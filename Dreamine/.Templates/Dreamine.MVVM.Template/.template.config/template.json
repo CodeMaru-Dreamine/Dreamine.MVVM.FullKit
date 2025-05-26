@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Dreamine Core Team",
+  "description": "Dreamine MVVM 기반의 자동화 프레임워크 템플릿입니다.",
+  "identity": "Dreamine.Templates.MVVM",
+  "name": "📦 Dreamine 빈 MVVM 프로젝트",
+  "shortName": "dreamine",
+  "sourceName": "DreamineApp",
+  "preferNameDirectory": true,
+  "classifications": [
+    "Dreamine",
+    "MVVM",
+    "WPF"
+  ],
+  "tags": {
+    "language": "C#",
+    "type": "project"
+  },
+  "icon": "icon.ico",
+  "symbols": {
+    "CompanyName": {
+      "type": "parameter",
+      "description": "회사 또는 프로젝트 이름",
+      "replaces": "DreamineCore"
+    }
+  },
+  "sources": [
+    {
+      "source": "./content",
+      "target": "./"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>Dreamine.Document</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+	 <None Include="**\*.md;**\*.txt;**\*.docx;**\*.png;**\*.svg;**\*.csv;**\*.json;**\*.yml;**\*.yaml;**\index.h*" />
+  </ItemGroup>
+
+</Project>

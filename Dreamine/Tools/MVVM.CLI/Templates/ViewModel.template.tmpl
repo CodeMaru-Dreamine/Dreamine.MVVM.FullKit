@@ -1,0 +1,20 @@
+﻿using Dreamine.MVVM.Attributes;
+using Dreamine.MVVM.Core;
+
+namespace ViewModels
+{
+    /// <summary>
+    /// {{name}}에 대한 ViewModel 클래스입니다.
+    /// </summary>
+    public partial class {{name}}ViewModel : ViewModelBase
+    {
+        [Property]
+        private string _title = "{{name}} ViewModel";
+
+        [RelayCommand]
+        private void Submit()
+        {
+            System.Diagnostics.Debug.WriteLine($"[{{name}}] Submit clicked: {{Title}}");
+        }
+    }
+}

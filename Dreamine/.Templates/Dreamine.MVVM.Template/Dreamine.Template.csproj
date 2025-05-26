@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageId>Dreamine.Templates.MVVM</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Dreamine Core Team</Authors>
+    <Description>Dreamine MVVM 자동화 템플릿</Description>
+    <PackageType>Template</PackageType>    
+    <PackAsTool>false</PackAsTool>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Dreamine.Templates.MVVM</Title>
+    <Copyright>© 2025 Dreamine Core Team. All rights reserved.</Copyright>
+    <PackageProjectUrl>https://github.com/dreamine/Dreamine</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="content/**" Pack="true" PackagePath="content/" CopyToOutputDirectory="Never" />
+    <Compile Remove="content/**" />
+    <Page Remove="content/**" />
+    <EmbeddedResource Remove="content/**" />
+    <None Include=".template.config/template.json" Pack="true" PackagePath=".template.config/" />
+    <None Include=".template.config/icon.ico" Pack="true" PackagePath=".template.config/" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+</Project>

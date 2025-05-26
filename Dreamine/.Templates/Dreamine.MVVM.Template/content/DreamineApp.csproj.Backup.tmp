@@ -1,0 +1,75 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <PackageIcon>icon.png</PackageIcon>
+    <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove=".template.config\**" />
+    <EmbeddedResource Remove=".template.config\**" />
+    <None Remove=".template.config\**" />
+    <Page Remove=".template.config\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\icon.ico" />
+    <Content Include="Resources\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dreamine.MVVM.Attributes" Version="1.0.1" />
+    <PackageReference Include="Dreamine.MVVM.Behaviors" Version="1.0.0" />
+    <PackageReference Include="Dreamine.MVVM.Behaviors.Core" Version="1.0.1" />
+    <PackageReference Include="Dreamine.MVVM.Behaviors.Wpf" Version="1.0.1" />
+    <PackageReference Include="Dreamine.MVVM.Core" Version="1.0.0" />
+    <PackageReference Include="Dreamine.MVVM.Extensions" Version="1.0.1" />
+    <PackageReference Include="Dreamine.MVVM.Interfaces" Version="1.0.0" />
+    <PackageReference Include="Dreamine.MVVM.Locators" Version="1.0.0" />
+    <PackageReference Include="Dreamine.MVVM.Locators.Wpf" Version="1.0.0" />
+    <PackageReference Include="Dreamine.MVVM.ViewModels" Version="1.0.0" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Analyzer Include="$(NuGetPackageRoot)dreamine.mvvm.generators\1.0.1\analyzers\dotnet\cs\Dreamine.MVVM.Generators.dll" />
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Page Include="App.xaml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Resources\icon.ico">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+</Project>
