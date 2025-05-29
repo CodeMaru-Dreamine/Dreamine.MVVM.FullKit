@@ -18,16 +18,45 @@
   },
   "icon": "icon.ico",
   "symbols": {
-    "CompanyName": {
-      "type": "parameter",
-      "description": "회사 또는 프로젝트 이름",
-      "replaces": "DreamineCore"
-    }
+     "Template": {
+            "type": "parameter",
+            "datatype": "choice",
+            "defaultValue": "DreamineCore",
+            "description": "사용할 템플릿 종류 선택",
+            "choices": [
+        {
+		  "choice": "DreamineCore",
+          "displayName": "Dreamine Core",
+          "value": "DreamineCore"
+        },
+        {
+		  "choice": "Smart",
+          "displayName": "Smart Systems",
+          "value": "Smart"
+        },
+        {
+		  "choice": "CustomCo", 	
+          "displayName": "Custom Co.",
+          "value": "CustomCo"
+        }
+      ]
+    },
+	"CompanyName": {
+            "type": "parameter",
+            "description": "회사 또는 프로젝트 이름",
+            "replaces": "DreamineCore"
+        }
   },
   "sources": [
     {
       "source": "./content",
-      "target": "./"
+      "target": "./",
+	  "condition": "(Template == 'DreamineCore')"
+    },
+    {
+      "source": "./content_Group",
+      "target": "./",
+	  "condition": "(Template == 'Smart')"
     }
   ]
 }

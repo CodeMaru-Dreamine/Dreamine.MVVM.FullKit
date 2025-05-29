@@ -31,20 +31,34 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dreamine.MVVM.Attributes" Version="1.0.1" />
-    <PackageReference Include="Dreamine.MVVM.Behaviors" Version="1.0.0" />
-    <PackageReference Include="Dreamine.MVVM.Behaviors.Core" Version="1.0.1" />
-    <PackageReference Include="Dreamine.MVVM.Behaviors.Wpf" Version="1.0.1" />
-    <PackageReference Include="Dreamine.MVVM.Core" Version="1.0.0" />
-    <PackageReference Include="Dreamine.MVVM.Extensions" Version="1.0.1" />
-    <PackageReference Include="Dreamine.MVVM.Interfaces" Version="1.0.0" />
-    <PackageReference Include="Dreamine.MVVM.Locators" Version="1.0.0" />
-    <PackageReference Include="Dreamine.MVVM.Locators.Wpf" Version="1.0.0" />
-    <PackageReference Include="Dreamine.MVVM.ViewModels" Version="1.0.0" />
+    <PackageReference Include="Dreamine.MVVM.Attributes" Version="1.0.2" />
+    <PackageReference Include="Dreamine.MVVM.Behaviors" Version="1.0.2" />
+    <PackageReference Include="Dreamine.MVVM.Behaviors.Core" Version="1.0.2" />
+    <PackageReference Include="Dreamine.MVVM.Behaviors.Wpf" Version="1.0.2" />
+    <PackageReference Include="Dreamine.MVVM.Core" Version="1.0.3" />
+    <PackageReference Include="Dreamine.MVVM.Generators" Version="1.0.2" PrivateAssets="all" OutputItemType="Analyzer" />
+    <PackageReference Include="Dreamine.MVVM.Extensions" Version="1.0.2" />
+    <PackageReference Include="Dreamine.MVVM.Interfaces" Version="1.0.2" />
+    <PackageReference Include="Dreamine.MVVM.Locators" Version="1.0.3" />
+    <PackageReference Include="Dreamine.MVVM.Locators.Wpf" Version="1.0.2" />
+    <PackageReference Include="Dreamine.MVVM.ViewModels" Version="1.0.2" />
   </ItemGroup>
-  
+
   <ItemGroup>
-    <Analyzer Include="$(NuGetPackageRoot)dreamine.mvvm.generators\1.0.1\analyzers\dotnet\cs\Dreamine.MVVM.Generators.dll" />
+    <!-- ViewModel -->
+    <Compile Update="**\*.xaml.ViewModel.cs">
+      <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
+    </Compile>
+
+    <!-- Model -->
+    <Compile Update="**\*.xaml.Model.cs">
+      <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
+    </Compile>
+
+    <!-- Event -->
+    <Compile Update="**\*.xaml.Event.cs">
+      <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
+    </Compile>
   </ItemGroup>
   
   <ItemGroup>

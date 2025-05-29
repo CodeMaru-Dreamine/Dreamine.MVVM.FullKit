@@ -21,7 +21,17 @@ for /r %%f in (*.bak) do (
 )
 
 :: devenv가 있는 경로 확인 후 실행
-set VSDEVENVDIR=C:\Program Files\Microsoft Visual Studio\2022\Professional\Common7\IDE
+:: 🔎 vswhere로 Visual Studio 경로 자동 감지
+for /f "delims=" %%i in ('"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property productPath') do (
+    set VSDEVENVDIR=%%~dpi
+)
+
+if not exist "%VSDEVENVDIR%devenv.exe" (
+    echo ❌ devenv.exe를 찾을 수 없습니다. 수동으로 경로를 설정해 주세요.
+    pause
+    exit /b
+)
+
 
 if exist "%VSDEVENVDIR%\devenv.exe" (
     echo ♻️ Visual Studio 구성 갱신 중...

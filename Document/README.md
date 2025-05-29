@@ -89,7 +89,8 @@
 ## 📘 관련 블로그 / Related Blog
 
 Dreamine 항해일지의 배경과 개발자 개인의 철학, 과정 등은 아래 블로그에 정리되어 있습니다:  
-🔗 [https://blog.naver.com/pro083](https://blog.naver.com/pro083)
+🔗 [https://blog.naver.com/pro083](https://blog.naver.com/pro083)  
+🔗 [Dreamine 풀패키지 GitHub](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit)
 
 ---
 
@@ -187,4 +188,5 @@ It is a chronicle of structure, vision, and the evolution of Dreamine's worldbui
 ## 📘 Related Blog
 
 For more background on Dreamine’s journey, architecture philosophy, and intuitive notes:  
-🔗 [https://blog.naver.com/pro083](https://blog.naver.com/pro083)
+🔗 [https://blog.naver.com/pro083](https://blog.naver.com/pro083)  
+🔗 [Dreamine FullKit Repository](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit)

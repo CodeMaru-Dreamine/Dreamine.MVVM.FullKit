@@ -58,6 +58,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MVVM.CLI", "Dreamine\Tools\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleTest", "Sample WPF\SampleTest\SampleTest.csproj", "{0CA84A51-CA37-4AEA-B51A-F10FA28CD88C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleSmart", "Sample WPF\SampleSmart\SampleSmart.csproj", "{7F246A7C-BDCC-450A-8BBB-DDC89C7A84FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -128,6 +130,10 @@ Global
 		{0CA84A51-CA37-4AEA-B51A-F10FA28CD88C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0CA84A51-CA37-4AEA-B51A-F10FA28CD88C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0CA84A51-CA37-4AEA-B51A-F10FA28CD88C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F246A7C-BDCC-450A-8BBB-DDC89C7A84FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F246A7C-BDCC-450A-8BBB-DDC89C7A84FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F246A7C-BDCC-450A-8BBB-DDC89C7A84FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F246A7C-BDCC-450A-8BBB-DDC89C7A84FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -153,6 +159,7 @@ Global
 		{7952B18E-6A46-9668-4738-2305A2558D7D} = {C8D5274F-AC00-46C7-1F8D-E88E81087A52}
 		{B8ADDD72-79F6-D812-DF4C-B1428C1F1769} = {C8D5274F-AC00-46C7-1F8D-E88E81087A52}
 		{0CA84A51-CA37-4AEA-B51A-F10FA28CD88C} = {0C09002F-253A-4896-A6BC-F6BE9763CE3F}
+		{7F246A7C-BDCC-450A-8BBB-DDC89C7A84FF} = {0C09002F-253A-4896-A6BC-F6BE9763CE3F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {24A649D7-F4AE-494B-A88B-31A7B347812F}

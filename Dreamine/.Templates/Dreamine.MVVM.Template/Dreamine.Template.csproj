@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PackageId>Dreamine.Templates.MVVM</PackageId>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <Authors>Dreamine Core Team</Authors>
     <Description>Dreamine MVVM 자동화 템플릿</Description>
     <PackageType>Template</PackageType>    
@@ -15,12 +15,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="content/**" Pack="true" PackagePath="content/" CopyToOutputDirectory="Never" />
-    <Compile Remove="content/**" />
-    <Page Remove="content/**" />
-    <EmbeddedResource Remove="content/**" />
-    <None Include=".template.config/template.json" Pack="true" PackagePath=".template.config/" />
-    <None Include=".template.config/icon.ico" Pack="true" PackagePath=".template.config/" />
+    <None Include="content\**" Pack="true" PackagePath="content/" CopyToOutputDirectory="Never" />
+  <None Include="content_Group\**" Pack="true" PackagePath="content_Group/" CopyToOutputDirectory="Never" />
+
+  <Compile Remove="content\**" />
+  <Compile Remove="content_Group\**" />
+  <Page Remove="content\**" />
+  <Page Remove="content_Group\**" />
+  <EmbeddedResource Remove="content\**" />
+  <EmbeddedResource Remove="content_Group\**" />
+
+  <None Include=".template.config\template.json" Pack="true" PackagePath=".template.config/" />
+  <None Include=".template.config\icon.ico" Pack="true" PackagePath=".template.config/" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,4 +35,8 @@
       <PackagePath>\</PackagePath>
     </None>
   </ItemGroup>
+
+  <!--<ItemGroup>
+    <Folder Include="content_Group\" />
+  </ItemGroup>-->
 </Project>
