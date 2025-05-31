@@ -1,0 +1,62 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+
+    <OutputItemType>Analyzer</OutputItemType>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <BuildOutputTargetFolder>analyzers\dotnet\cs</BuildOutputTargetFolder>
+    <SuppressTFMSubfolderInAnalyzersFolder>true</SuppressTFMSubfolderInAnalyzersFolder>
+
+    <PackageType>Analyzer</PackageType>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IntermediateOutputPath>$(BaseIntermediateOutputPath)AnalyzerBuild\</IntermediateOutputPath>
+
+    <PackageId>Dreamine.MVVM.Generators</PackageId>
+    <Version>1.0.3</Version>
+    <Authors>Dreamine Core Team</Authors>
+    <Company>Dreamine</Company>
+    <Description>Dreamine MVVM 프레임워크에서 사용하는 Source Generator 모듈입니다.</Description>
+    <PackageTags>MVVM;WPF;dreamine;SourceGenerator</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Generators</RepositoryUrl>
+    <Title>Dreamine MVVM Generators</Title>
+    <Copyright>© 2025 Dreamine</Copyright>
+    <PackageProjectUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0">
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="4.13.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="D:\Work\2. Work\Dreamine\Dreamine\Library\Dreamine.MVVM.Generators\bin\Debug\netstandard2.0\Dreamine.MVVM.Generators.dll" />
+	 <None Include="$(TargetDir)\$(TargetName).dll" Pack="true" PackagePath="analyzers/dotnet/cs" />
+	 <None Include="..\..\..\Document\README.md">
+	   <Pack>True</Pack>
+	   <PackagePath>\</PackagePath>
+	 </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="buildTransitive\Dreamine.MVVM.Generators.targets" Pack="true" PackagePath="buildTransitive\" />
+    <None Remove="D:\Work\2. Work\Dreamine\Dreamine\Library\Dreamine.MVVM.Generators\bin\Debug\netstandard2.0\Dreamine.MVVM.Generators.pdb" />
+    <None Include="$(TargetDir)$(TargetName).pdb" Pack="true" PackagePath="analyzers/dotnet/cs/" Visible="false" />
+    <None Include="..\..\.Templates\Dreamine.MVVM.Template\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dreamine.MVVM.Attributes\Dreamine.MVVM.Attributes.csproj" />
+  </ItemGroup>
+
+</Project>

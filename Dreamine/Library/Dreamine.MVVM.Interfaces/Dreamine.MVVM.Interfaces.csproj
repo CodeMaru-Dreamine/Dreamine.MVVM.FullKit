@@ -1,0 +1,35 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <PackageId>Dreamine.MVVM.Interfaces</PackageId>
+    <Version>1.0.3</Version>
+    <Authors>Dreamine Core Team</Authors>
+    <Company>Dreamine</Company>
+    <Description>Dreamine MVVM 프레임워크에서 사용하는 핵심 인터페이스 모음입니다. DI, 이벤트, 커맨드, Navigation 등을 정의합니다.</Description>
+    <PackageTags>MVVM;WPF;Dreamine;Interface;DI</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Interfaces</RepositoryUrl>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Dreamine.MVVM.Interfaces</Title>   
+    <Copyright>© 2025 Dreamine Core Team. All rights reserved.</Copyright>
+    <PackageProjectUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\Document\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\.Templates\Dreamine.MVVM.Template\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

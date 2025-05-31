@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <PackageId>Dreamine.MVVM.Locators.Wpf</PackageId>
+    <Version>1.0.3</Version>
+    <Authors>Dreamine Core Team</Authors>
+    <Company>Dreamine</Company>
+    <Description>WPF 전용 View ↔ ViewModel 자동 연결 및 주입 기능을 포함하는 Dreamine Locator 모듈입니다.</Description>
+    <PackageTags>MVVM;WPF;Dreamine;Locator;ViewModelMapping</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Locators.Wpf</RepositoryUrl>
+    <Title>Dreamine.MVVM.Locators.Wpf</Title>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit</PackageProjectUrl>
+    <Copyright>© 2025 Dreamine Core Team. All rights reserved.</Copyright>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\Document\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\.Templates\Dreamine.MVVM.Template\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dreamine.MVVM.Locators\Dreamine.MVVM.Locators.csproj" />
+  </ItemGroup>
+
+</Project>

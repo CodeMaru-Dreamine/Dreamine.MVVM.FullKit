@@ -1,0 +1,40 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <PackageId>Dreamine.MVVM.Extensions</PackageId>
+    <Version>1.0.3</Version>
+    <Authors>Dreamine Core Team</Authors>
+    <Company>Dreamine</Company>
+    <Description>Dreamine MVVM 개발을 위한 확장 메서드 모음입니다. LINQ, ICommand, Observable 유틸 등이 포함됩니다.</Description>
+    <PackageTags>MVVM;WPF;Dreamine;Extensions;LINQ;ICommand</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Extensions</RepositoryUrl>
+    <Title>Dreamine.MVVM.Extensions</Title>
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Copyright>© 2025 Dreamine Core Team. All rights reserved.</Copyright>
+    <PackageProjectUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit</PackageProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\Document\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+    <None Include="..\..\.Templates\Dreamine.MVVM.Template\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Dreamine.MVVM.Locators.Wpf\Dreamine.MVVM.Locators.Wpf.csproj" />
+  </ItemGroup>
+
+</Project>
