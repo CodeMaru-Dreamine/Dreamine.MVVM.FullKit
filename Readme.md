@@ -71,6 +71,35 @@ public partial class MainPageViewModel : VsViewModelBase
   - MainPage.xaml
 - App.xaml.cs
 ```
+---
+## 🔧 유틸리티 도구
+
+Dreamine.MVVM.FullKit에는 반복적인 빌드/정리/템플릿 등록을 자동화하기 위한 유틸리티 실행 파일들이 포함되어 있습니다.  
+개발 편의성과 패키지 배포를 높이기 위해 다음 도구들을 제공합니다.
+
+| 파일명 | 용도 | 설명 |
+|--------|------|------|
+| `CleanFile.exe` | 정리 | 빌드 중 생성된 `bin`, `obj`, `.vs`, `Debug`, `Release` 폴더 및 `.bak` 파일을 정리합니다. Visual Studio 설정 캐시도 제거하여 깨끗한 상태를 만듭니다. |
+| `build-nuget.exe` | 패키지 빌드 | Dreamine.MVVM 모듈별 `.csproj`를 순차적으로 빌드/팩/출력합니다. 로컬 NuGet 폴더로 `.nupkg` 패키지를 생성합니다. |
+| `rebuild_template.exe` | 템플릿 재등록 | Dreamine 템플릿을 재빌드 후 기존 등록 제거 및 강제 재설치합니다. Visual Studio `devenv.exe /updateconfiguration` 명령으로 템플릿 캐시도 갱신합니다. |
+
+> 🧩 이 도구들은 모두 `.bat` 파일 기반으로 제작되었으며, `Bat to Exe Converter`를 통해 `.exe`로 패키징되어 있습니다.  
+> 이로 인해 콘솔 깨짐 없이 CLI 환경에서도 안정적으로 실행됩니다.
+
+---
+## 🔧 Utility Tools
+
+Dreamine.MVVM.FullKit includes utility executables to automate repetitive tasks such as build cleanup, NuGet packaging, and template registration.  
+These tools help improve development efficiency and package delivery workflow.
+
+| Filename | Purpose | Description |
+|----------|---------|-------------|
+| `CleanFile.exe` | Cleanup | Removes temporary folders such as `bin`, `obj`, `.vs`, `Debug`, `Release`, and `.bak` files. Also clears Visual Studio configuration caches to ensure a clean build environment. |
+| `build-nuget.exe` | NuGet Packaging | Sequentially restores, builds, and packs each `Dreamine.MVVM` module (`.csproj`), generating `.nupkg` files into a local NuGet output folder. |
+| `rebuild_template.exe` | Template Re-registration | Rebuilds the Dreamine template, removes any previously installed versions, and force-installs the updated one. Also refreshes the Visual Studio template cache using `devenv.exe /updateconfiguration`. |
+
+> 🧩 These utilities are originally written as `.bat` scripts and packaged into `.exe` files using **Bat to Exe Converter**.  
+> This ensures stable and encoding-safe execution in various CLI environments.
 
 ---
 
