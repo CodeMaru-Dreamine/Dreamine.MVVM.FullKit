@@ -11,14 +11,14 @@ using System.Windows.Shapes;
 
 namespace DreamineApp.Views
 {
-    /// <summary>
-    /// MainWindow.xaml에 대한 상호 작용 로직
-    /// </summary>
-    public partial class MainWindow : Window
-    {
-        public MainWindow()
-        {
-            InitializeComponent();           
-        }
-    }
+	/// <summary>
+	/// MainWindow.xaml에 대한 상호 작용 로직
+	/// </summary>
+	public partial class MainWindow : Window
+	{
+		public MainWindow()
+		{
+			InitializeComponent();
+		}
+	}
 }

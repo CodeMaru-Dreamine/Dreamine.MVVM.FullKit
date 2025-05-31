@@ -16,17 +16,21 @@
 
   <ItemGroup>
     <None Include="content\**" Pack="true" PackagePath="content/" CopyToOutputDirectory="Never" />
-  <None Include="content_Group\**" Pack="true" PackagePath="content_Group/" CopyToOutputDirectory="Never" />
+	<None Include="content_Group\**" Pack="true" PackagePath="content_Group/" CopyToOutputDirectory="Never" />
+	<None Include="content_Enterprise\**" Pack="true" PackagePath="content_Enterprise/" CopyToOutputDirectory="Never" />
+ 
+	<Compile Remove="content\**" />
+	<Compile Remove="content_Group\**" />
+	<Compile Remove="content_Enterprise\**" />
+	<Page Remove="content\**" />
+	<Page Remove="content_Group\**" />
+	<Page Remove="content_Enterprise\**" />
+	<EmbeddedResource Remove="content\**" />
+	<EmbeddedResource Remove="content_Group\**" />
+	<EmbeddedResource Remove="content_Enterprise\**" />
 
-  <Compile Remove="content\**" />
-  <Compile Remove="content_Group\**" />
-  <Page Remove="content\**" />
-  <Page Remove="content_Group\**" />
-  <EmbeddedResource Remove="content\**" />
-  <EmbeddedResource Remove="content_Group\**" />
-
-  <None Include=".template.config\template.json" Pack="true" PackagePath=".template.config/" />
-  <None Include=".template.config\icon.ico" Pack="true" PackagePath=".template.config/" />
+	<None Include=".template.config\template.json" Pack="true" PackagePath=".template.config/" />
+	<None Include=".template.config\icon.ico" Pack="true" PackagePath=".template.config/" />
   </ItemGroup>
 
   <ItemGroup>

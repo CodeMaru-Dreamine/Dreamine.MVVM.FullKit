@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dreamine.MVVM.Core" Version="1.0.4" />
+    <PackageReference Include="Dreamine.MVVM.Generators" Version="1.0.3" PrivateAssets="all" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\DreamineApp.Events\DreamineApp.Events.csproj" />
+  </ItemGroup>
+
+</Project>

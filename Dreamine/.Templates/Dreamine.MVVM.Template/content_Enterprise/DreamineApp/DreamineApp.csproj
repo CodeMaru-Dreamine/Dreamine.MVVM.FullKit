@@ -1,0 +1,29 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>icon.ico</ApplicationIcon>    
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dreamine.MVVM.Generators" Version="1.0.3" PrivateAssets="all" OutputItemType="Analyzer" />
+    <PackageReference Include="Dreamine.MVVM.Extensions" Version="1.0.3" />
+  </ItemGroup>
+
+  
+  <ItemGroup>
+    <ProjectReference Include="..\DreamineApp.Events\DreamineApp.Events.csproj" />
+    <ProjectReference Include="..\DreamineApp.Interfaces\DreamineApp.Interfaces.csproj" />
+    <ProjectReference Include="..\DreamineApp.Managers\DreamineApp.Managers.csproj" />
+    <ProjectReference Include="..\DreamineApp.Models\DreamineApp.Models.csproj" />
+    <ProjectReference Include="..\DreamineApp.Resources\DreamineApp.Resources.csproj" />
+    <ProjectReference Include="..\DreamineApp.Styles\DreamineApp.Styles.csproj" />
+    <ProjectReference Include="..\DreamineApp.ViewModels\DreamineApp.ViewModels.csproj" />
+    <ProjectReference Include="..\DreamineApp.Views\DreamineApp.Views.csproj" />
+  </ItemGroup>  
+ 
+</Project>

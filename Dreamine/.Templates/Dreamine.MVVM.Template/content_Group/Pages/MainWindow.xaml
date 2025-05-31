@@ -5,14 +5,15 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DreamineApp.Pages"       
         xmlns:i="clr-namespace:Dreamine.MVVM.Behaviors.Wpf.Interactivity;assembly=Dreamine.MVVM.Behaviors.Wpf"
-        xmlns:mvvm="clr-namespace:Dreamine.MVVM.Behaviors.Wpf.Interactivity;assembly=Dreamine.MVVM.Behaviors.Wpf"       
+        xmlns:mvvm="clr-namespace:Dreamine.MVVM.Behaviors.Wpf.Interactivity;assembly=Dreamine.MVVM.Behaviors.Wpf" 
+        xmlns:region="clr-namespace:Dreamine.MVVM.Locators.Wpf;assembly=Dreamine.MVVM.Locators.Wpf"
         Title="MainWindow" Height="450" Width="800"
         WindowStyle="None" AllowsTransparency="True" Background="White">
-
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="0.16*"/>
         </Grid.RowDefinitions>
 
         <!-- 타이틀바 -->
@@ -33,12 +34,12 @@
                 <Image Grid.Column="0" Source="pack://application:,,,/Resources/icon.png" Width="24" Height="24" Margin="2"/>
 
                 <TextBlock Grid.Column="1"
-                           Text="{Binding Title}"
-                           VerticalAlignment="Center"
-                           FontSize="14"
-                           FontWeight="SemiBold"
-                           Foreground="#333"
-                           Margin="0,0,8,0"/>
+                       Text="{Binding Title}"
+                       VerticalAlignment="Center"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="#333"
+                       Margin="0,0,8,0"/>
 
                 <Button Grid.Column="2" Style="{StaticResource ControlButtonStyle}" Content="&#xE921;" ToolTip="최소화" Command="{Binding MinimizeCommand}" />
                 <Button Grid.Column="3" Style="{StaticResource ControlButtonStyle}" Content="&#xE922;" ToolTip="최대화" Command="{Binding MaximizeCommand}" />
@@ -46,16 +47,18 @@
             </Grid>
         </Border>
 
+        <ContentControl Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  region:RegionBinder.RegionName="SubPage"/>
+
         <!-- 본문 영역 -->
-        <DockPanel Grid.Row="1" Background="White" Margin="4">
+        <DockPanel Grid.Row="2" Background="White" Margin="4">
             <StackPanel Margin="2" Orientation="Horizontal" HorizontalAlignment="Stretch">
                 <TextBlock Text="{Binding Message}" 
-           FontSize="15" 
-           Margin="0,2,20,0"
-           HorizontalAlignment="Center"
-           TextAlignment="Center"/>
+       FontSize="15" 
+       Margin="0,2,20,0"
+       HorizontalAlignment="Center"
+       TextAlignment="Center"/>
                 <Button Content="Sub View" Height="30" Padding="20 2" 
-                VerticalAlignment="Top" Command="{Binding SubPageCommand}"/>
+            VerticalAlignment="Top" Command="{Binding SubPageCommand}"/>
             </StackPanel>
 
             <StackPanel Margin="2" HorizontalAlignment="Right">

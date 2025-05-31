@@ -3,7 +3,7 @@
   "author": "Dreamine Core Team",
   "description": "Dreamine MVVM 기반의 자동화 프레임워크 템플릿입니다.",
   "identity": "Dreamine.Templates.MVVM",
-  "name": "📦 Dreamine 빈 MVVM 프로젝트",
+  "name": "📦 Dreamine MVVM 템플릿 프로젝트",
   "shortName": "dreamine",
   "sourceName": "DreamineApp",
   "preferNameDirectory": true,
@@ -35,9 +35,9 @@
           "value": "Smart"
         },
         {
-		  "choice": "CustomCo", 	
-          "displayName": "Custom Co.",
-          "value": "CustomCo"
+		  "choice": "Enterprise", 	
+          "displayName": "Enterprise Package",
+          "value": "Enterprise"
         }
       ]
     },
@@ -57,6 +57,11 @@
       "source": "./content_Group",
       "target": "./",
 	  "condition": "(Template == 'Smart')"
+    },
+	{
+      "source": "./content_Enterprise",
+      "target": "./",
+	  "condition": "(Template == 'Enterprise')"
     }
   ]
 }

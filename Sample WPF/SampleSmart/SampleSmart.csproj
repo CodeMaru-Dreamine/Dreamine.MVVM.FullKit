@@ -31,16 +31,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Dreamine.MVVM.Attributes" Version="1.0.2" />
     <PackageReference Include="Dreamine.MVVM.Behaviors" Version="1.0.2" />
     <PackageReference Include="Dreamine.MVVM.Behaviors.Core" Version="1.0.2" />
     <PackageReference Include="Dreamine.MVVM.Behaviors.Wpf" Version="1.0.2" />
-    <PackageReference Include="Dreamine.MVVM.Core" Version="1.0.3" />
-    <PackageReference Include="Dreamine.MVVM.Generators" Version="1.0.2" PrivateAssets="all" OutputItemType="Analyzer" />
-    <PackageReference Include="Dreamine.MVVM.Extensions" Version="1.0.2" />
-    <PackageReference Include="Dreamine.MVVM.Interfaces" Version="1.0.2" />
-    <PackageReference Include="Dreamine.MVVM.Locators" Version="1.0.3" />
-    <PackageReference Include="Dreamine.MVVM.Locators.Wpf" Version="1.0.2" />
+    <PackageReference Include="Dreamine.MVVM.Core" Version="1.0.4" />
+    <PackageReference Include="Dreamine.MVVM.Generators" Version="1.0.3" PrivateAssets="all" OutputItemType="Analyzer" />
+    <PackageReference Include="Dreamine.MVVM.Extensions" Version="1.0.3" />
+    <PackageReference Include="Dreamine.MVVM.Interfaces" Version="1.0.3" />
+    <PackageReference Include="Dreamine.MVVM.Locators" Version="1.0.4" />
+    <PackageReference Include="Dreamine.MVVM.Locators.Wpf" Version="1.0.3" />
     <PackageReference Include="Dreamine.MVVM.ViewModels" Version="1.0.2" />
   </ItemGroup>
 

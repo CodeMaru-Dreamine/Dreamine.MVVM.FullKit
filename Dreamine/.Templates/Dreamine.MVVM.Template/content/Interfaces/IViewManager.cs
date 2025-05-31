@@ -8,7 +8,7 @@ namespace DreamineApp.Interfaces
 {
 	public interface IViewManager
 	{
-		void Show<TViewModel>() where TViewModel : class;	
+		void Show<TViewModel>() where TViewModel : class;
 	}
 
 }

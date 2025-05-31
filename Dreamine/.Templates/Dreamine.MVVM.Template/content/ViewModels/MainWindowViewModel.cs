@@ -9,7 +9,7 @@ namespace DreamineApp.ViewModels
 	/// MainWindow에 대한 ViewModel 클래스입니다.
 	/// Model과 Event 사이의 바인딩을 담당합니다.
 	/// </summary>
-	public partial class MainWindowViewModel 
+	public partial class MainWindowViewModel
 	{
 		[DreamineModel]
 		private MainWindowModel _model;
@@ -24,6 +24,6 @@ namespace DreamineApp.ViewModels
 		[RelayCommand] private void Minimize() => Event.Minimize();
 		[RelayCommand] private void Maximize() => Event.Maximize();
 		[RelayCommand] private void Close() => Event.Close();
-		[RelayCommand] private void SubPage() => Event.SubPage();			
+		[RelayCommand] private void SubPage() => Event.SubPage();
 	}
 }
