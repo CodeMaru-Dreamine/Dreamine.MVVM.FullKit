@@ -8,7 +8,7 @@ All-in-One package set for building WPF MVVM applications with the Dreamine arch
 
 > Dreamine.MVVM.FullKit is a meta-package/repository concept that brings together the core Dreamine MVVM modules used for WPF applications: DI, ViewModel infrastructure, source generators, locator wiring, WPF runtime integration, behaviors, extensions, and optional hybrid hosting.
 
-[➡️ 한국어 문서 보기](README_ko.md)
+[➡️ 한국어 문서 보기](README_KO.md)
 
 ---
 
