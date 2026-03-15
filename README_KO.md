@@ -4,7 +4,7 @@ WPF MVVM 애플리케이션을 위한 Dreamine 통합 패키지 문서입니다.
 
 > Dreamine.MVVM.FullKit은 WPF 애플리케이션에 필요한 Dreamine MVVM 계열 모듈들을 한 번에 이해할 수 있도록 정리한 통합 문서입니다. DI, ViewModel 인프라, 소스 제너레이터, Locator, WPF 런타임 연결, Behavior, Extension, 그리고 선택적 Hybrid 호스팅까지 포함합니다.
 
-[➡️ English Version](README.md)
+[➡️ English Version](./README.md)
 
 ---
 
