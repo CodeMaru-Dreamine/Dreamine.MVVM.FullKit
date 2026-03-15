@@ -1,0 +1,21 @@
+[submodule "20_SOURCES/100. Library/Core"]
+	path = 20_SOURCES/100. Library/Core
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Core
+[submodule "20_SOURCES/100. Library/Locators"]
+	path = 20_SOURCES/100. Library/Locators
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Locators
+[submodule "20_SOURCES/100. Library/Attributes"]
+	path = 20_SOURCES/100. Library/Attributes
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Attributes
+[submodule "20_SOURCES/100. Library/Interfaces"]
+	path = 20_SOURCES/100. Library/Interfaces
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Interfaces
+[submodule "20_SOURCES/100. Library/ViewModels"]
+	path = 20_SOURCES/100. Library/ViewModels
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.ViewModels
+[submodule "20_SOURCES/100. Library/Wpf"]
+	path = 20_SOURCES/100. Library/Wpf
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Wpf
+[submodule "20_SOURCES/100. Library/Generators"]
+	path = 20_SOURCES/100. Library/Generators
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Generators
