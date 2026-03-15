@@ -1,0 +1,281 @@
+﻿/*!\file wwwroot/app.css
+ * \brief Dreamine Hybrid(Embedded/Server) 전역 스타일
+ * \details
+ *  - :root 변수, html/body, 공용 유틸/기본 타이포를 정의한다.
+ *  - Blazor Scoped CSS(Index.razor.css 등)에는 전역 선택자(:root/html/body)를 두지 않는다.
+ * \version 1.1.0
+ */
+
+:root {
+    --bg: #0e1117;
+    --panel: #161b22;
+    --card: #1f2633;
+    --stroke: #2b3445;
+    --text: #e6edf3;
+    --muted: #9aa4b2;
+    --accent: #4aa3ff;
+    --ok: #3ddc97;
+    --danger: #ff6b6b;
+    --shadow: 0 10px 28px rgba(0,0,0,.45);
+    --radius-lg: 16px;
+    --radius-md: 12px;
+}
+
+html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", system-ui, "맑은 고딕", sans-serif;
+    /*!\brief 텍스트 렌더링 품질 개선 */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/*!\brief 기본 링크/버튼 초기화 */
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+button {
+    font-family: inherit;
+}
+
+/*!\brief 박스 사이징 통일 */
+* {
+    box-sizing: border-box;
+}
+
+/* ===== 공용 버튼 (Dashboard/Counter 공용) ===== */
+
+.dm-btn {
+    border: 1px solid rgba(74,163,255,.28);
+    background: rgba(74,163,255,.16);
+    color: rgba(255,255,255,.92);
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    font-weight: 900;
+    letter-spacing: .12px;
+    cursor: pointer;
+    transition: transform .08s ease, background .12s ease, border-color .12s ease, filter .12s ease;
+}
+
+    .dm-btn:hover {
+        background: rgba(74,163,255,.22);
+        border-color: rgba(74,163,255,.42);
+        filter: brightness(1.02);
+    }
+
+    .dm-btn:active {
+        transform: translateY(1px);
+    }
+
+.dm-btn-ghost {
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.06);
+}
+
+    .dm-btn-ghost:hover {
+        background: rgba(255,255,255,.10);
+        border-color: rgba(255,255,255,.22);
+    }
+
+
+/*!\file Components/LocalCounter.razor.css
+ * \brief LocalCounter 컴포넌트 전용 Scoped CSS (UI 개선 버전)
+ * \details
+ *  - 제품 데모 품질 기준에 맞춰 카드형 레이아웃과 가독성을 강화한다.
+ *  - Blazor CSS Isolation(Scoped CSS)로 빌드되며, Host 페이지에서 {Assembly}.styles.css 로드가 필요하다.
+ * \version 1.1.0
+ */
+
+.dm-counter {
+    position: relative;
+    overflow: hidden;
+    border-radius: 18px;
+    padding: 18px;
+    background: radial-gradient(900px 420px at 10% 0%, rgba(74,163,255,.16), transparent 60%), radial-gradient(700px 360px at 95% 10%, rgba(61,220,151,.12), transparent 55%), linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)), var(--panel);
+    border: 1px solid rgba(255,255,255,.10);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+    .dm-counter::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        pointer-events: none;
+        background: linear-gradient( 120deg, rgba(74,163,255,.20), rgba(61,220,151,.14), rgba(255,255,255,0) );
+        opacity: .35;
+        filter: blur(18px);
+    }
+
+.dm-counter-top {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    margin-bottom: 14px;
+}
+
+.dm-counter-title {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+    .dm-counter-title h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 950;
+        letter-spacing: .2px;
+        line-height: 1.1;
+    }
+
+    .dm-counter-title p {
+        margin: 0;
+        font-size: 13px;
+        color: rgba(255,255,255,.66);
+        line-height: 1.55;
+    }
+
+.dm-counter-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: flex-start;
+}
+
+.dm-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(0,0,0,.18);
+    color: rgba(255,255,255,.86);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .15px;
+    box-shadow: 0 10px 22px rgba(0,0,0,.18);
+}
+
+.dm-dot-blue,
+.dm-dot-green {
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    flex: 0 0 auto;
+}
+
+.dm-dot-blue {
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(74,163,255,.18);
+}
+
+.dm-dot-green {
+    background: var(--ok);
+    box-shadow: 0 0 0 3px rgba(61,220,151,.18);
+}
+
+.dm-counter-body {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.15fr .85fr;
+    gap: 12px;
+    align-items: stretch;
+}
+
+@media (max-width: 920px) {
+    .dm-counter-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+.dm-metric,
+.dm-actions {
+    border-radius: 16px;
+    padding: 14px;
+    border: 1px solid rgba(255,255,255,.12);
+    background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03)), rgba(0,0,0,.18);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 14px 30px rgba(0,0,0,.22);
+}
+
+.dm-metric-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    color: rgba(255,255,255,.66);
+    font-size: 12px;
+    font-weight: 900;
+    letter-spacing: .18px;
+}
+
+    .dm-metric-label span:last-child {
+        color: rgba(255,255,255,.78);
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+    }
+
+.dm-count {
+    font-size: 54px;
+    font-weight: 1000;
+    letter-spacing: .2px;
+    line-height: 1;
+    background: linear-gradient(90deg, rgba(74,163,255,1), rgba(61,220,151,1));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 18px 40px rgba(74,163,255,.10);
+}
+
+.dm-count-sub {
+    color: rgba(255,255,255,.68);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.dm-actions-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Scoped 내부에서 버튼을 더 “제품 UI”처럼 보이게 보강 */
+.dm-actions .dm-btn {
+    min-width: 92px;
+    box-shadow: 0 12px 26px rgba(0,0,0,.18);
+}
+
+    .dm-actions .dm-btn:active {
+        transform: translateY(1px) scale(.99);
+    }
+
+/* 작은 디테일: hover 시 카드가 살짝 뜨는 느낌 */
+.dm-metric:hover,
+.dm-actions:hover {
+    transform: translateY(-1px);
+    transition: transform .10s ease;
+}
+
+/* 모바일에서 텍스트가 너무 길어질 때 대비 */
+@media (max-width: 420px) {
+    .dm-count {
+        font-size: 44px;
+    }
+
+    .dm-counter-title p br {
+        display: none;
+    }
+}

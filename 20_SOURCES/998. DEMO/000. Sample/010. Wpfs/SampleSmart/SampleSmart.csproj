@@ -1,0 +1,94 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <PackageIcon>icon.png</PackageIcon>
+    <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove=".template.config\**" />
+    <EmbeddedResource Remove=".template.config\**" />
+    <None Remove=".template.config\**" />
+    <Page Remove=".template.config\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Resources\icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Resources\icon.ico" />
+    <Content Include="Resources\icon.png">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\..\100. Library\Behaviors.Core\Dreamine.MVVM.Behaviors.Core.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Behaviors.Wpf\Dreamine.MVVM.Behaviors.Wpf.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Behaviors\Dreamine.MVVM.Behaviors.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Extensions\Dreamine.MVVM.Extensions.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer" />
+		<ProjectReference Include="..\..\..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Locators.Wpf\Dreamine.MVVM.Locators.Wpf.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Locators\Dreamine.MVVM.Locators.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
+	</ItemGroup>
+
+  <ItemGroup>
+    <!-- ViewModel -->
+    <Compile Update="**\*.xaml.ViewModel.cs">
+      <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
+    </Compile>
+
+    <!-- Model -->
+    <Compile Update="**\*.xaml.Model.cs">
+      <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
+    </Compile>
+
+    <!-- Event -->
+    <Compile Update="**\*.xaml.Event.cs">
+      <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  
+  <ItemGroup>
+    <Page Include="App.xaml" />
+  </ItemGroup>
+  
+  <!--<ItemGroup>
+    <ProjectReference Include="..\..\Dreamine\Library\Dreamine.MVVM.Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer"/>
+  </ItemGroup>-->
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Resources\icon.ico">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
+</Project>

@@ -19,3 +19,27 @@
 [submodule "20_SOURCES/100. Library/Generators"]
 	path = 20_SOURCES/100. Library/Generators
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Generators
+[submodule "20_SOURCES/100. Library/Locators.Wpf"]
+	path = 20_SOURCES/100. Library/Locators.Wpf
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Locators.Wpf
+[submodule "20_SOURCES/100. Library/Behaviors"]
+	path = 20_SOURCES/100. Library/Behaviors
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Behaviors
+[submodule "20_SOURCES/100. Library/Behaviors.Core"]
+	path = 20_SOURCES/100. Library/Behaviors.Core
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Behaviors.Core
+[submodule "20_SOURCES/100. Library/Behaviors.Wpf"]
+	path = 20_SOURCES/100. Library/Behaviors.Wpf
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Behaviors.Wpf
+[submodule "20_SOURCES/100. Library/Extensions"]
+	path = 20_SOURCES/100. Library/Extensions
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Extensions
+[submodule "20_SOURCES/100. Library/Hybrid.BlazorApp"]
+	path = 20_SOURCES/100. Library/Hybrid.BlazorApp
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Hybrid.BlazorApp
+[submodule "20_SOURCES/100. Library/Hybrid"]
+	path = 20_SOURCES/100. Library/Hybrid
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Hybrid
+[submodule "20_SOURCES/100. Library/Hybrid.Wpf"]
+	path = 20_SOURCES/100. Library/Hybrid.Wpf
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Hybrid.Wpf

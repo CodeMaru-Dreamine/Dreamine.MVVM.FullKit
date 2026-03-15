@@ -1,0 +1,52 @@
+<Window
+    x:Class="Sample01.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:conv="clr-namespace:Dreamine.Hybrid.Wpf.Converters;assembly=Dreamine.Hybrid.Wpf"
+    xmlns:util="clr-namespace:Dreamine.Hybrid.Wpf.Utility;assembly=Dreamine.Hybrid.Wpf"
+    mc:Ignorable="d"
+    Title="{Binding Title}"
+    Width="950"
+    Height="650"
+    d:DesignWidth="950"
+    d:DesignHeight="650">
+    <!--! \file MainWindow.xaml
+          \brief WPF 쉘 + (옵션) 하이브리드 Blazor 패널을 가진 메인 윈도우. -->
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="260" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Margin="12">
+            <TextBlock Margin="0,0,0,12" FontSize="16" Text="{Binding StatusMessage}" />
+            <Button Height="34" Margin="0,0,0,8" Command="{Binding ClickCommand}" Content="클릭" />
+            <Button Height="34" Margin="0,0,0,8" Command="{Binding ResetCommand}" Content="초기화" />
+            <ListBox Height="400" Margin="0,8,0,0" ItemsSource="{Binding Logs}" />
+        </StackPanel>
+
+        <TabControl Grid.Column="1" Margin="8">
+            <TabItem Header="Embedded" x:Name="EmbeddedTab">
+                <Border Background="#222" Padding="12"
+                        d:Visibility="Visible"
+                        Visibility="{Binding Source={x:Static util:DesignTimeGuard.IsInDesignMode},
+                                             Converter={x:Static conv:BooleanToVisibilityConverter.Instance}}">
+                    <TextBlock Foreground="White" FontSize="14"
+                               Text="(디자인 타임) BlazorWebView 비활성화 중..." />
+                </Border>
+            </TabItem>
+
+            <TabItem Header="Server (5000)" x:Name="ServerTab">
+                <Border Background="#333" Padding="12"
+                        d:Visibility="Visible"
+                        Visibility="{Binding Source={x:Static util:DesignTimeGuard.IsInDesignMode},
+                                             Converter={x:Static conv:BooleanToVisibilityConverter.Instance}}">
+                    <TextBlock Foreground="LightGray"
+                               Text="(디자인 타임) WebView2 비활성화 중..." />
+                </Border>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

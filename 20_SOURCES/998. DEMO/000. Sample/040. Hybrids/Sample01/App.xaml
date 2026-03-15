@@ -1,0 +1,10 @@
+<Application
+    x:Class="Sample01.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!--
+        ! \file App.xaml
+        \brief WPF Application 리소스 엔트리.
+    -->
+    <Application.Resources />
+</Application>

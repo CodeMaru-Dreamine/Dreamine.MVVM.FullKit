@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--!
+    \file Sample01.csproj
+    \brief Dreamine Hybrid 샘플 실행 프로젝트
+    \details
+      - WPF 실행형(WinExe) 프로젝트로 구성한다.
+      - 잘못된 MSBuild Import 항목을 제거하고, 필요 시 전역 using은 <Using>으로 선언한다.
+      - Dreamine.Hybrid / Dreamine.Hybrid.Wpf 프로젝트를 참조하여 하이브리드 호스트를 실행한다.
+    \date 2026-01-31
+  -->
+
+  <PropertyGroup>
+    <!--! \brief WPF 실행형 출력 -->
+    <OutputType>WinExe</OutputType>
+    <!--! \brief Windows 전용 타겟 프레임워크 -->
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <!--! \brief 루트 네임스페이스 -->
+    <RootNamespace>Sample01</RootNamespace>
+    <!--! \brief WPF 활성화 -->
+    <UseWPF>true</UseWPF>
+    
+    <!--! \brief Nullable / ImplicitUsings -->
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    
+    <GenerateApplicationManifest>false</GenerateApplicationManifest>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <StartupObject>Sample01.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="wwwroot\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
+	  <ProjectReference Include="..\..\..\..\100. Library\Extensions\Dreamine.MVVM.Extensions.csproj" />
+	  <ProjectReference Include="..\..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer"/>
+	  <ProjectReference Include="..\..\..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />
+	  <ProjectReference Include="..\..\..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />
+	  <ProjectReference Include="..\..\..\..\100. Library\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
+	  <ProjectReference Include="..\..\..\..\100. Library\Locators.Wpf\Dreamine.MVVM.Locators.Wpf.csproj" />
+	  <ProjectReference Include="..\..\..\..\100. Library\Locators\Dreamine.MVVM.Locators.csproj" />
+	  <ProjectReference Include="..\..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
+	</ItemGroup>
+
+  <ItemGroup>
+    <!--! \brief XAML 연관 파일 네이밍 규칙 -->
+    <Compile Update="**\*.xaml.ViewModel.cs">
+      <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
+    </Compile>
+
+    <Compile Update="**\*.xaml.Model.cs">
+      <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
+    </Compile>
+
+    <Compile Update="**\*.xaml.Event.cs">
+      <DependentUpon>$([System.IO.Path]::GetFileNameWithoutExtension('%(Filename)'))</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+</Project>

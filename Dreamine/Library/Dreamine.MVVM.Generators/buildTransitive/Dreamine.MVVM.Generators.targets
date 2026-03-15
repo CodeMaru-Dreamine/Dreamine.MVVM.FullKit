@@ -1,5 +1,0 @@
-﻿<Project>
-  <ItemGroup>
-    <Analyzer Include="$(MSBuildThisFileDirectory)..\analyzers\dotnet\cs\Dreamine.MVVM.Generators.dll" />
-  </ItemGroup>
-</Project>

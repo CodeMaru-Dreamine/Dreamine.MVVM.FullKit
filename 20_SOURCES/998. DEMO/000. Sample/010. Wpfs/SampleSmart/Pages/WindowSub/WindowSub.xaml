@@ -1,0 +1,22 @@
+<Window x:Class="SampleSmart.Pages.WindowSub.WindowSub"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"      
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:SampleSmart.Pages.WindowSub"       
+        xmlns:i="clr-namespace:Dreamine.MVVM.Behaviors.Wpf.Interactivity;assembly=Dreamine.MVVM.Behaviors.Wpf"
+        xmlns:mvvm="clr-namespace:Dreamine.MVVM.Behaviors.Wpf.Interactivity;assembly=Dreamine.MVVM.Behaviors.Wpf" 
+        xmlns:region="clr-namespace:Dreamine.MVVM.Locators.Wpf;assembly=Dreamine.MVVM.Locators.Wpf"
+        Title="WindowSub" Height="450" Width="800">
+    <!--WindowStyle="None" AllowsTransparency="True" Background="White">-->
+    <Grid>
+	<!--타이틀바를 없에고 마우스를 드레그 가능 하게 해줍니다.
+		<i:Interaction.Behaviors>
+			<mvvm:WindowDragBehavior />
+		</i:Interaction.Behaviors>-->
+        <StackPanel>
+            <TextBlock Text="{Binding Readme}"></TextBlock>
+            <Button Command="{Binding ReadmeCleckCommand}"></Button>
+        </StackPanel>
+    </Grid>
+</Window>

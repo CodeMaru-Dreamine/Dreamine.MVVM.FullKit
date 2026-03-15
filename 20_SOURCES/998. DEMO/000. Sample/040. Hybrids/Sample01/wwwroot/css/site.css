@@ -1,0 +1,79 @@
+﻿/* \file Index.razor.css
+   \brief Dreamine Dashboard 전용 Scoped CSS
+   \version 1.0.0 */
+
+.page-container {
+    font-family: 'Segoe UI','맑은 고딕',sans-serif;
+    padding: 2rem;
+    background: linear-gradient(135deg,#121212,#1e1e1e);
+    color: #eee;
+    min-height: 100vh;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+    .page-header h1 {
+        font-size: 2rem;
+        color: #74c0fc;
+        margin-bottom: .5rem;
+    }
+
+    .page-header p {
+        color: #aaa;
+        font-size: 1rem;
+    }
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(250px,1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    background: #2b2b2b;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,.3);
+    transition: transform .2s, box-shadow .2s;
+}
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 20px rgba(0,0,0,.5);
+    }
+
+    .card h3 {
+        margin-bottom: .75rem;
+        color: #4dabf7;
+    }
+
+    .card p {
+        font-size: .95rem;
+        color: #ccc;
+        margin-bottom: 1rem;
+    }
+
+.primary-btn {
+    background: #4dabf7;
+    color: #fff;
+    border: 0;
+    padding: .5rem 1rem;
+    border-radius: .5rem;
+    cursor: pointer;
+    font-size: .9rem;
+    transition: background .2s;
+}
+
+    .primary-btn:hover {
+        background: #228be6;
+    }
+
+.footer {
+    margin-top: 3rem;
+    text-align: center;
+    font-size: .85rem;
+    color: #777;
+}
