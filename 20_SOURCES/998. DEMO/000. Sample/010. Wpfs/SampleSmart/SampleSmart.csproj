@@ -44,7 +44,7 @@
 		<ProjectReference Include="..\..\..\..\100. Library\Locators\Dreamine.MVVM.Locators.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
 	</ItemGroup>
-
+	
   <ItemGroup>
     <!-- ViewModel -->
     <Compile Update="**\*.xaml.ViewModel.cs">
