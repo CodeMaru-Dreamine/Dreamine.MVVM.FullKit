@@ -61,8 +61,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "030. Mauis", "030. Mauis", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SampleSmart", "998. DEMO\000. Sample\010. Wpfs\SampleSmart\SampleSmart.csproj", "{8469D9A2-42AA-4A1F-32D0-4ED9E59F12C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Threading.Abstractions", "100. Library\Threading.Abstractions\Threading.Abstractions.csproj", "{85FABB0C-D1E7-4741-A2FD-EB1FDBB9B841}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -207,14 +205,6 @@ Global
 		{8469D9A2-42AA-4A1F-32D0-4ED9E59F12C0}.Release|x64.Build.0 = Release|Any CPU
 		{8469D9A2-42AA-4A1F-32D0-4ED9E59F12C0}.Release|x86.ActiveCfg = Release|Any CPU
 		{8469D9A2-42AA-4A1F-32D0-4ED9E59F12C0}.Release|x86.Build.0 = Release|Any CPU
-		{85FABB0C-D1E7-4741-A2FD-EB1FDBB9B841}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{85FABB0C-D1E7-4741-A2FD-EB1FDBB9B841}.Debug|x64.Build.0 = Debug|Any CPU
-		{85FABB0C-D1E7-4741-A2FD-EB1FDBB9B841}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{85FABB0C-D1E7-4741-A2FD-EB1FDBB9B841}.Debug|x86.Build.0 = Debug|Any CPU
-		{85FABB0C-D1E7-4741-A2FD-EB1FDBB9B841}.Release|x64.ActiveCfg = Release|Any CPU
-		{85FABB0C-D1E7-4741-A2FD-EB1FDBB9B841}.Release|x64.Build.0 = Release|Any CPU
-		{85FABB0C-D1E7-4741-A2FD-EB1FDBB9B841}.Release|x86.ActiveCfg = Release|Any CPU
-		{85FABB0C-D1E7-4741-A2FD-EB1FDBB9B841}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -243,7 +233,6 @@ Global
 		{402EB59B-FF24-4D5C-B9FF-52E54B5568DF} = {953FE17B-C64E-4534-B89E-F26E0251AE80}
 		{14A07953-B6E4-4763-8B14-46CD4ED7651A} = {953FE17B-C64E-4534-B89E-F26E0251AE80}
 		{8469D9A2-42AA-4A1F-32D0-4ED9E59F12C0} = {B01B449C-D820-4CEA-83B7-B93BD7B1BFE1}
-		{85FABB0C-D1E7-4741-A2FD-EB1FDBB9B841} = {BF419B98-22B4-458C-98A0-82780D7C9C70}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6B5FA7DE-9A7E-4A90-8474-C97C8E210D6B}
