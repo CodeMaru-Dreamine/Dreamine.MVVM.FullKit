@@ -10,10 +10,9 @@ namespace SampleSmart.Pages
 	public partial class MainWindowViewModel
 	{
 		[DreamineModel]
-		private MainWindowModel _model;
+		private readonly MainWindowModel _model;
 		[DreamineEvent]
-		private MainWindowEvent _event;
-
+		private readonly MainWindowEvent _event;
 		public string Title => Model.Title;
 		public string Message => Model.Message;
         /// <summary>

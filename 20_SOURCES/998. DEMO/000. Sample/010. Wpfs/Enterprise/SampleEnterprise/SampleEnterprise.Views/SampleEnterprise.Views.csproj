@@ -1,0 +1,23 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>  
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <Content Include="..\SampleEnterprise.Resources\Resources\icon.png">
+      <Link>Resources\icon.png</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\..\..\..\100. Library\Behaviors.Wpf\Dreamine.MVVM.Behaviors.Wpf.csproj" />
+		<ProjectReference Include="..\..\..\..\..\..\100. Library\Locators.Wpf\Dreamine.MVVM.Locators.Wpf.csproj" />
+		<ProjectReference Include="..\SampleEnterprise.Resources\SampleEnterprise.Resources.csproj" />
+	</ItemGroup>
+</Project>
