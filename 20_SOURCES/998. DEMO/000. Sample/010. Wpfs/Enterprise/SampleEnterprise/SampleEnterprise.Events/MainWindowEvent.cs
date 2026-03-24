@@ -12,8 +12,8 @@ namespace SampleEnterprise.Events
             _viewManager = DMContainer.Resolve<IViewManager>();
         }
 
-        public static void Ok() => MessageBox.Show("확인 클릭됨!");
-        public static void Cancel() => MessageBox.Show("취소 클릭됨!");
+        public void Ok() => MessageBox.Show("확인 클릭됨!");
+        public void Cancel() => MessageBox.Show("취소 클릭됨!");
 
         public void SubPage()
         {
@@ -23,13 +23,13 @@ namespace SampleEnterprise.Events
         }
 
 
-        public static void Minimize()
+        public void Minimize()
         {
             var w = GetActiveWindow();
             if (w != null) w.WindowState = WindowState.Minimized;
         }
 
-        public static void Maximize()
+        public void Maximize()
         {
             var w = GetActiveWindow();
             if (w != null)
@@ -40,12 +40,12 @@ namespace SampleEnterprise.Events
             }
         }
 
-        public static void Close()
+        public void Close()
         {
             GetActiveWindow()?.Close();
         }
 
-        private static Window? GetActiveWindow()
+        private Window? GetActiveWindow()
         {
             return Application.Current?.Windows
                 .OfType<Window>()
