@@ -45,7 +45,7 @@ namespace SampleEnterprise.Events
             GetActiveWindow()?.Close();
         }
 
-        private Window? GetActiveWindow()
+        private static Window? GetActiveWindow()
         {
             return Application.Current?.Windows
                 .OfType<Window>()
