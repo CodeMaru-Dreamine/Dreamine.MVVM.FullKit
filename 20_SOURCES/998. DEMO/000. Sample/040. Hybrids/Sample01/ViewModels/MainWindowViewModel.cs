@@ -12,7 +12,7 @@ using System.Collections.ObjectModel;
 namespace Sample01.ViewModels
 {
     /// <summary>MainWindow용 ViewModel 입니다.</summary>
-    public partial class MainWindowViewModel 
+    public partial class MainWindowViewModel
     {
         private readonly IHybridMessageBus _bus;
         private readonly IDisposable? _dashboardSub;
