@@ -15,8 +15,8 @@ namespace Sample01.ViewModels
     public partial class MainWindowViewModel 
     {
         private readonly IHybridMessageBus _bus;
-        private IDisposable? _dashboardSub;
-        private IDisposable? _counterSub;
+        private readonly IDisposable? _dashboardSub;
+        private readonly IDisposable? _counterSub;
 
         /// <summary>창 타이틀</summary>
         [DreamineProperty] private string _title = "🌇 저녁시간이 다가옵니다!";

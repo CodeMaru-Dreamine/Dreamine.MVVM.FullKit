@@ -2,51 +2,22 @@
 
 namespace SampleSmart.Pages.WindowSub
 {
-	/// <summary>
-	/// 드리마인 페이지 전용 이벤트 클래스입니다.
-	/// 기본 제공 이벤트(예: 닫기, 최소화 등)를 원할 경우 아래 주석을 해제하세요.
-	/// </summary>
-	public class WindowSubEvent
-	{
-		///public void Ok() => MessageBox.Show("확인 클릭됨!");		
-
-		///#region [옵션] 드리마인 스타일 창 제어용 기본 이벤트
-
-		///private readonly IViewManager _viewManager;
-		///public MainWindowEvent(IViewManager viewManager) => _viewManager = viewManager;
-
-		///public void Minimize()
-		///{
-		///	var w = GetActiveWindow();
-		///	if (w != null) w.WindowState = WindowState.Minimized;
-		///}
-
-		///public void Maximize()
-		///{
-		///	var w = GetActiveWindow();
-		///	if (w != null)
-		///	{
-		///		w.WindowState = w.WindowState == WindowState.Maximized
-		///			? WindowState.Normal
-		///			: WindowState.Maximized;
-		///	}
-		///}
-
-		///public void Close()
-		///{
-		///	GetActiveWindow()?.Close();
-		///}
-
-		///private Window? GetActiveWindow()
-		///{
-		///	return Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
-		///}
-
-		///#endregion
-		///
-		public string ReadmeCleck()
-		{
-			return "Readme 눌림";
-		}
-	}
+    /// <summary>
+    /// 드리마인 페이지 전용 이벤트 클래스입니다.
+    /// </summary>
+    /// <remarks>
+    /// 기본 제공 이벤트(예: 닫기, 최소화, 최대화)는 필요 시 별도 창 제어 이벤트 클래스로 확장할 수 있습니다.
+    /// 현재 샘플은 ReadmeClick 예제만 포함합니다.
+    /// </remarks>
+    public class WindowSubEvent
+    {
+        /// <summary>
+        /// Readme 클릭 예제 동작입니다.
+        /// </summary>
+        /// <returns>샘플 메시지</returns>
+        public string ReadmeClick()
+        {
+            return "Readme 눌림";
+        }
+    }
 }

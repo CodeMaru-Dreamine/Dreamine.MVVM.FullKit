@@ -65,7 +65,14 @@ namespace Sample01.Views
                             break;
                         }
                     }
-                    catch { }
+                    catch (HttpRequestException)
+                    {
+                        // Server may not be ready yet during polling; ignore and retry until timeout.
+                    }
+                    catch (TaskCanceledException)
+                    {
+                        // Ignore per-request timeout/cancellation during polling and continue retrying until overall timeout.
+                    }
 
                     await Task.Delay(intervalMs, cts.Token);
                 }

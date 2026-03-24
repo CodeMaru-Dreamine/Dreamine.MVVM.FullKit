@@ -51,8 +51,8 @@ button {
 
 .dm-btn {
     border: 1px solid rgba(74,163,255,.28);
-    background: rgba(74,163,255,.16);
-    color: rgba(255,255,255,.92);
+    background: rgba(74,163,255,.55);
+    color: #ffffff;
     padding: 10px 12px;
     border-radius: var(--radius-md);
     font-size: 13px;
