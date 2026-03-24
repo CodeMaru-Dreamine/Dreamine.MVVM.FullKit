@@ -25,11 +25,11 @@ namespace SampleEnterprise.ViewModels
         public string Title => Model.Title;
         public string Message => Model.Message;
 
-        [RelayCommand] private void Ok() => Event.Ok();
-        [RelayCommand] private void Cancel() => Event.Cancel();
-        [RelayCommand] private void Minimize() => Event.Minimize();
-        [RelayCommand] private void Maximize() => Event.Maximize();
-        [RelayCommand] private void Close() => Event.Close();
+        [RelayCommand] private static void Ok() => MainWindowEvent.Ok();
+        [RelayCommand] private static void Cancel() => MainWindowEvent.Cancel();
+        [RelayCommand] private static void Minimize() => MainWindowEvent.Minimize();
+        [RelayCommand] private static void Maximize() => MainWindowEvent.Maximize();
+        [RelayCommand] private static void Close() => MainWindowEvent.Close();
         [RelayCommand] private void SubPage() => Event.SubPage();
 
         public MainWindowViewModel(MainWindowModel model, MainWindowEvent @event)

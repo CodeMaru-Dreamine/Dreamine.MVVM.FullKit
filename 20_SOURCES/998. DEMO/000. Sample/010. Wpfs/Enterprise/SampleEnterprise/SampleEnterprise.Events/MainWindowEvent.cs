@@ -1,15 +1,19 @@
 ﻿using SampleEnterprise.Interfaces;
 using System.Windows;
+using Dreamine.MVVM.Core;
 
 namespace SampleEnterprise.Events
 {
     public class MainWindowEvent
     {
         private readonly IViewManager _viewManager;
-        public MainWindowEvent(IViewManager viewManager) => _viewManager = viewManager;
+        public MainWindowEvent()
+        {            
+            _viewManager = DMContainer.Resolve<IViewManager>();
+        }
 
-        public void Ok() => MessageBox.Show("확인 클릭됨!");
-        public void Cancel() => MessageBox.Show("취소 클릭됨!");
+        public static void Ok() => MessageBox.Show("확인 클릭됨!");
+        public static void Cancel() => MessageBox.Show("취소 클릭됨!");
 
         public void SubPage()
         {
@@ -19,13 +23,13 @@ namespace SampleEnterprise.Events
         }
 
 
-        public void Minimize()
+        public static void Minimize()
         {
             var w = GetActiveWindow();
             if (w != null) w.WindowState = WindowState.Minimized;
         }
 
-        public void Maximize()
+        public static void Maximize()
         {
             var w = GetActiveWindow();
             if (w != null)
@@ -36,14 +40,16 @@ namespace SampleEnterprise.Events
             }
         }
 
-        public void Close()
+        public static void Close()
         {
             GetActiveWindow()?.Close();
         }
 
-        private Window? GetActiveWindow()
+        private static Window? GetActiveWindow()
         {
-            return Application.Current?.Windows.OfType<Window>().FirstOrDefault(w => w.IsActive);
+            return Application.Current?.Windows
+                .OfType<Window>()
+                .FirstOrDefault(w => w.IsActive);
         }
     }
 }

@@ -2,17 +2,14 @@
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
-  <ItemGroup>
- 
-    <PackageVersion Include="Microsoft.VisualStudio.SDK" Version="17.0.32112.339" ExcludeAssets="runtime" NoWarn="NU1604" />
-    <PackageVersion Include="Microsoft.VSSDK.BuildTools" Version="17.14.2120" NoWarn="NU1604" />
-
-	<PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
-	<PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="4.13.0" />
-	<PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
-	<PackageVersion Include="NETStandard.Library" Version="2.0.3" />
-
-	  <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="8.0.100" />
-	  <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.3719.77" />
+  <ItemGroup>	  
+    <PackageVersion Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" ExcludeAssets="runtime" NoWarn="NU1604" />
+    <PackageVersion Include="Microsoft.VSSDK.BuildTools" Version="17.14.2120" PrivateAssets="all" NoWarn="NU1604" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.Common" Version="4.13.0" />
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.13.0" />
+    <PackageVersion Include="NETStandard.Library" Version="2.0.3" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="8.0.100" />
+    <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.3719.77" />
   </ItemGroup>
 </Project>

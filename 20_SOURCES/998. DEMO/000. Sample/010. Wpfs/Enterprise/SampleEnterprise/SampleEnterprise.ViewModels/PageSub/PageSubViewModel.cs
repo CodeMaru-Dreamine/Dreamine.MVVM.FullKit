@@ -14,8 +14,8 @@ namespace SampleEnterprise.ViewModels.PageSub
 
         public string Message => Model.Message;
 
-        [RelayCommand] private void Ok() => Event.Ok();
-        [RelayCommand] private void Cancel() => Event.Cancel();
+        [RelayCommand] private static void Ok() => PageSubEvent.Ok();
+        [RelayCommand] private static void Cancel() => PageSubEvent.Cancel();
 
         public PageSubViewModel(PageSubModel model, PageSubEvent @event)
         {
