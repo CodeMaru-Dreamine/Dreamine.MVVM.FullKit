@@ -50,9 +50,9 @@ button {
 /* ===== 공용 버튼 (Dashboard/Counter 공용) ===== */
 
 .dm-btn {
-    border: 1px solid rgba(74,163,255,.28);
-    background: rgba(74,163,255,.55);
-    color: #ffffff;
+    border: 1px solid rgba(74, 163, 255, .28);
+    background: rgba(74, 163, 255, .22);
+    color: #0f172a;
     padding: 10px 12px;
     border-radius: var(--radius-md);
     font-size: 13px;
