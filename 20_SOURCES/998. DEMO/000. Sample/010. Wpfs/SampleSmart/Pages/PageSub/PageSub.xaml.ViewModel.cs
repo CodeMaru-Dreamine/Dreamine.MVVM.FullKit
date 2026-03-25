@@ -8,9 +8,9 @@ namespace SampleSmart.Pages.PageSub
     public partial class PageSubViewModel : ViewModelBase
     {
         [DreamineModel]
-        public PageSubModel _model;
+        private PageSubModel _model;
         [DreamineEvent]
-        public PageSubEvent _event;
+        private PageSubEvent _event;
 
         [DreamineProperty]
         public string _message = string.Empty;

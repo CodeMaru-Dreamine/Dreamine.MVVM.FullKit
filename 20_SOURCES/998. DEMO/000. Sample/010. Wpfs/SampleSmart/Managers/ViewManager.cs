@@ -51,7 +51,7 @@ namespace SampleSmart.Managers
 		/// </summary>
 		/// <param name="viewModelType">ViewModel 타입</param>
 		/// <returns>Window 또는 UserControl 인스턴스</returns>
-		private object? CreateViewFromViewModel(Type viewModelType)
+		private static object? CreateViewFromViewModel(Type viewModelType)
 		{
 			var viewTypeName = viewModelType.FullName!
 				.Replace(".ViewModels.", ".Pages.")
@@ -67,7 +67,7 @@ namespace SampleSmart.Managers
 		/// <summary>
 		/// INavigator 인스턴스를 시도하여 가져옵니다.
 		/// </summary>
-		private INavigator? TryGetNavigator()
+		private static INavigator? TryGetNavigator()
 		{
 			try { return DMContainer.Resolve<INavigator>(); }
 			catch { return null; }
