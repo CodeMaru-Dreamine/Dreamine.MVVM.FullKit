@@ -1,12 +1,13 @@
 using Dreamine.Hybrid.Messaging;
 using Dreamine.MVVM.Attributes;
+using Dreamine.MVVM.ViewModels;
 using System;
 using System.Collections.ObjectModel;
 
 namespace Sample01.ViewModels
 {
     /// <summary>MainWindow용 ViewModel 입니다.</summary>
-    public sealed partial class MainWindowViewModel : IDisposable
+    public sealed partial class MainWindowViewModel : ViewModelBase
     {
         private readonly IHybridMessageBus _bus;
         private readonly IDisposable? _dashboardSub;

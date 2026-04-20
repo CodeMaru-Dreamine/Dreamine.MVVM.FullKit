@@ -1,5 +1,6 @@
 using Dreamine.MVVM.Attributes;
 using Dreamine.MVVM.Core;
+using Dreamine.MVVM.ViewModels;
 using SampleCore.Events;
 using SampleCore.Models;
 
@@ -9,12 +10,12 @@ namespace SampleCore.ViewModels
     /// MainWindow에 대한 ViewModel 클래스입니다.
     /// Model과 Event 사이의 바인딩을 담당합니다.
     /// </summary>
-    public partial class MainWindowViewModel
+    public partial class MainWindowViewModel : ViewModelBase
     {
         [DreamineModel]
-        private readonly MainWindowModel _model;
+        private MainWindowModel _model;
         [DreamineEvent]
-        private readonly MainWindowEvent _event;
+        private MainWindowEvent _event;
 
         public string Title => Model.Title;
         public string Message => Model.Message;

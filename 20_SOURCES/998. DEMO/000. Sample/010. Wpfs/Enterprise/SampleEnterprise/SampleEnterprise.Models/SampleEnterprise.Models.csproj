@@ -11,7 +11,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer" />
-    <ProjectReference Include="..\..\..\..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
     <ProjectReference Include="..\SampleEnterprise.Events\SampleEnterprise.Events.csproj" />
   </ItemGroup>
 

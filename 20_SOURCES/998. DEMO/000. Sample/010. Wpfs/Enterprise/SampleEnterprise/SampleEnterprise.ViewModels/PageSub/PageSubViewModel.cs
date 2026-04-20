@@ -5,10 +5,10 @@ using SampleEnterprise.Models.PageSub;
 
 namespace SampleEnterprise.ViewModels.PageSub
 {
-    public partial class PageSubViewModel 
+    public partial class PageSubViewModel : ViewModelBase
     {
         [DreamineModel]
-        private readonly PageSubModel _model;
+        private PageSubModel _model;
         [DreamineEvent]
         private PageSubEvent _event;
 

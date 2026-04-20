@@ -12,13 +12,13 @@ namespace SampleSmart.Pages.WindowSub
     public partial class WindowSubViewModel : ViewModelBase
     {
         [DreamineModel]
-        private readonly WindowSubModel _model;
+        private WindowSubModel _model;
 
         [DreamineProperty]
         private string _readme = string.Empty;
 
         [DreamineEvent]
-        private readonly WindowSubEvent _event;
+        private WindowSubEvent _event;
 
         /// <summary>
         /// ReadmeClick 동작 예제입니다.
@@ -28,7 +28,7 @@ namespace SampleSmart.Pages.WindowSub
         [DreamineCommand("Event.ReadmeClick", BindTo = nameof(Readme))]
         private partial void ReadmeClick();
 
-        private readonly PageSubViewModel _viewModel;
+        private PageSubViewModel _viewModel;
 
         public WindowSubViewModel(PageSubViewModel viewModel)
         {
