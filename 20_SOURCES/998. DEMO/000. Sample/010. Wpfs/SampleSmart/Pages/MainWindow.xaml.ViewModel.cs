@@ -52,13 +52,25 @@ namespace SampleSmart.Pages
         [DreamineCommand("Event.SubPage")]
         private partial void SubPage();
 
+        [DreamineCommand("Event.SubPage2")]
+        private partial void SubPage2();
+
         /// <summary>
         /// \brief SubWindow 오픈 동작 실행.
         /// </summary>
         [DreamineCommand("Event.SubWindow")]
         private partial void SubWindow();
 
-		public MainWindowViewModel()
+        [DreamineCommand("Event.NoticeWindow")]
+        private partial void NoticeWindow();
+
+        [DreamineCommand("Event.MonitorWindow")]
+        private partial void MonitorWindow();
+
+        [DreamineCommand("Event.SettingWindow")]
+        private partial void SettingWindow();
+
+        public MainWindowViewModel()
 		{
             _model = null!;
             _event = null!;

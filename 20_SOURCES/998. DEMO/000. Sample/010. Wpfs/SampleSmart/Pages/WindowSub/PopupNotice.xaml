@@ -1,0 +1,30 @@
+﻿<Window x:Class="SampleSmart.Pages.WindowSub.PopupNotice"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="360"
+        Height="220"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
+        Title="Notice">
+
+    <Grid Background="White" Margin="16">
+        <StackPanel>
+            <TextBlock Text="📢 Notice"
+                       FontSize="22"
+                       FontWeight="SemiBold"
+                       Margin="0 0 0 16"/>
+
+            <TextBlock Text="{Binding Message}"
+                       TextWrapping="Wrap"
+                       FontSize="15"
+                       Foreground="#444"
+                       Margin="0 0 0 24"/>
+
+            <Button Content="확인"
+                    Width="100"
+                    Height="32"
+                    HorizontalAlignment="Right"
+                    Command="{Binding OkCommand}"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,73 +1,28 @@
 ﻿using Dreamine.MVVM.Attributes;
-using Dreamine.MVVM.Core;
-using Dreamine.MVVM.Extensions;
-using Dreamine.MVVM.Interfaces.Navigation;
-using Dreamine.MVVM.Locators.Wpf;
-using SampleEnterprise.Interfaces;
-using SampleEnterprise.Managers;
-using SampleEnterprise.ViewModels;
-using SampleEnterprise.Views;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
 using System.Windows;
-using System.Windows.Media.Imaging;
 
 namespace SampleEnterprise
 {
     /// <summary>
-    /// Interaction logic for App.xaml
+    /// SampleSmart WPF 애플리케이션 진입점입니다.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <see cref="DreamineEntryAttribute"/>가 적용된 App 클래스는 Dreamine Source Generator에 의해
+    /// 자동 부트스트랩 코드가 생성됩니다.
+    /// </para>
+    /// <para>
+    /// 기본 설정에서는 별도의 초기화 코드가 필요하지 않습니다.
+    /// Dreamine은 DI 컨테이너 초기화, ViewModel 자동 등록, View/ViewModel 매핑,
+    /// ViewModel 자동 연결, ViewManager, WindowStateService, Region Navigator 등록을 자동으로 수행합니다.
+    /// </para>
+    /// <para>
+    /// 시작 과정에서 사용자 정의 처리가 필요하면 partial hook을 선택적으로 구현할 수 있습니다.
+    /// </para>
+    /// </remarks>
     [DreamineEntry]
     public partial class App : Application
-    {
-        /// <summary>
-        /// DI 등록 전에 호출되는 사용자 정의 사전 등록 영역입니다.
-        /// 예: 커스텀 로그, 설정 로딩 등
-        /// </summary>
-        static partial void RegisterBefore()
-        {
-            DMContainer.RegisterSingleton<IViewManager>(new ViewManager());
-            Assembly.Load("SampleEnterprise.ViewModels");
-            Assembly.Load("SampleEnterprise.Views");
-            Assembly.Load("SampleEnterprise.Events");
-            Assembly.Load("SampleEnterprise.Interfaces");
-            Assembly.Load("SampleEnterprise.Managers");
-            Assembly.Load("SampleEnterprise.Models");
-        }
-
-        /// <summary>
-        /// DI 및 ViewModelLocator 등록 후 호출되는 사용자 정의 후처리입니다.
-        /// 예: 초기 Navigation, 이벤트 바인딩 등
-        /// </summary>
-        static partial void RegisterAfter()
-        {
-            
-        }
-
-        /// <summary>
-        /// 사용자가 수동으로 XAML이 아닌 동적으로 Main Window를 생성하고자 할 경우 이 메서드를 오버라이드하여 사용합니다.
-        /// 일반적으로 DI Container에서 ViewModel을 Resolve한 뒤 View에 DataContext로 할당하여 Show 합니다.
-        /// </summary>
-        static partial void ShowMainWindow()
-        {
-            var vm = DMContainer.Resolve<MainWindowViewModel>();
-            var view = new MainWindow
-            {
-                DataContext = vm
-            };
-
-            view.Loaded += (s, e) =>
-            {
-                var region = RegionBinderHelper.FindRegionControl(view, "SubPage");
-                if (region != null)
-                {
-                    DMContainer.RegisterSingleton<INavigator>(new ContentControlNavigator(region));
-                }
-            };
-
-            view.Show();
-        }
+    {       
     }
 
 }

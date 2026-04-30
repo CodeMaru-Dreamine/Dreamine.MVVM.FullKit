@@ -13,7 +13,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="0.16*"/>
+            <RowDefinition Height="0.2*"/>
         </Grid.RowDefinitions>
 
         <!-- 타이틀바 -->
@@ -51,14 +51,16 @@
 
         <!-- 본문 영역 -->
         <DockPanel Grid.Row="2" Background="White" Margin="4">
-            <StackPanel Margin="2" Orientation="Horizontal" HorizontalAlignment="Stretch">
-                <TextBlock Text="{Binding Message}" 
-       FontSize="15" 
-       Margin="0,2,20,0"
-       HorizontalAlignment="Center"
-       TextAlignment="Center"/>
-                <Button Content="Sub View" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding SubPageCommand}"/>
-                <Button Content="Sub View" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding SubWindowCommand}" Margin="10 0"/>
+            <StackPanel Margin="2" Orientation="Vertical" HorizontalAlignment="Stretch">
+                <TextBlock Text="{Binding Message}" FontSize="15" Margin="0,2,20,0" HorizontalAlignment="Center" TextAlignment="Center"/>
+                <StackPanel Margin="2" Orientation="Horizontal" HorizontalAlignment="Stretch">
+                    <Button Content="PageSub" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding SubPageCommand}"/>
+                    <Button Content="PageSub2" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding SubPage2Command}" Margin="10 0"/>
+                    <Button Content="PopupSub" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding SubWindowCommand}" Margin="10 0"/>
+                    <Button Content="Notice" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding NoticeWindowCommand}" Margin="10 0"/>
+                    <Button Content="Monitor" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding MonitorWindowCommand}" Margin="10 0"/>
+                    <Button Content="Setting" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding SettingWindowCommand}" Margin="10 0"/>
+                </StackPanel>
             </StackPanel>
 
             <StackPanel Margin="2" HorizontalAlignment="Right">

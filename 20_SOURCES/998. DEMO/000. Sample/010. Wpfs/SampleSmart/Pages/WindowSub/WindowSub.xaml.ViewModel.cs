@@ -28,19 +28,16 @@ namespace SampleSmart.Pages.WindowSub
         [DreamineCommand("Event.ReadmeClick", BindTo = nameof(Readme))]
         private partial void ReadmeClick();
 
-        private PageSubViewModel _viewModel;
 
-        public WindowSubViewModel(PageSubViewModel viewModel)
+        public WindowSubViewModel()
         {
             _model = null!;
             _event = null!;
-            _viewModel = viewModel;
 
             _ = _model;
             _ = _event;
 
             Readme = Model.Readme;
-            _viewModel.Message = "WindowSub 창 활성화 감지";
         }
     }
 }

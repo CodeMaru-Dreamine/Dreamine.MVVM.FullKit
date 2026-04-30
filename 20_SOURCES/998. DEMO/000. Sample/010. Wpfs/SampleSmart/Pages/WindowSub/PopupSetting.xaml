@@ -1,0 +1,40 @@
+﻿<Window x:Class="SampleSmart.Pages.WindowSub.PopupSetting"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Width="420"
+        Height="300"
+        WindowStartupLocation="CenterOwner"
+        Title="Setting">
+
+    <Grid Background="White" Margin="18">
+        <StackPanel>
+            <TextBlock Text="⚙ Setting"
+                       FontSize="22"
+                       FontWeight="SemiBold"
+                       Margin="0 0 0 16"/>
+
+            <CheckBox Content="자동 시작 사용"
+                      IsChecked="{Binding UseAutoStart}"
+                      Margin="0 0 0 8"/>
+
+            <CheckBox Content="로그 저장 사용"
+                      IsChecked="{Binding UseLogSave}"
+                      Margin="0 0 0 8"/>
+
+            <TextBlock Text="동작 모드"
+                       Margin="0 12 0 4"/>
+
+            <ComboBox ItemsSource="{Binding Modes}"
+                      SelectedItem="{Binding SelectedMode}"
+                      Width="180"
+                      HorizontalAlignment="Left"/>
+
+            <Button Content="설정 확인"
+                    Width="110"
+                    Height="32"
+                    HorizontalAlignment="Right"
+                    Margin="0 24 0 0"
+                    Command="{Binding ApplyCommand}"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,4 +1,4 @@
-﻿using SampleCore.Interfaces;
+﻿using Dreamine.MVVM.Interfaces.Navigation;
 using SampleCore.ViewModels.PageSub;
 using System.Windows;
 

@@ -16,7 +16,7 @@
 		</i:Interaction.Behaviors>-->
         <StackPanel>
             <TextBlock Text="{Binding Readme}"></TextBlock>
-            <Button Command="{Binding ReadmeClickCommand}"></Button>
+            <Button Command="{Binding ReadmeClickCommand}" Content="Click me"></Button>
         </StackPanel>
     </Grid>
 </Window>

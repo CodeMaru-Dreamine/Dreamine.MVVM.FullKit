@@ -43,6 +43,7 @@
 		<ProjectReference Include="..\..\..\..\100. Library\Locators.Wpf\Dreamine.MVVM.Locators.Wpf.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Locators\Dreamine.MVVM.Locators.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Wpf\Dreamine.MVVM.Wpf.csproj" />
 	</ItemGroup>
 
   <ItemGroup>

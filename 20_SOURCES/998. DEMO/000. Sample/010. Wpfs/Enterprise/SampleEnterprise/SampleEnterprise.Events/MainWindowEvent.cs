@@ -1,4 +1,4 @@
-﻿using SampleEnterprise.Interfaces;
+﻿using Dreamine.MVVM.Interfaces.Navigation;
 using System.Windows;
 using Dreamine.MVVM.Core;
 

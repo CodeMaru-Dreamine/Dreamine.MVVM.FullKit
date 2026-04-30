@@ -10,7 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
-    <ProjectReference Include="..\SampleEnterprise.Interfaces\SampleEnterprise.Interfaces.csproj" />
   </ItemGroup>
 
 </Project>
