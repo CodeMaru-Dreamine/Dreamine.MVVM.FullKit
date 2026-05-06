@@ -60,6 +60,7 @@
                     <Button Content="Notice" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding NoticeWindowCommand}" Margin="10 0"/>
                     <Button Content="Monitor" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding MonitorWindowCommand}" Margin="10 0"/>
                     <Button Content="Setting" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding SettingWindowCommand}" Margin="10 0"/>
+                    <Button Content="Log" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding LogPageCommand}" Margin="10 0"/>
                 </StackPanel>
             </StackPanel>
 

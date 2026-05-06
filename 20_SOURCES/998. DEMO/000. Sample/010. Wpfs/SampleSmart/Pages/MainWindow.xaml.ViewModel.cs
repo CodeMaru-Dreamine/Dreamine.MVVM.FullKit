@@ -55,6 +55,9 @@ namespace SampleSmart.Pages
         [DreamineCommand("Event.SubPage2")]
         private partial void SubPage2();
 
+        [DreamineCommand("Event.LogPage")]
+        private partial void LogPage();
+
         /// <summary>
         /// \brief SubWindow 오픈 동작 실행.
         /// </summary>

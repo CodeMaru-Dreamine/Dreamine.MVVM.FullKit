@@ -43,3 +43,9 @@
 [submodule "20_SOURCES/100. Library/Hybrid.Wpf"]
 	path = 20_SOURCES/100. Library/Hybrid.Wpf
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.Hybrid.Wpf
+[submodule "20_SOURCES/100. Library/Logging.Wpf"]
+	path = 20_SOURCES/100. Library/Logging.Wpf
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Logging.Wpf
+[submodule "20_SOURCES/100. Library/Logging"]
+	path = 20_SOURCES/100. Library/Logging
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Logging

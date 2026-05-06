@@ -1,4 +1,15 @@
-﻿using Dreamine.MVVM.Wpf;
+﻿using Dreamine.Logging.Formatters;
+using Dreamine.Logging.Interfaces;
+using Dreamine.Logging.Services;
+using Dreamine.Logging.Sinks;
+using Dreamine.Logging.Wpf.Services;
+using Dreamine.Logging.Wpf.ViewModels;
+using Dreamine.Logging.Wpf.Views;
+using Dreamine.MVVM.Core;
+using Dreamine.MVVM.Wpf;
+using SampleSmart.Pages.PageSub;
+using System;
+using System.IO;
 
 namespace SampleSmart
 {
@@ -27,7 +38,9 @@ namespace SampleSmart
         /// </example>
         static partial void RegisterBefore()
         {
+            RegisterLogging();
         }
+
 
         /// <summary>
         /// Allows customization of Dreamine WPF runtime options before initialization.
@@ -68,6 +81,10 @@ namespace SampleSmart
         /// </example>
         static partial void RegisterAfter()
         {
+            var logger = DMContainer.Resolve<IDreamineLogger>();
+
+            logger.Info("Application initialized.");
+            logger.Info("Logging system registered.");
         }
 
         /// <summary>
@@ -88,6 +105,51 @@ namespace SampleSmart
         /// </example>
         static partial void ShowMainWindow()
         {
+          
+        }
+
+        /// <summary>
+        /// Registers Dreamine logging services.
+        /// </summary>
+        private static void RegisterLogging()
+        {
+            var logStore = new InMemoryLogStore();
+
+            var formatter = new DreamineTextLogFormatter();
+
+            var textFileSink = new TextFileLogSink(
+                Path.Combine(AppContext.BaseDirectory, "Logs"),
+                formatter);
+
+            var compositeSink = new CompositeLogSink(new IDreamineLogSink[]
+            {
+        logStore,
+        textFileSink
+            });
+
+            DMContainer.RegisterSingleton(logStore);
+
+            DMContainer.RegisterSingleton<IDreamineLogStore>(logStore);
+
+            // IDreamineLogSink는 이제 MemoryStore가 아니라 Composite를 등록해야 함.
+            DMContainer.RegisterSingleton<IDreamineLogSink>(compositeSink);
+
+            DMContainer.RegisterSingleton<IDreamineLogFormatter>(formatter);
+
+            DMContainer.RegisterSingleton<IDreamineLogger>(
+                new DreamineLogger(compositeSink, "SampleSmart"));
+
+            DMContainer.RegisterSingleton<WpfLogUiDispatcher>(
+                new WpfLogUiDispatcher());
+
+            DMContainer.Register<DreamineLogPanelViewModel>(() =>
+                new DreamineLogPanelViewModel(
+                    DMContainer.Resolve<IDreamineLogStore>(),
+                    DMContainer.Resolve<WpfLogUiDispatcher>()));
+
+            DMContainer.Register<PageLogViewModel>(() =>
+                new PageLogViewModel(
+                    DMContainer.Resolve<DreamineLogPanelViewModel>()));
         }
     }
 }
