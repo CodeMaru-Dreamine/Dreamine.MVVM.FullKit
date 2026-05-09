@@ -49,3 +49,12 @@
 [submodule "20_SOURCES/100. Library/Logging"]
 	path = 20_SOURCES/100. Library/Logging
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.Logging
+[submodule "20_SOURCES/100. Library/Threading"]
+	path = 20_SOURCES/100. Library/Threading
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Threading
+[submodule "20_SOURCES/100. Library/Threading.Wpf"]
+	path = 20_SOURCES/100. Library/Threading.Wpf
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Threading.Wpf
+[submodule "20_SOURCES/100. Library/Threading.Windows"]
+	path = 20_SOURCES/100. Library/Threading.Windows
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Threading.Windows

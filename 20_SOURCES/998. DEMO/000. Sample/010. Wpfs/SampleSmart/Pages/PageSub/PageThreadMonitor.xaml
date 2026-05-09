@@ -1,0 +1,8 @@
+﻿<UserControl x:Class="SampleSmart.Pages.PageSub.PageThreadMonitor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:threadingViews="clr-namespace:Dreamine.Threading.Wpf.Views;assembly=Dreamine.Threading.Wpf">
+    <Grid>
+        <threadingViews:DreamineThreadMonitorView DataContext="{Binding ThreadMonitor}" />
+    </Grid>
+</UserControl>

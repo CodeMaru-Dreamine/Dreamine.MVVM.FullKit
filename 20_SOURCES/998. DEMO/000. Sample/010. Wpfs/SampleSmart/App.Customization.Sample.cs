@@ -1,15 +1,27 @@
 ﻿using Dreamine.Logging.Formatters;
 using Dreamine.Logging.Interfaces;
+using Dreamine.Logging.Models;
 using Dreamine.Logging.Services;
 using Dreamine.Logging.Sinks;
+using Dreamine.Logging.Wpf.Registration;
 using Dreamine.Logging.Wpf.Services;
 using Dreamine.Logging.Wpf.ViewModels;
 using Dreamine.Logging.Wpf.Views;
 using Dreamine.MVVM.Core;
 using Dreamine.MVVM.Wpf;
+using Dreamine.Threading.Allocators;
+using Dreamine.Threading.Interfaces;
+using Dreamine.Threading.Models;
+using Dreamine.Threading.Policies;
+using Dreamine.Threading.Services;
+using Dreamine.Threading.Windows.Registration;
+using Dreamine.Threading.Wpf.Registration;
+using Dreamine.Threading.Wpf.ViewModels;
 using SampleSmart.Pages.PageSub;
 using System;
 using System.IO;
+using System.Windows;
+using SampleSmart.Pages;
 
 namespace SampleSmart
 {
@@ -39,6 +51,7 @@ namespace SampleSmart
         static partial void RegisterBefore()
         {
             RegisterLogging();
+            RegisterThreading();
         }
 
 
@@ -81,10 +94,11 @@ namespace SampleSmart
         /// </example>
         static partial void RegisterAfter()
         {
-            var logger = DMContainer.Resolve<IDreamineLogger>();
+            var logger = DMContainer.Resolve<IDreamineLogger>();           
 
             logger.Info("Application initialized.");
             logger.Info("Logging system registered.");
+            logger.Info("Threading system registered.");     
         }
 
         /// <summary>
@@ -105,51 +119,34 @@ namespace SampleSmart
         /// </example>
         static partial void ShowMainWindow()
         {
-          
+
+        }
+
+        private static void RegisterLogging()
+        {
+            DreamineLoggingWpfRegistration.Register(options =>
+            {
+                options.Category = "SampleSmart";
+                options.LogDirectory = System.IO.Path.Combine(AppContext.BaseDirectory, "Logs");
+                options.StoreCapacity = 1000;
+                options.QueueCapacity = 8192;
+                options.DrainBatchSize = 256;
+                options.FlushEveryWriteCount = 20;
+                options.ShutdownTimeout = TimeSpan.FromSeconds(2);
+            });
         }
 
         /// <summary>
-        /// Registers Dreamine logging services.
+        /// Registers Dreamine threading services.
         /// </summary>
-        private static void RegisterLogging()
+        private static void RegisterThreading()
         {
-            var logStore = new InMemoryLogStore();
-
-            var formatter = new DreamineTextLogFormatter();
-
-            var textFileSink = new TextFileLogSink(
-                Path.Combine(AppContext.BaseDirectory, "Logs"),
-                formatter);
-
-            var compositeSink = new CompositeLogSink(new IDreamineLogSink[]
+            DreamineThreadingWpfRegistration.Register(options =>
             {
-        logStore,
-        textFileSink
+                options.RegisterWindowsServices = true;
+                options.UseAdaptiveCpuPolicy = true;
+                options.RegisterThreadMonitor = true;
             });
-
-            DMContainer.RegisterSingleton(logStore);
-
-            DMContainer.RegisterSingleton<IDreamineLogStore>(logStore);
-
-            // IDreamineLogSink는 이제 MemoryStore가 아니라 Composite를 등록해야 함.
-            DMContainer.RegisterSingleton<IDreamineLogSink>(compositeSink);
-
-            DMContainer.RegisterSingleton<IDreamineLogFormatter>(formatter);
-
-            DMContainer.RegisterSingleton<IDreamineLogger>(
-                new DreamineLogger(compositeSink, "SampleSmart"));
-
-            DMContainer.RegisterSingleton<WpfLogUiDispatcher>(
-                new WpfLogUiDispatcher());
-
-            DMContainer.Register<DreamineLogPanelViewModel>(() =>
-                new DreamineLogPanelViewModel(
-                    DMContainer.Resolve<IDreamineLogStore>(),
-                    DMContainer.Resolve<WpfLogUiDispatcher>()));
-
-            DMContainer.Register<PageLogViewModel>(() =>
-                new PageLogViewModel(
-                    DMContainer.Resolve<DreamineLogPanelViewModel>()));
         }
     }
 }

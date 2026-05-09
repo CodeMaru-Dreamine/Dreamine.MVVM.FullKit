@@ -55,6 +55,12 @@ namespace SampleSmart.Pages
             _viewManager.Show<PageLogViewModel>();
         }
 
+        public void ThreadPage()
+        {
+            _logger.Info("Thread monitor page requested.");
+            _viewManager.Show<PageThreadMonitorViewModel>();
+        }
+
         public void SubWindow()
         {
             _logger.Info("WindowSub requested.");

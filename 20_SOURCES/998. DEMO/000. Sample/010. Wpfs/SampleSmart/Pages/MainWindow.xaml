@@ -7,13 +7,13 @@
         xmlns:i="clr-namespace:Dreamine.MVVM.Behaviors.Wpf.Interactivity;assembly=Dreamine.MVVM.Behaviors.Wpf"
         xmlns:mvvm="clr-namespace:Dreamine.MVVM.Behaviors.Wpf.Interactivity;assembly=Dreamine.MVVM.Behaviors.Wpf" 
         xmlns:region="clr-namespace:Dreamine.MVVM.Locators.Wpf;assembly=Dreamine.MVVM.Locators.Wpf"
-        Title="MainWindow" Height="450" Width="800"
+        Title="MainWindow" Height="920" Width="1100"
         WindowStyle="None" AllowsTransparency="True" Background="White">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="30"/>
             <RowDefinition Height="*"/>
-            <RowDefinition Height="0.2*"/>
+            <RowDefinition Height="0.08*"/>
         </Grid.RowDefinitions>
 
         <!-- 타이틀바 -->
@@ -61,6 +61,7 @@
                     <Button Content="Monitor" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding MonitorWindowCommand}" Margin="10 0"/>
                     <Button Content="Setting" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding SettingWindowCommand}" Margin="10 0"/>
                     <Button Content="Log" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding LogPageCommand}" Margin="10 0"/>
+                    <Button Content="Thread" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding ThreadPageCommand}" Margin="10 0"/>
                 </StackPanel>
             </StackPanel>
 

@@ -44,6 +44,9 @@
 		<ProjectReference Include="..\..\..\..\100. Library\Locators\Dreamine.MVVM.Locators.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Logging.Wpf\Dreamine.Logging.Wpf.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Logging\Dreamine.Logging.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Threading.Windows\Dreamine.Threading.Windows.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Threading.Wpf\Dreamine.Threading.Wpf.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Threading\Dreamine.Threading.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Wpf\Dreamine.MVVM.Wpf.csproj" />
 	</ItemGroup>
