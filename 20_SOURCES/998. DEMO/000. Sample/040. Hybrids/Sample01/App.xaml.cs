@@ -1,20 +1,27 @@
+using Dreamine.Hybrid.Wpf.Interfaces;
 /// \file App.xaml.cs
 /// \brief WPF Application. Program(BuildApp)에서 Host의 ServiceProvider를 주입받아 초기화.
 /// \author Dreamine
 /// \date 2026-01-28
 /// \version 1.1.0
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Windows;
 using Sample01.ViewModels;
 using Sample01.Views;
+using System;
+using System.Windows;
 namespace Sample01
 {
     /// <summary>WPF Application</summary>
-    public partial class App : Application
+    public partial class App : Application, IDreamineServiceProviderAware
     {
         /// <summary>호스트가 주입한 ServiceProvider</summary>
-        public static IServiceProvider? ServiceProvider { get; internal set; }
+        public static IServiceProvider? ServiceProvider { get; private set; }
+
+        /// <inheritdoc />
+        public void SetServiceProvider(IServiceProvider serviceProvider)
+        {
+            ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        }
 
         /// <inheritdoc/>
         protected override void OnStartup(StartupEventArgs e)

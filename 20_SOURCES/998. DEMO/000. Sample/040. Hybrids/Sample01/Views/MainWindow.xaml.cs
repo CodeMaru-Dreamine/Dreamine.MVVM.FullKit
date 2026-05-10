@@ -5,7 +5,7 @@
 /// \version 1.2.0
 using Dreamine.Hybrid.Wpf.Controls;
 using Dreamine.Hybrid.Wpf.Internal;
-using Dreamine.Hybrid.BlazorApp.Components;
+using Sample01.Blazor.Components;
 using Microsoft.Web.WebView2.Wpf;
 using System;
 using System.ComponentModel;

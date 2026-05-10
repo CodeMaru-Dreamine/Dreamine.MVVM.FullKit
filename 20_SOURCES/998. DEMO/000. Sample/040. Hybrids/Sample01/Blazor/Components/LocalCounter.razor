@@ -1,0 +1,178 @@
+@* \file Blazor/Components/LocalCounter.razor
+   \brief Embedded 뷰에서 눌러보는 카운터 (WPF ↔ Blazor 동기화 데모)
+   \details
+     - WPF가 상태를 소유하고, Blazor는 메시지 버스로 통지/수신한다.
+     - 프레임워크 데모는 곧 제품의 얼굴이므로, 최소한의 카드형 UI를 제공한다. *@
+
+@namespace Sample01.Blazor.Components
+
+@using System
+@using System.Threading.Tasks
+@using Dreamine.Hybrid.Interfaces
+@using Dreamine.Hybrid.Messaging
+@using Dreamine.Hybrid.State
+@using Sample01.States
+
+@implements IDisposable
+@inject IHybridMessageBus Bus
+@inject IHybridStateStore<CounterState> Store
+
+<div class="dm-counter">
+    <div class="dm-counter-top">
+        <div class="dm-counter-title">
+            <h3>Embedded Counter</h3>
+            <p>
+                WPF가 “상태 소유자”이고 Blazor는 “표현(View)”입니다.<br />
+                버튼 클릭은 메시지로 요청/통지되고, 변경 결과는 다시 메시지로 반영됩니다.
+            </p>
+        </div>
+
+        <div class="dm-counter-badges">
+            <div class="dm-pill"><span class="dm-dot-green"></span> Bus Connected</div>
+            <div class="dm-pill"><span class="dm-dot-blue"></span> Embedded</div>
+        </div>
+    </div>
+
+    <div class="dm-counter-body">
+        <div class="dm-metric">
+            <div class="dm-metric-label">
+                <span>Current count</span>
+                <span>@_lastUpdated</span>
+            </div>
+
+            <div class="dm-count">@_count</div>
+
+            <div class="dm-count-sub">
+                마지막 변경: @_lastSource<br />
+                (WPF ↔ Blazor 동기화 확인용)
+            </div>
+        </div>
+
+        <div class="dm-actions">
+            <div class="dm-metric-label">
+                <span>Actions</span>
+                <span>Demo</span>
+            </div>
+
+            <div class="dm-actions-row">
+                <button class="dm-btn" @onclick="IncrementAsync">+1</button>
+                <button class="dm-btn dm-btn-ghost" @onclick="ResetAsync">Reset</button>
+            </div>
+
+            <div class="dm-count-sub">
+                +1: Blazor에서 count 증가 후 메시지 발행<br />
+                Reset: 0으로 초기화 메시지 발행
+            </div>
+        </div>
+    </div>
+</div>
+
+@code
+{
+    private int _count;
+    private string _lastUpdated = "-";
+    private string _lastSource = "-";
+    private bool _disposed;
+    private bool _isSubscribed;
+
+    /// <inheritdoc />
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _isSubscribed)
+        {
+            return Task.CompletedTask;
+        }
+
+        ApplyState(Store.State);
+
+        Store.StateChanged += OnStateChanged;
+        _isSubscribed = true;
+
+        return InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// \brief Handles shared state changes.
+    /// </summary>
+    /// <param name="sender">The event sender.</param>
+    /// <param name="e">The state changed event args.</param>
+    private void OnStateChanged(object? sender, HybridStateChangedEventArgs<CounterState> e)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        ApplyState(e.State);
+
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    /// <summary>
+    /// \brief Applies shared counter state to this component.
+    /// </summary>
+    /// <param name="state">The shared counter state.</param>
+    private void ApplyState(CounterState state)
+    {
+        _count = state.Count;
+        _lastSource = state.LastSource;
+        _lastUpdated = state.LastUpdated?.ToString("HH:mm:ss") ?? "-";
+    }
+
+    /// <summary>
+    /// \brief Increases the counter and publishes the changed state.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    private async Task IncrementAsync()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        int next = Store.State.Count + 1;
+
+        Store.SetState(new CounterState(
+            next,
+            "Blazor → StateStore",
+            DateTime.Now));
+
+        await Bus.PublishAsync(new CounterChangedMessage(next));
+    }
+
+    /// <summary>
+    /// \brief Resets the counter and publishes the changed state.
+    /// </summary>
+    /// <returns>A task that represents the asynchronous operation.</returns>
+    private async Task ResetAsync()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        Store.SetState(new CounterState(
+            0,
+            "Blazor → StateStore",
+            DateTime.Now));
+
+        await Bus.PublishAsync(new CounterChangedMessage(0));
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (_isSubscribed)
+        {
+            Store.StateChanged -= OnStateChanged;
+            _isSubscribed = false;
+        }
+
+        _disposed = true;
+    }
+}

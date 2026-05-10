@@ -34,9 +34,6 @@
 [submodule "20_SOURCES/100. Library/Extensions"]
 	path = 20_SOURCES/100. Library/Extensions
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.Extensions
-[submodule "20_SOURCES/100. Library/Hybrid.BlazorApp"]
-	path = 20_SOURCES/100. Library/Hybrid.BlazorApp
-	url = https://github.com/CodeMaru-Dreamine/Dreamine.Hybrid.BlazorApp
 [submodule "20_SOURCES/100. Library/Hybrid"]
 	path = 20_SOURCES/100. Library/Hybrid
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.Hybrid
