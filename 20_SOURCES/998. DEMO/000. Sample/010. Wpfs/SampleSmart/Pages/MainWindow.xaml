@@ -7,7 +7,7 @@
         xmlns:i="clr-namespace:Dreamine.MVVM.Behaviors.Wpf.Interactivity;assembly=Dreamine.MVVM.Behaviors.Wpf"
         xmlns:mvvm="clr-namespace:Dreamine.MVVM.Behaviors.Wpf.Interactivity;assembly=Dreamine.MVVM.Behaviors.Wpf" 
         xmlns:region="clr-namespace:Dreamine.MVVM.Locators.Wpf;assembly=Dreamine.MVVM.Locators.Wpf"
-        Title="MainWindow" Height="920" Width="1100"
+        Title="MainWindow" Height="920" Width="1300"
         WindowStyle="None" AllowsTransparency="True" Background="White">
     <Grid>
         <Grid.RowDefinitions>

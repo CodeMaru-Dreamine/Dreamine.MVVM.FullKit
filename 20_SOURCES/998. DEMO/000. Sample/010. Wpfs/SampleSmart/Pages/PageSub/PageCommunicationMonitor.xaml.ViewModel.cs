@@ -1,7 +1,6 @@
 using Dreamine.Communication.Wpf.ViewModels;
 using Dreamine.MVVM.Attributes;
 using Dreamine.MVVM.ViewModels;
-using Microsoft.Extensions.Logging;
 
 namespace SampleSmart.Pages.PageSub;
 
@@ -50,4 +49,28 @@ public partial class PageCommunicationMonitorViewModel : ViewModelBase
     /// </summary>
     [DreamineCommand("Event.ReceiveTest")]
     private partial void ReceiveTest();
+
+    /// <summary>
+    /// \brief TCP 서버 시작 명령입니다.
+    /// </summary>
+    [DreamineCommand("Event.StartTcpServer")]
+    private partial void StartTcpServer();
+
+    /// <summary>
+    /// \brief TCP 클라이언트 연결 명령입니다.
+    /// </summary>
+    [DreamineCommand("Event.ConnectTcpClient")]
+    private partial void ConnectTcpClient();
+
+    /// <summary>
+    /// \brief TCP 테스트 송신 명령입니다.
+    /// </summary>
+    [DreamineCommand("Event.SendTcp")]
+    private partial void SendTcp();
+
+    /// <summary>
+    /// \brief TCP 테스트 종료 명령입니다.
+    /// </summary>
+    [DreamineCommand("Event.StopTcp")]
+    private partial void StopTcp();
 }
