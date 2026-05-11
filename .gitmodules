@@ -55,3 +55,24 @@
 [submodule "20_SOURCES/100. Library/Threading.Windows"]
 	path = 20_SOURCES/100. Library/Threading.Windows
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.Threading.Windows
+[submodule "20_SOURCES/100. Library/Communication.Abstractions"]
+	path = 20_SOURCES/100. Library/Communication.Abstractions
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Communication.Abstractions
+[submodule "20_SOURCES/100. Library/Communication.Core"]
+	path = 20_SOURCES/100. Library/Communication.Core
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Communication.Core
+[submodule "20_SOURCES/100. Library/Communication.Wpf"]
+	path = 20_SOURCES/100. Library/Communication.Wpf
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Communication.Wpf
+[submodule "20_SOURCES/100. Library/Communication.Sockets"]
+	path = 20_SOURCES/100. Library/Communication.Sockets
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Communication.Sockets
+[submodule "20_SOURCES/100. Library/Communication.Serial"]
+	path = 20_SOURCES/100. Library/Communication.Serial
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Communication.Serial
+[submodule "20_SOURCES/100. Library/Communication.RabbitMQ"]
+	path = 20_SOURCES/100. Library/Communication.RabbitMQ
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Communication.RabbitMQ
+[submodule "20_SOURCES/100. Library/Communication.FullKit"]
+	path = 20_SOURCES/100. Library/Communication.FullKit
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Communication.FullKit
