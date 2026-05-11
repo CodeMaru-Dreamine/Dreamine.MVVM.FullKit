@@ -68,6 +68,12 @@ namespace SampleSmart.Pages
         private partial void ThreadPage();
 
         /// <summary>
+        /// \brief Communication Monitor 페이지 이동 동작 실행.
+        /// </summary>
+        [DreamineCommand("Event.CommunicationPage")]
+        private partial void CommunicationPage();
+
+        /// <summary>
         /// \brief SubWindow 오픈 동작 실행.
         /// </summary>
         [DreamineCommand("Event.SubWindow")]

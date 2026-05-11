@@ -34,6 +34,9 @@
 		<ProjectReference Include="..\..\..\..\100. Library\Behaviors.Core\Dreamine.MVVM.Behaviors.Core.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Behaviors.Wpf\Dreamine.MVVM.Behaviors.Wpf.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Behaviors\Dreamine.MVVM.Behaviors.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Communication.Abstractions\Dreamine.Communication.Abstractions.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Communication.Core\Dreamine.Communication.Core.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Communication.Wpf\Dreamine.Communication.Wpf.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Extensions\Dreamine.MVVM.Extensions.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer" />

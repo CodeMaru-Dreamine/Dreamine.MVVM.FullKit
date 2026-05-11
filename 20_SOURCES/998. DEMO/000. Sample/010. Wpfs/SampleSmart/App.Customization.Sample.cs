@@ -22,6 +22,8 @@ using System;
 using System.IO;
 using System.Windows;
 using SampleSmart.Pages;
+using Dreamine.Communication.Abstractions.Interfaces;
+using Dreamine.Communication.Core.Buses;
 
 namespace SampleSmart
 {
@@ -52,6 +54,8 @@ namespace SampleSmart
         {
             RegisterLogging();
             RegisterThreading();
+
+            DMContainer.RegisterSingleton<IMessageBus, InMemoryMessageBus>();
         }
 
 
