@@ -8,7 +8,7 @@
     <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="295" />
+            <RowDefinition Height="363" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -30,6 +30,10 @@
 
             <TabItem Header="Serial">
                 <tabs:SerialCommunicationTab />
+            </TabItem>
+
+            <TabItem Header="RabbitMQ">
+                <tabs:RabbitMqCommunicationTab />
             </TabItem>
         </TabControl>
 

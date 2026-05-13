@@ -5,6 +5,8 @@ using Dreamine.Communication.Abstractions.Interfaces;
 using Dreamine.Communication.Abstractions.Models;
 using Dreamine.Communication.Core.Framing;
 using Dreamine.Communication.Core.Protocols;
+using Dreamine.Communication.RabbitMQ.Buses;
+using Dreamine.Communication.RabbitMQ.Options;
 using Dreamine.Communication.Serial.Options;
 using Dreamine.Communication.Serial.Ports;
 using Dreamine.Communication.Sockets.Clients;
@@ -19,12 +21,15 @@ namespace SampleSmart.Pages.PageSub.CommunicationTabs;
 /// </summary>
 /// <remarks>
 /// 이 클래스는 Communication 샘플 탭들이 공유하는 Monitor, InMemory MessageBus,
-/// TCP Server, TCP Client, Serial Port 인스턴스를 관리합니다.
+/// TCP Server, TCP Client, Serial Port, RabbitMQ MessageBus 인스턴스를 관리합니다.
 /// </remarks>
 public sealed class CommunicationSampleRuntime
 {
     private const string InMemoryChannelName = "InMemory-Communication";
     private const string InMemoryRouteName = "sample.communication.message";
+
+    private const string RabbitMqChannelName = "RabbitMQ-MessageBus";
+    private const string RabbitMqProtocol = "RabbitMQ";
 
     private const string DreamineEnvelopeProtocol = "DreamineEnvelope";
     private const string PlainTextProtocol = "PlainText";
@@ -39,10 +44,12 @@ public sealed class CommunicationSampleRuntime
     private readonly IMessageBus _messageBus;
 
     private bool _isInMemorySubscribed;
+    private bool _isRabbitMqSubscribed;
 
     private TcpServerTransport? _tcpServer;
     private TcpClientTransport? _tcpClient;
     private SerialPortTransport? _serialTransport;
+    private RabbitMqMessageBus? _rabbitMqBus;
 
     private string _currentServerProtocol = PlainTextProtocol;
     private string _currentClientProtocol = PlainTextProtocol;
@@ -50,6 +57,13 @@ public sealed class CommunicationSampleRuntime
     private string _currentSerialProtocol = RawAvailableProtocol;
     private string _currentSerialPortName = string.Empty;
     private int _currentSerialBaudRate = 9600;
+
+    private string _currentRabbitMqHost = "localhost";
+    private int _currentRabbitMqPort = 5672;
+    private string _currentRabbitMqVirtualHost = "/";
+    private string _currentRabbitMqExchangeName = "dreamine.sample.exchange";
+    private string _currentRabbitMqQueueName = "dreamine.sample.queue";
+    private string _currentRabbitMqRoutingKey = "dreamine.sample.route";
 
     /// <summary>
     /// \brief CommunicationSampleRuntime 클래스의 새 인스턴스를 초기화합니다.
@@ -553,10 +567,256 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
+    /// \brief RabbitMQ에 연결합니다.
+    /// </summary>
+    /// <param name="host">RabbitMQ Host입니다.</param>
+    /// <param name="port">RabbitMQ Port입니다.</param>
+    /// <param name="virtualHost">RabbitMQ VirtualHost입니다.</param>
+    /// <param name="userName">RabbitMQ 사용자 이름입니다.</param>
+    /// <param name="password">RabbitMQ 비밀번호입니다.</param>
+    /// <param name="exchangeName">Exchange 이름입니다.</param>
+    /// <param name="queueName">Queue 이름입니다.</param>
+    /// <param name="routingKey">RoutingKey입니다.</param>
+    public async Task ConnectRabbitMqAsync(
+        string host,
+        int port,
+        string virtualHost,
+        string userName,
+        string password,
+        string exchangeName,
+        string queueName,
+        string routingKey)
+    {
+        host = NormalizeText(host, "localhost");
+        virtualHost = NormalizeText(virtualHost, "/");
+        userName = NormalizeText(userName, "guest");
+        password = NormalizeText(password, "guest");
+        exchangeName = NormalizeText(exchangeName, "dreamine.sample.exchange");
+        queueName = NormalizeText(queueName, "dreamine.sample.queue");
+        routingKey = NormalizeText(routingKey, "dreamine.sample.route");
+
+        if (port <= 0 || port > 65535)
+        {
+            port = 5672;
+        }
+
+        if (_rabbitMqBus is not null &&
+            _rabbitMqBus.State == ConnectionState.Connected &&
+            _currentRabbitMqHost == host &&
+            _currentRabbitMqPort == port &&
+            _currentRabbitMqVirtualHost == virtualHost &&
+            _currentRabbitMqExchangeName == exchangeName &&
+            _currentRabbitMqQueueName == queueName &&
+            _currentRabbitMqRoutingKey == routingKey)
+        {
+            return;
+        }
+
+        if (_rabbitMqBus is not null)
+        {
+            await DisconnectRabbitMqAsync();
+        }
+
+        _currentRabbitMqHost = host;
+        _currentRabbitMqPort = port;
+        _currentRabbitMqVirtualHost = virtualHost;
+        _currentRabbitMqExchangeName = exchangeName;
+        _currentRabbitMqQueueName = queueName;
+        _currentRabbitMqRoutingKey = routingKey;
+        _isRabbitMqSubscribed = false;
+
+        EnsureRabbitMqChannel();
+
+        _rabbitMqBus = new RabbitMqMessageBus(
+            new RabbitMqMessageBusOptions
+            {
+                HostName = host,
+                Port = port,
+                VirtualHost = virtualHost,
+                UserName = userName,
+                Password = password,
+                ExchangeName = exchangeName,
+                QueueName = queueName,
+                RoutingKey = routingKey
+            });
+
+        try
+        {
+            await _rabbitMqBus.ConnectAsync();
+
+            Monitor.UpdateChannelState(
+                RabbitMqChannelName,
+                ConnectionState.Connected);
+        }
+        catch (Exception ex)
+        {
+            Monitor.UpdateChannelState(
+                RabbitMqChannelName,
+                ConnectionState.Faulted);
+
+            AddRabbitMqErrorLog("RabbitMQ.Connect.Failed", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// \brief RabbitMQ 메시지 구독을 시작합니다.
+    /// </summary>
+    /// <param name="exchangeName">Exchange 이름입니다.</param>
+    /// <param name="queueName">Queue 이름입니다.</param>
+    /// <param name="routingKey">RoutingKey입니다.</param>
+    public async Task SubscribeRabbitMqAsync(
+        string exchangeName,
+        string queueName,
+        string routingKey)
+    {
+        exchangeName = NormalizeText(exchangeName, _currentRabbitMqExchangeName);
+        queueName = NormalizeText(queueName, _currentRabbitMqQueueName);
+        routingKey = NormalizeText(routingKey, _currentRabbitMqRoutingKey);
+
+        if (_rabbitMqBus is null)
+        {
+            AddRabbitMqErrorLog(
+                "RabbitMQ.Subscribe.Skipped",
+                "RabbitMQ is not connected.");
+            return;
+        }
+
+        if (_rabbitMqBus.State != ConnectionState.Connected)
+        {
+            AddRabbitMqErrorLog(
+                "RabbitMQ.Subscribe.Skipped",
+                $"RabbitMQ state is {_rabbitMqBus.State}.");
+            return;
+        }
+
+        if (_isRabbitMqSubscribed)
+        {
+            return;
+        }
+
+        _currentRabbitMqExchangeName = exchangeName;
+        _currentRabbitMqQueueName = queueName;
+        _currentRabbitMqRoutingKey = routingKey;
+
+        try
+        {
+            await _rabbitMqBus.SubscribeAsync(
+                routingKey,
+                (message, _) =>
+                {
+                    RunOnUiThread(() =>
+                    {
+                        Monitor.AddReceiveLog(
+                            RabbitMqChannelName,
+                            TransportKind.RabbitMq,
+                            message);
+                    });
+
+                    return Task.CompletedTask;
+                });
+
+            _isRabbitMqSubscribed = true;
+        }
+        catch (Exception ex)
+        {
+            AddRabbitMqErrorLog("RabbitMQ.Subscribe.Failed", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// \brief RabbitMQ 메시지를 발행합니다.
+    /// </summary>
+    /// <param name="exchangeName">Exchange 이름입니다.</param>
+    /// <param name="routingKey">RoutingKey입니다.</param>
+    /// <param name="text">송신 문자열입니다.</param>
+    public async Task PublishRabbitMqAsync(
+        string exchangeName,
+        string routingKey,
+        string text)
+    {
+        exchangeName = NormalizeText(exchangeName, _currentRabbitMqExchangeName);
+        routingKey = NormalizeText(routingKey, _currentRabbitMqRoutingKey);
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            text = "test";
+        }
+
+        if (_rabbitMqBus is null)
+        {
+            AddRabbitMqErrorLog(
+                "RabbitMQ.Publish.Skipped",
+                "RabbitMQ is not connected.");
+            return;
+        }
+
+        if (_rabbitMqBus.State != ConnectionState.Connected)
+        {
+            AddRabbitMqErrorLog(
+                "RabbitMQ.Publish.Skipped",
+                $"RabbitMQ state is {_rabbitMqBus.State}.");
+            return;
+        }
+
+        _currentRabbitMqExchangeName = exchangeName;
+        _currentRabbitMqRoutingKey = routingKey;
+
+        var message = CreateRabbitMqMessage(
+            "Publish",
+            routingKey,
+            text);
+
+        Monitor.AddSendLog(
+            RabbitMqChannelName,
+            TransportKind.RabbitMq,
+            message);
+
+        try
+        {
+            await _rabbitMqBus.PublishAsync(message);
+        }
+        catch (Exception ex)
+        {
+            AddRabbitMqErrorLog("RabbitMQ.Publish.Failed", ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// \brief RabbitMQ 연결을 해제합니다.
+    /// </summary>
+    public async Task DisconnectRabbitMqAsync()
+    {
+        if (_rabbitMqBus is null)
+        {
+            if (Monitor.Channels.Any(x => x.Name == RabbitMqChannelName))
+            {
+                Monitor.UpdateChannelState(
+                    RabbitMqChannelName,
+                    ConnectionState.Disconnected);
+            }
+
+            return;
+        }
+
+        await _rabbitMqBus.DisposeAsync();
+
+        _rabbitMqBus = null;
+        _isRabbitMqSubscribed = false;
+
+        if (Monitor.Channels.Any(x => x.Name == RabbitMqChannelName))
+        {
+            Monitor.UpdateChannelState(
+                RabbitMqChannelName,
+                ConnectionState.Disconnected);
+        }
+    }
+
+    /// <summary>
     /// \brief 모든 통신 샘플 연결을 종료합니다.
     /// </summary>
     public async Task StopAllAsync()
     {
+        await DisconnectRabbitMqAsync();
         await DisconnectSerialAsync();
         await StopAllTcpAsync();
         await DisconnectInMemoryAsync();
@@ -696,6 +956,19 @@ public sealed class CommunicationSampleRuntime
             channelName,
             TransportKind.Serial,
             $"Serial [{_currentSerialProtocol}] on {_currentSerialPortName}:{_currentSerialBaudRate}.");
+    }
+
+    private void EnsureRabbitMqChannel()
+    {
+        if (Monitor.Channels.Any(x => x.Name == RabbitMqChannelName))
+        {
+            return;
+        }
+
+        Monitor.AddChannel(
+            RabbitMqChannelName,
+            TransportKind.RabbitMq,
+            $"RabbitMQ on {_currentRabbitMqHost}:{_currentRabbitMqPort}, vhost={_currentRabbitMqVirtualHost}, exchange={_currentRabbitMqExchangeName}, queue={_currentRabbitMqQueueName}, route={_currentRabbitMqRoutingKey}.");
     }
 
     private string GetSerialChannelName()
@@ -943,6 +1216,24 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    private static MessageEnvelope CreateRabbitMqMessage(
+        string direction,
+        string route,
+        string text)
+    {
+        return new MessageEnvelope
+        {
+            Name = $"RabbitMQ.{direction}",
+            Route = route,
+            Payload = Encoding.UTF8.GetBytes(text),
+            Headers = new Dictionary<string, string>
+            {
+                ["ContentType"] = "text/plain",
+                ["Protocol"] = RabbitMqProtocol
+            }
+        };
+    }
+
     private static MessageEnvelope CreateTextMessage(
         string name,
         string route,
@@ -960,6 +1251,22 @@ public sealed class CommunicationSampleRuntime
                 ["Protocol"] = protocol
             }
         };
+    }
+
+    private void AddRabbitMqErrorLog(
+        string name,
+        string text)
+    {
+        var message = CreateTextMessage(
+            name,
+            _currentRabbitMqRoutingKey,
+            text,
+            RabbitMqProtocol);
+
+        Monitor.AddReceiveLog(
+            RabbitMqChannelName,
+            TransportKind.RabbitMq,
+            message);
     }
 
     private static byte[] EnsureJsonPayload(string text)
@@ -1008,6 +1315,15 @@ public sealed class CommunicationSampleRuntime
             RawJsonProtocol => RawJsonProtocol,
             _ => PlainTextProtocol
         };
+    }
+
+    private static string NormalizeText(
+        string? value,
+        string defaultValue)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? defaultValue
+            : value.Trim();
     }
 
     private static void RunOnUiThread(Action action)
