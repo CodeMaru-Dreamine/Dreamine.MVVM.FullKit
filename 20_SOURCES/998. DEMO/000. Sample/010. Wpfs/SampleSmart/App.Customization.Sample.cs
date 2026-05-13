@@ -1,4 +1,6 @@
-﻿using Dreamine.Logging.Formatters;
+﻿using Dreamine.Communication.Abstractions.Interfaces;
+using Dreamine.Communication.Core.Buses;
+using Dreamine.Logging.Formatters;
 using Dreamine.Logging.Interfaces;
 using Dreamine.Logging.Models;
 using Dreamine.Logging.Services;
@@ -17,13 +19,12 @@ using Dreamine.Threading.Services;
 using Dreamine.Threading.Windows.Registration;
 using Dreamine.Threading.Wpf.Registration;
 using Dreamine.Threading.Wpf.ViewModels;
+using SampleSmart.Pages;
 using SampleSmart.Pages.PageSub;
+using SampleSmart.Pages.PageSub.CommunicationTabs;
 using System;
 using System.IO;
 using System.Windows;
-using SampleSmart.Pages;
-using Dreamine.Communication.Abstractions.Interfaces;
-using Dreamine.Communication.Core.Buses;
 
 namespace SampleSmart
 {
@@ -56,6 +57,7 @@ namespace SampleSmart
             RegisterThreading();
 
             DMContainer.RegisterSingleton<IMessageBus, InMemoryMessageBus>();
+            DMContainer.RegisterSingleton<CommunicationSampleRuntime>();
         }
 
 

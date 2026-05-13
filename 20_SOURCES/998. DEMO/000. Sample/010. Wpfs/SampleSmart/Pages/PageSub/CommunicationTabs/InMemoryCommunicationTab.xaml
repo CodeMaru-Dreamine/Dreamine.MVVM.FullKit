@@ -1,0 +1,69 @@
+<UserControl x:Class="SampleSmart.Pages.PageSub.CommunicationTabs.InMemoryCommunicationTab"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border Background="White"
+            BorderBrush="#DDD"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="10">
+        <StackPanel>
+            <TextBlock Text="InMemory MessageBus Test"
+                       FontSize="15"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,8" />
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,8">
+                <Button Content="Add Channel"
+                        Width="110"
+                        Height="30"
+                        Margin="0,0,8,0"
+                        Command="{Binding AddChannelCommand}" />
+
+                <Button Content="Connect"
+                        Width="90"
+                        Height="30"
+                        Margin="0,0,8,0"
+                        Command="{Binding ConnectCommand}" />
+
+                <Button Content="Disconnect"
+                        Width="100"
+                        Height="30"
+                        Command="{Binding DisconnectCommand}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,8">
+                <TextBlock Text="Send"
+                           Width="80"
+                           VerticalAlignment="Center" />
+
+                <TextBox Width="500"
+                         Height="30"
+                         Margin="0,0,8,0"
+                         Text="{Binding InMemorySendText, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Button Content="Send"
+                        Width="100"
+                        Height="30"
+                        Command="{Binding SendTestCommand}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Receive"
+                           Width="80"
+                           VerticalAlignment="Center" />
+
+                <TextBox Width="500"
+                         Height="30"
+                         Margin="0,0,8,0"
+                         Text="{Binding InMemoryReceiveText, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Button Content="Receive"
+                        Width="100"
+                        Height="30"
+                        Command="{Binding ReceiveTestCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

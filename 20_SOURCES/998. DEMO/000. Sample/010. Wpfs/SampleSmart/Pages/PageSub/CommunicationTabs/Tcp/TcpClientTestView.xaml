@@ -1,0 +1,61 @@
+<UserControl x:Class="SampleSmart.Pages.PageSub.CommunicationTabs.Tcp.TcpClientTestView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Border Background="White"
+        BorderBrush="#DDD"
+        BorderThickness="1"
+        CornerRadius="6"
+        Padding="10">
+        <StackPanel>
+            <TextBlock Text="Hercules Server + Dreamine Client"
+               FontSize="15"
+               FontWeight="SemiBold"
+               Margin="0,0,0,8" />
+
+            <TextBlock Text="Select protocol mode, connect to the external TCP server, then send text."
+               Foreground="Gray"
+               Margin="0,0,0,8" />
+
+            <StackPanel Orientation="Horizontal"
+                Margin="0,0,0,8">
+                <TextBlock Text="Protocol"
+                   Width="80"
+                   VerticalAlignment="Center" />
+
+                <ComboBox Width="180"
+                  Height="28"
+                  Margin="0,0,8,0"
+                  ItemsSource="{Binding TcpClientProtocols}"
+                  SelectedItem="{Binding SelectedTcpClientProtocol}" />
+
+                <Button Content="Connect Client"
+                Width="120"
+                Height="30"
+                Margin="0,0,8,0"
+                Command="{Binding ConnectClientCommand}" />
+
+                <Button Content="Disconnect Client"
+                Width="130"
+                Height="30"
+                Command="{Binding DisconnectClientCommand}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="Send"
+                   Width="80"
+                   VerticalAlignment="Center" />
+
+                <TextBox Width="500"
+                 Height="30"
+                 Margin="0,0,8,0"
+                 Text="{Binding TcpClientSendText, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Button Content="Send"
+                Width="100"
+                Height="30"
+                Command="{Binding SendClientCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

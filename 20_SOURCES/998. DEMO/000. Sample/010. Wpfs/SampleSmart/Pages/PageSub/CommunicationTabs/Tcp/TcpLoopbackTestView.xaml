@@ -1,0 +1,72 @@
+<UserControl x:Class="SampleSmart.Pages.PageSub.CommunicationTabs.Tcp.TcpLoopbackTestView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Border Background="White"
+            BorderBrush="#DDD"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="10">
+        <StackPanel>
+            <TextBlock Text="Dreamine TCP Loopback Test"
+                       FontSize="15"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,8" />
+
+            <TextBlock Text="Start Dreamine TCP Server and Client with the same protocol mode, then test client/server send."
+                       Foreground="Gray"
+                       Margin="0,0,0,8" />
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,8">
+                <TextBlock Text="Protocol"
+                           Width="80"
+                           VerticalAlignment="Center" />
+
+                <ComboBox Width="180"
+                          Height="28"
+                          Margin="0,0,8,0"
+                          ItemsSource="{Binding TcpLoopbackProtocols}"
+                          SelectedItem="{Binding SelectedTcpLoopbackProtocol}" />
+
+                <Button Content="Start Loopback"
+                        Width="130"
+                        Height="30"
+                        Margin="0,0,8,0"
+                        Command="{Binding StartLoopbackCommand}" />
+
+                <Button Content="Stop Loopback"
+                        Width="120"
+                        Height="30"
+                        Command="{Binding StopLoopbackCommand}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,8">
+                <TextBlock Text="Send"
+                           Width="80"
+                           VerticalAlignment="Center" />
+
+                <TextBox Width="500"
+                         Height="30"
+                         Margin="0,0,8,0"
+                         Text="{Binding TcpLoopbackSendText, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text=""
+                           Width="80" />
+
+                <Button Content="Send Client"
+                        Width="120"
+                        Height="30"
+                        Margin="0,0,8,0"
+                        Command="{Binding SendClientCommand}" />
+
+                <Button Content="Send Server"
+                        Width="120"
+                        Height="30"
+                        Command="{Binding SendServerCommand}" />
+            </StackPanel>
+        </StackPanel>
+    </Border>
+</UserControl>

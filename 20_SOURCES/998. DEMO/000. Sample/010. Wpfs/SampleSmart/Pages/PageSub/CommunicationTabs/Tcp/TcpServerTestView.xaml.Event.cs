@@ -1,0 +1,64 @@
+using SampleSmart.Pages.PageSub.CommunicationTabs;
+
+namespace SampleSmart.Pages.PageSub.CommunicationTabs.Tcp;
+
+/// <summary>
+/// \brief TCP Server 테스트 이벤트 처리 클래스입니다.
+/// </summary>
+public sealed class TcpServerTestViewEvent
+{
+    private readonly CommunicationSampleRuntime _runtime;
+
+    /// <summary>
+    /// \brief TcpServerTestViewEvent 클래스의 새 인스턴스를 초기화합니다.
+    /// </summary>
+    /// <param name="runtime">Communication 샘플 공유 Runtime입니다.</param>
+    public TcpServerTestViewEvent(CommunicationSampleRuntime runtime)
+    {
+        _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+
+        SelectedTcpServerProtocol = "RawAvailable";
+        TcpServerSendText = "Hello from Dreamine TCP Server";
+    }
+
+    /// <summary>
+    /// \brief 선택 가능한 TCP Server 프로토콜 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> TcpServerProtocols => _runtime.TcpProtocols;
+
+    /// <summary>
+    /// \brief 선택된 TCP Server 프로토콜입니다.
+    /// </summary>
+    public string SelectedTcpServerProtocol { get; set; }
+
+    /// <summary>
+    /// \brief TCP Server 송신 문자열입니다.
+    /// </summary>
+    public string TcpServerSendText { get; set; }
+
+    /// <summary>
+    /// \brief 선택된 프로토콜로 TCP Server를 시작합니다.
+    /// </summary>
+    public void StartServer()
+    {
+        _ = _runtime.StartTcpServerAsync(SelectedTcpServerProtocol);
+    }
+
+    /// <summary>
+    /// \brief TCP Server를 종료합니다.
+    /// </summary>
+    public void StopServer()
+    {
+        _ = _runtime.StopTcpServerAsync();
+    }
+
+    /// <summary>
+    /// \brief 선택된 프로토콜로 TCP Server에서 메시지를 송신합니다.
+    /// </summary>
+    public void SendServer()
+    {
+        _ = _runtime.SendTcpServerAsync(
+            SelectedTcpServerProtocol,
+            TcpServerSendText);
+    }
+}
