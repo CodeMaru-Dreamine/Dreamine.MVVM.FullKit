@@ -36,6 +36,7 @@
 		<ProjectReference Include="..\..\..\..\100. Library\Behaviors\Dreamine.MVVM.Behaviors.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Communication.Abstractions\Dreamine.Communication.Abstractions.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Communication.Core\Dreamine.Communication.Core.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\Communication.Serial\Dreamine.Communication.Serial.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Communication.Sockets\Dreamine.Communication.Sockets.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Communication.Wpf\Dreamine.Communication.Wpf.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />

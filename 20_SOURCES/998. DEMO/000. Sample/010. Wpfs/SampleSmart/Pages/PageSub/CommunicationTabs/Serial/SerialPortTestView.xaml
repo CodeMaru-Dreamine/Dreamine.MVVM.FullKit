@@ -1,0 +1,111 @@
+﻿<UserControl x:Class="SampleSmart.Pages.PageSub.CommunicationTabs.Serial.SerialPortTestView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Border Background="White"
+            BorderBrush="#DDD"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="10">
+        <StackPanel>
+            <TextBlock Text="Serial Port Test"
+                       FontSize="15"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,8" />
+
+            <TextBlock Text="Select COM port, baud rate, and protocol mode, then connect to the serial device."
+                       Foreground="Gray"
+                       Margin="0,0,0,8" />
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,8">
+                <TextBlock Text="Port"
+                           Width="80"
+                           VerticalAlignment="Center" />
+
+                <ComboBox Width="120"
+                          Height="28"
+                          Margin="0,0,8,0"
+                          ItemsSource="{Binding SerialPortNames}"
+                          SelectedItem="{Binding SelectedSerialPortName}" />
+
+                <Button Content="Refresh"
+                        Width="90"
+                        Height="30"
+                        Margin="0,0,16,0"
+                        Command="{Binding RefreshPortsCommand}" />
+
+                <TextBlock Text="Baud"
+                           Width="50"
+                           VerticalAlignment="Center" />
+
+                <ComboBox Width="120"
+                          Height="28"
+                          Margin="0,0,8,0"
+                          ItemsSource="{Binding BaudRates}"
+                          SelectedItem="{Binding SelectedBaudRate}" />
+
+                <TextBlock Text="Protocol"
+                           Width="70"
+                           VerticalAlignment="Center" />
+
+                <ComboBox Width="160"
+                          Height="28"
+                          ItemsSource="{Binding SerialProtocols}"
+                          SelectedItem="{Binding SelectedSerialProtocol}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,8">
+                <TextBlock Text="Control"
+                           Width="80"
+                           VerticalAlignment="Center" />
+
+                <Button Content="Connect"
+                        Width="110"
+                        Height="30"
+                        Margin="0,0,8,0"
+                        Command="{Binding ConnectSerialCommand}" />
+
+                <Button Content="Disconnect"
+                        Width="110"
+                        Height="30"
+                        Margin="0,0,8,0"
+                        Command="{Binding DisconnectSerialCommand}" />
+            </StackPanel>
+
+            <StackPanel Orientation="Horizontal"
+                        Margin="0,0,0,8">
+                <TextBlock Text="Send"
+                           Width="80"
+                           VerticalAlignment="Center" />
+
+                <TextBox Width="500"
+                         Height="30"
+                         Margin="0,0,8,0"
+                         Text="{Binding SerialSendText, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Button Content="Send"
+                        Width="100"
+                        Height="30"
+                        Command="{Binding SendSerialCommand}" />
+            </StackPanel>
+
+            <Border BorderBrush="#EEE"
+                    BorderThickness="1"
+                    CornerRadius="4"
+                    Padding="8"
+                    Margin="0,8,0,0">
+                <StackPanel>
+                    <TextBlock Text="Current Selection"
+                               FontWeight="SemiBold"
+                               Margin="0,0,0,4" />
+
+                    <TextBlock Text="{Binding SerialSelectionSummary}"
+                               Foreground="Gray"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </Border>
+</UserControl>

@@ -5,6 +5,8 @@ using Dreamine.Communication.Abstractions.Interfaces;
 using Dreamine.Communication.Abstractions.Models;
 using Dreamine.Communication.Core.Framing;
 using Dreamine.Communication.Core.Protocols;
+using Dreamine.Communication.Serial.Options;
+using Dreamine.Communication.Serial.Ports;
 using Dreamine.Communication.Sockets.Clients;
 using Dreamine.Communication.Sockets.Options;
 using Dreamine.Communication.Sockets.Servers;
@@ -17,7 +19,7 @@ namespace SampleSmart.Pages.PageSub.CommunicationTabs;
 /// </summary>
 /// <remarks>
 /// 이 클래스는 Communication 샘플 탭들이 공유하는 Monitor, InMemory MessageBus,
-/// TCP Server, TCP Client 인스턴스를 관리합니다.
+/// TCP Server, TCP Client, Serial Port 인스턴스를 관리합니다.
 /// </remarks>
 public sealed class CommunicationSampleRuntime
 {
@@ -40,9 +42,14 @@ public sealed class CommunicationSampleRuntime
 
     private TcpServerTransport? _tcpServer;
     private TcpClientTransport? _tcpClient;
+    private SerialPortTransport? _serialTransport;
 
     private string _currentServerProtocol = PlainTextProtocol;
     private string _currentClientProtocol = PlainTextProtocol;
+
+    private string _currentSerialProtocol = RawAvailableProtocol;
+    private string _currentSerialPortName = string.Empty;
+    private int _currentSerialBaudRate = 9600;
 
     /// <summary>
     /// \brief CommunicationSampleRuntime 클래스의 새 인스턴스를 초기화합니다.
@@ -67,6 +74,16 @@ public sealed class CommunicationSampleRuntime
     public IReadOnlyList<string> TcpProtocols { get; } =
     [
         DreamineEnvelopeProtocol,
+        PlainTextProtocol,
+        RawAvailableProtocol,
+        RawJsonProtocol
+    ];
+
+    /// <summary>
+    /// \brief 선택 가능한 Serial 프로토콜 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> SerialProtocols { get; } =
+    [
         PlainTextProtocol,
         RawAvailableProtocol,
         RawJsonProtocol
@@ -412,6 +429,139 @@ public sealed class CommunicationSampleRuntime
         await StopTcpServerAsync();
     }
 
+    /// <summary>
+    /// \brief 선택된 설정으로 Serial Port를 연결합니다.
+    /// </summary>
+    /// <param name="portName">Serial Port 이름입니다.</param>
+    /// <param name="baudRate">BaudRate입니다.</param>
+    /// <param name="protocol">프로토콜 이름입니다.</param>
+    public async Task ConnectSerialAsync(
+        string portName,
+        int baudRate,
+        string protocol)
+    {
+        if (string.IsNullOrWhiteSpace(portName))
+        {
+            return;
+        }
+
+        protocol = NormalizeProtocol(protocol);
+
+        if (_serialTransport is not null &&
+            _serialTransport.State == ConnectionState.Connected &&
+            _currentSerialPortName == portName &&
+            _currentSerialBaudRate == baudRate &&
+            _currentSerialProtocol == protocol)
+        {
+            return;
+        }
+
+        if (_serialTransport is not null)
+        {
+            await DisconnectSerialAsync();
+        }
+
+        _currentSerialPortName = portName;
+        _currentSerialBaudRate = baudRate;
+        _currentSerialProtocol = protocol;
+
+        EnsureSerialChannel();
+
+        _serialTransport = new SerialPortTransport(
+            new SerialPortTransportOptions
+            {
+                PortName = portName,
+                BaudRate = baudRate
+            },
+            CreateProtocolAdapter(
+                protocol,
+                "serial",
+                "Serial"),
+            CreateFrameCodec(protocol));
+
+        _serialTransport.MessageReceived += OnSerialMessageReceived;
+
+        await _serialTransport.ConnectAsync();
+
+        Monitor.UpdateChannelState(
+            GetSerialChannelName(),
+            ConnectionState.Connected);
+    }
+
+    /// <summary>
+    /// \brief 현재 Serial Port 연결을 해제합니다.
+    /// </summary>
+    public async Task DisconnectSerialAsync()
+    {
+        var channelName = GetSerialChannelName();
+
+        if (_serialTransport is null)
+        {
+            if (Monitor.Channels.Any(x => x.Name == channelName))
+            {
+                Monitor.UpdateChannelState(channelName, ConnectionState.Disconnected);
+            }
+
+            return;
+        }
+
+        _serialTransport.MessageReceived -= OnSerialMessageReceived;
+
+        await _serialTransport.DisposeAsync();
+
+        _serialTransport = null;
+
+        if (Monitor.Channels.Any(x => x.Name == channelName))
+        {
+            Monitor.UpdateChannelState(channelName, ConnectionState.Disconnected);
+        }
+    }
+
+    /// <summary>
+    /// \brief 현재 Serial Port로 메시지를 송신합니다.
+    /// </summary>
+    /// <param name="protocol">프로토콜 이름입니다.</param>
+    /// <param name="text">송신 문자열입니다.</param>
+    public async Task SendSerialAsync(string protocol, string text)
+    {
+        protocol = NormalizeProtocol(protocol);
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            text = "test";
+        }
+
+        if (_serialTransport is null ||
+            _serialTransport.State != ConnectionState.Connected)
+        {
+            return;
+        }
+
+        var message = CreateSerialMessageByProtocol(
+            protocol,
+            "Send",
+            text);
+
+        var channelName = GetSerialChannelName();
+
+        Monitor.AddSendLog(
+            channelName,
+            TransportKind.Serial,
+            message);
+
+        await _serialTransport.SendAsync(message);
+    }
+
+    /// <summary>
+    /// \brief 모든 통신 샘플 연결을 종료합니다.
+    /// </summary>
+    public async Task StopAllAsync()
+    {
+        await DisconnectSerialAsync();
+        await StopAllTcpAsync();
+        await DisconnectInMemoryAsync();
+    }
+
     private async Task SubscribeInMemoryAsync()
     {
         if (_isInMemorySubscribed)
@@ -488,6 +638,19 @@ public sealed class CommunicationSampleRuntime
         });
     }
 
+    private void OnSerialMessageReceived(object? sender, MessageEnvelope message)
+    {
+        var channelName = GetSerialChannelName();
+
+        RunOnUiThread(() =>
+        {
+            Monitor.AddReceiveLog(
+                channelName,
+                TransportKind.Serial,
+                message);
+        });
+    }
+
     private void EnsureTcpServerChannel(string protocol)
     {
         var channelName = GetTcpServerChannelName(protocol);
@@ -520,30 +683,60 @@ public sealed class CommunicationSampleRuntime
             $"TCP client [{protocol}] to 127.0.0.1:{port}.");
     }
 
-    private static IMessageProtocolAdapter CreateProtocolAdapter(string protocol)
+    private void EnsureSerialChannel()
     {
-        return NormalizeProtocol(protocol) switch
+        var channelName = GetSerialChannelName();
+
+        if (Monitor.Channels.Any(x => x.Name == channelName))
+        {
+            return;
+        }
+
+        Monitor.AddChannel(
+            channelName,
+            TransportKind.Serial,
+            $"Serial [{_currentSerialProtocol}] on {_currentSerialPortName}:{_currentSerialBaudRate}.");
+    }
+
+    private string GetSerialChannelName()
+    {
+        if (string.IsNullOrWhiteSpace(_currentSerialPortName))
+        {
+            return "Serial-Port";
+        }
+
+        return $"Serial-{_currentSerialPortName}";
+    }
+
+    private static IMessageProtocolAdapter CreateProtocolAdapter(
+        string protocol,
+        string routePrefix = "tcp",
+        string namePrefix = "Tcp")
+    {
+        var normalizedProtocol = NormalizeProtocol(protocol);
+
+        return normalizedProtocol switch
         {
             DreamineEnvelopeProtocol => new DreamineEnvelopeProtocolAdapter(),
 
             PlainTextProtocol => new PlainTextProtocolAdapter(
                 Encoding.UTF8,
-                "tcp.plaintext",
-                "Tcp.PlainText"),
+                $"{routePrefix}.plaintext",
+                $"{namePrefix}.PlainText"),
 
             RawAvailableProtocol => new PlainTextProtocolAdapter(
                 Encoding.UTF8,
-                "tcp.raw.available",
-                "Tcp.RawAvailable"),
+                $"{routePrefix}.raw.available",
+                $"{namePrefix}.RawAvailable"),
 
             RawJsonProtocol => new RawJsonProtocolAdapter(
-                "tcp.rawjson",
-                "Tcp.RawJson"),
+                $"{routePrefix}.rawjson",
+                $"{namePrefix}.RawJson"),
 
             _ => new PlainTextProtocolAdapter(
                 Encoding.UTF8,
-                "tcp.plaintext",
-                "Tcp.PlainText")
+                $"{routePrefix}.plaintext",
+                $"{namePrefix}.PlainText")
         };
     }
 
@@ -669,6 +862,77 @@ public sealed class CommunicationSampleRuntime
             {
                 Name = $"Tcp.{direction}.PlainText",
                 Route = "tcp.plaintext",
+                Payload = payload,
+                Headers = new Dictionary<string, string>
+                {
+                    ["ContentType"] = "text/plain",
+                    ["Protocol"] = PlainTextProtocol
+                }
+            }
+        };
+    }
+
+    private static MessageEnvelope CreateSerialMessageByProtocol(
+        string protocol,
+        string direction,
+        string text)
+    {
+        var normalizedProtocol = NormalizeProtocol(protocol);
+        var payload = Encoding.UTF8.GetBytes(text);
+
+        return normalizedProtocol switch
+        {
+            DreamineEnvelopeProtocol => new MessageEnvelope
+            {
+                Name = $"Serial.{direction}.DreamineEnvelope",
+                Route = "sample.communication.serial",
+                Payload = payload,
+                Headers = new Dictionary<string, string>
+                {
+                    ["Protocol"] = DreamineEnvelopeProtocol
+                }
+            },
+
+            PlainTextProtocol => new MessageEnvelope
+            {
+                Name = $"Serial.{direction}.PlainText",
+                Route = "serial.plaintext",
+                Payload = payload,
+                Headers = new Dictionary<string, string>
+                {
+                    ["ContentType"] = "text/plain",
+                    ["Protocol"] = PlainTextProtocol
+                }
+            },
+
+            RawAvailableProtocol => new MessageEnvelope
+            {
+                Name = $"Serial.{direction}.RawAvailable",
+                Route = "serial.raw.available",
+                Payload = payload,
+                Headers = new Dictionary<string, string>
+                {
+                    ["ContentType"] = "text/plain",
+                    ["Protocol"] = RawAvailableProtocol
+                }
+            },
+
+            RawJsonProtocol => new MessageEnvelope
+            {
+                Name = $"Serial.{direction}.RawJson",
+                Route = "serial.rawjson",
+                Payload = EnsureJsonPayload(text),
+                Headers = new Dictionary<string, string>
+                {
+                    ["ContentType"] = "application/json",
+                    ["Protocol"] = RawJsonProtocol
+                }
+            },
+
+            _ => new MessageEnvelope
+            {
+                Name = $"Serial.{direction}.PlainText",
+                Route = "serial.plaintext",
                 Payload = payload,
                 Headers = new Dictionary<string, string>
                 {

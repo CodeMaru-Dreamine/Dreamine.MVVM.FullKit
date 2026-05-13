@@ -8,7 +8,7 @@
     <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="256" />
+            <RowDefinition Height="295" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -26,6 +26,10 @@
 
             <TabItem Header="TCP">
                 <tabs:TcpCommunicationTab />
+            </TabItem>
+
+            <TabItem Header="Serial">
+                <tabs:SerialCommunicationTab />
             </TabItem>
         </TabControl>
 
