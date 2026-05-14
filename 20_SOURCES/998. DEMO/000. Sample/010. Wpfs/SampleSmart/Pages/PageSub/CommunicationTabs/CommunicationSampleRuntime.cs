@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using System.Windows;
 using Dreamine.Communication.Abstractions.Enums;
 using Dreamine.Communication.Abstractions.Interfaces;
@@ -12,6 +12,7 @@ using Dreamine.Communication.Serial.Ports;
 using Dreamine.Communication.Sockets.Clients;
 using Dreamine.Communication.Sockets.Options;
 using Dreamine.Communication.Sockets.Servers;
+using Dreamine.Communication.Sockets.Udp;
 using Dreamine.Communication.Wpf.ViewModels;
 
 namespace SampleSmart.Pages.PageSub.CommunicationTabs;
@@ -41,6 +42,9 @@ public sealed class CommunicationSampleRuntime
     private const int RawAvailableProtocolPort = 15002;
     private const int RawJsonProtocolPort = 15003;
 
+    private const int UdpPeerALocalPort = 16001;
+    private const int UdpPeerBLocalPort = 16002;
+
     private readonly IMessageBus _messageBus;
 
     private bool _isInMemorySubscribed;
@@ -48,13 +52,22 @@ public sealed class CommunicationSampleRuntime
 
     private TcpServerTransport? _tcpServer;
     private TcpClientTransport? _tcpClient;
+    private UdpTransport? _udpPeerA;
+    private UdpTransport? _udpPeerB;
     private SerialPortTransport? _serialTransport;
     private RabbitMqMessageBus? _rabbitMqBus;
 
     private string _currentServerProtocol = PlainTextProtocol;
     private string _currentClientProtocol = PlainTextProtocol;
+    private string _currentServerEncoding = PlainTextProtocolOptions.Utf8EncodingName;
+    private string _currentClientEncoding = PlainTextProtocolOptions.Utf8EncodingName;
+    private string _currentUdpPeerAProtocol = PlainTextProtocol;
+    private string _currentUdpPeerBProtocol = PlainTextProtocol;
+    private string _currentUdpPeerAEncoding = PlainTextProtocolOptions.Utf8EncodingName;
+    private string _currentUdpPeerBEncoding = PlainTextProtocolOptions.Utf8EncodingName;
 
     private string _currentSerialProtocol = RawAvailableProtocol;
+    private string _currentSerialEncoding = PlainTextProtocolOptions.Utf8EncodingName;
     private string _currentSerialPortName = string.Empty;
     private int _currentSerialBaudRate = 9600;
 
@@ -102,6 +115,31 @@ public sealed class CommunicationSampleRuntime
         RawAvailableProtocol,
         RawJsonProtocol
     ];
+
+    /// <summary>
+    /// \brief 선택 가능한 UDP 프로토콜 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> UdpProtocols { get; } =
+    [
+        DreamineEnvelopeProtocol,
+        PlainTextProtocol,
+        RawAvailableProtocol,
+        RawJsonProtocol
+    ];
+
+    /// <summary>
+    /// \brief 선택 가능한 외부 PlainText 인코딩 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> TextEncodings { get; } =
+    [
+        PlainTextProtocolOptions.Utf8EncodingName,
+        PlainTextProtocolOptions.KoreanCodePage949EncodingName
+    ];
+
+    /// <summary>
+    /// \brief 선택 가능한 UDP PlainText 인코딩 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> UdpTextEncodings => TextEncodings;
 
     /// <summary>
     /// \brief InMemory 채널을 추가합니다.
@@ -208,13 +246,18 @@ public sealed class CommunicationSampleRuntime
     /// \brief 선택된 프로토콜로 TCP Server를 시작합니다.
     /// </summary>
     /// <param name="protocol">프로토콜 이름입니다.</param>
-    public async Task StartTcpServerAsync(string protocol)
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    public async Task StartTcpServerAsync(
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
         protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
 
         if (_tcpServer is not null &&
             _tcpServer.State == ConnectionState.Connected &&
-            _currentServerProtocol == protocol)
+            _currentServerProtocol == protocol &&
+            _currentServerEncoding == encodingName)
         {
             return;
         }
@@ -225,8 +268,9 @@ public sealed class CommunicationSampleRuntime
         }
 
         _currentServerProtocol = protocol;
+        _currentServerEncoding = encodingName;
 
-        EnsureTcpServerChannel(protocol);
+        EnsureTcpServerChannel(protocol, encodingName);
 
         var port = GetTcpPort(protocol);
 
@@ -236,15 +280,19 @@ public sealed class CommunicationSampleRuntime
                 Host = "127.0.0.1",
                 Port = port
             },
-            CreateProtocolAdapter(protocol),
-            CreateFrameCodec(protocol));
+            CreateProtocolAdapter(
+                protocol,
+                "tcp",
+                "Tcp",
+                encodingName),
+            CreateFrameCodec(protocol, encodingName));
 
         _tcpServer.MessageReceived += OnTcpServerMessageReceived;
 
         await _tcpServer.ConnectAsync();
 
         Monitor.UpdateChannelState(
-            GetTcpServerChannelName(protocol),
+            GetTcpServerChannelName(protocol, encodingName),
             ConnectionState.Connected);
     }
 
@@ -254,7 +302,8 @@ public sealed class CommunicationSampleRuntime
     public async Task StopTcpServerAsync()
     {
         var protocol = _currentServerProtocol;
-        var channelName = GetTcpServerChannelName(protocol);
+        var encodingName = _currentServerEncoding;
+        var channelName = GetTcpServerChannelName(protocol, encodingName);
 
         if (_tcpServer is null)
         {
@@ -283,9 +332,14 @@ public sealed class CommunicationSampleRuntime
     /// </summary>
     /// <param name="protocol">프로토콜 이름입니다.</param>
     /// <param name="text">송신 문자열입니다.</param>
-    public async Task SendTcpServerAsync(string protocol, string text)
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    public async Task SendTcpServerAsync(
+        string protocol,
+        string text,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
         protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -294,9 +348,10 @@ public sealed class CommunicationSampleRuntime
 
         if (_tcpServer is null ||
             _tcpServer.State != ConnectionState.Connected ||
-            _currentServerProtocol != protocol)
+            _currentServerProtocol != protocol ||
+            _currentServerEncoding != encodingName)
         {
-            await StartTcpServerAsync(protocol);
+            await StartTcpServerAsync(protocol, encodingName);
         }
 
         if (_tcpServer is null)
@@ -307,9 +362,10 @@ public sealed class CommunicationSampleRuntime
         var message = CreateTcpMessageByProtocol(
             protocol,
             "Server.Send",
-            text);
+            text,
+            encodingName);
 
-        var channelName = GetTcpServerChannelName(protocol);
+        var channelName = GetTcpServerChannelName(protocol, encodingName);
 
         Monitor.AddSendLog(
             channelName,
@@ -323,13 +379,18 @@ public sealed class CommunicationSampleRuntime
     /// \brief 선택된 프로토콜로 TCP Client를 연결합니다.
     /// </summary>
     /// <param name="protocol">프로토콜 이름입니다.</param>
-    public async Task ConnectTcpClientAsync(string protocol)
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    public async Task ConnectTcpClientAsync(
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
         protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
 
         if (_tcpClient is not null &&
             _tcpClient.State == ConnectionState.Connected &&
-            _currentClientProtocol == protocol)
+            _currentClientProtocol == protocol &&
+            _currentClientEncoding == encodingName)
         {
             return;
         }
@@ -340,8 +401,9 @@ public sealed class CommunicationSampleRuntime
         }
 
         _currentClientProtocol = protocol;
+        _currentClientEncoding = encodingName;
 
-        EnsureTcpClientChannel(protocol);
+        EnsureTcpClientChannel(protocol, encodingName);
 
         var port = GetTcpPort(protocol);
 
@@ -351,15 +413,19 @@ public sealed class CommunicationSampleRuntime
                 Host = "127.0.0.1",
                 Port = port
             },
-            CreateProtocolAdapter(protocol),
-            CreateFrameCodec(protocol));
+            CreateProtocolAdapter(
+                protocol,
+                "tcp",
+                "Tcp",
+                encodingName),
+            CreateFrameCodec(protocol, encodingName));
 
         _tcpClient.MessageReceived += OnTcpClientMessageReceived;
 
         await _tcpClient.ConnectAsync();
 
         Monitor.UpdateChannelState(
-            GetTcpClientChannelName(protocol),
+            GetTcpClientChannelName(protocol, encodingName),
             ConnectionState.Connected);
     }
 
@@ -369,7 +435,8 @@ public sealed class CommunicationSampleRuntime
     public async Task DisconnectTcpClientAsync()
     {
         var protocol = _currentClientProtocol;
-        var channelName = GetTcpClientChannelName(protocol);
+        var encodingName = _currentClientEncoding;
+        var channelName = GetTcpClientChannelName(protocol, encodingName);
 
         if (_tcpClient is null)
         {
@@ -398,9 +465,14 @@ public sealed class CommunicationSampleRuntime
     /// </summary>
     /// <param name="protocol">프로토콜 이름입니다.</param>
     /// <param name="text">송신 문자열입니다.</param>
-    public async Task SendTcpClientAsync(string protocol, string text)
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    public async Task SendTcpClientAsync(
+        string protocol,
+        string text,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
         protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -409,9 +481,10 @@ public sealed class CommunicationSampleRuntime
 
         if (_tcpClient is null ||
             _tcpClient.State != ConnectionState.Connected ||
-            _currentClientProtocol != protocol)
+            _currentClientProtocol != protocol ||
+            _currentClientEncoding != encodingName)
         {
-            await ConnectTcpClientAsync(protocol);
+            await ConnectTcpClientAsync(protocol, encodingName);
         }
 
         if (_tcpClient is null)
@@ -422,9 +495,10 @@ public sealed class CommunicationSampleRuntime
         var message = CreateTcpMessageByProtocol(
             protocol,
             "Client.Send",
-            text);
+            text,
+            encodingName);
 
-        var channelName = GetTcpClientChannelName(protocol);
+        var channelName = GetTcpClientChannelName(protocol, encodingName);
 
         Monitor.AddSendLog(
             channelName,
@@ -444,15 +518,305 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
+    /// \brief UDP Peer A와 Peer B를 모두 시작합니다.
+    /// </summary>
+    /// <param name="protocol">프로토콜 이름입니다.</param>
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    public async Task StartUdpLoopbackAsync(
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
+    {
+        await ConnectUdpPeerAAsync(protocol, encodingName);
+        await ConnectUdpPeerBAsync(protocol, encodingName);
+    }
+
+    /// <summary>
+    /// \brief 선택된 프로토콜로 UDP Peer A를 시작합니다.
+    /// </summary>
+    /// <param name="protocol">프로토콜 이름입니다.</param>
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    public async Task ConnectUdpPeerAAsync(
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
+    {
+        protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
+
+        if (_udpPeerA is not null &&
+            _udpPeerA.State == ConnectionState.Connected &&
+            _currentUdpPeerAProtocol == protocol &&
+            _currentUdpPeerAEncoding == encodingName)
+        {
+            return;
+        }
+
+        if (_udpPeerA is not null)
+        {
+            await DisconnectUdpPeerAAsync();
+        }
+
+        _currentUdpPeerAProtocol = protocol;
+        _currentUdpPeerAEncoding = encodingName;
+
+        EnsureUdpPeerChannel("A", protocol, encodingName);
+
+        _udpPeerA = new UdpTransport(
+            new UdpTransportOptions
+            {
+                LocalHost = "127.0.0.1",
+                LocalPort = UdpPeerALocalPort,
+                RemoteHost = "127.0.0.1",
+                RemotePort = UdpPeerBLocalPort,
+                ReuseAddress = true
+            },
+            CreateProtocolAdapter(
+                protocol,
+                "udp",
+                "Udp",
+                encodingName));
+
+        _udpPeerA.MessageReceived += OnUdpPeerAMessageReceived;
+
+        await _udpPeerA.ConnectAsync();
+
+        Monitor.UpdateChannelState(
+            GetUdpPeerChannelName("A", protocol, encodingName),
+            ConnectionState.Connected);
+    }
+
+    /// <summary>
+    /// \brief 선택된 프로토콜로 UDP Peer B를 시작합니다.
+    /// </summary>
+    /// <param name="protocol">프로토콜 이름입니다.</param>
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    public async Task ConnectUdpPeerBAsync(
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
+    {
+        protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
+
+        if (_udpPeerB is not null &&
+            _udpPeerB.State == ConnectionState.Connected &&
+            _currentUdpPeerBProtocol == protocol &&
+            _currentUdpPeerBEncoding == encodingName)
+        {
+            return;
+        }
+
+        if (_udpPeerB is not null)
+        {
+            await DisconnectUdpPeerBAsync();
+        }
+
+        _currentUdpPeerBProtocol = protocol;
+        _currentUdpPeerBEncoding = encodingName;
+
+        EnsureUdpPeerChannel("B", protocol, encodingName);
+
+        _udpPeerB = new UdpTransport(
+            new UdpTransportOptions
+            {
+                LocalHost = "127.0.0.1",
+                LocalPort = UdpPeerBLocalPort,
+                RemoteHost = "127.0.0.1",
+                RemotePort = UdpPeerALocalPort,
+                ReuseAddress = true
+            },
+            CreateProtocolAdapter(
+                protocol,
+                "udp",
+                "Udp",
+                encodingName));
+
+        _udpPeerB.MessageReceived += OnUdpPeerBMessageReceived;
+
+        await _udpPeerB.ConnectAsync();
+
+        Monitor.UpdateChannelState(
+            GetUdpPeerChannelName("B", protocol, encodingName),
+            ConnectionState.Connected);
+    }
+
+    /// <summary>
+    /// \brief UDP Peer A 연결을 해제합니다.
+    /// </summary>
+    public async Task DisconnectUdpPeerAAsync()
+    {
+        var protocol = _currentUdpPeerAProtocol;
+        var encodingName = _currentUdpPeerAEncoding;
+        var channelName = GetUdpPeerChannelName("A", protocol, encodingName);
+
+        if (_udpPeerA is null)
+        {
+            if (Monitor.Channels.Any(x => x.Name == channelName))
+            {
+                Monitor.UpdateChannelState(channelName, ConnectionState.Disconnected);
+            }
+
+            return;
+        }
+
+        _udpPeerA.MessageReceived -= OnUdpPeerAMessageReceived;
+
+        await _udpPeerA.DisposeAsync();
+
+        _udpPeerA = null;
+
+        if (Monitor.Channels.Any(x => x.Name == channelName))
+        {
+            Monitor.UpdateChannelState(channelName, ConnectionState.Disconnected);
+        }
+    }
+
+    /// <summary>
+    /// \brief UDP Peer B 연결을 해제합니다.
+    /// </summary>
+    public async Task DisconnectUdpPeerBAsync()
+    {
+        var protocol = _currentUdpPeerBProtocol;
+        var encodingName = _currentUdpPeerBEncoding;
+        var channelName = GetUdpPeerChannelName("B", protocol, encodingName);
+
+        if (_udpPeerB is null)
+        {
+            if (Monitor.Channels.Any(x => x.Name == channelName))
+            {
+                Monitor.UpdateChannelState(channelName, ConnectionState.Disconnected);
+            }
+
+            return;
+        }
+
+        _udpPeerB.MessageReceived -= OnUdpPeerBMessageReceived;
+
+        await _udpPeerB.DisposeAsync();
+
+        _udpPeerB = null;
+
+        if (Monitor.Channels.Any(x => x.Name == channelName))
+        {
+            Monitor.UpdateChannelState(channelName, ConnectionState.Disconnected);
+        }
+    }
+
+    /// <summary>
+    /// \brief UDP Peer A와 Peer B를 모두 종료합니다.
+    /// </summary>
+    public async Task StopAllUdpAsync()
+    {
+        await DisconnectUdpPeerBAsync();
+        await DisconnectUdpPeerAAsync();
+    }
+
+    /// <summary>
+    /// \brief UDP Peer A에서 Peer B로 메시지를 송신합니다.
+    /// </summary>
+    /// <param name="protocol">프로토콜 이름입니다.</param>
+    /// <param name="text">송신 문자열입니다.</param>
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    public async Task SendUdpPeerAAsync(
+        string protocol,
+        string text,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
+    {
+        protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            text = "Hello from Dreamine UDP Peer A";
+        }
+
+        if (_udpPeerA is null ||
+            _udpPeerA.State != ConnectionState.Connected ||
+            _currentUdpPeerAProtocol != protocol ||
+            _currentUdpPeerAEncoding != encodingName)
+        {
+            await ConnectUdpPeerAAsync(protocol, encodingName);
+        }
+
+        if (_udpPeerA is null)
+        {
+            return;
+        }
+
+        var message = CreateUdpMessageByProtocol(
+            protocol,
+            "PeerA.Send",
+            text,
+            encodingName);
+
+        var channelName = GetUdpPeerChannelName("A", protocol, encodingName);
+
+        Monitor.AddSendLog(
+            channelName,
+            TransportKind.Udp,
+            message);
+
+        await _udpPeerA.SendAsync(message);
+    }
+
+    /// <summary>
+    /// \brief UDP Peer B에서 Peer A로 메시지를 송신합니다.
+    /// </summary>
+    /// <param name="protocol">프로토콜 이름입니다.</param>
+    /// <param name="text">송신 문자열입니다.</param>
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    public async Task SendUdpPeerBAsync(
+        string protocol,
+        string text,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
+    {
+        protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            text = "Hello from Dreamine UDP Peer B";
+        }
+
+        if (_udpPeerB is null ||
+            _udpPeerB.State != ConnectionState.Connected ||
+            _currentUdpPeerBProtocol != protocol ||
+            _currentUdpPeerBEncoding != encodingName)
+        {
+            await ConnectUdpPeerBAsync(protocol, encodingName);
+        }
+
+        if (_udpPeerB is null)
+        {
+            return;
+        }
+
+        var message = CreateUdpMessageByProtocol(
+            protocol,
+            "PeerB.Send",
+            text,
+            encodingName);
+
+        var channelName = GetUdpPeerChannelName("B", protocol, encodingName);
+
+        Monitor.AddSendLog(
+            channelName,
+            TransportKind.Udp,
+            message);
+
+        await _udpPeerB.SendAsync(message);
+    }
+
+    /// <summary>
     /// \brief 선택된 설정으로 Serial Port를 연결합니다.
     /// </summary>
     /// <param name="portName">Serial Port 이름입니다.</param>
     /// <param name="baudRate">BaudRate입니다.</param>
     /// <param name="protocol">프로토콜 이름입니다.</param>
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
     public async Task ConnectSerialAsync(
         string portName,
         int baudRate,
-        string protocol)
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
         if (string.IsNullOrWhiteSpace(portName))
         {
@@ -460,12 +824,14 @@ public sealed class CommunicationSampleRuntime
         }
 
         protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
 
         if (_serialTransport is not null &&
             _serialTransport.State == ConnectionState.Connected &&
             _currentSerialPortName == portName &&
             _currentSerialBaudRate == baudRate &&
-            _currentSerialProtocol == protocol)
+            _currentSerialProtocol == protocol &&
+            _currentSerialEncoding == encodingName)
         {
             return;
         }
@@ -478,6 +844,7 @@ public sealed class CommunicationSampleRuntime
         _currentSerialPortName = portName;
         _currentSerialBaudRate = baudRate;
         _currentSerialProtocol = protocol;
+        _currentSerialEncoding = encodingName;
 
         EnsureSerialChannel();
 
@@ -490,8 +857,9 @@ public sealed class CommunicationSampleRuntime
             CreateProtocolAdapter(
                 protocol,
                 "serial",
-                "Serial"),
-            CreateFrameCodec(protocol));
+                "Serial",
+                encodingName),
+            CreateFrameCodec(protocol, encodingName));
 
         _serialTransport.MessageReceived += OnSerialMessageReceived;
 
@@ -536,9 +904,14 @@ public sealed class CommunicationSampleRuntime
     /// </summary>
     /// <param name="protocol">프로토콜 이름입니다.</param>
     /// <param name="text">송신 문자열입니다.</param>
-    public async Task SendSerialAsync(string protocol, string text)
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    public async Task SendSerialAsync(
+        string protocol,
+        string text,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
         protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -554,7 +927,8 @@ public sealed class CommunicationSampleRuntime
         var message = CreateSerialMessageByProtocol(
             protocol,
             "Send",
-            text);
+            text,
+            encodingName);
 
         var channelName = GetSerialChannelName();
 
@@ -818,6 +1192,7 @@ public sealed class CommunicationSampleRuntime
     {
         await DisconnectRabbitMqAsync();
         await DisconnectSerialAsync();
+        await StopAllUdpAsync();
         await StopAllTcpAsync();
         await DisconnectInMemoryAsync();
     }
@@ -850,7 +1225,8 @@ public sealed class CommunicationSampleRuntime
     private async void OnTcpServerMessageReceived(object? sender, MessageEnvelope message)
     {
         var protocol = _currentServerProtocol;
-        var channelName = GetTcpServerChannelName(protocol);
+        var encodingName = _currentServerEncoding;
+        var channelName = GetTcpServerChannelName(protocol, encodingName);
 
         RunOnUiThread(() =>
         {
@@ -871,7 +1247,8 @@ public sealed class CommunicationSampleRuntime
         var echoMessage = CreateTcpMessageByProtocol(
             protocol,
             "Server.Echo",
-            $"Echo from Dreamine TCP Server - {receiveText}");
+            $"Echo from Dreamine TCP Server - {receiveText}",
+            encodingName);
 
         RunOnUiThread(() =>
         {
@@ -887,13 +1264,44 @@ public sealed class CommunicationSampleRuntime
     private void OnTcpClientMessageReceived(object? sender, MessageEnvelope message)
     {
         var protocol = _currentClientProtocol;
-        var channelName = GetTcpClientChannelName(protocol);
+        var encodingName = _currentClientEncoding;
+        var channelName = GetTcpClientChannelName(protocol, encodingName);
 
         RunOnUiThread(() =>
         {
             Monitor.AddReceiveLog(
                 channelName,
                 TransportKind.Tcp,
+                message);
+        });
+    }
+
+    private void OnUdpPeerAMessageReceived(object? sender, MessageEnvelope message)
+    {
+        var protocol = _currentUdpPeerAProtocol;
+        var encodingName = _currentUdpPeerAEncoding;
+        var channelName = GetUdpPeerChannelName("A", protocol, encodingName);
+
+        RunOnUiThread(() =>
+        {
+            Monitor.AddReceiveLog(
+                channelName,
+                TransportKind.Udp,
+                message);
+        });
+    }
+
+    private void OnUdpPeerBMessageReceived(object? sender, MessageEnvelope message)
+    {
+        var protocol = _currentUdpPeerBProtocol;
+        var encodingName = _currentUdpPeerBEncoding;
+        var channelName = GetUdpPeerChannelName("B", protocol, encodingName);
+
+        RunOnUiThread(() =>
+        {
+            Monitor.AddReceiveLog(
+                channelName,
+                TransportKind.Udp,
                 message);
         });
     }
@@ -911,9 +1319,11 @@ public sealed class CommunicationSampleRuntime
         });
     }
 
-    private void EnsureTcpServerChannel(string protocol)
+    private void EnsureTcpServerChannel(
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
-        var channelName = GetTcpServerChannelName(protocol);
+        var channelName = GetTcpServerChannelName(protocol, encodingName);
         var port = GetTcpPort(protocol);
 
         if (Monitor.Channels.Any(x => x.Name == channelName))
@@ -924,12 +1334,14 @@ public sealed class CommunicationSampleRuntime
         Monitor.AddChannel(
             channelName,
             TransportKind.Tcp,
-            $"TCP server [{protocol}] on 127.0.0.1:{port}.");
+            $"TCP server [{protocol}/{NormalizeTextEncodingName(encodingName)}] on 127.0.0.1:{port}.");
     }
 
-    private void EnsureTcpClientChannel(string protocol)
+    private void EnsureTcpClientChannel(
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
-        var channelName = GetTcpClientChannelName(protocol);
+        var channelName = GetTcpClientChannelName(protocol, encodingName);
         var port = GetTcpPort(protocol);
 
         if (Monitor.Channels.Any(x => x.Name == channelName))
@@ -940,7 +1352,29 @@ public sealed class CommunicationSampleRuntime
         Monitor.AddChannel(
             channelName,
             TransportKind.Tcp,
-            $"TCP client [{protocol}] to 127.0.0.1:{port}.");
+            $"TCP client [{protocol}/{NormalizeTextEncodingName(encodingName)}] to 127.0.0.1:{port}.");
+    }
+
+    private void EnsureUdpPeerChannel(
+        string peerName,
+        string protocol,
+        string encodingName)
+    {
+        encodingName = NormalizeTextEncodingName(encodingName);
+
+        var channelName = GetUdpPeerChannelName(peerName, protocol, encodingName);
+        var localPort = GetUdpLocalPort(peerName);
+        var remotePort = GetUdpRemotePort(peerName);
+
+        if (Monitor.Channels.Any(x => x.Name == channelName))
+        {
+            return;
+        }
+
+        Monitor.AddChannel(
+            channelName,
+            TransportKind.Udp,
+            $"UDP peer {peerName} [{protocol}/{encodingName}] 127.0.0.1:{localPort} -> 127.0.0.1:{remotePort}.");
     }
 
     private void EnsureSerialChannel()
@@ -955,7 +1389,7 @@ public sealed class CommunicationSampleRuntime
         Monitor.AddChannel(
             channelName,
             TransportKind.Serial,
-            $"Serial [{_currentSerialProtocol}] on {_currentSerialPortName}:{_currentSerialBaudRate}.");
+            $"Serial [{_currentSerialProtocol}/{_currentSerialEncoding}] on {_currentSerialPortName}:{_currentSerialBaudRate}.");
     }
 
     private void EnsureRabbitMqChannel()
@@ -984,44 +1418,51 @@ public sealed class CommunicationSampleRuntime
     private static IMessageProtocolAdapter CreateProtocolAdapter(
         string protocol,
         string routePrefix = "tcp",
-        string namePrefix = "Tcp")
+        string namePrefix = "Tcp",
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
         var normalizedProtocol = NormalizeProtocol(protocol);
+        var textEncoding = PlainTextProtocolOptions.CreateEncoding(encodingName);
 
         return normalizedProtocol switch
         {
             DreamineEnvelopeProtocol => new DreamineEnvelopeProtocolAdapter(),
 
             PlainTextProtocol => new PlainTextProtocolAdapter(
-                Encoding.UTF8,
+                textEncoding,
                 $"{routePrefix}.plaintext",
                 $"{namePrefix}.PlainText"),
 
             RawAvailableProtocol => new PlainTextProtocolAdapter(
-                Encoding.UTF8,
+                textEncoding,
                 $"{routePrefix}.raw.available",
                 $"{namePrefix}.RawAvailable"),
 
             RawJsonProtocol => new RawJsonProtocolAdapter(
+                textEncoding,
                 $"{routePrefix}.rawjson",
                 $"{namePrefix}.RawJson"),
 
             _ => new PlainTextProtocolAdapter(
-                Encoding.UTF8,
+                textEncoding,
                 $"{routePrefix}.plaintext",
                 $"{namePrefix}.PlainText")
         };
     }
 
-    private static IMessageFrameCodec CreateFrameCodec(string protocol)
+    private static IMessageFrameCodec CreateFrameCodec(
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
+        var delimiterEncoding = PlainTextProtocolOptions.CreateEncoding(encodingName);
+
         return NormalizeProtocol(protocol) switch
         {
             DreamineEnvelopeProtocol => new LengthPrefixedMessageFrameCodec(),
 
             PlainTextProtocol => new DelimiterMessageFrameCodec(
                 "\r\n",
-                Encoding.UTF8,
+                delimiterEncoding,
                 1024 * 1024),
 
             RawAvailableProtocol => new RawAvailableMessageFrameCodec(),
@@ -1033,7 +1474,7 @@ public sealed class CommunicationSampleRuntime
 
             _ => new DelimiterMessageFrameCodec(
                 "\r\n",
-                Encoding.UTF8,
+                delimiterEncoding,
                 1024 * 1024)
         };
     }
@@ -1050,36 +1491,96 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
-    private static string GetTcpServerChannelName(string protocol)
+    private static string GetTcpServerChannelName(
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
+        var normalizedEncodingName = NormalizeTextEncodingName(encodingName);
+
         return NormalizeProtocol(protocol) switch
         {
             DreamineEnvelopeProtocol => "TCP-Server-Dreamine",
-            PlainTextProtocol => "TCP-Server-PlainText",
-            RawAvailableProtocol => "TCP-Server-RawAvailable",
+            PlainTextProtocol => $"TCP-Server-PlainText-{normalizedEncodingName}",
+            RawAvailableProtocol => $"TCP-Server-RawAvailable-{normalizedEncodingName}",
             RawJsonProtocol => "TCP-Server-RawJson",
-            _ => "TCP-Server-PlainText"
+            _ => $"TCP-Server-PlainText-{normalizedEncodingName}"
         };
     }
 
-    private static string GetTcpClientChannelName(string protocol)
+    private static string GetTcpClientChannelName(
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
+        var normalizedEncodingName = NormalizeTextEncodingName(encodingName);
+
         return NormalizeProtocol(protocol) switch
         {
             DreamineEnvelopeProtocol => "TCP-Client-Dreamine",
-            PlainTextProtocol => "TCP-Client-PlainText",
-            RawAvailableProtocol => "TCP-Client-RawAvailable",
+            PlainTextProtocol => $"TCP-Client-PlainText-{normalizedEncodingName}",
+            RawAvailableProtocol => $"TCP-Client-RawAvailable-{normalizedEncodingName}",
             RawJsonProtocol => "TCP-Client-RawJson",
-            _ => "TCP-Client-PlainText"
+            _ => $"TCP-Client-PlainText-{normalizedEncodingName}"
         };
+    }
+
+    private static string GetUdpPeerChannelName(
+        string peerName,
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
+    {
+        var normalizedPeerName = NormalizeUdpPeerName(peerName);
+        var normalizedEncodingName = NormalizeTextEncodingName(encodingName);
+
+        return NormalizeProtocol(protocol) switch
+        {
+            DreamineEnvelopeProtocol => $"UDP-Peer{normalizedPeerName}-Dreamine",
+            PlainTextProtocol => $"UDP-Peer{normalizedPeerName}-PlainText-{normalizedEncodingName}",
+            RawAvailableProtocol => $"UDP-Peer{normalizedPeerName}-RawAvailable-{normalizedEncodingName}",
+            RawJsonProtocol => $"UDP-Peer{normalizedPeerName}-RawJson",
+            _ => $"UDP-Peer{normalizedPeerName}-PlainText-{normalizedEncodingName}"
+        };
+    }
+    private static string NormalizeTextEncodingName(string encodingName)
+    {
+        if (string.Equals(encodingName, PlainTextProtocolOptions.KoreanCodePage949EncodingName, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(encodingName, "949", StringComparison.OrdinalIgnoreCase))
+        {
+            return PlainTextProtocolOptions.KoreanCodePage949EncodingName;
+        }
+
+        return PlainTextProtocolOptions.Utf8EncodingName;
+    }
+
+
+    private static int GetUdpLocalPort(string peerName)
+    {
+        return NormalizeUdpPeerName(peerName) == "B"
+            ? UdpPeerBLocalPort
+            : UdpPeerALocalPort;
+    }
+
+    private static int GetUdpRemotePort(string peerName)
+    {
+        return NormalizeUdpPeerName(peerName) == "B"
+            ? UdpPeerALocalPort
+            : UdpPeerBLocalPort;
+    }
+
+    private static string NormalizeUdpPeerName(string peerName)
+    {
+        return string.Equals(peerName, "B", StringComparison.OrdinalIgnoreCase)
+            ? "B"
+            : "A";
     }
 
     private static MessageEnvelope CreateTcpMessageByProtocol(
         string protocol,
         string direction,
-        string text)
+        string text,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
         var normalizedProtocol = NormalizeProtocol(protocol);
+        var normalizedEncodingName = NormalizeTextEncodingName(encodingName);
         var payload = Encoding.UTF8.GetBytes(text);
 
         return normalizedProtocol switch
@@ -1103,7 +1604,8 @@ public sealed class CommunicationSampleRuntime
                 Headers = new Dictionary<string, string>
                 {
                     ["ContentType"] = "text/plain",
-                    ["Protocol"] = PlainTextProtocol
+                    ["Protocol"] = PlainTextProtocol,
+                    ["ExternalEncoding"] = normalizedEncodingName
                 }
             },
 
@@ -1115,7 +1617,8 @@ public sealed class CommunicationSampleRuntime
                 Headers = new Dictionary<string, string>
                 {
                     ["ContentType"] = "text/plain",
-                    ["Protocol"] = RawAvailableProtocol
+                    ["Protocol"] = RawAvailableProtocol,
+                    ["ExternalEncoding"] = normalizedEncodingName
                 }
             },
 
@@ -1139,7 +1642,84 @@ public sealed class CommunicationSampleRuntime
                 Headers = new Dictionary<string, string>
                 {
                     ["ContentType"] = "text/plain",
-                    ["Protocol"] = PlainTextProtocol
+                    ["Protocol"] = PlainTextProtocol,
+                    ["ExternalEncoding"] = normalizedEncodingName
+                }
+            }
+        };
+    }
+
+    private static MessageEnvelope CreateUdpMessageByProtocol(
+        string protocol,
+        string direction,
+        string text,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
+    {
+        var normalizedProtocol = NormalizeProtocol(protocol);
+        var normalizedEncodingName = NormalizeTextEncodingName(encodingName);
+        var payload = Encoding.UTF8.GetBytes(text);
+
+        return normalizedProtocol switch
+        {
+            DreamineEnvelopeProtocol => new MessageEnvelope
+            {
+                Name = $"Udp.{direction}.DreamineEnvelope",
+                Route = "sample.communication.udp",
+                Payload = payload,
+                Headers = new Dictionary<string, string>
+                {
+                    ["Protocol"] = DreamineEnvelopeProtocol
+                }
+            },
+
+            PlainTextProtocol => new MessageEnvelope
+            {
+                Name = $"Udp.{direction}.PlainText",
+                Route = "udp.plaintext",
+                Payload = payload,
+                Headers = new Dictionary<string, string>
+                {
+                    ["ContentType"] = "text/plain",
+                    ["Protocol"] = PlainTextProtocol,
+                    ["ExternalEncoding"] = normalizedEncodingName
+                }
+            },
+
+            RawAvailableProtocol => new MessageEnvelope
+            {
+                Name = $"Udp.{direction}.RawAvailable",
+                Route = "udp.raw.available",
+                Payload = payload,
+                Headers = new Dictionary<string, string>
+                {
+                    ["ContentType"] = "text/plain",
+                    ["Protocol"] = RawAvailableProtocol,
+                    ["ExternalEncoding"] = normalizedEncodingName
+                }
+            },
+
+            RawJsonProtocol => new MessageEnvelope
+            {
+                Name = $"Udp.{direction}.RawJson",
+                Route = "udp.rawjson",
+                Payload = EnsureJsonPayload(text),
+                Headers = new Dictionary<string, string>
+                {
+                    ["ContentType"] = "application/json",
+                    ["Protocol"] = RawJsonProtocol
+                }
+            },
+
+            _ => new MessageEnvelope
+            {
+                Name = $"Udp.{direction}.PlainText",
+                Route = "udp.plaintext",
+                Payload = payload,
+                Headers = new Dictionary<string, string>
+                {
+                    ["ContentType"] = "text/plain",
+                    ["Protocol"] = PlainTextProtocol,
+                    ["ExternalEncoding"] = normalizedEncodingName
                 }
             }
         };
@@ -1148,9 +1728,11 @@ public sealed class CommunicationSampleRuntime
     private static MessageEnvelope CreateSerialMessageByProtocol(
         string protocol,
         string direction,
-        string text)
+        string text,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
     {
         var normalizedProtocol = NormalizeProtocol(protocol);
+        var normalizedEncodingName = NormalizeTextEncodingName(encodingName);
         var payload = Encoding.UTF8.GetBytes(text);
 
         return normalizedProtocol switch
@@ -1174,7 +1756,8 @@ public sealed class CommunicationSampleRuntime
                 Headers = new Dictionary<string, string>
                 {
                     ["ContentType"] = "text/plain",
-                    ["Protocol"] = PlainTextProtocol
+                    ["Protocol"] = PlainTextProtocol,
+                    ["ExternalEncoding"] = normalizedEncodingName
                 }
             },
 
@@ -1186,7 +1769,8 @@ public sealed class CommunicationSampleRuntime
                 Headers = new Dictionary<string, string>
                 {
                     ["ContentType"] = "text/plain",
-                    ["Protocol"] = RawAvailableProtocol
+                    ["Protocol"] = RawAvailableProtocol,
+                    ["ExternalEncoding"] = normalizedEncodingName
                 }
             },
 
@@ -1210,7 +1794,8 @@ public sealed class CommunicationSampleRuntime
                 Headers = new Dictionary<string, string>
                 {
                     ["ContentType"] = "text/plain",
-                    ["Protocol"] = PlainTextProtocol
+                    ["Protocol"] = PlainTextProtocol,
+                    ["ExternalEncoding"] = normalizedEncodingName
                 }
             }
         };

@@ -1,4 +1,4 @@
-<UserControl x:Class="SampleSmart.Pages.PageSub.CommunicationTabs.Tcp.TcpClientTestView"
+﻿<UserControl x:Class="SampleSmart.Pages.PageSub.CommunicationTabs.Tcp.TcpClientTestView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
@@ -28,6 +28,16 @@
                   Margin="0,0,8,0"
                   ItemsSource="{Binding TcpClientProtocols}"
                   SelectedItem="{Binding SelectedTcpClientProtocol}" />
+
+                <TextBlock Text="Encoding"
+                           Width="70"
+                           VerticalAlignment="Center" />
+
+                <ComboBox Width="110"
+                          Height="28"
+                          Margin="0,0,8,0"
+                          ItemsSource="{Binding TcpClientEncodings}"
+                          SelectedItem="{Binding SelectedTcpClientEncoding}" />
 
                 <Button Content="Connect Client"
                 Width="120"

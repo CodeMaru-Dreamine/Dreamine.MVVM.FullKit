@@ -1,3 +1,4 @@
+using Dreamine.Communication.Core.Protocols;
 using SampleSmart.Pages.PageSub.CommunicationTabs;
 
 namespace SampleSmart.Pages.PageSub.CommunicationTabs.Tcp;
@@ -18,6 +19,7 @@ public sealed class TcpServerTestViewEvent
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
 
         SelectedTcpServerProtocol = "RawAvailable";
+        SelectedTcpServerEncoding = PlainTextProtocolOptions.Utf8EncodingName;
         TcpServerSendText = "Hello from Dreamine TCP Server";
     }
 
@@ -27,9 +29,19 @@ public sealed class TcpServerTestViewEvent
     public IReadOnlyList<string> TcpServerProtocols => _runtime.TcpProtocols;
 
     /// <summary>
+    /// \brief 선택 가능한 TCP Server 문자열 인코딩 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> TcpServerEncodings => _runtime.TextEncodings;
+
+    /// <summary>
     /// \brief 선택된 TCP Server 프로토콜입니다.
     /// </summary>
     public string SelectedTcpServerProtocol { get; set; }
+
+    /// <summary>
+    /// \brief 선택된 TCP Server 문자열 인코딩입니다.
+    /// </summary>
+    public string SelectedTcpServerEncoding { get; set; }
 
     /// <summary>
     /// \brief TCP Server 송신 문자열입니다.
@@ -41,7 +53,9 @@ public sealed class TcpServerTestViewEvent
     /// </summary>
     public void StartServer()
     {
-        _ = _runtime.StartTcpServerAsync(SelectedTcpServerProtocol);
+        _ = _runtime.StartTcpServerAsync(
+            SelectedTcpServerProtocol,
+            SelectedTcpServerEncoding);
     }
 
     /// <summary>
@@ -59,6 +73,7 @@ public sealed class TcpServerTestViewEvent
     {
         _ = _runtime.SendTcpServerAsync(
             SelectedTcpServerProtocol,
-            TcpServerSendText);
+            TcpServerSendText,
+            SelectedTcpServerEncoding);
     }
 }

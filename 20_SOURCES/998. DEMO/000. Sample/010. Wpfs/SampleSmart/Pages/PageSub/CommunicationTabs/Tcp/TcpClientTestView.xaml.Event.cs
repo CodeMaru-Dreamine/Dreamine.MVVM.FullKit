@@ -1,3 +1,4 @@
+using Dreamine.Communication.Core.Protocols;
 using SampleSmart.Pages.PageSub.CommunicationTabs;
 
 namespace SampleSmart.Pages.PageSub.CommunicationTabs.Tcp;
@@ -18,6 +19,7 @@ public sealed class TcpClientTestViewEvent
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
 
         SelectedTcpClientProtocol = "RawAvailable";
+        SelectedTcpClientEncoding = PlainTextProtocolOptions.Utf8EncodingName;
         TcpClientSendText = "test";
     }
 
@@ -27,9 +29,19 @@ public sealed class TcpClientTestViewEvent
     public IReadOnlyList<string> TcpClientProtocols => _runtime.TcpProtocols;
 
     /// <summary>
+    /// \brief 선택 가능한 TCP Client 문자열 인코딩 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> TcpClientEncodings => _runtime.TextEncodings;
+
+    /// <summary>
     /// \brief 선택된 TCP Client 프로토콜입니다.
     /// </summary>
     public string SelectedTcpClientProtocol { get; set; }
+
+    /// <summary>
+    /// \brief 선택된 TCP Client 문자열 인코딩입니다.
+    /// </summary>
+    public string SelectedTcpClientEncoding { get; set; }
 
     /// <summary>
     /// \brief TCP Client 송신 문자열입니다.
@@ -41,7 +53,9 @@ public sealed class TcpClientTestViewEvent
     /// </summary>
     public void ConnectClient()
     {
-        _ = _runtime.ConnectTcpClientAsync(SelectedTcpClientProtocol);
+        _ = _runtime.ConnectTcpClientAsync(
+            SelectedTcpClientProtocol,
+            SelectedTcpClientEncoding);
     }
 
     /// <summary>
@@ -59,6 +73,7 @@ public sealed class TcpClientTestViewEvent
     {
         _ = _runtime.SendTcpClientAsync(
             SelectedTcpClientProtocol,
-            TcpClientSendText);
+            TcpClientSendText,
+            SelectedTcpClientEncoding);
     }
 }

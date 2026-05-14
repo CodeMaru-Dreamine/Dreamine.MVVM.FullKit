@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.IO.Ports;
+using Dreamine.Communication.Core.Protocols;
 using SampleSmart.Pages.PageSub.CommunicationTabs;
 
 namespace SampleSmart.Pages.PageSub.CommunicationTabs.Serial;
@@ -39,6 +40,7 @@ public sealed class SerialPortTestViewEvent
 
         SelectedBaudRate = 9600;
         SelectedSerialProtocol = "RawAvailable";
+        SelectedSerialEncoding = PlainTextProtocolOptions.Utf8EncodingName;
         SerialSendText = "test";
 
         RefreshPorts();
@@ -60,6 +62,11 @@ public sealed class SerialPortTestViewEvent
     public IReadOnlyList<string> SerialProtocols { get; }
 
     /// <summary>
+    /// \brief 선택 가능한 Serial 문자열 인코딩 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> SerialEncodings => _runtime.TextEncodings;
+
+    /// <summary>
     /// \brief 선택된 Serial Port 이름입니다.
     /// </summary>
     public string SelectedSerialPortName { get; set; } = string.Empty;
@@ -75,6 +82,11 @@ public sealed class SerialPortTestViewEvent
     public string SelectedSerialProtocol { get; set; } = string.Empty;
 
     /// <summary>
+    /// \brief 선택된 Serial 문자열 인코딩입니다.
+    /// </summary>
+    public string SelectedSerialEncoding { get; set; }
+
+    /// <summary>
     /// \brief Serial 송신 문자열입니다.
     /// </summary>
     public string SerialSendText { get; set; } = string.Empty;
@@ -83,7 +95,7 @@ public sealed class SerialPortTestViewEvent
     /// \brief 현재 Serial 선택 상태 요약 문자열입니다.
     /// </summary>
     public string SerialSelectionSummary =>
-        $"Port={SelectedSerialPortName}, BaudRate={SelectedBaudRate}, Protocol={SelectedSerialProtocol}";
+        $"Port={SelectedSerialPortName}, BaudRate={SelectedBaudRate}, Protocol={SelectedSerialProtocol}, Encoding={SelectedSerialEncoding}";
 
     /// <summary>
     /// \brief Serial Port 목록을 갱신합니다.
@@ -128,7 +140,8 @@ public sealed class SerialPortTestViewEvent
         _ = _runtime.ConnectSerialAsync(
             SelectedSerialPortName,
             SelectedBaudRate,
-            SelectedSerialProtocol);
+            SelectedSerialProtocol,
+            SelectedSerialEncoding);
     }
 
     /// <summary>
@@ -151,7 +164,8 @@ public sealed class SerialPortTestViewEvent
 
         _ = _runtime.SendSerialAsync(
             SelectedSerialProtocol,
-            SerialSendText);
+            SerialSendText,
+            SelectedSerialEncoding);
     }
 
     private void AddFallbackPorts()

@@ -1,3 +1,5 @@
+using Dreamine.Communication.Core.Protocols;
+
 namespace SampleSmart.Pages.PageSub.CommunicationTabs.Tcp;
 
 /// <summary>
@@ -16,6 +18,7 @@ public sealed class TcpLoopbackTestViewEvent
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
 
         SelectedTcpLoopbackProtocol = "PlainText";
+        SelectedTcpLoopbackEncoding = PlainTextProtocolOptions.Utf8EncodingName;
         TcpLoopbackSendText = "Hello from Dreamine TCP Loopback";
     }
 
@@ -25,9 +28,19 @@ public sealed class TcpLoopbackTestViewEvent
     public IReadOnlyList<string> TcpLoopbackProtocols => _runtime.TcpProtocols;
 
     /// <summary>
+    /// \brief 선택 가능한 TCP Loopback 문자열 인코딩 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> TcpLoopbackEncodings => _runtime.TextEncodings;
+
+    /// <summary>
     /// \brief 선택된 TCP Loopback 프로토콜입니다.
     /// </summary>
     public string SelectedTcpLoopbackProtocol { get; set; }
+
+    /// <summary>
+    /// \brief 선택된 TCP Loopback 문자열 인코딩입니다.
+    /// </summary>
+    public string SelectedTcpLoopbackEncoding { get; set; }
 
     /// <summary>
     /// \brief TCP Loopback 송신 문자열입니다.
@@ -57,7 +70,8 @@ public sealed class TcpLoopbackTestViewEvent
     {
         _ = _runtime.SendTcpClientAsync(
             SelectedTcpLoopbackProtocol,
-            TcpLoopbackSendText);
+            TcpLoopbackSendText,
+            SelectedTcpLoopbackEncoding);
     }
 
     /// <summary>
@@ -67,12 +81,18 @@ public sealed class TcpLoopbackTestViewEvent
     {
         _ = _runtime.SendTcpServerAsync(
             SelectedTcpLoopbackProtocol,
-            TcpLoopbackSendText);
+            TcpLoopbackSendText,
+            SelectedTcpLoopbackEncoding);
     }
 
     private async Task StartLoopbackAsync()
     {
-        await _runtime.StartTcpServerAsync(SelectedTcpLoopbackProtocol);
-        await _runtime.ConnectTcpClientAsync(SelectedTcpLoopbackProtocol);
+        await _runtime.StartTcpServerAsync(
+            SelectedTcpLoopbackProtocol,
+            SelectedTcpLoopbackEncoding);
+
+        await _runtime.ConnectTcpClientAsync(
+            SelectedTcpLoopbackProtocol,
+            SelectedTcpLoopbackEncoding);
     }
 }

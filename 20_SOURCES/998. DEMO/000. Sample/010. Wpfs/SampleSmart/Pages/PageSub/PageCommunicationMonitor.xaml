@@ -28,6 +28,10 @@
                 <tabs:TcpCommunicationTab />
             </TabItem>
 
+            <TabItem Header="UDP">
+                <tabs:UdpCommunicationTab />
+            </TabItem>
+
             <TabItem Header="Serial">
                 <tabs:SerialCommunicationTab />
             </TabItem>

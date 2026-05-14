@@ -20,12 +20,44 @@ public partial class TcpServerTestViewModel : ViewModelBase
     public IReadOnlyList<string> TcpServerProtocols => Event.TcpServerProtocols;
 
     /// <summary>
+    /// \brief 선택 가능한 TCP Server 문자열 인코딩 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> TcpServerEncodings => Event.TcpServerEncodings;
+
+    /// <summary>
     /// \brief 선택된 TCP Server 프로토콜입니다.
     /// </summary>
     public string SelectedTcpServerProtocol
     {
         get => Event.SelectedTcpServerProtocol;
-        set => Event.SelectedTcpServerProtocol = value;
+        set
+        {
+            if (Event.SelectedTcpServerProtocol == value)
+            {
+                return;
+            }
+
+            Event.SelectedTcpServerProtocol = value;
+            OnPropertyChanged(nameof(SelectedTcpServerProtocol));
+        }
+    }
+
+    /// <summary>
+    /// \brief 선택된 TCP Server 문자열 인코딩입니다.
+    /// </summary>
+    public string SelectedTcpServerEncoding
+    {
+        get => Event.SelectedTcpServerEncoding;
+        set
+        {
+            if (Event.SelectedTcpServerEncoding == value)
+            {
+                return;
+            }
+
+            Event.SelectedTcpServerEncoding = value;
+            OnPropertyChanged(nameof(SelectedTcpServerEncoding));
+        }
     }
 
     /// <summary>

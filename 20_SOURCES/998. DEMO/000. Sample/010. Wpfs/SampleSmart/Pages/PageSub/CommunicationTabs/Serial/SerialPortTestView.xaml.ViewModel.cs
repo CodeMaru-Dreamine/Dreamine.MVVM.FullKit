@@ -30,6 +30,11 @@ public partial class SerialPortTestViewModel : ViewModelBase
     public IReadOnlyList<string> SerialProtocols => Event.SerialProtocols;
 
     /// <summary>
+    /// \brief 선택 가능한 Serial 문자열 인코딩 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> SerialEncodings => Event.SerialEncodings;
+
+    /// <summary>
     /// \brief 선택된 Serial Port 이름입니다.
     /// </summary>
     public string SelectedSerialPortName
@@ -82,6 +87,25 @@ public partial class SerialPortTestViewModel : ViewModelBase
 
             Event.SelectedSerialProtocol = value;
             OnPropertyChanged(nameof(SelectedSerialProtocol));
+            OnPropertyChanged(nameof(SerialSelectionSummary));
+        }
+    }
+
+    /// <summary>
+    /// \brief 선택된 Serial 문자열 인코딩입니다.
+    /// </summary>
+    public string SelectedSerialEncoding
+    {
+        get => Event.SelectedSerialEncoding;
+        set
+        {
+            if (Event.SelectedSerialEncoding == value)
+            {
+                return;
+            }
+
+            Event.SelectedSerialEncoding = value;
+            OnPropertyChanged(nameof(SelectedSerialEncoding));
             OnPropertyChanged(nameof(SerialSelectionSummary));
         }
     }

@@ -1,4 +1,4 @@
-<UserControl x:Class="SampleSmart.Pages.PageSub.CommunicationTabs.Tcp.TcpServerTestView"
+﻿<UserControl x:Class="SampleSmart.Pages.PageSub.CommunicationTabs.Tcp.TcpServerTestView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Border Background="White"
@@ -27,6 +27,16 @@
                           Margin="0,0,8,0"
                           ItemsSource="{Binding TcpServerProtocols}"
                           SelectedItem="{Binding SelectedTcpServerProtocol}" />
+
+                <TextBlock Text="Encoding"
+                           Width="70"
+                           VerticalAlignment="Center" />
+
+                <ComboBox Width="110"
+                          Height="28"
+                          Margin="0,0,8,0"
+                          ItemsSource="{Binding TcpServerEncodings}"
+                          SelectedItem="{Binding SelectedTcpServerEncoding}" />
 
                 <Button Content="Start Server"
                         Width="120"

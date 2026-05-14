@@ -51,8 +51,18 @@
 
                 <ComboBox Width="160"
                           Height="28"
+                          Margin="0,0,8,0"
                           ItemsSource="{Binding SerialProtocols}"
                           SelectedItem="{Binding SelectedSerialProtocol}" />
+
+                <TextBlock Text="Encoding"
+                           Width="70"
+                           VerticalAlignment="Center" />
+
+                <ComboBox Width="110"
+                          Height="28"
+                          ItemsSource="{Binding SerialEncodings}"
+                          SelectedItem="{Binding SelectedSerialEncoding}" />
             </StackPanel>
 
             <StackPanel Orientation="Horizontal"
