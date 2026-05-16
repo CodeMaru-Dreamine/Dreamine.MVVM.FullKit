@@ -1,0 +1,89 @@
+@page "/dashboard"
+@namespace DreamineVMS.Blazor.Pages
+@using DreamineVMS.Blazor.ViewModels
+@implements IDisposable
+@inject DashboardPageViewModel ViewModel
+
+<PageTitle>Dreamine VMS</PageTitle>
+
+<div class="page-shell">
+    <div class="hero">
+        <div>
+            <h1>Dreamine VMS Server Dashboard</h1>
+            <p>폰/브라우저에서 접근 가능한 VMS 대시보드입니다.</p>
+            <p class="muted">
+                Live: <a href="/">/</a>
+                · Dashboard: <a href="/dashboard">/dashboard</a>
+                · Health: <a href="/healthz">/healthz</a>
+            </p>
+        </div>
+
+        <a class="primary link-button" href="/">Open Live View</a>
+    </div>
+
+    <div class="card-grid">
+        <section class="metric-card">
+            <span>Total Cameras</span>
+            <strong>@ViewModel.TotalCameraCount</strong>
+        </section>
+
+        <section class="metric-card">
+            <span>Connected</span>
+            <strong>@ViewModel.ConnectedCameraCount</strong>
+        </section>
+
+        <section class="metric-card">
+            <span>Recording</span>
+            <strong>@ViewModel.RecordingCameraCount</strong>
+        </section>
+    </div>
+
+    <section class="event-card">
+        <h3>Last Event</h3>
+        <p>@ViewModel.LastEvent</p>
+        <small>@ViewModel.LastUpdatedText</small>
+    </section>
+
+    <section class="event-card">
+        <h3>Cameras</h3>
+
+        <div class="camera-list">
+            @foreach (DashboardCameraItemViewModel camera in ViewModel.Cameras)
+            {
+                <div class="camera-row">
+                    <div>
+                        <strong>@camera.Name</strong>
+                        <small>@camera.Host · @camera.HlsUrl</small>
+                    </div>
+
+                    <span class="badge @camera.StateCssClass">
+                        @camera.StateText
+                    </span>
+                </div>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    /// <summary>
+    /// \brief 컴포넌트 초기화 시 ViewModel 상태 변경 이벤트를 구독합니다.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        ViewModel.StateChanged += OnViewModelStateChanged;
+        ViewModel.Initialize();
+    }
+
+    private void OnViewModelStateChanged(object? sender, EventArgs e)
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        ViewModel.StateChanged -= OnViewModelStateChanged;
+        ViewModel.Dispose();
+    }
+}

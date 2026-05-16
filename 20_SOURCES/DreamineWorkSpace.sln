@@ -101,6 +101,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dreamine.Communication.Sock
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dreamine.Communication.Wpf", "100. Library\Communication.Wpf\Dreamine.Communication.Wpf.csproj", "{A68F5CF4-7E28-0F4F-0DCF-F41B75ACE010}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DreamineVMS", "000. Project\010. App\DreamineVMS\DreamineVMS.csproj", "{E4A5611B-F09A-40FD-6D9D-C2AC17663177}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -397,6 +399,14 @@ Global
 		{A68F5CF4-7E28-0F4F-0DCF-F41B75ACE010}.Release|x64.Build.0 = Release|Any CPU
 		{A68F5CF4-7E28-0F4F-0DCF-F41B75ACE010}.Release|x86.ActiveCfg = Release|Any CPU
 		{A68F5CF4-7E28-0F4F-0DCF-F41B75ACE010}.Release|x86.Build.0 = Release|Any CPU
+		{E4A5611B-F09A-40FD-6D9D-C2AC17663177}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{E4A5611B-F09A-40FD-6D9D-C2AC17663177}.Debug|x64.Build.0 = Debug|Any CPU
+		{E4A5611B-F09A-40FD-6D9D-C2AC17663177}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{E4A5611B-F09A-40FD-6D9D-C2AC17663177}.Debug|x86.Build.0 = Debug|Any CPU
+		{E4A5611B-F09A-40FD-6D9D-C2AC17663177}.Release|x64.ActiveCfg = Release|Any CPU
+		{E4A5611B-F09A-40FD-6D9D-C2AC17663177}.Release|x64.Build.0 = Release|Any CPU
+		{E4A5611B-F09A-40FD-6D9D-C2AC17663177}.Release|x86.ActiveCfg = Release|Any CPU
+		{E4A5611B-F09A-40FD-6D9D-C2AC17663177}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -445,6 +455,7 @@ Global
 		{5CD6F23C-DCE0-4A92-D704-FA8FBB927070} = {BF419B98-22B4-458C-98A0-82780D7C9C70}
 		{AA0CC6F4-7636-17E8-9BAD-739CE4AE3674} = {BF419B98-22B4-458C-98A0-82780D7C9C70}
 		{A68F5CF4-7E28-0F4F-0DCF-F41B75ACE010} = {BF419B98-22B4-458C-98A0-82780D7C9C70}
+		{E4A5611B-F09A-40FD-6D9D-C2AC17663177} = {728C860F-665B-4636-9E6D-2117D6ABF73E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6B5FA7DE-9A7E-4A90-8474-C97C8E210D6B}

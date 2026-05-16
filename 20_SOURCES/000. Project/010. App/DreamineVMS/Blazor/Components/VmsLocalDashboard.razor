@@ -1,0 +1,63 @@
+﻿@namespace DreamineVMS.Blazor.Components
+@using DreamineVMS.Blazor.ViewModels
+@implements IDisposable
+@inject VmsLocalDashboardViewModel ViewModel
+
+<div class="page-shell embedded">
+    <div class="hero">
+        <div>
+            <h1>Dreamine VMS Embedded Dashboard</h1>
+            <p>WPF Shell 내부에 호스팅되는 Blazor 대시보드입니다.</p>
+        </div>
+
+        <button class="primary" @onclick="ViewModel.RefreshAsync">
+            Request Refresh
+        </button>
+    </div>
+
+    <div class="card-grid">
+        <section class="metric-card">
+            <span>Total Cameras</span>
+            <strong>@ViewModel.TotalCameraCount</strong>
+        </section>
+
+        <section class="metric-card">
+            <span>Connected</span>
+            <strong>@ViewModel.ConnectedCameraCount</strong>
+        </section>
+
+        <section class="metric-card">
+            <span>Recording</span>
+            <strong>@ViewModel.RecordingCameraCount</strong>
+        </section>
+    </div>
+
+    <section class="event-card">
+        <h3>Last Event</h3>
+        <p>@ViewModel.LastEvent</p>
+        <small>@ViewModel.LastUpdatedText</small>
+    </section>
+</div>
+
+@code {
+    /// <summary>
+    /// \brief 컴포넌트 초기화 시 ViewModel 상태 변경 이벤트를 구독합니다.
+    /// </summary>
+    protected override void OnInitialized()
+    {
+        ViewModel.StateChanged += OnViewModelStateChanged;
+        ViewModel.Initialize();
+    }
+
+    private void OnViewModelStateChanged(object? sender, EventArgs e)
+    {
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        ViewModel.StateChanged -= OnViewModelStateChanged;
+        ViewModel.Dispose();
+    }
+}

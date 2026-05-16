@@ -1,0 +1,60 @@
+@page "/"
+@page "/live"
+@namespace DreamineVMS.Blazor.Pages
+@using DreamineVMS.Blazor.ViewModels
+@implements IAsyncDisposable
+@inject LivePageViewModel ViewModel
+
+<PageTitle>Dreamine VMS Live</PageTitle>
+
+<div class="page-shell live-shell">
+    <div class="hero compact">
+        <div>
+            <h1>Live View</h1>
+            <p>FFmpeg HLS 출력이 생성되면 브라우저/폰에서 재생됩니다.</p>
+        </div>
+        <a class="primary link-button" href="/dashboard">Dashboard</a>
+    </div>
+
+    <div class="live-grid six-layout">
+        @foreach (var camera in ViewModel.Cameras)
+        {
+            string playerId = LivePageViewModel.GetPlayerId(camera);
+
+            <section class="video-tile tile-@camera.DisplayOrder">
+                <header>
+                    <strong>@camera.Name</strong>
+                    <span>@camera.Host</span>
+                </header>
+
+                <video id="@playerId"
+                       class="video-player"
+                       controls
+                       autoplay
+                       muted
+                       playsinline
+                       preload="auto">
+                </video>
+
+                <footer>@camera.HlsUrl</footer>
+            </section>
+        }
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ViewModel.Initialize();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await ViewModel.OnAfterRenderAsync(firstRender);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await ViewModel.DisposeAsync();
+    }
+}

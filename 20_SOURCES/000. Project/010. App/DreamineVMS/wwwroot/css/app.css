@@ -1,0 +1,183 @@
+:root {
+    color-scheme: dark;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #0f172a;
+    color: #e5e7eb;
+}
+
+body { margin: 0; background: #0f172a; }
+a { color: #93c5fd; }
+
+.page-shell {
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 28px;
+    background: linear-gradient(135deg, #0f172a 0%, #111827 50%, #1e293b 100%);
+}
+.page-shell.embedded { min-height: 100%; }
+.hero { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 24px; }
+.hero.compact { margin-bottom: 16px; }
+.hero h1 { margin: 0 0 8px 0; font-size: 30px; }
+.hero p { margin: 0; color: #9ca3af; }
+.muted { color: #64748b !important; margin-top: 8px !important; font-size: 13px; }
+.card-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 20px; }
+.metric-card, .event-card { border: 1px solid rgba(148,163,184,.2); border-radius: 16px; background: rgba(15,23,42,.75); box-shadow: 0 16px 40px rgba(0,0,0,.25); padding: 20px; }
+.metric-card span { display: block; color: #9ca3af; margin-bottom: 10px; }
+.metric-card strong { font-size: 42px; }
+.event-card h3 { margin-top: 0; }
+.event-card p { color: #d1d5db; }
+.event-card small { color: #6b7280; }
+.primary { border: 0; border-radius: 12px; background: #2563eb; color: white; font-weight: 600; padding: 12px 18px; cursor: pointer; text-decoration: none; }
+.primary:hover { background: #1d4ed8; }
+.link-button { display: inline-block; }
+.camera-list { display: grid; gap: 8px; }
+.camera-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border: 1px solid rgba(148,163,184,.18); border-radius: 10px; background: rgba(15,23,42,.45); }
+.camera-row small { display: block; color: #94a3b8; margin-top: 4px; }
+.badge { padding: 4px 8px; border-radius: 999px; background: #334155; color: #e5e7eb; font-size: 12px; }
+.badge.connected { background: #065f46; color: #d1fae5; }
+.badge.connecting { background: #92400e; color: #ffedd5; }
+.badge.faulted { background: #7f1d1d; color: #fee2e2; }
+.live-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.live-grid {
+    display: grid;
+    gap: 8px;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+/* =========================================================
+   Live View - VMS 5x4 병합 레이아웃 (현재 카메라 3대)
+   tile-1 = 192.168.0.11 CH01  → 좌측 세로로 길게 (2열 x 4행)
+   tile-3 = 192.168.0.51 CH01  → 우측 상단 (3열 x 2행)
+   tile-2 = 192.168.0.36 CH01  → 우측 하단 (3열 x 2행)
+   ========================================================= */
+.six-layout {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+    grid-template-areas:
+        "cam011 cam011 cam051 cam051 cam051"
+        "cam011 cam011 cam051 cam051 cam051"
+        "cam011 cam011 cam036 cam036 cam036"
+        "cam011 cam011 cam036 cam036 cam036";
+    background: #334155;
+    border: 1px solid rgba(148, 163, 184, .35);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+    .six-layout .tile-1 {
+        grid-area: cam011;
+    }
+
+    .six-layout .tile-3 {
+        grid-area: cam051;
+    }
+
+    .six-layout .tile-2 {
+        grid-area: cam036;
+    }
+
+    /* 현재 3대만 사용 - 나머지 타일 숨김 */
+    .six-layout .tile-4,
+    .six-layout .tile-5 {
+        display: none;
+    }
+
+/* 타일 컨테이너: grid 칸 크기를 그대로 따르도록 min-* 을 0으로 */
+.video-tile {
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    min-height: 0;
+    border: 1px solid rgba(71, 85, 105, .9);
+    background: #020617;
+}
+
+/* 영상: 원본 비율 유지하면서 잘리지 않게 축소해 칸에 맞춤 */
+.video-player {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: #020617;
+    display: block;
+}
+
+/* 헤더 (타일 상단 이름/IP) */
+.video-tile header {
+    position: absolute;
+    z-index: 2;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    height: 22px;
+    box-sizing: border-box;
+    padding: 0 6px;
+    font-size: 11px;
+    background: rgba(51, 65, 85, .88);
+    pointer-events: none;
+}
+
+    .video-tile header strong {
+        font-weight: 600;
+    }
+
+    .video-tile header span {
+        color: #cbd5e1;
+    }
+
+/* 푸터 (타일 하단 HLS 경로) */
+.video-tile footer {
+    position: absolute;
+    z-index: 2;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    height: 18px;
+    box-sizing: border-box;
+    padding: 0 6px;
+    font-size: 10px;
+    color: #94a3b8;
+    background: rgba(15, 23, 42, .78);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+}
+
+/* 모바일: 병합 해제, 세로 스택 */
+@media (max-width: 900px) {
+    .card-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .live-grid {
+        flex: 0 0 auto;
+    }
+
+    .six-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: repeat(3, 240px);
+        grid-template-areas:
+            "cam011"
+            "cam051"
+            "cam036";
+    }
+
+        .six-layout .tile-4,
+        .six-layout .tile-5 {
+            display: none;
+        }
+}

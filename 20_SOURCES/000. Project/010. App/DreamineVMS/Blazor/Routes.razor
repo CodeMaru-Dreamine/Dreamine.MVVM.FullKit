@@ -1,0 +1,14 @@
+﻿@namespace DreamineVMS.Blazor
+@using Microsoft.AspNetCore.Components.Routing
+
+<Router AppAssembly="@typeof(DreamineVMS.Blazor.Routes).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" />
+    </Found>
+
+    <NotFound>
+        <div class="page-shell">
+            <h2>Page not found</h2>
+        </div>
+    </NotFound>
+</Router>
