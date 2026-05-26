@@ -3,13 +3,16 @@ using System.Windows;
 using Dreamine.Communication.Abstractions.Enums;
 using Dreamine.Communication.Abstractions.Interfaces;
 using Dreamine.Communication.Abstractions.Models;
+using Dreamine.Communication.Abstractions.Options;
 using Dreamine.Communication.Core.Framing;
 using Dreamine.Communication.Core.Protocols;
+using Dreamine.Communication.Core.Resilience;
 using Dreamine.Communication.RabbitMQ.Buses;
 using Dreamine.Communication.RabbitMQ.Options;
 using Dreamine.Communication.Serial.Options;
 using Dreamine.Communication.Serial.Ports;
 using Dreamine.Communication.Sockets.Clients;
+using Dreamine.Communication.Sockets.Enums;
 using Dreamine.Communication.Sockets.Options;
 using Dreamine.Communication.Sockets.Servers;
 using Dreamine.Communication.Sockets.Udp;
@@ -50,8 +53,9 @@ public sealed class CommunicationSampleRuntime
     private bool _isInMemorySubscribed;
     private bool _isRabbitMqSubscribed;
 
-    private TcpServerTransport? _tcpServer;
-    private TcpClientTransport? _tcpClient;
+    private IMessageTransport? _tcpServer;
+    private TcpServerTransport? _rawTcpServer;
+    private IMessageTransport? _tcpClient;
     private UdpTransport? _udpPeerA;
     private UdpTransport? _udpPeerB;
     private SerialPortTransport? _serialTransport;
@@ -61,6 +65,8 @@ public sealed class CommunicationSampleRuntime
     private string _currentClientProtocol = PlainTextProtocol;
     private string _currentServerEncoding = PlainTextProtocolOptions.Utf8EncodingName;
     private string _currentClientEncoding = PlainTextProtocolOptions.Utf8EncodingName;
+    private TcpServerSendTargetMode _currentServerSendTargetMode = TcpServerSendTargetMode.Broadcast;
+    private bool _currentServerEchoEnabled;
     private string _currentUdpPeerAProtocol = PlainTextProtocol;
     private string _currentUdpPeerBProtocol = PlainTextProtocol;
     private string _currentUdpPeerAEncoding = PlainTextProtocolOptions.Utf8EncodingName;
@@ -134,6 +140,16 @@ public sealed class CommunicationSampleRuntime
     [
         PlainTextProtocolOptions.Utf8EncodingName,
         PlainTextProtocolOptions.KoreanCodePage949EncodingName
+    ];
+
+    /// <summary>
+    /// \brief 선택 가능한 TCP Server 송신 대상 정책 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> TcpServerSendTargetModes { get; } =
+    [
+        nameof(TcpServerSendTargetMode.Broadcast),
+        nameof(TcpServerSendTargetMode.FirstClient),
+        nameof(TcpServerSendTargetMode.LastClient)
     ];
 
     /// <summary>
@@ -249,16 +265,33 @@ public sealed class CommunicationSampleRuntime
     /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
     public async Task StartTcpServerAsync(
         string protocol,
-        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName,
+        string sendTargetMode = nameof(TcpServerSendTargetMode.Broadcast),
+        bool echoEnabled = false)
     {
         protocol = NormalizeProtocol(protocol);
         encodingName = NormalizeTextEncodingName(encodingName);
+        var targetMode = NormalizeTcpServerSendTargetMode(sendTargetMode);
 
         if (_tcpServer is not null &&
-            _tcpServer.State == ConnectionState.Connected &&
+            _tcpServer.State == ConnectionState.Listening &&
             _currentServerProtocol == protocol &&
             _currentServerEncoding == encodingName)
         {
+            _currentServerSendTargetMode = targetMode;
+            _currentServerEchoEnabled = echoEnabled;
+
+            if (_rawTcpServer is not null)
+            {
+                _rawTcpServer.SendTargetMode = targetMode;
+                UpdateTcpServerDescription(
+                    protocol,
+                    encodingName,
+                    _rawTcpServer.ConnectedClientCount,
+                    targetMode,
+                    echoEnabled);
+            }
+
             return;
         }
 
@@ -269,16 +302,19 @@ public sealed class CommunicationSampleRuntime
 
         _currentServerProtocol = protocol;
         _currentServerEncoding = encodingName;
+        _currentServerSendTargetMode = targetMode;
+        _currentServerEchoEnabled = echoEnabled;
 
         EnsureTcpServerChannel(protocol, encodingName);
 
         var port = GetTcpPort(protocol);
 
-        _tcpServer = new TcpServerTransport(
+        _rawTcpServer = new TcpServerTransport(
             new TcpServerTransportOptions
             {
                 Host = "127.0.0.1",
-                Port = port
+                Port = port,
+                SendTargetMode = targetMode
             },
             CreateProtocolAdapter(
                 protocol,
@@ -287,13 +323,75 @@ public sealed class CommunicationSampleRuntime
                 encodingName),
             CreateFrameCodec(protocol, encodingName));
 
+        _tcpServer = new ResilientMessageTransport(
+            _rawTcpServer,
+            CreateSampleReconnectPolicy(),
+            CreateSampleServerOutboundQueueOptions());
+
+        var channelName = GetTcpServerChannelName(protocol, encodingName);
+
+        AttachTcpResilientStateMonitor(
+            _tcpServer,
+            channelName);
+
+        AttachTcpServerClientCountMonitor(
+            _rawTcpServer,
+            protocol,
+            encodingName);
+
+        UpdateTcpServerDescription(
+            protocol,
+            encodingName,
+            _rawTcpServer.ConnectedClientCount,
+            targetMode,
+            echoEnabled);
+
         _tcpServer.MessageReceived += OnTcpServerMessageReceived;
+
+        Monitor.UpdateChannelState(channelName, ConnectionState.Connecting);
 
         await _tcpServer.ConnectAsync();
 
         Monitor.UpdateChannelState(
-            GetTcpServerChannelName(protocol, encodingName),
-            ConnectionState.Connected);
+            channelName,
+            _tcpServer.State);
+    }
+
+    /// <summary>
+    /// \brief 실행 중인 TCP Server의 송신 대상과 Echo 옵션을 갱신합니다.
+    /// </summary>
+    /// <param name="protocol">프로토콜 이름입니다.</param>
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="sendTargetMode">서버 송신 대상 정책입니다.</param>
+    /// <param name="echoEnabled">Echo 응답 사용 여부입니다.</param>
+    public void UpdateTcpServerOptions(
+        string protocol,
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName,
+        string sendTargetMode = nameof(TcpServerSendTargetMode.Broadcast),
+        bool echoEnabled = false)
+    {
+        protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
+        var targetMode = NormalizeTcpServerSendTargetMode(sendTargetMode);
+
+        _currentServerSendTargetMode = targetMode;
+        _currentServerEchoEnabled = echoEnabled;
+
+        if (_rawTcpServer is null ||
+            _currentServerProtocol != protocol ||
+            _currentServerEncoding != encodingName)
+        {
+            return;
+        }
+
+        _rawTcpServer.SendTargetMode = targetMode;
+
+        UpdateTcpServerDescription(
+            protocol,
+            encodingName,
+            _rawTcpServer.ConnectedClientCount,
+            targetMode,
+            echoEnabled);
     }
 
     /// <summary>
@@ -320,6 +418,7 @@ public sealed class CommunicationSampleRuntime
         await _tcpServer.DisposeAsync();
 
         _tcpServer = null;
+        _rawTcpServer = null;
 
         if (Monitor.Channels.Any(x => x.Name == channelName))
         {
@@ -336,10 +435,24 @@ public sealed class CommunicationSampleRuntime
     public async Task SendTcpServerAsync(
         string protocol,
         string text,
-        string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
+        string encodingName = PlainTextProtocolOptions.Utf8EncodingName,
+        string sendTargetMode = nameof(TcpServerSendTargetMode.Broadcast))
     {
         protocol = NormalizeProtocol(protocol);
         encodingName = NormalizeTextEncodingName(encodingName);
+        var targetMode = NormalizeTcpServerSendTargetMode(sendTargetMode);
+        _currentServerSendTargetMode = targetMode;
+
+        if (_rawTcpServer is not null)
+        {
+            _rawTcpServer.SendTargetMode = targetMode;
+            UpdateTcpServerDescription(
+                protocol,
+                encodingName,
+                _rawTcpServer.ConnectedClientCount,
+                targetMode,
+                _currentServerEchoEnabled);
+        }
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -347,11 +460,11 @@ public sealed class CommunicationSampleRuntime
         }
 
         if (_tcpServer is null ||
-            _tcpServer.State != ConnectionState.Connected ||
+            _tcpServer.State != ConnectionState.Listening ||
             _currentServerProtocol != protocol ||
             _currentServerEncoding != encodingName)
         {
-            await StartTcpServerAsync(protocol, encodingName);
+            await StartTcpServerAsync(protocol, encodingName, sendTargetMode, _currentServerEchoEnabled);
         }
 
         if (_tcpServer is null)
@@ -361,7 +474,7 @@ public sealed class CommunicationSampleRuntime
 
         var message = CreateTcpMessageByProtocol(
             protocol,
-            "Server.Send",
+            $"Server.Send.{targetMode}",
             text,
             encodingName);
 
@@ -395,6 +508,52 @@ public sealed class CommunicationSampleRuntime
             return;
         }
 
+        await PrepareTcpClientTransportAsync(protocol, encodingName);
+
+        if (_tcpClient is null)
+        {
+            return;
+        }
+
+        var channelName = GetTcpClientChannelName(protocol, encodingName);
+
+        Monitor.UpdateChannelState(channelName, ConnectionState.Connecting);
+
+        try
+        {
+            await _tcpClient.ConnectAsync();
+
+            Monitor.UpdateChannelState(
+                channelName,
+                _tcpClient.State);
+        }
+        catch
+        {
+            // ResilientMessageTransport의 내부 WatchLoop가 계속 재연결을 시도합니다.
+            // 수동 Connect 실패는 UI 상태만 Connecting으로 유지하고 예외를 샘플 밖으로 전파하지 않습니다.
+            Monitor.UpdateChannelState(channelName, ConnectionState.Connecting);
+        }
+    }
+
+    /// <summary>
+    /// \brief TCP Client Transport를 준비합니다. 연결은 수행하지 않고, 송신 큐와 재연결 Decorator를 구성합니다.
+    /// </summary>
+    /// <param name="protocol">프로토콜 이름입니다.</param>
+    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    private async Task PrepareTcpClientTransportAsync(
+        string protocol,
+        string encodingName)
+    {
+        protocol = NormalizeProtocol(protocol);
+        encodingName = NormalizeTextEncodingName(encodingName);
+
+        if (_tcpClient is not null &&
+            _currentClientProtocol == protocol &&
+            _currentClientEncoding == encodingName)
+        {
+            return;
+        }
+
         if (_tcpClient is not null)
         {
             await DisconnectTcpClientAsync();
@@ -407,7 +566,7 @@ public sealed class CommunicationSampleRuntime
 
         var port = GetTcpPort(protocol);
 
-        _tcpClient = new TcpClientTransport(
+        var rawTcpClient = new TcpClientTransport(
             new TcpClientTransportOptions
             {
                 Host = "127.0.0.1",
@@ -420,13 +579,28 @@ public sealed class CommunicationSampleRuntime
                 encodingName),
             CreateFrameCodec(protocol, encodingName));
 
+        _tcpClient = new ResilientMessageTransport(
+            rawTcpClient,
+            CreateSampleReconnectPolicy(),
+            CreateSampleOutboundQueueOptions());
+
+        var channelName = GetTcpClientChannelName(protocol, encodingName);
+
+        AttachTcpResilientStateMonitor(
+            _tcpClient,
+            channelName);
+
+        AttachTcpClientQueueMonitor(
+            _tcpClient,
+            protocol,
+            encodingName,
+            channelName);
+
         _tcpClient.MessageReceived += OnTcpClientMessageReceived;
 
-        await _tcpClient.ConnectAsync();
-
         Monitor.UpdateChannelState(
-            GetTcpClientChannelName(protocol, encodingName),
-            ConnectionState.Connected);
+            channelName,
+            _tcpClient.State);
     }
 
     /// <summary>
@@ -479,13 +653,7 @@ public sealed class CommunicationSampleRuntime
             text = "Hello from Dreamine TCP Client";
         }
 
-        if (_tcpClient is null ||
-            _tcpClient.State != ConnectionState.Connected ||
-            _currentClientProtocol != protocol ||
-            _currentClientEncoding != encodingName)
-        {
-            await ConnectTcpClientAsync(protocol, encodingName);
-        }
+        await PrepareTcpClientTransportAsync(protocol, encodingName);
 
         if (_tcpClient is null)
         {
@@ -506,6 +674,24 @@ public sealed class CommunicationSampleRuntime
             message);
 
         await _tcpClient.SendAsync(message);
+
+        if (_tcpClient is ResilientMessageTransport resilientTransport)
+        {
+            var queueStatusMessage = CreateTcpMessageByProtocol(
+                protocol,
+                "Client.QueueStatus",
+                $"QueueCount={resilientTransport.QueuedMessageCount}, State={_tcpClient.State}",
+                encodingName);
+
+            Monitor.AddReceiveLog(
+                channelName,
+                TransportKind.Tcp,
+                queueStatusMessage);
+        }
+
+        Monitor.UpdateChannelState(
+            channelName,
+            _tcpClient.State);
     }
 
     /// <summary>
@@ -1237,7 +1423,8 @@ public sealed class CommunicationSampleRuntime
         });
 
         if (_tcpServer is null ||
-            _tcpServer.State != ConnectionState.Connected)
+            _tcpServer.State != ConnectionState.Listening ||
+            !_currentServerEchoEnabled)
         {
             return;
         }
@@ -1246,7 +1433,7 @@ public sealed class CommunicationSampleRuntime
 
         var echoMessage = CreateTcpMessageByProtocol(
             protocol,
-            "Server.Echo",
+            $"Server.Echo.{_currentServerSendTargetMode}",
             $"Echo from Dreamine TCP Server - {receiveText}",
             encodingName);
 
@@ -1259,6 +1446,155 @@ public sealed class CommunicationSampleRuntime
         });
 
         await _tcpServer.SendAsync(echoMessage);
+    }
+
+    /// <summary>
+    /// \brief SampleSmart TCP Client 예제에서 사용할 재연결 정책을 생성합니다.
+    /// </summary>
+    /// <returns>재연결 정책입니다.</returns>
+    private static ReconnectPolicy CreateSampleReconnectPolicy()
+    {
+        return new ReconnectPolicy
+        {
+            Enabled = true,
+            InitialDelay = TimeSpan.FromSeconds(1),
+            MaxDelay = TimeSpan.FromSeconds(5),
+            BackoffFactor = 1.5,
+            MaxRetryCount = null,
+            WatchInterval = TimeSpan.FromMilliseconds(500)
+        };
+    }
+
+    /// <summary>
+    /// \brief SampleSmart TCP Client 예제에서 사용할 송신 큐 정책을 생성합니다.
+    /// </summary>
+    /// <returns>송신 큐 정책입니다.</returns>
+    private static OutboundQueueOptions CreateSampleOutboundQueueOptions()
+    {
+        return new OutboundQueueOptions
+        {
+            DisconnectedSendPolicy = DisconnectedSendPolicy.Queue,
+            MaxQueueSize = 10_000,
+            DropOldestWhenFull = true,
+            MaxMessageAge = null,
+            FlushOnReconnect = true
+        };
+    }
+
+    /// <summary>
+    /// \brief TCP Server 예제에서 사용할 송신 큐 정책을 생성합니다.
+    /// </summary>
+    /// <returns>송신 큐 정책입니다.</returns>
+    private static OutboundQueueOptions CreateSampleServerOutboundQueueOptions()
+    {
+        return new OutboundQueueOptions
+        {
+            DisconnectedSendPolicy = DisconnectedSendPolicy.Fail,
+            MaxQueueSize = 1_000,
+            DropOldestWhenFull = true,
+            MaxMessageAge = null,
+            FlushOnReconnect = false
+        };
+    }
+
+    private void AttachTcpResilientStateMonitor(
+        IMessageTransport transport,
+        string channelName)
+    {
+        if (transport is not ResilientMessageTransport resilientTransport)
+        {
+            return;
+        }
+
+        resilientTransport.StateChanged += (_, state) =>
+        {
+            RunOnUiThread(() =>
+            {
+                Monitor.UpdateChannelState(
+                    channelName,
+                    state);
+            });
+        };
+    }
+
+    private void AttachTcpServerClientCountMonitor(
+        TcpServerTransport tcpServerTransport,
+        string protocol,
+        string encodingName)
+    {
+        tcpServerTransport.ConnectedClientCountChanged += (_, clientCount) =>
+        {
+            RunOnUiThread(() =>
+            {
+                UpdateTcpServerDescription(
+                    protocol,
+                    encodingName,
+                    clientCount,
+                    _currentServerSendTargetMode,
+                    _currentServerEchoEnabled);
+            });
+        };
+    }
+
+    private void UpdateTcpServerDescription(
+        string protocol,
+        string encodingName,
+        int clientCount,
+        TcpServerSendTargetMode targetMode,
+        bool echoEnabled)
+    {
+        var channelName = GetTcpServerChannelName(protocol, encodingName);
+        var port = GetTcpPort(protocol);
+
+        Monitor.UpdateChannelDescription(
+            channelName,
+            CreateTcpServerDescription(protocol, encodingName, port, clientCount, targetMode, echoEnabled));
+    }
+
+    private static string CreateTcpServerDescription(
+        string protocol,
+        string encodingName,
+        int port,
+        int clientCount,
+        TcpServerSendTargetMode targetMode,
+        bool echoEnabled)
+    {
+        var echoText = echoEnabled ? "On" : "Off";
+
+        return $"TCP server [{protocol}/{NormalizeTextEncodingName(encodingName)}] on 127.0.0.1:{port}. Clients={clientCount}. Target={targetMode}. Echo={echoText}.";
+    }
+
+    private void AttachTcpClientQueueMonitor(
+        IMessageTransport transport,
+        string protocol,
+        string encodingName,
+        string channelName)
+    {
+        if (transport is not ResilientMessageTransport resilientTransport)
+        {
+            return;
+        }
+
+        resilientTransport.QueueCountChanged += (_, queueCount) =>
+        {
+            var queueStatusMessage = CreateTcpMessageByProtocol(
+                protocol,
+                "Client.QueueStatus",
+                $"QueueCount={queueCount}, State={resilientTransport.State}",
+                encodingName);
+
+            RunOnUiThread(() =>
+            {
+                Monitor.AddReceiveLog(
+                    channelName,
+                    TransportKind.Tcp,
+                    queueStatusMessage);
+
+                Monitor.UpdateChannelState(
+                    channelName,
+                    resilientTransport.State);
+            });
+        };
     }
 
     private void OnTcpClientMessageReceived(object? sender, MessageEnvelope message)
@@ -1334,7 +1670,13 @@ public sealed class CommunicationSampleRuntime
         Monitor.AddChannel(
             channelName,
             TransportKind.Tcp,
-            $"TCP server [{protocol}/{NormalizeTextEncodingName(encodingName)}] on 127.0.0.1:{port}.");
+            CreateTcpServerDescription(
+                protocol,
+                encodingName,
+                port,
+                0,
+                _currentServerSendTargetMode,
+                _currentServerEchoEnabled));
     }
 
     private void EnsureTcpClientChannel(
@@ -1883,6 +2225,19 @@ public sealed class CommunicationSampleRuntime
             .Replace("\"", "\\\"", StringComparison.Ordinal)
             .Replace("\r", "\\r", StringComparison.Ordinal)
             .Replace("\n", "\\n", StringComparison.Ordinal);
+    }
+
+    private static TcpServerSendTargetMode NormalizeTcpServerSendTargetMode(string? sendTargetMode)
+    {
+        if (Enum.TryParse<TcpServerSendTargetMode>(
+                sendTargetMode,
+                ignoreCase: true,
+                out var parsed))
+        {
+            return parsed;
+        }
+
+        return TcpServerSendTargetMode.Broadcast;
     }
 
     private static string NormalizeProtocol(string? protocol)

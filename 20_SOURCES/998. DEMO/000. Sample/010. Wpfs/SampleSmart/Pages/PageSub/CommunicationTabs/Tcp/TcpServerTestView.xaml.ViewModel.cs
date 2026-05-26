@@ -1,4 +1,4 @@
-using Dreamine.MVVM.Attributes;
+﻿using Dreamine.MVVM.Attributes;
 using Dreamine.MVVM.ViewModels;
 
 namespace SampleSmart.Pages.PageSub.CommunicationTabs.Tcp;
@@ -23,6 +23,11 @@ public partial class TcpServerTestViewModel : ViewModelBase
     /// \brief 선택 가능한 TCP Server 문자열 인코딩 목록입니다.
     /// </summary>
     public IReadOnlyList<string> TcpServerEncodings => Event.TcpServerEncodings;
+
+    /// <summary>
+    /// \brief 선택 가능한 TCP Server 송신 대상 정책 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> TcpServerSendTargetModes => Event.TcpServerSendTargetModes;
 
     /// <summary>
     /// \brief 선택된 TCP Server 프로토콜입니다.
@@ -57,6 +62,44 @@ public partial class TcpServerTestViewModel : ViewModelBase
 
             Event.SelectedTcpServerEncoding = value;
             OnPropertyChanged(nameof(SelectedTcpServerEncoding));
+        }
+    }
+
+    /// <summary>
+    /// \brief 선택된 TCP Server 송신 대상 정책입니다.
+    /// </summary>
+    public string SelectedTcpServerSendTargetMode
+    {
+        get => Event.SelectedTcpServerSendTargetMode;
+        set
+        {
+            if (Event.SelectedTcpServerSendTargetMode == value)
+            {
+                return;
+            }
+
+            Event.SelectedTcpServerSendTargetMode = value;
+            Event.ApplyServerOptions();
+            OnPropertyChanged(nameof(SelectedTcpServerSendTargetMode));
+        }
+    }
+
+    /// <summary>
+    /// \brief TCP Server Echo 응답 사용 여부입니다.
+    /// </summary>
+    public bool IsTcpServerEchoEnabled
+    {
+        get => Event.IsTcpServerEchoEnabled;
+        set
+        {
+            if (Event.IsTcpServerEchoEnabled == value)
+            {
+                return;
+            }
+
+            Event.IsTcpServerEchoEnabled = value;
+            Event.ApplyServerOptions();
+            OnPropertyChanged(nameof(IsTcpServerEchoEnabled));
         }
     }
 

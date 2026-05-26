@@ -1,4 +1,5 @@
-using Dreamine.Communication.Core.Protocols;
+﻿using Dreamine.Communication.Core.Protocols;
+using Dreamine.Communication.Sockets.Enums;
 using SampleSmart.Pages.PageSub.CommunicationTabs;
 
 namespace SampleSmart.Pages.PageSub.CommunicationTabs.Tcp;
@@ -20,6 +21,8 @@ public sealed class TcpServerTestViewEvent
 
         SelectedTcpServerProtocol = "RawAvailable";
         SelectedTcpServerEncoding = PlainTextProtocolOptions.Utf8EncodingName;
+        SelectedTcpServerSendTargetMode = nameof(TcpServerSendTargetMode.Broadcast);
+        IsTcpServerEchoEnabled = false;
         TcpServerSendText = "Hello from Dreamine TCP Server";
     }
 
@@ -34,6 +37,11 @@ public sealed class TcpServerTestViewEvent
     public IReadOnlyList<string> TcpServerEncodings => _runtime.TextEncodings;
 
     /// <summary>
+    /// \brief 선택 가능한 TCP Server 송신 대상 정책 목록입니다.
+    /// </summary>
+    public IReadOnlyList<string> TcpServerSendTargetModes => _runtime.TcpServerSendTargetModes;
+
+    /// <summary>
     /// \brief 선택된 TCP Server 프로토콜입니다.
     /// </summary>
     public string SelectedTcpServerProtocol { get; set; }
@@ -42,6 +50,16 @@ public sealed class TcpServerTestViewEvent
     /// \brief 선택된 TCP Server 문자열 인코딩입니다.
     /// </summary>
     public string SelectedTcpServerEncoding { get; set; }
+
+    /// <summary>
+    /// \brief 선택된 TCP Server 송신 대상 정책입니다.
+    /// </summary>
+    public string SelectedTcpServerSendTargetMode { get; set; }
+
+    /// <summary>
+    /// \brief TCP Server Echo 응답 사용 여부입니다.
+    /// </summary>
+    public bool IsTcpServerEchoEnabled { get; set; }
 
     /// <summary>
     /// \brief TCP Server 송신 문자열입니다.
@@ -55,7 +73,9 @@ public sealed class TcpServerTestViewEvent
     {
         _ = _runtime.StartTcpServerAsync(
             SelectedTcpServerProtocol,
-            SelectedTcpServerEncoding);
+            SelectedTcpServerEncoding,
+            SelectedTcpServerSendTargetMode,
+            IsTcpServerEchoEnabled);
     }
 
     /// <summary>
@@ -67,6 +87,18 @@ public sealed class TcpServerTestViewEvent
     }
 
     /// <summary>
+    /// \brief 현재 TCP Server 옵션을 Runtime에 반영합니다.
+    /// </summary>
+    public void ApplyServerOptions()
+    {
+        _runtime.UpdateTcpServerOptions(
+            SelectedTcpServerProtocol,
+            SelectedTcpServerEncoding,
+            SelectedTcpServerSendTargetMode,
+            IsTcpServerEchoEnabled);
+    }
+
+    /// <summary>
     /// \brief 선택된 프로토콜로 TCP Server에서 메시지를 송신합니다.
     /// </summary>
     public void SendServer()
@@ -74,6 +106,7 @@ public sealed class TcpServerTestViewEvent
         _ = _runtime.SendTcpServerAsync(
             SelectedTcpServerProtocol,
             TcpServerSendText,
-            SelectedTcpServerEncoding);
+            SelectedTcpServerEncoding,
+            SelectedTcpServerSendTargetMode);
     }
 }

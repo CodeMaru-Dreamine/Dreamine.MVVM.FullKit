@@ -38,6 +38,23 @@
                           ItemsSource="{Binding TcpServerEncodings}"
                           SelectedItem="{Binding SelectedTcpServerEncoding}" />
 
+                <TextBlock Text="Target"
+                           Width="55"
+                           VerticalAlignment="Center" />
+
+                <ComboBox Width="120"
+                          Height="28"
+                          Margin="0,0,8,0"
+                          ItemsSource="{Binding TcpServerSendTargetModes}"
+                          SelectedItem="{Binding SelectedTcpServerSendTargetMode}" />
+
+                <CheckBox Content="Echo"
+                          Width="70"
+                          Height="28"
+                          Margin="0,0,8,0"
+                          VerticalContentAlignment="Center"
+                          IsChecked="{Binding IsTcpServerEchoEnabled}" />
+
                 <Button Content="Start Server"
                         Width="120"
                         Height="30"
