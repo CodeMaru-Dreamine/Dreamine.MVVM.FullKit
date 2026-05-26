@@ -76,3 +76,21 @@
 [submodule "20_SOURCES/100. Library/Communication.FullKit"]
 	path = 20_SOURCES/100. Library/Communication.FullKit
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.Communication.FullKit
+[submodule "20_SOURCES/100. Library/PLC.Abstractions"]
+	path = 20_SOURCES/100. Library/PLC.Abstractions
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.PLC.Abstractions
+[submodule "20_SOURCES/100. Library/PLC.Core"]
+	path = 20_SOURCES/100. Library/PLC.Core
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.PLC.Core
+[submodule "20_SOURCES/100. Library/PLC.Mitsubishi.MC"]
+	path = 20_SOURCES/100. Library/PLC.Mitsubishi.MC
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.PLC.Mitsubishi.MC
+[submodule "20_SOURCES/100. Library/PLC.Mitsubishi.MxComponent"]
+	path = 20_SOURCES/100. Library/PLC.Mitsubishi.MxComponent
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.PLC.Mitsubishi.MxComponent
+[submodule "20_SOURCES/100. Library/PLC.Omron.CxComponent"]
+	path = 20_SOURCES/100. Library/PLC.Omron.CxComponent
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.PLC.Omron.CxComponent
+[submodule "20_SOURCES/100. Library/PLC.Wpf"]
+	path = 20_SOURCES/100. Library/PLC.Wpf
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.PLC.Wpf
