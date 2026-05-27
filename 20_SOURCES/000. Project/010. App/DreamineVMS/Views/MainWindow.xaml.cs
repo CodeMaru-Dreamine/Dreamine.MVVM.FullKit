@@ -1,9 +1,10 @@
-using Dreamine.Hybrid.Wpf.Controls;
+﻿using Dreamine.Hybrid.Wpf.Controls;
 using Dreamine.Hybrid.Wpf.Internal;
 using DreamineVMS.Blazor.Components;
 using DreamineVMS.Options;
 using DreamineVMS.ViewModels;
 using Microsoft.Extensions.Options;
+using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
 using System;
 using System.ComponentModel;
@@ -24,6 +25,8 @@ public partial class MainWindow : Window
     private MainWindowViewModel? _attachedViewModel;
     private WebView2? _serverDashboardWebView;
     private WebView2? _wpfLiveWebView;
+    private bool _serverLiveInitialized;
+    private bool _wpfLiveInitialized;
 
     /// <summary>
     /// \brief MainWindow 인스턴스를 초기화합니다.
@@ -35,7 +38,7 @@ public partial class MainWindow : Window
         InitializeComponent();
 
         // 탭 헤더의 포트 번호를 실제 옵션 값으로 표시합니다.
-        ServerDashboardTabHeader.Text = $"Server Dashboard ({_serverOptions.Port})";
+        ServerDashboardTabHeader.Text = $"Server Live ({_serverOptions.Port})";
 
         if (DesignerProperties.GetIsInDesignMode(this))
         {
@@ -45,6 +48,7 @@ public partial class MainWindow : Window
         DataContextChanged += OnDataContextChanged;
         Loaded += OnLoaded;
         Closed += OnClosed;
+        MainTabControl.SelectionChanged += OnMainTabSelectionChanged;
     }
 
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -64,10 +68,9 @@ public partial class MainWindow : Window
 
     private void OnOpenLiveTabRequested(object? sender, EventArgs e)
     {
-        // Server Dashboard에서 "Open Live View"를 누르면 WPF Live 탭으로 전환.
+        // 레거시 메시지 호환용입니다. Blazor Server의 첫 화면은 Live View이며, 탭 전환은 수행하지 않습니다.
         Dispatcher.Invoke(() =>
         {
-            MainTabControl.SelectedItem = WpfLiveTab;
             if (!IsActive)
             {
                 Activate();
@@ -87,22 +90,10 @@ public partial class MainWindow : Window
 
         EmbeddedDashboardTab.Content = embeddedDashboard;
 
-        WebView2 serverDashboard = WebView2Initializer.CreateConfiguredWebView2();
-        ServerDashboardTab.Content = serverDashboard;
-        _serverDashboardWebView = serverDashboard;
-
-        WebView2 wpfLive = WebView2Initializer.CreateConfiguredWebView2();
-        WpfLiveTab.Content = wpfLive;
-        _wpfLiveWebView = wpfLive;
-
-        string baseUrl = $"http://localhost:{_serverOptions.Port}";
-
-        // 두 WebView가 같은 Blazor Server를 바라보므로 가용성 체크는 한 번이면 충분합니다.
-        // 다만 헬퍼는 URL 단위로 동작하므로 동시에 실행하고 끝납니다.
-        Task dashboardTask = NavigateServerAsync(serverDashboard, baseUrl);
-        Task liveTask = NavigateServerAsync(wpfLive, $"{baseUrl}/live");
-
-        await Task.WhenAll(dashboardTask, liveTask).ConfigureAwait(true);
+        // Live WebView는 동시에 두 개를 바로 띄우지 않습니다.
+        // 두 Live 탭이 동시에 /live에 접속하면 Blazor Circuit과 hls.js player가 중복 생성되어
+        // StopAll → StartAll 이후 source/session 동기화가 꼬일 수 있습니다.
+        await EnsureSelectedLiveWebViewAsync().ConfigureAwait(true);
     }
 
     private void OnClosed(object? sender, EventArgs e)
@@ -121,6 +112,119 @@ public partial class MainWindow : Window
         // WPF Shutdown을 명시적으로 트리거합니다.
         // host.RunDreamineWpfApp의 구현에 따라 자동 종료가 안 될 수 있으므로 안전망입니다.
         Application.Current?.Shutdown();
+    }
+
+    private async void OnMainTabSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+    {
+        if (!IsLoaded)
+        {
+            return;
+        }
+
+        await EnsureSelectedLiveWebViewAsync().ConfigureAwait(true);
+    }
+
+    private async Task EnsureSelectedLiveWebViewAsync()
+    {
+        if (MainTabControl.SelectedItem == ServerDashboardTab)
+        {
+            await EnsureServerLiveWebViewAsync().ConfigureAwait(true);
+            return;
+        }
+
+        if (MainTabControl.SelectedItem == WpfLiveTab)
+        {
+            await EnsureWpfLiveWebViewAsync().ConfigureAwait(true);
+        }
+    }
+
+    private async Task EnsureServerLiveWebViewAsync()
+    {
+        if (_serverLiveInitialized)
+        {
+            return;
+        }
+
+        WebView2 webView = WebView2Initializer.CreateConfiguredWebView2();
+        ServerDashboardTab.Content = webView;
+        _serverDashboardWebView = webView;
+
+        string liveUrl = GetLiveUrl();
+        RegisterWebViewRecovery(webView, () => liveUrl);
+        await NavigateServerAsync(webView, liveUrl).ConfigureAwait(true);
+        _serverLiveInitialized = true;
+    }
+
+    private async Task EnsureWpfLiveWebViewAsync()
+    {
+        if (_wpfLiveInitialized)
+        {
+            return;
+        }
+
+        WebView2 webView = WebView2Initializer.CreateConfiguredWebView2();
+        WpfLiveTab.Content = webView;
+        _wpfLiveWebView = webView;
+
+        string liveUrl = GetLiveUrl();
+        RegisterWebViewRecovery(webView, () => liveUrl);
+        await NavigateServerAsync(webView, liveUrl).ConfigureAwait(true);
+        _wpfLiveInitialized = true;
+    }
+
+    private string GetLiveUrl()
+    {
+        return $"http://localhost:{_serverOptions.Port}/live";
+    }
+
+    private void RegisterWebViewRecovery(WebView2 webView, Func<string> urlFactory)
+    {
+        webView.CoreWebView2InitializationCompleted += (_, e) =>
+        {
+            if (!e.IsSuccess || webView.CoreWebView2 is null)
+            {
+                Debug.WriteLine($"[DreamineVMS] WebView2 initialization failed: {e.InitializationException}");
+                return;
+            }
+
+            webView.CoreWebView2.ProcessFailed += async (_, args) =>
+            {
+                Debug.WriteLine($"[DreamineVMS] WebView2 process failed: {args.ProcessFailedKind}. Reloading...");
+
+                await Dispatcher.InvokeAsync(async () =>
+                {
+                    await Task.Delay(1000).ConfigureAwait(true);
+                    TryNavigateWebView(webView, urlFactory());
+                });
+            };
+        };
+
+        webView.NavigationCompleted += (_, e) =>
+        {
+            if (e.IsSuccess)
+            {
+                return;
+            }
+
+            Debug.WriteLine($"[DreamineVMS] WebView2 navigation failed: {e.WebErrorStatus}. Reloading...");
+            Dispatcher.InvokeAsync(async () =>
+            {
+                await Task.Delay(1500).ConfigureAwait(true);
+                TryNavigateWebView(webView, urlFactory());
+            });
+        };
+    }
+
+    private static void TryNavigateWebView(WebView2 webView, string url)
+    {
+        try
+        {
+            webView.Source = new Uri(url);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"[DreamineVMS] WebView2 recovery navigation failed: {ex}");
+        }
     }
 
     private static void TryDisposeWebView(ref WebView2? webView)

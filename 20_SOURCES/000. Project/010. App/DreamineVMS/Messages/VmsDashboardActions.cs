@@ -13,4 +13,19 @@ public static class VmsDashboardActions
 
     /// <summary>\brief Server Dashboard에서 Live 탭으로 전환을 요청합니다.</summary>
     public const string ServerOpenLive = "server.open-live";
+
+    /// <summary>\brief 선택한 카메라 연결을 요청합니다.</summary>
+    public const string CameraConnect = "camera.connect";
+
+    /// <summary>\brief 선택한 카메라 연결 해제를 요청합니다.</summary>
+    public const string CameraDisconnect = "camera.disconnect";
+
+    /// <summary>\brief 전체 카메라 연결을 요청합니다.</summary>
+    public const string CameraStartAll = "camera.start-all";
+
+    /// <summary>\brief 전체 카메라 연결 해제를 요청합니다.</summary>
+    public const string CameraStopAll = "camera.stop-all";
+
+    /// <summary>\brief WPF Shell 로그 삭제를 요청합니다.</summary>
+    public const string ClearLogs = "logs.clear";
 }

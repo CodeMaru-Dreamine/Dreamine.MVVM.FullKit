@@ -1,4 +1,4 @@
-@page "/dashboard"
+﻿@page "/dashboard"
 @namespace DreamineVMS.Blazor.Pages
 @using DreamineVMS.Blazor.ViewModels
 @implements IDisposable
@@ -10,15 +10,20 @@
     <div class="hero">
         <div>
             <h1>Dreamine VMS Server Dashboard</h1>
-            <p>폰/브라우저에서 접근 가능한 VMS 대시보드입니다.</p>
+            <p>폰/브라우저에서 접근 가능한 VMS 대시보드입니다. 기본 진입 화면은 Live View입니다.</p>
             <p class="muted">
-                Live: <a href="/">/</a>
+                Live: <a href="/live">/live</a>
                 · Dashboard: <a href="/dashboard">/dashboard</a>
                 · Health: <a href="/healthz">/healthz</a>
             </p>
         </div>
 
-        <a class="primary link-button" href="/">Open Live View</a>
+        <div class="action-toolbar">
+            <a class="primary link-button" href="/live">Back to Live</a>
+            <button class="secondary" @onclick="ViewModel.StartAllAsync">Start All</button>
+            <button class="secondary" @onclick="ViewModel.StopAllAsync">Stop All</button>
+            <button class="danger" @onclick="ViewModel.ClearLogsAsync">Clear Logs</button>
+        </div>
     </div>
 
     <div class="card-grid">
@@ -56,9 +61,13 @@
                         <small>@camera.Host · @camera.HlsUrl</small>
                     </div>
 
-                    <span class="badge @camera.StateCssClass">
-                        @camera.StateText
-                    </span>
+                    <div class="camera-actions">
+                        <span class="badge @camera.StateCssClass">
+                            @camera.StateText
+                        </span>
+                        <button class="mini" @onclick="() => ViewModel.ConnectCameraAsync(camera.Id)">Connect</button>
+                        <button class="mini" @onclick="() => ViewModel.DisconnectCameraAsync(camera.Id)">Disconnect</button>
+                    </div>
                 </div>
             }
         </div>

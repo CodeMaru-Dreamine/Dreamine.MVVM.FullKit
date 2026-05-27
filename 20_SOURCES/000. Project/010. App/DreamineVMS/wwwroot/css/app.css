@@ -181,3 +181,101 @@ a { color: #93c5fd; }
             display: none;
         }
 }
+
+/* =========================================================
+   Dashboard actions
+   ========================================================= */
+.action-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+}
+
+.secondary,
+.danger,
+.mini {
+    border: 0;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.secondary {
+    background: #334155;
+    color: #e5e7eb;
+    padding: 12px 16px;
+}
+
+.secondary:hover {
+    background: #475569;
+}
+
+.danger {
+    background: #7f1d1d;
+    color: #fee2e2;
+    padding: 12px 16px;
+}
+
+.danger:hover {
+    background: #991b1b;
+}
+
+.camera-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.mini {
+    background: #1e293b;
+    color: #e5e7eb;
+    padding: 6px 8px;
+    font-size: 12px;
+    border: 1px solid rgba(148, 163, 184, .2);
+}
+
+.mini:hover {
+    background: #334155;
+}
+
+.video-tile.recovering::after {
+    content: "Recovering stream...";
+    position: absolute;
+    z-index: 4;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(2, 6, 23, .72);
+    color: #e5e7eb;
+    font-weight: 600;
+}
+
+/* =========================================================
+   Live HLS recovery status overlay
+   ========================================================= */
+.video-tile[data-status]::after {
+    content: attr(data-status);
+    position: absolute;
+    z-index: 4;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+    background: rgba(2, 6, 23, .72);
+    color: #e5e7eb;
+    font-weight: 600;
+    pointer-events: none;
+}
+
+.video-tile.recovering header,
+.video-tile.recovering footer {
+    z-index: 5;
+}

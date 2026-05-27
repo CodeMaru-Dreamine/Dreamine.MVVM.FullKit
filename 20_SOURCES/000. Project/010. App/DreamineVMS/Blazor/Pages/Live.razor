@@ -21,7 +21,7 @@
         {
             string playerId = LivePageViewModel.GetPlayerId(camera);
 
-            <section class="video-tile tile-@camera.DisplayOrder">
+            <section class="video-tile tile-@camera.DisplayOrder" data-status="Stream stopped.">
                 <header>
                     <strong>@camera.Name</strong>
                     <span>@camera.Host</span>
@@ -43,18 +43,74 @@
 </div>
 
 @code {
+    private PeriodicTimer? _syncTimer;
+    private CancellationTokenSource? _syncCts;
+    private bool _disposed;
+
     protected override void OnInitialized()
     {
         ViewModel.Initialize();
+        ViewModel.PlayersNeedSync += OnPlayersNeedSync;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         await ViewModel.OnAfterRenderAsync(firstRender);
+
+        if (firstRender)
+        {
+            StartPlayerSyncLoop();
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        ViewModel.PlayersNeedSync -= OnPlayersNeedSync;
+
+        if (_syncCts is not null)
+        {
+            await _syncCts.CancelAsync();
+        }
+
+        _syncTimer?.Dispose();
+        _syncCts?.Dispose();
+
         await ViewModel.DisposeAsync();
+    }
+
+    private void OnPlayersNeedSync(object? sender, EventArgs e)
+    {
+        _ = InvokeAsync(async () =>
+        {
+            await ViewModel.SynchronizePlayersAsync();
+            StateHasChanged();
+        });
+    }
+
+    private void StartPlayerSyncLoop()
+    {
+        _syncCts = new CancellationTokenSource();
+        _syncTimer = new PeriodicTimer(TimeSpan.FromSeconds(2));
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (await _syncTimer.WaitForNextTickAsync(_syncCts.Token))
+                {
+                    await InvokeAsync(ViewModel.SynchronizePlayersAsync);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // 정상 종료.
+            }
+        });
     }
 }

@@ -1,4 +1,4 @@
-using DreamineVMS.Models;
+﻿using DreamineVMS.Models;
 using DreamineVMS.Options;
 using DreamineVMS.Services.Cameras;
 using DreamineVMS.Services.Runtime;
@@ -32,6 +32,7 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
     private readonly Dictionary<string, Process> _processes = new();
     private readonly Dictionary<string, long> _lastSequences = new();
     private readonly Dictionary<string, DateTime> _lastWrites = new();
+    private readonly ConcurrentDictionary<string, SemaphoreSlim> _cameraOperationLocks = new();
 
     /// <summary>
     /// \brief 의도된 정지(StopAsync / Restart)로 인해 곧 종료될 프로세스의 카메라 ID 집합입니다.
@@ -147,6 +148,12 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
             }
         }
 
+        foreach (SemaphoreSlim cameraLock in _cameraOperationLocks.Values)
+        {
+            try { cameraLock.Dispose(); } catch { }
+        }
+        _cameraOperationLocks.Clear();
+
         _processJob?.Dispose();
         _sync.Dispose();
 
@@ -180,27 +187,60 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
     /// <inheritdoc />
     public async Task StartAsync(string cameraId, CancellationToken cancellationToken = default)
     {
+        SemaphoreSlim cameraLock = GetCameraOperationLock(cameraId);
+        await cameraLock.WaitAsync(cancellationToken);
+        try
+        {
+            await StartInternalAsync(cameraId, cancellationToken);
+        }
+        finally
+        {
+            cameraLock.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task StopAsync(string cameraId, CancellationToken cancellationToken = default)
+    {
+        SemaphoreSlim cameraLock = GetCameraOperationLock(cameraId);
+        await cameraLock.WaitAsync(cancellationToken);
+        try
+        {
+            await StopInternalAsync(cameraId, cancellationToken);
+        }
+        finally
+        {
+            cameraLock.Release();
+        }
+    }
+
+    private async Task StartInternalAsync(string cameraId, CancellationToken cancellationToken)
+    {
         CameraDevice? camera = _repository.GetAll().FirstOrDefault(item => item.Id == cameraId);
         if (camera is null)
         {
             throw new InvalidOperationException($"Camera '{cameraId}' was not found.");
         }
 
-        // 1) 락 안에서는 "기존 프로세스 핸들 회수"만 수행 (블로킹 없음).
+        // StartAll 직전 StopAll이 눌렸거나 빠르게 Stop→Start가 반복되는 경우를 위해
+        // 같은 카메라의 Stop/Start는 cameraOperationLock으로 직렬화합니다.
         Process? toStop = null;
         await _sync.WaitAsync(cancellationToken);
         try
         {
-            if (_processes.TryGetValue(camera.Id, out Process? existing) && !existing.HasExited)
+            if (_processes.TryGetValue(camera.Id, out Process? existing))
             {
-                _runtimeState.SetState(camera.Id, CameraConnectionState.Connecting, $"HLS already running: {camera.Name}");
-                return;
-            }
-
-            if (_processes.TryGetValue(camera.Id, out toStop))
-            {
-                _intentionalStops.TryAdd(camera.Id, 0);
-                _processes.Remove(camera.Id);
+                if (!existing.HasExited)
+                {
+                    _intentionalStops.TryAdd(camera.Id, 0);
+                    _processes.Remove(camera.Id);
+                    toStop = existing;
+                }
+                else
+                {
+                    _processes.Remove(camera.Id);
+                    try { existing.Dispose(); } catch { }
+                }
             }
         }
         finally
@@ -208,17 +248,20 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
             _sync.Release();
         }
 
-        // 2) 락 밖에서 graceful/kill 처리(시간이 걸릴 수 있는 작업).
         if (toStop is not null)
         {
+            _runtimeState.SetState(camera.Id, CameraConnectionState.Disconnected, $"Restarting camera: {camera.Name}");
+            await Task.Delay(TimeSpan.FromMilliseconds(700), cancellationToken);
             await ShutdownProcessAsync(camera.Id, toStop, cancellationToken);
+            CleanupOldSegmentFiles(camera.Id, TimeSpan.FromMinutes(30));
         }
 
-        // 3) 다시 짧게 락 잡고 새 프로세스 시작.
         await _sync.WaitAsync(cancellationToken);
         try
         {
             _intentionalStops.TryRemove(camera.Id, out _);
+            _lastSequences.Remove(camera.Id);
+            _lastWrites.Remove(camera.Id);
             StartProcessUnsafe(camera);
         }
         finally
@@ -227,10 +270,8 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
-    /// <inheritdoc />
-    public async Task StopAsync(string cameraId, CancellationToken cancellationToken = default)
+    private async Task StopInternalAsync(string cameraId, CancellationToken cancellationToken)
     {
-        // 1) 락 안에서 핸들만 회수 (블로킹 없음).
         Process? toStop = null;
         await _sync.WaitAsync(cancellationToken);
         try
@@ -246,16 +287,26 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
             _sync.Release();
         }
 
-        // 2) 락 밖에서 비동기 종료 처리.
         if (toStop is not null)
         {
+            _runtimeState.SetState(cameraId, CameraConnectionState.Disconnected, $"Stopping camera: {cameraId}");
+            await Task.Delay(TimeSpan.FromMilliseconds(700), cancellationToken);
             await ShutdownProcessAsync(cameraId, toStop, cancellationToken);
+            CleanupOldSegmentFiles(cameraId, TimeSpan.FromMinutes(30));
+        }
+
+        await _sync.WaitAsync(cancellationToken);
+        try
+        {
+            _lastSequences.Remove(cameraId);
+            _lastWrites.Remove(cameraId);
+        }
+        finally
+        {
+            _sync.Release();
         }
 
         _runtimeState.SetState(cameraId, CameraConnectionState.Disconnected, $"Camera stopped: {cameraId}");
-
-        // 3) 종료 처리가 완전히 끝났으니 의도 마커 제거.
-        //    이후 사용자가 다시 Start하면 정상적으로 진행됩니다.
         _intentionalStops.TryRemove(cameraId, out _);
     }
 
@@ -380,7 +431,8 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
 
         Directory.CreateDirectory(GetCameraOutputDirectory(camera.Id));
-        DeleteOldHlsFiles(camera.Id);
+        PreparePlaylistForNewSession(camera.Id);
+        CleanupOldSegmentFiles(camera.Id, TimeSpan.FromMinutes(30));
 
         string arguments = BuildArguments(camera);
         ProcessStartInfo startInfo = new()
@@ -544,10 +596,17 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
+
+    private SemaphoreSlim GetCameraOperationLock(string cameraId)
+    {
+        return _cameraOperationLocks.GetOrAdd(cameraId, _ => new SemaphoreSlim(1, 1));
+    }
+
     private string BuildArguments(CameraDevice camera)
     {
         string playlistPath = Quote(GetPlaylistPath(camera.Id));
-        string segmentPath = Quote(Path.Combine(GetCameraOutputDirectory(camera.Id), "seg_%05d.ts"));
+        string sessionStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
+        string segmentPath = Quote(Path.Combine(GetCameraOutputDirectory(camera.Id), $"seg_{sessionStamp}_%05d.ts"));
         string input = Quote(camera.RtspUrl);
         string videoCodec = (_options.VideoCodec ?? "libx264").ToLowerInvariant();
         string audioCodec = (_options.AudioCodec ?? "an").ToLowerInvariant();
@@ -607,10 +666,15 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         parts.Add("-muxdelay 0");
         parts.Add("-muxpreload 0");
         parts.Add("-f hls");
+        parts.Add("-hls_segment_type mpegts");
+        parts.Add("-hls_allow_cache 0");
         parts.Add($"-hls_time {segmentSeconds}");
         parts.Add($"-hls_list_size {listSize}");
-        parts.Add("-hls_delete_threshold 2");
-        parts.Add("-hls_flags delete_segments+omit_endlist+independent_segments+temp_file");
+        // Windows + WebView2 환경에서는 video 태그가 .ts 파일 핸들을 오래 잡는 경우가 있습니다.
+        // delete_segments를 사용하면 ffmpeg가 WebView2가 읽는 세그먼트를 삭제하려다
+        // Permission denied가 발생하고 playlist/segment 수명이 꼬일 수 있습니다.
+        // 실행 중 삭제는 하지 않고, 세션별 고유 파일명 + 지연 정리 방식으로 안정화합니다.
+        parts.Add("-hls_flags omit_endlist+independent_segments+temp_file");
         parts.Add($"-hls_segment_filename {segmentPath}");
         parts.Add(playlistPath);
 
@@ -666,7 +730,34 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         return Path.Combine(GetCameraOutputDirectory(cameraId), "index.m3u8");
     }
 
-    private void DeleteOldHlsFiles(string cameraId)
+    private void PreparePlaylistForNewSession(string cameraId)
+    {
+        string directory = GetCameraOutputDirectory(cameraId);
+        Directory.CreateDirectory(directory);
+
+        string playlistPath = GetPlaylistPath(cameraId);
+        string preparingPlaylist = string.Join(Environment.NewLine,
+            "#EXTM3U",
+            "#EXT-X-VERSION:3",
+            "#EXT-X-TARGETDURATION:1",
+            "#EXT-X-MEDIA-SEQUENCE:0",
+            string.Empty);
+
+        try
+        {
+            File.WriteAllText(playlistPath, preparingPlaylist);
+        }
+        catch (IOException ex)
+        {
+            _logger.LogDebug(ex, "Playlist reset skipped because the file is currently locked: {CameraId}.", cameraId);
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            _logger.LogDebug(ex, "Playlist reset skipped because access was denied: {CameraId}.", cameraId);
+        }
+    }
+
+    private void CleanupOldSegmentFiles(string cameraId, TimeSpan minimumAge)
     {
         string directory = GetCameraOutputDirectory(cameraId);
         if (!Directory.Exists(directory))
@@ -674,10 +765,27 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
             return;
         }
 
-        foreach (string file in Directory.EnumerateFiles(directory, "*.m3u8").Concat(Directory.EnumerateFiles(directory, "*.ts")))
+        DateTime thresholdUtc = DateTime.UtcNow - minimumAge;
+
+        foreach (string file in Directory.EnumerateFiles(directory, "seg_*.ts"))
         {
-            try { File.Delete(file); }
-            catch { /* ignore */ }
+            try
+            {
+                if (File.GetLastWriteTimeUtc(file) > thresholdUtc)
+                {
+                    continue;
+                }
+
+                File.Delete(file);
+            }
+            catch (IOException)
+            {
+                // WebView2/Chrome이 읽는 중인 세그먼트는 다음 정리 주기에 다시 시도합니다.
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // 파일 핸들 또는 백신/인덱서 점유 가능성이 있으므로 무시합니다.
+            }
         }
     }
 

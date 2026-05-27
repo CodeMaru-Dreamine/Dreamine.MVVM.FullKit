@@ -74,7 +74,7 @@
             </DockPanel>
         </Border>
 
-        <TabControl Grid.Column="1" Margin="0,12,12,12" x:Name="MainTabControl">
+        <TabControl Grid.Column="1" Margin="0,12,12,12" x:Name="MainTabControl" Background="#0b1120">
             <TabItem Header="Embedded Dashboard" x:Name="EmbeddedDashboardTab" />
             <TabItem x:Name="ServerDashboardTab">
                 <TabItem.Header>
@@ -82,6 +82,160 @@
                 </TabItem.Header>
             </TabItem>
             <TabItem Header="WPF Live" x:Name="WpfLiveTab" />
+            <TabItem Header="Certificate">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#0b1120" DataContext="{Binding CertificateMonitor}">
+                    <Grid Margin="24" Background="#0b1120">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Margin="0,0,0,20">
+                            <TextBlock FontSize="26" FontWeight="Bold" Foreground="#e5e7eb" Text="Certificate Monitor" />
+                            <TextBlock Margin="0,6,0,0" Foreground="#9ca3af" Text="win-acme 인증서 남은 기간, 자동 갱신 작업, nginx reload 상태를 확인합니다." />
+                        </StackPanel>
+
+                        <Border Grid.Row="1" Margin="0,0,0,16" Padding="16" Background="#111827" BorderBrush="#1f2937" BorderThickness="1" CornerRadius="10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="170" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="150" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Certificate Folder" />
+                                <TextBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8" Text="{Binding CertificateDirectory, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="wacs.exe" />
+                                <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8" Text="{Binding WacsPath, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="nginx.exe" />
+                                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8" Text="{Binding NginxPath, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Nginx Working Dir" />
+                                <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8" Text="{Binding NginxWorkingDirectory, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,0,8,0" Foreground="#9ca3af" Text="Thresholds" />
+                                <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal">
+                                    <TextBlock Margin="0,4,8,0" Foreground="#9ca3af" Text="Warning Days" />
+                                    <TextBox Width="80" Margin="0,0,16,0" Text="{Binding WarningDays, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBlock Margin="0,4,8,0" Foreground="#9ca3af" Text="Critical Days" />
+                                    <TextBox Width="80" Margin="0,0,16,0" Text="{Binding CriticalDays, UpdateSourceTrigger=PropertyChanged}" />
+                                    <Button Width="120" Margin="0,0,8,0" Command="{Binding SaveSettingsCommand}" Content="Save Settings" />
+                                    <Button Width="100" Command="{Binding RefreshCommand}" Content="Refresh" />
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+
+                        <Grid Grid.Row="2" Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="16" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <Border Grid.Column="0" Padding="16" Background="#111827" BorderBrush="#1f2937" BorderThickness="1" CornerRadius="10">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="#e5e7eb" Text="Certificate Status" />
+                                        <TextBlock DockPanel.Dock="Right" FontSize="16" FontWeight="Bold" Foreground="{Binding HealthBrush}" Text="{Binding HealthText}" />
+                                    </DockPanel>
+
+                                    <Grid Margin="0,14,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Remaining" />
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Margin="0,0,0,8" Foreground="#e5e7eb" Text="{Binding RemainingDaysText}" />
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Expires" />
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" Foreground="#e5e7eb" Text="{Binding NotAfterText}" />
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Certificate" />
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,0,0,8" Foreground="#d1d5db" Text="{Binding CertificatePath}" TextWrapping="Wrap" />
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Subject" />
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,0,0,8" Foreground="#d1d5db" Text="{Binding Subject}" TextWrapping="Wrap" />
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,0,8,0" Foreground="#9ca3af" Text="Issuer" />
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Foreground="#d1d5db" Text="{Binding Issuer}" TextWrapping="Wrap" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Grid.Column="2" Padding="16" Background="#111827" BorderBrush="#1f2937" BorderThickness="1" CornerRadius="10">
+                                <StackPanel>
+                                    <DockPanel>
+                                        <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="#e5e7eb" Text="win-acme Renewal" />
+                                        <Button DockPanel.Dock="Right" Width="120" Command="{Binding CheckRenewalTaskCommand}" Content="Check Task" />
+                                    </DockPanel>
+
+                                    <Grid Margin="0,14,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="130" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Task" />
+                                        <TextBlock Grid.Row="0" Grid.Column="1" Margin="0,0,0,8" Foreground="#e5e7eb" Text="{Binding TaskName}" />
+                                        <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="State" />
+                                        <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,0,0,8" Foreground="#e5e7eb" Text="{Binding TaskState}" />
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Last Run" />
+                                        <TextBlock Grid.Row="2" Grid.Column="1" Margin="0,0,0,8" Foreground="#d1d5db" Text="{Binding LastRunTime}" />
+                                        <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Next Run" />
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Margin="0,0,0,8" Foreground="#d1d5db" Text="{Binding NextRunTime}" />
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,0,8,0" Foreground="#9ca3af" Text="Last Result" />
+                                        <TextBlock Grid.Row="4" Grid.Column="1" Foreground="#d1d5db" Text="{Binding LastTaskResult}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+
+                        <Border Grid.Row="3" Margin="0,0,0,16" Padding="16" Background="#111827" BorderBrush="#1f2937" BorderThickness="1" CornerRadius="10">
+                            <StackPanel>
+                                <TextBlock FontSize="18" FontWeight="SemiBold" Foreground="#e5e7eb" Text="Actions" />
+                                <TextBlock Margin="0,6,0,12" Foreground="#f59e0b" Text="Force Renew는 발급 제한에 걸릴 수 있으므로 테스트 중 반복 실행하지 마십시오." />
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Width="130" Height="34" Margin="0,0,8,0" Command="{Binding RunRenewCommand}" Content="Run Renew" />
+                                    <Button Width="130" Height="34" Margin="0,0,8,0" Command="{Binding ForceRenewCommand}" Content="Force Renew" />
+                                    <Button Width="130" Height="34" Command="{Binding ReloadNginxCommand}" Content="Reload Nginx" />
+                                </StackPanel>
+                                <TextBlock Margin="0,12,0,0" Foreground="#d1d5db" Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Grid.Row="4" Padding="16" Background="#111827" BorderBrush="#1f2937" BorderThickness="1" CornerRadius="10">
+                            <DockPanel LastChildFill="True">
+                                <TextBlock DockPanel.Dock="Top" Margin="0,0,0,10" FontSize="18" FontWeight="SemiBold" Foreground="#e5e7eb" Text="Command Output" />
+                                <TextBox MinHeight="180" AcceptsReturn="True" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Background="#0b1120" Foreground="#d1d5db" BorderBrush="#374151" Text="{Binding CommandOutput, Mode=OneWay}" />
+                            </DockPanel>
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
         </TabControl>
     </Grid>
 </Window>

@@ -7,6 +7,7 @@ using DreamineVMS.Blazor.ViewModels;
 using DreamineVMS.Hosting;
 using DreamineVMS.Options;
 using DreamineVMS.Services.Cameras;
+using DreamineVMS.Services.Certificates;
 using DreamineVMS.Services.Dashboard;
 using DreamineVMS.Services.Runtime;
 using DreamineVMS.Services.Streaming;
@@ -73,6 +74,9 @@ public static class Program
 
         builder.Services.Configure<List<CameraDeviceOptions>>(
             builder.Configuration.GetSection("Cameras"));
+
+        builder.Services.Configure<CertificateMonitorOptions>(
+            builder.Configuration.GetSection("CertificateMonitor"));
     }
 
     /// <summary>
@@ -92,6 +96,13 @@ public static class Program
     {
         builder.Services.AddSingleton<MainWindow>();
         builder.Services.AddSingleton<MainWindowViewModel>();
+        builder.Services.AddSingleton<CertificateMonitorViewModel>();
+
+        builder.Services.AddSingleton<IProcessRunner, ProcessRunner>();
+        builder.Services.AddSingleton<ICertificateMonitorService, X509CertificateMonitorService>();
+        builder.Services.AddSingleton<IWinAcmeService, WinAcmeService>();
+        builder.Services.AddSingleton<INginxReloadService, NginxReloadService>();
+        builder.Services.AddSingleton<ICertificateSettingsWriter, CertificateSettingsWriter>();
     }
 
     /// <summary>

@@ -1,4 +1,4 @@
-﻿@namespace DreamineVMS.Blazor.Components
+@namespace DreamineVMS.Blazor.Components
 @using DreamineVMS.Blazor.ViewModels
 @implements IDisposable
 @inject VmsLocalDashboardViewModel ViewModel
@@ -10,9 +10,12 @@
             <p>WPF Shell 내부에 호스팅되는 Blazor 대시보드입니다.</p>
         </div>
 
-        <button class="primary" @onclick="ViewModel.RefreshAsync">
-            Request Refresh
-        </button>
+        <div class="action-toolbar">
+            <button class="primary" @onclick="ViewModel.RefreshAsync">Request Refresh</button>
+            <button class="secondary" @onclick="ViewModel.StartAllAsync">Start All</button>
+            <button class="secondary" @onclick="ViewModel.StopAllAsync">Stop All</button>
+            <button class="danger" @onclick="ViewModel.ClearLogsAsync">Clear Logs</button>
+        </div>
     </div>
 
     <div class="card-grid">

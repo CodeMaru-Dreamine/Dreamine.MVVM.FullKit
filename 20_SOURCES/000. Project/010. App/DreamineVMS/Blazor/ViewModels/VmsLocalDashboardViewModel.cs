@@ -1,4 +1,4 @@
-﻿using Dreamine.Hybrid.Interfaces;
+using Dreamine.Hybrid.Interfaces;
 using Dreamine.Hybrid.State;
 using DreamineVMS.Messages;
 using DreamineVMS.States;
@@ -80,9 +80,41 @@ public sealed class VmsLocalDashboardViewModel : IDisposable
     /// <returns>비동기 작업입니다.</returns>
     public Task RefreshAsync()
     {
+        return PublishAsync(VmsDashboardActions.EmbeddedRefresh);
+    }
+
+    /// <summary>
+    /// \brief 전체 카메라 연결을 WPF Shell에 요청합니다.
+    /// </summary>
+    /// <returns>비동기 작업입니다.</returns>
+    public Task StartAllAsync()
+    {
+        return PublishAsync(VmsDashboardActions.CameraStartAll);
+    }
+
+    /// <summary>
+    /// \brief 전체 카메라 연결 해제를 WPF Shell에 요청합니다.
+    /// </summary>
+    /// <returns>비동기 작업입니다.</returns>
+    public Task StopAllAsync()
+    {
+        return PublishAsync(VmsDashboardActions.CameraStopAll);
+    }
+
+    /// <summary>
+    /// \brief WPF Shell 로그 삭제를 요청합니다.
+    /// </summary>
+    /// <returns>비동기 작업입니다.</returns>
+    public Task ClearLogsAsync()
+    {
+        return PublishAsync(VmsDashboardActions.ClearLogs);
+    }
+
+    private Task PublishAsync(string action)
+    {
         return _bus.PublishAsync(new VmsDashboardActionRequestedMessage
         {
-            Action = VmsDashboardActions.EmbeddedRefresh
+            Action = action
         });
     }
 

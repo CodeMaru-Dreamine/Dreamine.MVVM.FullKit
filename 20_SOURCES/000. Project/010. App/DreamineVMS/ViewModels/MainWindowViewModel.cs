@@ -28,6 +28,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private readonly IDisposable _dashboardSubscription;
     private CameraRowViewModel? _selectedCamera;
     private string _statusMessage = "VMS application started.";
+    private readonly CertificateMonitorViewModel _certificateMonitor;
 
     /// <summary>
     /// \brief MainWindowViewModel 클래스의 새 인스턴스를 초기화합니다.
@@ -42,13 +43,15 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         ICameraRuntimeStateService runtimeState,
         ICameraStreamService streamService,
         IVmsDashboardStateService dashboardStateService,
-        IHybridMessageBus messageBus)
+        IHybridMessageBus messageBus,
+        CertificateMonitorViewModel certificateMonitor)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _runtimeState = runtimeState ?? throw new ArgumentNullException(nameof(runtimeState));
         _streamService = streamService ?? throw new ArgumentNullException(nameof(streamService));
         _dashboardStateService = dashboardStateService ?? throw new ArgumentNullException(nameof(dashboardStateService));
         ArgumentNullException.ThrowIfNull(messageBus);
+        _certificateMonitor = certificateMonitor ?? throw new ArgumentNullException(nameof(certificateMonitor));
 
         foreach (CameraDevice camera in _repository.GetAll())
         {
@@ -74,6 +77,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     /// <summary>\brief Server Dashboard에서 Live 탭으로 이동 요청이 들어왔을 때 발생합니다.</summary>
     public event EventHandler? OpenLiveTabRequested;
+
+    /// <summary>\brief 인증서 모니터 ViewModel입니다.</summary>
+    public CertificateMonitorViewModel CertificateMonitor => _certificateMonitor;
 
     /// <summary>\brief 카메라 목록(행 ViewModel)입니다.</summary>
     public ObservableCollection<CameraRowViewModel> Cameras { get; } = new();
@@ -167,6 +173,44 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         AddLog($"Disconnect requested: {selected.Name}");
     }
 
+    private async Task ConnectCameraAsync(string? cameraId)
+    {
+        if (string.IsNullOrWhiteSpace(cameraId))
+        {
+            AddLog("Connect request ignored: camera id is empty.");
+            return;
+        }
+
+        CameraRowViewModel? camera = Cameras.FirstOrDefault(row => string.Equals(row.Id, cameraId, StringComparison.OrdinalIgnoreCase));
+        if (camera is null)
+        {
+            AddLog($"Connect request ignored: camera not found. id={cameraId}");
+            return;
+        }
+
+        await _streamService.StartAsync(camera.Id).ConfigureAwait(false);
+        AddLog($"Dashboard connect requested: {camera.Name}");
+    }
+
+    private async Task DisconnectCameraAsync(string? cameraId)
+    {
+        if (string.IsNullOrWhiteSpace(cameraId))
+        {
+            AddLog("Disconnect request ignored: camera id is empty.");
+            return;
+        }
+
+        CameraRowViewModel? camera = Cameras.FirstOrDefault(row => string.Equals(row.Id, cameraId, StringComparison.OrdinalIgnoreCase));
+        if (camera is null)
+        {
+            AddLog($"Disconnect request ignored: camera not found. id={cameraId}");
+            return;
+        }
+
+        await _streamService.StopAsync(camera.Id).ConfigureAwait(false);
+        AddLog($"Dashboard disconnect requested: {camera.Name}");
+    }
+
     private async Task StartAllAsync()
     {
         await _streamService.StartAllAsync();
@@ -179,7 +223,7 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         AddLog("Stop all cameras requested.");
     }
 
-    private Task OnDashboardActionRequestedAsync(VmsDashboardActionRequestedMessage message, CancellationToken cancellationToken)
+    private async Task OnDashboardActionRequestedAsync(VmsDashboardActionRequestedMessage message, CancellationToken cancellationToken)
     {
         switch (message.Action)
         {
@@ -189,16 +233,35 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
                 break;
 
             case VmsDashboardActions.ServerOpenLive:
-                AddLog("Server dashboard requested Open Live.");
-                RaiseOpenLiveTabRequested();
+                // Server Dashboard is a browser/WebView route.
+                // Do not switch the WPF tab from here, otherwise the Server Dashboard tab and WPF Live tab appear to be mixed.
+                AddLog("Server dashboard requested Open Live. Use /live route in the server WebView.");
+                break;
+
+            case VmsDashboardActions.CameraConnect:
+                await ConnectCameraAsync(message.CameraId).ConfigureAwait(false);
+                break;
+
+            case VmsDashboardActions.CameraDisconnect:
+                await DisconnectCameraAsync(message.CameraId).ConfigureAwait(false);
+                break;
+
+            case VmsDashboardActions.CameraStartAll:
+                await StartAllAsync().ConfigureAwait(false);
+                break;
+
+            case VmsDashboardActions.CameraStopAll:
+                await StopAllAsync().ConfigureAwait(false);
+                break;
+
+            case VmsDashboardActions.ClearLogs:
+                ClearLogs();
                 break;
 
             default:
                 AddLog($"Dashboard action requested: {message.Action}");
                 break;
         }
-
-        return Task.CompletedTask;
     }
 
     private void OnCameraRuntimeStateChanged(object? sender, CameraRuntimeState state)

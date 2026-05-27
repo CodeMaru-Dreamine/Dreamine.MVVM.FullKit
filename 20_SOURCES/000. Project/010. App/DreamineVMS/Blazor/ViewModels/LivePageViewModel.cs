@@ -1,4 +1,4 @@
-using DreamineVMS.Models;
+﻿using DreamineVMS.Models;
 using DreamineVMS.Services.Cameras;
 using DreamineVMS.Services.Runtime;
 using Microsoft.JSInterop;
@@ -9,16 +9,16 @@ namespace DreamineVMS.Blazor.ViewModels;
 /// \brief Live Blazor 페이지의 ViewModel입니다.
 /// </summary>
 /// <remarks>
-/// FFmpeg HLS 스트림의 시작/재시작은 BackgroundService가 담당하고,
-/// 이 ViewModel은 이미 생성된 HLS 스트림을 화면에 연결하고
-/// 카메라가 Stop→Start 사이클을 겪을 때 hls.js를 다시 초기화하는 책임을 갖습니다.
+/// FFmpeg HLS 스트림의 시작/재시작은 BackgroundService가 담당합니다.
+/// 이 ViewModel은 RuntimeState와 video element를 동기화합니다.
+/// StopAll → StartAll 사이클에서 기존 hls.js 인스턴스를 제거하고,
+/// 다시 Connected/Connecting 상태가 되면 안전하게 재연결합니다.
 /// </remarks>
 public sealed class LivePageViewModel : IAsyncDisposable
 {
     private readonly IVmsCameraRepository _repository;
     private readonly ICameraRuntimeStateService _runtimeState;
     private readonly IJSRuntime _jsRuntime;
-    private readonly Dictionary<string, CameraConnectionState> _lastSeenStates = new();
     private readonly object _gate = new();
     private bool _isInitialized;
     private bool _isDisposed;
@@ -38,6 +38,11 @@ public sealed class LivePageViewModel : IAsyncDisposable
         _runtimeState = runtimeState ?? throw new ArgumentNullException(nameof(runtimeState));
         _jsRuntime = jsRuntime ?? throw new ArgumentNullException(nameof(jsRuntime));
     }
+
+    /// <summary>
+    /// \brief RuntimeState 변경으로 player 동기화가 필요할 때 발생합니다.
+    /// </summary>
+    public event EventHandler? PlayersNeedSync;
 
     /// <summary>
     /// \brief Live 화면에 표시할 카메라 목록입니다.
@@ -62,21 +67,16 @@ public sealed class LivePageViewModel : IAsyncDisposable
                 .Take(5)
                 .ToArray();
 
-            foreach (CameraDevice camera in Cameras)
-            {
-                CameraRuntimeState state = _runtimeState.GetState(camera.Id);
-                _lastSeenStates[camera.Id] = state.State;
-            }
-
             _runtimeState.StateChanged += OnRuntimeStateChanged;
             _isInitialized = true;
         }
     }
 
     /// <summary>
-    /// \brief Video DOM이 생성된 뒤 hls.js 플레이어를 연결합니다.
+    /// \brief Video DOM이 생성된 뒤 player 상태를 RuntimeState와 동기화합니다.
     /// </summary>
     /// <param name="firstRender">첫 렌더링 여부입니다.</param>
+    /// <returns>비동기 작업입니다.</returns>
     public async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender)
@@ -84,9 +84,31 @@ public sealed class LivePageViewModel : IAsyncDisposable
             return;
         }
 
+        await SynchronizePlayersAsync();
+    }
+
+    /// <summary>
+    /// \brief 현재 RuntimeState에 맞춰 hls.js player를 생성 또는 제거합니다.
+    /// </summary>
+    /// <returns>비동기 작업입니다.</returns>
+    public async Task SynchronizePlayersAsync()
+    {
+        if (_isDisposed)
+        {
+            return;
+        }
+
         foreach (CameraDevice camera in Cameras)
         {
-            await InitPlayerAsync(camera);
+            CameraRuntimeState state = _runtimeState.GetState(camera.Id);
+
+            if (state.State is CameraConnectionState.Connected or CameraConnectionState.Connecting)
+            {
+                await EnsurePlayerAsync(camera);
+                continue;
+            }
+
+            await DestroyPlayerAsync(camera, state.LastMessage);
         }
     }
 
@@ -116,32 +138,37 @@ public sealed class LivePageViewModel : IAsyncDisposable
             if (_isInitialized)
             {
                 _runtimeState.StateChanged -= OnRuntimeStateChanged;
+                _isInitialized = false;
             }
         }
 
         foreach (CameraDevice camera in Cameras)
         {
-            try
-            {
-                await _jsRuntime.InvokeVoidAsync(
-                    "dreamineVmsHls.destroy",
-                    GetPlayerId(camera));
-            }
-            catch
-            {
-                // 화면 종료 중 JS 런타임이 이미 끊긴 경우는 무시합니다.
-            }
+            await DestroyPlayerAsync(camera, "Live view disposed.");
         }
     }
 
-    private async Task InitPlayerAsync(CameraDevice camera)
+
+    private static string BuildVersionedHlsUrl(CameraDevice camera, CameraRuntimeState state)
+    {
+        ArgumentNullException.ThrowIfNull(camera);
+        ArgumentNullException.ThrowIfNull(state);
+
+        string separator = camera.HlsUrl.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+        return $"{camera.HlsUrl}{separator}session={state.RestartCount}";
+    }
+
+    private async Task EnsurePlayerAsync(CameraDevice camera)
     {
         try
         {
+            CameraRuntimeState state = _runtimeState.GetState(camera.Id);
+            string source = BuildVersionedHlsUrl(camera, state);
+
             await _jsRuntime.InvokeVoidAsync(
                 "dreamineVmsHls.init",
                 GetPlayerId(camera),
-                camera.HlsUrl);
+                source);
         }
         catch (JSDisconnectedException)
         {
@@ -149,58 +176,41 @@ public sealed class LivePageViewModel : IAsyncDisposable
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"[LivePageViewModel] init failed: {camera.Id}: {ex}");
+            System.Diagnostics.Debug.WriteLine($"[LivePageViewModel] player init failed: {camera.Id}: {ex}");
+        }
+    }
+
+    private async Task DestroyPlayerAsync(CameraDevice camera, string? reason)
+    {
+        try
+        {
+            await _jsRuntime.InvokeVoidAsync(
+                "dreamineVmsHls.destroy",
+                GetPlayerId(camera),
+                string.IsNullOrWhiteSpace(reason) ? "Stream stopped." : reason);
+        }
+        catch (JSDisconnectedException)
+        {
+            // Circuit이 끊긴 상태는 무시합니다.
+        }
+        catch
+        {
+            // 화면 종료 중 JS 런타임이 이미 끊긴 경우는 무시합니다.
         }
     }
 
     private void OnRuntimeStateChanged(object? sender, CameraRuntimeState state)
     {
-        // 화면에 표시하는 카메라만 관심 대상.
         if (Cameras.All(c => c.Id != state.CameraId))
         {
             return;
         }
 
-        CameraConnectionState previous;
-        bool transitionedToConnected;
-
-        lock (_gate)
-        {
-            if (_isDisposed)
-            {
-                return;
-            }
-
-            previous = _lastSeenStates.GetValueOrDefault(state.CameraId, CameraConnectionState.Disconnected);
-            _lastSeenStates[state.CameraId] = state.State;
-
-            // "Disconnected/Faulted/Connecting → Connected" 전환에서만 init 재호출.
-            // Connected에서 Connected로 가는 노이즈는 무시.
-            transitionedToConnected =
-                previous != CameraConnectionState.Connected &&
-                state.State == CameraConnectionState.Connected;
-        }
-
-        if (!transitionedToConnected)
+        if (_isDisposed)
         {
             return;
         }
 
-        CameraDevice? camera = Cameras.FirstOrDefault(c => c.Id == state.CameraId);
-        if (camera is null)
-        {
-            return;
-        }
-
-        // 비동기 호출은 락 밖에서.
-        _ = ReinitializePlayerAsync(camera);
-    }
-
-    private async Task ReinitializePlayerAsync(CameraDevice camera)
-    {
-        // Connected 직후에는 m3u8가 아직 초기 세그먼트를 다 갖추지 못한 상태일 수 있습니다.
-        // 짧게 대기 후 init을 호출합니다. (hls-interop.js의 waitUntilReady가 이중 안전망)
-        await Task.Delay(500);
-        await InitPlayerAsync(camera);
+        PlayersNeedSync?.Invoke(this, EventArgs.Empty);
     }
 }

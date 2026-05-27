@@ -1,4 +1,4 @@
-﻿using Dreamine.Hybrid.Interfaces;
+using Dreamine.Hybrid.Interfaces;
 using Dreamine.Hybrid.State;
 using DreamineVMS.Messages;
 using DreamineVMS.Models;
@@ -97,14 +97,67 @@ public sealed class DashboardPageViewModel : IDisposable
     }
 
     /// <summary>
-    /// \brief WPF Shell에 Live View 열기 요청을 전송합니다.
+    /// \brief 레거시 호환용 Live View 요청입니다. 서버 Dashboard에서는 href="/live" 라우팅을 우선 사용합니다.
     /// </summary>
     /// <returns>비동기 작업입니다.</returns>
     public Task OpenLiveAsync()
     {
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// \brief 선택한 카메라 연결을 WPF Shell에 요청합니다.
+    /// </summary>
+    /// <param name="cameraId">카메라 ID입니다.</param>
+    /// <returns>비동기 작업입니다.</returns>
+    public Task ConnectCameraAsync(string cameraId)
+    {
+        return PublishAsync(VmsDashboardActions.CameraConnect, cameraId);
+    }
+
+    /// <summary>
+    /// \brief 선택한 카메라 연결 해제를 WPF Shell에 요청합니다.
+    /// </summary>
+    /// <param name="cameraId">카메라 ID입니다.</param>
+    /// <returns>비동기 작업입니다.</returns>
+    public Task DisconnectCameraAsync(string cameraId)
+    {
+        return PublishAsync(VmsDashboardActions.CameraDisconnect, cameraId);
+    }
+
+    /// <summary>
+    /// \brief 전체 카메라 연결을 WPF Shell에 요청합니다.
+    /// </summary>
+    /// <returns>비동기 작업입니다.</returns>
+    public Task StartAllAsync()
+    {
+        return PublishAsync(VmsDashboardActions.CameraStartAll);
+    }
+
+    /// <summary>
+    /// \brief 전체 카메라 연결 해제를 WPF Shell에 요청합니다.
+    /// </summary>
+    /// <returns>비동기 작업입니다.</returns>
+    public Task StopAllAsync()
+    {
+        return PublishAsync(VmsDashboardActions.CameraStopAll);
+    }
+
+    /// <summary>
+    /// \brief WPF Shell 로그 삭제를 요청합니다.
+    /// </summary>
+    /// <returns>비동기 작업입니다.</returns>
+    public Task ClearLogsAsync()
+    {
+        return PublishAsync(VmsDashboardActions.ClearLogs);
+    }
+
+    private Task PublishAsync(string action, string? cameraId = null)
+    {
         return _bus.PublishAsync(new VmsDashboardActionRequestedMessage
         {
-            Action = VmsDashboardActions.ServerOpenLive
+            Action = action,
+            CameraId = cameraId
         });
     }
 
