@@ -94,3 +94,6 @@
 [submodule "20_SOURCES/100. Library/PLC.Wpf"]
 	path = 20_SOURCES/100. Library/PLC.Wpf
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.PLC.Wpf
+[submodule "20_SOURCES/100. Library/PLC.Omron.Fins"]
+	path = 20_SOURCES/100. Library/PLC.Omron.Fins
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.PLC.Omron.Fins
