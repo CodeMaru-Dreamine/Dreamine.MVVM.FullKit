@@ -43,6 +43,7 @@
 		<ProjectReference Include="..\..\..\..\100. Library\PLC.Abstractions\Dreamine.PLC.Abstractions.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\PLC.Core\Dreamine.PLC.Core.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\PLC.Mitsubishi.MC\Dreamine.PLC.Mitsubishi.MC.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\PLC.Omron.Fins\Dreamine.PLC.Omron.Fins.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\PLC.Wpf\Dreamine.PLC.Wpf.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Extensions\Dreamine.MVVM.Extensions.csproj" />

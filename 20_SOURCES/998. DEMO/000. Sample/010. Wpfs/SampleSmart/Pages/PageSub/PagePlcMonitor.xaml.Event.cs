@@ -36,7 +36,7 @@ public sealed class PagePlcMonitorEvent
 
 
     /// <summary>
-    /// \brief PLC Client 선택 모드 문자열입니다. SimulatorTcp, McTcp, McUdp를 사용합니다.
+    /// \brief PLC Client 선택 모드 문자열입니다. SimulatorTcp, McTcp, McUdp, FinsTcp, FinsUdp를 사용합니다.
     /// </summary>
     public string ClientModeText { get; set; } = "SimulatorTcp";
 
@@ -127,12 +127,29 @@ public sealed class PagePlcMonitorEvent
             case "MCUDP":
                 UseMitsubishiMcClient(Host, port, "Udp");
                 return;
+            case "FINSTCP":
+                UseOmronFinsClient(Host, port, "Tcp");
+                return;
+            case "FINSUDP":
+                UseOmronFinsClient(Host, port, "Udp");
+                return;
             default:
-                _runtime.Monitor.StatusMessage = "Client mode must be SimulatorTcp, McTcp, or McUdp.";
+                _runtime.Monitor.StatusMessage = "Client mode must be SimulatorTcp, McTcp, McUdp, FinsTcp, or FinsUdp.";
                 return;
         }
     }
 
+
+    private void UseOmronFinsClient(string host, int port, string transportText)
+    {
+        if (!int.TryParse(McRetryCountText, out var retryCount) || retryCount <= 0)
+        {
+            _runtime.Monitor.StatusMessage = "FINS retry count must be greater than zero.";
+            return;
+        }
+
+        _runtime.UseOmronFinsClient(host, port, transportText, retryCount);
+    }
 
     /// <summary>
     /// \brief PLC Simulator TCP Client를 선택합니다.

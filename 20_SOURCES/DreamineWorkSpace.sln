@@ -115,6 +115,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dreamine.PLC.Omron.CxCompon
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dreamine.PLC.Wpf", "100. Library\PLC.Wpf\Dreamine.PLC.Wpf.csproj", "{0C803E7F-D2AE-18A8-AFCC-3E3CE58EF23E}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Dreamine.PLC.Omron.Fins", "100. Library\PLC.Omron.Fins\Dreamine.PLC.Omron.Fins.csproj", "{F8E4418E-FFE5-05C6-216B-2A6F5B3D5FC1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -467,6 +469,14 @@ Global
 		{0C803E7F-D2AE-18A8-AFCC-3E3CE58EF23E}.Release|x64.Build.0 = Release|Any CPU
 		{0C803E7F-D2AE-18A8-AFCC-3E3CE58EF23E}.Release|x86.ActiveCfg = Release|Any CPU
 		{0C803E7F-D2AE-18A8-AFCC-3E3CE58EF23E}.Release|x86.Build.0 = Release|Any CPU
+		{F8E4418E-FFE5-05C6-216B-2A6F5B3D5FC1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F8E4418E-FFE5-05C6-216B-2A6F5B3D5FC1}.Debug|x64.Build.0 = Debug|Any CPU
+		{F8E4418E-FFE5-05C6-216B-2A6F5B3D5FC1}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F8E4418E-FFE5-05C6-216B-2A6F5B3D5FC1}.Debug|x86.Build.0 = Debug|Any CPU
+		{F8E4418E-FFE5-05C6-216B-2A6F5B3D5FC1}.Release|x64.ActiveCfg = Release|Any CPU
+		{F8E4418E-FFE5-05C6-216B-2A6F5B3D5FC1}.Release|x64.Build.0 = Release|Any CPU
+		{F8E4418E-FFE5-05C6-216B-2A6F5B3D5FC1}.Release|x86.ActiveCfg = Release|Any CPU
+		{F8E4418E-FFE5-05C6-216B-2A6F5B3D5FC1}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -522,6 +532,7 @@ Global
 		{9095ACA9-7913-E61B-5E44-926FF6F2C26D} = {BF419B98-22B4-458C-98A0-82780D7C9C70}
 		{5B3C2A30-7B74-2A61-99E4-DC952522BC03} = {BF419B98-22B4-458C-98A0-82780D7C9C70}
 		{0C803E7F-D2AE-18A8-AFCC-3E3CE58EF23E} = {BF419B98-22B4-458C-98A0-82780D7C9C70}
+		{F8E4418E-FFE5-05C6-216B-2A6F5B3D5FC1} = {BF419B98-22B4-458C-98A0-82780D7C9C70}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6B5FA7DE-9A7E-4A90-8474-C97C8E210D6B}

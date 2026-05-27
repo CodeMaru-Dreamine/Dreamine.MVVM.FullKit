@@ -6,6 +6,9 @@ using Dreamine.PLC.Core.Simulation;
 using Dreamine.PLC.Mitsubishi.MC.Clients;
 using Dreamine.PLC.Mitsubishi.MC.Options;
 using Dreamine.PLC.Mitsubishi.MC.Simulation;
+using Dreamine.PLC.Omron.Fins.Clients;
+using Dreamine.PLC.Omron.Fins.Options;
+using Dreamine.PLC.Omron.Fins.Simulation;
 using Dreamine.PLC.Wpf.ViewModels;
 
 namespace SampleSmart.Pages.PageSub.PlcTabs;
@@ -21,8 +24,11 @@ public sealed class PlcSampleRuntime
     private PlcSimulatorServer? _simulatorServer;
     private MitsubishiMcTcpSimulatorServer? _mcTcpSimulatorServer;
     private MitsubishiMcUdpSimulatorServer? _mcUdpSimulatorServer;
+    private OmronFinsTcpSimulatorServer? _finsTcpSimulatorServer;
+    private OmronFinsUdpSimulatorServer? _finsUdpSimulatorServer;
     private PlcSimulatorTcpClient? _simulatorClient;
     private MitsubishiMcPlcClient? _mitsubishiMcClient;
+    private OmronFinsPlcClient? _omronFinsClient;
     private string _activeServerMode = string.Empty;
 
     /// <summary>
@@ -104,6 +110,39 @@ public sealed class PlcSampleRuntime
         Monitor.StatusMessage = $"Mitsubishi MC {transportType} client selected.";
     }
 
+
+    /// <summary>
+    /// \brief Omron FINS Client를 모니터에 연결합니다.
+    /// </summary>
+    /// <param name="host">PLC Host입니다.</param>
+    /// <param name="port">PLC Port입니다.</param>
+    /// <param name="transportText">Transport 문자열입니다. Tcp 또는 Udp를 사용합니다.</param>
+    /// <param name="retryCount">송수신 재시도 횟수입니다.</param>
+    public void UseOmronFinsClient(string host, int port, string transportText, int retryCount)
+    {
+        if (!Enum.TryParse<OmronFinsTransportType>(transportText, ignoreCase: true, out var transportType))
+        {
+            Monitor.StatusMessage = "FINS transport must be Tcp or Udp.";
+            return;
+        }
+
+        _omronFinsClient = new OmronFinsPlcClient(new OmronFinsConnectionOptions
+        {
+            Host = host,
+            Port = port,
+            TransportType = transportType,
+            RetryCount = Math.Max(1, retryCount),
+            ConnectTimeoutMs = 3000,
+            ReceiveTimeoutMs = 3000,
+            DestinationNode = 0x00,
+            SourceNode = 0x01
+        });
+
+        _activeClient = _omronFinsClient;
+        Monitor.SetClient(_omronFinsClient, $"Omron FINS {transportType} ({host}:{port})");
+        Monitor.StatusMessage = $"Omron FINS {transportType} client selected.";
+    }
+
     /// <summary>
     /// \brief 선택된 모드에 맞는 PLC Protocol Simulator Server를 시작합니다.
     /// </summary>
@@ -152,8 +191,22 @@ public sealed class PlcSampleRuntime
                 _activeServerMode = "McUdp";
                 break;
 
+            case "FINSTCP":
+                _finsTcpSimulatorServer = new OmronFinsTcpSimulatorServer(CreateFinsSimulatorOptions(host, port));
+                _finsTcpSimulatorServer.StatusChanged += OnSimulatorServerStatusChanged;
+                await _finsTcpSimulatorServer.StartAsync();
+                _activeServerMode = "FinsTcp";
+                break;
+
+            case "FINSUDP":
+                _finsUdpSimulatorServer = new OmronFinsUdpSimulatorServer(CreateFinsSimulatorOptions(host, port));
+                _finsUdpSimulatorServer.StatusChanged += OnSimulatorServerStatusChanged;
+                await _finsUdpSimulatorServer.StartAsync();
+                _activeServerMode = "FinsUdp";
+                break;
+
             default:
-                Monitor.StatusMessage = "Server mode must be SimulatorTcp, McTcp, or McUdp.";
+                Monitor.StatusMessage = "Server mode must be SimulatorTcp, McTcp, McUdp, FinsTcp, or FinsUdp.";
                 return;
         }
 
@@ -192,6 +245,20 @@ public sealed class PlcSampleRuntime
             _mcUdpSimulatorServer.StatusChanged -= OnSimulatorServerStatusChanged;
             await _mcUdpSimulatorServer.StopAsync();
             _mcUdpSimulatorServer = null;
+        }
+
+        if (_finsTcpSimulatorServer is not null)
+        {
+            _finsTcpSimulatorServer.StatusChanged -= OnSimulatorServerStatusChanged;
+            await _finsTcpSimulatorServer.StopAsync();
+            _finsTcpSimulatorServer = null;
+        }
+
+        if (_finsUdpSimulatorServer is not null)
+        {
+            _finsUdpSimulatorServer.StatusChanged -= OnSimulatorServerStatusChanged;
+            await _finsUdpSimulatorServer.StopAsync();
+            _finsUdpSimulatorServer = null;
         }
 
         _activeServerMode = string.Empty;
@@ -308,9 +375,26 @@ public sealed class PlcSampleRuntime
         };
     }
 
+    private static OmronFinsSimulatorServerOptions CreateFinsSimulatorOptions(string host, int port)
+    {
+        return new OmronFinsSimulatorServerOptions
+        {
+            Host = host,
+            Port = port,
+            EnableAutoWordResponse = true,
+            AutoResponseTriggerOffset = 100,
+            AutoResponseOffset = 101,
+            AutoResponseIncrement = 1
+        };
+    }
+
     private bool IsAnyServerRunning()
     {
-        return _simulatorServer is not null || _mcTcpSimulatorServer is not null || _mcUdpSimulatorServer is not null;
+        return _simulatorServer is not null
+            || _mcTcpSimulatorServer is not null
+            || _mcUdpSimulatorServer is not null
+            || _finsTcpSimulatorServer is not null
+            || _finsUdpSimulatorServer is not null;
     }
 
     private static string NormalizeMode(string? modeText)
