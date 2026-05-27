@@ -1,4 +1,4 @@
-using Dreamine.Logging.Interfaces;
+﻿using Dreamine.Logging.Interfaces;
 using Dreamine.MVVM.Attributes;
 using Dreamine.MVVM.Core;
 using Dreamine.MVVM.ViewModels;
@@ -72,6 +72,12 @@ namespace SampleSmart.Pages
         /// </summary>
         [DreamineCommand("Event.CommunicationPage")]
         private partial void CommunicationPage();
+
+        /// <summary>
+        /// \brief PLC Monitor 페이지 이동 동작 실행.
+        /// </summary>
+        [DreamineCommand("Event.PlcPage")]
+        private partial void PlcPage();
 
         /// <summary>
         /// \brief SubWindow 오픈 동작 실행.

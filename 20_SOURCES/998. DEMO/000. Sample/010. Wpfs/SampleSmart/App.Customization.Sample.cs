@@ -22,6 +22,7 @@ using Dreamine.Threading.Wpf.ViewModels;
 using SampleSmart.Pages;
 using SampleSmart.Pages.PageSub;
 using SampleSmart.Pages.PageSub.CommunicationTabs;
+using SampleSmart.Pages.PageSub.PlcTabs;
 using System;
 using System.IO;
 using System.Windows;
@@ -58,6 +59,7 @@ namespace SampleSmart
 
             DMContainer.RegisterSingleton<IMessageBus, InMemoryMessageBus>();
             DMContainer.RegisterSingleton<CommunicationSampleRuntime>();
+            DMContainer.RegisterSingleton<PlcSampleRuntime>();
         }
 
 

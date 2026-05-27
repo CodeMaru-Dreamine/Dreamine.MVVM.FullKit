@@ -40,6 +40,10 @@
 		<ProjectReference Include="..\..\..\..\100. Library\Communication.Serial\Dreamine.Communication.Serial.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Communication.Sockets\Dreamine.Communication.Sockets.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Communication.Wpf\Dreamine.Communication.Wpf.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\PLC.Abstractions\Dreamine.PLC.Abstractions.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\PLC.Core\Dreamine.PLC.Core.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\PLC.Mitsubishi.MC\Dreamine.PLC.Mitsubishi.MC.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\PLC.Wpf\Dreamine.PLC.Wpf.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Extensions\Dreamine.MVVM.Extensions.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer" />

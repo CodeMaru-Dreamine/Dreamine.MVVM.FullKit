@@ -1,0 +1,91 @@
+<UserControl x:Class="SampleSmart.Pages.PageSub.PagePlcMonitor"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:plcViews="clr-namespace:Dreamine.PLC.Wpf.Views;assembly=Dreamine.PLC.Wpf"
+             MinWidth="1200"
+             MinHeight="650">
+    <Grid Margin="8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="170" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Text="Dreamine PLC Sample"
+                   FontSize="18"
+                   FontWeight="SemiBold"
+                   Margin="0,0,0,8" />
+
+        <TabControl Grid.Row="1" Margin="0,0,0,8">
+            <TabItem Header="InMemory">
+                <Border Background="White" BorderBrush="#DDD" BorderThickness="1" CornerRadius="6" Padding="10">
+                    <StackPanel>
+                        <TextBlock Text="InMemory PLC Test" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <TextBlock Text="외부 PLC 없이 메모리 기반 Read/Write를 검증합니다. Connect 후 D100/M10 등에 Write → Read 순서로 테스트하십시오."
+                                   TextWrapping="Wrap" Foreground="#555" Margin="0,0,0,10" />
+                        <Button Content="Use InMemory Client" Width="160" HorizontalAlignment="Left" Command="{Binding UseInMemoryCommand}" />
+                    </StackPanel>
+                </Border>
+            </TabItem>
+            <TabItem Header="TCP Simulator">
+                <Border Background="White" BorderBrush="#DDD" BorderThickness="1" CornerRadius="6" Padding="10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+                        <TextBlock Grid.Row="0" Text="TCP PLC Simulator Test" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <Grid Grid.Row="1" Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="130" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Host" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Grid.Column="1" Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="2" Text="Port" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Grid.Column="3" Text="{Binding PortText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0" />
+                            <Button Grid.Column="4" Content="Start Server" Width="100" Margin="0,0,6,0" Command="{Binding StartServerCommand}" />
+                            <Button Grid.Column="5" Content="Stop Server" Width="100" Margin="0,0,6,0" Command="{Binding StopServerCommand}" />
+                            <Button Grid.Column="6" Content="Use TCP Client" Width="120" Command="{Binding UseTcpClientCommand}" />
+                        </Grid>
+                        <TextBlock Grid.Row="2"
+                                   Text="같은 PC 테스트: Host=127.0.0.1. 다른 PC 테스트: 서버 PC는 Host=0.0.0.0으로 Start, 클라이언트 PC는 서버 PC IP를 Host에 입력."
+                                   TextWrapping="Wrap" Foreground="#555" />
+                        <TextBlock Grid.Row="3"
+                                   Text="Use TCP Client를 누르면 아래 PLC Monitor의 채널명이 PLC Simulator TCP Client로 바뀌어야 합니다."
+                                   TextWrapping="Wrap" Foreground="#B45309" Margin="0,6,0,0" />
+                        <Grid Grid.Row="4" Margin="0,8,0,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="70" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="Handshake Start" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Grid.Column="1" Text="{Binding HandshakeStartValueText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="2" Text="Iterations" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Grid.Column="3" Text="{Binding HandshakeIterationsText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0" />
+                            <TextBlock Grid.Column="4" Text="Delay(ms)" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Grid.Column="5" Text="{Binding HandshakeDelayMsText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0" />
+                            <Button Grid.Column="6" Content="Run Handshake" Width="130" Command="{Binding RunHandshakeTestCommand}" />
+                        </Grid>
+                    </Grid>
+                </Border>
+            </TabItem>
+        </TabControl>
+
+        <plcViews:PlcMonitorView Grid.Row="2" DataContext="{Binding Monitor}" />
+    </Grid>
+</UserControl>
