@@ -1,4 +1,4 @@
-using Dreamine.MVVM.Attributes;
+﻿using Dreamine.MVVM.Attributes;
 using Dreamine.MVVM.ViewModels;
 using Dreamine.PLC.Wpf.ViewModels;
 
@@ -53,6 +53,99 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
 
             Event.PortText = value;
             OnPropertyChanged(nameof(PortText));
+        }
+    }
+
+
+
+
+    /// <summary>
+    /// \brief PLC Client 선택 모드 문자열입니다. SimulatorTcp, McTcp, McUdp를 사용합니다.
+    /// </summary>
+    public string ClientModeText
+    {
+        get => Event.ClientModeText;
+        set
+        {
+            if (Event.ClientModeText == value)
+            {
+                return;
+            }
+
+            Event.ClientModeText = value;
+            OnPropertyChanged(nameof(ClientModeText));
+        }
+    }
+
+    /// <summary>
+    /// \brief Mitsubishi MC Host입니다.
+    /// </summary>
+    public string McHost
+    {
+        get => Event.McHost;
+        set
+        {
+            if (Event.McHost == value)
+            {
+                return;
+            }
+
+            Event.McHost = value;
+            OnPropertyChanged(nameof(McHost));
+        }
+    }
+
+    /// <summary>
+    /// \brief Mitsubishi MC Port 문자열입니다.
+    /// </summary>
+    public string McPortText
+    {
+        get => Event.McPortText;
+        set
+        {
+            if (Event.McPortText == value)
+            {
+                return;
+            }
+
+            Event.McPortText = value;
+            OnPropertyChanged(nameof(McPortText));
+        }
+    }
+
+    /// <summary>
+    /// \brief Mitsubishi MC Transport 문자열입니다.
+    /// </summary>
+    public string McTransportText
+    {
+        get => Event.McTransportText;
+        set
+        {
+            if (Event.McTransportText == value)
+            {
+                return;
+            }
+
+            Event.McTransportText = value;
+            OnPropertyChanged(nameof(McTransportText));
+        }
+    }
+
+    /// <summary>
+    /// \brief Mitsubishi MC Retry Count 문자열입니다.
+    /// </summary>
+    public string McRetryCountText
+    {
+        get => Event.McRetryCountText;
+        set
+        {
+            if (Event.McRetryCountText == value)
+            {
+                return;
+            }
+
+            Event.McRetryCountText = value;
+            OnPropertyChanged(nameof(McRetryCountText));
         }
     }
 
@@ -133,6 +226,20 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     /// </summary>
     [DreamineCommand("Event.UseTcpClient")]
     private partial void UseTcpClient();
+
+
+    /// <summary>
+    /// \brief 선택된 PLC Client를 모니터에 연결하는 명령입니다.
+    /// </summary>
+    [DreamineCommand("Event.UseSelectedClient")]
+    private partial void UseSelectedClient();
+
+
+    /// <summary>
+    /// \brief Mitsubishi MC Client 선택 명령입니다.
+    /// </summary>
+    [DreamineCommand("Event.UseMcClient")]
+    private partial void UseMcClient();
 
     /// <summary>
     /// \brief D100/D101 기반 자동 응답 Handshake 테스트 명령입니다.

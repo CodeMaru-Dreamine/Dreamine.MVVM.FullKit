@@ -34,6 +34,33 @@ public sealed class PagePlcMonitorEvent
     /// </summary>
     public string PortText { get; set; } = "55000";
 
+
+    /// <summary>
+    /// \brief PLC Client 선택 모드 문자열입니다. SimulatorTcp, McTcp, McUdp를 사용합니다.
+    /// </summary>
+    public string ClientModeText { get; set; } = "SimulatorTcp";
+
+
+    /// <summary>
+    /// \brief Mitsubishi MC Host입니다.
+    /// </summary>
+    public string McHost { get; set; } = "127.0.0.1";
+
+    /// <summary>
+    /// \brief Mitsubishi MC Port 문자열입니다.
+    /// </summary>
+    public string McPortText { get; set; } = "5000";
+
+    /// <summary>
+    /// \brief Mitsubishi MC Transport 문자열입니다. Tcp 또는 Udp를 사용합니다.
+    /// </summary>
+    public string McTransportText { get; set; } = "Tcp";
+
+    /// <summary>
+    /// \brief Mitsubishi MC Retry Count 문자열입니다.
+    /// </summary>
+    public string McRetryCountText { get; set; } = "1";
+
     /// <summary>
     /// \brief Handshake 시작 값 문자열입니다.
     /// </summary>
@@ -67,7 +94,7 @@ public sealed class PagePlcMonitorEvent
             return;
         }
 
-        _ = _runtime.StartSimulatorServerAsync(Host, port);
+        _ = _runtime.StartProtocolServerAsync(ClientModeText, Host, port);
     }
 
     /// <summary>
@@ -75,8 +102,37 @@ public sealed class PagePlcMonitorEvent
     /// </summary>
     public void StopServer()
     {
-        _ = _runtime.StopSimulatorServerAsync();
+        _ = _runtime.StopProtocolServerAsync();
     }
+
+    /// <summary>
+    /// \brief 선택된 PLC Client를 모니터에 연결합니다.
+    /// </summary>
+    public void UseSelectedClient()
+    {
+        if (!TryGetPort(out var port))
+        {
+            return;
+        }
+
+        var mode = string.IsNullOrWhiteSpace(ClientModeText) ? "SimulatorTcp" : ClientModeText.Trim();
+        switch (mode.ToUpperInvariant())
+        {
+            case "SIMULATORTCP":
+                _runtime.UseSimulatorTcpClient(Host, port);
+                return;
+            case "MCTCP":
+                UseMitsubishiMcClient(Host, port, "Tcp");
+                return;
+            case "MCUDP":
+                UseMitsubishiMcClient(Host, port, "Udp");
+                return;
+            default:
+                _runtime.Monitor.StatusMessage = "Client mode must be SimulatorTcp, McTcp, or McUdp.";
+                return;
+        }
+    }
+
 
     /// <summary>
     /// \brief PLC Simulator TCP Client를 선택합니다.
@@ -89,6 +145,39 @@ public sealed class PagePlcMonitorEvent
         }
 
         _runtime.UseSimulatorTcpClient(Host, port);
+    }
+
+
+    private void UseMitsubishiMcClient(string host, int port, string transportText)
+    {
+        if (!int.TryParse(McRetryCountText, out var retryCount) || retryCount <= 0)
+        {
+            _runtime.Monitor.StatusMessage = "MC retry count must be greater than zero.";
+            return;
+        }
+
+        _runtime.UseMitsubishiMcClient(host, port, transportText, retryCount);
+    }
+
+
+    /// <summary>
+    /// \brief Mitsubishi MC Client를 선택합니다.
+    /// </summary>
+    public void UseMcClient()
+    {
+        if (!int.TryParse(McPortText, out var port) || port is <= 0 or > 65535)
+        {
+            _runtime.Monitor.StatusMessage = "MC port must be between 1 and 65535.";
+            return;
+        }
+
+        if (!int.TryParse(McRetryCountText, out var retryCount) || retryCount <= 0)
+        {
+            _runtime.Monitor.StatusMessage = "MC retry count must be greater than zero.";
+            return;
+        }
+
+        _runtime.UseMitsubishiMcClient(McHost, port, McTransportText, retryCount);
     }
 
     /// <summary>

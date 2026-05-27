@@ -7,7 +7,7 @@
     <Grid Margin="8">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="170" />
+            <RowDefinition Height="200" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
@@ -28,7 +28,7 @@
                     </StackPanel>
                 </Border>
             </TabItem>
-            <TabItem Header="TCP Simulator">
+            <TabItem Header="PLC Protocol">
                 <Border Background="White" BorderBrush="#DDD" BorderThickness="1" CornerRadius="6" Padding="10">
                     <Grid>
                         <Grid.RowDefinitions>
@@ -38,13 +38,17 @@
                             <RowDefinition Height="Auto" />
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <TextBlock Grid.Row="0" Text="TCP PLC Simulator Test" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8" />
+                        <TextBlock Grid.Row="0" Text="PLC Protocol / Simulator Test" FontSize="15" FontWeight="SemiBold" Margin="0,0,0,8" />
                         <Grid Grid.Row="1" Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="130" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="90" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="130" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="70" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition Width="Auto" />
@@ -53,15 +57,26 @@
                             <TextBox Grid.Column="1" Text="{Binding Host, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0" />
                             <TextBlock Grid.Column="2" Text="Port" VerticalAlignment="Center" Margin="0,0,6,0" />
                             <TextBox Grid.Column="3" Text="{Binding PortText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0" />
-                            <Button Grid.Column="4" Content="Start Server" Width="100" Margin="0,0,6,0" Command="{Binding StartServerCommand}" />
-                            <Button Grid.Column="5" Content="Stop Server" Width="100" Margin="0,0,6,0" Command="{Binding StopServerCommand}" />
-                            <Button Grid.Column="6" Content="Use TCP Client" Width="120" Command="{Binding UseTcpClientCommand}" />
+                            <TextBlock Grid.Column="4" Text="Mode" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <ComboBox Grid.Column="5"
+                                      SelectedValue="{Binding ClientModeText, UpdateSourceTrigger=PropertyChanged}"
+                                      SelectedValuePath="Content"
+                                      Margin="0,0,12,0">
+                                <ComboBoxItem Content="SimulatorTcp" />
+                                <ComboBoxItem Content="McTcp" />
+                                <ComboBoxItem Content="McUdp" />
+                            </ComboBox>
+                            <TextBlock Grid.Column="6" Text="Retry" VerticalAlignment="Center" Margin="0,0,6,0" />
+                            <TextBox Grid.Column="7" Text="{Binding McRetryCountText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,12,0" />
+                            <Button Grid.Column="8" Content="Start Server" Width="100" Margin="0,0,6,0" Command="{Binding StartServerCommand}" />
+                            <Button Grid.Column="9" Content="Stop Server" Width="100" Margin="0,0,6,0" Command="{Binding StopServerCommand}" />
+                            <Button Grid.Column="10" Content="Use Client" Width="110" Command="{Binding UseSelectedClientCommand}" />
                         </Grid>
                         <TextBlock Grid.Row="2"
-                                   Text="같은 PC 테스트: Host=127.0.0.1. 다른 PC 테스트: 서버 PC는 Host=0.0.0.0으로 Start, 클라이언트 PC는 서버 PC IP를 Host에 입력."
+                                   Text="Mode별로 서버/클라이언트가 함께 전환됩니다. SimulatorTcp는 Dreamine 텍스트 시뮬레이터, McTcp/McUdp는 Mitsubishi MC Binary 3E 시뮬레이터입니다. 같은 PC는 Host=127.0.0.1, 다른 PC 서버는 Host=0.0.0.0으로 Start 하십시오."
                                    TextWrapping="Wrap" Foreground="#555" />
                         <TextBlock Grid.Row="3"
-                                   Text="Use TCP Client를 누르면 아래 PLC Monitor의 채널명이 PLC Simulator TCP Client로 바뀌어야 합니다."
+                                   Text="Use Client를 누르면 아래 PLC Monitor의 채널명이 선택한 Mode Client로 바뀌어야 합니다. 모든 시뮬레이터 서버는 단일 Word Write(D100 1개)에서만 D101=N+1을 기록합니다."
                                    TextWrapping="Wrap" Foreground="#B45309" Margin="0,6,0,0" />
                         <Grid Grid.Row="4" Margin="0,8,0,0">
                             <Grid.ColumnDefinitions>
