@@ -6,6 +6,10 @@ using Dreamine.PLC.Core.Simulation;
 using Dreamine.PLC.Mitsubishi.MC.Clients;
 using Dreamine.PLC.Mitsubishi.MC.Options;
 using Dreamine.PLC.Mitsubishi.MC.Simulation;
+using Dreamine.PLC.Mitsubishi.MxComponent.Clients;
+using Dreamine.PLC.Mitsubishi.MxComponent.Options;
+using Dreamine.PLC.Omron.CxComponent.Clients;
+using Dreamine.PLC.Omron.CxComponent.Options;
 using Dreamine.PLC.Omron.Fins.Clients;
 using Dreamine.PLC.Omron.Fins.Options;
 using Dreamine.PLC.Omron.Fins.Simulation;
@@ -28,7 +32,9 @@ public sealed class PlcSampleRuntime
     private OmronFinsUdpSimulatorServer? _finsUdpSimulatorServer;
     private PlcSimulatorTcpClient? _simulatorClient;
     private MitsubishiMcPlcClient? _mitsubishiMcClient;
+    private MitsubishiMxComponentPlcClient? _mitsubishiMxComponentClient;
     private OmronFinsPlcClient? _omronFinsClient;
+    private OmronCxComponentPlcClient? _omronCxComponentClient;
     private string _activeServerMode = string.Empty;
 
     /// <summary>
@@ -141,6 +147,42 @@ public sealed class PlcSampleRuntime
         _activeClient = _omronFinsClient;
         Monitor.SetClient(_omronFinsClient, $"Omron FINS {transportType} ({host}:{port})");
         Monitor.StatusMessage = $"Omron FINS {transportType} client selected.";
+    }
+
+    /// <summary>
+    /// \brief Mitsubishi MX Component Client를 모니터에 연결합니다.
+    /// </summary>
+    /// <param name="progId">MX Component ProgID입니다.</param>
+    /// <param name="logicalStationNumber">MX Component logical station number입니다.</param>
+    public void UseMitsubishiMxComponentClient(string progId, int logicalStationNumber)
+    {
+        _mitsubishiMxComponentClient = new MitsubishiMxComponentPlcClient(new MitsubishiMxComponentOptions
+        {
+            ProgId = string.IsNullOrWhiteSpace(progId) ? MitsubishiMxComponentOptions.DefaultProgId : progId.Trim(),
+            LogicalStationNumber = logicalStationNumber
+        });
+
+        _activeClient = _mitsubishiMxComponentClient;
+        Monitor.SetClient(_mitsubishiMxComponentClient, $"Mitsubishi MX Component LS={logicalStationNumber}");
+        Monitor.StatusMessage = "Mitsubishi MX Component client selected. Vendor runtime must be installed before Connect.";
+    }
+
+    /// <summary>
+    /// \brief Omron CX-Compolet Client를 모니터에 연결합니다.
+    /// </summary>
+    /// <param name="progId">CX-Compolet ProgID입니다.</param>
+    /// <param name="peerAddress">PLC peer address입니다.</param>
+    public void UseOmronCxComponentClient(string progId, string peerAddress)
+    {
+        _omronCxComponentClient = new OmronCxComponentPlcClient(new OmronCxComponentOptions
+        {
+            ProgId = string.IsNullOrWhiteSpace(progId) ? "OMRON.Compolet.CJ2Compolet" : progId.Trim(),
+            PeerAddress = string.IsNullOrWhiteSpace(peerAddress) ? "127.0.0.1" : peerAddress.Trim()
+        });
+
+        _activeClient = _omronCxComponentClient;
+        Monitor.SetClient(_omronCxComponentClient, $"Omron CX-Compolet ({peerAddress})");
+        Monitor.StatusMessage = "Omron CX-Compolet client selected. Vendor runtime must be installed before Connect.";
     }
 
     /// <summary>

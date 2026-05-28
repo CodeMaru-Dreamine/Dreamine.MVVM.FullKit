@@ -50,8 +50,20 @@ Dreamine.MVVM.FullKit은 가볍지만 구조가 명확한 WPF MVVM 스택을 원
 - **Dreamine.MVVM.Extensions**  
   Dreamine MVVM 애플리케이션 전반에서 사용하는 유틸리티 확장 모듈
 
-- **Dreamine.Hybrid / Dreamine.Hybrid.Wpf / Dreamine.Hybrid.BlazorApp**  
-  WPF 내부에 Blazor UI를 호스팅하기 위한 선택형 하이브리드 구성
+- **Dreamine.Hybrid / Dreamine.Hybrid.Wpf**  
+  메시지/상태 공유와 WPF 내부 Blazor UI 호스팅을 위한 선택형 하이브리드 구성
+
+- **Dreamine.Communication.\***  
+  통신 추상화 및 TCP/UDP, Serial, RabbitMQ, WPF, FullKit 구성 패키지
+
+- **Dreamine.Logging / Dreamine.Logging.Wpf**  
+  로깅 인프라와 WPF 통합 패키지
+
+- **Dreamine.Threading / Dreamine.Threading.Windows / Dreamine.Threading.Wpf**  
+  스레딩 및 디스패처 헬퍼 패키지
+
+- **Dreamine.PLC.\***  
+  PLC 추상화, Simulator/Runtime, Mitsubishi MC/MX Component, Omron FINS/CX-Compolet, WPF Monitor 패키지
 
 ---
 
@@ -92,7 +104,10 @@ graph LR
     Attributes --> Generators[Dreamine.MVVM.Generators]
     Core --> Hybrid[Dreamine.Hybrid]
     Hybrid --> HybridWpf[Dreamine.Hybrid.Wpf]
-    HybridWpf --> HybridBlazor[Dreamine.Hybrid.BlazorApp]
+    Core --> Communication[Dreamine.Communication.*]
+    Core --> Logging[Dreamine.Logging.*]
+    Core --> Threading[Dreamine.Threading.*]
+    Core --> PLC[Dreamine.PLC.*]
 ```
 
 ---
@@ -189,7 +204,6 @@ Behavior를 사용하면 코드 비하인드에 흩어질 상호작용 로직을
 <ItemGroup>
   <PackageReference Include="Dreamine.Hybrid" Version="*" />
   <PackageReference Include="Dreamine.Hybrid.Wpf" Version="*" />
-  <PackageReference Include="Dreamine.Hybrid.BlazorApp" Version="*" />
 </ItemGroup>
 ```
 
@@ -306,23 +320,28 @@ Dreamine.MVVM.FullKit/
 ├─ README.md
 ├─ README_KO.md
 ├─ LICENSE
-├─ src/
-│  ├─ Dreamine.MVVM.Core/
-│  ├─ Dreamine.MVVM.Interfaces/
-│  ├─ Dreamine.MVVM.ViewModels/
-│  ├─ Dreamine.MVVM.Attributes/
-│  ├─ Dreamine.MVVM.Generators/
-│  ├─ Dreamine.MVVM.Locators/
-│  ├─ Dreamine.MVVM.Locators.Wpf/
-│  ├─ Dreamine.MVVM.Wpf/
-│  ├─ Dreamine.MVVM.Behaviors.Core/
-│  ├─ Dreamine.MVVM.Behaviors.Wpf/
-│  ├─ Dreamine.MVVM.Behaviors/
-│  ├─ Dreamine.MVVM.Extensions/
-│  ├─ Dreamine.Hybrid/
-│  ├─ Dreamine.Hybrid.Wpf/
-│  └─ Dreamine.Hybrid.BlazorApp/
-└─ samples/
+└─ 20_SOURCES/
+   ├─ 100. Library/
+   │  ├─ Core/
+   │  ├─ Interfaces/
+   │  ├─ ViewModels/
+   │  ├─ Attributes/
+   │  ├─ Generators/
+   │  ├─ Locators/
+   │  ├─ Locators.Wpf/
+   │  ├─ Wpf/
+   │  ├─ Behaviors.Core/
+   │  ├─ Behaviors.Wpf/
+   │  ├─ Behaviors/
+   │  ├─ Extensions/
+   │  ├─ Hybrid/
+   │  ├─ Hybrid.Wpf/
+   │  ├─ Communication.*
+   │  ├─ Logging.*
+   │  ├─ Threading.*
+   │  └─ PLC.*
+   └─ 998. DEMO/
+      └─ 000. Sample/
 ```
 
 ---

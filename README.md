@@ -50,8 +50,20 @@ This kit brings together:
 - **Dreamine.MVVM.Extensions**  
   Utility helpers and extension points used across Dreamine MVVM applications.
 
-- **Dreamine.Hybrid / Dreamine.Hybrid.Wpf / Dreamine.Hybrid.BlazorApp**  
-  Optional hybrid hosting stack for embedding Blazor UI inside WPF.
+- **Dreamine.Hybrid / Dreamine.Hybrid.Wpf**  
+  Optional hybrid hosting stack for sharing messages/state and embedding Blazor UI inside WPF.
+
+- **Dreamine.Communication.\***  
+  Communication abstractions and TCP/UDP, serial, RabbitMQ, WPF, and FullKit composition packages.
+
+- **Dreamine.Logging / Dreamine.Logging.Wpf**  
+  Logging infrastructure and WPF integration packages.
+
+- **Dreamine.Threading / Dreamine.Threading.Windows / Dreamine.Threading.Wpf**  
+  Threading and dispatcher helper packages.
+
+- **Dreamine.PLC.\***  
+  PLC abstractions, simulator/runtime support, Mitsubishi MC/MX Component, Omron FINS/CX-Compolet, and WPF monitor packages.
 
 ---
 
@@ -87,7 +99,10 @@ graph LR
     Attributes --> Generators[Dreamine.MVVM.Generators]
     Core --> Hybrid[Dreamine.Hybrid]
     Hybrid --> HybridWpf[Dreamine.Hybrid.Wpf]
-    HybridWpf --> HybridBlazor[Dreamine.Hybrid.BlazorApp]
+    Core --> Communication[Dreamine.Communication.*]
+    Core --> Logging[Dreamine.Logging.*]
+    Core --> Threading[Dreamine.Threading.*]
+    Core --> PLC[Dreamine.PLC.*]
 ```
 
 ---
@@ -186,7 +201,6 @@ For hybrid hosting:
 <ItemGroup>
   <PackageReference Include="Dreamine.Hybrid" Version="*" />
   <PackageReference Include="Dreamine.Hybrid.Wpf" Version="*" />
-  <PackageReference Include="Dreamine.Hybrid.BlazorApp" Version="*" />
 </ItemGroup>
 ```
 
@@ -303,23 +317,28 @@ Dreamine.MVVM.FullKit/
 ├─ README.md
 ├─ README_KO.md
 ├─ LICENSE
-├─ src/
-│  ├─ Dreamine.MVVM.Core/
-│  ├─ Dreamine.MVVM.Interfaces/
-│  ├─ Dreamine.MVVM.ViewModels/
-│  ├─ Dreamine.MVVM.Attributes/
-│  ├─ Dreamine.MVVM.Generators/
-│  ├─ Dreamine.MVVM.Locators/
-│  ├─ Dreamine.MVVM.Locators.Wpf/
-│  ├─ Dreamine.MVVM.Wpf/
-│  ├─ Dreamine.MVVM.Behaviors.Core/
-│  ├─ Dreamine.MVVM.Behaviors.Wpf/
-│  ├─ Dreamine.MVVM.Behaviors/
-│  ├─ Dreamine.MVVM.Extensions/
-│  ├─ Dreamine.Hybrid/
-│  ├─ Dreamine.Hybrid.Wpf/
-│  └─ Dreamine.Hybrid.BlazorApp/
-└─ samples/
+└─ 20_SOURCES/
+   ├─ 100. Library/
+   │  ├─ Core/
+   │  ├─ Interfaces/
+   │  ├─ ViewModels/
+   │  ├─ Attributes/
+   │  ├─ Generators/
+   │  ├─ Locators/
+   │  ├─ Locators.Wpf/
+   │  ├─ Wpf/
+   │  ├─ Behaviors.Core/
+   │  ├─ Behaviors.Wpf/
+   │  ├─ Behaviors/
+   │  ├─ Extensions/
+   │  ├─ Hybrid/
+   │  ├─ Hybrid.Wpf/
+   │  ├─ Communication.*
+   │  ├─ Logging.*
+   │  ├─ Threading.*
+   │  └─ PLC.*
+   └─ 998. DEMO/
+      └─ 000. Sample/
 ```
 
 ---

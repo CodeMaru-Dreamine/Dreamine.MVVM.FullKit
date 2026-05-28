@@ -11,8 +11,8 @@ Dreamine PLC is a modular PLC communication package family for C#/.NET industria
 | `Dreamine.PLC.Wpf` | WPF diagnostic monitor | Ready |
 | `Dreamine.PLC.Mitsubishi.MC` | Mitsubishi MC TCP/UDP adapter and simulator | Simulator validated |
 | `Dreamine.PLC.Omron.Fins` | Omron FINS TCP/UDP adapter and simulator | Simulator validated |
-| `Dreamine.PLC.Mitsubishi.MxComponent` | MX Component adapter boundary | Vendor runtime required |
-| `Dreamine.PLC.Omron.CxComponent` | CX-Compolet adapter boundary | Vendor runtime required |
+| `Dreamine.PLC.Mitsubishi.MxComponent` | MX Component late-bound COM adapter | Vendor runtime required |
+| `Dreamine.PLC.Omron.CxComponent` | CX-Compolet late-bound COM adapter | Vendor runtime required |
 
 ## Current validation status
 
@@ -50,6 +50,24 @@ FinsUdp      ↔ FinsUdp
 ```
 
 Cross-mode communication is expected to fail because each mode uses a different protocol.
+
+`MxComponent` and `CxComponent` do not use simulator servers. They call the installed vendor runtime directly. In the SampleSmart PLC Monitor, select the mode, then run `Use Client` and `Connect`.
+
+## Mitsubishi MX Component Test
+
+SampleSmart uses the standard MX Component path for the default run and for the `x86` platform build.
+
+```powershell
+dotnet build .\SampleSmart.csproj -c Debug -p:Platform=x86
+```
+
+Use these values in the PLC Monitor:
+
+- Mode: `MxComponent`
+- MX ProgID: `ActUtlType.ActUtlType`
+- MX LS: the Logical Station Number registered in MX Component Communication Setup Utility
+
+When running as `x64`, Mitsubishi's `DotUtlType64` wrapper can require legacy .NET Framework WCF types. In that case, do not connect directly from the SampleSmart `net8.0-windows` process. Use the `x86` run, or bridge through a separate .NET Framework helper process.
 
 ## PC-to-PC firewall requirement
 

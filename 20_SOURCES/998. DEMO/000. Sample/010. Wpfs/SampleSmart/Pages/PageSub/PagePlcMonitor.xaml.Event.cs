@@ -1,4 +1,5 @@
 using Dreamine.PLC.Wpf.ViewModels;
+using Dreamine.PLC.Mitsubishi.MxComponent.Options;
 using SampleSmart.Pages.PageSub.PlcTabs;
 
 namespace SampleSmart.Pages.PageSub;
@@ -36,9 +37,29 @@ public sealed class PagePlcMonitorEvent
 
 
     /// <summary>
-    /// \brief PLC Client 선택 모드 문자열입니다. SimulatorTcp, McTcp, McUdp, FinsTcp, FinsUdp를 사용합니다.
+    /// \brief PLC Client 선택 모드 문자열입니다. SimulatorTcp, McTcp, McUdp, FinsTcp, FinsUdp, MxComponent, CxComponent를 사용합니다.
     /// </summary>
     public string ClientModeText { get; set; } = "SimulatorTcp";
+
+    /// <summary>
+    /// \brief MX Component ProgID입니다.
+    /// </summary>
+    public string MxProgId { get; set; } = MitsubishiMxComponentOptions.DefaultProgId;
+
+    /// <summary>
+    /// \brief MX Component logical station number 문자열입니다.
+    /// </summary>
+    public string MxLogicalStationNumberText { get; set; } = "0";
+
+    /// <summary>
+    /// \brief CX-Compolet ProgID입니다.
+    /// </summary>
+    public string CxProgId { get; set; } = "OMRON.Compolet.CJ2Compolet";
+
+    /// <summary>
+    /// \brief CX-Compolet peer address입니다.
+    /// </summary>
+    public string CxPeerAddress { get; set; } = "127.0.0.1";
 
 
     /// <summary>
@@ -89,6 +110,14 @@ public sealed class PagePlcMonitorEvent
     /// </summary>
     public void StartServer()
     {
+        var mode = string.IsNullOrWhiteSpace(ClientModeText) ? "SimulatorTcp" : ClientModeText.Trim();
+        if (mode.Equals("MxComponent", StringComparison.OrdinalIgnoreCase)
+            || mode.Equals("CxComponent", StringComparison.OrdinalIgnoreCase))
+        {
+            _runtime.Monitor.StatusMessage = "MxComponent/CxComponent modes use vendor runtime directly. Press Use Client, then Connect.";
+            return;
+        }
+
         if (!TryGetPort(out var port))
         {
             return;
@@ -133,10 +162,36 @@ public sealed class PagePlcMonitorEvent
             case "FINSUDP":
                 UseOmronFinsClient(Host, port, "Udp");
                 return;
+            case "MXCOMPONENT":
+                UseMitsubishiMxComponentClient();
+                return;
+            case "CXCOMPONENT":
+                UseOmronCxComponentClient();
+                return;
             default:
-                _runtime.Monitor.StatusMessage = "Client mode must be SimulatorTcp, McTcp, McUdp, FinsTcp, or FinsUdp.";
+                _runtime.Monitor.StatusMessage = "Client mode must be SimulatorTcp, McTcp, McUdp, FinsTcp, FinsUdp, MxComponent, or CxComponent.";
                 return;
         }
+    }
+
+    private void UseMitsubishiMxComponentClient()
+    {
+        if (!int.TryParse(MxLogicalStationNumberText, out var logicalStationNumber) || logicalStationNumber < 0)
+        {
+            _runtime.Monitor.StatusMessage = "MX logical station number must be zero or greater.";
+            return;
+        }
+
+        var progId = string.IsNullOrWhiteSpace(MxProgId)
+            ? MitsubishiMxComponentOptions.DefaultProgId
+            : MxProgId;
+
+        _runtime.UseMitsubishiMxComponentClient(progId, logicalStationNumber);
+    }
+
+    private void UseOmronCxComponentClient()
+    {
+        _runtime.UseOmronCxComponentClient(CxProgId, CxPeerAddress);
     }
 
 

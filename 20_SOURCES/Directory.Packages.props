@@ -13,5 +13,6 @@
     <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.3719.77" />
     <PackageVersion Include="RabbitMQ.Client" Version="6.8.1" />
     <PackageVersion Include="System.IO.Ports" Version="10.0.7" />
+    <PackageVersion Include="System.ServiceModel.Primitives" Version="8.1.2" />
   </ItemGroup>
 </Project>

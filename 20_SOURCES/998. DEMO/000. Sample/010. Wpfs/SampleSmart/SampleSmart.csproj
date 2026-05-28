@@ -6,8 +6,21 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <Platforms>AnyCPU;x86;x64</Platforms>
     <PackageIcon>icon.png</PackageIcon>
     <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)' == '' Or '$(Platform)' == 'AnyCPU'">
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)' == 'x86'">
+    <PlatformTarget>x86</PlatformTarget>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Platform)' == 'x64'">
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <ItemGroup>
@@ -43,6 +56,8 @@
 		<ProjectReference Include="..\..\..\..\100. Library\PLC.Abstractions\Dreamine.PLC.Abstractions.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\PLC.Core\Dreamine.PLC.Core.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\PLC.Mitsubishi.MC\Dreamine.PLC.Mitsubishi.MC.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\PLC.Mitsubishi.MxComponent\Dreamine.PLC.Mitsubishi.MxComponent.csproj" />
+		<ProjectReference Include="..\..\..\..\100. Library\PLC.Omron.CxComponent\Dreamine.PLC.Omron.CxComponent.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\PLC.Omron.Fins\Dreamine.PLC.Omron.Fins.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\PLC.Wpf\Dreamine.PLC.Wpf.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />

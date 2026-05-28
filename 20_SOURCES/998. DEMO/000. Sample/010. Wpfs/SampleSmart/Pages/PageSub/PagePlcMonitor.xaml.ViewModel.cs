@@ -60,7 +60,7 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
 
 
     /// <summary>
-    /// \brief PLC Client 선택 모드 문자열입니다. SimulatorTcp, McTcp, McUdp를 사용합니다.
+    /// \brief PLC Client 선택 모드 문자열입니다. SimulatorTcp, McTcp, McUdp, FinsTcp, FinsUdp, MxComponent, CxComponent를 사용합니다.
     /// </summary>
     public string ClientModeText
     {
@@ -74,6 +74,78 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
 
             Event.ClientModeText = value;
             OnPropertyChanged(nameof(ClientModeText));
+        }
+    }
+
+    /// <summary>
+    /// \brief MX Component ProgID입니다.
+    /// </summary>
+    public string MxProgId
+    {
+        get => Event.MxProgId;
+        set
+        {
+            if (Event.MxProgId == value)
+            {
+                return;
+            }
+
+            Event.MxProgId = value;
+            OnPropertyChanged(nameof(MxProgId));
+        }
+    }
+
+    /// <summary>
+    /// \brief MX Component logical station number 문자열입니다.
+    /// </summary>
+    public string MxLogicalStationNumberText
+    {
+        get => Event.MxLogicalStationNumberText;
+        set
+        {
+            if (Event.MxLogicalStationNumberText == value)
+            {
+                return;
+            }
+
+            Event.MxLogicalStationNumberText = value;
+            OnPropertyChanged(nameof(MxLogicalStationNumberText));
+        }
+    }
+
+    /// <summary>
+    /// \brief CX-Compolet ProgID입니다.
+    /// </summary>
+    public string CxProgId
+    {
+        get => Event.CxProgId;
+        set
+        {
+            if (Event.CxProgId == value)
+            {
+                return;
+            }
+
+            Event.CxProgId = value;
+            OnPropertyChanged(nameof(CxProgId));
+        }
+    }
+
+    /// <summary>
+    /// \brief CX-Compolet peer address입니다.
+    /// </summary>
+    public string CxPeerAddress
+    {
+        get => Event.CxPeerAddress;
+        set
+        {
+            if (Event.CxPeerAddress == value)
+            {
+                return;
+            }
+
+            Event.CxPeerAddress = value;
+            OnPropertyChanged(nameof(CxPeerAddress));
         }
     }
 
