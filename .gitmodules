@@ -97,3 +97,9 @@
 [submodule "20_SOURCES/100. Library/PLC.Omron.Fins"]
 	path = 20_SOURCES/100. Library/PLC.Omron.Fins
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.PLC.Omron.Fins
+[submodule "20_SOURCES/100. Library/IO.Fastech.Ethernet"]
+	path = 20_SOURCES/100. Library/IO.Fastech.Ethernet
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.IO.Fastech.Ethernet
+[submodule "20_SOURCES/100. Library/IO.Abstractions"]
+	path = 20_SOURCES/100. Library/IO.Abstractions
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.IO.Abstractions

@@ -71,6 +71,13 @@ namespace SampleSmart.Pages
             _logger.Info("PLC monitor page requested.");
             _viewManager.Show<PagePlcMonitorViewModel>();
         }
+
+        public void IoPage()
+        {
+            _logger.Info("I/O monitor page requested.");
+            _viewManager.Show<PageIoMonitorViewModel>();
+        }
+
         public void SubWindow()
         {
             _logger.Info("WindowSub requested.");

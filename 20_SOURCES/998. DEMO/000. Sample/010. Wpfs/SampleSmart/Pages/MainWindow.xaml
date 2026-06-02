@@ -64,6 +64,7 @@
                     <Button Content="Thread" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding ThreadPageCommand}" Margin="10 0"/>
                     <Button Content="Communication" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding CommunicationPageCommand}" Margin="10 0"/>
                     <Button Content="PLC" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding PlcPageCommand}" Margin="10 0"/>
+                    <Button Content="I/O" Height="30" Padding="20 2" VerticalAlignment="Top" Command="{Binding IoPageCommand}" Margin="10 0"/>
                 </StackPanel>
             </StackPanel>
 

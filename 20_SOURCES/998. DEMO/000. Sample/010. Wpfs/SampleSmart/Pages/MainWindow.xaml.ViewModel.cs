@@ -80,6 +80,12 @@ namespace SampleSmart.Pages
         private partial void PlcPage();
 
         /// <summary>
+        /// \brief I/O Monitor 페이지 이동 동작 실행.
+        /// </summary>
+        [DreamineCommand("Event.IoPage")]
+        private partial void IoPage();
+
+        /// <summary>
         /// \brief SubWindow 오픈 동작 실행.
         /// </summary>
         [DreamineCommand("Event.SubWindow")]
