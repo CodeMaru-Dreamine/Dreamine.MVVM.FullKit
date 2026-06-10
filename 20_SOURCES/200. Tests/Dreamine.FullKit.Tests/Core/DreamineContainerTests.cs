@@ -1,4 +1,5 @@
 using Dreamine.MVVM.Core.DependencyInjection;
+using Dreamine.MVVM.Core;
 
 namespace Dreamine.FullKit.Tests.Core;
 
@@ -65,6 +66,72 @@ public sealed class DreamineContainerTests
         Assert.Contains("Circular dependency", exception.Message);
     }
 
+    [Fact]
+    public async Task Resolve_CreatesSingletonOnlyOnceAcrossConcurrentCalls()
+    {
+        SlowSingleton.Reset();
+
+        var container = new DreamineContainer();
+        container.RegisterSingleton<SlowSingleton>();
+
+        var tasks = Enumerable.Range(0, 32)
+            .Select(_ => Task.Run(() => container.Resolve<SlowSingleton>()))
+            .ToArray();
+
+        var instances = await Task.WhenAll(tasks);
+
+        Assert.Single(instances.Distinct());
+        Assert.Equal(1, SlowSingleton.CreatedCount);
+    }
+
+    [Fact]
+    public async Task Resolve_DoesNotShareCircularStateAcrossConcurrentCalls()
+    {
+        var container = new DreamineContainer();
+        container.Register<IndependentA>();
+        container.Register<IndependentB>();
+
+        var tasks = Enumerable.Range(0, 16)
+            .Select(index => Task.Run<object>(() =>
+                index % 2 == 0
+                    ? container.Resolve<IndependentA>()
+                    : container.Resolve<IndependentB>()))
+            .ToArray();
+
+        var instances = await Task.WhenAll(tasks);
+
+        Assert.Equal(16, instances.Length);
+        Assert.All(instances, Assert.NotNull);
+    }
+
+    [Fact]
+    public void Register_ReplacesPreviousSingletonCache()
+    {
+        var container = new DreamineContainer();
+        container.RegisterSingleton<IClock, FixedClock>();
+
+        _ = container.Resolve<IClock>();
+
+        container.Register<IClock, AlternateClock>();
+
+        var resolved = container.Resolve<IClock>();
+
+        Assert.IsType<AlternateClock>(resolved);
+    }
+
+    [Fact]
+    public void DMContainer_ResetClearsStaticFacadeRegistrations()
+    {
+        DMContainer.Reset();
+        DMContainer.Register<IClock, FixedClock>();
+
+        Assert.True(DMContainer.IsRegistered<IClock>());
+
+        DMContainer.Reset();
+
+        Assert.False(DMContainer.IsRegistered<IClock>());
+    }
+
     private interface IClock
     {
         DateOnly Today { get; }
@@ -73,6 +140,37 @@ public sealed class DreamineContainerTests
     private sealed class FixedClock : IClock
     {
         public DateOnly Today { get; } = new(2026, 6, 7);
+    }
+
+    private sealed class AlternateClock : IClock
+    {
+        public DateOnly Today { get; } = new(2026, 6, 8);
+    }
+
+    private sealed class SlowSingleton
+    {
+        private static int _createdCount;
+
+        public SlowSingleton()
+        {
+            Thread.Sleep(20);
+            Interlocked.Increment(ref _createdCount);
+        }
+
+        public static int CreatedCount => Volatile.Read(ref _createdCount);
+
+        public static void Reset()
+        {
+            Volatile.Write(ref _createdCount, 0);
+        }
+    }
+
+    private sealed class IndependentA
+    {
+    }
+
+    private sealed class IndependentB
+    {
     }
 
     private sealed class ReportService

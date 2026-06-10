@@ -1,7 +1,7 @@
 using Dreamine.Hybrid.Interfaces;
-using Dreamine.Hybrid.Messaging;
 using Dreamine.MVVM.Attributes;
 using Dreamine.MVVM.ViewModels;
+using Sample01.Messages;
 using Sample01.States;
 using System;
 using System.Collections.ObjectModel;

@@ -1,4 +1,4 @@
-﻿using Dreamine.MVVM.Attributes;
+using Dreamine.MVVM.Attributes;
 using Dreamine.MVVM.Core;
 using Dreamine.MVVM.ViewModels;
 using SampleCore.Events.PageSub;
@@ -15,8 +15,8 @@ namespace SampleCore.ViewModels.PageSub
 
         public string Message => Model.Message;
 
-        [RelayCommand] private void Ok() => Event.Ok();
-        [RelayCommand] private void Cancel() => Event.Cancel();
+        [DreamineCommand] private void Ok() => Event.Ok();
+        [DreamineCommand] private void Cancel() => Event.Cancel();
 
         public PageSubViewModel(PageSubModel model, PageSubEvent @event)
         {

@@ -9,8 +9,8 @@
 @using System
 @using System.Threading.Tasks
 @using Dreamine.Hybrid.Interfaces
-@using Dreamine.Hybrid.Messaging
 @using Dreamine.Hybrid.State
+@using Sample01.Messages
 @using Sample01.States
 
 @implements IDisposable
@@ -73,20 +73,19 @@
     private string _lastUpdated = "-";
     private string _lastSource = "-";
     private bool _disposed;
-    private bool _isSubscribed;
+    private IDisposable? _stateSubscription;
 
     /// <inheritdoc />
     protected override Task OnAfterRenderAsync(bool firstRender)
     {
-        if (!firstRender || _isSubscribed)
+        if (!firstRender || _stateSubscription is not null)
         {
             return Task.CompletedTask;
         }
 
         ApplyState(Store.State);
 
-        Store.StateChanged += OnStateChanged;
-        _isSubscribed = true;
+        _stateSubscription = Store.Subscribe(OnStateChanged);
 
         return InvokeAsync(StateHasChanged);
     }
@@ -167,11 +166,8 @@
             return;
         }
 
-        if (_isSubscribed)
-        {
-            Store.StateChanged -= OnStateChanged;
-            _isSubscribed = false;
-        }
+        _stateSubscription?.Dispose();
+        _stateSubscription = null;
 
         _disposed = true;
     }

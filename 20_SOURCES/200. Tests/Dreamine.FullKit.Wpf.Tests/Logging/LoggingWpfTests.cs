@@ -3,6 +3,7 @@ using Dreamine.Logging.Models;
 using Dreamine.Logging.Services;
 using Dreamine.Logging.Wpf.Services;
 using Dreamine.Logging.Wpf.ViewModels;
+using System.Windows.Threading;
 
 namespace Dreamine.FullKit.Wpf.Tests.Logging;
 
@@ -42,6 +43,18 @@ public sealed class LoggingWpfTests
         Assert.Empty(store.GetEntries());
     }
 
+    [Fact]
+    public void LogPanelViewModel_AcceptsDispatcherAbstraction()
+    {
+        var store = new InMemoryLogStore();
+
+        using var viewModel = new DreamineLogPanelViewModel(
+            store,
+            new TestLogUiDispatcher());
+
+        Assert.Empty(viewModel.Entries);
+    }
+
     private static DreamineLogEntry Entry(string message)
     {
         return new DreamineLogEntry(
@@ -51,5 +64,20 @@ public sealed class LoggingWpfTests
             message,
             exception: null,
             threadId: 1);
+    }
+
+    private sealed class TestLogUiDispatcher : ILogUiDispatcher
+    {
+        public Dispatcher Dispatcher { get; } = Dispatcher.CurrentDispatcher;
+
+        public void Invoke(Action action)
+        {
+            action();
+        }
+
+        public void BeginInvoke(Action action)
+        {
+            action();
+        }
     }
 }

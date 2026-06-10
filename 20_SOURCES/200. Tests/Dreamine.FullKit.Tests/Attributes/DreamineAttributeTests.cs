@@ -30,7 +30,12 @@ public sealed class DreamineAttributeTests
         Assert.Equal("Model", new DreamineModelAttribute("Model").PropertyName);
         Assert.Equal("Event", new DreamineEventAttribute("Event").PropertyName);
         Assert.Equal("Name", new DreaminePropertyAttribute("Name").PropertyName);
-        Assert.Equal("SaveCommand", new RelayCommandAttribute("SaveCommand").CommandName);
+        var commandAttribute = new DreamineCommandAttribute
+        {
+            CommandName = "SaveCommand"
+        };
+        Assert.Null(commandAttribute.TargetMethod);
+        Assert.Equal("SaveCommand", commandAttribute.CommandName);
         Assert.Equal("Text", new DreamineModelPropertyAttribute("Text").ModelPropertyName);
     }
 }

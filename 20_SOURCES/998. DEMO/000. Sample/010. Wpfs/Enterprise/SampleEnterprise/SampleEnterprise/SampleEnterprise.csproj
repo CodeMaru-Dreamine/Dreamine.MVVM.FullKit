@@ -10,7 +10,6 @@
   </PropertyGroup>
    
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\..\..\100. Library\Extensions\Dreamine.MVVM.Extensions.csproj" />
     <ProjectReference Include="..\..\..\..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer" />
     <ProjectReference Include="..\..\..\..\..\..\100. Library\Wpf\Dreamine.MVVM.Wpf.csproj" />
     <ProjectReference Include="..\SampleEnterprise.Events\SampleEnterprise.Events.csproj" />

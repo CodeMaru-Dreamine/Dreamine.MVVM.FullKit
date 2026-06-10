@@ -4,7 +4,7 @@
 /// \date 2026-01-28
 /// \version 1.2.0
 using Dreamine.Hybrid.Wpf.Controls;
-using Dreamine.Hybrid.Wpf.Internal;
+using Dreamine.Hybrid.Wpf.Hosting;
 using Sample01.Blazor.Components;
 using Microsoft.Web.WebView2.Wpf;
 using System;
@@ -38,7 +38,7 @@ namespace Sample01.Views
             };
             EmbeddedTab.Content = hybrid;
 
-            var webView = WebView2Initializer.CreateConfiguredWebView2();
+            var webView = HybridWebViewHost.CreateWebView();
             ServerTab.Content = webView;
 
             await NavigateServerAsync(webView, "http://localhost:5000");
@@ -80,7 +80,7 @@ namespace Sample01.Views
                 if (!alive)
                 {
                     Debug.WriteLine($"[ServerNav] Timeout: {url}");
-                    await WebView2Initializer.ShowOfflineMessageAsync(webView, url);
+                    await HybridWebViewHost.ShowOfflineMessageAsync(webView, url);
                     return;
                 }
 

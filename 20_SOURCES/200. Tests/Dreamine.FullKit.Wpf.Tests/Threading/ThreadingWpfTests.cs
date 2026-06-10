@@ -2,9 +2,12 @@ using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
 using Dreamine.Threading.Models;
+using Dreamine.Threading.Interfaces;
 using Dreamine.Threading.Windows.Services;
 using Dreamine.Threading.Wpf.Converters;
+using Dreamine.Threading.Wpf.Services;
 using Dreamine.Threading.Wpf.ViewModels;
+using System.Windows.Threading;
 
 namespace Dreamine.FullKit.Wpf.Tests.Threading;
 
@@ -44,12 +47,23 @@ public sealed class ThreadingWpfTests
     [Fact]
     public void WindowsCpuInfoProvider_ReportsValidProcessorRange()
     {
-        var provider = new WindowsCpuInfoProvider();
+        ICpuInfoProvider provider = new WindowsCpuInfoProvider();
 
         Assert.True(provider.GetLogicalProcessorCount() >= 1);
         Assert.True(provider.IsValidCoreIndex(0));
         Assert.False(provider.IsValidCoreIndex(-1));
         Assert.False(provider.IsValidCoreIndex(provider.GetLogicalProcessorCount()));
+    }
+
+    [Fact]
+    public void ThreadMonitorViewModel_AcceptsDispatcherAbstraction()
+    {
+        using var viewModel = new DreamineThreadMonitorViewModel(
+            new TestThreadManager(),
+            new TestThreadUiDispatcher(),
+            TimeSpan.FromSeconds(1));
+
+        Assert.Empty(viewModel.Threads);
     }
 
     private static DreamineThreadInfo CreateInfo(DreamineThreadStatus status, long cycles)
@@ -66,5 +80,70 @@ public sealed class ThreadingWpfTests
             startedAt: null,
             stoppedAt: null,
             lastErrorMessage: null);
+    }
+
+    private sealed class TestThreadUiDispatcher : IThreadUiDispatcher
+    {
+        public Dispatcher Dispatcher { get; } = Dispatcher.CurrentDispatcher;
+
+        public void Invoke(Action action)
+        {
+            action();
+        }
+
+        public void BeginInvoke(Action action)
+        {
+            action();
+        }
+    }
+
+    private sealed class TestThreadManager : IDreamineThreadManager
+    {
+        public IDreamineThreadJob Register(DreamineThreadOptions options, Func<CancellationToken, ValueTask> action)
+        {
+            throw new NotSupportedException();
+        }
+
+        public bool Start(string threadName) => true;
+
+        public bool Stop(string threadName) => true;
+
+        public ValueTask<bool> StopAsync(string threadName) => ValueTask.FromResult(true);
+
+        public bool Pause(string threadName) => true;
+
+        public bool Resume(string threadName) => true;
+
+        public void StartAll()
+        {
+        }
+
+        public void StopAll()
+        {
+        }
+
+        public ValueTask StopAllAsync() => ValueTask.CompletedTask;
+
+        public void PauseAll()
+        {
+        }
+
+        public void ResumeAll()
+        {
+        }
+
+        public bool TryGetThread(string threadName, out IDreamineThread? thread)
+        {
+            thread = null;
+            return false;
+        }
+
+        public IReadOnlyList<IDreamineThread> GetThreads() => Array.Empty<IDreamineThread>();
+
+        public IReadOnlyList<DreamineThreadInfo> GetThreadInfos() => Array.Empty<DreamineThreadInfo>();
+
+        public void Dispose()
+        {
+        }
     }
 }

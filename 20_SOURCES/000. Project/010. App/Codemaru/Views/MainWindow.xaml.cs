@@ -1,6 +1,5 @@
 using Dreamine.Hybrid.Wpf.Controls;
 using Dreamine.Hybrid.Wpf.Hosting;
-using Dreamine.Hybrid.Wpf.Internal;
 using Microsoft.Web.WebView2.Wpf;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -38,7 +37,7 @@ public partial class MainWindow : Window
         };
         EmbeddedTab.Content = hybrid;
 
-        var webView = WebView2Initializer.CreateConfiguredWebView2();
+        var webView = HybridWebViewHost.CreateWebView();
         ServerTab.Content = webView;
 
         await NavigateServerAsync(webView, $"http://localhost:{_serverOptions.Port}", _serverOptions.InstanceId);
@@ -80,7 +79,7 @@ public partial class MainWindow : Window
             if (!alive)
             {
                 Debug.WriteLine($"[CardHybrid] Server instance mismatch or timeout: {baseUrl}");
-                await WebView2Initializer.ShowOfflineMessageAsync(webView, cardHybridUrl);
+                await HybridWebViewHost.ShowOfflineMessageAsync(webView, cardHybridUrl);
                 return;
             }
 

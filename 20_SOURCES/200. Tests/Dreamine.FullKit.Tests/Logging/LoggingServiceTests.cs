@@ -1,8 +1,11 @@
 using Dreamine.Logging.Formatters;
 using Dreamine.Logging.Interfaces;
 using Dreamine.Logging.Models;
+using Dreamine.Logging.Options;
+using Dreamine.Logging.Registration;
 using Dreamine.Logging.Services;
 using Dreamine.Logging.Sinks;
+using Dreamine.MVVM.Core;
 
 namespace Dreamine.FullKit.Tests.Logging;
 
@@ -75,6 +78,39 @@ public sealed class LoggingServiceTests
         }
         finally
         {
+            if (Directory.Exists(directory))
+            {
+                Directory.Delete(directory, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task DreamineLoggingRegistration_ReturnsShutdownHandleWithoutConcreteSinkCoupling()
+    {
+        var directory = Path.Combine(Path.GetTempPath(), "DreamineFullKitTests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        DMContainer.Reset();
+
+        try
+        {
+            await using IAsyncDisposable shutdownHandle =
+                DreamineLoggingRegistration.Register(new DreamineLoggingOptions
+                {
+                    Category = "RegistrationTest",
+                    LogDirectory = directory,
+                    ShutdownTimeout = TimeSpan.FromMilliseconds(500)
+                });
+
+            Assert.NotNull(shutdownHandle);
+            Assert.IsNotType<AsyncQueueSink>(shutdownHandle);
+            Assert.NotNull(DMContainer.Resolve<IDreamineLogger>());
+            Assert.NotNull(DMContainer.Resolve<IDreamineLogSink>());
+            Assert.NotNull(DMContainer.Resolve<AsyncQueueSink>());
+        }
+        finally
+        {
+            DMContainer.Reset();
             if (Directory.Exists(directory))
             {
                 Directory.Delete(directory, recursive: true);

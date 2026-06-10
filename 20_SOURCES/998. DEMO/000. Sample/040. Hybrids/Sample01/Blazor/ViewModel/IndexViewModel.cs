@@ -6,7 +6,7 @@
 /// \version 1.1.0
 
 using Dreamine.Hybrid.Interfaces;
-using Dreamine.Hybrid.Messaging;
+using Sample01.Messages;
 using System;
 using System.Threading.Tasks;
 

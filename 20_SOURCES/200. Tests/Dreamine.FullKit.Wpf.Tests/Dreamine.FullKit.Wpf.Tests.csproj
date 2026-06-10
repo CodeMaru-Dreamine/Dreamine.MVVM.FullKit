@@ -21,7 +21,6 @@
 		<ProjectReference Include="..\..\100. Library\Behaviors.Wpf\Dreamine.MVVM.Behaviors.Wpf.csproj" />
 		<ProjectReference Include="..\..\100. Library\Behaviors\Dreamine.MVVM.Behaviors.csproj" />
 		<ProjectReference Include="..\..\100. Library\Communication.Wpf\Dreamine.Communication.Wpf.csproj" />
-		<ProjectReference Include="..\..\100. Library\Extensions\Dreamine.MVVM.Extensions.csproj" />
 		<ProjectReference Include="..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />
 		<ProjectReference Include="..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />
 		<ProjectReference Include="..\..\100. Library\Locators.Wpf\Dreamine.MVVM.Locators.Wpf.csproj" />

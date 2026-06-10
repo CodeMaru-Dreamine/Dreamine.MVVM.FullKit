@@ -8,7 +8,7 @@ namespace Dreamine.FullKit.Tests.Generators;
 public sealed class SourceGeneratorTests
 {
     [Fact]
-    public void RelayCommandSourceGenerator_GeneratesCommandPropertyForPartialViewModel()
+    public void DreamineCommandSourceGenerator_GeneratesSimpleCommandPropertyForPartialViewModel()
     {
         var source = """
             using Dreamine.MVVM.Attributes;
@@ -17,23 +17,52 @@ public sealed class SourceGeneratorTests
 
             public partial class MainViewModel
             {
-                [RelayCommand]
+                [DreamineCommand]
                 private void Save()
                 {
                 }
             }
             """;
 
-        var runResult = RunGenerator(source, new RelayCommandSourceGenerator());
+        var runResult = RunGenerator(source, new DreamineCommandSourceGenerator());
 
         var generated = Assert.Single(runResult.GeneratedSources);
         var text = generated.SourceText.ToString();
         Assert.Contains("SaveCommand", text);
         Assert.Contains("ICommand", text);
+        Assert.Contains("new __DreamineGeneratedCommand_Save(Save)", text);
     }
 
     [Fact]
-    public void RelayCommandSourceGenerator_ReportsDiagnosticForNonPartialType()
+    public void DreamineCommandSourceGenerator_GeneratesForwardingMethodForPartialDeclaration()
+    {
+        var source = """
+            using Dreamine.MVVM.Attributes;
+
+            namespace Sample;
+
+            public partial class MainViewModel
+            {
+                private string? Result { get; set; }
+
+                private string Load() => "Loaded";
+
+                [DreamineCommand("Load", BindTo = "Result")]
+                private partial void LoadResult();
+            }
+            """;
+
+        var runResult = RunGenerator(source, new DreamineCommandSourceGenerator());
+
+        var generated = Assert.Single(runResult.GeneratedSources);
+        var text = generated.SourceText.ToString();
+        Assert.Contains("LoadResultCommand", text);
+        Assert.Contains("var __result = Load();", text);
+        Assert.Contains("Result = __result;", text);
+    }
+
+    [Fact]
+    public void DreamineCommandSourceGenerator_ReportsDiagnosticForNonPartialType()
     {
         var source = """
             using Dreamine.MVVM.Attributes;
@@ -42,16 +71,16 @@ public sealed class SourceGeneratorTests
 
             public class MainViewModel
             {
-                [RelayCommand]
+                [DreamineCommand]
                 private void Save()
                 {
                 }
             }
             """;
 
-        var runResult = RunGenerator(source, new RelayCommandSourceGenerator());
+        var runResult = RunGenerator(source, new DreamineCommandSourceGenerator());
 
-        Assert.Contains(runResult.Diagnostics, diagnostic => diagnostic.Id == "DMRLY001");
+        Assert.Contains(runResult.Diagnostics, diagnostic => diagnostic.Id == "DMCMD002");
     }
 
     [Fact]
@@ -102,7 +131,7 @@ public sealed class SourceGeneratorTests
             ?? Array.Empty<string>();
 
         return trustedPlatformAssemblies
-            .Concat(new[] { typeof(RelayCommandAttribute).Assembly.Location })
+            .Concat(new[] { typeof(DreamineCommandAttribute).Assembly.Location })
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .Select(path => MetadataReference.CreateFromFile(path));
     }

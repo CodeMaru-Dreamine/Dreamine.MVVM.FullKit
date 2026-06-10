@@ -4,7 +4,6 @@ using System.Reflection;
 using SampleEnterprise.ViewModels;
 using SampleEnterprise.Views;
 using Dreamine.MVVM.Interfaces.Navigation;
-using Dreamine.MVVM.Extensions;
 using Dreamine.MVVM.Locators.Wpf;
 
 namespace SampleEnterprise

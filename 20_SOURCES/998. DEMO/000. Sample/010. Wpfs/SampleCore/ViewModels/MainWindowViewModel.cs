@@ -20,12 +20,12 @@ namespace SampleCore.ViewModels
         public string Title => Model.Title;
         public string Message => Model.Message;
 
-        [RelayCommand] private void Ok() => Event.Ok();
-        [RelayCommand] private void Cancel() => Event.Cancel();
-        [RelayCommand] private void Minimize() => Event.Minimize();
-        [RelayCommand] private void Maximize() => Event.Maximize();
-        [RelayCommand] private void Close() => Event.Close();
-        [RelayCommand] private void SubPage() => Event.SubPage();
+        [DreamineCommand] private void Ok() => Event.Ok();
+        [DreamineCommand] private void Cancel() => Event.Cancel();
+        [DreamineCommand] private void Minimize() => Event.Minimize();
+        [DreamineCommand] private void Maximize() => Event.Maximize();
+        [DreamineCommand] private void Close() => Event.Close();
+        [DreamineCommand] private void SubPage() => Event.SubPage();
 
         public MainWindowViewModel()
         {

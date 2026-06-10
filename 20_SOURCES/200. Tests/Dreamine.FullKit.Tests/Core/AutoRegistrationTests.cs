@@ -10,7 +10,8 @@ public sealed class AutoRegistrationTests
     [Theory]
     [InlineData(typeof(CustomerModel), true)]
     [InlineData(typeof(CustomerEvent), true)]
-    [InlineData(typeof(CustomerManager), true)]
+    [InlineData(typeof(CustomerManager), false)]
+    [InlineData(typeof(ExplicitlyRegisteredUtility), true)]
     [InlineData(typeof(CustomerViewModel), true)]
     [InlineData(typeof(CustomerService), false)]
     public void NamingConventionFilter_IdentifiesSupportedTypes(Type type, bool expected)
@@ -65,11 +66,20 @@ public sealed class AutoRegistrationTests
     {
     }
 
+    [DreamineRegister]
+    public sealed class ExplicitlyRegisteredUtility
+    {
+    }
+
     public sealed class CustomerViewModel
     {
     }
 
     public sealed class CustomerService
+    {
+    }
+
+    private sealed class DreamineRegisterAttribute : Attribute
     {
     }
 }

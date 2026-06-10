@@ -1,5 +1,5 @@
-﻿using Dreamine.Hybrid.Wpf.Controls;
-using Dreamine.Hybrid.Wpf.Internal;
+using Dreamine.Hybrid.Wpf.Controls;
+using Dreamine.Hybrid.Wpf.Hosting;
 using DreamineVMS.Blazor.Components;
 using DreamineVMS.Options;
 using DreamineVMS.ViewModels;
@@ -145,7 +145,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        WebView2 webView = WebView2Initializer.CreateConfiguredWebView2();
+        WebView2 webView = HybridWebViewHost.CreateWebView();
         ServerDashboardTab.Content = webView;
         _serverDashboardWebView = webView;
 
@@ -162,7 +162,7 @@ public partial class MainWindow : Window
             return;
         }
 
-        WebView2 webView = WebView2Initializer.CreateConfiguredWebView2();
+        WebView2 webView = HybridWebViewHost.CreateWebView();
         WpfLiveTab.Content = webView;
         _wpfLiveWebView = webView;
 
@@ -282,7 +282,7 @@ public partial class MainWindow : Window
             if (!alive)
             {
                 Debug.WriteLine($"[DreamineVMS] Server dashboard timeout: {url}");
-                await WebView2Initializer.ShowOfflineMessageAsync(webView, url).ConfigureAwait(true);
+                await HybridWebViewHost.ShowOfflineMessageAsync(webView, url).ConfigureAwait(true);
                 return;
             }
 

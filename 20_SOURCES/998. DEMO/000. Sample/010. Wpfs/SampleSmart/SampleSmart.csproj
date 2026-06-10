@@ -69,7 +69,6 @@
 		<ProjectReference Include="..\..\..\..\100. Library\PLC.Omron.Fins\Dreamine.PLC.Omron.Fins.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\PLC.Wpf\Dreamine.PLC.Wpf.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
-		<ProjectReference Include="..\..\..\..\100. Library\Extensions\Dreamine.MVVM.Extensions.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer" />
 		<ProjectReference Include="..\..\..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />
 		<ProjectReference Include="..\..\..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />

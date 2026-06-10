@@ -2,6 +2,8 @@ using Dreamine.Threading.Interfaces;
 using Dreamine.Threading.Models;
 using Dreamine.Threading.Options;
 using Dreamine.Threading.Policies;
+using Dreamine.Threading.Registration;
+using Dreamine.MVVM.Core;
 
 namespace Dreamine.FullKit.Tests.Threading;
 
@@ -71,6 +73,39 @@ public sealed class ThreadingPolicyTests
         Assert.True(DreamineThreadCoreAssignment.Dedicated(2, true).IsDedicatedWorker);
         Assert.True(DreamineThreadCoreAssignment.Overflow().IsOverflowPolling);
         Assert.True(new DreamineThreadingOptions().RegisterWindowsServices);
+    }
+
+    [Fact]
+    public void ThreadingRegistration_UsesFixedPolicyWhenCpuUsageProviderIsMissing()
+    {
+        DMContainer.Reset();
+
+        try
+        {
+            DreamineThreadingRegistration.Register(new DreamineThreadingOptions
+            {
+                UseAdaptiveCpuPolicy = true
+            });
+
+            Assert.IsType<FixedIntervalCyclePolicy>(
+                DMContainer.Resolve<IThreadCyclePolicy>());
+            Assert.NotNull(DMContainer.Resolve<IDreamineThreadManager>());
+        }
+        finally
+        {
+            DMContainer.Reset();
+        }
+    }
+
+    [Fact]
+    public void ThreadOptions_NormalizeRepairsInvalidStopTimeout()
+    {
+        var options = new DreamineThreadOptions
+        {
+            StopTimeout = TimeSpan.Zero
+        }.Normalize();
+
+        Assert.Equal(TimeSpan.FromSeconds(2), options.StopTimeout);
     }
 
     private sealed class CpuUsageProvider : ICpuUsageProvider

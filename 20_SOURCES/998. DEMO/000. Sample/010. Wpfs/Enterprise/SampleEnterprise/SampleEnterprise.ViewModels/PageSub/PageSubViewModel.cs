@@ -1,4 +1,4 @@
-﻿using Dreamine.MVVM.Attributes;
+using Dreamine.MVVM.Attributes;
 using Dreamine.MVVM.ViewModels;
 using SampleEnterprise.Events.PageSub;
 using SampleEnterprise.Models.PageSub;
@@ -17,8 +17,8 @@ namespace SampleEnterprise.ViewModels.PageSub
         /// </summary>
         public string Message => Model.Message;
 
-        [RelayCommand] private void Ok() => Event.Ok();
-        [RelayCommand] private void Cancel() => Event.Cancel();
+        [DreamineCommand] private void Ok() => Event.Ok();
+        [DreamineCommand] private void Cancel() => Event.Cancel();
 
         /// <summary>
         /// PageSubViewModel을 생성합니다.
