@@ -86,6 +86,12 @@ namespace SampleSmart.Pages
         private partial void IoPage();
 
         /// <summary>
+        /// \brief Database 샘플 페이지 이동 동작 실행.
+        /// </summary>
+        [DreamineCommand("Event.DatabasePage")]
+        private partial void DatabasePage();
+
+        /// <summary>
         /// \brief SubWindow 오픈 동작 실행.
         /// </summary>
         [DreamineCommand("Event.SubWindow")]

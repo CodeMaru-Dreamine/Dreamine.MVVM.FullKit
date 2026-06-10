@@ -12,6 +12,11 @@
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Wpf" Version="8.0.100" />
     <PackageVersion Include="Microsoft.Web.WebView2" Version="1.0.3719.77" />
     <PackageVersion Include="QRCoder" Version="1.6.0" />
+    <PackageVersion Include="Dapper" Version="2.1.66" />
+    <PackageVersion Include="Microsoft.Data.Sqlite" Version="8.0.2" />
+    <PackageVersion Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+    <PackageVersion Include="MySqlConnector" Version="2.4.0" />
+    <PackageVersion Include="Oracle.ManagedDataAccess.Core" Version="23.6.1" />
     <PackageVersion Include="RabbitMQ.Client" Version="6.8.1" />
     <PackageVersion Include="System.IO.Ports" Version="10.0.7" />
     <PackageVersion Include="System.ServiceModel.Primitives" Version="8.1.2" />

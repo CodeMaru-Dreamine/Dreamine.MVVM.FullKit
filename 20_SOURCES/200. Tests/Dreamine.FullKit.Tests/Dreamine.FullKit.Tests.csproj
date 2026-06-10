@@ -25,6 +25,12 @@
 		<ProjectReference Include="..\..\100. Library\Communication.Serial\Dreamine.Communication.Serial.csproj" />
 		<ProjectReference Include="..\..\100. Library\Communication.Sockets\Dreamine.Communication.Sockets.csproj" />
 		<ProjectReference Include="..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
+		<ProjectReference Include="..\..\100. Library\Database.Abstractions\Dreamine.Database.Abstractions.csproj" />
+		<ProjectReference Include="..\..\100. Library\Database.Core\Dreamine.Database.Core.csproj" />
+		<ProjectReference Include="..\..\100. Library\Database.MySql\Dreamine.Database.MySql.csproj" />
+		<ProjectReference Include="..\..\100. Library\Database.Oracle\Dreamine.Database.Oracle.csproj" />
+		<ProjectReference Include="..\..\100. Library\Database.Sqlite\Dreamine.Database.Sqlite.csproj" />
+		<ProjectReference Include="..\..\100. Library\Database.SqlServer\Dreamine.Database.SqlServer.csproj" />
 		<ProjectReference Include="..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" />
 		<ProjectReference Include="..\..\100. Library\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
 		<ProjectReference Include="..\..\100. Library\IO.Abstractions\Dreamine.IO.Abstractions.csproj" />

@@ -78,6 +78,12 @@ namespace SampleSmart.Pages
             _viewManager.Show<PageIoMonitorViewModel>();
         }
 
+        public void DatabasePage()
+        {
+            _logger.Info("Database sample page requested.");
+            _viewManager.Show<PageDatabaseViewModel>();
+        }
+
         public void SubWindow()
         {
             _logger.Info("WindowSub requested.");

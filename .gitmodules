@@ -103,3 +103,21 @@
 [submodule "20_SOURCES/100. Library/IO.Abstractions"]
 	path = 20_SOURCES/100. Library/IO.Abstractions
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.IO.Abstractions
+[submodule "20_SOURCES/100. Library/Database.Abstractions"]
+	path = 20_SOURCES/100. Library/Database.Abstractions
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Database.Abstractions
+[submodule "20_SOURCES/100. Library/Database.Core"]
+	path = 20_SOURCES/100. Library/Database.Core
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Database.Core
+[submodule "20_SOURCES/100. Library/Database.MySql"]
+	path = 20_SOURCES/100. Library/Database.MySql
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Database.MySql
+[submodule "20_SOURCES/100. Library/Database.Oracle"]
+	path = 20_SOURCES/100. Library/Database.Oracle
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Database.Oracle
+[submodule "20_SOURCES/100. Library/Database.Sqlite"]
+	path = 20_SOURCES/100. Library/Database.Sqlite
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Database.Sqlite
+[submodule "20_SOURCES/100. Library/Database.SqlServer"]
+	path = 20_SOURCES/100. Library/Database.SqlServer
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Database.SqlServer
