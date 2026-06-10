@@ -1,0 +1,67 @@
+<Window
+    x:Class="Codemaru.Views.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:conv="clr-namespace:Dreamine.Hybrid.Wpf.Converters;assembly=Dreamine.Hybrid.Wpf"
+    xmlns:util="clr-namespace:Dreamine.Hybrid.Wpf.Utility;assembly=Dreamine.Hybrid.Wpf"
+    mc:Ignorable="d"
+    Title="{Binding Title}"
+    Width="1220"
+    Height="760"
+    MinWidth="980"
+    MinHeight="620"
+    d:DesignWidth="1220"
+    d:DesignHeight="760">
+    <Grid Background="#F4F6F3">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Grid.Column="0" Background="#FFFFFF" BorderBrush="#D9E0D6" BorderThickness="0,0,1,0" Padding="20">
+            <DockPanel LastChildFill="True">
+                <StackPanel DockPanel.Dock="Top">
+                    <TextBlock FontSize="22" FontWeight="SemiBold" Foreground="#243126" Text="Codemaru" />
+                    <TextBlock Margin="0,8,0,20" Foreground="#667067" TextWrapping="Wrap" Text="CardHybrid를 포함한 CodeMaru 도구 모음입니다." />
+
+                    <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#6B746C" Text="현재 카드" />
+                    <TextBlock Margin="0,4,0,0" FontSize="18" FontWeight="SemiBold" Foreground="#1F2B21" Text="{Binding Brand}" />
+                    <TextBlock Margin="0,2,0,0" Foreground="#475247" Text="{Binding OwnerName}" />
+                    <TextBlock Margin="0,8,0,0" Foreground="#475247" TextWrapping="Wrap" Text="{Binding LandingUrl}" />
+
+                    <Border Margin="0,18,0,0" Padding="12" Background="#EEF3EB" CornerRadius="6">
+                        <StackPanel>
+                            <TextBlock FontSize="12" FontWeight="SemiBold" Foreground="#607062" Text="상태" />
+                            <TextBlock Margin="0,6,0,0" Foreground="#607062" Text="{Binding CurrentUser, StringFormat=사용자 {0}}" />
+                            <TextBlock Margin="0,6,0,0" Foreground="#263228" Text="{Binding StatusMessage}" />
+                            <TextBlock Margin="0,8,0,0" Foreground="#607062" Text="{Binding HistoryCount, StringFormat=저장된 이력 {0}개}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <ListBox Margin="0,20,0,0" BorderBrush="#DDE4DA" ItemsSource="{Binding Logs}" />
+            </DockPanel>
+        </Border>
+
+        <TabControl Grid.Column="1" Margin="14" SelectedIndex="1">
+            <TabItem Header="CardHybrid Server" x:Name="ServerTab">
+                <Border Background="#303530" Padding="14"
+                        d:Visibility="Visible"
+                        Visibility="{Binding Source={x:Static util:DesignTimeGuard.IsInDesignMode},
+                                             Converter={x:Static conv:BooleanToVisibilityConverter.Instance}}">
+                    <TextBlock Foreground="White" Text="Design-time preview placeholder." />
+                </Border>
+            </TabItem>
+            <TabItem Header="Embedded" x:Name="EmbeddedTab">
+                <Border Background="#303530" Padding="14"
+                        d:Visibility="Visible"
+                        Visibility="{Binding Source={x:Static util:DesignTimeGuard.IsInDesignMode},
+                                             Converter={x:Static conv:BooleanToVisibilityConverter.Instance}}">
+                    <TextBlock Foreground="White" Text="Embedded Blazor preview placeholder." />
+                </Border>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

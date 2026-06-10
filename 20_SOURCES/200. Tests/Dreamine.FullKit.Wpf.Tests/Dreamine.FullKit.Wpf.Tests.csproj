@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<UseWPF>true</UseWPF>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="xunit" />
+		<PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+		<PackageReference Include="coverlet.collector" PrivateAssets="all" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\100. Library\Behaviors.Core\Dreamine.MVVM.Behaviors.Core.csproj" />
+		<ProjectReference Include="..\..\100. Library\Behaviors.Wpf\Dreamine.MVVM.Behaviors.Wpf.csproj" />
+		<ProjectReference Include="..\..\100. Library\Behaviors\Dreamine.MVVM.Behaviors.csproj" />
+		<ProjectReference Include="..\..\100. Library\Communication.Wpf\Dreamine.Communication.Wpf.csproj" />
+		<ProjectReference Include="..\..\100. Library\Extensions\Dreamine.MVVM.Extensions.csproj" />
+		<ProjectReference Include="..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />
+		<ProjectReference Include="..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />
+		<ProjectReference Include="..\..\100. Library\Locators.Wpf\Dreamine.MVVM.Locators.Wpf.csproj" />
+		<ProjectReference Include="..\..\100. Library\Logging.Wpf\Dreamine.Logging.Wpf.csproj" />
+		<ProjectReference Include="..\..\100. Library\PLC.Wpf\Dreamine.PLC.Wpf.csproj" />
+		<ProjectReference Include="..\..\100. Library\Threading.Windows\Dreamine.Threading.Windows.csproj" />
+		<ProjectReference Include="..\..\100. Library\Threading.Wpf\Dreamine.Threading.Wpf.csproj" />
+		<ProjectReference Include="..\..\100. Library\Wpf\Dreamine.MVVM.Wpf.csproj" />
+	</ItemGroup>
+
+</Project>

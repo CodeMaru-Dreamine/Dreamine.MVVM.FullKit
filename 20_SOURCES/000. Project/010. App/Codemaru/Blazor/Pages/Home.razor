@@ -1,0 +1,88 @@
+@page "/"
+@namespace Codemaru.Blazor.Pages
+
+<PageTitle>코드마루</PageTitle>
+
+<section class="cm-hero">
+    <img class="cm-hero-logo" src="img/Codemaru_Core.jpg" alt="CodeMaru 로고" />
+    <h1>Welcome to CodeMaru</h1>
+    <p class="lead">
+        CodeMaru는 다양한 서비스를 제공하는 통합 플랫폼입니다.<br />
+        CCTV Viewer · Wedding · Families · Research 프로젝트를 만나보세요.
+    </p>
+</section>
+
+<section class="cm-cards">
+    <a class="cm-card" href="https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit" target="_blank" rel="noopener noreferrer">
+        <img class="cm-card-img" src="img/Dreamine_1200x630.png" alt="Dreamine" />
+        <h5>Dreamine</h5>
+        <p>새로운 가능성을 탐구하는 연구 프로젝트.</p>
+        <span class="cm-btn">바로가기</span>
+    </a>
+
+    <a class="cm-card" href="/cardhybrid">
+        <img class="cm-card-img" src="img/Codemaru_Essence.jpg" alt="CardHybrid" />
+        <h5>CardHybrid</h5>
+        <p>무료 QR, 명함 랜딩 페이지, vCard, 명함 앞뒷면 내보내기를 한 화면에서 관리합니다.</p>
+        <span class="cm-btn">열기</span>
+    </a>
+
+    <button class="cm-card" type="button" @onclick='() => OpenModal("https://wedding.codemaru.co.kr")'>
+        <img class="cm-card-img" src="img/Wedding_1200x630.jpg" alt="Wedding" />
+        <h5>Wedding</h5>
+        <p>특별한 순간을 위한 디지털 청첩장 서비스.</p>
+        <span class="cm-btn">바로가기</span>
+    </button>
+
+    <button class="cm-card" type="button" @onclick='() => OpenModal("https://families.codemaru.co.kr")'>
+        <img class="cm-card-img" src="img/Families_1200x630.jpg" alt="Families" />
+        <h5>Families</h5>
+        <p>가족과 함께하는 라이프 스타일 플랫폼.</p>
+        <span class="cm-btn">바로가기</span>
+    </button>
+
+    <button class="cm-card" type="button" @onclick='() => OpenModal("https://portfolio.codemaru.co.kr/")'>
+        <img class="cm-card-img" src="img/portfolio_og.jpg" alt="Portfolio" />
+        <h5>Portfolio</h5>
+        <p>.NET 8 · Blazor 기반으로 만든 개인 포트폴리오.</p>
+        <span class="cm-btn">바로가기</span>
+    </button>
+
+    <button class="cm-card" type="button" @onclick='() => OpenModal("https://cctvviewer.codemaru.co.kr")'>
+        <img class="cm-card-img" src="img/CCTVViewer_1200x630.jpg" alt="CCTV Viewer" />
+        <h5>CCTV Viewer</h5>
+        <p>집과 농장의 안전을 지켜주는 실시간 뷰어.</p>
+        <span class="cm-btn">바로가기</span>
+    </button>
+
+    <button class="cm-card" type="button" @onclick='() => OpenModal("https://shop.codemaru.co.kr/")'>
+        <img class="cm-card-img" src="img/ShopStore_1200x630.png" alt="Shop Store" />
+        <h5>Shop Store</h5>
+        <p>농산물부터 소프트웨어까지, 여러 상품을 한 곳에서 구매하세요.</p>
+        <span class="cm-btn">바로가기</span>
+    </button>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(modalUrl))
+{
+    <div class="cm-modal open" role="dialog" aria-modal="true">
+        <div class="cm-modal-content">
+            <button class="cm-modal-close" type="button" @onclick="CloseModal" aria-label="닫기">&times;</button>
+            <iframe title="CodeMaru linked service" src="@modalUrl"></iframe>
+        </div>
+    </div>
+}
+
+@code {
+    private string? modalUrl;
+
+    private void OpenModal(string url)
+    {
+        modalUrl = url;
+    }
+
+    private void CloseModal()
+    {
+        modalUrl = null;
+    }
+}

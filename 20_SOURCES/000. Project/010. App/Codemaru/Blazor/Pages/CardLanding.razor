@@ -1,0 +1,64 @@
+@page "/card/{Slug}"
+@namespace Codemaru.Blazor.Pages
+@inject CardHybridSession Session
+
+<PageTitle>@Profile.Name - @Profile.BackBrand</PageTitle>
+
+<main class="public-card-page theme-@Profile.LandingTheme">
+    <section class="public-card">
+        <div class="public-logo" style="border-color:@Profile.AccentColor">
+            @if (string.IsNullOrWhiteSpace(Profile.LogoImageDataUrl))
+            {
+                <span style="background:@Profile.AccentColor"></span>
+            }
+            else
+            {
+                <img src="@Profile.LogoImageDataUrl" alt="@Profile.BackBrand logo" />
+            }
+        </div>
+
+        <p class="eyebrow">@Profile.BackBrand</p>
+        <h1>@Profile.Name</h1>
+        <p class="role">@Profile.Role</p>
+        <p class="description">@Profile.LandingDescription</p>
+
+        <div class="public-actions">
+            <a href="mailto:@Profile.Email">메일 보내기</a>
+            @if (!string.IsNullOrWhiteSpace(Profile.Phone))
+            {
+                <a href="tel:@Profile.Phone">전화하기</a>
+            }
+            <a href="@Profile.Website" target="_blank">웹사이트</a>
+        </div>
+
+        <dl class="public-contact">
+            <div>
+                <dt>Email</dt>
+                <dd>@Profile.Email</dd>
+            </div>
+            <div>
+                <dt>Company</dt>
+                <dd>@Profile.BackBrand</dd>
+            </div>
+            <div>
+                <dt>Phone</dt>
+                <dd>@Display(Profile.Phone)</dd>
+            </div>
+            <div>
+                <dt>Address</dt>
+                <dd>@Display(Profile.Address)</dd>
+            </div>
+        </dl>
+    </section>
+</main>
+
+@code {
+    [Parameter] public string? Slug { get; set; }
+
+    private CardProfile Profile => Session.State.Profile;
+
+    private static string Display(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "-" : value;
+    }
+}

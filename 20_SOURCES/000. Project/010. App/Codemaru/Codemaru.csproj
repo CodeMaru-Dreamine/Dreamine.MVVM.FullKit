@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>Codemaru</RootNamespace>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateApplicationManifest>false</GenerateApplicationManifest>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <StartupObject>Codemaru.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="QRCoder" />
+    <PackageReference Include="System.Text.Encoding.CodePages" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Extensions\Dreamine.MVVM.Extensions.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Locators.Wpf\Dreamine.MVVM.Locators.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Locators\Dreamine.MVVM.Locators.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="**\*.xaml.ViewModel.cs">
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <Compile Update="**\*.xaml.Model.cs">
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+    <Compile Update="**\*.xaml.Event.cs">
+      <DependentUpon>%(Filename)</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+</Project>

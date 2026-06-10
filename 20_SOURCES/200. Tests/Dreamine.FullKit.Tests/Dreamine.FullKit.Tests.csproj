@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+		<PackageReference Include="xunit" />
+		<PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+		<PackageReference Include="coverlet.collector" PrivateAssets="all" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\100. Library\Attributes\Dreamine.MVVM.Attributes.csproj" />
+		<ProjectReference Include="..\..\100. Library\Communication.Abstractions\Dreamine.Communication.Abstractions.csproj" />
+		<ProjectReference Include="..\..\100. Library\Communication.Core\Dreamine.Communication.Core.csproj" />
+		<ProjectReference Include="..\..\100. Library\Communication.FullKit\Dreamine.Communication.FullKit.csproj" />
+		<ProjectReference Include="..\..\100. Library\Communication.RabbitMQ\Dreamine.Communication.RabbitMQ.csproj" />
+		<ProjectReference Include="..\..\100. Library\Communication.Serial\Dreamine.Communication.Serial.csproj" />
+		<ProjectReference Include="..\..\100. Library\Communication.Sockets\Dreamine.Communication.Sockets.csproj" />
+		<ProjectReference Include="..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
+		<ProjectReference Include="..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" />
+		<ProjectReference Include="..\..\100. Library\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
+		<ProjectReference Include="..\..\100. Library\IO.Abstractions\Dreamine.IO.Abstractions.csproj" />
+		<ProjectReference Include="..\..\100. Library\IO.Fastech.Ethernet\Dreamine.IO.Fastech.Ethernet.csproj" />
+		<ProjectReference Include="..\..\100. Library\Locators\Dreamine.MVVM.Locators.csproj" />
+		<ProjectReference Include="..\..\100. Library\Logging\Dreamine.Logging.csproj" />
+		<ProjectReference Include="..\..\100. Library\PLC.Abstractions\Dreamine.PLC.Abstractions.csproj" />
+		<ProjectReference Include="..\..\100. Library\PLC.Core\Dreamine.PLC.Core.csproj" />
+		<ProjectReference Include="..\..\100. Library\PLC.Mitsubishi.MC\Dreamine.PLC.Mitsubishi.MC.csproj" />
+		<ProjectReference Include="..\..\100. Library\PLC.Mitsubishi.MxComponent\Dreamine.PLC.Mitsubishi.MxComponent.csproj" />
+		<ProjectReference Include="..\..\100. Library\PLC.Omron.CxComponent\Dreamine.PLC.Omron.CxComponent.csproj" />
+		<ProjectReference Include="..\..\100. Library\PLC.Omron.Fins\Dreamine.PLC.Omron.Fins.csproj" />
+		<ProjectReference Include="..\..\100. Library\Threading\Dreamine.Threading.csproj" />
+		<ProjectReference Include="..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
+	</ItemGroup>
+
+</Project>

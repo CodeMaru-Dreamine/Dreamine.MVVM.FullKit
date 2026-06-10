@@ -1,0 +1,63 @@
+@namespace Codemaru.Blazor.Layout
+@implements IDisposable
+@inject NavigationManager Navigation
+
+<header class="cm-topbar">
+    <a class="cm-brand" href="/">
+        <img class="cm-brand-logo" src="/img/Codemaru_Bloom.jpg" alt="Codemaru" />
+        <span class="cm-brand-text">CodeMaru</span>
+    </a>
+
+    <div class="cm-right">
+        <nav id="cmMenu" class="cm-nav cm-nav-menu @(isOpen ? "open" : null)">
+            <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="active">Home</NavLink>
+            <NavLink href="/cardhybrid" ActiveClass="active">CardHybrid</NavLink>
+            <a href="https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit" target="_blank" rel="noopener">Dreamine</a>
+            <a href="https://wedding.codemaru.co.kr" target="_blank" rel="noopener">Wedding</a>
+            <a href="https://families.codemaru.co.kr" target="_blank" rel="noopener">Families</a>
+            <a href="https://portfolio.codemaru.co.kr/" target="_blank" rel="noopener">Portfolio</a>
+            <a href="https://cctvviewer.codemaru.co.kr" target="_blank" rel="noopener">CCTV</a>
+            <a href="https://shop.codemaru.co.kr/" target="_blank" rel="noopener">ShopStore</a>
+            <NavLink href="/contact" Match="NavLinkMatch.All" ActiveClass="active">Contact</NavLink>
+        </nav>
+
+        <button class="cm-nav-burger"
+                type="button"
+                @onclick="ToggleMenu"
+                aria-label="메뉴 열기/닫기"
+                aria-expanded="@isOpen"
+                aria-controls="cmMenu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</header>
+
+@code {
+    private bool isOpen;
+
+    private void ToggleMenu()
+    {
+        isOpen = !isOpen;
+    }
+
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (!isOpen)
+        {
+            return;
+        }
+
+        isOpen = false;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Navigation.LocationChanged -= HandleLocationChanged;
+    }
+}

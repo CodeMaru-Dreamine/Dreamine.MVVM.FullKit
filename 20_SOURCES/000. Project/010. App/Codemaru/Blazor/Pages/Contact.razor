@@ -1,0 +1,242 @@
+@page "/contact"
+@namespace Codemaru.Blazor.Pages
+@using System.ComponentModel.DataAnnotations
+@using System.Net
+@using System.Net.Mail
+@inject Microsoft.Extensions.Options.IOptions<Contact.MailSettings> MailOptions
+
+<PageTitle>CodeMaru Contact</PageTitle>
+
+<section class="contact-wrap">
+    <header class="section-header">
+        <span class="section-icon"><i class="fas fa-envelope"></i></span>
+        <h3>Contact</h3>
+    </header>
+
+    <div class="contact-grid">
+        <aside class="section-card">
+            <h4 class="block-title">연락 카드</h4>
+
+            <div class="kv">
+                <i class="fas fa-at"></i>
+                <div>
+                    <div class="kv-key">이메일</div>
+                    <a class="kv-val" href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a>
+                </div>
+            </div>
+
+            <div class="kv">
+                <i class="fab fa-github"></i>
+                <div>
+                    <div class="kv-key">GitHub</div>
+                    <a class="kv-val" href="https://github.com/CodeMaru-Dreamine" target="_blank" rel="noopener">github.com/CodeMaru-Dreamine</a>
+                </div>
+            </div>
+
+            <div class="kv">
+                <i class="fab fa-youtube"></i>
+                <div>
+                    <div class="kv-key">YouTube</div>
+                    <a class="kv-val" href="https://www.youtube.com/@@dreamine.arkilog" target="_blank" rel="noopener">youtube.com/@@dreamine.arkilog</a>
+                </div>
+            </div>
+
+            <div class="kv">
+                <i class="fas fa-location-dot"></i>
+                <div>
+                    <div class="kv-key">위치</div>
+                    <div class="kv-val">충청남도 청양군 · Remote / On-site 협업 가능</div>
+                </div>
+            </div>
+
+            <div class="note">Dreamine 관련 문의나 견적 및 협업 제안은 환영합니다.</div>
+        </aside>
+
+        <article class="section-card form-card">
+            <header class="form-head">
+                <span class="badge-grad"><i class="fas fa-paper-plane"></i></span>
+                <div>
+                    <h4 class="form-title">의견을 보내주세요.</h4>
+                    <p class="form-desc">보내주신 내용은 연락 및 회신 용도로만 사용합니다.</p>
+                </div>
+            </header>
+
+            <EditForm Model="@Form" OnValidSubmit="@SendAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-grid-2">
+                    <div class="form-row">
+                        <label for="name">Full name</label>
+                        <div class="input-group">
+                            <i class="fas fa-user"></i>
+                            <InputText id="name" class="input" @bind-Value="Form.Name" />
+                        </div>
+                        <ValidationMessage For="@(() => Form.Name)" />
+                    </div>
+
+                    <div class="form-row">
+                        <label for="email">Email address</label>
+                        <div class="input-group">
+                            <i class="fas fa-envelope"></i>
+                            <InputText id="email" class="input" @bind-Value="Form.Email" />
+                        </div>
+                        <ValidationMessage For="@(() => Form.Email)" />
+                    </div>
+
+                    <div class="form-row span-2">
+                        <label for="phone">Phone number <small class="muted">(선택)</small></label>
+                        <div class="input-group">
+                            <i class="fas fa-phone"></i>
+                            <InputText id="phone" class="input" @bind-Value="Form.Phone" />
+                        </div>
+                    </div>
+
+                    <div class="form-row span-2">
+                        <label for="msg">Message</label>
+                        <div class="input-group textarea-group">
+                            <i class="fas fa-comment-dots"></i>
+                            <InputTextArea id="msg" class="textarea" @bind-Value="Form.Message" rows="8" />
+                        </div>
+                        <ValidationMessage For="@(() => Form.Message)" />
+                    </div>
+                </div>
+
+                <InputText class="hp" @bind-Value="Form.Honeypot" />
+
+                <button class="btn-send" type="submit" disabled="@sending" aria-live="polite">
+                    @if (sending)
+                    {
+                        <span class="spinner"></span>
+                        <span>Sending...</span>
+                    }
+                    else
+                    {
+                        <span>Send</span>
+                    }
+                </button>
+
+                @if (ok is true)
+                {
+                    <div class="alert ok">메일이 전송되었습니다. 빠른 시일 내 회신드릴게요.</div>
+                }
+                else if (ok is false)
+                {
+                    <div class="alert fail">전송에 실패했습니다. 설정을 확인한 뒤 다시 시도해 주세요.</div>
+                    @if (!string.IsNullOrWhiteSpace(error))
+                    {
+                        <pre class="alert fail detail">@error</pre>
+                    }
+                }
+            </EditForm>
+        </article>
+    </div>
+</section>
+
+@code {
+    public sealed class MailSettings
+    {
+        public string Host { get; set; } = string.Empty;
+        public int Port { get; set; } = 587;
+        public bool EnableSsl { get; set; } = true;
+        public string User { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string From { get; set; } = string.Empty;
+        public string FromName { get; set; } = "Website";
+        public string To { get; set; } = string.Empty;
+    }
+
+    public sealed class ContactFormModel
+    {
+        [Required, StringLength(60, MinimumLength = 2)]
+        public string Name { get; set; } = string.Empty;
+
+        [Required, EmailAddress, StringLength(120)]
+        public string Email { get; set; } = string.Empty;
+
+        [StringLength(40)]
+        public string? Phone { get; set; }
+
+        [Required, StringLength(4000, MinimumLength = 5)]
+        public string Message { get; set; } = string.Empty;
+
+        public string? Honeypot { get; set; }
+    }
+
+    private readonly ContactFormModel Form = new();
+    private bool sending;
+    private bool? ok;
+    private string? error;
+
+    private async Task SendAsync()
+    {
+        if (!string.IsNullOrWhiteSpace(Form.Honeypot))
+        {
+            ok = false;
+            error = "봇 의심 요청으로 차단되었습니다.";
+            return;
+        }
+
+        MailSettings cfg = MailOptions.Value;
+
+        if (string.IsNullOrWhiteSpace(cfg.Host) ||
+            string.IsNullOrWhiteSpace(cfg.User) ||
+            string.IsNullOrWhiteSpace(cfg.Password))
+        {
+            ok = false;
+            error = "MailSettings Host/User/Password 값이 비어 있습니다.";
+            return;
+        }
+
+        sending = true;
+        ok = null;
+        error = null;
+
+        try
+        {
+            using var msg = new MailMessage();
+            string fromAddress = string.IsNullOrWhiteSpace(cfg.From) ? cfg.User : cfg.From;
+            string toAddress = string.IsNullOrWhiteSpace(cfg.To) ? cfg.User : cfg.To;
+
+            msg.From = new MailAddress(fromAddress, cfg.FromName);
+            msg.To.Add(new MailAddress(toAddress));
+            msg.Subject = $"[Contact] {Form.Name} 님 문의";
+            msg.IsBodyHtml = true;
+            msg.Body =
+                $"<h3>웹 문의</h3>" +
+                $"<p><b>Name:</b> {WebUtility.HtmlEncode(Form.Name)}</p>" +
+                $"<p><b>Email:</b> {WebUtility.HtmlEncode(Form.Email)}</p>" +
+                $"<p><b>Phone:</b> {WebUtility.HtmlEncode(Form.Phone ?? "-")}</p>" +
+                $"<p><b>Message:</b><br/>{WebUtility.HtmlEncode(Form.Message).Replace("\n", "<br/>")}</p>" +
+                $"<hr/><small>보낸 시각: {DateTimeOffset.Now:yyyy-MM-dd HH:mm}</small>";
+
+            using var client = new SmtpClient(cfg.Host, cfg.Port)
+            {
+                EnableSsl = cfg.EnableSsl,
+                DeliveryMethod = SmtpDeliveryMethod.Network,
+                UseDefaultCredentials = false,
+                Credentials = new NetworkCredential(cfg.User, cfg.Password),
+                Timeout = 15000
+            };
+
+            await client.SendMailAsync(msg);
+
+            ok = true;
+            Form.Name = string.Empty;
+            Form.Email = string.Empty;
+            Form.Phone = string.Empty;
+            Form.Message = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            ok = false;
+            error = ex.InnerException is null
+                ? ex.Message
+                : $"{ex.Message}{Environment.NewLine}{ex.InnerException.Message}";
+        }
+        finally
+        {
+            sending = false;
+        }
+    }
+}

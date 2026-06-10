@@ -1,0 +1,73 @@
+@namespace Codemaru.Blazor
+@using Microsoft.AspNetCore.Components.Web
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <title>코드마루</title>
+    <meta name="description" content="코드마루는 CCTV 뷰어, 웨딩, 패밀리, 연구 프로젝트, 샵스토어와 CardHybrid 명함 도구를 제공하는 Dreamine 기반 기술 플랫폼입니다." />
+    <meta name="keywords" content="코드마루, CodeMaru, Dreamine, 드리마인, CardHybrid, 명함, QR, vCard, CCTV, 웨딩, 패밀리, ShopStore, Blazor, WPF, 자동화" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://codemaru.co.kr/" />
+
+    <meta property="og:title" content="코드마루" />
+    <meta property="og:description" content="CCTV, 웨딩, 패밀리, 샵스토어, Dreamine 연구와 CardHybrid 명함 도구를 한 곳에서 만나보세요." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://codemaru.co.kr/" />
+    <meta property="og:image" content="https://codemaru.co.kr/img/codemaru_og.png" />
+    <meta property="og:image:secure_url" content="https://codemaru.co.kr/img/codemaru_og.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="코드마루" />
+    <meta property="og:locale" content="ko_KR" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="코드마루" />
+    <meta name="twitter:description" content="코드마루 통합 플랫폼과 CardHybrid 명함 도구." />
+    <meta name="twitter:image" content="https://codemaru.co.kr/img/codemaru_og.png" />
+    <link rel="icon" type="image/jpeg" href="/img/Codemaru_Essence.jpg" />
+
+    <script type="application/ld+json">
+        {
+          "@@context": "https://schema.org",
+          "@@type": "Organization",
+          "name": "코드마루",
+          "url": "https://codemaru.co.kr/",
+          "logo": "https://codemaru.co.kr/img/codemaru_og.png",
+          "sameAs": [
+            "https://shop.codemaru.co.kr",
+            "https://wedding.codemaru.co.kr",
+            "https://families.codemaru.co.kr",
+            "https://portfolio.codemaru.co.kr",
+            "https://github.com/CodeMaru-Dreamine",
+            "https://cctvviewer.codemaru.co.kr"
+          ],
+          "department": [
+            {
+              "@@type": "WebApplication",
+              "name": "CardHybrid",
+              "url": "https://codemaru.co.kr/cardhybrid",
+              "description": "QR, vCard, 명함 랜딩 페이지와 명함 앞뒷면 내보내기를 지원하는 CodeMaru 명함 도구."
+            }
+          ]
+        }
+    </script>
+
+    <link rel="stylesheet" href="/css/site.css" />
+    <link rel="stylesheet" href="/css/codemaru-site.css" />
+    <link rel="stylesheet" href="/css/cardhybrid.css" />
+    <link rel="stylesheet" href="/app.css" />
+    <link rel="stylesheet" href="/Codemaru.styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <HeadOutlet />
+</head>
+<body>
+    <Codemaru.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: false)" />
+    <script src="/js/site.js"></script>
+    <script src="/_framework/blazor.web.js"></script>
+</body>
+</html>

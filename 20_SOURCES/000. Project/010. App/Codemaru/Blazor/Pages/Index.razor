@@ -1,0 +1,1098 @@
+@page "/cardhybrid"
+@namespace Codemaru.Blazor.Pages
+@implements IDisposable
+@inject CardHybridSession Session
+@inject ImageBackgroundRemover BackgroundRemover
+@inject LandingPageExporter Exporter
+@inject LandingPagePublisher Publisher
+@inject CardProfileImporter Importer
+
+<PageTitle>Codemaru CardHybrid</PageTitle>
+
+<main class="card-hybrid-shell">
+    <section class="workspace-band">
+        <div class="workspace-title">
+            <div>
+                <p class="eyebrow">Codemaru Feature</p>
+                <h1>CardHybrid</h1>
+            </div>
+            <div class="toolbar">
+                <button type="button" class="ghost-button" title="현재 입력값으로 QR 다시 생성" @onclick="ApplyProfile">QR 갱신</button>
+                <button type="button" class="primary-button" title="현재 명함을 이력에 저장" @onclick="SaveHistory">@HistorySaveButtonText</button>
+            </div>
+        </div>
+
+        <div class="tool-grid">
+            <section class="editor-panel" aria-label="명함 편집">
+                <div class="panel-header">
+                    <h2>명함 정보</h2>
+                    <span>@lastSavedText</span>
+                </div>
+
+                <div class="profile-fieldset">
+                <div class="field-with-style">
+                    <label class="field-main">
+                        앞면 브랜드
+                        <input @bind="brand" @bind:event="oninput" />
+                    </label>
+                    <label>
+                        폰트
+                        <select @bind="frontFontFamily">
+                            @foreach (var font in FontOptions)
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        크기
+                        <input type="number" min="10" max="56" step="1" @bind="frontBrandFontSize" @bind:event="oninput" />
+                    </label>
+                </div>
+
+                <div class="field-with-style">
+                    <label class="field-main">
+                        앞면 태그라인
+                        <input @bind="tagline" @bind:event="oninput" />
+                    </label>
+                    <label>
+                        폰트
+                        <select @bind="frontFontFamily">
+                            @foreach (var font in FontOptions)
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        크기
+                        <input type="number" min="10" max="40" step="1" @bind="frontTaglineFontSize" @bind:event="oninput" />
+                    </label>
+                </div>
+
+                <div class="field-with-style">
+                    <label class="field-main">
+                        분야
+                        <textarea rows="3" @bind="category" @bind:event="oninput"></textarea>
+                    </label>
+                    <label>
+                        폰트
+                        <select @bind="frontFontFamily">
+                            @foreach (var font in FontOptions)
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        크기
+                        <input type="number" min="10" max="40" step="1" @bind="frontCategoryFontSize" @bind:event="oninput" />
+                    </label>
+                </div>
+
+                <div class="field-with-style">
+                    <label class="field-main">
+                        이메일
+                        <input type="email" @bind="email" @bind:event="oninput" />
+                    </label>
+                    <label>
+                        폰트
+                        <select @bind="frontFontFamily">
+                            @foreach (var font in FontOptions)
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        크기
+                        <input type="number" min="9" max="28" step="1" @bind="frontEmailFontSize" @bind:event="oninput" />
+                    </label>
+                </div>
+
+                <div class="field-with-style">
+                    <label class="field-main">
+                        뒷면 브랜드
+                        <input @bind="backBrand" @bind:event="oninput" />
+                    </label>
+                    <label>
+                        폰트
+                        <select @bind="backFontFamily">
+                            @foreach (var font in FontOptions)
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        크기
+                        <input type="number" min="10" max="48" step="1" @bind="backBrandFontSize" @bind:event="oninput" />
+                    </label>
+                </div>
+
+                <div class="field-with-style">
+                    <label class="field-main">
+                        뒷면 태그라인
+                        <input @bind="backTagline" @bind:event="oninput" />
+                    </label>
+                    <label>
+                        폰트
+                        <select @bind="backFontFamily">
+                            @foreach (var font in FontOptions)
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        크기
+                        <input type="number" min="9" max="32" step="1" @bind="backTaglineFontSize" @bind:event="oninput" />
+                    </label>
+                </div>
+
+                <div class="field-with-style">
+                    <label class="field-main">
+                        이름
+                        <input @bind="name" @bind:event="oninput" />
+                    </label>
+                    <label>
+                        폰트
+                        <select @bind="backFontFamily">
+                            @foreach (var font in FontOptions)
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        크기
+                        <input type="number" min="10" max="36" step="1" @bind="backNameFontSize" @bind:event="oninput" />
+                    </label>
+                </div>
+
+                <div class="field-with-style">
+                    <label class="field-main">
+                        직책
+                        <input @bind="role" @bind:event="oninput" />
+                    </label>
+                    <label>
+                        폰트
+                        <select @bind="backFontFamily">
+                            @foreach (var font in FontOptions)
+                            {
+                                <option value="@font">@font</option>
+                            }
+                        </select>
+                    </label>
+                    <label>
+                        크기
+                        <input type="number" min="9" max="30" step="1" @bind="backRoleFontSize" @bind:event="oninput" />
+                    </label>
+                </div>
+                <label>
+                    전화
+                    <textarea rows="2" @bind="phone" @bind:event="oninput"></textarea>
+                </label>
+                <label>
+                    주소
+                    <input @bind="address" @bind:event="oninput" />
+                </label>
+                <label>
+                    랜딩 기본 주소
+                    <input @bind="website" @bind:event="oninput" />
+                </label>
+                <label>
+                    랜딩 슬러그
+                    <input @bind="slug" @bind:event="oninput" />
+                </label>
+
+                <div class="size-grid">
+                    <label>
+                        가로(mm)
+                        <input type="number" min="40" max="140" step="1" @bind="cardWidthMm" @bind:event="oninput" />
+                    </label>
+                    <label>
+                        세로(mm)
+                        <input type="number" min="25" max="90" step="1" @bind="cardHeightMm" @bind:event="oninput" />
+                    </label>
+                </div>
+
+                <div class="accent-row">
+                    <label>
+                        강조색
+                        <input type="color" @bind="accentColor" />
+                    </label>
+                    <div class="swatch" style="background:@accentColor"></div>
+                </div>
+
+                <label>
+                    뒷면 이미지
+                    <InputFile OnChange="OnLogoSelectedAsync" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,.ico" />
+                </label>
+
+                @if (!string.IsNullOrWhiteSpace(logoImageDataUrl))
+                {
+                    <label class="check-row">
+                        <input type="checkbox" checked="@removeLogoBackground" @onchange="OnRemoveBackgroundChangedAsync" />
+                        이미지 배경 제거
+                    </label>
+                    <button type="button" class="ghost-button full-button" @onclick="RemoveLogo">이미지 제거</button>
+                }
+
+                <label>
+                    짧은 소개
+                    <input @bind="shortBio" @bind:event="oninput" />
+                </label>
+                <label>
+                    랜딩 설명
+                    <textarea rows="3" @bind="landingDescription" @bind:event="oninput"></textarea>
+                </label>
+                <label>
+                    vCard 노트
+                    <textarea rows="2" @bind="vCardNote" @bind:event="oninput"></textarea>
+                </label>
+                <label>
+                    내부 메모
+                    <textarea rows="3" @bind="internalMemo" @bind:event="oninput"></textarea>
+                </label>
+                </div>
+            </section>
+
+            <section class="preview-panel" aria-label="명함 및 랜딩 미리보기">
+                <div class="preview-tabs" role="tablist" aria-label="미리보기 탭">
+                    <button type="button" class="@TabClass("card")" @onclick='() => activePreviewTab = "card"'>명함</button>
+                    <button type="button" class="@TabClass("landing")" @onclick='() => activePreviewTab = "landing"'>랜딩 HTML</button>
+                </div>
+
+                @if (activePreviewTab == "card")
+                {
+                    <div class="export-actions card-export-actions">
+                        <a class="ghost-button" download="card-front.svg" href="@CardFrontSvgDataUrl">앞면 SVG</a>
+                        <a class="ghost-button" download="card-back.svg" href="@CardBackSvgDataUrl">뒷면 SVG</a>
+                    </div>
+
+                    <div class="card-preview-block">
+                        <span class="side-label">앞면</span>
+                        @if (IsImportedImageCard)
+                        {
+                            <div class="business-card imported-card" style="@CardStyle">
+                                <img src="@importedFrontImageDataUrl" alt="가져온 명함 앞면" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="business-card front" style="@CardStyle">
+                                <div class="front-copy">
+                                    <h2 style="color:@accentColor">@brand</h2>
+                                    <p>@tagline</p>
+                                    <strong>@category</strong>
+                                    <span>@email</span>
+                                </div>
+                                <div class="qr-stack">
+                                    <div class="qr-box">@((MarkupString)State.QrSvg)</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="card-preview-block">
+                        <span class="side-label">뒷면</span>
+                        @if (IsImportedImageCard)
+                        {
+                            <div class="business-card imported-card" style="@CardStyle">
+                                @if (string.IsNullOrWhiteSpace(importedBackImageDataUrl))
+                                {
+                                    <span class="imported-card-empty">뒷면 이미지 없음</span>
+                                }
+                                else
+                                {
+                                    <img src="@importedBackImageDataUrl" alt="가져온 명함 뒷면" />
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="business-card back" style="@CardStyle">
+                                <div class="back-logo-slot" style="border-color:@accentColor">
+                                    @if (string.IsNullOrWhiteSpace(logoImageDataUrl))
+                                    {
+                                        <span style="background:@accentColor"></span>
+                                    }
+                                    else
+                                    {
+                                        <img src="@logoImageDataUrl" alt="@backBrand logo" />
+                                    }
+                                </div>
+                                <div class="back-copy">
+                                    <h3>@backBrand</h3>
+                                    <p>@backTagline</p>
+                                    <strong>@name</strong>
+                                    <span>@role</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="landing-preview">
+                        <div>
+                            <p class="eyebrow">Landing page</p>
+                            <h2>@name</h2>
+                            <p>@role at @backBrand</p>
+                            <a href="@LandingBaseUrl" target="_blank">@LandingBaseUrl</a>
+                        </div>
+                        <dl>
+                            <dt>Email</dt>
+                            <dd>@email</dd>
+                            <dt>Phone</dt>
+                            <dd>@DisplayValue(phone)</dd>
+                            <dt>Memo</dt>
+                            <dd>@shortBio</dd>
+                        </dl>
+                    </div>
+                }
+                else
+                {
+                    <div class="export-panel">
+                        <div class="panel-header">
+                            <h2>랜딩 페이지 만들기</h2>
+                            <div class="export-actions">
+                                <button type="button" class="ghost-button" @onclick="SaveLandingHtmlToServerAsync">서버 index.html 저장</button>
+                                <a class="ghost-button" download="card-landing.html" href="@LandingHtmlDataUrl">HTML 저장</a>
+                                <a class="ghost-button" download="contact.vcf" href="@VCardDataUrl">모바일 vCard</a>
+                                <a class="ghost-button" download="contact_windows.vcf" href="@WindowsVCardDataUrl">Windows 연락처 vCard</a>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(landingPublishMessage))
+                        {
+                            <p class="@LandingPublishMessageClass">@landingPublishMessage</p>
+                        }
+
+                        <div class="theme-row" role="radiogroup" aria-label="랜딩 페이지 테마">
+                            <button type="button" class="@ThemeClass("light")" @onclick='() => SetTheme("light")'>밝은</button>
+                            <button type="button" class="@ThemeClass("dark")" @onclick='() => SetTheme("dark")'>어두운</button>
+                            <button type="button" class="@ThemeClass("blue")" @onclick='() => SetTheme("blue")'>블루</button>
+                            <button type="button" class="@ThemeClass("green")" @onclick='() => SetTheme("green")'>그린</button>
+                        </div>
+
+                        <div class="vcard-options" aria-label="vCard 공개 항목">
+                            <label class="check-row compact">
+                                <input type="checkbox" @bind="includePhoneInVCard" />
+                                vCard에 전화 포함
+                            </label>
+                            <label class="check-row compact">
+                                <input type="checkbox" @bind="includeAddressInVCard" />
+                                vCard에 주소 포함
+                            </label>
+                        </div>
+
+                        <div class="landing-page-render @LandingThemeClass">
+                            <section class="landing-card">
+                                <div class="landing-logo" style="border-color:@accentColor">
+                                    @if (string.IsNullOrWhiteSpace(logoImageDataUrl))
+                                    {
+                                        <span style="background:@accentColor"></span>
+                                    }
+                                    else
+                                    {
+                                        <img src="@logoImageDataUrl" alt="@backBrand logo" />
+                                    }
+                                </div>
+                                <p class="eyebrow">@backBrand</p>
+                                <h2>@name</h2>
+                                <p>@role</p>
+                                <a href="@LandingBaseUrl" target="_blank">@LandingBaseUrl</a>
+                            </section>
+
+                            <section class="landing-contact-grid">
+                                <div>
+                                    <dt>Email</dt>
+                                    <dd>@email</dd>
+                                </div>
+                                <div>
+                                    <dt>Phone</dt>
+                                    <dd>@DisplayValue(phone)</dd>
+                                </div>
+                                <div>
+                                    <dt>Company</dt>
+                                    <dd>@backBrand</dd>
+                                </div>
+                                <div>
+                                    <dt>Address</dt>
+                                    <dd>@DisplayValue(address)</dd>
+                                </div>
+                                <div class="wide-field">
+                                    <dt>Memo</dt>
+                                    <dd>@landingDescription</dd>
+                                </div>
+                            </section>
+                        </div>
+
+                        <label>
+                            내보낼 HTML
+                            <textarea rows="10" readonly>@LandingHtml</textarea>
+                        </label>
+                    </div>
+                }
+            </section>
+
+            <section class="history-panel" aria-label="명함 이력">
+                <div class="panel-header">
+                    <h2>이력</h2>
+                    <button type="button" class="icon-button" title="이력 비우기" @onclick="ClearHistory">초기화</button>
+                </div>
+
+                <div class="signin-box">
+                    <span>@CurrentUserLabel</span>
+                    <input type="email" placeholder="email@example.com" @bind="loginEmail" @bind:event="oninput" />
+                    <input type="password" placeholder="비밀번호" @bind="loginPassword" @bind:event="oninput" />
+                    @if (!string.IsNullOrWhiteSpace(signinMessage))
+                    {
+                        <p class="@SignInMessageClass">@signinMessage</p>
+                    }
+                    <div class="signin-actions">
+                        <button type="button" class="history-action-button" @onclick="SignIn">간편로그인</button>
+                        <button type="button" class="history-action-button" @onclick="SignOut">게스트</button>
+                    </div>
+                </div>
+
+                <label class="import-box">
+                    외부 명함 가져오기
+                    <InputFile OnChange="OnImportSelectedAsync" multiple accept=".vcf,text/vcard,text/x-vcard,image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,.ico" />
+                </label>
+
+                @if (State.History.Count == 0)
+                {
+                    <p class="empty-text">저장된 명함 이력이 없습니다.</p>
+                }
+                else
+                {
+                    <div class="history-list">
+                        @foreach (var entry in State.History)
+                        {
+                            <div class="history-item">
+                                <button type="button" class="history-summary" title="이력 편집" @onclick="() => LoadHistory(entry)">
+                                    <strong>@entry.Profile.BackBrand</strong>
+                                    <span>@entry.Profile.Name / @entry.Profile.Role</span>
+                                    <small>@entry.CreatedAt.ToString("yyyy.MM.dd HH:mm")</small>
+                                </button>
+                                <div class="history-actions" aria-label="이력 항목 작업">
+                                    <button type="button" class="history-action-button" @onclick="() => LoadHistory(entry)">편집</button>
+                                    <button type="button" class="history-action-button danger" @onclick="() => DeleteHistory(entry)">삭제</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+        </div>
+    </section>
+</main>
+
+@code {
+    private CardHybridState State => Session.State;
+    private static readonly string[] FontOptions =
+    [
+        "Segoe UI",
+        "Malgun Gothic",
+        "맑은 고딕",
+        "Arial",
+        "Calibri",
+        "Noto Sans KR",
+        "Pretendard",
+        "Gulim",
+        "Batang"
+    ];
+
+    private string brand = string.Empty;
+    private string tagline = string.Empty;
+    private string backBrand = string.Empty;
+    private string backTagline = string.Empty;
+    private string category = string.Empty;
+    private string name = string.Empty;
+    private string role = string.Empty;
+    private string email = string.Empty;
+    private string phone = string.Empty;
+    private string address = string.Empty;
+    private string website = string.Empty;
+    private string slug = string.Empty;
+    private string accentColor = "#5d7f57";
+    private string shortBio = string.Empty;
+    private string landingDescription = string.Empty;
+    private string vCardNote = string.Empty;
+    private string internalMemo = string.Empty;
+    private string? logoImageDataUrl;
+    private string? importedFrontImageDataUrl;
+    private string? importedBackImageDataUrl;
+    private byte[]? logoOriginalBytes;
+    private string? logoOriginalContentType;
+    private bool removeLogoBackground;
+    private double cardWidthMm = 90;
+    private double cardHeightMm = 50;
+    private string frontFontFamily = "Segoe UI";
+    private string backFontFamily = "Segoe UI";
+    private double frontBrandFontSize = 28;
+    private double frontTaglineFontSize = 18;
+    private double frontCategoryFontSize = 18;
+    private double frontEmailFontSize = 14;
+    private double backBrandFontSize = 22;
+    private double backTaglineFontSize = 14;
+    private double backNameFontSize = 16;
+    private double backRoleFontSize = 14;
+    private string landingTheme = "light";
+    private bool includePhoneInVCard;
+    private bool includeAddressInVCard;
+    private string activePreviewTab = "card";
+    private string lastSavedText = "아직 저장 전";
+    private string loginEmail = string.Empty;
+    private string loginPassword = string.Empty;
+    private string signinMessage = string.Empty;
+    private bool signinMessageIsError;
+    private string landingPublishMessage = string.Empty;
+    private bool landingPublishMessageIsError;
+    private Guid? editingHistoryId;
+
+    private string CardStyle
+    {
+        get
+        {
+            var width = Clamp(cardWidthMm, 40, 140);
+            var height = Clamp(cardHeightMm, 25, 90);
+
+            return $"--card-width-mm:{width:0.##}; --card-height-mm:{height:0.##}; --card-ratio:{width:0.##} / {height:0.##}; --front-font:{CssString(frontFontFamily)}; --back-font:{CssString(backFontFamily)}; --front-brand-size:{Clamp(frontBrandFontSize, 10, 56):0.##}px; --front-tagline-size:{Clamp(frontTaglineFontSize, 10, 40):0.##}px; --front-category-size:{Clamp(frontCategoryFontSize, 10, 40):0.##}px; --front-email-size:{Clamp(frontEmailFontSize, 9, 28):0.##}px; --back-brand-size:{Clamp(backBrandFontSize, 10, 48):0.##}px; --back-tagline-size:{Clamp(backTaglineFontSize, 9, 32):0.##}px; --back-name-size:{Clamp(backNameFontSize, 10, 36):0.##}px; --back-role-size:{Clamp(backRoleFontSize, 9, 30):0.##}px;";
+        }
+    }
+
+    private string LandingThemeClass => $"theme-{landingTheme}";
+    private string LandingBaseUrl => string.IsNullOrWhiteSpace(website) ? State.QrPayload : website.Trim();
+    private string LandingHtml => Exporter.BuildHtml(CreateProfile(), LandingBaseUrl);
+    private string LandingHtmlDataUrl => $"data:text/html;charset=utf-8,{Uri.EscapeDataString(LandingHtml)}";
+    private string VCardDataUrl => $"data:text/vcard;charset=utf-8,{Uri.EscapeDataString(Exporter.BuildVCard(CreateProfile()))}";
+    private string WindowsVCardDataUrl => $"data:text/x-vcard;charset=us-ascii,{Uri.EscapeDataString(Exporter.BuildWindowsVCard(CreateProfile()))}";
+    private string CardFrontSvgDataUrl => $"data:image/svg+xml;charset=utf-8,{Uri.EscapeDataString(Exporter.BuildCardSideSvg(CreateProfile(), State.QrSvg, true))}";
+    private string CardBackSvgDataUrl => $"data:image/svg+xml;charset=utf-8,{Uri.EscapeDataString(Exporter.BuildCardSideSvg(CreateProfile(), State.QrSvg, false))}";
+    private string HistorySaveButtonText => editingHistoryId.HasValue ? "수정 저장" : "이력 저장";
+    private string SignInMessageClass => signinMessageIsError ? "signin-message error" : "signin-message";
+    private string LandingPublishMessageClass => landingPublishMessageIsError
+        ? "publish-message error"
+        : "publish-message";
+    private bool IsImportedImageCard => !string.IsNullOrWhiteSpace(importedFrontImageDataUrl) ||
+        !string.IsNullOrWhiteSpace(importedBackImageDataUrl);
+    private string CurrentUserLabel => string.IsNullOrWhiteSpace(Session.CurrentUser.Email)
+        ? "게스트 사용 중"
+        : $"{Session.CurrentUser.DisplayName} 사용 중";
+
+    protected override void OnInitialized()
+    {
+        Session.StateChanged += OnStateChanged;
+        loginEmail = Session.CurrentUser.Email;
+        CopyFromProfile(State.Profile);
+    }
+
+    private async Task SignIn()
+    {
+        editingHistoryId = null;
+        signinMessage = string.Empty;
+
+        try
+        {
+            var result = await Session.SignInAsync(loginEmail, loginPassword);
+            if (result is CardHybridSignInResult.Success or CardHybridSignInResult.Created)
+            {
+                loginEmail = Session.CurrentUser.Email;
+                loginPassword = string.Empty;
+                CopyFromProfile(Session.State.Profile);
+                signinMessageIsError = false;
+                signinMessage = result == CardHybridSignInResult.Created
+                    ? $"{Session.CurrentUser.DisplayName} 계정 생성됨"
+                    : $"{Session.CurrentUser.DisplayName} 로그인됨";
+                lastSavedText = result == CardHybridSignInResult.Created
+                    ? $"{Session.CurrentUser.DisplayName} 계정 생성"
+                    : $"{Session.CurrentUser.DisplayName} 로그인";
+                StateHasChanged();
+                return;
+            }
+
+            signinMessageIsError = true;
+            signinMessage = result switch
+            {
+                CardHybridSignInResult.MissingEmail => "이메일을 입력해 주세요.",
+                CardHybridSignInResult.MissingPassword => "비밀번호를 입력해 주세요.",
+                CardHybridSignInResult.InvalidPassword => "비밀번호가 맞지 않습니다.",
+                _ => "로그인에 실패했습니다."
+            };
+            lastSavedText = signinMessage;
+        }
+        catch (Exception ex)
+        {
+            signinMessageIsError = true;
+            signinMessage = "로그인 처리 중 오류가 났습니다.";
+            lastSavedText = signinMessage;
+            Console.Error.WriteLine(ex);
+        }
+    }
+
+    private async Task SignOut()
+    {
+        editingHistoryId = null;
+        await Session.SignOutAsync();
+        loginEmail = string.Empty;
+        loginPassword = string.Empty;
+        signinMessageIsError = false;
+        signinMessage = "게스트로 전환됨";
+        CopyFromProfile(Session.State.Profile);
+        lastSavedText = "게스트 전환";
+        StateHasChanged();
+    }
+
+    private void ApplyProfile()
+    {
+        Session.UpdateProfile(CreateProfile());
+    }
+
+    private void SaveHistory()
+    {
+        try
+        {
+            var profile = CreateProfile();
+            if (editingHistoryId is { } historyId)
+            {
+                var updatedEntry = Session.UpdateHistory(historyId, profile);
+                if (updatedEntry is not null)
+                {
+                    lastSavedText = $"{updatedEntry.CreatedAt:HH:mm:ss} 수정 저장";
+                    editingHistoryId = null;
+                    return;
+                }
+
+                editingHistoryId = null;
+            }
+
+            Session.UpdateProfile(profile);
+            var entry = Session.SaveCurrent();
+            lastSavedText = $"{entry.CreatedAt:HH:mm:ss} 저장";
+        }
+        catch (Exception ex)
+        {
+            editingHistoryId = null;
+            lastSavedText = "저장 중 오류";
+            Console.Error.WriteLine(ex);
+        }
+    }
+
+    private async Task SaveLandingHtmlToServerAsync()
+    {
+        landingPublishMessage = string.Empty;
+
+        try
+        {
+            var profile = CreateProfile();
+            Session.UpdateProfile(profile);
+            var result = await Publisher.PublishIndexAsync(profile, Exporter.BuildHtml(profile, LandingBaseUrl));
+            landingPublishMessageIsError = false;
+            landingPublishMessage = $"서버 저장 완료: {result.PublicUrl}";
+            lastSavedText = "랜딩 HTML 서버 저장";
+        }
+        catch (Exception ex)
+        {
+            landingPublishMessageIsError = true;
+            landingPublishMessage = $"서버 저장 실패: {ex.Message}";
+            lastSavedText = "랜딩 HTML 저장 실패";
+            Console.Error.WriteLine(ex);
+        }
+    }
+
+    private void LoadHistory(CardHistoryEntry entry)
+    {
+        editingHistoryId = entry.Id;
+        Session.LoadHistory(entry);
+        lastSavedText = $"{entry.CreatedAt:HH:mm} 이력 편집 중";
+    }
+
+    private void ClearHistory()
+    {
+        editingHistoryId = null;
+        Session.ClearHistory();
+        lastSavedText = "이력 초기화";
+    }
+
+    private void DeleteHistory(CardHistoryEntry entry)
+    {
+        if (Session.RemoveHistory(entry.Id))
+        {
+            if (editingHistoryId == entry.Id)
+            {
+                editingHistoryId = null;
+            }
+
+            lastSavedText = $"{entry.CreatedAt:HH:mm} 이력 삭제";
+        }
+    }
+
+    private async Task OnImportSelectedAsync(InputFileChangeEventArgs args)
+    {
+        var files = args.GetMultipleFiles(10);
+        if (files.Count == 0)
+        {
+            lastSavedText = "선택된 파일 없음";
+            return;
+        }
+
+        var file = files[0];
+        var extension = Path.GetExtension(file.Name);
+
+        if (extension.Equals(".vcf", StringComparison.OrdinalIgnoreCase) ||
+            file.ContentType.Contains("vcard", StringComparison.OrdinalIgnoreCase))
+        {
+            await ImportVCardAsync(file);
+            return;
+        }
+
+        if (IsSupportedImageImport(file))
+        {
+            await ImportImagesAsync(files);
+            return;
+        }
+
+        lastSavedText = "지원하지 않는 파일";
+    }
+
+    private async Task ImportVCardAsync(IBrowserFile file)
+    {
+        await using var stream = file.OpenReadStream(maxAllowedSize: 4 * 1024 * 1024);
+        using var memory = new MemoryStream();
+        await stream.CopyToAsync(memory);
+
+        var content = DecodeText(memory.ToArray());
+        var profile = Importer.ImportVCard(content, CreateProfile());
+        SaveImportedProfile(profile, $"{Path.GetFileName(file.Name)} 가져옴");
+    }
+
+    private async Task ImportImagesAsync(IReadOnlyList<IBrowserFile> files)
+    {
+        var imageFiles = files.Where(IsSupportedImageImport).Take(2).ToArray();
+        var images = new List<(IBrowserFile File, string Name, string Side, string DataUrl)>();
+
+        foreach (var imageFile in imageFiles)
+        {
+            var (name, side) = ParseCardImageFileName(imageFile.Name);
+            images.Add((imageFile, name, side, await ReadImageDataUrlAsync(imageFile)));
+        }
+
+        if (images.Count == 0)
+        {
+            lastSavedText = "이미지 없음";
+            return;
+        }
+
+        var displayName = images.Select(static image => image.Name)
+            .FirstOrDefault(static value => !string.IsNullOrWhiteSpace(value)) ?? "Imported Card";
+        var frontImage = images.FirstOrDefault(static image => image.Side == "front").DataUrl;
+        var backImage = images.FirstOrDefault(static image => image.Side == "back").DataUrl;
+
+        frontImage = string.IsNullOrWhiteSpace(frontImage) ? images[0].DataUrl : frontImage;
+        if (string.IsNullOrWhiteSpace(backImage) && images.Count > 1)
+        {
+            backImage = images.First(image => image.DataUrl != frontImage).DataUrl;
+        }
+
+        var profile = CreateProfile() with
+        {
+            Brand = displayName,
+            BackBrand = displayName,
+            Name = displayName,
+            Role = "이미지 명함",
+            BackTagline = "가져온 명함 이미지",
+            LogoImageDataUrl = null,
+            RemoveLogoBackground = false,
+            ImportedFrontImageDataUrl = frontImage,
+            ImportedBackImageDataUrl = backImage
+        };
+
+        logoOriginalBytes = null;
+        logoOriginalContentType = null;
+        SaveImportedProfile(profile, string.IsNullOrWhiteSpace(backImage) ? $"{displayName} 앞면 저장" : $"{displayName} 앞/뒤 저장");
+    }
+
+    private void SaveImportedProfile(CardProfile profile, string message)
+    {
+        editingHistoryId = null;
+        Session.UpdateProfile(profile);
+        var entry = Session.SaveCurrent();
+        CopyFromProfile(entry.Profile);
+        lastSavedText = $"{entry.CreatedAt:HH:mm:ss} {message}";
+    }
+
+    private void SetTheme(string theme)
+    {
+        landingTheme = theme;
+        ApplyProfile();
+    }
+
+    private CardProfile CreateProfile()
+    {
+        return new CardProfile(
+            Brand: brand,
+            Tagline: tagline,
+            BackBrand: backBrand,
+            BackTagline: backTagline,
+            Category: category,
+            Name: name,
+            Role: role,
+            Email: email,
+            Phone: phone,
+            Address: address,
+            Website: website,
+            LandingSlug: slug,
+            AccentColor: accentColor,
+            ShortBio: shortBio,
+            LandingDescription: landingDescription,
+            VCardNote: vCardNote,
+            InternalMemo: internalMemo,
+            LogoImageDataUrl: logoImageDataUrl,
+            RemoveLogoBackground: removeLogoBackground,
+            CardWidthMm: Clamp(cardWidthMm, 40, 140),
+            CardHeightMm: Clamp(cardHeightMm, 25, 90),
+            FrontFontFamily: frontFontFamily,
+            BackFontFamily: backFontFamily,
+            FrontBrandFontSize: Clamp(frontBrandFontSize, 10, 56),
+            FrontTaglineFontSize: Clamp(frontTaglineFontSize, 10, 40),
+            FrontCategoryFontSize: Clamp(frontCategoryFontSize, 10, 40),
+            FrontEmailFontSize: Clamp(frontEmailFontSize, 9, 28),
+            BackBrandFontSize: Clamp(backBrandFontSize, 10, 48),
+            BackTaglineFontSize: Clamp(backTaglineFontSize, 9, 32),
+            BackNameFontSize: Clamp(backNameFontSize, 10, 36),
+            BackRoleFontSize: Clamp(backRoleFontSize, 9, 30),
+            LandingTheme: landingTheme,
+            IncludePhoneInVCard: includePhoneInVCard,
+            IncludeAddressInVCard: includeAddressInVCard,
+            ImportedFrontImageDataUrl: importedFrontImageDataUrl,
+            ImportedBackImageDataUrl: importedBackImageDataUrl);
+    }
+
+    private void CopyFromProfile(CardProfile profile)
+    {
+        brand = profile.Brand;
+        tagline = profile.Tagline;
+        backBrand = profile.BackBrand;
+        backTagline = profile.BackTagline;
+        category = profile.Category;
+        name = profile.Name;
+        role = profile.Role;
+        email = profile.Email;
+        phone = profile.Phone;
+        address = profile.Address;
+        website = profile.Website;
+        slug = profile.LandingSlug;
+        accentColor = profile.AccentColor;
+        shortBio = profile.ShortBio;
+        landingDescription = profile.LandingDescription;
+        vCardNote = profile.VCardNote;
+        internalMemo = profile.InternalMemo;
+        logoImageDataUrl = profile.LogoImageDataUrl;
+        importedFrontImageDataUrl = profile.ImportedFrontImageDataUrl;
+        importedBackImageDataUrl = profile.ImportedBackImageDataUrl;
+        removeLogoBackground = profile.RemoveLogoBackground;
+        cardWidthMm = profile.CardWidthMm;
+        cardHeightMm = profile.CardHeightMm;
+        frontFontFamily = profile.FrontFontFamily;
+        backFontFamily = profile.BackFontFamily;
+        frontBrandFontSize = profile.FrontBrandFontSize;
+        frontTaglineFontSize = profile.FrontTaglineFontSize;
+        frontCategoryFontSize = profile.FrontCategoryFontSize;
+        frontEmailFontSize = profile.FrontEmailFontSize;
+        backBrandFontSize = profile.BackBrandFontSize;
+        backTaglineFontSize = profile.BackTaglineFontSize;
+        backNameFontSize = profile.BackNameFontSize;
+        backRoleFontSize = profile.BackRoleFontSize;
+        landingTheme = profile.LandingTheme;
+        includePhoneInVCard = profile.IncludePhoneInVCard;
+        includeAddressInVCard = profile.IncludeAddressInVCard;
+    }
+
+    private async Task OnLogoSelectedAsync(InputFileChangeEventArgs args)
+    {
+        var file = args.File;
+        await using var stream = file.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024);
+        using var memory = new MemoryStream();
+        await stream.CopyToAsync(memory);
+
+        logoOriginalBytes = memory.ToArray();
+        logoOriginalContentType = string.IsNullOrWhiteSpace(file.ContentType)
+            ? "application/octet-stream"
+            : file.ContentType;
+        logoImageDataUrl = BackgroundRemover.CreateDataUrl(logoOriginalBytes, logoOriginalContentType, removeLogoBackground);
+        ApplyProfile();
+    }
+
+    private Task OnRemoveBackgroundChangedAsync(ChangeEventArgs args)
+    {
+        removeLogoBackground = args.Value is bool value && value;
+
+        if (logoOriginalBytes is not null && logoOriginalContentType is not null)
+        {
+            logoImageDataUrl = BackgroundRemover.CreateDataUrl(logoOriginalBytes, logoOriginalContentType, removeLogoBackground);
+        }
+        else if (!string.IsNullOrWhiteSpace(logoImageDataUrl) && TryReadDataUrl(logoImageDataUrl, out var bytes, out var contentType))
+        {
+            logoOriginalBytes = bytes;
+            logoOriginalContentType = contentType;
+            logoImageDataUrl = BackgroundRemover.CreateDataUrl(bytes, contentType, removeLogoBackground);
+        }
+
+        ApplyProfile();
+        return Task.CompletedTask;
+    }
+
+    private void RemoveLogo()
+    {
+        logoImageDataUrl = null;
+        logoOriginalBytes = null;
+        logoOriginalContentType = null;
+        removeLogoBackground = false;
+        ApplyProfile();
+    }
+
+    private void OnStateChanged(object? sender, CardHybridState state)
+    {
+        CopyFromProfile(state.Profile);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private string TabClass(string tab)
+    {
+        return activePreviewTab == tab ? "tab-button active" : "tab-button";
+    }
+
+    private string ThemeClass(string theme)
+    {
+        return landingTheme == theme ? "theme-button active" : "theme-button";
+    }
+
+    private static string DisplayValue(string value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? "-" : value;
+    }
+
+    private static double Clamp(double value, double min, double max)
+    {
+        return Math.Min(Math.Max(value, min), max);
+    }
+
+    private static string CssString(string value)
+    {
+        var safe = string.IsNullOrWhiteSpace(value) ? "Segoe UI" : value.Replace("'", string.Empty, StringComparison.Ordinal);
+        return $"'{safe}'";
+    }
+
+    private static bool TryReadDataUrl(string dataUrl, out byte[] bytes, out string contentType)
+    {
+        bytes = [];
+        contentType = "application/octet-stream";
+
+        const string marker = ";base64,";
+        var markerIndex = dataUrl.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+        if (!dataUrl.StartsWith("data:", StringComparison.OrdinalIgnoreCase) || markerIndex < 0)
+        {
+            return false;
+        }
+
+        contentType = dataUrl[5..markerIndex];
+        bytes = Convert.FromBase64String(dataUrl[(markerIndex + marker.Length)..]);
+        return true;
+    }
+
+    private static bool IsSupportedImageImport(IBrowserFile file)
+    {
+        var extension = Path.GetExtension(file.Name);
+        return file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".svg", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".png", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".jpg", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".webp", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".ico", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static string GetImageContentType(IBrowserFile file)
+    {
+        if (!string.IsNullOrWhiteSpace(file.ContentType) &&
+            file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+        {
+            return file.ContentType;
+        }
+
+        return Path.GetExtension(file.Name).ToLowerInvariant() switch
+        {
+            ".svg" => "image/svg+xml",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".webp" => "image/webp",
+            ".ico" => "image/x-icon",
+            _ => "image/png"
+        };
+    }
+
+    private static (string Name, string Side) ParseCardImageFileName(string fileName)
+    {
+        var name = Path.GetFileNameWithoutExtension(fileName).Trim();
+        if (name.EndsWith("_front", StringComparison.OrdinalIgnoreCase))
+        {
+            return (name[..^"_front".Length].Trim(), "front");
+        }
+
+        if (name.EndsWith("_back", StringComparison.OrdinalIgnoreCase))
+        {
+            return (name[..^"_back".Length].Trim(), "back");
+        }
+
+        if (name.EndsWith("_앞면", StringComparison.OrdinalIgnoreCase) ||
+            name.EndsWith("_앞", StringComparison.OrdinalIgnoreCase))
+        {
+            var marker = name.EndsWith("_앞면", StringComparison.OrdinalIgnoreCase) ? "_앞면" : "_앞";
+            return (name[..^marker.Length].Trim(), "front");
+        }
+
+        if (name.EndsWith("_뒷면", StringComparison.OrdinalIgnoreCase) ||
+            name.EndsWith("_뒤", StringComparison.OrdinalIgnoreCase))
+        {
+            var marker = name.EndsWith("_뒷면", StringComparison.OrdinalIgnoreCase) ? "_뒷면" : "_뒤";
+            return (name[..^marker.Length].Trim(), "back");
+        }
+
+        return (name, string.Empty);
+    }
+
+    private static async Task<string> ReadImageDataUrlAsync(IBrowserFile file)
+    {
+        await using var stream = file.OpenReadStream(maxAllowedSize: 8 * 1024 * 1024);
+        using var memory = new MemoryStream();
+        await stream.CopyToAsync(memory);
+
+        return $"data:{GetImageContentType(file)};base64,{Convert.ToBase64String(memory.ToArray())}";
+    }
+
+    private static string DecodeText(byte[] bytes)
+    {
+        if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
+        {
+            return Encoding.UTF8.GetString(bytes, 3, bytes.Length - 3);
+        }
+
+        if (bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE)
+        {
+            return Encoding.Unicode.GetString(bytes, 2, bytes.Length - 2);
+        }
+
+        if (bytes.Length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF)
+        {
+            return Encoding.BigEndianUnicode.GetString(bytes, 2, bytes.Length - 2);
+        }
+
+        return Encoding.UTF8.GetString(bytes);
+    }
+
+    public void Dispose()
+    {
+        Session.StateChanged -= OnStateChanged;
+    }
+}
