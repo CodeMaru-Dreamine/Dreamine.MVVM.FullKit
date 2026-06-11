@@ -121,3 +121,18 @@
 [submodule "20_SOURCES/100. Library/Database.SqlServer"]
 	path = 20_SOURCES/100. Library/Database.SqlServer
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.Database.SqlServer
+[submodule "20_SOURCES/100. Library/UI.Abstractions"]
+	path = 20_SOURCES/100. Library/UI.Abstractions
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.UI.Abstractions
+[submodule "20_SOURCES/100. Library/UI.Wpf"]
+	path = 20_SOURCES/100. Library/UI.Wpf
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.UI.Wpf
+[submodule "20_SOURCES/100. Library/UI.Wpf.Themes"]
+	path = 20_SOURCES/100. Library/UI.Wpf.Themes
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.UI.Wpf.Themes
+[submodule "20_SOURCES/100. Library/UI.Wpf.Controls"]
+	path = 20_SOURCES/100. Library/UI.Wpf.Controls
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.UI.Wpf.Controls
+[submodule "20_SOURCES/100. Library/UI.Wpf.Equipment"]
+	path = 20_SOURCES/100. Library/UI.Wpf.Equipment
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.UI.Wpf.Equipment
