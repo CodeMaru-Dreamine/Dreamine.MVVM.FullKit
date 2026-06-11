@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SampleCrossUi.Shared\SampleCrossUi.Shared.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Wpf\Dreamine.MVVM.Wpf.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -46,6 +46,7 @@
 		<ProjectReference Include="..\..\100. Library\PLC.Omron.Fins\Dreamine.PLC.Omron.Fins.csproj" />
 		<ProjectReference Include="..\..\100. Library\Threading\Dreamine.Threading.csproj" />
 		<ProjectReference Include="..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
+		<ProjectReference Include="..\..\998. DEMO\000. Sample\050. CrossUi\SampleCrossUi.Shared\SampleCrossUi.Shared.csproj" />
 	</ItemGroup>
 
 </Project>

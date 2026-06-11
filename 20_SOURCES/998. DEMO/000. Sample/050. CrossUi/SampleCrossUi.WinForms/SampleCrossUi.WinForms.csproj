@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SampleCrossUi.Shared\SampleCrossUi.Shared.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
+  </ItemGroup>
+
+</Project>

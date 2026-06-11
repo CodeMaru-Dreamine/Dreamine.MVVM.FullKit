@@ -1,0 +1,45 @@
+@page "/counter"
+@page "/"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject CounterViewModel ViewModel
+
+<h3>Dreamine Cross-UI Sample — Blazor</h3>
+
+<p style="font-size: 2rem; font-weight: bold;">Count: @ViewModel.Count</p>
+
+<button class="btn btn-primary" @onclick="Increment">Increment</button>
+<button class="btn btn-secondary ms-2" @onclick="Reset">Reset</button>
+
+<hr />
+
+<h5>Operation Log</h5>
+<ul>
+    @foreach (var log in ViewModel.Logs)
+    {
+        <li>[@log.CreatedAt.ToString("HH:mm:ss")] @log.Message</li>
+    }
+</ul>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ViewModel.PropertyChanged += OnPropertyChanged;
+        ViewModel.Logs.CollectionChanged += OnLogsChanged;
+    }
+
+    private void Increment() => ViewModel.IncrementCommand.Execute(null);
+    private void Reset()     => ViewModel.ResetCommand.Execute(null);
+
+    private void OnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => _ = InvokeAsync(StateHasChanged);
+
+    private void OnLogsChanged(object? sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ViewModel.PropertyChanged -= OnPropertyChanged;
+        ViewModel.Logs.CollectionChanged -= OnLogsChanged;
+    }
+}

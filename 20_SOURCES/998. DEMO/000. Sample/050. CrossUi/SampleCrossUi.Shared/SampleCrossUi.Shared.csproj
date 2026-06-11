@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
+  </ItemGroup>
+
+</Project>
