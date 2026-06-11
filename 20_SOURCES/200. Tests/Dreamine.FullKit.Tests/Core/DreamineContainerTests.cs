@@ -120,6 +120,18 @@ public sealed class DreamineContainerTests
     }
 
     [Fact]
+    public void DreamineAutoRegistrar_RegisterAll_SingleAssemblyOverload_RegistersInDMContainer()
+    {
+        DMContainer.Reset();
+
+        // The no-registry overload scans the given assembly and registers into DMContainer directly.
+        Dreamine.MVVM.Core.DreamineAutoRegistrar.RegisterAll(typeof(DreamineContainerTests).Assembly);
+
+        // AutoRegistrationViewModel matches the naming convention filter used by DreamineAutoRegistrar.
+        Assert.True(DMContainer.IsRegistered<AutoRegistrationViewModel>());
+    }
+
+    [Fact]
     public void DMContainer_ResetClearsStaticFacadeRegistrations()
     {
         DMContainer.Reset();
@@ -250,6 +262,9 @@ public sealed class DreamineContainerTests
 
         public CircularA Dependency { get; }
     }
+
+    // Matches the ViewModel naming convention used by NamingConventionAutoRegistrationFilter.
+    public sealed class AutoRegistrationViewModel { }
 
     private sealed class DisposableSingleton : IDisposable
     {

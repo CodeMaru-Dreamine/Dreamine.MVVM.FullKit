@@ -41,6 +41,31 @@ public sealed class SqliteDatabaseProviderTests
     }
 
     [Fact]
+    public void SqliteProvider_SqlCache_ProducesDeterministicSqlForSameEntityType()
+    {
+        // Two separate provider instances that share the same static SQL cache.
+        // The observable contract is that the same entity type always produces identical SQL
+        // regardless of which provider instance triggers the build.
+        using var db1 = TemporarySqliteDatabase.Create();
+        using var db2 = TemporarySqliteDatabase.Create();
+        var p1 = new SqliteDatabaseProvider(db1.ConnectionString);
+        var p2 = new SqliteDatabaseProvider(db2.ConnectionString);
+
+        var method = typeof(SqliteDatabaseProvider)
+            .BaseType!
+            .GetMethod("BuildInsertSql", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)!;
+
+        var map = Dreamine.Database.Core.Mapping.DatabaseEntityMap.Create<SampleUser>();
+        var sql1 = (string)method.Invoke(p1, [map])!;
+        var sql2 = (string)method.Invoke(p2, [map])!;
+
+        Assert.NotEmpty(sql1);
+        Assert.Equal(sql1, sql2);
+        Assert.Contains("INSERT INTO", sql1);
+        Assert.Contains("SampleUsers", sql1);
+    }
+
+[Fact]
     public async Task SqliteProvider_SupportsAsyncOperations()
     {
         using var database = TemporarySqliteDatabase.Create();
