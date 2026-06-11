@@ -1,6 +1,9 @@
 using Dreamine.IO.Abstractions.Models;
+using Dreamine.IO.Abstractions.Results;
+using Dreamine.IO.Fastech.Ethernet.Controllers;
 using Dreamine.IO.Fastech.Ethernet.Options;
 using Dreamine.IO.Fastech.Ethernet.Protocol;
+using Dreamine.IO.Fastech.Ethernet.Transport;
 
 namespace Dreamine.FullKit.Tests.IO;
 
@@ -47,6 +50,23 @@ public sealed class FastechProtocolTests
     }
 
     [Fact]
+    public void PlusE16PointProtocol_ReportsAnalogUnsupportedConsistently()
+    {
+        var protocol = new FastechPlusE16PointProtocol();
+        var point = new AnalogIoPoint(0, 0);
+
+        var inputException = Assert.Throws<NotSupportedException>(() => protocol.BuildReadAnalogInputs([point]));
+        var inputParse = protocol.ParseAnalogInputs([], 1);
+        var outputException = Assert.Throws<NotSupportedException>(() => protocol.BuildReadAnalogOutputs([point]));
+        var outputParse = protocol.ParseAnalogOutputs([], 1);
+
+        Assert.Equal(inputException.Message, inputParse.Message);
+        Assert.Equal(outputException.Message, outputParse.Message);
+        Assert.False(inputParse.IsSuccess);
+        Assert.False(outputParse.IsSuccess);
+    }
+
+    [Fact]
     public void UnsupportedProtocol_ReturnsFailuresForParseMethods()
     {
         var protocol = new UnsupportedFastechEthernetIoProtocol();
@@ -58,11 +78,118 @@ public sealed class FastechProtocolTests
     }
 
     [Fact]
+    public async Task Controller_ReturnsFailureWhenParserThrows()
+    {
+        var transport = new FakeFastechTransport();
+        await using var controller = new FastechEthernetIoController(
+            new FastechEthernetIoOptions(),
+            transport,
+            new ThrowingParseProtocol());
+
+        await controller.ConnectAsync();
+
+        var result = await controller.DigitalInputs.ReadAsync([new IoPoint(0, 0)]);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("parse failed", result.Message);
+    }
+
+    [Fact]
     public void FastechOptions_ExposeDefaults()
     {
         var options = new FastechEthernetIoOptions();
 
         Assert.Equal("127.0.0.1", options.Host);
         Assert.Equal(FastechEthernetIoTransportType.Udp, options.TransportType);
+    }
+
+    private sealed class FakeFastechTransport : IFastechEthernetIoTransport
+    {
+        public bool IsConnected { get; private set; }
+
+        public Task<IoResult> ConnectAsync(CancellationToken cancellationToken = default)
+        {
+            IsConnected = true;
+            return Task.FromResult(IoResult.Success());
+        }
+
+        public Task<IoResult> DisconnectAsync(CancellationToken cancellationToken = default)
+        {
+            IsConnected = false;
+            return Task.FromResult(IoResult.Success());
+        }
+
+        public Task<IoResult<byte[]>> SendAndReceiveAsync(
+            IReadOnlyList<byte> requestFrame,
+            int receiveTimeoutMs,
+            int expectedResponseLength,
+            CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(IoResult<byte[]>.Success([0xAA, 3, 1, 0, 0xC0, 0]));
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            IsConnected = false;
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class ThrowingParseProtocol : IFastechEthernetIoProtocol
+    {
+        public byte[] BuildReadDigitalInputs(IReadOnlyList<IoPoint> points)
+        {
+            return [1];
+        }
+
+        public IoResult<bool[]> ParseDigitalInputs(IReadOnlyList<byte> responseFrame, int count)
+        {
+            throw new InvalidOperationException("parse failed");
+        }
+
+        public byte[] BuildReadDigitalOutputs(IReadOnlyList<IoPoint> points)
+        {
+            return [1];
+        }
+
+        public IoResult<bool[]> ParseDigitalOutputs(IReadOnlyList<byte> responseFrame, int count)
+        {
+            return IoResult<bool[]>.Success([]);
+        }
+
+        public byte[] BuildWriteDigitalOutputs(IReadOnlyDictionary<IoPoint, bool> values)
+        {
+            return [1];
+        }
+
+        public byte[] BuildReadAnalogInputs(IReadOnlyList<AnalogIoPoint> points)
+        {
+            return [1];
+        }
+
+        public IoResult<double[]> ParseAnalogInputs(IReadOnlyList<byte> responseFrame, int count)
+        {
+            return IoResult<double[]>.Success([]);
+        }
+
+        public byte[] BuildReadAnalogOutputs(IReadOnlyList<AnalogIoPoint> points)
+        {
+            return [1];
+        }
+
+        public IoResult<double[]> ParseAnalogOutputs(IReadOnlyList<byte> responseFrame, int count)
+        {
+            return IoResult<double[]>.Success([]);
+        }
+
+        public byte[] BuildWriteAnalogOutputs(IReadOnlyDictionary<AnalogIoPoint, double> values)
+        {
+            return [1];
+        }
+
+        public IoResult ParseWriteResponse(IReadOnlyList<byte> responseFrame)
+        {
+            return IoResult.Success();
+        }
     }
 }

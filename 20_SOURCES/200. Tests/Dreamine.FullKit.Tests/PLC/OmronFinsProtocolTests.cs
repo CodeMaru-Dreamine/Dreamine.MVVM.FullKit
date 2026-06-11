@@ -34,6 +34,36 @@ public sealed class OmronFinsProtocolTests
     }
 
     [Fact]
+    public void FrameBuilder_RejectsOutOfRangeAddressWithClearMessage()
+    {
+        var options = new OmronFinsConnectionOptions();
+        var builder = new OmronFinsFrameBuilder();
+
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            builder.BuildMemoryAreaRead(
+                options,
+                new PlcAddress(PlcDeviceType.D, 65536),
+                1,
+                bitAccess: false));
+
+        Assert.Contains("between 0 and 65535", ex.Message);
+    }
+
+    [Fact]
+    public void FrameBuilder_GeneratesDistinctSidsAcrossParallelCalls()
+    {
+        var options = new OmronFinsConnectionOptions();
+        var builder = new OmronFinsFrameBuilder();
+
+        var sids = Enumerable.Range(0, 64)
+            .AsParallel()
+            .Select(_ => builder.BuildMemoryAreaRead(options, new PlcAddress(PlcDeviceType.D, 0), 1, false)[9])
+            .ToArray();
+
+        Assert.Equal(64, sids.Distinct().Count());
+    }
+
+    [Fact]
     public void ResponseParser_ExtractsPayloadAndParsesWordsAndBits()
     {
         var parser = new OmronFinsResponseParser();

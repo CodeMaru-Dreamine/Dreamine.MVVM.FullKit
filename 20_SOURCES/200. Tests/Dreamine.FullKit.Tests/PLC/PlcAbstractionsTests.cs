@@ -28,4 +28,11 @@ public sealed class PlcAbstractionsTests
         Assert.False(valueFailure.IsSuccess);
         Assert.Null(valueFailure.Value);
     }
+
+    [Fact]
+    public void PlcResult_FailureRejectsEmptyMessage()
+    {
+        Assert.Throws<ArgumentException>(() => PlcResult.Failure(""));
+        Assert.Throws<ArgumentException>(() => PlcResult<int>.Failure(" "));
+    }
 }

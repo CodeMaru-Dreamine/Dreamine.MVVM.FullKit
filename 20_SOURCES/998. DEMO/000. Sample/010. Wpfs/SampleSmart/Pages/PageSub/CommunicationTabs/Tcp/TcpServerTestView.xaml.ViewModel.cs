@@ -129,4 +129,18 @@ public partial class TcpServerTestViewModel : ViewModelBase
     /// </summary>
     [DreamineCommand("Event.SendServer")]
     private partial void SendServer();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="TcpServerTestViewModel"/> class.
+    /// </summary>
+    /// <param name="event">The event handler used by the TCP server test view.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="event"/> is <c>null</c>.
+    /// </exception>
+    public TcpServerTestViewModel(TcpServerTestViewEvent @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+
+        _event = @event;
+    }
 }

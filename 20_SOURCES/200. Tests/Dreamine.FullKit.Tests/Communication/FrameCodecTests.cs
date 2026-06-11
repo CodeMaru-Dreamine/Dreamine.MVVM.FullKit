@@ -70,6 +70,19 @@ public sealed class FrameCodecTests
     }
 
     [Fact]
+    public async Task DelimiterCodec_PreservesBytesAfterDelimiterForNextFrame()
+    {
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes("first|second|"));
+        var codec = new DelimiterMessageFrameCodec("|", Encoding.UTF8, 32);
+
+        var first = await codec.ReadFrameAsync(stream);
+        var second = await codec.ReadFrameAsync(stream);
+
+        Assert.Equal("first", Encoding.UTF8.GetString(first!));
+        Assert.Equal("second", Encoding.UTF8.GetString(second!));
+    }
+
+    [Fact]
     public async Task DelimiterCodec_RejectsFramesLargerThanLimit()
     {
         using var stream = new MemoryStream(Encoding.UTF8.GetBytes("abcd"));

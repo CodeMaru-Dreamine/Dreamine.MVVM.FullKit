@@ -42,4 +42,30 @@ public sealed class MessageRouterTests
 
         Assert.False(called);
     }
+
+    [Fact]
+    public async Task Unregister_RemovesOnlySelectedHandler()
+    {
+        var router = new MessageRouter();
+        var calls = new List<string>();
+        Func<MessageEnvelope, CancellationToken, Task> first = (_, _) =>
+        {
+            calls.Add("first");
+            return Task.CompletedTask;
+        };
+        Func<MessageEnvelope, CancellationToken, Task> second = (_, _) =>
+        {
+            calls.Add("second");
+            return Task.CompletedTask;
+        };
+
+        router.Register("route", first);
+        router.Register("route", second);
+
+        Assert.True(router.Unregister("route", first));
+
+        await router.RouteAsync(new MessageEnvelope { Route = "route" });
+
+        Assert.Equal(["second"], calls);
+    }
 }

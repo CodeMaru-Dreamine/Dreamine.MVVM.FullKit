@@ -61,4 +61,18 @@ public partial class InMemoryCommunicationTabViewModel : ViewModelBase
     /// </summary>
     [DreamineCommand("Event.ReceiveTest")]
     private partial void ReceiveTest();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="InMemoryCommunicationTabViewModel"/> class.
+    /// </summary>
+    /// <param name="event">The event handler used by the in-memory communication tab.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="event"/> is <c>null</c>.
+    /// </exception>
+    public InMemoryCommunicationTabViewModel(InMemoryCommunicationTabEvent @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+
+        _event = @event;
+    }
 }

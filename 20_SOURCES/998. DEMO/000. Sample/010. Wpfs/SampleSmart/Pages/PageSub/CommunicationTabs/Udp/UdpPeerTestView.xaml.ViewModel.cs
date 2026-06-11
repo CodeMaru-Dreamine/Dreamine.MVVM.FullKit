@@ -130,4 +130,18 @@ public partial class UdpPeerTestViewModel : ViewModelBase
     /// </summary>
     [DreamineCommand("Event.SendUdpPeerB")]
     private partial void SendUdpPeerB();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="UdpPeerTestViewModel"/> class.
+    /// </summary>
+    /// <param name="event">The event handler used by the UDP peer test view.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="event"/> is <c>null</c>.
+    /// </exception>
+    public UdpPeerTestViewModel(UdpPeerTestViewEvent @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+
+        _event = @event;
+    }
 }

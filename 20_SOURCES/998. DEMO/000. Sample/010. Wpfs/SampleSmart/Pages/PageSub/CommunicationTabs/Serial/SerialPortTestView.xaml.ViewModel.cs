@@ -156,4 +156,18 @@ public partial class SerialPortTestViewModel : ViewModelBase
     /// </summary>
     [DreamineCommand("Event.SendSerial")]
     private partial void SendSerial();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="SerialPortTestViewModel"/> class.
+    /// </summary>
+    /// <param name="event">The event handler used by the serial port test view.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="event"/> is <c>null</c>.
+    /// </exception>
+    public SerialPortTestViewModel(SerialPortTestViewEvent @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+
+        _event = @event;
+    }
 }

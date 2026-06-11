@@ -19,4 +19,18 @@ public partial class InMemoryPlcTabViewModel : ViewModelBase
     /// </summary>
     [DreamineCommand("Event.UseInMemory")]
     private partial void UseInMemory();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="InMemoryPlcTabViewModel"/> class.
+    /// </summary>
+    /// <param name="event">The event handler used by the in-memory PLC tab.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="event"/> is <c>null</c>.
+    /// </exception>
+    public InMemoryPlcTabViewModel(InMemoryPlcTabEvent @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+
+        _event = @event;
+    }
 }

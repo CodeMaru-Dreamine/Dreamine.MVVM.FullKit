@@ -318,4 +318,18 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     /// </summary>
     [DreamineCommand("Event.RunHandshakeTest")]
     private partial void RunHandshakeTest();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PagePlcMonitorViewModel"/> class.
+    /// </summary>
+    /// <param name="event">The event handler used by the PLC monitor page.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="event"/> is <c>null</c>.
+    /// </exception>
+    public PagePlcMonitorViewModel(PagePlcMonitorEvent @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+
+        _event = @event;
+    }
 }

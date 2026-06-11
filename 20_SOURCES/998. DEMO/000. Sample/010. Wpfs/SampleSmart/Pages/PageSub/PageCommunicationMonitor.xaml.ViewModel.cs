@@ -19,4 +19,18 @@ public partial class PageCommunicationMonitorViewModel : ViewModelBase
     /// \brief Communication Monitor ViewModel입니다.
     /// </summary>
     public CommunicationMonitorViewModel Monitor => Event.Monitor;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PageCommunicationMonitorViewModel"/> class.
+    /// </summary>
+    /// <param name="event">The event handler used by the communication monitor page.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="event"/> is <c>null</c>.
+    /// </exception>
+    public PageCommunicationMonitorViewModel(PageCommunicationMonitorEvent @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+
+        _event = @event;
+    }
 }

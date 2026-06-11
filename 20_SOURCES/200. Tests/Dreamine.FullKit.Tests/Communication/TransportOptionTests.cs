@@ -3,6 +3,7 @@ using System.Net;
 using Dreamine.Communication.FullKit;
 using Dreamine.Communication.RabbitMQ.Options;
 using Dreamine.Communication.Serial.Options;
+using Dreamine.Communication.Serial.Ports;
 using Dreamine.Communication.Sockets.Enums;
 using Dreamine.Communication.Sockets.Options;
 
@@ -47,8 +48,23 @@ public sealed class TransportOptionTests
         Assert.Equal("COM1", serial.PortName);
         Assert.Equal(9600, serial.BaudRate);
         Assert.Equal(Parity.None, serial.Parity);
+        Assert.Equal(3000, serial.ReadTimeoutMs);
         Assert.Equal("localhost", rabbit.HostName);
         Assert.Equal("guest", rabbit.UserName);
-        Assert.Equal("dreamine.sample.route", rabbit.RoutingKey);
+        Assert.Equal("dreamine.default.route", rabbit.RoutingKey);
+    }
+
+    [Fact]
+    public void SerialTransport_AllowsImmediateReturnTimeouts()
+    {
+        var options = new SerialPortTransportOptions
+        {
+            ReadTimeoutMs = 0,
+            WriteTimeoutMs = 0
+        };
+
+        var transport = new SerialPortTransport(options);
+
+        Assert.Equal(Dreamine.Communication.Abstractions.Enums.ConnectionState.Disconnected, transport.State);
     }
 }

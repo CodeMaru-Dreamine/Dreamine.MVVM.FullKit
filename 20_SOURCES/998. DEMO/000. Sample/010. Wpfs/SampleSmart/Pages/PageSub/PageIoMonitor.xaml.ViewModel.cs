@@ -73,4 +73,18 @@ public partial class PageIoMonitorViewModel : ViewModelBase
     /// </summary>
     [DreamineCommand("Event.ReadOutputs")]
     private partial void ReadOutputs();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PageIoMonitorViewModel"/> class.
+    /// </summary>
+    /// <param name="event">The event handler used by the I/O monitor page.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="event"/> is <c>null</c>.
+    /// </exception>
+    public PageIoMonitorViewModel(PageIoMonitorEvent @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+
+        _event = @event;
+    }
 }

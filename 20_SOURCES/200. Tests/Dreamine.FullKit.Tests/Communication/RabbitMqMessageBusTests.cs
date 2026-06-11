@@ -125,6 +125,48 @@ public sealed class RabbitMqMessageBusTests
     }
 
     [Fact]
+    public async Task SubscribeAsync_AllowsMultipleHandlersForSameRoute()
+    {
+        var fixture = new RabbitMqFixture(new RabbitMqMessageBusOptions
+        {
+            ExchangeName = "dreamine.exchange",
+            QueueName = "dreamine.queue"
+        });
+        var calls = new List<string>();
+
+        await fixture.Bus.ConnectAsync();
+        await fixture.Bus.SubscribeAsync(
+            "custom.route",
+            (_, _) =>
+            {
+                calls.Add("first");
+                return Task.CompletedTask;
+            });
+        await fixture.Bus.SubscribeAsync(
+            "custom.route",
+            (_, _) =>
+            {
+                calls.Add("second");
+                return Task.CompletedTask;
+            });
+
+        var delivery = new RabbitMqDelivery(
+            13,
+            "custom.route",
+            JsonSerializer.SerializeToUtf8Bytes(new MessageEnvelope
+            {
+                Name = "Rabbit.Receive",
+                Route = "custom.route"
+            }));
+
+        await fixture.Channel.DeliverAsync(delivery);
+
+        Assert.Equal(["first", "second"], calls);
+        Assert.Equal([13UL], fixture.Channel.AckedDeliveryTags);
+        Assert.Empty(fixture.Channel.NackedDeliveryTags);
+    }
+
+    [Fact]
     public async Task SubscribeAsync_NacksDeliveryWhenHandlerFails()
     {
         var fixture = new RabbitMqFixture(new RabbitMqMessageBusOptions

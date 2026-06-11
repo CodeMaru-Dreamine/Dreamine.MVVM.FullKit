@@ -212,4 +212,18 @@ public partial class RabbitMqTestViewModel : ViewModelBase
     /// </summary>
     [DreamineCommand("Event.DisconnectRabbitMq")]
     private partial void DisconnectRabbitMq();
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="RabbitMqTestViewModel"/> class.
+    /// </summary>
+    /// <param name="event">The event handler used by the RabbitMQ test view.</param>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="event"/> is <c>null</c>.
+    /// </exception>
+    public RabbitMqTestViewModel(RabbitMqTestViewEvent @event)
+    {
+        ArgumentNullException.ThrowIfNull(@event);
+
+        _event = @event;
+    }
 }

@@ -51,6 +51,17 @@ public sealed class DatabaseProviderDialectTests
         Assert.Contains("[Name] NVARCHAR(MAX)", sql);
     }
 
+    [Fact]
+    public void DatabaseEntityMap_CachesMapsPerEntityType()
+    {
+        var first = DatabaseEntityMap.Create<DialectSample>();
+        var second = DatabaseEntityMap.Create<DialectSample>();
+
+        Assert.Same(first, second);
+        Assert.Same(first.InsertableProperties, second.InsertableProperties);
+        Assert.Same(first.UpdatableProperties, second.UpdatableProperties);
+    }
+
     private static string BuildCreateTableSql(object provider)
     {
         var method = provider

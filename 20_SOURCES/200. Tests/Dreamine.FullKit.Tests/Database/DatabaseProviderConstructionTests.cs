@@ -16,6 +16,23 @@ public sealed class DatabaseProviderConstructionTests
         Assert.Equal("Server=localhost;Database=dreamine;User Id=user;Password=password;", provider.ConnectionString);
     }
 
+    [Theory]
+    [MemberData(nameof(Providers))]
+    public void Providers_CanBeConsumedThroughSmallRoleInterfaces(IDatabaseProvider provider, DatabaseProviderKind expectedKind)
+    {
+        IDatabaseConnection connection = provider;
+        IDatabaseSchemaProvider schema = provider;
+        IDatabaseCommandExecutor commands = provider;
+        IDatabaseQueryProvider queries = provider;
+        IDatabaseRepository repository = provider;
+
+        Assert.Equal(expectedKind, connection.Kind);
+        Assert.NotNull(schema);
+        Assert.NotNull(commands);
+        Assert.NotNull(queries);
+        Assert.NotNull(repository);
+    }
+
     public static IEnumerable<object[]> Providers()
     {
         const string connectionString = "Server=localhost;Database=dreamine;User Id=user;Password=password;";
