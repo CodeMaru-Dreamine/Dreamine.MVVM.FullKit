@@ -62,6 +62,32 @@ public sealed class DatabaseProviderDialectTests
         Assert.Same(first.UpdatableProperties, second.UpdatableProperties);
     }
 
+    [Fact]
+    public void DatabaseProviderBase_SqlCache_ReturnsSameStringReferenceOnSubsequentCalls()
+    {
+        // GetOrBuildSql<T> caches INSERT/UPDATE/DELETE SQL strings per (entity type, provider kind).
+        // Calling the method twice must return the same string reference — no redundant rebuild.
+        var provider = new SqliteDatabaseProvider("Data Source=:memory:");
+
+        // GetOrBuildSql is declared on the abstract base class — search the hierarchy.
+        var baseType = provider.GetType().BaseType
+            ?? throw new InvalidOperationException("DatabaseProviderBase not found.");
+        var getOrBuildSql = baseType
+            .GetMethod("GetOrBuildSql", BindingFlags.Instance | BindingFlags.NonPublic)
+            ?.MakeGenericMethod(typeof(DialectSample))
+            ?? throw new InvalidOperationException("GetOrBuildSql<T> not found via reflection.");
+
+        // SqlKind is a private nested enum on the abstract base class.
+        var sqlKindType = baseType.GetNestedType("SqlKind", BindingFlags.NonPublic)
+            ?? throw new InvalidOperationException("SqlKind enum not found on base type.");
+        var insertKind = Enum.ToObject(sqlKindType, 0); // 0 = Insert
+
+        var first  = (string)getOrBuildSql.Invoke(provider, [insertKind])!;
+        var second = (string)getOrBuildSql.Invoke(provider, [insertKind])!;
+
+        Assert.Same(first, second);
+    }
+
     private static string BuildCreateTableSql(object provider)
     {
         var method = provider
