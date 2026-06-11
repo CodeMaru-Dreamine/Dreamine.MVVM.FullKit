@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Threading;
 using Dreamine.MVVM.ViewModels;
 
 namespace Dreamine.FullKit.Tests.ViewModels;
@@ -46,6 +47,38 @@ public sealed class ViewModelAndRelayCommandTests
         viewModel.Name = "two";
 
         Assert.Equal(new[] { "Name", "Name" }, propertyNames);
+    }
+
+    [Fact]
+    public async Task AsyncRelayCommand_PreventsConcurrentExecution()
+    {
+        var concurrentCount = 0;
+        var maxConcurrent = 0;
+        var command = new AsyncRelayCommand(async () =>
+        {
+            var c = Interlocked.Increment(ref concurrentCount);
+            Interlocked.Exchange(ref maxConcurrent, Math.Max(Volatile.Read(ref maxConcurrent), c));
+            await Task.Delay(30);
+            Interlocked.Decrement(ref concurrentCount);
+        });
+
+        var tasks = Enumerable.Range(0, 10).Select(_ => Task.Run(() => command.Execute(null)));
+        await Task.WhenAll(tasks);
+        await Task.Delay(100); // let the one accepted execution finish
+
+        Assert.Equal(1, maxConcurrent);
+    }
+
+    [Fact]
+    public void AsyncRelayCommand_LastExceptionVisibleAfterFailure()
+    {
+        var ex = new InvalidOperationException("test");
+        var command = new AsyncRelayCommand(() => Task.FromException(ex));
+
+        command.Execute(null);
+        Thread.Sleep(50);
+
+        Assert.Same(ex, command.LastException);
     }
 
     private sealed class TestViewModel : ViewModelBase

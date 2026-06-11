@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net8.0-windows</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>false</IsPackable>
@@ -32,6 +32,7 @@
 		<ProjectReference Include="..\..\100. Library\Database.Sqlite\Dreamine.Database.Sqlite.csproj" />
 		<ProjectReference Include="..\..\100. Library\Database.SqlServer\Dreamine.Database.SqlServer.csproj" />
 		<ProjectReference Include="..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" />
+		<ProjectReference Include="..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />
 		<ProjectReference Include="..\..\100. Library\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
 		<ProjectReference Include="..\..\100. Library\IO.Abstractions\Dreamine.IO.Abstractions.csproj" />
 		<ProjectReference Include="..\..\100. Library\IO.Fastech.Ethernet\Dreamine.IO.Fastech.Ethernet.csproj" />

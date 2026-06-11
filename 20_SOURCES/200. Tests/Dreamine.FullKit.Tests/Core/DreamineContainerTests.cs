@@ -132,6 +132,49 @@ public sealed class DreamineContainerTests
         Assert.False(DMContainer.IsRegistered<IClock>());
     }
 
+    [Fact]
+    public void DreamineContainer_Dispose_DisposesIDisposableSingletons()
+    {
+        var container = new DreamineContainer();
+        var disposable = new DisposableSingleton();
+        container.RegisterSingleton<DisposableSingleton>(disposable);
+
+        _ = container.Resolve<DisposableSingleton>();
+        Assert.False(disposable.IsDisposed);
+
+        container.Dispose();
+
+        Assert.True(disposable.IsDisposed);
+    }
+
+    [Fact]
+    public void DreamineContainer_Dispose_IsIdempotent()
+    {
+        var container = new DreamineContainer();
+        var disposable = new DisposableSingleton();
+        container.RegisterSingleton<DisposableSingleton>(disposable);
+
+        container.Dispose();
+        container.Dispose();
+
+        Assert.Equal(1, disposable.DisposeCount);
+    }
+
+    [Fact]
+    public void DMContainer_Reset_DisposesOldContainerSingletons()
+    {
+        DMContainer.Reset();
+        var disposable = new DisposableSingleton();
+        DMContainer.RegisterSingleton(disposable);
+
+        _ = DMContainer.Resolve<DisposableSingleton>();
+        Assert.False(disposable.IsDisposed);
+
+        DMContainer.Reset();
+
+        Assert.True(disposable.IsDisposed);
+    }
+
     private interface IClock
     {
         DateOnly Today { get; }
@@ -206,5 +249,15 @@ public sealed class DreamineContainerTests
         }
 
         public CircularA Dependency { get; }
+    }
+
+    private sealed class DisposableSingleton : IDisposable
+    {
+        private int _disposeCount;
+
+        public bool IsDisposed => Volatile.Read(ref _disposeCount) > 0;
+        public int DisposeCount => Volatile.Read(ref _disposeCount);
+
+        public void Dispose() => Interlocked.Increment(ref _disposeCount);
     }
 }
