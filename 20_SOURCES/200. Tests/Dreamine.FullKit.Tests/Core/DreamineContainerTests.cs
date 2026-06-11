@@ -3,6 +3,73 @@ using Dreamine.MVVM.Core;
 
 namespace Dreamine.FullKit.Tests.Core;
 
+// All classes in this file modify the DMContainer static facade.
+// Placing them in the same xUnit Collection serializes their execution
+// and prevents cross-class state leakage.
+[CollectionDefinition(Name)]
+public sealed class DMContainerCollection : ICollectionFixture<DMContainerFixture>
+{
+    public const string Name = "DMContainer";
+}
+
+/// <summary>
+/// Test fixture that resets the DMContainer static facade before and after each test class.
+/// Use with IClassFixture&lt;DMContainerFixture&gt; for test classes that register into DMContainer,
+/// or add <c>[Collection(DMContainerCollection.Name)]</c> to serialize DMContainer access.
+/// </summary>
+/// <example>
+/// <code>
+/// [Collection(DMContainerCollection.Name)]
+/// public sealed class MyTests
+/// {
+///     ...
+/// }
+/// </code>
+/// </example>
+public sealed class DMContainerFixture : IDisposable
+{
+    public DMContainerFixture() => DMContainer.Reset();
+    public void Dispose() => DMContainer.Reset();
+}
+
+/// <summary>
+/// Demonstrates using <see cref="DMContainerFixture"/> to isolate static container state.
+/// </summary>
+[Collection(DMContainerCollection.Name)]
+public sealed class DMContainerFixturePatternTests
+{
+    [Fact]
+    public void DMContainer_StartsEmpty_WhenFixtureIsUsed()
+    {
+        DMContainer.Reset();
+        Assert.False(DMContainer.IsRegistered<IDisposable>());
+    }
+
+    [Fact]
+    public void DMContainer_GetResolver_ReturnsWorkingResolver()
+    {
+        DMContainer.Reset();
+        DMContainer.Register<DMContainerFixture>();
+
+        var resolver = DMContainer.GetResolver();
+        var instance = resolver.Resolve<DMContainerFixture>();
+
+        Assert.NotNull(instance);
+    }
+
+    [Fact]
+    public void DMContainer_TryResolve_ReturnsFalse_WhenNotRegistered()
+    {
+        DMContainer.Reset();
+        var resolver = DMContainer.GetResolver();
+        var found = resolver.TryResolve<IDisposable>(out var result);
+
+        Assert.False(found);
+        Assert.Null(result);
+    }
+}
+
+[Collection(DMContainerCollection.Name)]
 public sealed class DreamineContainerTests
 {
     [Fact]

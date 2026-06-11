@@ -6,9 +6,11 @@ using Dreamine.Logging.Registration;
 using Dreamine.Logging.Services;
 using Dreamine.Logging.Sinks;
 using Dreamine.MVVM.Core;
+using Dreamine.FullKit.Tests.Core;
 
 namespace Dreamine.FullKit.Tests.Logging;
 
+[Collection(DMContainerCollection.Name)]
 public sealed class LoggingServiceTests
 {
     [Fact]

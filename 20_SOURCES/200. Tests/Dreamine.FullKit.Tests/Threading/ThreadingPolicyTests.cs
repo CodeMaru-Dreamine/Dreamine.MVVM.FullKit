@@ -4,9 +4,11 @@ using Dreamine.Threading.Options;
 using Dreamine.Threading.Policies;
 using Dreamine.Threading.Registration;
 using Dreamine.MVVM.Core;
+using Dreamine.FullKit.Tests.Core;
 
 namespace Dreamine.FullKit.Tests.Threading;
 
+[Collection(DMContainerCollection.Name)]
 public sealed class ThreadingPolicyTests
 {
     [Fact]
