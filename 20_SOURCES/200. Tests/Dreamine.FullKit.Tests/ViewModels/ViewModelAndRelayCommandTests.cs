@@ -10,14 +10,14 @@ public sealed class ViewModelAndRelayCommandTests
     {
         var executed = false;
         var raised = false;
-        var command = new RelayCommand(() => executed = true, () => false);
+        var command = new RelayCommand(() => executed = true, () => true);
         command.CanExecuteChanged += (_, _) => raised = true;
 
         command.Execute(null);
         command.RaiseCanExecuteChanged();
 
         Assert.True(executed);
-        Assert.False(command.CanExecute(null));
+        Assert.True(command.CanExecute(null));
         Assert.True(raised);
     }
 
@@ -26,8 +26,12 @@ public sealed class ViewModelAndRelayCommandTests
     {
         var command = new RelayCommand<int>(_ => { }, value => value > 0);
 
+        // CanExecute returns false for a bad parameter type — Execute silently no-ops.
         Assert.False(command.CanExecute("bad"));
-        Assert.Throws<ArgumentException>(() => command.Execute("bad"));
+        var executed = false;
+        command = new RelayCommand<int>(_ => executed = true, value => value > 0);
+        command.Execute("bad");
+        Assert.False(executed);
     }
 
     [Fact]

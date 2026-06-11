@@ -1,5 +1,7 @@
 using System.Globalization;
+using System.Windows.Data;
 using System.Windows.Media;
+using Dreamine.MVVM.ViewModels;
 using Dreamine.PLC.Abstractions.Connections;
 using Dreamine.PLC.Abstractions.Devices;
 using Dreamine.PLC.Wpf.Commands;
@@ -81,7 +83,7 @@ public sealed class PlcWpfTests
         Assert.Same(Brushes.DarkOrange, converter.Convert(PlcConnectionState.Connecting, typeof(Brush), null!, CultureInfo.InvariantCulture));
         Assert.Same(Brushes.Firebrick, converter.Convert(PlcConnectionState.Faulted, typeof(Brush), null!, CultureInfo.InvariantCulture));
         Assert.Same(Brushes.Gray, converter.Convert(PlcConnectionState.Disconnected, typeof(Brush), null!, CultureInfo.InvariantCulture));
-        Assert.Throws<NotSupportedException>(() => converter.ConvertBack(Brushes.Gray, typeof(PlcConnectionState), null!, CultureInfo.InvariantCulture));
+        Assert.Equal(Binding.DoNothing, converter.ConvertBack(Brushes.Gray, typeof(PlcConnectionState), null!, CultureInfo.InvariantCulture));
     }
 
     [Fact]

@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace Codemaru.Services;
 
-public sealed partial class FreeQrSvgGenerator
+public sealed partial class FreeQrSvgGenerator : IQrSvgGenerator
 {
     public string CreateSvg(string payload, string foreground = "#111111", string background = "#ffffff")
     {

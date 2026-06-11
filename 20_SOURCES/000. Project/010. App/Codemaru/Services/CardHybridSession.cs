@@ -8,58 +8,76 @@ namespace Codemaru.Services;
 /// <summary>
 /// \brief Coordinates CardHybrid state, QR generation, history, and persistence.
 /// </summary>
+/// <remarks>
+/// Register as singleton in the DI container and call <see cref="InitializeAsync"/>
+/// from the application startup path (e.g. App.OnStartup) before the UI loads.
+/// The constructor is intentionally free of blocking I/O to avoid deadlocks on
+/// the WPF UI thread when the DI container resolves this service.
+/// </remarks>
 public sealed class CardHybridSession
 {
-    private static readonly object Sync = new();
-    private static readonly SemaphoreSlim SharedSaveLock = new(1, 1);
-    private static readonly List<CardHistoryEntry> SharedHistory = new();
-    private static CardHybridState? SharedState;
-    private static CardHybridUser? SharedCurrentUser;
-    private static event EventHandler<CardHybridState>? SharedStateChanged;
-
-    private readonly FreeQrSvgGenerator _qr;
+    private readonly object _sync = new();
+    private readonly SemaphoreSlim _saveLock = new(1, 1);
+    private readonly List<CardHistoryEntry> _history = new();
+    private readonly IQrSvgGenerator _qr;
     private readonly ICardProfileStore _store;
+
+    private CardHybridState? _state;
+    private CardHybridUser? _currentUser;
 
     /// <summary>
     /// \brief Initializes a new instance of the <see cref="CardHybridSession" /> class.
     /// </summary>
     /// <param name="qr">The QR SVG generator.</param>
     /// <param name="store">The persistent profile store.</param>
-    public CardHybridSession(FreeQrSvgGenerator qr, ICardProfileStore store)
+    public CardHybridSession(IQrSvgGenerator qr, ICardProfileStore store)
     {
         _qr = qr ?? throw new ArgumentNullException(nameof(qr));
         _store = store ?? throw new ArgumentNullException(nameof(store));
-
-        lock (Sync)
-        {
-            if (SharedState is not null)
-            {
-                return;
-            }
-
-            var lastUser = _store.LoadLastUserAsync().GetAwaiter().GetResult();
-            SharedCurrentUser = lastUser is not null && !string.IsNullOrWhiteSpace(lastUser.PasswordHash)
-                ? lastUser
-                : CardHybridUser.Guest;
-            var snapshot = _store.LoadAsync(SharedCurrentUser.Id).GetAwaiter().GetResult();
-            LoadSnapshot(snapshot);
-        }
     }
 
     /// <summary>
     /// \brief Gets the current CardHybrid state.
     /// </summary>
-    public CardHybridState State => SharedState ?? CardHybridState.CreateDefault(_qr.CreateSvg(CardProfile.Default.LandingUrl));
+    public CardHybridState State => _state ?? CardHybridState.CreateDefault(_qr.CreateSvg(CardProfile.Default.LandingUrl));
 
-    public CardHybridUser CurrentUser => SharedCurrentUser ?? CardHybridUser.Guest;
+    /// <summary>
+    /// \brief Gets the currently signed-in user, or <see cref="CardHybridUser.Guest"/>.
+    /// </summary>
+    public CardHybridUser CurrentUser => _currentUser ?? CardHybridUser.Guest;
 
     /// <summary>
     /// \brief Occurs when the CardHybrid state has changed.
     /// </summary>
-    public event EventHandler<CardHybridState>? StateChanged
+    public event EventHandler<CardHybridState>? StateChanged;
+
+    /// <summary>
+    /// \brief Loads the last saved user and profile from the store.
+    /// Must be called once from the application startup path before the UI is shown.
+    /// </summary>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
-        add => SharedStateChanged += value;
-        remove => SharedStateChanged -= value;
+        lock (_sync)
+        {
+            if (_state is not null)
+            {
+                return;
+            }
+        }
+
+        var lastUser = await _store.LoadLastUserAsync().ConfigureAwait(false);
+        var resolvedUser = lastUser is not null && !string.IsNullOrWhiteSpace(lastUser.PasswordHash)
+            ? lastUser
+            : CardHybridUser.Guest;
+
+        var snapshot = await _store.LoadAsync(resolvedUser.Id).ConfigureAwait(false);
+
+        lock (_sync)
+        {
+            _currentUser = resolvedUser;
+            LoadSnapshot(snapshot);
+        }
     }
 
     public async Task<CardHybridSignInResult> SignInAsync(string email, string password, CancellationToken cancellationToken = default)
@@ -91,21 +109,31 @@ public sealed class CardHybridSession
             PasswordHash: storedUser?.PasswordHash ?? HashPassword(password),
             SignedInAt: DateTime.Now);
 
-        SharedCurrentUser = user;
+        _currentUser = user;
         await _store.SaveUserAsync(user, cancellationToken).ConfigureAwait(false);
         await _store.SaveLastUserAsync(user, cancellationToken).ConfigureAwait(false);
         var snapshot = await _store.LoadAsync(user.Id, cancellationToken).ConfigureAwait(false);
-        LoadSnapshot(snapshot);
+
+        lock (_sync)
+        {
+            LoadSnapshot(snapshot);
+        }
+
         NotifyStateChanged();
         return result;
     }
 
     public async Task SignOutAsync(CancellationToken cancellationToken = default)
     {
-        SharedCurrentUser = CardHybridUser.Guest;
+        _currentUser = CardHybridUser.Guest;
         await _store.SaveLastUserAsync(CurrentUser, cancellationToken).ConfigureAwait(false);
         var snapshot = await _store.LoadAsync(CurrentUser.Id, cancellationToken).ConfigureAwait(false);
-        LoadSnapshot(snapshot);
+
+        lock (_sync)
+        {
+            LoadSnapshot(snapshot);
+        }
+
         NotifyStateChanged();
     }
 
@@ -116,13 +144,17 @@ public sealed class CardHybridSession
     public void UpdateProfile(CardProfile profile)
     {
         var payload = profile.LandingUrl;
-        SharedState = State with
+
+        lock (_sync)
         {
-            Profile = profile,
-            QrPayload = payload,
-            QrSvg = _qr.CreateSvg(payload),
-            LastUpdated = DateTime.Now
-        };
+            _state = State with
+            {
+                Profile = profile,
+                QrPayload = payload,
+                QrSvg = _qr.CreateSvg(payload),
+                LastUpdated = DateTime.Now
+            };
+        }
 
         PersistCurrent();
         NotifyStateChanged();
@@ -134,19 +166,24 @@ public sealed class CardHybridSession
     /// <returns>The saved history entry.</returns>
     public CardHistoryEntry SaveCurrent()
     {
-        var entry = new CardHistoryEntry(
-            Id: Guid.NewGuid(),
-            Profile: State.Profile,
-            LandingUrl: State.Profile.LandingUrl,
-            QrPayload: State.QrPayload,
-            CreatedAt: DateTime.Now);
+        CardHistoryEntry entry;
 
-        SharedHistory.Insert(0, entry);
-        SharedState = State with
+        lock (_sync)
         {
-            History = SharedHistory.ToArray(),
-            LastUpdated = DateTime.Now
-        };
+            entry = new CardHistoryEntry(
+                Id: Guid.NewGuid(),
+                Profile: State.Profile,
+                LandingUrl: State.Profile.LandingUrl,
+                QrPayload: State.QrPayload,
+                CreatedAt: DateTime.Now);
+
+            _history.Insert(0, entry);
+            _state = State with
+            {
+                History = _history.ToArray(),
+                LastUpdated = DateTime.Now
+            };
+        }
 
         PersistCurrent();
         NotifyStateChanged();
@@ -161,30 +198,35 @@ public sealed class CardHybridSession
     /// <returns>The updated history entry, or <c>null</c> when the entry does not exist.</returns>
     public CardHistoryEntry? UpdateHistory(Guid id, CardProfile profile)
     {
-        var index = SharedHistory.FindIndex(entry => entry.Id == id);
-        if (index < 0)
+        CardHistoryEntry? entry;
+
+        lock (_sync)
         {
-            return null;
+            var index = _history.FindIndex(e => e.Id == id);
+            if (index < 0)
+            {
+                return null;
+            }
+
+            var payload = profile.LandingUrl;
+            entry = _history[index] with
+            {
+                Profile = profile,
+                LandingUrl = payload,
+                QrPayload = payload,
+                CreatedAt = DateTime.Now
+            };
+
+            _history[index] = entry;
+            _state = State with
+            {
+                Profile = profile,
+                QrPayload = payload,
+                QrSvg = _qr.CreateSvg(payload),
+                History = _history.ToArray(),
+                LastUpdated = DateTime.Now
+            };
         }
-
-        var payload = profile.LandingUrl;
-        var entry = SharedHistory[index] with
-        {
-            Profile = profile,
-            LandingUrl = payload,
-            QrPayload = payload,
-            CreatedAt = DateTime.Now
-        };
-
-        SharedHistory[index] = entry;
-        SharedState = State with
-        {
-            Profile = profile,
-            QrPayload = payload,
-            QrSvg = _qr.CreateSvg(payload),
-            History = SharedHistory.ToArray(),
-            LastUpdated = DateTime.Now
-        };
 
         PersistCurrent();
         NotifyStateChanged();
@@ -205,12 +247,15 @@ public sealed class CardHybridSession
     /// </summary>
     public void ClearHistory()
     {
-        SharedHistory.Clear();
-        SharedState = State with
+        lock (_sync)
         {
-            History = Array.Empty<CardHistoryEntry>(),
-            LastUpdated = DateTime.Now
-        };
+            _history.Clear();
+            _state = State with
+            {
+                History = Array.Empty<CardHistoryEntry>(),
+                LastUpdated = DateTime.Now
+            };
+        }
 
         PersistCurrent();
         NotifyStateChanged();
@@ -223,33 +268,53 @@ public sealed class CardHybridSession
     /// <returns><c>true</c> when an entry was removed.</returns>
     public bool RemoveHistory(Guid id)
     {
-        var index = SharedHistory.FindIndex(entry => entry.Id == id);
-        if (index < 0)
+        bool removed;
+
+        lock (_sync)
         {
-            return false;
+            var index = _history.FindIndex(e => e.Id == id);
+            if (index < 0)
+            {
+                return false;
+            }
+
+            _history.RemoveAt(index);
+            _state = State with
+            {
+                History = _history.ToArray(),
+                LastUpdated = DateTime.Now
+            };
+
+            removed = true;
         }
 
-        SharedHistory.RemoveAt(index);
-        SharedState = State with
+        if (removed)
         {
-            History = SharedHistory.ToArray(),
-            LastUpdated = DateTime.Now
-        };
+            PersistCurrent();
+            NotifyStateChanged();
+        }
 
-        PersistCurrent();
-        NotifyStateChanged();
-        return true;
+        return removed;
     }
 
     private void PersistCurrent()
     {
-        var state = State;
-        var userId = CurrentUser.Id;
-        var snapshot = new CardHybridSnapshot(userId, state.Profile, SharedHistory.ToArray(), DateTime.Now);
+        CardHybridState state;
+        CardHistoryEntry[] historySnapshot;
+        string userId;
+
+        lock (_sync)
+        {
+            state = State;
+            historySnapshot = _history.ToArray();
+            userId = CurrentUser.Id;
+        }
+
+        var snapshot = new CardHybridSnapshot(userId, state.Profile, historySnapshot, DateTime.Now);
 
         _ = Task.Run(async () =>
         {
-            await SharedSaveLock.WaitAsync().ConfigureAwait(false);
+            await _saveLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 await _store.SaveAsync(userId, snapshot).ConfigureAwait(false);
@@ -260,26 +325,26 @@ public sealed class CardHybridSession
             }
             finally
             {
-                SharedSaveLock.Release();
+                _saveLock.Release();
             }
         });
     }
 
     private void LoadSnapshot(CardHybridSnapshot? snapshot)
     {
-        SharedHistory.Clear();
+        _history.Clear();
         if (snapshot?.History is not null)
         {
-            SharedHistory.AddRange(snapshot.History);
+            _history.AddRange(snapshot.History);
         }
 
         var profile = snapshot?.Profile ?? CardProfile.Default;
-        SharedState = CardHybridState.Create(profile, _qr.CreateSvg(profile.LandingUrl), SharedHistory.ToArray());
+        _state = CardHybridState.Create(profile, _qr.CreateSvg(profile.LandingUrl), _history.ToArray());
     }
 
     private void NotifyStateChanged()
     {
-        var handlers = SharedStateChanged?.GetInvocationList();
+        var handlers = StateChanged?.GetInvocationList();
         if (handlers is null)
         {
             return;

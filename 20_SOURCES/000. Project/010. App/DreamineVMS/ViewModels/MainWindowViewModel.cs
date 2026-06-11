@@ -306,13 +306,25 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
             return;
         }
 
-        if (app.Dispatcher.CheckAccess())
+        var dispatcher = app.Dispatcher;
+
+        // 종료 시퀀스 중에는 Invoke가 OperationCanceledException을 던지므로 무시합니다.
+        if (dispatcher.HasShutdownStarted || dispatcher.HasShutdownFinished)
+        {
+            return;
+        }
+
+        if (dispatcher.CheckAccess())
         {
             action();
         }
         else
         {
-            app.Dispatcher.Invoke(action);
+            try
+            {
+                dispatcher.Invoke(action);
+            }
+            catch (OperationCanceledException) { }
         }
     }
 

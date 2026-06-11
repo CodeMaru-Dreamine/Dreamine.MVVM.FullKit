@@ -23,7 +23,7 @@ public static class Program
 
         builder.Services.AddDreamineHybridWpf();
 
-        builder.Services.AddSingleton<FreeQrSvgGenerator>();
+        builder.Services.AddSingleton<IQrSvgGenerator, FreeQrSvgGenerator>();
         builder.Services.AddSingleton<ImageBackgroundRemover>();
         builder.Services.AddSingleton<LandingPageExporter>();
         builder.Services.AddSingleton<LandingPagePublisher>();
@@ -44,7 +44,7 @@ public static class Program
             options.Port = serverPort;
             options.ListenAnyIp = listenAnyIp;
             options.SharedServiceTypes.Add(typeof(CardHybridSession));
-            options.SharedServiceTypes.Add(typeof(FreeQrSvgGenerator));
+            options.SharedServiceTypes.Add(typeof(IQrSvgGenerator));
             options.SharedServiceTypes.Add(typeof(ImageBackgroundRemover));
             options.SharedServiceTypes.Add(typeof(LandingPageExporter));
             options.SharedServiceTypes.Add(typeof(LandingPagePublisher));
