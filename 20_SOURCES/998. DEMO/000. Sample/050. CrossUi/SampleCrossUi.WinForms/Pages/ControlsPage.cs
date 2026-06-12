@@ -8,7 +8,10 @@ namespace SampleCrossUi.WinForms.Pages;
 public sealed class ControlsPage : UserControl
 {
     private readonly ControlsViewModel _vm;
-    private readonly Label _statusLabel;
+    private readonly Label _statusLabel = null!;
+
+    /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>
+    public ControlsPage() : this(new ControlsViewModel()) { }
 
     public ControlsPage(ControlsViewModel vm)
     {

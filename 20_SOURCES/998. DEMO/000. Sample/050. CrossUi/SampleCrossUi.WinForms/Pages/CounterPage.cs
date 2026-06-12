@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Dreamine.UI.WinForms;
 using Dreamine.UI.WinForms.Controls;
+using SampleCrossUi.Shared.Services;
 using SampleCrossUi.Shared.ViewModels;
 
 namespace SampleCrossUi.WinForms.Pages;
@@ -8,8 +9,11 @@ namespace SampleCrossUi.WinForms.Pages;
 public sealed class CounterPage : UserControl
 {
     private readonly CounterViewModel _vm;
-    private readonly Label _countLabel;
-    private readonly ListBox _logList;
+    private readonly Label _countLabel = null!;
+    private readonly ListBox _logList = null!;
+
+    /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>
+    public CounterPage() : this(new CounterViewModel(new CounterService())) { }
 
     public CounterPage(CounterViewModel vm)
     {
