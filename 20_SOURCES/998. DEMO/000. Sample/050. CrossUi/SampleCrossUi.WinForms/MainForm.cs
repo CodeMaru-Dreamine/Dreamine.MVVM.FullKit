@@ -1,126 +1,139 @@
-using System.ComponentModel;
+using Dreamine.UI.WinForms;
+using Dreamine.UI.WinForms.Controls;
 using SampleCrossUi.Shared.ViewModels;
+using SampleCrossUi.WinForms.Pages;
+using SampleCrossUi.WinForms.ViewModels;
 
 namespace SampleCrossUi.WinForms;
 
-/// <summary>
-/// Main WinForms window demonstrating CounterViewModel reuse without full MVVM.
-/// The ViewModel is injected via constructor; UI subscribes to PropertyChanged
-/// and delegates button clicks to ViewModel commands.
-/// </summary>
 public sealed class MainForm : Form
 {
-    private readonly CounterViewModel _viewModel;
-    private readonly Label _countLabel;
-    private readonly ListBox _logListBox;
+    private readonly Panel _pageHost;
+    private readonly DreamineButton[] _navButtons;
+    private UserControl? _currentPage;
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="MainForm"/> class.
-    /// </summary>
-    /// <param name="viewModel">The counter ViewModel.</param>
-    public MainForm(CounterViewModel viewModel)
+    private readonly CounterPage  _counterPage;
+    private readonly ControlsPage _controlsPage;
+    private readonly PopupPage    _popupPage;
+
+    public MainForm(CounterViewModel counterVm)
     {
-        ArgumentNullException.ThrowIfNull(viewModel);
-        _viewModel = viewModel;
-
         Text = "Dreamine Cross-UI — WinForms";
-        ClientSize = new Size(480, 540);
+        ClientSize = new Size(900, 660);
+        MinimumSize = new Size(900, 600);
         StartPosition = FormStartPosition.CenterScreen;
+        BackColor = DreamineTheme.AppBackground;
 
-        // --- Title ---
-        var titleLabel = new Label
+        // ── Nav sidebar ─────────────────────────────────
+        var nav = new Panel
         {
-            Text = "Dreamine Cross-UI Sample — WinForms",
-            Font = new Font(Font.FontFamily, 14, FontStyle.Bold),
+            Dock = DockStyle.Left,
+            Width = 180,
+            BackColor = DreamineTheme.CardBackground,
+            Padding = new Padding(0, 8, 0, 8),
+        };
+
+        var appTitle = new Label
+        {
+            Text = "Dreamine\nCross-UI",
+            ForeColor = Color.White,
+            Font = new Font("Segoe UI", 13f, FontStyle.Bold, GraphicsUnit.Point),
             Dock = DockStyle.Top,
-            Height = 40,
-            TextAlign = ContentAlignment.MiddleLeft
+            Height = 64,
+            TextAlign = ContentAlignment.MiddleCenter,
+            Padding = new Padding(8, 8, 8, 0),
         };
 
-        // --- Count ---
-        _countLabel = new Label
+        var divider = new Panel
         {
-            Text = $"Count: {_viewModel.Count}",
-            Font = new Font(Font.FontFamily, 24),
             Dock = DockStyle.Top,
-            Height = 50,
-            TextAlign = ContentAlignment.MiddleCenter
+            Height = 1,
+            BackColor = DreamineTheme.BorderNormal,
+            Margin = new Padding(0, 4, 0, 4),
         };
 
-        // --- Buttons ---
-        var incrementButton = new Button
+        string[] navLabels = ["Counter", "Controls", "Popup"];
+        _navButtons = new DreamineButton[3];
+
+        for (int i = 0; i < navLabels.Length; i++)
         {
-            Text = "Increment",
-            Width = 100, Height = 34
-        };
-        var resetButton = new Button
-        {
-            Text = "Reset",
-            Width = 100, Height = 34,
-            Left = 112
-        };
+            var btn = new DreamineButton
+            {
+                Content = navLabels[i],
+                Width = 172,
+                Height = 44,
+                CornerRadius = 6,
+                Margin = new Padding(4, 2, 4, 2),
+                Tag = i,
+            };
+            _navButtons[i] = btn;
+            var idx = i;
+            btn.Click += (_, _) => Navigate(idx);
+        }
 
-        var buttonPanel = new Panel { Dock = DockStyle.Top, Height = 44 };
-        buttonPanel.Controls.Add(incrementButton);
-        buttonPanel.Controls.Add(resetButton);
-
-        // --- Log list ---
-        var logLabel = new Label
-        {
-            Text = "Operation Log:",
-            Font = new Font(Font.FontFamily, 9, FontStyle.Bold),
-            Dock = DockStyle.Top,
-            Height = 22
-        };
-
-        _logListBox = new ListBox
+        var navFlow = new FlowLayoutPanel
         {
             Dock = DockStyle.Fill,
-            HorizontalScrollbar = true
+            FlowDirection = FlowDirection.TopDown,
+            WrapContents = false,
+            BackColor = DreamineTheme.CardBackground,
+        };
+        foreach (var b in _navButtons) navFlow.Controls.Add(b);
+
+        nav.Controls.Add(navFlow);
+        nav.Controls.Add(divider);
+        nav.Controls.Add(appTitle);
+
+        // ── Page host ────────────────────────────────────
+        _pageHost = new Panel
+        {
+            Dock = DockStyle.Fill,
+            BackColor = DreamineTheme.AppBackground,
         };
 
-        // Layout (reverse order for DockStyle.Top stacking)
-        Controls.Add(_logListBox);
-        Controls.Add(logLabel);
-        Controls.Add(buttonPanel);
-        Controls.Add(_countLabel);
-        Controls.Add(titleLabel);
+        // ── Pages ────────────────────────────────────────
+        _counterPage  = new CounterPage(counterVm);
+        _controlsPage = new ControlsPage(new ControlsViewModel());
+        _popupPage    = new PopupPage();
 
-        // Wire up
-        incrementButton.Click += (_, _) => _viewModel.IncrementCommand.Execute(null);
-        resetButton.Click    += (_, _) => _viewModel.ResetCommand.Execute(null);
+        Controls.Add(_pageHost);
+        Controls.Add(nav);
 
-        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
-        _viewModel.Logs.CollectionChanged += (_, _) => RefreshLog();
-
-        RefreshLog();
+        Navigate(0);
     }
 
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    private void Navigate(int index)
     {
-        if (e.PropertyName == nameof(CounterViewModel.Count))
+        // update selection highlight
+        for (int i = 0; i < _navButtons.Length; i++)
+            _navButtons[i].IsSelected = i == index;
+
+        _currentPage?.Hide();
+
+        _currentPage = index switch
         {
-            _countLabel.Text = $"Count: {_viewModel.Count}";
+            0 => _counterPage,
+            1 => _controlsPage,
+            2 => _popupPage,
+            _ => _counterPage,
+        };
+
+        if (!_pageHost.Controls.Contains(_currentPage))
+        {
+            _currentPage.Dock = DockStyle.Fill;
+            _pageHost.Controls.Add(_currentPage);
         }
+        _currentPage.Show();
+        _currentPage.BringToFront();
     }
 
-    private void RefreshLog()
-    {
-        _logListBox.BeginUpdate();
-        _logListBox.Items.Clear();
-        foreach (var item in _viewModel.Logs)
-        {
-            _logListBox.Items.Add($"[{item.CreatedAt:HH:mm:ss}] {item.Message}");
-        }
-        _logListBox.EndUpdate();
-    }
-
-    /// <inheritdoc />
     protected override void Dispose(bool disposing)
     {
         if (disposing)
         {
-            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _counterPage.Dispose();
+            _controlsPage.Dispose();
+            _popupPage.Dispose();
         }
         base.Dispose(disposing);
     }

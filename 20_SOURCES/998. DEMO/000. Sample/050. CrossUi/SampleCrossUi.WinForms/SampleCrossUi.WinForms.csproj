@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="..\SampleCrossUi.Shared\SampleCrossUi.Shared.csproj" />
     <ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\UI.WinForms\Dreamine.UI.WinForms.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,9 +4,6 @@ using SampleCrossUi.Shared.ViewModels;
 
 namespace SampleCrossUi.WinForms;
 
-/// <summary>
-/// WinForms Cross-UI sample entry point.
-/// </summary>
 internal static class Program
 {
     [STAThread]
@@ -17,7 +14,7 @@ internal static class Program
         DMContainer.Register<ICounterService, CounterService>();
         DMContainer.Register<CounterViewModel>();
 
-        var viewModel = DMContainer.Resolve<CounterViewModel>();
-        Application.Run(new MainForm(viewModel));
+        var counterVm = DMContainer.Resolve<CounterViewModel>();
+        Application.Run(new MainForm(counterVm));
     }
 }
