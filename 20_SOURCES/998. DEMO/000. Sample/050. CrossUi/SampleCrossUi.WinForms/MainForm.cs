@@ -8,113 +8,49 @@ namespace SampleCrossUi.WinForms;
 
 public sealed class MainForm : Form
 {
-    private readonly Panel _pageHost;
-    private readonly DreamineButton[] _navButtons;
-    private UserControl? _currentPage;
+    // ── Designer-visible fields ──────────────────────────
+    private Panel _pageHost = null!;
+    private Panel _navPanel = null!;
+    private FlowLayoutPanel _navFlow = null!;
+    private Label _appTitle = null!;
+    private Panel _navDivider = null!;
+    private DreamineButton _btnCounter = null!;
+    private DreamineButton _btnControls = null!;
+    private DreamineButton _btnPopup = null!;
 
-    private readonly CounterPage _counterPage = null!;
-    private readonly ControlsPage _controlsPage = null!;
-    private readonly PopupPage _popupPage = null!;
+    // ── Runtime-only fields ──────────────────────────────
+    private DreamineButton[] _navButtons = null!;
+    private UserControl? _currentPage;
+    private CounterPage _counterPage = null!;
+    private ControlsPage _controlsPage = null!;
+    private PopupPage _popupPage = null!;
 
     /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>
     public MainForm() : this(new CounterViewModel(new SampleCrossUi.Shared.Services.CounterService())) { }
 
     public MainForm(CounterViewModel counterVm)
     {
-        InitializeComponent();   // 디자이너 필수 — 없으면 디자이너가 폼을 인식하지 못함
+        InitializeComponent();
 
-        Text = "Dreamine Cross-UI — WinForms";
-        ClientSize = new Size(900, 660);
-        MinimumSize = new Size(900, 600);
-        StartPosition = FormStartPosition.CenterScreen;
-        BackColor = DreamineTheme.AppBackground;
-
-        // ── Nav sidebar ─────────────────────────────────
-        var nav = new Panel
+        _navButtons = [_btnCounter, _btnControls, _btnPopup];
+        for (int i = 0; i < _navButtons.Length; i++)
         {
-            Dock = DockStyle.Left,
-            Width = 180,
-            BackColor = DreamineTheme.CardBackground,
-            Padding = new Padding(0, 8, 0, 8),
-        };
-
-        var appTitle = new Label
-        {
-            Text = "Dreamine\nCross-UI",
-            ForeColor = Color.White,
-            Font = new Font("Segoe UI", 13f, FontStyle.Bold, GraphicsUnit.Point),
-            Dock = DockStyle.Top,
-            Height = 64,
-            TextAlign = ContentAlignment.MiddleCenter,
-            Padding = new Padding(8, 8, 8, 0),
-        };
-
-        var divider = new Panel
-        {
-            Dock = DockStyle.Top,
-            Height = 1,
-            BackColor = DreamineTheme.BorderNormal,
-            Margin = new Padding(0, 4, 0, 4),
-        };
-
-        string[] navLabels = ["Counter", "Controls", "Popup"];
-        _navButtons = new DreamineButton[3];
-
-        for (int i = 0; i < navLabels.Length; i++)
-        {
-            var btn = new DreamineButton
-            {
-                Content = navLabels[i],
-                Width = 172,
-                Height = 44,
-                CornerRadius = 6,
-                Margin = new Padding(4, 2, 4, 2),
-                Tag = i,
-            };
-            _navButtons[i] = btn;
             var idx = i;
-            btn.Click += (_, _) => Navigate(idx);
+            _navButtons[i].Click += (_, _) => Navigate(idx);
         }
 
-        var navFlow = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            WrapContents = false,
-            BackColor = DreamineTheme.CardBackground,
-        };
-        foreach (var b in _navButtons) navFlow.Controls.Add(b);
-
-        nav.Controls.Add(navFlow);
-        nav.Controls.Add(divider);
-        nav.Controls.Add(appTitle);
-
-        // ── Page host ────────────────────────────────────
-        _pageHost = new Panel
-        {
-            Dock = DockStyle.Fill,
-            BackColor = DreamineTheme.AppBackground,
-        };
-
-        // 레이아웃은 항상 추가 — 디자이너에서 폼 골격을 볼 수 있도록
-        Controls.Add(_pageHost);
-        Controls.Add(nav);
-
-        // 디자이너에서는 페이지 생성 생략 (복잡한 초기화가 디자인 타임에 실패할 수 있음)
         if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
             return;
 
-        // ── Pages ────────────────────────────────────────
-        _counterPage = new CounterPage(counterVm);
+        _counterPage  = new CounterPage(counterVm);
         _controlsPage = new ControlsPage(new ControlsViewModel());
-        _popupPage = new PopupPage();
+        _popupPage    = new PopupPage();
 
         Navigate(0);
     }
 
     private void Navigate(int index)
     {
-        // update selection highlight
         for (int i = 0; i < _navButtons.Length; i++)
             _navButtons[i].IsSelected = i == index;
 
@@ -139,14 +75,78 @@ public sealed class MainForm : Form
 
     private void InitializeComponent()
     {
-        SuspendLayout();
-        // 
-        // MainForm
-        // 
-        ClientSize = new Size(284, 261);
-        Name = "MainForm";
-        ResumeLayout(false);
+        _appTitle    = new Label();
+        _navDivider  = new Panel();
+        _btnCounter  = new DreamineButton();
+        _btnControls = new DreamineButton();
+        _btnPopup    = new DreamineButton();
+        _navFlow     = new FlowLayoutPanel();
+        _navPanel    = new Panel();
+        _pageHost    = new Panel();
 
+        SuspendLayout();
+
+        // _appTitle
+        _appTitle.Text      = "Dreamine\nCross-UI";
+        _appTitle.ForeColor = Color.White;
+        _appTitle.Font      = new Font("Segoe UI", 13f, FontStyle.Bold, GraphicsUnit.Point);
+        _appTitle.Dock      = DockStyle.Top;
+        _appTitle.Height    = 64;
+        _appTitle.TextAlign = ContentAlignment.MiddleCenter;
+        _appTitle.Padding   = new Padding(8, 8, 8, 0);
+
+        // _navDivider
+        _navDivider.Dock      = DockStyle.Top;
+        _navDivider.Height    = 1;
+        _navDivider.BackColor = DreamineTheme.BorderNormal;
+
+        // nav buttons
+        foreach (var (btn, label) in new[] {
+            (_btnCounter,  "Counter"),
+            (_btnControls, "Controls"),
+            (_btnPopup,    "Popup"),
+        })
+        {
+            btn.Content      = label;
+            btn.Width        = 172;
+            btn.Height       = 44;
+            btn.CornerRadius = 6;
+            btn.Margin       = new Padding(4, 2, 4, 2);
+        }
+
+        // _navFlow
+        _navFlow.Dock            = DockStyle.Fill;
+        _navFlow.FlowDirection   = FlowDirection.TopDown;
+        _navFlow.WrapContents    = false;
+        _navFlow.BackColor       = DreamineTheme.CardBackground;
+        _navFlow.Controls.Add(_btnCounter);
+        _navFlow.Controls.Add(_btnControls);
+        _navFlow.Controls.Add(_btnPopup);
+
+        // _navPanel
+        _navPanel.Dock      = DockStyle.Left;
+        _navPanel.Width     = 180;
+        _navPanel.BackColor = DreamineTheme.CardBackground;
+        _navPanel.Padding   = new Padding(0, 8, 0, 8);
+        _navPanel.Controls.Add(_navFlow);
+        _navPanel.Controls.Add(_navDivider);
+        _navPanel.Controls.Add(_appTitle);
+
+        // _pageHost
+        _pageHost.Dock      = DockStyle.Fill;
+        _pageHost.BackColor = DreamineTheme.AppBackground;
+
+        // MainForm
+        Text             = "Dreamine Cross-UI — WinForms";
+        ClientSize       = new Size(900, 660);
+        MinimumSize      = new Size(900, 600);
+        StartPosition    = FormStartPosition.CenterScreen;
+        BackColor        = DreamineTheme.AppBackground;
+        Name             = "MainForm";
+        Controls.Add(_pageHost);
+        Controls.Add(_navPanel);
+
+        ResumeLayout(false);
     }
 
     protected override void Dispose(bool disposing)

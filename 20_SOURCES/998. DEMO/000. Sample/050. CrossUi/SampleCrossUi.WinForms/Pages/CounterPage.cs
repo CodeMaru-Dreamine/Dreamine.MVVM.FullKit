@@ -8,9 +8,16 @@ namespace SampleCrossUi.WinForms.Pages;
 
 public sealed class CounterPage : UserControl
 {
+    private Label           _title        = null!;
+    private Label           _countLabel   = null!;
+    private DreamineButton  _btnIncrement = null!;
+    private DreamineButton  _btnReset     = null!;
+    private FlowLayoutPanel _btnPanel     = null!;
+    private Label           _logTitle     = null!;
+    private ListBox         _logList      = null!;
+    private FlowLayoutPanel _layout       = null!;
+
     private readonly CounterViewModel _vm;
-    private readonly Label _countLabel = null!;
-    private readonly ListBox _logList = null!;
 
     /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>
     public CounterPage() : this(new CounterViewModel(new CounterService())) { }
@@ -18,83 +25,13 @@ public sealed class CounterPage : UserControl
     public CounterPage(CounterViewModel vm)
     {
         _vm = vm;
-        BackColor = DreamineTheme.AppBackground;
-        Dock = DockStyle.Fill;
-        Padding = new Padding(24);
+        InitializeComponent();
 
-        // Title
-        var title = new Label
-        {
-            Text = "Counter",
-            ForeColor = Color.White,
-            Font = new Font("Segoe UI", 20f, FontStyle.Bold, GraphicsUnit.Point),
-            AutoSize = true,
-            Margin = new Padding(0, 0, 0, 16),
-        };
+        _btnIncrement.Click += (_, _) => _vm.IncrementCommand.Execute(null);
+        _btnReset.Click     += (_, _) => _vm.ResetCommand.Execute(null);
 
-        // Count display
-        _countLabel = new Label
-        {
-            Text = $"Count: {_vm.Count}",
-            ForeColor = DreamineTheme.AccentBlue,
-            Font = new Font("Segoe UI", 36f, FontStyle.Bold, GraphicsUnit.Point),
-            AutoSize = true,
-            Margin = new Padding(0, 0, 0, 16),
-        };
-
-        // Buttons
-        var btnIncrement = new DreamineButton { Content = "Increment", Width = 140, Height = 40, Margin = new Padding(0, 0, 8, 0) };
-        var btnReset     = new DreamineButton { Content = "Reset",     Width = 100, Height = 40 };
-
-        var btnPanel = new FlowLayoutPanel
-        {
-            AutoSize = true,
-            FlowDirection = FlowDirection.LeftToRight,
-            Margin = new Padding(0, 0, 0, 24),
-        };
-        btnPanel.Controls.Add(btnIncrement);
-        btnPanel.Controls.Add(btnReset);
-
-        // Log
-        var logTitle = new Label
-        {
-            Text = "Operation Log",
-            ForeColor = DreamineTheme.TextSecondary,
-            Font = new Font("Segoe UI", 10f, FontStyle.Regular, GraphicsUnit.Point),
-            AutoSize = true,
-            Margin = new Padding(0, 0, 0, 4),
-        };
-
-        _logList = new ListBox
-        {
-            BackColor = DreamineTheme.CardBackground,
-            ForeColor = DreamineTheme.TextPrimary,
-            Font = new Font("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point),
-            Width = 400,
-            Height = 200,
-            BorderStyle = BorderStyle.FixedSingle,
-        };
-
-        var layout = new FlowLayoutPanel
-        {
-            Dock = DockStyle.Fill,
-            FlowDirection = FlowDirection.TopDown,
-            AutoSize = true,
-            WrapContents = false,
-        };
-        layout.Controls.Add(title);
-        layout.Controls.Add(_countLabel);
-        layout.Controls.Add(btnPanel);
-        layout.Controls.Add(logTitle);
-        layout.Controls.Add(_logList);
-        Controls.Add(layout);
-
-        // Wire
-        btnIncrement.Click += (_, _) => _vm.IncrementCommand.Execute(null);
-        btnReset.Click     += (_, _) => _vm.ResetCommand.Execute(null);
-
-        _vm.PropertyChanged += OnPropertyChanged;
-        _vm.Logs.CollectionChanged += (_, _) => RefreshLog();
+        _vm.PropertyChanged              += OnPropertyChanged;
+        _vm.Logs.CollectionChanged       += (_, _) => RefreshLog();
         RefreshLog();
     }
 
@@ -111,6 +48,86 @@ public sealed class CounterPage : UserControl
         foreach (var item in _vm.Logs)
             _logList.Items.Add($"[{item.CreatedAt:HH:mm:ss}] {item.Message}");
         _logList.EndUpdate();
+    }
+
+    private void InitializeComponent()
+    {
+        _title        = new Label();
+        _countLabel   = new Label();
+        _btnIncrement = new DreamineButton();
+        _btnReset     = new DreamineButton();
+        _btnPanel     = new FlowLayoutPanel();
+        _logTitle     = new Label();
+        _logList      = new ListBox();
+        _layout       = new FlowLayoutPanel();
+
+        SuspendLayout();
+
+        // _title
+        _title.Text      = "Counter";
+        _title.ForeColor = Color.White;
+        _title.Font      = new Font("Segoe UI", 20f, FontStyle.Bold, GraphicsUnit.Point);
+        _title.AutoSize  = true;
+        _title.Margin    = new Padding(0, 0, 0, 16);
+
+        // _countLabel
+        _countLabel.Text      = "Count: 0";
+        _countLabel.ForeColor = DreamineTheme.AccentBlue;
+        _countLabel.Font      = new Font("Segoe UI", 36f, FontStyle.Bold, GraphicsUnit.Point);
+        _countLabel.AutoSize  = true;
+        _countLabel.Margin    = new Padding(0, 0, 0, 16);
+
+        // buttons
+        _btnIncrement.Content = "Increment";
+        _btnIncrement.Width   = 140;
+        _btnIncrement.Height  = 40;
+        _btnIncrement.Margin  = new Padding(0, 0, 8, 0);
+
+        _btnReset.Content = "Reset";
+        _btnReset.Width   = 100;
+        _btnReset.Height  = 40;
+
+        // _btnPanel
+        _btnPanel.AutoSize       = true;
+        _btnPanel.FlowDirection  = FlowDirection.LeftToRight;
+        _btnPanel.Margin         = new Padding(0, 0, 0, 24);
+        _btnPanel.Controls.Add(_btnIncrement);
+        _btnPanel.Controls.Add(_btnReset);
+
+        // _logTitle
+        _logTitle.Text      = "Operation Log";
+        _logTitle.ForeColor = DreamineTheme.TextSecondary;
+        _logTitle.Font      = new Font("Segoe UI", 10f, FontStyle.Regular, GraphicsUnit.Point);
+        _logTitle.AutoSize  = true;
+        _logTitle.Margin    = new Padding(0, 0, 0, 4);
+
+        // _logList
+        _logList.BackColor   = DreamineTheme.CardBackground;
+        _logList.ForeColor   = DreamineTheme.TextPrimary;
+        _logList.Font        = new Font("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point);
+        _logList.Width       = 400;
+        _logList.Height      = 200;
+        _logList.BorderStyle = BorderStyle.FixedSingle;
+
+        // _layout
+        _layout.Dock          = DockStyle.Fill;
+        _layout.FlowDirection = FlowDirection.TopDown;
+        _layout.AutoSize      = true;
+        _layout.WrapContents  = false;
+        _layout.Controls.Add(_title);
+        _layout.Controls.Add(_countLabel);
+        _layout.Controls.Add(_btnPanel);
+        _layout.Controls.Add(_logTitle);
+        _layout.Controls.Add(_logList);
+
+        // UserControl
+        BackColor = DreamineTheme.AppBackground;
+        Dock      = DockStyle.Fill;
+        Padding   = new Padding(24);
+        Name      = "CounterPage";
+        Controls.Add(_layout);
+
+        ResumeLayout(false);
     }
 
     protected override void Dispose(bool disposing)
