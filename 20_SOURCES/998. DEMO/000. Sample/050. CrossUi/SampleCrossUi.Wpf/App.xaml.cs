@@ -2,6 +2,7 @@ using System.Windows;
 using Dreamine.MVVM.Core;
 using Dreamine.UI.Abstractions.Popup;
 using Dreamine.UI.Wpf.Equipment.Popup;
+using Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
 using SampleCrossUi.Shared.Services;
 using SampleCrossUi.Shared.ViewModels;
 using SampleCrossUi.Wpf.ViewModels;
@@ -22,5 +23,11 @@ public partial class App : Application
         DMContainer.Register<MainViewModel>();
 
         new MainWindow().Show();
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        DreamineVirtualKeyboardAssist.Shutdown();
+        base.OnExit(e);
     }
 }
