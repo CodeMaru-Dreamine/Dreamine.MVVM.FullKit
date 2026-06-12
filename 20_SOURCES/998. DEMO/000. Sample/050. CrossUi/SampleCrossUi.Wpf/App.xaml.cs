@@ -22,12 +22,12 @@ public partial class App : Application
         DMContainer.Register<PopupViewModel>();
         DMContainer.Register<MainViewModel>();
 
-        new MainWindow().Show();
-    }
-
-    protected override void OnExit(ExitEventArgs e)
-    {
-        DreamineVirtualKeyboardAssist.Shutdown();
-        base.OnExit(e);
+        var mainWindow = new MainWindow();
+        mainWindow.Closed += (_, _) =>
+        {
+            DreamineVirtualKeyboardAssist.Shutdown();
+            Shutdown();
+        };
+        mainWindow.Show();
     }
 }
