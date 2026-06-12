@@ -276,7 +276,7 @@
                                     <ctrl:DreamineCheckLed IsOn="True" Diameter="16" Margin="0,0,14,0" />
                                     <ctrl:DreamineCheckLed IsOn="True" Diameter="22" Margin="0,0,14,0" />
                                     <ctrl:DreamineCheckLed IsOn="True" Diameter="30" Margin="0,0,14,0" />
-                                    <ctrl:DreamineCheckLed IsOn="True" Diameter="42" />
+                                    <ctrl:DreamineCheckLed IsOn="True" Diameter="42" Margin="14,0,0,15"/>
                                 </StackPanel>
                             </StackPanel>
                         </Border>
@@ -396,10 +396,10 @@
                             <ctrl:DreamineExpander
                                 Header="DreamineExpander — 펼치기 / 접기"
                                 IsExpanded="{Binding IsExpanded}"
-                                Foreground="White">
+                                Foreground="Black">
                                 <StackPanel Margin="16,8,16,12">
                                     <TextBlock Text="IsExpanded 를 VM에 바인딩하면 코드에서도 제어 가능합니다."
-                                        Foreground="White" TextWrapping="Wrap" Margin="0,0,0,6" />
+                                        Foreground="Black" TextWrapping="Wrap" Margin="0,0,0,6" />
                                     <TextBlock Text="내부에는 어떤 컨텐츠도 배치할 수 있습니다."
                                         Foreground="#FF8899AA" TextWrapping="Wrap" />
                                 </StackPanel>
@@ -411,7 +411,7 @@
                                 <TextBlock Text="DreamineTimeSpinner — Time 바인딩 (HH:mm:ss)" Style="{StaticResource CardTitle}" />
                                 <ctrl:DreamineTimeSpinner
                                     Time="{Binding Time, Mode=TwoWay}"
-                                    Width="180" Height="40"
+                                    Width="190" Height="40"
                                     HorizontalAlignment="Left"
                                     Foreground="White" Background="#FF162040" />
                                 <TextBlock Style="{StaticResource ResultText}"
