@@ -21,6 +21,8 @@ public sealed class MainForm : Form
 
     public MainForm(CounterViewModel counterVm)
     {
+        InitializeComponent();   // 디자이너 필수 — 없으면 디자이너가 폼을 인식하지 못함
+
         Text = "Dreamine Cross-UI — WinForms";
         ClientSize = new Size(900, 660);
         MinimumSize = new Size(900, 600);
@@ -137,6 +139,13 @@ public sealed class MainForm : Form
 
     private void InitializeComponent()
     {
+        SuspendLayout();
+        // 
+        // MainForm
+        // 
+        ClientSize = new Size(284, 261);
+        Name = "MainForm";
+        ResumeLayout(false);
 
     }
 
