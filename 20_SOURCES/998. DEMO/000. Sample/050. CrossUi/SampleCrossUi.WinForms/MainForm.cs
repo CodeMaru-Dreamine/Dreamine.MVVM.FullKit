@@ -100,19 +100,29 @@ public sealed class MainForm : Form
         _navDivider.Height    = 1;
         _navDivider.BackColor = DreamineTheme.BorderNormal;
 
-        // nav buttons
-        foreach (var (btn, label) in new[] {
-            (_btnCounter,  "Counter"),
-            (_btnControls, "Controls"),
-            (_btnPopup,    "Popup"),
-        })
-        {
-            btn.Content      = label;
-            btn.Width        = 172;
-            btn.Height       = 44;
-            btn.CornerRadius = 6;
-            btn.Margin       = new Padding(4, 2, 4, 2);
-        }
+        // _btnCounter
+        _btnCounter.Content      = "Counter";
+        _btnCounter.Width        = 172;
+        _btnCounter.Height       = 44;
+        _btnCounter.CornerRadius = 6;
+        _btnCounter.Margin       = new Padding(4, 2, 4, 2);
+        _btnCounter.Name         = "_btnCounter";
+
+        // _btnControls
+        _btnControls.Content      = "Controls";
+        _btnControls.Width        = 172;
+        _btnControls.Height       = 44;
+        _btnControls.CornerRadius = 6;
+        _btnControls.Margin       = new Padding(4, 2, 4, 2);
+        _btnControls.Name         = "_btnControls";
+
+        // _btnPopup
+        _btnPopup.Content      = "Popup";
+        _btnPopup.Width        = 172;
+        _btnPopup.Height       = 44;
+        _btnPopup.CornerRadius = 6;
+        _btnPopup.Margin       = new Padding(4, 2, 4, 2);
+        _btnPopup.Name         = "_btnPopup";
 
         // _navFlow
         _navFlow.Dock            = DockStyle.Fill;

@@ -78,12 +78,25 @@ public sealed class PopupPage : UserControl
         _btnWarn.Content   = "Show Warning";
         _btnError.Content  = "Show Error";
 
-        foreach (var btn in new[] { _btnMsgBox, _btnInfo, _btnWarn, _btnError })
-        {
-            btn.Width  = 200;
-            btn.Height = 40;
-            btn.Margin = new Padding(0, 0, 0, 8);
-        }
+        _btnMsgBox.Width  = 200;
+        _btnMsgBox.Height = 40;
+        _btnMsgBox.Margin = new Padding(0, 0, 0, 8);
+        _btnMsgBox.Name   = "_btnMsgBox";
+
+        _btnInfo.Width  = 200;
+        _btnInfo.Height = 40;
+        _btnInfo.Margin = new Padding(0, 0, 0, 8);
+        _btnInfo.Name   = "_btnInfo";
+
+        _btnWarn.Width  = 200;
+        _btnWarn.Height = 40;
+        _btnWarn.Margin = new Padding(0, 0, 0, 8);
+        _btnWarn.Name   = "_btnWarn";
+
+        _btnError.Width  = 200;
+        _btnError.Height = 40;
+        _btnError.Margin = new Padding(0, 0, 0, 8);
+        _btnError.Name   = "_btnError";
 
         // _layout
         _layout.Dock          = DockStyle.Fill;
