@@ -7,81 +7,430 @@
     Background="#FF1A1A2E"
     Foreground="White">
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,20,32,20">
-        <StackPanel MaxWidth="560">
+    <UserControl.Resources>
+        <Style x:Key="DemoCard" TargetType="Border">
+            <Setter Property="Background" Value="#FF0F1E3A" />
+            <Setter Property="BorderBrush" Value="#FF2D4A6E" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="16,12" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+        <Style x:Key="CardTitle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FF7EB8E8" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+        <Style x:Key="PropLabel" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FF8899AA" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+        <Style x:Key="ResultText" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#FF4FC3F7" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Margin" Value="0,10,0,0" />
+        </Style>
+    </UserControl.Resources>
 
-            <TextBlock
-                Text="Controls Demo"
-                FontSize="20" FontWeight="Bold"
-                Foreground="White"
-                Margin="0,0,0,16" />
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="32" />
+        </Grid.RowDefinitions>
 
-            <!-- CheckBox + CheckLed -->
-            <Border Background="#FF0F1E3A" BorderBrush="#FF2D4A6E" BorderThickness="1"
-                    CornerRadius="6" Padding="14,10" Margin="0,0,0,12">
-                <StackPanel>
-                    <TextBlock Text="CheckBox / CheckLed" Foreground="#FFAAAAAA"
-                               FontSize="11" Margin="0,0,0,8" />
-                    <StackPanel Orientation="Horizontal">
-                        <ctrl:DreamineCheckBox
-                            Content="DreamineCheckBox"
-                            IsChecked="{Binding IsChecked}"
-                            Foreground="White"
-                            VerticalAlignment="Center"
-                            Margin="0,0,16,0" />
-                        <ctrl:DreamineCheckLed
-                            IsOn="{Binding IsChecked}"
-                            Corner="{Binding LedCorner}"
-                            Width="30" Height="30"
-                            VerticalAlignment="Center"
-                            Margin="0,0,16,0" />
-                        <ctrl:DreamineButton
-                            Content="Toggle"
-                            Foreground="White"
-                            Command="{Binding ToggleCheckCommand}"
-                            Width="80" Height="32" />
+        <!-- ════ DreamineTabControl ════ -->
+        <ctrl:DreamineTabControl Grid.Row="0" Margin="12,8,12,4">
+
+            <!-- ═══════════ TAB 1: Button ═══════════ -->
+            <TabItem Header="Button">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4,8,4,8">
+                    <StackPanel MaxWidth="640">
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="기본 버튼 — Background / Foreground" Style="{StaticResource CardTitle}" />
+                                <WrapPanel>
+                                    <ctrl:DreamineButton Content="Primary" Foreground="White"
+                                        Background="#FF1E90FF" Width="100" Height="34" Margin="0,0,8,8"
+                                        Command="{Binding ClickMeCommand}" />
+                                    <ctrl:DreamineButton Content="Secondary" Foreground="White"
+                                        Background="#FF2D4A6E" Width="100" Height="34" Margin="0,0,8,8"
+                                        Command="{Binding ClickMeCommand}" />
+                                    <ctrl:DreamineButton Content="Success" Foreground="White"
+                                        Background="#FF1B7A3E" Width="100" Height="34" Margin="0,0,8,8"
+                                        Command="{Binding ClickMeCommand}" />
+                                    <ctrl:DreamineButton Content="Warning" Foreground="White"
+                                        Background="#FFB85C00" Width="100" Height="34" Margin="0,0,8,8"
+                                        Command="{Binding ClickMeCommand}" />
+                                    <ctrl:DreamineButton Content="Danger" Foreground="White"
+                                        Background="#FF8B1A1A" Width="100" Height="34" Margin="0,0,8,8"
+                                        Command="{Binding ClickMeCommand}" />
+                                </WrapPanel>
+                                <TextBlock Style="{StaticResource ResultText}"
+                                    Text="{Binding ClickCount, StringFormat='클릭 횟수: {0}'}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="ShineColor — 글로우 효과" Style="{StaticResource CardTitle}" />
+                                <WrapPanel>
+                                    <ctrl:DreamineButton Content="Blue Glow" Foreground="White"
+                                        Background="#FF0D1B3E" ShineColor="#FF1E90FF"
+                                        Width="110" Height="36" Margin="0,0,8,8"
+                                        Command="{Binding ClickMeCommand}" />
+                                    <ctrl:DreamineButton Content="Cyan Glow" Foreground="White"
+                                        Background="#FF0D1B3E" ShineColor="#FF00BCD4"
+                                        Width="110" Height="36" Margin="0,0,8,8"
+                                        Command="{Binding ClickMeCommand}" />
+                                    <ctrl:DreamineButton Content="Green Glow" Foreground="White"
+                                        Background="#FF0D1B3E" ShineColor="#FF4CAF50"
+                                        Width="110" Height="36" Margin="0,0,8,8"
+                                        Command="{Binding ClickMeCommand}" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="크기 변형" Style="{StaticResource CardTitle}" />
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <ctrl:DreamineButton Content="XS" Foreground="White"
+                                        Background="#FF1E90FF" Width="50" Height="24" Margin="0,0,8,0"
+                                        FontSize="10" Command="{Binding ClickMeCommand}" />
+                                    <ctrl:DreamineButton Content="Small" Foreground="White"
+                                        Background="#FF1E90FF" Width="72" Height="28" Margin="0,0,8,0"
+                                        FontSize="11" Command="{Binding ClickMeCommand}" />
+                                    <ctrl:DreamineButton Content="Medium" Foreground="White"
+                                        Background="#FF1E90FF" Width="90" Height="34" Margin="0,0,8,0"
+                                        Command="{Binding ClickMeCommand}" />
+                                    <ctrl:DreamineButton Content="Large" Foreground="White"
+                                        Background="#FF1E90FF" Width="110" Height="42"
+                                        FontSize="15" Command="{Binding ClickMeCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="비활성 / 그림자" Style="{StaticResource CardTitle}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <ctrl:DreamineButton Content="Enabled" Foreground="White"
+                                        Background="#FF1E90FF" Width="100" Height="34" Margin="0,0,8,0"
+                                        Command="{Binding ClickMeCommand}" />
+                                    <ctrl:DreamineButton Content="Disabled" Foreground="White"
+                                        Background="#FF1E90FF" Width="100" Height="34" Margin="0,0,16,0"
+                                        IsEnabled="False" />
+                                    <ctrl:DreamineButton Content="Shadow" Foreground="White"
+                                        Background="#FF1E90FF" Width="100" Height="34"
+                                        UseShadow="True" ShadowColor="#FF1E90FF" ShadowBlurRadius="20" ShadowOpacity="0.7"
+                                        Command="{Binding ClickMeCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
                     </StackPanel>
-                </StackPanel>
-            </Border>
+                </ScrollViewer>
+            </TabItem>
 
-            <!-- TextBox -->
-            <Border Background="#FF0F1E3A" BorderBrush="#FF2D4A6E" BorderThickness="1"
-                    CornerRadius="6" Padding="14,10" Margin="0,0,0,12">
-                <StackPanel>
-                    <TextBlock Text="TextBox (가상 키보드)" Foreground="#FFAAAAAA"
-                               FontSize="11" Margin="0,0,0,8" />
-                    <ctrl:DreamineTextBox
-                        Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
-                        vk:DreamineVirtualKeyboardAssist.UseVirtualKeyBoard="True"
-                        Hint="가상 키보드 텍스트 입력..."
-                        Height="42"
-                        Foreground="White"
-                        Background="#FF162040"
-                        Margin="0,0,0,8" />
-                    <ctrl:DreamineButton
-                        Content="Clear"
-                        Foreground="White"
-                        Command="{Binding ClearTextCommand}"
-                        Width="80" Height="32"
-                        HorizontalAlignment="Left" />
-                </StackPanel>
-            </Border>
+            <!-- ═══════════ TAB 2: CheckBox / Radio ═══════════ -->
+            <TabItem Header="CheckBox / Radio">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4,8,4,8">
+                    <StackPanel MaxWidth="640">
 
-            <!-- Expander -->
-            <Border Background="#FF0F1E3A" BorderBrush="#FF2D4A6E" BorderThickness="1"
-                    CornerRadius="6" Padding="0" Margin="0,0,0,12">
-                <ctrl:DreamineExpander
-                    Header="DreamineExpander — 펼치기/접기"
-                    IsExpanded="{Binding IsExpanded}"
-                    Foreground="Black">
-                    <StackPanel Margin="14,8,14,12">
-                        <TextBlock Text="Expander 내부 콘텐츠입니다." Foreground="Black" Margin="0,0,0,4" />
-                        <TextBlock Text="{Binding StatusMessage}" Foreground="#FF4FC3F7"
-                                   FontWeight="SemiBold" />
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="DreamineCheckBox — IsChecked 바인딩" Style="{StaticResource CardTitle}" />
+                                <ctrl:DreamineCheckBox Content="Check 1 (기본 체크됨)"
+                                    IsChecked="{Binding Check1}" Foreground="White" Margin="0,0,0,8" />
+                                <ctrl:DreamineCheckBox Content="Check 2 (기본 해제됨)"
+                                    IsChecked="{Binding Check2}" Foreground="White" Margin="0,0,0,8" />
+                                <ctrl:DreamineCheckBox Content="Check 3 (IsEnabled=False)"
+                                    IsChecked="{Binding Check3}" Foreground="#FF8899AA" IsEnabled="False" />
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <TextBlock Text="Check1:" Style="{StaticResource PropLabel}" />
+                                    <TextBlock Text="{Binding Check1}" Foreground="#FF4FC3F7" />
+                                    <TextBlock Text="   Check2:" Foreground="#FF8899AA" FontSize="11"
+                                        VerticalAlignment="Center" Margin="16,0,8,0" />
+                                    <TextBlock Text="{Binding Check2}" Foreground="#FF4FC3F7" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="DreamineRadioButton — GroupName=&quot;demo&quot;" Style="{StaticResource CardTitle}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <ctrl:DreamineRadioButton Content="Option A" GroupName="demo"
+                                        ctrl:DreamineRadioButton.Command="{Binding SelectRadioCommand}"
+                                        ctrl:DreamineRadioButton.CommandParameter="Option A"
+                                        ctrl:DreamineRadioButton.CommandTriggerName="Click"
+                                        IsChecked="True"
+                                        Foreground="White" Margin="0,0,16,0" />
+                                    <ctrl:DreamineRadioButton Content="Option B" GroupName="demo"
+                                        ctrl:DreamineRadioButton.Command="{Binding SelectRadioCommand}"
+                                        ctrl:DreamineRadioButton.CommandParameter="Option B"
+                                        ctrl:DreamineRadioButton.CommandTriggerName="Click"
+                                        Foreground="White" Margin="0,0,16,0" />
+                                    <ctrl:DreamineRadioButton Content="Option C" GroupName="demo"
+                                        ctrl:DreamineRadioButton.Command="{Binding SelectRadioCommand}"
+                                        ctrl:DreamineRadioButton.CommandParameter="Option C"
+                                        ctrl:DreamineRadioButton.CommandTriggerName="Click"
+                                        Foreground="White" />
+                                </StackPanel>
+                                <TextBlock Style="{StaticResource ResultText}"
+                                    Text="{Binding SelectedRadio, StringFormat='선택: {0}'}" />
+                            </StackPanel>
+                        </Border>
+
                     </StackPanel>
-                </ctrl:DreamineExpander>
-            </Border>
+                </ScrollViewer>
+            </TabItem>
 
-        </StackPanel>
-    </ScrollViewer>
+            <!-- ═══════════ TAB 3: CheckLed ═══════════ -->
+            <TabItem Header="CheckLed">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4,8,4,8">
+                    <StackPanel MaxWidth="640">
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="IsOn / IsPulse 토글" Style="{StaticResource CardTitle}" />
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <ctrl:DreamineCheckLed IsOn="{Binding LedIsOn}"
+                                        IsPulse="{Binding LedIsPulse}"
+                                        Width="36" Height="36" Margin="0,0,16,0" />
+                                    <ctrl:DreamineButton Content="ON / OFF" Foreground="White"
+                                        Background="#FF2D4A6E" Width="90" Height="32" Margin="0,0,8,0"
+                                        Command="{Binding ToggleLedCommand}" />
+                                    <ctrl:DreamineButton Content="Pulse" Foreground="White"
+                                        Background="#FF2D4A6E" Width="80" Height="32"
+                                        Command="{Binding TogglePulseCommand}" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                    <TextBlock Text="IsOn:" Style="{StaticResource PropLabel}" />
+                                    <TextBlock Text="{Binding LedIsOn}" Foreground="#FF4FC3F7" />
+                                    <TextBlock Text="   IsPulse:" Foreground="#FF8899AA" FontSize="11"
+                                        VerticalAlignment="Center" Margin="16,0,8,0" />
+                                    <TextBlock Text="{Binding LedIsPulse}" Foreground="#FF4FC3F7" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="Corner 위치 (4가지)" Style="{StaticResource CardTitle}" />
+                                <WrapPanel>
+                                    <StackPanel Margin="0,0,20,8">
+                                        <TextBlock Text="TopLeft" Style="{StaticResource PropLabel}" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                                        <Border Width="60" Height="60" Background="#FF0D1B3E"
+                                                BorderBrush="#FF2D4A6E" BorderThickness="1" CornerRadius="4">
+                                            <ctrl:DreamineCheckLed IsOn="True" Corner="TopLeft"
+                                                Width="18" Height="18" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4" />
+                                        </Border>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,20,8">
+                                        <TextBlock Text="TopRight" Style="{StaticResource PropLabel}" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                                        <Border Width="60" Height="60" Background="#FF0D1B3E"
+                                                BorderBrush="#FF2D4A6E" BorderThickness="1" CornerRadius="4">
+                                            <ctrl:DreamineCheckLed IsOn="True" Corner="TopRight"
+                                                Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4" />
+                                        </Border>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,20,8">
+                                        <TextBlock Text="BottomLeft" Style="{StaticResource PropLabel}" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                                        <Border Width="60" Height="60" Background="#FF0D1B3E"
+                                                BorderBrush="#FF2D4A6E" BorderThickness="1" CornerRadius="4">
+                                            <ctrl:DreamineCheckLed IsOn="True" Corner="BottomLeft"
+                                                Width="18" Height="18" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="4" />
+                                        </Border>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,20,8">
+                                        <TextBlock Text="BottomRight" Style="{StaticResource PropLabel}" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                                        <Border Width="60" Height="60" Background="#FF0D1B3E"
+                                                BorderBrush="#FF2D4A6E" BorderThickness="1" CornerRadius="4">
+                                            <ctrl:DreamineCheckLed IsOn="True" Corner="BottomRight"
+                                                Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="4" />
+                                        </Border>
+                                    </StackPanel>
+                                    <StackPanel Margin="0,0,0,8">
+                                        <TextBlock Text="IsOn=False" Style="{StaticResource PropLabel}" HorizontalAlignment="Center" Margin="0,0,0,4" />
+                                        <Border Width="60" Height="60" Background="#FF0D1B3E"
+                                                BorderBrush="#FF2D4A6E" BorderThickness="1" CornerRadius="4">
+                                            <ctrl:DreamineCheckLed IsOn="False" Corner="TopRight"
+                                                Width="18" Height="18" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4" />
+                                        </Border>
+                                    </StackPanel>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="Diameter — 크기 변형" Style="{StaticResource CardTitle}" />
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <ctrl:DreamineCheckLed IsOn="True" Diameter="10" Margin="0,0,14,0" />
+                                    <ctrl:DreamineCheckLed IsOn="True" Diameter="16" Margin="0,0,14,0" />
+                                    <ctrl:DreamineCheckLed IsOn="True" Diameter="22" Margin="0,0,14,0" />
+                                    <ctrl:DreamineCheckLed IsOn="True" Diameter="30" Margin="0,0,14,0" />
+                                    <ctrl:DreamineCheckLed IsOn="True" Diameter="42" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══════════ TAB 4: TextBox ═══════════ -->
+            <TabItem Header="TextBox">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4,8,4,8">
+                    <StackPanel MaxWidth="640">
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="DreamineTextBox — 일반 입력" Style="{StaticResource CardTitle}" />
+                                <ctrl:DreamineTextBox
+                                    Text="{Binding TextInput, UpdateSourceTrigger=PropertyChanged}"
+                                    Hint="여기에 텍스트를 입력하세요..."
+                                    Height="40" Foreground="White" Background="#FF162040"
+                                    Margin="0,0,0,8" />
+                                <StackPanel Orientation="Horizontal">
+                                    <ctrl:DreamineButton Content="Clear" Foreground="White"
+                                        Background="#FF2D4A6E" Width="80" Height="30"
+                                        Command="{Binding ClearTextCommand}" />
+                                    <TextBlock Text="{Binding TextInput, StringFormat='  값: {0}'}"
+                                        Foreground="#FF4FC3F7" VerticalAlignment="Center" FontSize="12" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="DreamineTextBox — 가상 키보드 (UseVirtualKeyBoard=True)" Style="{StaticResource CardTitle}" />
+                                <ctrl:DreamineTextBox
+                                    Text="{Binding TextInput, UpdateSourceTrigger=PropertyChanged}"
+                                    vk:DreamineVirtualKeyboardAssist.UseVirtualKeyBoard="True"
+                                    Hint="클릭하면 가상 키보드가 열립니다..."
+                                    Height="40" Foreground="White" Background="#FF162040" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="DreamineTextBox — 읽기 전용 (IsReadOnly=True)" Style="{StaticResource CardTitle}" />
+                                <ctrl:DreamineTextBox
+                                    Text="이 텍스트는 수정할 수 없습니다."
+                                    IsReadOnly="True"
+                                    Height="40" Foreground="#FF8899AA" Background="#FF0A1525" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="DreaminePasswordBox" Style="{StaticResource CardTitle}" />
+                                <ctrl:DreaminePasswordBox
+                                    Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                    Hint="비밀번호를 입력하세요..."
+                                    Height="40" Foreground="White" Background="#FF162040"
+                                    Margin="0,0,0,8" />
+                                <StackPanel Orientation="Horizontal">
+                                    <ctrl:DreamineButton Content="Clear" Foreground="White"
+                                        Background="#FF2D4A6E" Width="80" Height="30"
+                                        Command="{Binding ClearPasswordCommand}" />
+                                    <TextBlock Foreground="#FF4FC3F7" VerticalAlignment="Center" FontSize="12"
+                                        Text="{Binding Password.Length, StringFormat='  길이: {0} 자'}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══════════ TAB 5: ComboBox ═══════════ -->
+            <TabItem Header="ComboBox">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4,8,4,8">
+                    <StackPanel MaxWidth="640">
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="DreamineComboBox — SelectedItem 바인딩" Style="{StaticResource CardTitle}" />
+                                <ctrl:DreamineComboBox
+                                    ItemsSource="{Binding FruitItems}"
+                                    SelectedItem="{Binding SelectedFruit}"
+                                    Width="200" Height="36"
+                                    HorizontalAlignment="Left"
+                                    Foreground="White" Background="#FF162040" />
+                                <TextBlock Style="{StaticResource ResultText}"
+                                    Text="{Binding SelectedFruit, StringFormat='선택된 항목: {0}'}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="IsEnabled=False — 비활성 상태" Style="{StaticResource CardTitle}" />
+                                <ctrl:DreamineComboBox
+                                    ItemsSource="{Binding FruitItems}"
+                                    SelectedIndex="0"
+                                    IsEnabled="False"
+                                    Width="200" Height="36"
+                                    HorizontalAlignment="Left"
+                                    Foreground="#FF8899AA" Background="#FF0A1525" />
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══════════ TAB 6: Misc ═══════════ -->
+            <TabItem Header="Misc">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4,8,4,8">
+                    <StackPanel MaxWidth="640">
+
+                        <Border Style="{StaticResource DemoCard}" Padding="0">
+                            <ctrl:DreamineExpander
+                                Header="DreamineExpander — 펼치기 / 접기"
+                                IsExpanded="{Binding IsExpanded}"
+                                Foreground="White">
+                                <StackPanel Margin="16,8,16,12">
+                                    <TextBlock Text="IsExpanded 를 VM에 바인딩하면 코드에서도 제어 가능합니다."
+                                        Foreground="White" TextWrapping="Wrap" Margin="0,0,0,6" />
+                                    <TextBlock Text="내부에는 어떤 컨텐츠도 배치할 수 있습니다."
+                                        Foreground="#FF8899AA" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </ctrl:DreamineExpander>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="DreamineTimeSpinner — Time 바인딩 (HH:mm:ss)" Style="{StaticResource CardTitle}" />
+                                <ctrl:DreamineTimeSpinner
+                                    Time="{Binding Time, Mode=TwoWay}"
+                                    Width="180" Height="40"
+                                    HorizontalAlignment="Left"
+                                    Foreground="White" Background="#FF162040" />
+                                <TextBlock Style="{StaticResource ResultText}"
+                                    Text="{Binding Time, StringFormat='선택 시각: {0:hh\\:mm\\:ss}'}" />
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+        </ctrl:DreamineTabControl>
+
+        <!-- ════ Status Bar ════ -->
+        <Border Grid.Row="1" Background="#FF0A1525" BorderBrush="#FF2D4A6E" BorderThickness="0,1,0,0">
+            <TextBlock Text="{Binding StatusMessage}"
+                Foreground="#FF4FC3F7" FontSize="11"
+                VerticalAlignment="Center" Margin="16,0,0,0" />
+        </Border>
+
+    </Grid>
 </UserControl>
