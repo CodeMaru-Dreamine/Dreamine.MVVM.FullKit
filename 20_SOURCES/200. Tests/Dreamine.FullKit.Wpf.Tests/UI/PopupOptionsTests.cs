@@ -38,7 +38,7 @@ public sealed class PopupOptionsTests
         conv.NumPadTemplate = numPad;
         conv.DefaultTemplate = defaultTpl;
 
-        var result = conv.Convert(eVkLayout.Numeric, typeof(System.Windows.DataTemplate), null, System.Globalization.CultureInfo.InvariantCulture);
+        var result = conv.Convert(VkLayout.Numeric, typeof(System.Windows.DataTemplate), null, System.Globalization.CultureInfo.InvariantCulture);
 
         Assert.Same(numPad, result);
     }
@@ -50,7 +50,7 @@ public sealed class PopupOptionsTests
         var defaultTpl = new System.Windows.DataTemplate();
         conv.DefaultTemplate = defaultTpl;
 
-        var result = conv.Convert(eVkLayout.Text, typeof(System.Windows.DataTemplate), null, System.Globalization.CultureInfo.InvariantCulture);
+        var result = conv.Convert(VkLayout.Text, typeof(System.Windows.DataTemplate), null, System.Globalization.CultureInfo.InvariantCulture);
 
         Assert.Same(defaultTpl, result);
     }
