@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using Dreamine.UI.WinForms;
 using Dreamine.UI.WinForms.Controls;
 using SampleCrossUi.Shared.ViewModels;
@@ -93,13 +94,18 @@ public sealed class MainForm : Form
             BackColor = DreamineTheme.AppBackground,
         };
 
+        // 레이아웃은 항상 추가 — 디자이너에서 폼 골격을 볼 수 있도록
+        Controls.Add(_pageHost);
+        Controls.Add(nav);
+
+        // 디자이너에서는 페이지 생성 생략 (복잡한 초기화가 디자인 타임에 실패할 수 있음)
+        if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
+            return;
+
         // ── Pages ────────────────────────────────────────
         _counterPage = new CounterPage(counterVm);
         _controlsPage = new ControlsPage(new ControlsViewModel());
         _popupPage = new PopupPage();
-
-        Controls.Add(_pageHost);
-        Controls.Add(nav);
 
         Navigate(0);
     }
@@ -138,9 +144,9 @@ public sealed class MainForm : Form
     {
         if (disposing)
         {
-            _counterPage.Dispose();
-            _controlsPage.Dispose();
-            _popupPage.Dispose();
+            _counterPage?.Dispose();
+            _controlsPage?.Dispose();
+            _popupPage?.Dispose();
         }
         base.Dispose(disposing);
     }
