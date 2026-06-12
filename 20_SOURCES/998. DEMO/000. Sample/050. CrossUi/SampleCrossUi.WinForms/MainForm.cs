@@ -11,9 +11,12 @@ public sealed class MainForm : Form
     private readonly DreamineButton[] _navButtons;
     private UserControl? _currentPage;
 
-    private readonly CounterPage  _counterPage;
-    private readonly ControlsPage _controlsPage;
-    private readonly PopupPage    _popupPage;
+    private readonly CounterPage _counterPage = null!;
+    private readonly ControlsPage _controlsPage = null!;
+    private readonly PopupPage _popupPage = null!;
+
+    /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>
+    public MainForm() : this(new CounterViewModel(new SampleCrossUi.Shared.Services.CounterService())) { }
 
     public MainForm(CounterViewModel counterVm)
     {
@@ -91,9 +94,9 @@ public sealed class MainForm : Form
         };
 
         // ── Pages ────────────────────────────────────────
-        _counterPage  = new CounterPage(counterVm);
+        _counterPage = new CounterPage(counterVm);
         _controlsPage = new ControlsPage(new ControlsViewModel());
-        _popupPage    = new PopupPage();
+        _popupPage = new PopupPage();
 
         Controls.Add(_pageHost);
         Controls.Add(nav);
@@ -124,6 +127,11 @@ public sealed class MainForm : Form
         }
         _currentPage.Show();
         _currentPage.BringToFront();
+    }
+
+    private void InitializeComponent()
+    {
+
     }
 
     protected override void Dispose(bool disposing)

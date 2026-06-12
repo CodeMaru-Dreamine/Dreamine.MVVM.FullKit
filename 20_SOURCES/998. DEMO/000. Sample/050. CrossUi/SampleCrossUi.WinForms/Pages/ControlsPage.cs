@@ -128,10 +128,10 @@ public sealed class ControlsPage : UserControl
         var led = new DreamineCheckLed { IsOn = _vm.LedIsOn, IsPulse = _vm.LedIsPulse, Width = 60, Height = 60 };
 
         var btnToggle = new DreamineButton { Content = "Toggle ON/OFF", Width = 160, Height = 36, Margin = new Padding(0, 0, 8, 0) };
-        var btnPulse  = new DreamineButton { Content = "Toggle Pulse",  Width = 140, Height = 36 };
+        var btnPulse = new DreamineButton { Content = "Toggle Pulse", Width = 140, Height = 36 };
 
-        btnToggle.Click += (_, _) => { _vm.ToggleLedCommand.Execute(null);   led.IsOn    = _vm.LedIsOn; };
-        btnPulse.Click  += (_, _) => { _vm.TogglePulseCommand.Execute(null); led.IsPulse = _vm.LedIsPulse; };
+        btnToggle.Click += (_, _) => { _vm.ToggleLedCommand.Execute(null); led.IsOn = _vm.LedIsOn; };
+        btnPulse.Click += (_, _) => { _vm.TogglePulseCommand.Execute(null); led.IsPulse = _vm.LedIsPulse; };
 
         panel.Controls.Add(led);
         Spacer(panel);
@@ -251,6 +251,11 @@ public sealed class ControlsPage : UserControl
     {
         if (e.PropertyName == nameof(ControlsViewModel.StatusMessage))
             _statusLabel.Text = _vm.StatusMessage;
+    }
+
+    private void InitializeComponent()
+    {
+
     }
 
     protected override void Dispose(bool disposing)
