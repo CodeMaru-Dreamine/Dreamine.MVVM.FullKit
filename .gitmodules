@@ -136,3 +136,6 @@
 [submodule "20_SOURCES/100. Library/UI.Wpf.Equipment"]
 	path = 20_SOURCES/100. Library/UI.Wpf.Equipment
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.UI.Wpf.Equipment
+[submodule "20_SOURCES/100. Library/UI.WinForms"]
+	path = 20_SOURCES/100. Library/UI.WinForms
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.UI.WinForms
