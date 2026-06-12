@@ -1,9 +1,12 @@
 using System.Collections.ObjectModel;
 using Dreamine.MVVM.ViewModels;
-using Dreamine.UI.Wpf.Controls;
 
-namespace SampleCrossUi.Wpf.ViewModels;
+namespace SampleCrossUi.Shared.ViewModels;
 
+/// <summary>
+/// Controls showcase ViewModel. Platform-independent.
+/// Reusable across WPF, WinForms, Blazor, and MAUI.
+/// </summary>
 public class ControlsViewModel : ViewModelBase
 {
     // ── Button ────────────────────────────────────────────
@@ -29,19 +32,19 @@ public class ControlsViewModel : ViewModelBase
     // ── CheckLed ──────────────────────────────────────────
     private bool _ledIsOn = true;
     private bool _ledIsPulse;
-    public bool LedIsOn { get => _ledIsOn; set => SetProperty(ref _ledIsOn, value); }
+    public bool LedIsOn  { get => _ledIsOn;   set => SetProperty(ref _ledIsOn,   value); }
     public bool LedIsPulse { get => _ledIsPulse; set => SetProperty(ref _ledIsPulse, value); }
 
-    public RelayCommand ToggleLedCommand { get; }
+    public RelayCommand ToggleLedCommand   { get; }
     public RelayCommand TogglePulseCommand { get; }
 
     // ── TextBox / PasswordBox ─────────────────────────────
     private string _textInput = string.Empty;
-    private string _password = string.Empty;
+    private string _password  = string.Empty;
     public string TextInput { get => _textInput; set => SetProperty(ref _textInput, value); }
-    public string Password { get => _password; set => SetProperty(ref _password, value); }
+    public string Password  { get => _password;  set => SetProperty(ref _password,  value); }
 
-    public RelayCommand ClearTextCommand { get; }
+    public RelayCommand ClearTextCommand     { get; }
     public RelayCommand ClearPasswordCommand { get; }
 
     // ── ComboBox ──────────────────────────────────────────
@@ -51,10 +54,11 @@ public class ControlsViewModel : ViewModelBase
     private string? _selectedFruit = "Cherry";
     public string? SelectedFruit { get => _selectedFruit; set => SetProperty(ref _selectedFruit, value); }
 
-    // ── Expander / TimeSpinner ────────────────────────────
+    // ── Expander ─────────────────────────────────────────
     private bool _isExpanded = true;
     public bool IsExpanded { get => _isExpanded; set => SetProperty(ref _isExpanded, value); }
 
+    // ── TimeSpinner (WPF용; WinForms는 무시) ─────────────
     private TimeSpan _time = new(9, 30, 0);
     public TimeSpan Time { get => _time; set => SetProperty(ref _time, value); }
 

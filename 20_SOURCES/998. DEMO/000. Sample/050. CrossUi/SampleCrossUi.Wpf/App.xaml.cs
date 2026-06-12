@@ -5,7 +5,7 @@ using Dreamine.UI.Wpf.Equipment.Popup;
 using Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;
 using SampleCrossUi.Shared.Services;
 using SampleCrossUi.Shared.ViewModels;
-using SampleCrossUi.Wpf.ViewModels;
+using SampleCrossUi.Wpf.ViewModels; // PopupViewModel, MainViewModel
 
 namespace SampleCrossUi.Wpf;
 

@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using Dreamine.UI.WinForms;
 using Dreamine.UI.WinForms.Controls;
-using SampleCrossUi.WinForms.ViewModels;
+using SampleCrossUi.Shared.ViewModels;
 
 namespace SampleCrossUi.WinForms.Pages;
 
@@ -81,7 +81,7 @@ public sealed class ControlsPage : UserControl
             Font = new Font("Segoe UI", 11f, FontStyle.Regular, GraphicsUnit.Point),
             AutoSize = true,
         };
-        btn.Click += (_, _) => { _vm.ClickMe(); countLabel.Text = $"Clicks: {_vm.ClickCount}"; };
+        btn.Click += (_, _) => { _vm.ClickMeCommand.Execute(null); countLabel.Text = $"Clicks: {_vm.ClickCount}"; };
         panel.Controls.Add(btn);
         Spacer(panel);
         panel.Controls.Add(countLabel);
@@ -109,9 +109,9 @@ public sealed class ControlsPage : UserControl
         var rb2 = new DreamineRadioButton { Content = "Option B", GroupName = "demo", IsChecked = _vm.SelectedRadio == "Option B", Width = 160, Height = 28, Left = 160 };
         var rb3 = new DreamineRadioButton { Content = "Option C", GroupName = "demo", IsChecked = _vm.SelectedRadio == "Option C", Width = 160, Height = 28, Left = 320 };
         radioPanel.Controls.Add(rb1); radioPanel.Controls.Add(rb2); radioPanel.Controls.Add(rb3);
-        rb1.CheckedChanged += (_, _) => { if (rb1.IsChecked) _vm.SelectRadio("Option A"); };
-        rb2.CheckedChanged += (_, _) => { if (rb2.IsChecked) _vm.SelectRadio("Option B"); };
-        rb3.CheckedChanged += (_, _) => { if (rb3.IsChecked) _vm.SelectRadio("Option C"); };
+        rb1.CheckedChanged += (_, _) => { if (rb1.IsChecked) _vm.SelectRadioCommand.Execute("Option A"); };
+        rb2.CheckedChanged += (_, _) => { if (rb2.IsChecked) _vm.SelectRadioCommand.Execute("Option B"); };
+        rb3.CheckedChanged += (_, _) => { if (rb3.IsChecked) _vm.SelectRadioCommand.Execute("Option C"); };
         panel.Controls.Add(radioPanel);
         return page;
     }
@@ -127,8 +127,8 @@ public sealed class ControlsPage : UserControl
         var btnToggle = new DreamineButton { Content = "Toggle ON/OFF", Width = 160, Height = 36, Margin = new Padding(0, 0, 8, 0) };
         var btnPulse  = new DreamineButton { Content = "Toggle Pulse",  Width = 140, Height = 36 };
 
-        btnToggle.Click += (_, _) => { _vm.ToggleLed();   led.IsOn    = _vm.LedIsOn; };
-        btnPulse.Click  += (_, _) => { _vm.TogglePulse(); led.IsPulse = _vm.LedIsPulse; };
+        btnToggle.Click += (_, _) => { _vm.ToggleLedCommand.Execute(null);   led.IsOn    = _vm.LedIsOn; };
+        btnPulse.Click  += (_, _) => { _vm.TogglePulseCommand.Execute(null); led.IsPulse = _vm.LedIsPulse; };
 
         panel.Controls.Add(led);
         Spacer(panel);
@@ -149,7 +149,7 @@ public sealed class ControlsPage : UserControl
         var tbRow = new FlowLayoutPanel { AutoSize = true, FlowDirection = FlowDirection.LeftToRight };
         tbRow.Controls.Add(tb); tbRow.Controls.Add(btnClear);
         tb.TextChanged += (_, _) => _vm.TextInput = tb.Text;
-        btnClear.Click += (_, _) => { _vm.ClearText(); tb.Text = string.Empty; };
+        btnClear.Click += (_, _) => { _vm.ClearTextCommand.Execute(null); tb.Text = string.Empty; };
         panel.Controls.Add(tbRow);
 
         Spacer(panel);
@@ -158,7 +158,7 @@ public sealed class ControlsPage : UserControl
         var btnClrPw = new DreamineButton { Content = "Clear", Width = 80, Height = 36, Margin = new Padding(8, 0, 0, 0) };
         var pbRow = new FlowLayoutPanel { AutoSize = true, FlowDirection = FlowDirection.LeftToRight };
         pbRow.Controls.Add(pb); pbRow.Controls.Add(btnClrPw);
-        btnClrPw.Click += (_, _) => { _vm.ClearPassword(); pb.Password = string.Empty; };
+        btnClrPw.Click += (_, _) => { _vm.ClearPasswordCommand.Execute(null); pb.Password = string.Empty; };
         panel.Controls.Add(pbRow);
         return page;
     }

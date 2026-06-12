@@ -2,7 +2,6 @@ using Dreamine.UI.WinForms;
 using Dreamine.UI.WinForms.Controls;
 using SampleCrossUi.Shared.ViewModels;
 using SampleCrossUi.WinForms.Pages;
-using SampleCrossUi.WinForms.ViewModels;
 
 namespace SampleCrossUi.WinForms;
 

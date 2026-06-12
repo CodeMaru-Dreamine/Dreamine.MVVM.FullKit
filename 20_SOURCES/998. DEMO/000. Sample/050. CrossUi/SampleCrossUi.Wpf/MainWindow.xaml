@@ -7,7 +7,7 @@
     xmlns:views="clr-namespace:SampleCrossUi.Wpf.Views"
     xmlns:shared="clr-namespace:SampleCrossUi.Shared.ViewModels;assembly=SampleCrossUi.Shared"
     Title="Dreamine UI Kit — Sample"
-    Width="900" Height="640"
+    Width="900" Height="740"
     WindowStartupLocation="CenterScreen"
     Background="#FF1A1A2E">
 
@@ -15,7 +15,7 @@
         <DataTemplate DataType="{x:Type shared:CounterViewModel}">
             <views:CounterView />
         </DataTemplate>
-        <DataTemplate DataType="{x:Type vm:ControlsViewModel}">
+        <DataTemplate DataType="{x:Type shared:ControlsViewModel}">
             <views:ControlsView />
         </DataTemplate>
         <DataTemplate DataType="{x:Type vm:PopupViewModel}">
