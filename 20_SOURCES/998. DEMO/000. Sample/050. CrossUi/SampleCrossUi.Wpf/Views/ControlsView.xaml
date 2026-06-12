@@ -1,0 +1,87 @@
+<UserControl
+    x:Class="SampleCrossUi.Wpf.Views.ControlsView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ctrl="clr-namespace:Dreamine.UI.Wpf.Controls;assembly=Dreamine.UI.Wpf.Controls"
+    xmlns:vk="clr-namespace:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;assembly=Dreamine.UI.Wpf.Equipment"
+    Background="#FF1A1A2E"
+    Foreground="White">
+
+    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="32,20,32,20">
+        <StackPanel MaxWidth="560">
+
+            <TextBlock
+                Text="Controls Demo"
+                FontSize="20" FontWeight="Bold"
+                Foreground="White"
+                Margin="0,0,0,16" />
+
+            <!-- CheckBox + CheckLed -->
+            <Border Background="#FF0F1E3A" BorderBrush="#FF2D4A6E" BorderThickness="1"
+                    CornerRadius="6" Padding="14,10" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="CheckBox / CheckLed" Foreground="#FFAAAAAA"
+                               FontSize="11" Margin="0,0,0,8" />
+                    <StackPanel Orientation="Horizontal">
+                        <ctrl:DreamineCheckBox
+                            Content="DreamineCheckBox"
+                            IsChecked="{Binding IsChecked}"
+                            Foreground="White"
+                            VerticalAlignment="Center"
+                            Margin="0,0,16,0" />
+                        <ctrl:DreamineCheckLed
+                            IsOn="{Binding IsChecked}"
+                            Corner="{Binding LedCorner}"
+                            Width="30" Height="30"
+                            VerticalAlignment="Center"
+                            Margin="0,0,16,0" />
+                        <ctrl:DreamineButton
+                            Content="Toggle"
+                            Foreground="White"
+                            Command="{Binding ToggleCheckCommand}"
+                            Width="80" Height="32" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- TextBox -->
+            <Border Background="#FF0F1E3A" BorderBrush="#FF2D4A6E" BorderThickness="1"
+                    CornerRadius="6" Padding="14,10" Margin="0,0,0,12">
+                <StackPanel>
+                    <TextBlock Text="TextBox (가상 키보드)" Foreground="#FFAAAAAA"
+                               FontSize="11" Margin="0,0,0,8" />
+                    <ctrl:DreamineTextBox
+                        Text="{Binding InputText, UpdateSourceTrigger=PropertyChanged}"
+                        vk:DreamineVirtualKeyboardAssist.UseVirtualKeyBoard="True"
+                        Hint="가상 키보드 텍스트 입력..."
+                        Height="42"
+                        Foreground="White"
+                        Background="#FF162040"
+                        Margin="0,0,0,8" />
+                    <ctrl:DreamineButton
+                        Content="Clear"
+                        Foreground="White"
+                        Command="{Binding ClearTextCommand}"
+                        Width="80" Height="32"
+                        HorizontalAlignment="Left" />
+                </StackPanel>
+            </Border>
+
+            <!-- Expander -->
+            <Border Background="#FF0F1E3A" BorderBrush="#FF2D4A6E" BorderThickness="1"
+                    CornerRadius="6" Padding="0" Margin="0,0,0,12">
+                <ctrl:DreamineExpander
+                    Header="DreamineExpander — 펼치기/접기"
+                    IsExpanded="{Binding IsExpanded}"
+                    Foreground="Black">
+                    <StackPanel Margin="14,8,14,12">
+                        <TextBlock Text="Expander 내부 콘텐츠입니다." Foreground="Black" Margin="0,0,0,4" />
+                        <TextBlock Text="{Binding StatusMessage}" Foreground="#FF4FC3F7"
+                                   FontWeight="SemiBold" />
+                    </StackPanel>
+                </ctrl:DreamineExpander>
+            </Border>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

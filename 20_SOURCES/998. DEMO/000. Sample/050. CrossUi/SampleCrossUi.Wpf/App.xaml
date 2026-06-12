@@ -2,5 +2,14 @@
     x:Class="SampleCrossUi.Wpf.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    StartupUri="MainWindow.xaml">
+    xmlns:vsl="clr-namespace:Dreamine.UI.Wpf.Localization;assembly=Dreamine.UI.Wpf"
+>
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Dreamine.UI.Wpf.Themes;component/DreamineThemes.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <vsl:StaticLocalizationProxy x:Key="LangProxy" />
+        </ResourceDictionary>
+    </Application.Resources>
 </Application>

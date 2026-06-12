@@ -1,0 +1,49 @@
+<UserControl
+    x:Class="SampleCrossUi.Wpf.Views.PopupView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ctrl="clr-namespace:Dreamine.UI.Wpf.Controls;assembly=Dreamine.UI.Wpf.Controls"
+    Background="#FF1A1A2E"
+    Foreground="White">
+
+    <StackPanel
+        VerticalAlignment="Center"
+        HorizontalAlignment="Center"
+        Width="360">
+
+        <ctrl:DreamineLabel
+            Content="Popup Demo"
+            FontSize="22" FontWeight="Bold"
+            Foreground="White"
+            HorizontalAlignment="Center" />
+
+        <ctrl:DreamineButton
+            Content="DreamineMessageBox (5s auto-close)"
+            Command="{Binding ShowMessageBoxCommand}"
+            Foreground="White"
+            Height="42" Margin="0,0,0,8" />
+
+        <ctrl:DreamineButton
+            Content="BlinkPopup — 완료 알림"
+            Command="{Binding ShowBlinkOkCommand}"
+            Foreground="White"
+            Height="42" Margin="0,0,0,8" />
+
+        <ctrl:DreamineButton
+            Content="BlinkPopup — 설비 ALARM (점멸)"
+            Command="{Binding ShowBlinkAlarmCommand}"
+            Foreground="White"
+            Height="42" Margin="0,0,0,16" />
+
+        <Border
+            Background="#FF0F3460"
+            CornerRadius="6"
+            Padding="12,8">
+            <StackPanel Orientation="Horizontal">
+                <ctrl:DreamineLabel Content="Last result:" Foreground="#FFAAAAAA" />
+                <ctrl:DreamineLabel Content="{Binding LastResult}" Foreground="#FF80CBC4" />
+            </StackPanel>
+        </Border>
+
+    </StackPanel>
+</UserControl>
