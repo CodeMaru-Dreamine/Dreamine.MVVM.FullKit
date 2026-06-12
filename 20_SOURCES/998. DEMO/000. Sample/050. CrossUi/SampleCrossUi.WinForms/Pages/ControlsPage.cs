@@ -136,403 +136,716 @@ public sealed class ControlsPage : UserControl
 
     private void InitializeComponent()
     {
-        // ── instantiate all ───────────────────────────────
-        _title            = new Label();
-        _tabs             = new DreamineTabControl();
-        _statusLabel      = new Label();
-        _layout           = new FlowLayoutPanel();
-
-        _tabButton        = new TabPage("Button");
-        _tabButtonFlow    = new FlowLayoutPanel();
-        _lblButtonCard    = new Label();
-        _btnClickMe       = new DreamineButton();
-        _lblClickCount    = new Label();
-
-        _tabCheckRadio     = new TabPage("CheckBox / Radio");
+        _title = new Label();
+        _tabs = new DreamineTabControl();
+        _tabButton = new TabPage();
+        _tabButtonFlow = new FlowLayoutPanel();
+        _lblButtonCard = new Label();
+        _btnClickMe = new DreamineButton();
+        _lblClickCount = new Label();
+        _tabCheckRadio = new TabPage();
         _tabCheckRadioFlow = new FlowLayoutPanel();
-        _lblCbCard         = new Label();
-        _cb1               = new DreamineCheckBox();
-        _cb2               = new DreamineCheckBox();
-        _cb3               = new DreamineCheckBox();
-        _lblRbCard         = new Label();
-        _radioPanel        = new Panel();
-        _rb1               = new DreamineRadioButton();
-        _rb2               = new DreamineRadioButton();
-        _rb3               = new DreamineRadioButton();
-
-        _tabLed     = new TabPage("CheckLed");
+        _lblCbCard = new Label();
+        _cb1 = new DreamineCheckBox();
+        _cb2 = new DreamineCheckBox();
+        _cb3 = new DreamineCheckBox();
+        _lblRbCard = new Label();
+        _radioPanel = new Panel();
+        _rb1 = new DreamineRadioButton();
+        _rb2 = new DreamineRadioButton();
+        _rb3 = new DreamineRadioButton();
+        _tabLed = new TabPage();
         _tabLedFlow = new FlowLayoutPanel();
         _lblLedCard = new Label();
-        _led        = new DreamineCheckLed();
-        _ledBtnRow  = new FlowLayoutPanel();
-        _btnToggle  = new DreamineButton();
-        _btnPulse   = new DreamineButton();
-
-        _tabText     = new TabPage("TextBox");
+        _led = new DreamineCheckLed();
+        _ledBtnRow = new FlowLayoutPanel();
+        _btnToggle = new DreamineButton();
+        _btnPulse = new DreamineButton();
+        _tabText = new TabPage();
         _tabTextFlow = new FlowLayoutPanel();
-        _lblTbCard   = new Label();
-        _tbRow       = new FlowLayoutPanel();
-        _tb          = new DreamineTextBox();
-        _btnClearTb  = new DreamineButton();
-        _lblPbCard   = new Label();
-        _pbRow       = new FlowLayoutPanel();
-        _pb          = new DreaminePasswordBox();
-        _btnClearPb  = new DreamineButton();
-
-        _tabCombo     = new TabPage("ComboBox");
+        _lblTbCard = new Label();
+        _tbRow = new FlowLayoutPanel();
+        _tb = new DreamineTextBox();
+        _btnClearTb = new DreamineButton();
+        _lblPbCard = new Label();
+        _pbRow = new FlowLayoutPanel();
+        _pb = new DreaminePasswordBox();
+        _btnClearPb = new DreamineButton();
+        _tabCombo = new TabPage();
         _tabComboFlow = new FlowLayoutPanel();
         _lblComboCard = new Label();
-        _combo        = new DreamineComboBox();
-        _lblSelected  = new Label();
-
-        _tabMisc     = new TabPage("Misc");
+        _combo = new DreamineComboBox();
+        _lblSelected = new Label();
+        _tabMisc = new TabPage();
         _tabMiscFlow = new FlowLayoutPanel();
-        _lblExpCard  = new Label();
-        _expander    = new DreamineExpander();
+        _lblExpCard = new Label();
+        _expander = new DreamineExpander();
         _lblExpInner = new Label();
-
+        _statusLabel = new Label();
+        _layout = new FlowLayoutPanel();
+        _tabs.SuspendLayout();
+        _tabButton.SuspendLayout();
+        _tabButtonFlow.SuspendLayout();
+        _tabCheckRadio.SuspendLayout();
+        _tabCheckRadioFlow.SuspendLayout();
+        _radioPanel.SuspendLayout();
+        _tabLed.SuspendLayout();
+        _tabLedFlow.SuspendLayout();
+        _ledBtnRow.SuspendLayout();
+        _tabText.SuspendLayout();
+        _tabTextFlow.SuspendLayout();
+        _tbRow.SuspendLayout();
+        _pbRow.SuspendLayout();
+        _tabCombo.SuspendLayout();
+        _tabComboFlow.SuspendLayout();
+        _tabMisc.SuspendLayout();
+        _tabMiscFlow.SuspendLayout();
+        _layout.SuspendLayout();
         SuspendLayout();
-
-        // ── _title ────────────────────────────────────────
-        _title.Text      = "Controls Showcase";
+        // 
+        // _title
+        // 
+        _title.AutoSize = true;
+        _title.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
         _title.ForeColor = Color.White;
-        _title.Font      = new Font("Segoe UI", 18f, FontStyle.Bold, GraphicsUnit.Point);
-        _title.AutoSize  = true;
-        _title.Margin    = new Padding(0, 0, 0, 8);
-        _title.Name      = "_title";
-
-        // ── _statusLabel ──────────────────────────────────
-        _statusLabel.Text      = "Status: —";
-        _statusLabel.ForeColor = DreamineTheme.TextSecondary;
-        _statusLabel.Font      = new Font("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point);
-        _statusLabel.AutoSize  = true;
-        _statusLabel.Name      = "_statusLabel";
-
-        // ══ Button tab ════════════════════════════════════
-        _tabButton.BackColor = DreamineTheme.AppBackground;
+        _title.Location = new Point(0, 0);
+        _title.Margin = new Padding(0, 0, 0, 8);
+        _title.Name = "_title";
+        _title.Size = new Size(228, 32);
+        _title.TabIndex = 0;
+        _title.Text = "Controls Showcase";
+        // 
+        // _tabs
+        // 
+        _tabs.Controls.Add(_tabButton);
+        _tabs.Controls.Add(_tabCheckRadio);
+        _tabs.Controls.Add(_tabLed);
+        _tabs.Controls.Add(_tabText);
+        _tabs.Controls.Add(_tabCombo);
+        _tabs.Controls.Add(_tabMisc);
+        _tabs.DrawMode = TabDrawMode.OwnerDrawFixed;
+        _tabs.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        _tabs.ItemSize = new Size(120, 36);
+        _tabs.Location = new Point(0, 40);
+        _tabs.Margin = new Padding(0, 0, 0, 8);
+        _tabs.Name = "_tabs";
+        _tabs.Padding = new Point(12, 6);
+        _tabs.SelectedIndex = 0;
+        _tabs.Size = new Size(680, 420);
+        _tabs.TabIndex = 1;
+        // 
+        // _tabButton
+        // 
+        _tabButton.BackColor = Color.FromArgb(26, 26, 46);
+        _tabButton.Controls.Add(_tabButtonFlow);
         _tabButton.ForeColor = Color.White;
-        _tabButton.Name      = "_tabButton";
-
-        _tabButtonFlow.Dock          = DockStyle.Fill;
-        _tabButtonFlow.FlowDirection = FlowDirection.TopDown;
-        _tabButtonFlow.WrapContents  = false;
-        _tabButtonFlow.Padding       = new Padding(16);
-        _tabButtonFlow.BackColor     = DreamineTheme.AppBackground;
-        _tabButtonFlow.Name          = "_tabButtonFlow";
-
-        _lblButtonCard.Text      = "DreamineButton";
-        _lblButtonCard.ForeColor = DreamineTheme.AccentBlue;
-        _lblButtonCard.Font      = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
-        _lblButtonCard.AutoSize  = true;
-        _lblButtonCard.Margin    = new Padding(0, 8, 0, 4);
-        _lblButtonCard.Name      = "_lblButtonCard";
-
-        _btnClickMe.Content = "Click Me";
-        _btnClickMe.Width   = 140;
-        _btnClickMe.Height  = 40;
-        _btnClickMe.Name    = "_btnClickMe";
-
-        _lblClickCount.Text      = "Clicks: 0";
-        _lblClickCount.ForeColor = DreamineTheme.TextPrimary;
-        _lblClickCount.Font      = new Font("Segoe UI", 11f, FontStyle.Regular, GraphicsUnit.Point);
-        _lblClickCount.AutoSize  = true;
-        _lblClickCount.Name      = "_lblClickCount";
-
+        _tabButton.Location = new Point(4, 40);
+        _tabButton.Name = "_tabButton";
+        _tabButton.Size = new Size(672, 376);
+        _tabButton.TabIndex = 0;
+        _tabButton.Text = "Button";
+        // 
+        // _tabButtonFlow
+        // 
+        _tabButtonFlow.BackColor = Color.FromArgb(26, 26, 46);
         _tabButtonFlow.Controls.Add(_lblButtonCard);
         _tabButtonFlow.Controls.Add(_btnClickMe);
         _tabButtonFlow.Controls.Add(_lblClickCount);
-        _tabButton.Controls.Add(_tabButtonFlow);
-
-        // ══ CheckBox/Radio tab ════════════════════════════
-        _tabCheckRadio.BackColor = DreamineTheme.AppBackground;
+        _tabButtonFlow.Dock = DockStyle.Fill;
+        _tabButtonFlow.FlowDirection = FlowDirection.TopDown;
+        _tabButtonFlow.Location = new Point(0, 0);
+        _tabButtonFlow.Name = "_tabButtonFlow";
+        _tabButtonFlow.Padding = new Padding(16);
+        _tabButtonFlow.Size = new Size(672, 376);
+        _tabButtonFlow.TabIndex = 0;
+        _tabButtonFlow.WrapContents = false;
+        // 
+        // _lblButtonCard
+        // 
+        _lblButtonCard.AutoSize = true;
+        _lblButtonCard.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        _lblButtonCard.ForeColor = Color.FromArgb(30, 144, 255);
+        _lblButtonCard.Location = new Point(16, 24);
+        _lblButtonCard.Margin = new Padding(0, 8, 0, 4);
+        _lblButtonCard.Name = "_lblButtonCard";
+        _lblButtonCard.Size = new Size(118, 19);
+        _lblButtonCard.TabIndex = 0;
+        _lblButtonCard.Text = "DreamineButton";
+        // 
+        // _btnClickMe
+        // 
+        _btnClickMe.BackColor = Color.FromArgb(13, 27, 62);
+        _btnClickMe.BorderColor = Color.FromArgb(45, 74, 110);
+        _btnClickMe.Command = null;
+        _btnClickMe.CommandParameter = null;
+        _btnClickMe.Content = "Click Me";
+        _btnClickMe.CornerRadius = 6;
+        _btnClickMe.Font = new Font("Segoe UI", 10F);
+        _btnClickMe.ForeColor = Color.White;
+        _btnClickMe.IsSelected = false;
+        _btnClickMe.Location = new Point(19, 50);
+        _btnClickMe.Name = "_btnClickMe";
+        _btnClickMe.ShineColor = Color.Empty;
+        _btnClickMe.Size = new Size(140, 40);
+        _btnClickMe.TabIndex = 1;
+        // 
+        // _lblClickCount
+        // 
+        _lblClickCount.AutoSize = true;
+        _lblClickCount.Font = new Font("Segoe UI", 11F);
+        _lblClickCount.ForeColor = Color.White;
+        _lblClickCount.Location = new Point(19, 93);
+        _lblClickCount.Name = "_lblClickCount";
+        _lblClickCount.Size = new Size(61, 20);
+        _lblClickCount.TabIndex = 2;
+        _lblClickCount.Text = "Clicks: 0";
+        // 
+        // _tabCheckRadio
+        // 
+        _tabCheckRadio.BackColor = Color.FromArgb(26, 26, 46);
+        _tabCheckRadio.Controls.Add(_tabCheckRadioFlow);
         _tabCheckRadio.ForeColor = Color.White;
-        _tabCheckRadio.Name      = "_tabCheckRadio";
-
-        _tabCheckRadioFlow.Dock          = DockStyle.Fill;
-        _tabCheckRadioFlow.FlowDirection = FlowDirection.TopDown;
-        _tabCheckRadioFlow.WrapContents  = false;
-        _tabCheckRadioFlow.Padding       = new Padding(16);
-        _tabCheckRadioFlow.BackColor     = DreamineTheme.AppBackground;
-        _tabCheckRadioFlow.Name          = "_tabCheckRadioFlow";
-
-        _lblCbCard.Text      = "DreamineCheckBox";
-        _lblCbCard.ForeColor = DreamineTheme.AccentBlue;
-        _lblCbCard.Font      = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
-        _lblCbCard.AutoSize  = true;
-        _lblCbCard.Margin    = new Padding(0, 8, 0, 4);
-        _lblCbCard.Name      = "_lblCbCard";
-
-        _cb1.Content = "Option 1";
-        _cb1.Width   = 180;
-        _cb1.Height  = 28;
-        _cb1.Name    = "_cb1";
-
-        _cb2.Content = "Option 2";
-        _cb2.Width   = 180;
-        _cb2.Height  = 28;
-        _cb2.Name    = "_cb2";
-
-        _cb3.Content = "Option 3";
-        _cb3.Width   = 180;
-        _cb3.Height  = 28;
-        _cb3.Name    = "_cb3";
-
-        _lblRbCard.Text      = "DreamineRadioButton";
-        _lblRbCard.ForeColor = DreamineTheme.AccentBlue;
-        _lblRbCard.Font      = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
-        _lblRbCard.AutoSize  = true;
-        _lblRbCard.Margin    = new Padding(0, 8, 0, 4);
-        _lblRbCard.Name      = "_lblRbCard";
-
-        _radioPanel.Width     = 500;
-        _radioPanel.Height    = 80;
-        _radioPanel.BackColor = DreamineTheme.CardBackground;
-        _radioPanel.Name      = "_radioPanel";
-
-        _rb1.Content   = "Option A";
-        _rb1.GroupName = "demo";
-        _rb1.Width     = 160;
-        _rb1.Height    = 28;
-        _rb1.Left      = 0;
-        _rb1.Name      = "_rb1";
-
-        _rb2.Content   = "Option B";
-        _rb2.GroupName = "demo";
-        _rb2.Width     = 160;
-        _rb2.Height    = 28;
-        _rb2.Left      = 160;
-        _rb2.Name      = "_rb2";
-
-        _rb3.Content   = "Option C";
-        _rb3.GroupName = "demo";
-        _rb3.Width     = 160;
-        _rb3.Height    = 28;
-        _rb3.Left      = 320;
-        _rb3.Name      = "_rb3";
-
-        _radioPanel.Controls.Add(_rb1);
-        _radioPanel.Controls.Add(_rb2);
-        _radioPanel.Controls.Add(_rb3);
-
+        _tabCheckRadio.Location = new Point(4, 40);
+        _tabCheckRadio.Name = "_tabCheckRadio";
+        _tabCheckRadio.Size = new Size(672, 376);
+        _tabCheckRadio.TabIndex = 1;
+        _tabCheckRadio.Text = "CheckBox / Radio";
+        // 
+        // _tabCheckRadioFlow
+        // 
+        _tabCheckRadioFlow.BackColor = Color.FromArgb(26, 26, 46);
         _tabCheckRadioFlow.Controls.Add(_lblCbCard);
         _tabCheckRadioFlow.Controls.Add(_cb1);
         _tabCheckRadioFlow.Controls.Add(_cb2);
         _tabCheckRadioFlow.Controls.Add(_cb3);
         _tabCheckRadioFlow.Controls.Add(_lblRbCard);
         _tabCheckRadioFlow.Controls.Add(_radioPanel);
-        _tabCheckRadio.Controls.Add(_tabCheckRadioFlow);
-
-        // ══ CheckLed tab ══════════════════════════════════
-        _tabLed.BackColor = DreamineTheme.AppBackground;
+        _tabCheckRadioFlow.Dock = DockStyle.Fill;
+        _tabCheckRadioFlow.FlowDirection = FlowDirection.TopDown;
+        _tabCheckRadioFlow.Location = new Point(0, 0);
+        _tabCheckRadioFlow.Name = "_tabCheckRadioFlow";
+        _tabCheckRadioFlow.Padding = new Padding(16);
+        _tabCheckRadioFlow.Size = new Size(672, 376);
+        _tabCheckRadioFlow.TabIndex = 0;
+        _tabCheckRadioFlow.WrapContents = false;
+        // 
+        // _lblCbCard
+        // 
+        _lblCbCard.AutoSize = true;
+        _lblCbCard.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        _lblCbCard.ForeColor = Color.FromArgb(30, 144, 255);
+        _lblCbCard.Location = new Point(16, 24);
+        _lblCbCard.Margin = new Padding(0, 8, 0, 4);
+        _lblCbCard.Name = "_lblCbCard";
+        _lblCbCard.Size = new Size(140, 19);
+        _lblCbCard.TabIndex = 0;
+        _lblCbCard.Text = "DreamineCheckBox";
+        // 
+        // _cb1
+        // 
+        _cb1.BackColor = Color.Transparent;
+        _cb1.Content = "Option 1";
+        _cb1.Font = new Font("Segoe UI", 10F);
+        _cb1.ForeColor = Color.White;
+        _cb1.IsChecked = false;
+        _cb1.Location = new Point(19, 50);
+        _cb1.Name = "_cb1";
+        _cb1.Size = new Size(180, 28);
+        _cb1.TabIndex = 1;
+        // 
+        // _cb2
+        // 
+        _cb2.BackColor = Color.Transparent;
+        _cb2.Content = "Option 2";
+        _cb2.Font = new Font("Segoe UI", 10F);
+        _cb2.ForeColor = Color.White;
+        _cb2.IsChecked = false;
+        _cb2.Location = new Point(19, 84);
+        _cb2.Name = "_cb2";
+        _cb2.Size = new Size(180, 28);
+        _cb2.TabIndex = 2;
+        // 
+        // _cb3
+        // 
+        _cb3.BackColor = Color.Transparent;
+        _cb3.Content = "Option 3";
+        _cb3.Font = new Font("Segoe UI", 10F);
+        _cb3.ForeColor = Color.White;
+        _cb3.IsChecked = false;
+        _cb3.Location = new Point(19, 118);
+        _cb3.Name = "_cb3";
+        _cb3.Size = new Size(180, 28);
+        _cb3.TabIndex = 3;
+        // 
+        // _lblRbCard
+        // 
+        _lblRbCard.AutoSize = true;
+        _lblRbCard.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        _lblRbCard.ForeColor = Color.FromArgb(30, 144, 255);
+        _lblRbCard.Location = new Point(16, 157);
+        _lblRbCard.Margin = new Padding(0, 8, 0, 4);
+        _lblRbCard.Name = "_lblRbCard";
+        _lblRbCard.Size = new Size(157, 19);
+        _lblRbCard.TabIndex = 4;
+        _lblRbCard.Text = "DreamineRadioButton";
+        // 
+        // _radioPanel
+        // 
+        _radioPanel.BackColor = Color.FromArgb(15, 30, 58);
+        _radioPanel.Controls.Add(_rb1);
+        _radioPanel.Controls.Add(_rb2);
+        _radioPanel.Controls.Add(_rb3);
+        _radioPanel.Location = new Point(19, 183);
+        _radioPanel.Name = "_radioPanel";
+        _radioPanel.Size = new Size(500, 80);
+        _radioPanel.TabIndex = 5;
+        // 
+        // _rb1
+        // 
+        _rb1.BackColor = Color.Transparent;
+        _rb1.Content = "Option A";
+        _rb1.Font = new Font("Segoe UI", 10F);
+        _rb1.ForeColor = Color.White;
+        _rb1.GroupName = "demo";
+        _rb1.IsChecked = false;
+        _rb1.Location = new Point(0, 0);
+        _rb1.Name = "_rb1";
+        _rb1.Size = new Size(160, 28);
+        _rb1.TabIndex = 0;
+        // 
+        // _rb2
+        // 
+        _rb2.BackColor = Color.Transparent;
+        _rb2.Content = "Option B";
+        _rb2.Font = new Font("Segoe UI", 10F);
+        _rb2.ForeColor = Color.White;
+        _rb2.GroupName = "demo";
+        _rb2.IsChecked = false;
+        _rb2.Location = new Point(160, 0);
+        _rb2.Name = "_rb2";
+        _rb2.Size = new Size(160, 28);
+        _rb2.TabIndex = 1;
+        // 
+        // _rb3
+        // 
+        _rb3.BackColor = Color.Transparent;
+        _rb3.Content = "Option C";
+        _rb3.Font = new Font("Segoe UI", 10F);
+        _rb3.ForeColor = Color.White;
+        _rb3.GroupName = "demo";
+        _rb3.IsChecked = false;
+        _rb3.Location = new Point(320, 0);
+        _rb3.Name = "_rb3";
+        _rb3.Size = new Size(160, 28);
+        _rb3.TabIndex = 2;
+        // 
+        // _tabLed
+        // 
+        _tabLed.BackColor = Color.FromArgb(26, 26, 46);
+        _tabLed.Controls.Add(_tabLedFlow);
         _tabLed.ForeColor = Color.White;
-        _tabLed.Name      = "_tabLed";
-
-        _tabLedFlow.Dock          = DockStyle.Fill;
-        _tabLedFlow.FlowDirection = FlowDirection.TopDown;
-        _tabLedFlow.WrapContents  = false;
-        _tabLedFlow.Padding       = new Padding(16);
-        _tabLedFlow.BackColor     = DreamineTheme.AppBackground;
-        _tabLedFlow.Name          = "_tabLedFlow";
-
-        _lblLedCard.Text      = "DreamineCheckLed";
-        _lblLedCard.ForeColor = DreamineTheme.AccentBlue;
-        _lblLedCard.Font      = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
-        _lblLedCard.AutoSize  = true;
-        _lblLedCard.Margin    = new Padding(0, 8, 0, 4);
-        _lblLedCard.Name      = "_lblLedCard";
-
-        _led.Width  = 60;
-        _led.Height = 60;
-        _led.Name   = "_led";
-
-        _btnToggle.Content = "Toggle ON/OFF";
-        _btnToggle.Width   = 160;
-        _btnToggle.Height  = 36;
-        _btnToggle.Margin  = new Padding(0, 0, 8, 0);
-        _btnToggle.Name    = "_btnToggle";
-
-        _btnPulse.Content = "Toggle Pulse";
-        _btnPulse.Width   = 140;
-        _btnPulse.Height  = 36;
-        _btnPulse.Name    = "_btnPulse";
-
-        _ledBtnRow.AutoSize      = true;
-        _ledBtnRow.FlowDirection = FlowDirection.LeftToRight;
-        _ledBtnRow.Name          = "_ledBtnRow";
-        _ledBtnRow.Controls.Add(_btnToggle);
-        _ledBtnRow.Controls.Add(_btnPulse);
-
+        _tabLed.Location = new Point(4, 40);
+        _tabLed.Name = "_tabLed";
+        _tabLed.Size = new Size(672, 376);
+        _tabLed.TabIndex = 2;
+        _tabLed.Text = "CheckLed";
+        // 
+        // _tabLedFlow
+        // 
+        _tabLedFlow.BackColor = Color.FromArgb(26, 26, 46);
         _tabLedFlow.Controls.Add(_lblLedCard);
         _tabLedFlow.Controls.Add(_led);
         _tabLedFlow.Controls.Add(_ledBtnRow);
-        _tabLed.Controls.Add(_tabLedFlow);
-
-        // ══ TextBox tab ═══════════════════════════════════
-        _tabText.BackColor = DreamineTheme.AppBackground;
+        _tabLedFlow.Dock = DockStyle.Fill;
+        _tabLedFlow.FlowDirection = FlowDirection.TopDown;
+        _tabLedFlow.Location = new Point(0, 0);
+        _tabLedFlow.Name = "_tabLedFlow";
+        _tabLedFlow.Padding = new Padding(16);
+        _tabLedFlow.Size = new Size(672, 376);
+        _tabLedFlow.TabIndex = 0;
+        _tabLedFlow.WrapContents = false;
+        // 
+        // _lblLedCard
+        // 
+        _lblLedCard.AutoSize = true;
+        _lblLedCard.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        _lblLedCard.ForeColor = Color.FromArgb(30, 144, 255);
+        _lblLedCard.Location = new Point(16, 24);
+        _lblLedCard.Margin = new Padding(0, 8, 0, 4);
+        _lblLedCard.Name = "_lblLedCard";
+        _lblLedCard.Size = new Size(138, 19);
+        _lblLedCard.TabIndex = 0;
+        _lblLedCard.Text = "DreamineCheckLed";
+        // 
+        // _led
+        // 
+        _led.BackColor = Color.Transparent;
+        _led.Corner = LedCorner.TopRight;
+        _led.Diameter = 16F;
+        _led.IsOn = true;
+        _led.IsPulse = false;
+        _led.Location = new Point(19, 50);
+        _led.Name = "_led";
+        _led.Size = new Size(60, 60);
+        _led.TabIndex = 1;
+        // 
+        // _ledBtnRow
+        // 
+        _ledBtnRow.AutoSize = true;
+        _ledBtnRow.Controls.Add(_btnToggle);
+        _ledBtnRow.Controls.Add(_btnPulse);
+        _ledBtnRow.Location = new Point(19, 116);
+        _ledBtnRow.Name = "_ledBtnRow";
+        _ledBtnRow.Size = new Size(314, 42);
+        _ledBtnRow.TabIndex = 2;
+        // 
+        // _btnToggle
+        // 
+        _btnToggle.BackColor = Color.FromArgb(13, 27, 62);
+        _btnToggle.BorderColor = Color.FromArgb(45, 74, 110);
+        _btnToggle.Command = null;
+        _btnToggle.CommandParameter = null;
+        _btnToggle.Content = "Toggle ON/OFF";
+        _btnToggle.CornerRadius = 6;
+        _btnToggle.Font = new Font("Segoe UI", 10F);
+        _btnToggle.ForeColor = Color.White;
+        _btnToggle.IsSelected = false;
+        _btnToggle.Location = new Point(0, 0);
+        _btnToggle.Margin = new Padding(0, 0, 8, 0);
+        _btnToggle.Name = "_btnToggle";
+        _btnToggle.ShineColor = Color.Empty;
+        _btnToggle.Size = new Size(160, 36);
+        _btnToggle.TabIndex = 0;
+        // 
+        // _btnPulse
+        // 
+        _btnPulse.BackColor = Color.FromArgb(13, 27, 62);
+        _btnPulse.BorderColor = Color.FromArgb(45, 74, 110);
+        _btnPulse.Command = null;
+        _btnPulse.CommandParameter = null;
+        _btnPulse.Content = "Toggle Pulse";
+        _btnPulse.CornerRadius = 6;
+        _btnPulse.Font = new Font("Segoe UI", 10F);
+        _btnPulse.ForeColor = Color.White;
+        _btnPulse.IsSelected = false;
+        _btnPulse.Location = new Point(171, 3);
+        _btnPulse.Name = "_btnPulse";
+        _btnPulse.ShineColor = Color.Empty;
+        _btnPulse.Size = new Size(140, 36);
+        _btnPulse.TabIndex = 1;
+        // 
+        // _tabText
+        // 
+        _tabText.BackColor = Color.FromArgb(26, 26, 46);
+        _tabText.Controls.Add(_tabTextFlow);
         _tabText.ForeColor = Color.White;
-        _tabText.Name      = "_tabText";
-
-        _tabTextFlow.Dock          = DockStyle.Fill;
-        _tabTextFlow.FlowDirection = FlowDirection.TopDown;
-        _tabTextFlow.WrapContents  = false;
-        _tabTextFlow.Padding       = new Padding(16);
-        _tabTextFlow.BackColor     = DreamineTheme.AppBackground;
-        _tabTextFlow.Name          = "_tabTextFlow";
-
-        _lblTbCard.Text      = "DreamineTextBox";
-        _lblTbCard.ForeColor = DreamineTheme.AccentBlue;
-        _lblTbCard.Font      = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
-        _lblTbCard.AutoSize  = true;
-        _lblTbCard.Margin    = new Padding(0, 8, 0, 4);
-        _lblTbCard.Name      = "_lblTbCard";
-
-        _tb.Hint   = "텍스트를 입력하세요…";
-        _tb.Width  = 360;
-        _tb.Height = 36;
-        _tb.Name   = "_tb";
-
-        _btnClearTb.Content = "Clear";
-        _btnClearTb.Width   = 80;
-        _btnClearTb.Height  = 36;
-        _btnClearTb.Margin  = new Padding(8, 0, 0, 0);
-        _btnClearTb.Name    = "_btnClearTb";
-
-        _tbRow.AutoSize      = true;
-        _tbRow.FlowDirection = FlowDirection.LeftToRight;
-        _tbRow.Name          = "_tbRow";
-        _tbRow.Controls.Add(_tb);
-        _tbRow.Controls.Add(_btnClearTb);
-
-        _lblPbCard.Text      = "DreaminePasswordBox";
-        _lblPbCard.ForeColor = DreamineTheme.AccentBlue;
-        _lblPbCard.Font      = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
-        _lblPbCard.AutoSize  = true;
-        _lblPbCard.Margin    = new Padding(0, 8, 0, 4);
-        _lblPbCard.Name      = "_lblPbCard";
-
-        _pb.Hint   = "비밀번호 입력…";
-        _pb.Width  = 360;
-        _pb.Height = 36;
-        _pb.Name   = "_pb";
-
-        _btnClearPb.Content = "Clear";
-        _btnClearPb.Width   = 80;
-        _btnClearPb.Height  = 36;
-        _btnClearPb.Margin  = new Padding(8, 0, 0, 0);
-        _btnClearPb.Name    = "_btnClearPb";
-
-        _pbRow.AutoSize      = true;
-        _pbRow.FlowDirection = FlowDirection.LeftToRight;
-        _pbRow.Name          = "_pbRow";
-        _pbRow.Controls.Add(_pb);
-        _pbRow.Controls.Add(_btnClearPb);
-
+        _tabText.Location = new Point(4, 40);
+        _tabText.Name = "_tabText";
+        _tabText.Size = new Size(672, 376);
+        _tabText.TabIndex = 3;
+        _tabText.Text = "TextBox";
+        // 
+        // _tabTextFlow
+        // 
+        _tabTextFlow.BackColor = Color.FromArgb(26, 26, 46);
         _tabTextFlow.Controls.Add(_lblTbCard);
         _tabTextFlow.Controls.Add(_tbRow);
         _tabTextFlow.Controls.Add(_lblPbCard);
         _tabTextFlow.Controls.Add(_pbRow);
-        _tabText.Controls.Add(_tabTextFlow);
-
-        // ══ ComboBox tab ══════════════════════════════════
-        _tabCombo.BackColor = DreamineTheme.AppBackground;
+        _tabTextFlow.Dock = DockStyle.Fill;
+        _tabTextFlow.FlowDirection = FlowDirection.TopDown;
+        _tabTextFlow.Location = new Point(0, 0);
+        _tabTextFlow.Name = "_tabTextFlow";
+        _tabTextFlow.Padding = new Padding(16);
+        _tabTextFlow.Size = new Size(672, 376);
+        _tabTextFlow.TabIndex = 0;
+        _tabTextFlow.WrapContents = false;
+        // 
+        // _lblTbCard
+        // 
+        _lblTbCard.AutoSize = true;
+        _lblTbCard.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        _lblTbCard.ForeColor = Color.FromArgb(30, 144, 255);
+        _lblTbCard.Location = new Point(16, 24);
+        _lblTbCard.Margin = new Padding(0, 8, 0, 4);
+        _lblTbCard.Name = "_lblTbCard";
+        _lblTbCard.Size = new Size(128, 19);
+        _lblTbCard.TabIndex = 0;
+        _lblTbCard.Text = "DreamineTextBox";
+        // 
+        // _tbRow
+        // 
+        _tbRow.AutoSize = true;
+        _tbRow.Controls.Add(_tb);
+        _tbRow.Controls.Add(_btnClearTb);
+        _tbRow.Location = new Point(19, 50);
+        _tbRow.Name = "_tbRow";
+        _tbRow.Size = new Size(454, 42);
+        _tbRow.TabIndex = 1;
+        // 
+        // _tb
+        // 
+        _tb.BackColor = Color.FromArgb(22, 32, 64);
+        _tb.Font = new Font("Segoe UI", 10F);
+        _tb.ForeColor = Color.White;
+        _tb.Hint = "텍스트를 입력하세요…";
+        _tb.IsReadOnly = false;
+        _tb.Location = new Point(3, 3);
+        _tb.Name = "_tb";
+        _tb.Padding = new Padding(2);
+        _tb.Size = new Size(360, 36);
+        _tb.TabIndex = 0;
+        // 
+        // _btnClearTb
+        // 
+        _btnClearTb.BackColor = Color.FromArgb(13, 27, 62);
+        _btnClearTb.BorderColor = Color.FromArgb(45, 74, 110);
+        _btnClearTb.Command = null;
+        _btnClearTb.CommandParameter = null;
+        _btnClearTb.Content = "Clear";
+        _btnClearTb.CornerRadius = 6;
+        _btnClearTb.Font = new Font("Segoe UI", 10F);
+        _btnClearTb.ForeColor = Color.White;
+        _btnClearTb.IsSelected = false;
+        _btnClearTb.Location = new Point(374, 0);
+        _btnClearTb.Margin = new Padding(8, 0, 0, 0);
+        _btnClearTb.Name = "_btnClearTb";
+        _btnClearTb.ShineColor = Color.Empty;
+        _btnClearTb.Size = new Size(80, 36);
+        _btnClearTb.TabIndex = 1;
+        // 
+        // _lblPbCard
+        // 
+        _lblPbCard.AutoSize = true;
+        _lblPbCard.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        _lblPbCard.ForeColor = Color.FromArgb(30, 144, 255);
+        _lblPbCard.Location = new Point(16, 103);
+        _lblPbCard.Margin = new Padding(0, 8, 0, 4);
+        _lblPbCard.Name = "_lblPbCard";
+        _lblPbCard.Size = new Size(164, 19);
+        _lblPbCard.TabIndex = 2;
+        _lblPbCard.Text = "DreaminePasswordBox";
+        // 
+        // _pbRow
+        // 
+        _pbRow.AutoSize = true;
+        _pbRow.Controls.Add(_pb);
+        _pbRow.Controls.Add(_btnClearPb);
+        _pbRow.Location = new Point(19, 129);
+        _pbRow.Name = "_pbRow";
+        _pbRow.Size = new Size(454, 42);
+        _pbRow.TabIndex = 3;
+        // 
+        // _pb
+        // 
+        _pb.BackColor = Color.FromArgb(22, 32, 64);
+        _pb.Font = new Font("Segoe UI", 10F);
+        _pb.ForeColor = Color.White;
+        _pb.Hint = "비밀번호 입력…";
+        _pb.Location = new Point(3, 3);
+        _pb.Name = "_pb";
+        _pb.Password = "";
+        _pb.Size = new Size(360, 36);
+        _pb.TabIndex = 0;
+        // 
+        // _btnClearPb
+        // 
+        _btnClearPb.BackColor = Color.FromArgb(13, 27, 62);
+        _btnClearPb.BorderColor = Color.FromArgb(45, 74, 110);
+        _btnClearPb.Command = null;
+        _btnClearPb.CommandParameter = null;
+        _btnClearPb.Content = "Clear";
+        _btnClearPb.CornerRadius = 6;
+        _btnClearPb.Font = new Font("Segoe UI", 10F);
+        _btnClearPb.ForeColor = Color.White;
+        _btnClearPb.IsSelected = false;
+        _btnClearPb.Location = new Point(374, 0);
+        _btnClearPb.Margin = new Padding(8, 0, 0, 0);
+        _btnClearPb.Name = "_btnClearPb";
+        _btnClearPb.ShineColor = Color.Empty;
+        _btnClearPb.Size = new Size(80, 36);
+        _btnClearPb.TabIndex = 1;
+        // 
+        // _tabCombo
+        // 
+        _tabCombo.BackColor = Color.FromArgb(26, 26, 46);
+        _tabCombo.Controls.Add(_tabComboFlow);
         _tabCombo.ForeColor = Color.White;
-        _tabCombo.Name      = "_tabCombo";
-
-        _tabComboFlow.Dock          = DockStyle.Fill;
-        _tabComboFlow.FlowDirection = FlowDirection.TopDown;
-        _tabComboFlow.WrapContents  = false;
-        _tabComboFlow.Padding       = new Padding(16);
-        _tabComboFlow.BackColor     = DreamineTheme.AppBackground;
-        _tabComboFlow.Name          = "_tabComboFlow";
-
-        _lblComboCard.Text      = "DreamineComboBox";
-        _lblComboCard.ForeColor = DreamineTheme.AccentBlue;
-        _lblComboCard.Font      = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
-        _lblComboCard.AutoSize  = true;
-        _lblComboCard.Margin    = new Padding(0, 8, 0, 4);
-        _lblComboCard.Name      = "_lblComboCard";
-
-        _combo.Width  = 240;
-        _combo.Height = 36;
-        _combo.Name   = "_combo";
-
-        _lblSelected.Text      = "Selected: —";
-        _lblSelected.ForeColor = DreamineTheme.TextPrimary;
-        _lblSelected.Font      = new Font("Segoe UI", 11f, FontStyle.Regular, GraphicsUnit.Point);
-        _lblSelected.AutoSize  = true;
-        _lblSelected.Name      = "_lblSelected";
-
+        _tabCombo.Location = new Point(4, 40);
+        _tabCombo.Name = "_tabCombo";
+        _tabCombo.Size = new Size(672, 376);
+        _tabCombo.TabIndex = 4;
+        _tabCombo.Text = "ComboBox";
+        // 
+        // _tabComboFlow
+        // 
+        _tabComboFlow.BackColor = Color.FromArgb(26, 26, 46);
         _tabComboFlow.Controls.Add(_lblComboCard);
         _tabComboFlow.Controls.Add(_combo);
         _tabComboFlow.Controls.Add(_lblSelected);
-        _tabCombo.Controls.Add(_tabComboFlow);
-
-        // ══ Misc tab ══════════════════════════════════════
-        _tabMisc.BackColor = DreamineTheme.AppBackground;
+        _tabComboFlow.Dock = DockStyle.Fill;
+        _tabComboFlow.FlowDirection = FlowDirection.TopDown;
+        _tabComboFlow.Location = new Point(0, 0);
+        _tabComboFlow.Name = "_tabComboFlow";
+        _tabComboFlow.Padding = new Padding(16);
+        _tabComboFlow.Size = new Size(672, 376);
+        _tabComboFlow.TabIndex = 0;
+        _tabComboFlow.WrapContents = false;
+        // 
+        // _lblComboCard
+        // 
+        _lblComboCard.AutoSize = true;
+        _lblComboCard.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        _lblComboCard.ForeColor = Color.FromArgb(30, 144, 255);
+        _lblComboCard.Location = new Point(16, 24);
+        _lblComboCard.Margin = new Padding(0, 8, 0, 4);
+        _lblComboCard.Name = "_lblComboCard";
+        _lblComboCard.Size = new Size(149, 19);
+        _lblComboCard.TabIndex = 0;
+        _lblComboCard.Text = "DreamineComboBox";
+        // 
+        // _combo
+        // 
+        _combo.BackColor = Color.FromArgb(22, 32, 64);
+        _combo.Font = new Font("Segoe UI", 10F);
+        _combo.ForeColor = Color.White;
+        _combo.Location = new Point(19, 50);
+        _combo.Name = "_combo";
+        _combo.SelectedIndex = -1;
+        _combo.SelectedItem = null;
+        _combo.Size = new Size(240, 36);
+        _combo.TabIndex = 1;
+        // 
+        // _lblSelected
+        // 
+        _lblSelected.AutoSize = true;
+        _lblSelected.Font = new Font("Segoe UI", 11F);
+        _lblSelected.ForeColor = Color.White;
+        _lblSelected.Location = new Point(19, 89);
+        _lblSelected.Name = "_lblSelected";
+        _lblSelected.Size = new Size(88, 20);
+        _lblSelected.TabIndex = 2;
+        _lblSelected.Text = "Selected: —";
+        // 
+        // _tabMisc
+        // 
+        _tabMisc.BackColor = Color.FromArgb(26, 26, 46);
+        _tabMisc.Controls.Add(_tabMiscFlow);
         _tabMisc.ForeColor = Color.White;
-        _tabMisc.Name      = "_tabMisc";
-
-        _tabMiscFlow.Dock          = DockStyle.Fill;
-        _tabMiscFlow.FlowDirection = FlowDirection.TopDown;
-        _tabMiscFlow.WrapContents  = false;
-        _tabMiscFlow.Padding       = new Padding(16);
-        _tabMiscFlow.BackColor     = DreamineTheme.AppBackground;
-        _tabMiscFlow.Name          = "_tabMiscFlow";
-
-        _lblExpCard.Text      = "DreamineExpander";
-        _lblExpCard.ForeColor = DreamineTheme.AccentBlue;
-        _lblExpCard.Font      = new Font("Segoe UI", 10f, FontStyle.Bold, GraphicsUnit.Point);
-        _lblExpCard.AutoSize  = true;
-        _lblExpCard.Margin    = new Padding(0, 8, 0, 4);
-        _lblExpCard.Name      = "_lblExpCard";
-
-        _expander.Header = "Expander 섹션";
-        _expander.Width  = 500;
-        _expander.Height = 120;
-        _expander.Name   = "_expander";
-
-        _lblExpInner.Text      = "이 안에 어떤 컨트롤이든 배치할 수 있습니다.";
-        _lblExpInner.ForeColor = DreamineTheme.TextPrimary;
-        _lblExpInner.Font      = new Font("Segoe UI", 9f, FontStyle.Regular, GraphicsUnit.Point);
-        _lblExpInner.AutoSize  = true;
-        _lblExpInner.Name      = "_lblExpInner";
-
-        _expander.Content.Controls.Add(_lblExpInner);
-
+        _tabMisc.Location = new Point(4, 40);
+        _tabMisc.Name = "_tabMisc";
+        _tabMisc.Size = new Size(672, 376);
+        _tabMisc.TabIndex = 5;
+        _tabMisc.Text = "Misc";
+        // 
+        // _tabMiscFlow
+        // 
+        _tabMiscFlow.BackColor = Color.FromArgb(26, 26, 46);
         _tabMiscFlow.Controls.Add(_lblExpCard);
         _tabMiscFlow.Controls.Add(_expander);
-        _tabMisc.Controls.Add(_tabMiscFlow);
-
-        // ══ _tabs ═════════════════════════════════════════
-        _tabs.Width  = 680;
-        _tabs.Height = 420;
-        _tabs.Margin = new Padding(0, 0, 0, 8);
-        _tabs.Name   = "_tabs";
-        _tabs.TabPages.Add(_tabButton);
-        _tabs.TabPages.Add(_tabCheckRadio);
-        _tabs.TabPages.Add(_tabLed);
-        _tabs.TabPages.Add(_tabText);
-        _tabs.TabPages.Add(_tabCombo);
-        _tabs.TabPages.Add(_tabMisc);
-
-        // ══ _layout ═══════════════════════════════════════
-        _layout.Dock          = DockStyle.Fill;
-        _layout.FlowDirection = FlowDirection.TopDown;
-        _layout.AutoSize      = true;
-        _layout.WrapContents  = false;
-        _layout.Name          = "_layout";
+        _tabMiscFlow.Dock = DockStyle.Fill;
+        _tabMiscFlow.FlowDirection = FlowDirection.TopDown;
+        _tabMiscFlow.Location = new Point(0, 0);
+        _tabMiscFlow.Name = "_tabMiscFlow";
+        _tabMiscFlow.Padding = new Padding(16);
+        _tabMiscFlow.Size = new Size(672, 376);
+        _tabMiscFlow.TabIndex = 0;
+        _tabMiscFlow.WrapContents = false;
+        // 
+        // _lblExpCard
+        // 
+        _lblExpCard.AutoSize = true;
+        _lblExpCard.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+        _lblExpCard.ForeColor = Color.FromArgb(30, 144, 255);
+        _lblExpCard.Location = new Point(16, 24);
+        _lblExpCard.Margin = new Padding(0, 8, 0, 4);
+        _lblExpCard.Name = "_lblExpCard";
+        _lblExpCard.Size = new Size(137, 19);
+        _lblExpCard.TabIndex = 0;
+        _lblExpCard.Text = "DreamineExpander";
+        // 
+        // _expander
+        // 
+        _expander.BackColor = Color.FromArgb(15, 30, 58);
+        _expander.Font = new Font("Segoe UI", 10F);
+        _expander.ForeColor = Color.White;
+        _expander.Header = "Expander 섹션";
+        _expander.IsExpanded = true;
+        _expander.Location = new Point(19, 50);
+        _expander.Name = "_expander";
+        _expander.Size = new Size(500, 120);
+        _expander.TabIndex = 1;
+        // 
+        // _lblExpInner
+        // 
+        _lblExpInner.AutoSize = true;
+        _lblExpInner.Font = new Font("Segoe UI", 9F);
+        _lblExpInner.ForeColor = Color.White;
+        _lblExpInner.Location = new Point(0, 0);
+        _lblExpInner.Name = "_lblExpInner";
+        _lblExpInner.Size = new Size(244, 15);
+        _lblExpInner.TabIndex = 0;
+        _lblExpInner.Text = "이 안에 어떤 컨트롤이든 배치할 수 있습니다.";
+        // 
+        // _statusLabel
+        // 
+        _statusLabel.AutoSize = true;
+        _statusLabel.Font = new Font("Segoe UI", 9F);
+        _statusLabel.ForeColor = Color.FromArgb(136, 153, 170);
+        _statusLabel.Location = new Point(3, 468);
+        _statusLabel.Name = "_statusLabel";
+        _statusLabel.Size = new Size(57, 15);
+        _statusLabel.TabIndex = 2;
+        _statusLabel.Text = "Status: —";
+        // 
+        // _layout
+        // 
+        _layout.AutoSize = true;
         _layout.Controls.Add(_title);
         _layout.Controls.Add(_tabs);
         _layout.Controls.Add(_statusLabel);
-
-        // ══ UserControl ═══════════════════════════════════
-        BackColor = DreamineTheme.AppBackground;
-        Dock      = DockStyle.Fill;
-        Padding   = new Padding(16);
-        Name      = "ControlsPage";
+        _layout.Dock = DockStyle.Fill;
+        _layout.FlowDirection = FlowDirection.TopDown;
+        _layout.Location = new Point(16, 16);
+        _layout.Name = "_layout";
+        _layout.Size = new Size(1149, 1241);
+        _layout.TabIndex = 0;
+        _layout.WrapContents = false;
+        // 
+        // ControlsPage
+        // 
+        BackColor = Color.FromArgb(26, 26, 46);
         Controls.Add(_layout);
-
+        Name = "ControlsPage";
+        Padding = new Padding(16);
+        Size = new Size(1181, 1273);
+        _tabs.ResumeLayout(false);
+        _tabButton.ResumeLayout(false);
+        _tabButtonFlow.ResumeLayout(false);
+        _tabButtonFlow.PerformLayout();
+        _tabCheckRadio.ResumeLayout(false);
+        _tabCheckRadioFlow.ResumeLayout(false);
+        _tabCheckRadioFlow.PerformLayout();
+        _radioPanel.ResumeLayout(false);
+        _tabLed.ResumeLayout(false);
+        _tabLedFlow.ResumeLayout(false);
+        _tabLedFlow.PerformLayout();
+        _ledBtnRow.ResumeLayout(false);
+        _tabText.ResumeLayout(false);
+        _tabTextFlow.ResumeLayout(false);
+        _tabTextFlow.PerformLayout();
+        _tbRow.ResumeLayout(false);
+        _pbRow.ResumeLayout(false);
+        _tabCombo.ResumeLayout(false);
+        _tabComboFlow.ResumeLayout(false);
+        _tabComboFlow.PerformLayout();
+        _tabMisc.ResumeLayout(false);
+        _tabMiscFlow.ResumeLayout(false);
+        _tabMiscFlow.PerformLayout();
+        _layout.ResumeLayout(false);
+        _layout.PerformLayout();
         ResumeLayout(false);
+        PerformLayout();
     }
 
     protected override void Dispose(bool disposing)

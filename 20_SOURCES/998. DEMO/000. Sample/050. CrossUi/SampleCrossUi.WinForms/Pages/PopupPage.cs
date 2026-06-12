@@ -48,75 +48,139 @@ public sealed class PopupPage : UserControl
 
     private void InitializeComponent()
     {
-        _title       = new Label();
+        _title = new Label();
         _resultLabel = new Label();
-        _btnMsgBox   = new DreamineButton();
-        _btnInfo     = new DreamineButton();
-        _btnWarn     = new DreamineButton();
-        _btnError    = new DreamineButton();
-        _layout      = new FlowLayoutPanel();
-
+        _btnMsgBox = new DreamineButton();
+        _btnInfo = new DreamineButton();
+        _btnWarn = new DreamineButton();
+        _btnError = new DreamineButton();
+        _layout = new FlowLayoutPanel();
+        _layout.SuspendLayout();
         SuspendLayout();
-
+        // 
         // _title
-        _title.Text      = "Popup Demo";
+        // 
+        _title.AutoSize = true;
+        _title.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
         _title.ForeColor = Color.White;
-        _title.Font      = new Font("Segoe UI", 18f, FontStyle.Bold, GraphicsUnit.Point);
-        _title.AutoSize  = true;
-        _title.Margin    = new Padding(0, 0, 0, 24);
-
+        _title.Location = new Point(0, 0);
+        _title.Margin = new Padding(0, 0, 0, 24);
+        _title.Name = "_title";
+        _title.Size = new Size(163, 32);
+        _title.TabIndex = 0;
+        _title.Text = "Popup Demo";
+        // 
         // _resultLabel
-        _resultLabel.Text      = "Last result: —";
-        _resultLabel.ForeColor = DreamineTheme.TextSecondary;
-        _resultLabel.Font      = new Font("Segoe UI", 10f, FontStyle.Regular, GraphicsUnit.Point);
-        _resultLabel.AutoSize  = true;
-        _resultLabel.Margin    = new Padding(0, 16, 0, 0);
-
-        // buttons
+        // 
+        _resultLabel.AutoSize = true;
+        _resultLabel.Font = new Font("Segoe UI", 10F);
+        _resultLabel.ForeColor = Color.FromArgb(136, 153, 170);
+        _resultLabel.Location = new Point(0, 264);
+        _resultLabel.Margin = new Padding(0, 16, 0, 0);
+        _resultLabel.Name = "_resultLabel";
+        _resultLabel.Size = new Size(93, 19);
+        _resultLabel.TabIndex = 5;
+        _resultLabel.Text = "Last result: —";
+        // 
+        // _btnMsgBox
+        // 
+        _btnMsgBox.BackColor = Color.FromArgb(13, 27, 62);
+        _btnMsgBox.BorderColor = Color.FromArgb(45, 74, 110);
+        _btnMsgBox.Command = null;
+        _btnMsgBox.CommandParameter = null;
         _btnMsgBox.Content = "Show MessageBox";
-        _btnInfo.Content   = "Show Info Dialog";
-        _btnWarn.Content   = "Show Warning";
-        _btnError.Content  = "Show Error";
-
-        _btnMsgBox.Width  = 200;
-        _btnMsgBox.Height = 40;
+        _btnMsgBox.CornerRadius = 6;
+        _btnMsgBox.Font = new Font("Segoe UI", 10F);
+        _btnMsgBox.ForeColor = Color.White;
+        _btnMsgBox.IsSelected = false;
+        _btnMsgBox.Location = new Point(0, 56);
         _btnMsgBox.Margin = new Padding(0, 0, 0, 8);
-        _btnMsgBox.Name   = "_btnMsgBox";
-
-        _btnInfo.Width  = 200;
-        _btnInfo.Height = 40;
+        _btnMsgBox.Name = "_btnMsgBox";
+        _btnMsgBox.ShineColor = Color.Empty;
+        _btnMsgBox.Size = new Size(200, 40);
+        _btnMsgBox.TabIndex = 1;
+        // 
+        // _btnInfo
+        // 
+        _btnInfo.BackColor = Color.FromArgb(13, 27, 62);
+        _btnInfo.BorderColor = Color.FromArgb(45, 74, 110);
+        _btnInfo.Command = null;
+        _btnInfo.CommandParameter = null;
+        _btnInfo.Content = "Show Info Dialog";
+        _btnInfo.CornerRadius = 6;
+        _btnInfo.Font = new Font("Segoe UI", 10F);
+        _btnInfo.ForeColor = Color.White;
+        _btnInfo.IsSelected = false;
+        _btnInfo.Location = new Point(0, 104);
         _btnInfo.Margin = new Padding(0, 0, 0, 8);
-        _btnInfo.Name   = "_btnInfo";
-
-        _btnWarn.Width  = 200;
-        _btnWarn.Height = 40;
+        _btnInfo.Name = "_btnInfo";
+        _btnInfo.ShineColor = Color.Empty;
+        _btnInfo.Size = new Size(200, 40);
+        _btnInfo.TabIndex = 2;
+        // 
+        // _btnWarn
+        // 
+        _btnWarn.BackColor = Color.FromArgb(13, 27, 62);
+        _btnWarn.BorderColor = Color.FromArgb(45, 74, 110);
+        _btnWarn.Command = null;
+        _btnWarn.CommandParameter = null;
+        _btnWarn.Content = "Show Warning";
+        _btnWarn.CornerRadius = 6;
+        _btnWarn.Font = new Font("Segoe UI", 10F);
+        _btnWarn.ForeColor = Color.White;
+        _btnWarn.IsSelected = false;
+        _btnWarn.Location = new Point(0, 152);
         _btnWarn.Margin = new Padding(0, 0, 0, 8);
-        _btnWarn.Name   = "_btnWarn";
-
-        _btnError.Width  = 200;
-        _btnError.Height = 40;
+        _btnWarn.Name = "_btnWarn";
+        _btnWarn.ShineColor = Color.Empty;
+        _btnWarn.Size = new Size(200, 40);
+        _btnWarn.TabIndex = 3;
+        // 
+        // _btnError
+        // 
+        _btnError.BackColor = Color.FromArgb(13, 27, 62);
+        _btnError.BorderColor = Color.FromArgb(45, 74, 110);
+        _btnError.Command = null;
+        _btnError.CommandParameter = null;
+        _btnError.Content = "Show Error";
+        _btnError.CornerRadius = 6;
+        _btnError.Font = new Font("Segoe UI", 10F);
+        _btnError.ForeColor = Color.White;
+        _btnError.IsSelected = false;
+        _btnError.Location = new Point(0, 200);
         _btnError.Margin = new Padding(0, 0, 0, 8);
-        _btnError.Name   = "_btnError";
-
+        _btnError.Name = "_btnError";
+        _btnError.ShineColor = Color.Empty;
+        _btnError.Size = new Size(200, 40);
+        _btnError.TabIndex = 4;
+        // 
         // _layout
-        _layout.Dock          = DockStyle.Fill;
-        _layout.FlowDirection = FlowDirection.TopDown;
-        _layout.AutoSize      = true;
-        _layout.WrapContents  = false;
+        // 
+        _layout.AutoSize = true;
         _layout.Controls.Add(_title);
         _layout.Controls.Add(_btnMsgBox);
         _layout.Controls.Add(_btnInfo);
         _layout.Controls.Add(_btnWarn);
         _layout.Controls.Add(_btnError);
         _layout.Controls.Add(_resultLabel);
-
-        // UserControl
-        BackColor = DreamineTheme.AppBackground;
-        Dock      = DockStyle.Fill;
-        Padding   = new Padding(24);
-        Name      = "PopupPage";
+        _layout.Dock = DockStyle.Fill;
+        _layout.FlowDirection = FlowDirection.TopDown;
+        _layout.Location = new Point(24, 24);
+        _layout.Name = "_layout";
+        _layout.Size = new Size(1133, 1225);
+        _layout.TabIndex = 0;
+        _layout.WrapContents = false;
+        // 
+        // PopupPage
+        // 
+        BackColor = Color.FromArgb(26, 26, 46);
         Controls.Add(_layout);
-
+        Name = "PopupPage";
+        Padding = new Padding(24);
+        Size = new Size(1181, 1273);
+        _layout.ResumeLayout(false);
+        _layout.PerformLayout();
         ResumeLayout(false);
+        PerformLayout();
     }
 }
