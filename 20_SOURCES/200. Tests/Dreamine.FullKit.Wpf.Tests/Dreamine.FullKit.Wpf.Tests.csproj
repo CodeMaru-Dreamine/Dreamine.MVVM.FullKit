@@ -29,6 +29,10 @@
 		<ProjectReference Include="..\..\100. Library\Threading.Windows\Dreamine.Threading.Windows.csproj" />
 		<ProjectReference Include="..\..\100. Library\Threading.Wpf\Dreamine.Threading.Wpf.csproj" />
 		<ProjectReference Include="..\..\100. Library\Wpf\Dreamine.MVVM.Wpf.csproj" />
+		<ProjectReference Include="..\..\100. Library\UI.Abstractions\Dreamine.UI.Abstractions.csproj" />
+		<ProjectReference Include="..\..\100. Library\UI.Wpf\Dreamine.UI.Wpf.csproj" />
+		<ProjectReference Include="..\..\100. Library\UI.Wpf.Controls\Dreamine.UI.Wpf.Controls.csproj" />
+		<ProjectReference Include="..\..\100. Library\UI.Wpf.Equipment\Dreamine.UI.Wpf.Equipment.csproj" />
 	</ItemGroup>
 
 </Project>
