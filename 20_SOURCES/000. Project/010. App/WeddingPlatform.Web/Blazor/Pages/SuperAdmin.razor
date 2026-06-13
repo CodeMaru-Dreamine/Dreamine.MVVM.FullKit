@@ -1,0 +1,220 @@
+@page "/admin"
+@layout WeddingPlatform.Blazor.Layout.WeddingLayout
+@namespace WeddingPlatform.Blazor.Pages
+@rendermode InteractiveServer
+
+@using WeddingPlatform.Models
+@inject WeddingSuperAdminViewModel Vm
+
+<PageTitle>Wedding 통합 어드민</PageTitle>
+
+<div class="w-admin">
+    <div class="w-sa-header">
+        <h1 class="w-admin__title">💒 Wedding 통합 어드민</h1>
+        <p class="w-sa-subtitle">등록된 커플 계정을 관리하고 새 청첩장을 만듭니다.</p>
+    </div>
+
+    @if (!Vm.IsAuthenticated)
+    {
+        <div class="w-admin__login w-panel">
+            <h2>슈퍼 어드민 로그인</h2>
+            <p class="w-sa-hint">appsettings.json → Wedding:SuperAdminPassword</p>
+            <input class="w-input" type="password" placeholder="어드민 비밀번호"
+                   @bind="Vm.LoginPassword"
+                   @onkeydown="OnLoginKeyDown" />
+            <button class="w-btn w-btn--primary" @onclick="OnLogin">로그인</button>
+            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            {
+                <p class="w-status w-status--error">@Vm.StatusMessage</p>
+            }
+        </div>
+    }
+    else if (!Vm.IsLoaded)
+    {
+        <div class="w-loading"><div class="w-spinner"></div></div>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+        {
+            <p class="w-status @(Vm.StatusMessage.StartsWith("✅") ? "" : "w-status--error")">
+                @Vm.StatusMessage
+            </p>
+        }
+
+        <section class="w-admin__section w-sa-create">
+            <h2>➕ 새 청첩장 만들기</h2>
+
+            <div class="w-sa-form">
+                <div class="w-sa-field">
+                    <label class="w-label">슬러그 (URL ID)</label>
+                    <input class="w-input" placeholder="예: gildong-sunja (영문·숫자·하이픈)"
+                           @bind="Vm.NewSlug" />
+                    @if (!string.IsNullOrWhiteSpace(Vm.NewSlug))
+                    {
+                        <span class="w-sa-preview">
+                            → /@Vm.NewSlug.Trim().ToLowerInvariant()
+                        </span>
+                    }
+                </div>
+
+                <div class="w-sa-field">
+                    <label class="w-label">커플 이름</label>
+                    <input class="w-input" placeholder="예: 홍길동 ♥ 성춘향"
+                           @bind="Vm.NewCoupleName" />
+                </div>
+
+                <div class="w-sa-field">
+                    <label class="w-label">결혼 날짜</label>
+                    <input class="w-input" type="date" @bind="Vm.NewWeddingDate" />
+                </div>
+
+                <div class="w-sa-field">
+                    <label class="w-label">커플 어드민 비밀번호</label>
+                    <input class="w-input" type="password" placeholder="커플이 어드민 접속 시 사용"
+                           @bind="Vm.NewPassword" />
+                </div>
+
+                <button class="w-btn w-btn--primary w-sa-create-btn" @onclick="OnCreate">
+                    청첩장 생성
+                </button>
+            </div>
+        </section>
+
+        <section class="w-admin__section">
+            <h2>📋 등록된 커플 (@Vm.Tenants.Count 쌍)</h2>
+
+            @if (Vm.Tenants.Count == 0)
+            {
+                <p class="w-sa-empty">등록된 청첩장이 없습니다. 위에서 새로 만들어보세요.</p>
+            }
+            else
+            {
+                <div class="w-sa-table">
+                    <div class="w-sa-table__head">
+                        <span>슬러그</span>
+                        <span>커플 이름</span>
+                        <span>결혼일</span>
+                        <span>모드</span>
+                        <span>사진</span>
+                        <span>메인 노출</span>
+                        <span>링크</span>
+                        <span></span>
+                    </div>
+                    @foreach (var t in Vm.Tenants)
+                    {
+                        var displayKey = t.Slug;
+                        <div class="w-sa-table__row">
+                            <span class="w-sa-slug">@t.Slug</span>
+                            <span>@t.CoupleName</span>
+                            <span>@t.WeddingDate.ToString("yyyy-MM-dd")</span>
+                            <span class="w-sa-mode w-sa-mode--@t.Mode.ToString().ToLower()">
+                                @(t.Mode switch
+                                {
+                                    WeddingSiteMode.Invite => "청첩장",
+                                    WeddingSiteMode.ThankYou => "감사장",
+                                    _ => "둘 다"
+                                })
+                            </span>
+                            <span>@t.GalleryFileNames.Count 장</span>
+                            <span class="w-sa-display">
+                                <label class="w-sa-check">
+                                    <input type="checkbox" checked="@t.ShowOnHome"
+                                           @onchange="e => OnShowOnHomeChange(t, e)" />
+                                    노출
+                                </label>
+                                @if (t.ShowOnHome)
+                                {
+                                    <label class="w-sa-pin-label">
+                                        📌
+                                        <input type="number" class="w-sa-pin-input" min="0" max="99"
+                                               value="@t.PinOrder"
+                                               @onchange="e => OnPinOrderChange(t, e)"
+                                               title="고정 순서 (1=최우선, 0=자동)" />
+                                    </label>
+                                }
+                            </span>
+                            <span class="w-sa-links">
+                                <a href="/@t.Slug" target="_blank" class="w-btn w-btn--sm">청첩장</a>
+                                @if (t.Mode == WeddingSiteMode.ThankYou || t.Mode == WeddingSiteMode.Both)
+                                {
+                                    <a href="/@t.Slug/thankyou" target="_blank" class="w-btn w-btn--sm">감사장</a>
+                                }
+                                <a href="/@t.Slug/admin" target="_blank" class="w-btn w-btn--sm">어드민</a>
+                            </span>
+                            <span>
+                                @if (_confirmSlug == t.Slug)
+                                {
+                                    <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => OnDeleteConfirmed(t.Slug)">확인</button>
+                                    <button class="w-btn w-btn--sm" @onclick="() => _confirmSlug = null">취소</button>
+                                }
+                                else
+                                {
+                                    <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => _confirmSlug = t.Slug">삭제</button>
+                                }
+                            </span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <div class="w-sa-refresh">
+            <button class="w-btn" @onclick="OnRefresh">🔄 새로고침</button>
+        </div>
+    }
+</div>
+
+@code {
+    private string? _confirmSlug;
+
+    protected override void OnInitialized() { }
+
+    private async Task OnLogin()
+    {
+        if (await Vm.LoginAsync())
+            await Vm.LoadAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnLoginKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await OnLogin();
+    }
+
+    private async Task OnCreate()
+    {
+        await Vm.CreateTenantAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnShowOnHomeChange(TenantConfig t, ChangeEventArgs e)
+    {
+        t.ShowOnHome = (bool)(e.Value ?? false);
+        await Vm.SetDisplayAsync(t.Slug, t.ShowOnHome, t.PinOrder);
+        StateHasChanged();
+    }
+
+    private async Task OnPinOrderChange(TenantConfig t, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var order))
+        {
+            t.PinOrder = Math.Max(0, order);
+            await Vm.SetDisplayAsync(t.Slug, t.ShowOnHome, t.PinOrder);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnDeleteConfirmed(string slug)
+    {
+        _confirmSlug = null;
+        await Vm.DeleteTenantAsync(slug);
+        StateHasChanged();
+    }
+
+    private async Task OnRefresh()
+    {
+        await Vm.LoadAsync();
+        StateHasChanged();
+    }
+}

@@ -1,0 +1,483 @@
+@page "/{Slug}"
+@layout WeddingPlatform.Blazor.Layout.WeddingLayout
+@namespace WeddingPlatform.Blazor.Pages
+@rendermode InteractiveServer
+
+@using Microsoft.JSInterop
+@using WeddingPlatform.Models
+@inject WeddingInvitationViewModel Vm
+@inject WeddingGuestbookViewModel VmGuest
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@implements IAsyncDisposable
+
+<PageTitle>@Vm.OgTitle</PageTitle>
+
+<HeadContent>
+    @if (Vm.IsLoaded && !Vm.NotFound)
+    {
+        var pageUrl = Nav.Uri;
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="@pageUrl" />
+        <meta property="og:title" content="@Vm.OgTitle" />
+        <meta property="og:description" content="@Vm.OgDescription" />
+        @if (!string.IsNullOrWhiteSpace(Vm.OgImageUrl))
+        {
+            <meta property="og:image" content="@(Nav.BaseUri.TrimEnd('/') + Vm.OgImageUrl)" />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+        }
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="@Vm.OgTitle" />
+        <meta name="twitter:description" content="@Vm.OgDescription" />
+        @if (!string.IsNullOrWhiteSpace(Vm.OgImageUrl))
+        {
+            <meta name="twitter:image" content="@(Nav.BaseUri.TrimEnd('/') + Vm.OgImageUrl)" />
+        }
+        <meta name="description" content="@Vm.OgDescription" />
+    }
+</HeadContent>
+
+@if (!Vm.IsLoaded)
+{
+    <div class="w-loading"><div class="w-spinner"></div></div>
+}
+else if (Vm.NotFound)
+{
+    <div class="w-notfound">
+        <h1>404</h1>
+        <p>청첩장을 찾을 수 없습니다.</p>
+        <a href="/">홈으로</a>
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(Vm.MusicUrl))
+    {
+        <div class="w-music-bar">
+            <audio @ref="audioRef" src="@Vm.MusicUrl" loop preload="auto"></audio>
+            <button class="w-music-btn" @onclick="ToggleMusic" title="@(isMusicPlaying ? "음악 끄기" : "음악 켜기")">
+                @(isMusicPlaying ? "⏸" : "🎵")
+            </button>
+            <span class="w-music-label">@(isMusicPlaying ? "재생 중" : "음악 켜기")</span>
+        </div>
+    }
+
+    <!-- ══ 히어로 ══════════════════════════════════════════════ -->
+    <section class="w-hero" role="banner">
+        @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
+        {
+            <div class="w-hero__bg" style="background-image:url('@Vm.HeroImageUrl')"></div>
+        }
+        else
+        {
+            <div class="w-hero__bg w-hero__bg--default"></div>
+        }
+        <div class="w-hero__overlay"></div>
+        <div class="w-hero__content">
+            <div class="w-hero__top w-panel">
+                <h1 class="w-hero__title">@Vm.HeroTitle</h1>
+                <p class="w-hero__names">@Vm.CoupleName</p>
+                <p class="w-hero__date">@Vm.WeddingDate.ToString("yyyy년 MM월 dd일") @Vm.WeddingTime</p>
+            </div>
+            <div class="w-hero__bottom w-panel">
+                <p class="w-hero__venue">@Vm.VenueName</p>
+                <p class="w-hero__addr">@Vm.VenueAddress</p>
+                <div class="w-hero__cta">
+                    <button class="w-btn w-btn--gb" @onclick="ScrollToGuestbook">✍ 방명록 쓰기</button>
+                    @if (Vm.ShowThankYouLink && !string.IsNullOrWhiteSpace(Vm.ThankYouUrl))
+                    {
+                        <a href="@Vm.ThankYouUrl" class="w-btn w-btn--primary">Thank You 페이지</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ══ 스토리 ══════════════════════════════════════════════ -->
+    @if (!string.IsNullOrWhiteSpace(Vm.Story))
+    {
+        <section class="w-story">
+            <h2 class="w-section-title">우리 이야기</h2>
+            <p>@Vm.Story</p>
+            @if (!string.IsNullOrWhiteSpace(Vm.Story2))
+            {
+                <hr class="w-divider" />
+                <p>@Vm.Story2</p>
+            }
+        </section>
+    }
+
+    <!-- ══ 예식 안내 / 감사 인사 ════════════════════════════════════ -->
+    <section class="w-details">
+        @if (Vm.Mode == WeddingSiteMode.ThankYou)
+        {
+            <h2 class="w-section-title" id="details">감사 인사</h2>
+        }
+        else
+        {
+            <h2 class="w-section-title" id="details">예식 안내</h2>
+            <ul class="w-info-list">
+                <li><strong>일시</strong>@Vm.WeddingDate.ToString("yyyy년 MM월 dd일 (ddd)") @Vm.WeddingTime</li>
+                <li><strong>장소</strong>@Vm.VenueName</li>
+                <li><strong>주소</strong>@Vm.VenueAddress</li>
+            </ul>
+
+            <div class="w-tabs" role="tablist">
+                <button class="w-tab @Vm.TabClass("map")" role="tab" @onclick="Vm.SetMap">지도</button>
+                <button class="w-tab @Vm.TabClass("road")" role="tab" @onclick="Vm.SetRoad">약도</button>
+            </div>
+            @if (Vm.SelectedTab == "map")
+            {
+                @if (Vm.HasVenueCoords)
+                {
+                    <div id="w-leaflet-map" class="w-osm__frame" data-lat="@Vm.VenueLat.ToString("F6")" data-lng="@Vm.VenueLng.ToString("F6")" data-name="@Vm.VenueName"></div>
+                }
+                <div class="w-map-links">
+                    @if (!string.IsNullOrWhiteSpace(Vm.MapLinkKakao))
+                    {
+                        <a href="@Vm.MapLinkKakao" target="_blank" class="w-map-btn w-map-btn--kakao">카카오맵</a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Vm.MapLinkNaver))
+                    {
+                        <a href="@Vm.MapLinkNaver" target="_blank" class="w-map-btn w-map-btn--naver">네이버지도</a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Vm.MapLinkAtlan))
+                    {
+                        <a href="@Vm.MapLinkAtlan" target="_blank" class="w-map-btn w-map-btn--atlan">아틀란</a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Vm.MapLinkTmap))
+                    {
+                        <a href="@Vm.MapLinkTmap" target="_blank" class="w-map-btn w-map-btn--tmap">T맵</a>
+                    }
+                </div>
+            }
+            else
+            {
+                @if (!string.IsNullOrWhiteSpace(Vm.RoadMapUrl))
+                {
+                    <div class="w-roadmap">
+                        <img src="@Vm.RoadMapUrl" alt="약도" />
+                    </div>
+                }
+                else
+                {
+                    <div class="w-road-placeholder">
+                        <p>약도 이미지를 어드민에서 업로드 해주세요.</p>
+                    </div>
+                }
+            }
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml))
+        {
+            <div class="w-ceremony-note">
+                @((MarkupString)Vm.CeremonyNoteHtml)
+            </div>
+        }
+    </section>
+
+    <!-- ══ 동영상 ════════════════════════════════════════════════ -->
+    @if (Vm.VideoUrls.Count > 0)
+    {
+        <section class="w-video">
+            <h2 class="w-section-title">우리의 영상</h2>
+            @foreach (var url in Vm.VideoUrls)
+            {
+                <div class="w-video__wrap">
+                    <video src="@url" controls preload="metadata"
+                           class="w-video__player" playsinline></video>
+                </div>
+            }
+        </section>
+    }
+
+    <!-- ══ 갤러리 ════════════════════════════════════════════════ -->
+    @if (Vm.Gallery.Count > 0)
+    {
+        <section class="w-gallery" aria-labelledby="galleryTitle">
+            <h2 class="w-section-title" id="galleryTitle">우리의 사진</h2>
+
+            <div class="w-gallery__controls">
+                <button class="w-btn" @onclick="ToggleAutoPlay">
+                    @(isAutoPlaying ? "⏸ 정지" : "▶ 자동재생")
+                </button>
+                <span class="w-gallery__count">최근 @(Vm.Gallery.Count)장 / 전체 @(Vm.AllPhotos.Count)장</span>
+            </div>
+
+            <div class="w-gallery__grid">
+                @for (int i = 0; i < Vm.Gallery.Count; i++)
+                {
+                    var idx = i;
+                    <button class="w-gallery__item" @onclick="() => OpenLightbox(idx)">
+                        <img src="@Vm.Gallery[idx].ThumbUrl" alt="사진 @(idx+1)" loading="lazy" />
+                    </button>
+                }
+            </div>
+        </section>
+
+        @if (Vm.LightboxOpen)
+        {
+            <div class="w-lightbox"
+                 role="dialog" aria-modal="true"
+                 tabindex="-1"
+                 @ref="lbRef"
+                 @onkeydown="OnKeyDown"
+                 @onpointerdown="OnPointerDown"
+                 @onpointerup="OnPointerUp">
+                <button class="w-lb__close" @onclick="CloseLightbox" aria-label="닫기">✕</button>
+                <button class="w-lb__prev" @onclick="Vm.LightboxPrev" aria-label="이전">‹</button>
+                <img class="w-lb__img" src="@Vm.AllPhotos[Vm.LightboxIdx].Url" alt="사진 @(Vm.LightboxIdx+1)" />
+                <button class="w-lb__next" @onclick="Vm.LightboxNext" aria-label="다음">›</button>
+                <span class="w-lb__counter">@(Vm.LightboxIdx+1) / @Vm.AllPhotos.Count</span>
+            </div>
+            <div class="w-lb__backdrop" @onclick="CloseLightbox"></div>
+        }
+    }
+
+    <!-- ══ 마음 전하실 곳 ════════════════════════════════════════════════ -->
+    @if (Vm.Accounts.Count > 0)
+    {
+        <section class="w-gift" aria-labelledby="giftTitle">
+            <h2 class="w-section-title" id="giftTitle">마음 전하실 곳</h2>
+            <div class="w-gift__cards">
+                @foreach (var acc in Vm.Accounts)
+                {
+                    <div class="w-gift__card">
+                        <h3 class="w-gift__who">@acc.Label @acc.Name</h3>
+                        @if (!string.IsNullOrWhiteSpace(acc.Account))
+                        {
+                            <div class="w-gift__account">
+                                <span class="w-gift__bank">@acc.BankName</span>
+                                <span class="w-gift__num">@acc.Account</span>
+                                @if (!string.IsNullOrWhiteSpace(acc.AccountHolder))
+                                {
+                                    <span class="w-gift__holder">(@acc.AccountHolder)</span>
+                                }
+                            </div>
+                            <button class="w-btn w-btn--copy" @onclick='() => CopyToClipboard(acc.Account)'>
+                                📋 계좌번호 복사
+                            </button>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(acc.KakaoPayUrl))
+                        {
+                            <a href="@acc.KakaoPayUrl" target="_blank" class="w-btn w-btn--kakaopay">💛 카카오페이</a>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(acc.Phone))
+                        {
+                            <div class="w-gift__contact">
+                                <a href="tel:@acc.Phone" class="w-btn w-btn--tel">📞 전화</a>
+                                <a href="sms:@acc.Phone" class="w-btn w-btn--sms">💬 문자</a>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(copyFeedback))
+            {
+                <p class="w-copy-feedback">@copyFeedback</p>
+            }
+        </section>
+    }
+
+    <!-- ══ 방명록 ════════════════════════════════════════════════ -->
+    <section class="w-guestbook" id="guestbook" aria-labelledby="gbTitle">
+        <h2 class="w-section-title" id="gbTitle">📖 방명록</h2>
+
+        <div class="w-gb__form">
+            <input class="w-input" type="text" placeholder="이름" @bind="VmGuest.Name" />
+            <input class="w-input" type="text" placeholder="연락처 (선택)" @bind="VmGuest.Contact" />
+            <textarea class="w-input w-textarea" rows="4" placeholder="축하 메시지를 남겨주세요"
+                      @bind="VmGuest.Message"></textarea>
+            <div class="w-gb__actions">
+                <button class="w-btn w-btn--primary" @onclick="OnGuestbookAdd" disabled="@VmGuest.IsSaving">등록</button>
+                <button class="w-btn" @onclick="OnGuestbookReload">새로고침</button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(VmGuest.LastStatus))
+            {
+                <p class="w-status">@VmGuest.LastStatus</p>
+            }
+        </div>
+
+        <ul class="w-gb__list">
+            @foreach (var e in VmGuest.EntriesView)
+            {
+                <li class="w-gb__entry">
+                    <div class="w-gb__meta">
+                        <strong>@e.Name</strong>
+                        <span class="w-gb__date">@e.CreatedLocal.ToString("yyyy-MM-dd HH:mm")</span>
+                    </div>
+                    <div class="w-gb__msg">@e.Message</div>
+                </li>
+            }
+        </ul>
+    </section>
+
+    <footer class="w-footer">
+        <a href="/@Slug/admin" class="w-admin-link" title="관리자">·</a>
+    </footer>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private ElementReference lbRef;
+    private ElementReference audioRef;
+    private bool isMusicPlaying;
+    private string copyFeedback = "";
+    private System.Threading.CancellationTokenSource? feedbackCts;
+    private double? startX;
+    private bool isAutoPlaying;
+    private System.Threading.CancellationTokenSource? autoCts;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Vm.LoadAsync(Slug);
+        await VmGuest.InitializeAsync(Slug);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            VmGuest.ApplyDefaultMessage();
+            await JS.InvokeVoidAsync("weddingInterop.applyTheme", Vm.ThemeName);
+            if (!string.IsNullOrWhiteSpace(Vm.MusicUrl))
+            {
+                await JS.InvokeVoidAsync("weddingInterop.initMusicAutoplay");
+                isMusicPlaying = true;
+            }
+        }
+
+        // 매 렌더마다 호출 — JS 내부에서 _leaflet_id 체크로 중복 초기화 방지
+        if (Vm.HasVenueCoords)
+            await JS.InvokeVoidAsync("weddingInterop.initLeafletMap");
+    }
+
+    private async Task OpenLightbox(int idx)
+    {
+        Vm.OpenLightbox(idx);
+        await Task.Yield();
+        await lbRef.FocusAsync();
+    }
+
+    private async Task CloseLightbox()
+    {
+        await StopAutoPlay();
+        Vm.CloseLightbox();
+    }
+
+    private void OnKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "Escape": _ = CloseLightbox(); break;
+            case "ArrowRight": Vm.LightboxNext(); break;
+            case "ArrowLeft": Vm.LightboxPrev(); break;
+        }
+    }
+
+    private void OnPointerDown(PointerEventArgs e) => startX = e.ClientX;
+    private void OnPointerUp(PointerEventArgs e)
+    {
+        if (startX is null) return;
+        var delta = e.ClientX - startX.Value;
+        startX = null;
+        if (Math.Abs(delta) < 30) return;
+        if (delta < 0) Vm.LightboxNext(); else Vm.LightboxPrev();
+    }
+
+    private async Task ToggleAutoPlay()
+    {
+        if (isAutoPlaying) await StopAutoPlay(); else await StartAutoPlay();
+    }
+
+    private async Task StartAutoPlay()
+    {
+        if (Vm.Gallery.Count == 0 || isAutoPlaying) return;
+        if (!Vm.LightboxOpen) Vm.OpenLightbox(0);
+        isAutoPlaying = true;
+        autoCts = new();
+        var token = autoCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    await Task.Delay(Vm.GalleryAutoPlayMs, token);
+                    if (Vm.LightboxOpen)
+                        await InvokeAsync(() => { Vm.LightboxNext(); StateHasChanged(); });
+                }
+            }
+            catch (TaskCanceledException) { }
+        }, token);
+        await Task.CompletedTask;
+    }
+
+    private Task StopAutoPlay()
+    {
+        isAutoPlaying = false;
+        autoCts?.Cancel();
+        return Task.CompletedTask;
+    }
+
+    private async Task ScrollToGuestbook()
+    {
+        await JS.InvokeVoidAsync("weddingInterop.scrollToElement", "guestbook");
+    }
+
+    private async Task ToggleMusic()
+    {
+        try
+        {
+            if (isMusicPlaying)
+            {
+                await JS.InvokeVoidAsync("weddingInterop.pauseMusic");
+                isMusicPlaying = false;
+            }
+            else
+            {
+                await JS.InvokeVoidAsync("weddingInterop.playMusic");
+                isMusicPlaying = true;
+            }
+        }
+        catch { }
+    }
+
+    private async Task CopyToClipboard(string text)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("weddingInterop.copyToClipboard", text);
+            feedbackCts?.Cancel();
+            feedbackCts = new();
+            copyFeedback = "✅ 복사되었습니다!";
+            StateHasChanged();
+            await Task.Delay(2500, feedbackCts.Token);
+            copyFeedback = "";
+            StateHasChanged();
+        }
+        catch (TaskCanceledException) { }
+        catch { copyFeedback = "복사에 실패했습니다. 직접 선택해주세요."; StateHasChanged(); }
+    }
+
+    private async Task OnGuestbookAdd()
+    {
+        await VmGuest.AddEntryAsync(Slug);
+        StateHasChanged();
+    }
+
+    private async Task OnGuestbookReload()
+    {
+        await VmGuest.ReloadAsync(Slug);
+        StateHasChanged();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await StopAutoPlay();
+        autoCts?.Dispose();
+        feedbackCts?.Dispose();
+    }
+}

@@ -1,0 +1,457 @@
+@page "/{Slug}/admin"
+@layout WeddingPlatform.Blazor.Layout.WeddingLayout
+@namespace WeddingPlatform.Blazor.Pages
+@rendermode InteractiveServer
+
+@using WeddingPlatform.Models
+@inject WeddingAdminViewModel Vm
+
+<PageTitle>어드민 — @Slug</PageTitle>
+
+<div class="w-admin">
+    <h1 class="w-admin__title">⚙ 어드민 — <code>@Slug</code></h1>
+
+    @if (!Vm.IsAuthenticated)
+    {
+        <div class="w-admin__login w-panel">
+            <h2>관리자 로그인</h2>
+            <input class="w-input" type="password" placeholder="비밀번호" @bind="Vm.LoginPassword" />
+            <button class="w-btn w-btn--primary" @onclick="OnLogin">로그인</button>
+            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            {
+                <p class="w-status w-status--error">@Vm.StatusMessage</p>
+            }
+        </div>
+    }
+    else if (!Vm.IsLoaded)
+    {
+        <div class="w-loading"><div class="w-spinner"></div></div>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+        {
+            <p class="w-status">@Vm.StatusMessage</p>
+        }
+
+        <!-- ── 기본 정보 ── -->
+        <section class="w-admin__section">
+            <h2>기본 정보</h2>
+            <label class="w-label">상단 타이틀 문구</label>
+            <input class="w-input" @bind="Vm.Config!.HeroTitle" placeholder="Save The Date" />
+
+            <label class="w-label">커플 이름</label>
+            <input class="w-input" @bind="Vm.Config!.CoupleName" />
+
+            <label class="w-label">결혼 날짜</label>
+            <input class="w-input" type="date" @bind="Vm.Config.WeddingDate" />
+
+            <label class="w-label">결혼 시간</label>
+            <input class="w-input" @bind="Vm.Config.WeddingTime" placeholder="예: PM 12:00" />
+
+            <label class="w-label">예식장 이름</label>
+            <input class="w-input" @bind="Vm.Config.VenueName" />
+
+            <label class="w-label">예식장 주소</label>
+            <input class="w-input" @bind="Vm.Config.VenueAddress" />
+
+            <label class="w-label">예식장 위도 (지도 표시, 예: 36.449977)</label>
+            <input class="w-input" type="number" step="0.000001" @bind="Vm.Config.VenueLat" placeholder="36.449977" />
+
+            <label class="w-label">예식장 경도 (지도 표시, 예: 126.804227)</label>
+            <input class="w-input" type="number" step="0.000001" @bind="Vm.Config.VenueLng" placeholder="126.804227" />
+            <p class="w-hint">카카오맵 공유 → 링크 복사에서 좌표 확인. 입력 시 청첩장에 지도가 표시됩니다.</p>
+
+            <label class="w-label">스토리 (한국어)</label>
+            <textarea class="w-input w-textarea" rows="4" @bind="Vm.Config.Story"></textarea>
+
+            <label class="w-label">스토리 (기타 언어)</label>
+            <textarea class="w-input w-textarea" rows="4" @bind="Vm.Config.Story2"></textarea>
+
+            <label class="w-label">카카오맵 링크</label>
+            <input class="w-input" @bind="Vm.Config.MapLinkKakao" />
+
+            <label class="w-label">네이버지도 링크</label>
+            <input class="w-input" @bind="Vm.Config.MapLinkNaver" />
+
+            <label class="w-label">아틀란 링크</label>
+            <input class="w-input" @bind="Vm.Config.MapLinkAtlan" placeholder="http://m.atlan.co.kr/..." />
+
+            <label class="w-label">T맵 링크</label>
+            <input class="w-input" @bind="Vm.Config.MapLinkTmap" placeholder="https://apis.openapi.sk.com/tmap/..." />
+
+            <label class="w-label">사이트 모드</label>
+            <select class="w-input" @bind="Vm.Config.Mode">
+                <option value="@WeddingSiteMode.Invite">청첩장 (예식 안내)</option>
+                <option value="@WeddingSiteMode.ThankYou">감사장 (예식 후)</option>
+                <option value="@WeddingSiteMode.Both">청첩장 + 감사장</option>
+            </select>
+            <p class="w-hint">예식 완료 후 <strong>감사장</strong>으로 바꾸면 지도·예식 안내 대신 감사 인사가 표시됩니다.</p>
+
+            <label class="w-label">예식 안내 / 감사 메시지</label>
+            <div class="w-note-toolbar">
+                <button class="@(Vm.Config.CeremonyNoteFormat == "Markdown" ? "active" : "")"
+                        @onclick='() => Vm.Config.CeremonyNoteFormat = "Markdown"'>Markdown (추천)</button>
+                <button class="@(Vm.Config.CeremonyNoteFormat == "Html" ? "active" : "")"
+                        @onclick='() => Vm.Config.CeremonyNoteFormat = "Html"'>HTML</button>
+            </div>
+            @if (Vm.Config.CeremonyNoteFormat == "Markdown")
+            {
+                <textarea class="w-input w-textarea w-textarea--code" rows="8" @bind="Vm.Config.CeremonyNote"
+                          placeholder="## 감사 인사&#10;&#10;소중한 자리에 함께해 주셔서 진심으로 감사드립니다.&#10;&#10;**굵게**, *기울임*, 줄바꿈은 엔터 두 번"></textarea>
+                <p class="w-hint">마크다운 형식 — **굵게** *기울임* ## 제목 · 빈 줄이 문단 구분. 비워두면 표시 안 됨.</p>
+            }
+            else
+            {
+                <textarea class="w-input w-textarea w-textarea--code" rows="8" @bind="Vm.Config.CeremonyNote"
+                          placeholder="&lt;p&gt;감사합니다. 소중한 자리에 함께해 주셔서...&lt;/p&gt;"></textarea>
+                <p class="w-hint">HTML 태그 직접 입력. 비워두면 표시 안 됨.</p>
+            }
+
+            <label class="w-label">감사장 URL (외부, 선택)</label>
+            <input class="w-input" @bind="Vm.Config.ThankYouUrl" placeholder="https://thankyou.example.com" />
+
+            <label class="w-label">어드민 비밀번호 (변경 시 입력)</label>
+            <input class="w-input" type="password" @bind="Vm.Config.PasswordHash" />
+
+            <label class="w-label">메인 페이지 노출</label>
+            <label class="w-toggle">
+                <input type="checkbox" @bind="Vm.Config.ShowOnHome" />
+                <span class="w-toggle__track"></span>
+                <span class="w-toggle__label">@(Vm.Config.ShowOnHome ? "ON — 메인 페이지에 표시됨" : "OFF — 메인 페이지에 숨김")</span>
+            </label>
+
+            <button class="w-btn w-btn--primary" @onclick="OnSaveConfig">💾 설정 저장</button>
+        </section>
+
+        <!-- ── 링크 미리보기 (OG) ── -->
+        <section class="w-admin__section">
+            <h2>🔗 링크 미리보기 설정</h2>
+            <p class="w-hint">카카오톡·문자 등으로 청첩장 링크를 공유할 때 표시되는 제목·설명·이미지입니다.</p>
+
+            <label class="w-label">미리보기 제목</label>
+            <input class="w-input" @bind="Vm.Config!.OgTitle"
+                   placeholder="@(Vm.Config?.CoupleName + " 청첩장")" />
+
+            <label class="w-label">미리보기 설명</label>
+            <textarea class="w-input w-textarea" rows="3" @bind="Vm.Config!.OgDescription"
+                      placeholder="@($"{Vm.Config?.WeddingDate:yyyy년 MM월 dd일} {Vm.Config?.VenueName}에서 함께해 주세요.")"></textarea>
+
+            <label class="w-label">미리보기 이미지 (비우면 히어로 이미지 사용)</label>
+            @if (!string.IsNullOrWhiteSpace(Vm.Config!.OgImageFileName))
+            {
+                <div class="w-admin__hero-preview">
+                    <img src="@Vm.GetOgImageUrl(Slug, Vm.Config.OgImageFileName)" alt="OG 이미지" />
+                    <span>@Vm.Config.OgImageFileName</span>
+                    <button class="w-btn w-btn--sm" @onclick="() => { Vm.Config!.OgImageFileName = string.Empty; }">✕ 제거</button>
+                </div>
+            }
+            <InputFile class="w-file-input" OnChange="OnOgImageUpload" accept="image/*" />
+            <p class="w-hint">권장 크기: 1200×630px (가로형). 카카오톡 미리보기는 링크 캐시가 있어 바로 반영 안 될 수 있습니다.</p>
+            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중...</span> }
+
+            <button class="w-btn w-btn--primary" @onclick="OnSaveConfig">💾 설정 저장</button>
+        </section>
+
+        <!-- ── 테마 ── -->
+        <section class="w-admin__section">
+            <h2>🎨 테마</h2>
+            <div class="w-theme-picker">
+                @foreach (var t in _themes)
+                {
+                    <button class="w-theme-btn @(Vm.Config!.ThemeName == t.Key ? "active" : "")"
+                            style="--tc:@t.Value.Primary;--tca:@t.Value.Accent"
+                            @onclick="() => Vm.Config!.ThemeName = t.Key">
+                        <span class="w-theme-swatch"></span>
+                        <span>@t.Value.Label</span>
+                    </button>
+                }
+            </div>
+            <p class="w-hint">테마 선택 후 <strong>설정 저장</strong>을 누르세요.</p>
+        </section>
+
+        <!-- ── 배경 음악 ── -->
+        <section class="w-admin__section">
+            <h2>🎵 배경 음악</h2>
+            @if (!string.IsNullOrWhiteSpace(Vm.Config!.MusicFileName))
+            {
+                <div class="w-admin__music-preview">
+                    <audio controls src="@Vm.GetMusicUrl(Slug, Vm.Config.MusicFileName)" style="width:100%"></audio>
+                    <span class="w-hint">현재: @Vm.Config.MusicFileName</span>
+                    <button class="w-btn w-btn--danger w-btn--sm" @onclick="OnRemoveMusic">🗑 음악 제거</button>
+                </div>
+            }
+            else
+            {
+                <p class="w-hint">배경 음악이 없습니다. mp3·ogg·m4a 파일을 업로드하세요. (최대 30MB)</p>
+            }
+            <InputFile class="w-file-input" OnChange="OnMusicUpload" accept="audio/*" />
+            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중...</span> }
+        </section>
+
+        <!-- ── 약도 이미지 ── -->
+        <section class="w-admin__section">
+            <h2>약도 이미지</h2>
+            @if (!string.IsNullOrWhiteSpace(Vm.Config!.RoadMapFileName))
+            {
+                <div class="w-admin__hero-preview">
+                    <img src="@Vm.GetRoadMapUrl(Slug, Vm.Config.RoadMapFileName)" alt="약도" />
+                    <span>@Vm.Config.RoadMapFileName</span>
+                </div>
+            }
+            else
+            {
+                <p class="w-hint">아직 약도 이미지가 없습니다. 업로드하면 청첩장 약도 탭에 표시됩니다.</p>
+            }
+            <InputFile class="w-file-input" OnChange="OnRoadMapUpload" accept="image/*" />
+            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중...</span> }
+        </section>
+
+        <!-- ── 히어로 이미지 ── -->
+        <section class="w-admin__section">
+            <h2>히어로 이미지</h2>
+            @if (!string.IsNullOrWhiteSpace(Vm.Config!.HeroImageFileName))
+            {
+                <div class="w-admin__hero-preview">
+                    <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="히어로" />
+                    <span>@Vm.Config.HeroImageFileName</span>
+                </div>
+            }
+            <InputFile class="w-file-input" OnChange="OnHeroUpload" accept="image/*" />
+            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중...</span> }
+        </section>
+
+        <!-- ── 동영상 ── -->
+        <section class="w-admin__section">
+            <h2>🎬 우리의 영상</h2>
+            <p class="w-hint">갤러리 위에 표시됩니다. mp4 / webm / mov 권장, 최대 200MB, 최대 6개.</p>
+
+            @if (Vm.Config!.VideoFileNames.Count > 0)
+            {
+                <div class="w-admin__video-list">
+                    @foreach (var fn in Vm.Config.VideoFileNames.ToList())
+                    {
+                        <div class="w-admin__video-item">
+                            <video src="@Vm.GetVideoUrl(Slug, fn)"
+                                   controls preload="metadata" class="w-admin__video-player"></video>
+                            <div class="w-admin__video-meta">
+                                <span class="w-hint">@fn</span>
+                                <button class="w-btn w-btn--danger w-btn--sm"
+                                        @onclick="() => OnDeleteVideo(fn)">삭제</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (Vm.Config.VideoFileNames.Count < 6)
+            {
+                <InputFile class="w-file-input" OnChange="OnVideoUpload" accept="video/*" />
+                @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (용량에 따라 시간이 걸릴 수 있습니다)</span> }
+            }
+            else
+            {
+                <p class="w-hint" style="color:var(--w-primary)">최대 6개 업로드 완료. 삭제 후 추가 가능합니다.</p>
+            }
+        </section>
+
+        <!-- ── 갤러리 ── -->
+        <section class="w-admin__section">
+            <h2>갤러리 사진 (@Vm.Gallery.Count 장)</h2>
+
+            <label class="w-label">자동재생 간격 — <strong>@Vm.Config!.GalleryAutoPlaySeconds 초</strong></label>
+            <input type="range" class="w-range" min="1" max="10" step="1"
+                   @bind="Vm.Config!.GalleryAutoPlaySeconds" @bind:event="oninput" />
+            <p class="w-hint">1 ~ 10초 · 설정 저장 후 청첩장에 반영됩니다.</p>
+
+            <InputFile class="w-file-input" OnChange="OnGalleryUpload" accept="image/*" multiple />
+            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중...</span> }
+
+            <div class="w-admin__gallery">
+                @foreach (var p in Vm.Gallery)
+                {
+                    <div class="w-admin__gallery-item">
+                        <img src="@Vm.GetThumbUrl(Slug, p.FileName)" alt="@p.FileName" />
+                        <button class="w-btn w-btn--danger w-btn--sm"
+                                @onclick="() => OnDeletePhoto(p.FileName)">삭제</button>
+                        <span class="w-admin__fname">@p.FileName</span>
+                    </div>
+                }
+            </div>
+        </section>
+
+        <!-- ── 마음 전하실 곳 ── -->
+        <section class="w-admin__section">
+            <h2>💌 마음 전하실 곳</h2>
+            <p class="w-hint">신랑·신부·부모님 등 최대 8명까지 등록할 수 있습니다. 계좌 또는 연락처만 입력해도 됩니다.</p>
+
+            @for (int i = 0; i < Vm.Config!.Accounts.Count; i++)
+            {
+                var idx = i;
+                var acc = Vm.Config.Accounts[idx];
+                <div class="w-acc-editor">
+                    <div class="w-acc-editor__header">
+                        <strong>@((idx + 1))번 — @(string.IsNullOrWhiteSpace(acc.Label) ? "(레이블 없음)" : acc.Label)</strong>
+                        <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => RemoveAccount(idx)">✕ 삭제</button>
+                    </div>
+                    <div class="w-acc-editor__grid">
+                        <div>
+                            <label class="w-label">레이블 (표시 이름)</label>
+                            <select class="w-input" value="@acc.Label" @onchange="e => acc.Label = e.Value?.ToString() ?? string.Empty">
+                                <option>신랑</option>
+                                <option>신부</option>
+                                <option>신랑 아버지</option>
+                                <option>신랑 어머니</option>
+                                <option>신부 아버지</option>
+                                <option>신부 어머니</option>
+                                <option>직접 입력</option>
+                            </select>
+                            @if (acc.Label == "직접 입력" || !_defaultLabels.Contains(acc.Label))
+                            {
+                                <input class="w-input" style="margin-top:.4rem" @bind="acc.Label" placeholder="레이블 직접 입력" />
+                            }
+                        </div>
+                        <div>
+                            <label class="w-label">이름</label>
+                            <input class="w-input" @bind="acc.Name" placeholder="홍길동" />
+                        </div>
+                        <div>
+                            <label class="w-label">연락처</label>
+                            <input class="w-input" @bind="acc.Phone" placeholder="010-0000-0000" />
+                        </div>
+                        <div>
+                            <label class="w-label">은행명</label>
+                            <input class="w-input" @bind="acc.BankName" placeholder="국민은행" />
+                        </div>
+                        <div>
+                            <label class="w-label">계좌번호</label>
+                            <input class="w-input" @bind="acc.Account" placeholder="000-000-000000" />
+                        </div>
+                        <div>
+                            <label class="w-label">예금주</label>
+                            <input class="w-input" @bind="acc.AccountHolder" placeholder="홍길동" />
+                        </div>
+                        <div class="w-acc-editor__full">
+                            <label class="w-label">카카오페이 URL (선택)</label>
+                            <input class="w-input" @bind="acc.KakaoPayUrl" placeholder="https://qr.kakaopay.com/..." />
+                        </div>
+                    </div>
+                </div>
+            }
+
+            @if (Vm.Config.Accounts.Count < 8)
+            {
+                <button class="w-btn" @onclick="AddAccount">+ 계좌 / 연락처 추가</button>
+            }
+
+            <button class="w-btn w-btn--primary" style="margin-top:1rem" @onclick="OnSaveConfig">💾 설정 저장</button>
+        </section>
+
+        <section class="w-admin__section w-admin__links">
+            <a href="/@Slug" class="w-btn">청첩장 미리보기</a>
+            <a href="/@Slug/thankyou" class="w-btn">감사장 미리보기</a>
+        </section>
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private static readonly HashSet<string> _defaultLabels =
+        ["신랑", "신부", "신랑 아버지", "신랑 어머니", "신부 아버지", "신부 어머니"];
+
+    private static readonly Dictionary<string, (string Primary, string Accent, string Label)> _themes = new()
+    {
+        ["rose"]   = ("#c8a882", "#a07850", "로즈 골드 (기본)"),
+        ["ivory"]  = ("#b8a99a", "#8a7060", "아이보리 크림"),
+        ["forest"] = ("#6b8f71", "#4a6b50", "포레스트 그린"),
+        ["navy"]   = ("#3d5a80", "#98c1d9", "네이비 & 골드"),
+        ["blush"]  = ("#d4a5a5", "#b07575", "블러쉬 핑크"),
+    };
+
+    protected override void OnInitialized() { }
+
+    private async Task OnLogin()
+    {
+        if (await Vm.LoginAsync(Slug))
+            await Vm.LoadAsync(Slug);
+    }
+
+    private async Task OnSaveConfig() => await Vm.SaveConfigAsync();
+
+    private void AddAccount()
+    {
+        Vm.Config?.Accounts.Add(new AccountInfo { Label = "신랑" });
+        StateHasChanged();
+    }
+
+    private void RemoveAccount(int idx)
+    {
+        if (idx >= 0 && idx < Vm.Config?.Accounts.Count)
+        {
+            Vm.Config.Accounts.RemoveAt(idx);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnVideoUpload(InputFileChangeEventArgs e)
+    {
+        await Vm.UploadVideoAsync(Slug, e.File);
+        StateHasChanged();
+    }
+
+    private async Task OnDeleteVideo(string fileName)
+    {
+        await Vm.DeleteVideoAsync(Slug, fileName);
+        StateHasChanged();
+    }
+
+    private async Task OnMusicUpload(InputFileChangeEventArgs e)
+    {
+        await Vm.UploadMusicAsync(Slug, e.File);
+        StateHasChanged();
+    }
+
+    private async Task OnRemoveMusic()
+    {
+        if (Vm.Config is not null)
+        {
+            Vm.Config.MusicFileName = "";
+            await Vm.SaveConfigAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnOgImageUpload(InputFileChangeEventArgs e)
+    {
+        await Vm.UploadOgImageAsync(Slug, e.File);
+        StateHasChanged();
+    }
+
+    private async Task OnRoadMapUpload(InputFileChangeEventArgs e)
+    {
+        await Vm.UploadRoadMapAsync(Slug, e.File);
+        StateHasChanged();
+    }
+
+    private async Task OnHeroUpload(InputFileChangeEventArgs e)
+    {
+        await Vm.UploadHeroAsync(Slug, e.File);
+        StateHasChanged();
+    }
+
+    private async Task OnGalleryUpload(InputFileChangeEventArgs e)
+    {
+        foreach (var f in e.GetMultipleFiles(30))
+        {
+            await Vm.UploadGalleryAsync(Slug, f);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnDeletePhoto(string fileName)
+    {
+        await Vm.DeletePhotoAsync(Slug, fileName);
+        StateHasChanged();
+    }
+}

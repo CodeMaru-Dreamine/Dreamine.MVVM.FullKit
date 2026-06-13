@@ -1,0 +1,16 @@
+@namespace WeddingPlatform.Blazor
+@using Microsoft.AspNetCore.Components.Routing
+@using WeddingPlatform.Blazor.Layout
+
+<Router AppAssembly="@typeof(Routes).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(WeddingLayout)" />
+    </Found>
+    <NotFound>
+        <div class="w-notfound">
+            <h1>404</h1>
+            <p>페이지를 찾을 수 없습니다.</p>
+            <a href="/">홈으로</a>
+        </div>
+    </NotFound>
+</Router>

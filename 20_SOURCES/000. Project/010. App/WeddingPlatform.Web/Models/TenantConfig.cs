@@ -1,0 +1,61 @@
+namespace WeddingPlatform.Models;
+
+public sealed class TenantConfig
+{
+    public string Slug { get; set; } = "";
+    public string CoupleName { get; set; } = "신랑 ♥ 신부";
+    public string HeroTitle { get; set; } = "Save The Date";
+    public string Subtitle { get; set; } = "";
+    public DateTime WeddingDate { get; set; } = DateTime.Today;
+    public string WeddingTime { get; set; } = "PM 12:00";
+    public string VenueName { get; set; } = "";
+    public string VenueAddress { get; set; } = "";
+    public double VenueLat { get; set; }
+    public double VenueLng { get; set; }
+    public string Story { get; set; } = "";
+    public string Story2 { get; set; } = "";
+    public string HeroImageFileName { get; set; } = "";
+    public string MapLinkKakao { get; set; } = "";
+    public string MapLinkNaver { get; set; } = "";
+    public string MapLinkAtlan { get; set; } = "";
+    public string MapLinkTmap { get; set; } = "";
+    public string CeremonyNote { get; set; } = "";
+    public string CeremonyNoteFormat { get; set; } = "Markdown";
+    public string RoadMapFileName { get; set; } = "";
+
+    /// <summary>마음 전하실 곳 — 신랑·신부·부모님 계좌 및 연락처 (최대 제한 없음, UI에서 4개까지 권장)</summary>
+    public List<AccountInfo> Accounts { get; set; } = new();
+
+    /// <summary>테마 이름 — rose(기본), ivory, forest, navy</summary>
+    public string ThemeName { get; set; } = "rose";
+
+    /// <summary>배경 음악 파일명</summary>
+    public string MusicFileName { get; set; } = "";
+    [Obsolete("Use VideoFileNames")]
+    public string VideoFileName { get; set; } = "";
+    public List<string> VideoFileNames { get; set; } = new();
+
+    // ── 링크 미리보기 (Open Graph) ──────────────────────
+    public string OgTitle { get; set; } = "";
+    public string OgDescription { get; set; } = "";
+    /// <summary>OG 이미지 파일명 — 비우면 히어로 이미지 사용</summary>
+    public string OgImageFileName { get; set; } = "";
+
+    public WeddingSiteMode Mode { get; set; } = WeddingSiteMode.Invite;
+    public string PasswordHash { get; set; } = "";
+    public string ThankYouUrl { get; set; } = "";
+    public bool IsPublished { get; set; } = true;
+    public DateTime CreatedAt { get; set; } = DateTime.Now;
+    public bool ShowOnHome { get; set; } = false;
+    /// <summary>메인 노출 고정 순서 — 1이 최우선. 0이면 날짜순 자동 정렬.</summary>
+    public int PinOrder { get; set; } = 0;
+    public List<string> GalleryFileNames { get; set; } = new();
+    public int GalleryAutoPlaySeconds { get; set; } = 3;
+}
+
+public enum WeddingSiteMode
+{
+    Invite,
+    ThankYou,
+    Both
+}
