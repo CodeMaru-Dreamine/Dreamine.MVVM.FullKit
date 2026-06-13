@@ -7,6 +7,8 @@ public sealed class WeddingOptions
 {
     public string DataPath { get; set; } = "";
     public string SuperAdminPassword { get; set; } = "admin1234";
+    public string AtlanAuthKey { get; set; } = "";
+    public string TmapAppKey { get; set; } = "";
 
     public string ResolvedDataPath
     {

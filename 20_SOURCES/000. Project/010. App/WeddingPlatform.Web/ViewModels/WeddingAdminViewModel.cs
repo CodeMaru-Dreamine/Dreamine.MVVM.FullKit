@@ -11,16 +11,18 @@ public sealed class WeddingAdminViewModel
 {
     private readonly ITenantStore _tenants;
     private readonly IPhotoService _photos;
+    private readonly WeddingOptions _opts;
 
     private static readonly HttpClient _geocodeHttp = new()
     {
         DefaultRequestHeaders = { { "User-Agent", "CodemaruWeddingPlatform/1.0 (contact: admin@codemaru.co.kr)" } }
     };
 
-    public WeddingAdminViewModel(ITenantStore tenants, IPhotoService photos)
+    public WeddingAdminViewModel(ITenantStore tenants, IPhotoService photos, WeddingOptions opts)
     {
         _tenants = tenants;
         _photos = photos;
+        _opts = opts;
     }
 
     public TenantConfig? Config { get; private set; }
@@ -153,26 +155,26 @@ public sealed class WeddingAdminViewModel
         var lat = Config.VenueLat;
         var lng = Config.VenueLng;
         bool hasCoords = lat != 0 && lng != 0;
+        var latS = lat.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var lngS = lng.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         // 카카오맵 — 좌표 있으면 핀, 없으면 검색
         Config.MapLinkKakao = hasCoords
-            ? $"https://map.kakao.com/link/map/{name},{lat},{lng}"
+            ? $"https://map.kakao.com/link/map/{name},{latS},{lngS}"
             : $"https://map.kakao.com/link/search/{addr}";
 
         // 네이버지도 — 좌표 있으면 좌표 검색, 없으면 주소 검색
         Config.MapLinkNaver = hasCoords
-            ? $"https://map.naver.com/v5/search/{addr}?c={lng},{lat},15,0,0,0,dh"
+            ? $"https://map.naver.com/v5/search/{addr}?c={lngS},{latS},15,0,0,0,dh"
             : $"https://map.naver.com/v5/search/{addr}";
 
-        // 아틀란 — 좌표 필요 (없으면 주소만)
-        Config.MapLinkAtlan = hasCoords
-            ? $"http://m.atlan.co.kr/app/deeplink/navi?goalname={name}&goalx={lng}&goaly={lat}"
-            : $"http://m.atlan.co.kr/app/deeplink/search?keyword={addr}";
+        // 아틀란
+        if (!string.IsNullOrWhiteSpace(_opts.AtlanAuthKey) && hasCoords)
+            Config.MapLinkAtlan = $"http://m.atlan.co.kr/searchPlus/linkAtlan.do?shareType=kakao&coordX={lng.ToString(System.Globalization.CultureInfo.InvariantCulture)}&coordY={lat.ToString(System.Globalization.CultureInfo.InvariantCulture)}&title={name}&AuthKey={_opts.AtlanAuthKey}";
 
-        // T맵 — 좌표 있으면 목적지 설정, 없으면 검색
-        Config.MapLinkTmap = hasCoords
-            ? $"https://apis.openapi.sk.com/tmap/app/routes?goalname={name}&goalx={lng}&goaly={lat}"
-            : $"https://apis.openapi.sk.com/tmap/app/search?name={addr}";
+        // T맵
+        if (!string.IsNullOrWhiteSpace(_opts.TmapAppKey) && hasCoords)
+            Config.MapLinkTmap = $"https://apis.openapi.sk.com/tmap/app/routes?appKey={_opts.TmapAppKey}&name={name}&lon={lng.ToString(System.Globalization.CultureInfo.InvariantCulture)}&lat={lat.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
     }
 
     public string GetThumbUrl(string slug, string fileName) => _photos.GetThumbUrl(slug, fileName);
