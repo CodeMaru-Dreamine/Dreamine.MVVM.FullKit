@@ -76,7 +76,9 @@ public sealed class ResilientTransportStateTests
 
         public int DisposeCount => System.Threading.Volatile.Read(ref _disposeCount);
 
+#pragma warning disable CS0067
         public event EventHandler<MessageEnvelope>? MessageReceived;
+#pragma warning restore CS0067
         public event EventHandler<ConnectionState>? StateChanged;
 
         public ConnectionState State => _connected

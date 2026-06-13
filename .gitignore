@@ -3,6 +3,17 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
+# ── Wedding Platform 배포 설정 (서버마다 다름) ──────
+**/appsettings.Production.json
+**/appsettings.Development.json
+
+# ── Wedding 테넌트 데이터 (사진·config·방명록) ──────
+**/App_Data/Wedding/
+
+# ── Wedding 배포 산출물 ──────────────────────────────
+**/publish-output/
+**/wedding-deploy.zip
+
 # User-specific files
 *.rsuser
 *.suo

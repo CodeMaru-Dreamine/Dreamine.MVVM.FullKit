@@ -43,7 +43,8 @@ public partial class MainWindow : Window
         await NavigateServerAsync(webView, $"http://localhost:{_serverOptions.Port}", _serverOptions.InstanceId);
     }
 
-    private static async Task NavigateServerAsync(WebView2 webView, string baseUrl, string expectedInstanceId, int timeoutMs = 15000, int intervalMs = 500)
+    private static async Task NavigateServerAsync(WebView2 webView, string baseUrl, string expectedInstanceId,
+        int timeoutMs = 15000, int intervalMs = 500)
     {
         var cardHybridUrl = $"{baseUrl}/cardhybrid";
         var instanceUrl = $"{baseUrl}/_dreamine/instance";

@@ -12,14 +12,14 @@ public sealed class ConverterTests
     public void NullToVisibility_NullReturnsCollapsed()
     {
         var conv = new NullToVisibilityConverter();
-        Assert.Equal(Visibility.Collapsed, conv.Convert(null, typeof(Visibility), null, CultureInfo.InvariantCulture));
+        Assert.Equal(Visibility.Collapsed, conv.Convert(null, typeof(Visibility), null!, CultureInfo.InvariantCulture));
     }
 
     [Fact]
     public void NullToVisibility_NonNullReturnsVisible()
     {
         var conv = new NullToVisibilityConverter();
-        Assert.Equal(Visibility.Visible, conv.Convert("hello", typeof(Visibility), null, CultureInfo.InvariantCulture));
+        Assert.Equal(Visibility.Visible, conv.Convert("hello", typeof(Visibility), null!, CultureInfo.InvariantCulture));
     }
 
     // ── BoolToIntDynamicConverter ──────────────────────────────────────────
@@ -30,7 +30,7 @@ public sealed class ConverterTests
     public void BoolToIntDynamic_ReturnsBoolInputUnchangedWhenNoParam(bool value)
     {
         var conv = new BoolToIntDynamicConverter();
-        var result = conv.Convert(value, typeof(object), null, CultureInfo.InvariantCulture);
+        var result = conv.Convert(value, typeof(object), null!, CultureInfo.InvariantCulture);
         Assert.NotNull(result);
     }
 
@@ -43,7 +43,7 @@ public sealed class ConverterTests
     public void LedInnerDiameter_MultiBinding_ReturnsScaledValue(double diameter, double scale)
     {
         var conv = new LedInnerDiameterConverter();
-        var result = conv.Convert(new object[] { diameter, scale }, typeof(double), null, CultureInfo.InvariantCulture);
+        var result = conv.Convert(new object[] { diameter, scale }, typeof(double), null!, CultureInfo.InvariantCulture);
         var inner = Assert.IsType<double>(result);
         Assert.Equal(diameter * scale, inner, precision: 10);
     }
@@ -52,7 +52,7 @@ public sealed class ConverterTests
     public void LedInnerDiameter_NullValues_ReturnsZero()
     {
         var conv = new LedInnerDiameterConverter();
-        var result = conv.Convert(null!, typeof(double), null, CultureInfo.InvariantCulture);
+        var result = conv.Convert(null!, typeof(double), null!, CultureInfo.InvariantCulture);
         Assert.Equal(0.0, result);
     }
 }

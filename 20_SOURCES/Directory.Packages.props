@@ -3,6 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="Markdig" Version="0.38.0" />
     <PackageVersion Include="Microsoft.VisualStudio.SDK" Version="17.14.40265" ExcludeAssets="runtime" NoWarn="NU1604" />
     <PackageVersion Include="Microsoft.VSSDK.BuildTools" Version="17.14.2120" PrivateAssets="all" NoWarn="NU1604" />
     <PackageVersion Include="Microsoft.CodeAnalysis.Analyzers" Version="3.11.0" />
@@ -24,10 +25,9 @@
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.1" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
-	<PackageVersion Include="System.Text.Encoding.CodePages" Version="8.0.0" />
-	<PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
-	<PackageVersion Include="System.Drawing.Common" Version="8.0.0" />
-	<PackageVersion Include="SharpHook" Version="5.3.8" />
-	  
+    <PackageVersion Include="System.Text.Encoding.CodePages" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+    <PackageVersion Include="System.Drawing.Common" Version="8.0.0" />
+    <PackageVersion Include="SharpHook" Version="5.3.8" />
   </ItemGroup>
 </Project>

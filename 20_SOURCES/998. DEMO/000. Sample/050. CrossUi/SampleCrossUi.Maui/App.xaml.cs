@@ -2,9 +2,14 @@ namespace SampleCrossUi.Maui;
 
 public partial class App : Application
 {
+    private readonly MainPage _mainPage;
+
     public App(MainPage mainPage)
     {
         InitializeComponent();
-        MainPage = new NavigationPage(mainPage);
+        _mainPage = mainPage;
     }
+
+    protected override Window CreateWindow(IActivationState? activationState)
+        => new Window(new NavigationPage(_mainPage));
 }
