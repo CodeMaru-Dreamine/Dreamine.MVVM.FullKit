@@ -27,6 +27,10 @@ public static class Program
         builder.Services.AddSingleton<ITenantStore, JsonTenantStore>();
         builder.Services.AddSingleton<IGuestbookStorage, CsvGuestbookStorage>();
         builder.Services.AddSingleton<IPhotoService, LocalPhotoService>();
+        builder.Services.AddHttpClient<WeddingPlatform.ViewModels.WeddingAdminViewModel>(c =>
+        {
+            c.DefaultRequestHeaders.UserAgent.ParseAdd("CodemaruWeddingPlatform/1.0 (contact: admin@codemaru.co.kr)");
+        });
 
         builder.Services.AddSingleton<Views.MainWindow>();
         builder.Services.AddHostedService<GhostAccountCleanupService>();

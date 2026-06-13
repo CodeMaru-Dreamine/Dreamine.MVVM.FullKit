@@ -55,12 +55,31 @@
             <label class="w-label">예식장 주소</label>
             <input class="w-input" @bind="Vm.Config.VenueAddress" />
 
-            <label class="w-label">예식장 위도 (지도 표시, 예: 36.449977)</label>
-            <input class="w-input" type="number" step="0.000001" @bind="Vm.Config.VenueLat" placeholder="36.449977" />
-
-            <label class="w-label">예식장 경도 (지도 표시, 예: 126.804227)</label>
-            <input class="w-input" type="number" step="0.000001" @bind="Vm.Config.VenueLng" placeholder="126.804227" />
-            <p class="w-hint">카카오맵 공유 → 링크 복사에서 좌표 확인. 입력 시 청첩장에 지도가 표시됩니다.</p>
+            <div class="w-maplink-header" style="margin-top:.75rem">
+                <span class="w-label" style="margin:0">지도 좌표</span>
+                <button class="w-btn w-btn--sm" type="button" @onclick="OnGeocode"
+                        disabled="@Vm.IsGeocoding"
+                        title="예식장 이름/주소로 위도·경도를 자동으로 찾아줍니다">
+                    @(Vm.IsGeocoding ? "검색 중..." : "📍 좌표 자동 검색")
+                </button>
+            </div>
+            @if (!string.IsNullOrWhiteSpace(Vm.GeocodeStatus))
+            {
+                <p class="w-hint" style="color:@(Vm.GeocodeStatus.StartsWith("✅") ? "green" : "#e53e3e")">
+                    @Vm.GeocodeStatus
+                </p>
+            }
+            <div class="w-coord-row">
+                <div>
+                    <label class="w-label">위도</label>
+                    <input class="w-input" type="number" step="0.000001" @bind="Vm.Config.VenueLat" placeholder="자동 검색 또는 직접 입력" />
+                </div>
+                <div>
+                    <label class="w-label">경도</label>
+                    <input class="w-input" type="number" step="0.000001" @bind="Vm.Config.VenueLng" placeholder="자동 검색 또는 직접 입력" />
+                </div>
+            </div>
+            <p class="w-hint">좌표가 있으면 청첩장에 지도가 표시됩니다.</p>
 
             <label class="w-label">스토리 (한국어)</label>
             <textarea class="w-input w-textarea" rows="4" @bind="Vm.Config.Story"></textarea>
@@ -440,6 +459,12 @@
     private async Task OnRoadMapUpload(InputFileChangeEventArgs e)
     {
         await Vm.UploadRoadMapAsync(Slug, e.File);
+        StateHasChanged();
+    }
+
+    private async Task OnGeocode()
+    {
+        await Vm.GeocodeAsync();
         StateHasChanged();
     }
 

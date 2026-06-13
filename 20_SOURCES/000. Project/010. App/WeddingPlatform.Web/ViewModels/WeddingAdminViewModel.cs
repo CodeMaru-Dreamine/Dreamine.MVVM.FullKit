@@ -1,3 +1,6 @@
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.AspNetCore.Components.Forms;
 using WeddingPlatform.Models;
 using WeddingPlatform.Services;
@@ -8,11 +11,13 @@ public sealed class WeddingAdminViewModel
 {
     private readonly ITenantStore _tenants;
     private readonly IPhotoService _photos;
+    private readonly HttpClient _http;
 
-    public WeddingAdminViewModel(ITenantStore tenants, IPhotoService photos)
+    public WeddingAdminViewModel(ITenantStore tenants, IPhotoService photos, HttpClient http)
     {
         _tenants = tenants;
         _photos = photos;
+        _http = http;
     }
 
     public TenantConfig? Config { get; private set; }
@@ -21,6 +26,8 @@ public sealed class WeddingAdminViewModel
     public bool IsAuthenticated { get; private set; }
     public string StatusMessage { get; private set; } = "";
     public bool IsUploading { get; private set; }
+    public bool IsGeocoding { get; private set; }
+    public string GeocodeStatus { get; private set; } = "";
 
     public string LoginPassword { get; set; } = "";
 
@@ -105,6 +112,32 @@ public sealed class WeddingAdminViewModel
         }
         catch (Exception ex) { StatusMessage = $"약도 업로드 오류: {ex.Message}"; }
         finally { IsUploading = false; }
+    }
+
+    public async Task GeocodeAsync(CancellationToken ct = default)
+    {
+        if (Config is null) return;
+        var query = string.IsNullOrWhiteSpace(Config.VenueAddress) ? Config.VenueName : Config.VenueAddress;
+        if (string.IsNullOrWhiteSpace(query)) { GeocodeStatus = "❗ 예식장 이름 또는 주소를 먼저 입력해주세요."; return; }
+
+        IsGeocoding = true;
+        GeocodeStatus = "";
+        try
+        {
+            var url = $"https://nominatim.openstreetmap.org/search?q={Uri.EscapeDataString(query)}&format=json&limit=1&accept-language=ko";
+            var results = await _http.GetFromJsonAsync<JsonElement[]>(url, ct).ConfigureAwait(false);
+            if (results is null || results.Length == 0)
+            {
+                GeocodeStatus = "❌ 좌표를 찾을 수 없습니다. 주소를 더 자세히 입력해 보세요.";
+                return;
+            }
+            var item = results[0];
+            Config.VenueLat = double.Parse(item.GetProperty("lat").GetString()!, System.Globalization.CultureInfo.InvariantCulture);
+            Config.VenueLng = double.Parse(item.GetProperty("lon").GetString()!, System.Globalization.CultureInfo.InvariantCulture);
+            GeocodeStatus = $"✅ 좌표 검색 완료 — {item.GetProperty("display_name").GetString()}";
+        }
+        catch { GeocodeStatus = "❌ 좌표 검색 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."; }
+        finally { IsGeocoding = false; }
     }
 
     public void GenerateMapLinks()
