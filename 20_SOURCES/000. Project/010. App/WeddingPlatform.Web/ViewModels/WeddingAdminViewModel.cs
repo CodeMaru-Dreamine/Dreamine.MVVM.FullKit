@@ -107,6 +107,38 @@ public sealed class WeddingAdminViewModel
         finally { IsUploading = false; }
     }
 
+    public void GenerateMapLinks()
+    {
+        if (Config is null) return;
+
+        var name = Uri.EscapeDataString(Config.VenueName);
+        var addr = Uri.EscapeDataString(
+            string.IsNullOrWhiteSpace(Config.VenueAddress) ? Config.VenueName : Config.VenueAddress);
+        var lat = Config.VenueLat;
+        var lng = Config.VenueLng;
+        bool hasCoords = lat != 0 && lng != 0;
+
+        // 카카오맵 — 좌표 있으면 핀, 없으면 검색
+        Config.MapLinkKakao = hasCoords
+            ? $"https://map.kakao.com/link/map/{name},{lat},{lng}"
+            : $"https://map.kakao.com/link/search/{addr}";
+
+        // 네이버지도 — 좌표 있으면 좌표 검색, 없으면 주소 검색
+        Config.MapLinkNaver = hasCoords
+            ? $"https://map.naver.com/v5/search/{addr}?c={lng},{lat},15,0,0,0,dh"
+            : $"https://map.naver.com/v5/search/{addr}";
+
+        // 아틀란 — 좌표 필요 (없으면 주소만)
+        Config.MapLinkAtlan = hasCoords
+            ? $"http://m.atlan.co.kr/app/deeplink/navi?goalname={name}&goalx={lng}&goaly={lat}"
+            : $"http://m.atlan.co.kr/app/deeplink/search?keyword={addr}";
+
+        // T맵 — 좌표 있으면 목적지 설정, 없으면 검색
+        Config.MapLinkTmap = hasCoords
+            ? $"https://apis.openapi.sk.com/tmap/app/routes?goalname={name}&goalx={lng}&goaly={lat}"
+            : $"https://apis.openapi.sk.com/tmap/app/search?name={addr}";
+    }
+
     public string GetThumbUrl(string slug, string fileName) => _photos.GetThumbUrl(slug, fileName);
     public string GetPhotoUrl(string slug, string fileName) => _photos.GetPhotoUrl(slug, fileName);
     public string GetHeroUrl(string slug, string fileName) => _photos.GetHeroUrl(slug, fileName);

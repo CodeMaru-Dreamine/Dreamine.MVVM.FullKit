@@ -68,17 +68,26 @@
             <label class="w-label">스토리 (기타 언어)</label>
             <textarea class="w-input w-textarea" rows="4" @bind="Vm.Config.Story2"></textarea>
 
+            <div class="w-maplink-header">
+                <span class="w-label" style="margin:0">지도 앱 링크</span>
+                <button class="w-btn w-btn--sm" type="button" @onclick="OnAutoGenerateMapLinks"
+                        title="예식장 이름·주소·좌표를 이용해 링크를 자동으로 채워드립니다">
+                    ✨ 자동 생성
+                </button>
+            </div>
+            <p class="w-hint">예식장 이름/주소/좌표를 먼저 입력한 후 <strong>자동 생성</strong> 버튼을 누르세요. 직접 수정도 가능합니다.</p>
+
             <label class="w-label">카카오맵 링크</label>
-            <input class="w-input" @bind="Vm.Config.MapLinkKakao" />
+            <input class="w-input" @bind="Vm.Config.MapLinkKakao" placeholder="자동 생성 또는 직접 입력" />
 
             <label class="w-label">네이버지도 링크</label>
-            <input class="w-input" @bind="Vm.Config.MapLinkNaver" />
+            <input class="w-input" @bind="Vm.Config.MapLinkNaver" placeholder="자동 생성 또는 직접 입력" />
 
             <label class="w-label">아틀란 링크</label>
-            <input class="w-input" @bind="Vm.Config.MapLinkAtlan" placeholder="http://m.atlan.co.kr/..." />
+            <input class="w-input" @bind="Vm.Config.MapLinkAtlan" placeholder="자동 생성 또는 직접 입력" />
 
             <label class="w-label">T맵 링크</label>
-            <input class="w-input" @bind="Vm.Config.MapLinkTmap" placeholder="https://apis.openapi.sk.com/tmap/..." />
+            <input class="w-input" @bind="Vm.Config.MapLinkTmap" placeholder="자동 생성 또는 직접 입력" />
 
             <label class="w-label">사이트 모드</label>
             <select class="w-input" @bind="Vm.Config.Mode">
@@ -431,6 +440,13 @@
     private async Task OnRoadMapUpload(InputFileChangeEventArgs e)
     {
         await Vm.UploadRoadMapAsync(Slug, e.File);
+        StateHasChanged();
+    }
+
+    private void OnAutoGenerateMapLinks()
+    {
+        if (Vm.Config is null) return;
+        Vm.GenerateMapLinks();
         StateHasChanged();
     }
 
