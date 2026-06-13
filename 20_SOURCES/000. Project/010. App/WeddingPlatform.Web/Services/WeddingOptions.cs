@@ -9,6 +9,8 @@ public sealed class WeddingOptions
     public string SuperAdminPassword { get; set; } = "admin1234";
     public string AtlanAuthKey { get; set; } = "";
     public string TmapAppKey { get; set; } = "";
+    /// <summary>Google AdSense Publisher ID (예: ca-pub-1234567890123456). 비워두면 광고 비활성화.</summary>
+    public string AdSenseId { get; set; } = "";
 
     public string ResolvedDataPath
     {

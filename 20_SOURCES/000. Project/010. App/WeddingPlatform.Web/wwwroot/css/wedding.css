@@ -714,6 +714,10 @@ body.w-theme-blush {
 .w-toggle__label { font-size: .88rem; color: #666; }
 
 /* ── 하단 ── */
+.wh-ad { width: 100%; max-width: 800px; margin: 1.5rem auto; padding: 0 1rem; }
+.wh-ad--top { margin-top: 2rem; }
+.wh-ad--bottom { margin-bottom: 1rem; }
+
 .wh-footer {
     text-align: center; padding: 2rem 1rem;
     font-size: .8rem; color: #bbb;
