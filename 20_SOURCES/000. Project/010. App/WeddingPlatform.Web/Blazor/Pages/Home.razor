@@ -143,20 +143,6 @@
         </div>
     </section>
 
-    <!-- ── 광고 (상단) ── -->
-    @if (!string.IsNullOrWhiteSpace(Opts.AdSenseId))
-    {
-        <div class="wh-ad wh-ad--top">
-            <ins class="adsbygoogle"
-                 style="display:block"
-                 data-ad-client="@Opts.AdSenseId"
-                 data-ad-slot="auto"
-                 data-ad-format="auto"
-                 data-full-width-responsive="true"></ins>
-            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-        </div>
-    }
-
     <!-- ── 공개 청첩장 목록 ── -->
     @if (publicInvites.Count > 0)
     {
@@ -190,20 +176,6 @@
                 }
             </div>
         </section>
-    }
-
-    <!-- ── 광고 (하단) ── -->
-    @if (!string.IsNullOrWhiteSpace(Opts.AdSenseId))
-    {
-        <div class="wh-ad wh-ad--bottom">
-            <ins class="adsbygoogle"
-                 style="display:block"
-                 data-ad-client="@Opts.AdSenseId"
-                 data-ad-slot="auto"
-                 data-ad-format="auto"
-                 data-full-width-responsive="true"></ins>
-            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-        </div>
     }
 
     <!-- ── 하단 ── -->
