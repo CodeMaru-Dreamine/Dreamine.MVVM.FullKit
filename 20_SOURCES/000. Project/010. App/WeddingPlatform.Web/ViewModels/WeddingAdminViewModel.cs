@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Forms;
 using WeddingPlatform.Models;
@@ -11,13 +12,13 @@ public sealed class WeddingAdminViewModel
 {
     private readonly ITenantStore _tenants;
     private readonly IPhotoService _photos;
-    private readonly HttpClient _http;
+    private readonly IHttpClientFactory _httpFactory;
 
-    public WeddingAdminViewModel(ITenantStore tenants, IPhotoService photos, HttpClient http)
+    public WeddingAdminViewModel(ITenantStore tenants, IPhotoService photos, IHttpClientFactory httpFactory)
     {
         _tenants = tenants;
         _photos = photos;
-        _http = http;
+        _httpFactory = httpFactory;
     }
 
     public TenantConfig? Config { get; private set; }
@@ -125,7 +126,8 @@ public sealed class WeddingAdminViewModel
         try
         {
             var url = $"https://nominatim.openstreetmap.org/search?q={Uri.EscapeDataString(query)}&format=json&limit=1&accept-language=ko";
-            var results = await _http.GetFromJsonAsync<JsonElement[]>(url, ct).ConfigureAwait(false);
+            var http = _httpFactory.CreateClient("geocoding");
+            var results = await http.GetFromJsonAsync<JsonElement[]>(url, ct).ConfigureAwait(false);
             if (results is null || results.Length == 0)
             {
                 GeocodeStatus = "❌ 좌표를 찾을 수 없습니다. 주소를 더 자세히 입력해 보세요.";
