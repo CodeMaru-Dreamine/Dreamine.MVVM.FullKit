@@ -5,7 +5,6 @@
 
 @inject WeddingSuperAdminViewModel Vm
 @inject NavigationManager Nav
-@inject WeddingPlatform.Services.WeddingOptions Opts
 
 <PageTitle>💒 무료 모바일 청첩장 — Codemaru Wedding</PageTitle>
 
@@ -22,11 +21,6 @@
     <meta name="twitter:title" content="💒 무료 모바일 청첩장 — Codemaru Wedding" />
     <meta name="twitter:description" content="사진·음악·지도·방명록·계좌 안내까지 — 5분이면 완성되는 무료 모바일 청첩장 서비스" />
     <meta name="twitter:image" content="@(Nav.BaseUri.TrimEnd('/') + "/img/og-platform.jpg")" />
-    @if (!string.IsNullOrWhiteSpace(Opts.AdSenseId))
-    {
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=@Opts.AdSenseId"
-                crossorigin="anonymous"></script>
-    }
 </HeadContent>
 
 <div class="wh-page">
