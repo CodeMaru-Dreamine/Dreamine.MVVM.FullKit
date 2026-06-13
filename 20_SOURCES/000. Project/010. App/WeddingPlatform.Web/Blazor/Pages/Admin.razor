@@ -94,19 +94,11 @@
                     ✨ 자동 생성
                 </button>
             </div>
-            <p class="w-hint">예식장 이름/주소/좌표를 먼저 입력한 후 <strong>자동 생성</strong> 버튼을 누르세요. 직접 수정도 가능합니다.</p>
-
-            <label class="w-label">카카오맵 링크</label>
-            <input class="w-input" @bind="Vm.Config.MapLinkKakao" placeholder="자동 생성 또는 직접 입력" />
-
-            <label class="w-label">네이버지도 링크</label>
-            <input class="w-input" @bind="Vm.Config.MapLinkNaver" placeholder="자동 생성 또는 직접 입력" />
-
-            <label class="w-label">아틀란 링크</label>
-            <input class="w-input" @bind="Vm.Config.MapLinkAtlan" placeholder="자동 생성 또는 직접 입력" />
-
-            <label class="w-label">T맵 링크</label>
-            <input class="w-input" @bind="Vm.Config.MapLinkTmap" placeholder="자동 생성 또는 직접 입력" />
+            <p class="w-hint">예식장 이름/주소/좌표를 먼저 입력한 후 <strong>자동 생성</strong> 버튼을 누르세요.</p>
+            @if (Vm.Config.MapLinkKakao != "" || Vm.Config.MapLinkNaver != "" || Vm.Config.MapLinkAtlan != "" || Vm.Config.MapLinkTmap != "")
+            {
+                <p class="w-hint" style="color:green">✅ 링크 생성 완료 (카카오맵 · 네이버지도 · 아틀란 · T맵)</p>
+            }
 
             <label class="w-label">사이트 모드</label>
             <select class="w-input" @bind="Vm.Config.Mode">
