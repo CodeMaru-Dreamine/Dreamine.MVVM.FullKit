@@ -145,15 +145,18 @@
 
 .cm-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 280px));
+    justify-content: center;
+    align-items: stretch;
     gap: 1rem;
     margin-top: 1.25rem;
 }
 
 .cm-card {
-    display: block;
+    display: flex;
+    flex-direction: column;
     width: 100%;
-    min-height: 100%;
+    height: 100%;
     padding: 1rem;
     border: 1px solid var(--cm-border);
     border-radius: 14px;
@@ -181,6 +184,24 @@
     margin-bottom: .75rem;
 }
 
+/* 1구역: 미리보기 이미지 — 16:9 고정 */
+.cm-card-preview {
+    flex-shrink: 0;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-radius: 10px;
+    margin-bottom: .75rem;
+}
+
+/* 2구역: 제목 + 설명 — 고정 높이로 버튼 위치를 통일 */
+.cm-card-body {
+    height: 8rem;
+    overflow: hidden;
+    flex-shrink: 0;
+    padding: .1rem 0 .5rem;
+}
+
 .cm-card h5 {
     margin: .25rem 0 .35rem;
     color: var(--cm-strong);
@@ -189,10 +210,16 @@
 }
 
 .cm-card p {
-    min-height: 4.5em;
-    margin: 0 0 .8rem;
+    margin: 0;
     color: #cbd5e1;
     font-size: .95rem;
+    line-height: 1.5;
+}
+
+/* 3구역: 버튼 */
+.cm-card-footer {
+    flex-shrink: 0;
+    margin-top: auto;
 }
 
 .cm-btn {

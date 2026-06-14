@@ -1,0 +1,115 @@
+@inject PaymentKeyProtector KeyProtector
+
+<div class="card" style="max-width:600px">
+    <div class="card-header">
+        <h5 class="mb-0">결제 설정</h5>
+    </div>
+    <div class="card-body">
+
+        <div class="alert alert-info mb-4">
+            <strong>토스페이먼츠 API 키 발급 방법:</strong><br />
+            1. <a href="https://developers.tosspayments.com" target="_blank">토스페이먼츠 개발자 콘솔</a> 접속<br />
+            2. 가입 후 "내 애플리케이션" → API 키 발급<br />
+            3. 테스트 키: <code>test_ck_...</code> / <code>test_sk_...</code><br />
+            4. 운영 키: 토스 심사 후 발급<br />
+            <small class="text-muted">※ 결제는 귀하의 토스 계정으로 직접 정산됩니다.</small>
+        </div>
+
+        <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="payEnabled"
+                   @bind="_isEnabled" />
+            <label class="form-check-label" for="payEnabled">결제 활성화</label>
+        </div>
+
+        <div class="form-check form-switch mb-4">
+            <input class="form-check-input" type="checkbox" id="testMode"
+                   @bind="_isTestMode" />
+            <label class="form-check-label" for="testMode">
+                테스트 모드
+                <span class="badge @(_isTestMode ? "bg-warning text-dark" : "bg-success") ms-1">
+                    @(_isTestMode ? "TEST" : "LIVE")
+                </span>
+            </label>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">클라이언트 키 (Client Key)</label>
+            <input class="form-control font-monospace" placeholder="@(_isTestMode ? "test_ck_..." : "ck_...")"
+                   @bind="_clientKey" />
+            <div class="form-text">브라우저에서 결제 위젯을 로드할 때 사용합니다.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">시크릿 키 (Secret Key)</label>
+            <input class="form-control font-monospace" type="password"
+                   placeholder="@(_isTestMode ? "test_sk_..." : "sk_...")"
+                   @bind="_secretKeyPlain" />
+            <div class="form-text">서버에서 결제 승인 시 사용합니다. 암호화되어 저장됩니다.</div>
+            @if (!string.IsNullOrEmpty(_secretKeyPlain))
+            {
+                <div class="form-text text-success">✓ 새 키를 입력했습니다. 저장 시 기존 키를 덮어씁니다.</div>
+            }
+            else if (!string.IsNullOrEmpty(Config.Payment.TossSecretKeyEncrypted))
+            {
+                <div class="form-text text-muted">기존 저장된 키가 있습니다. 변경하려면 새 키를 입력하세요.</div>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(_saveMessage))
+        {
+            <div class="alert @(_saveError ? "alert-danger" : "alert-success")">@_saveMessage</div>
+        }
+
+        <button class="btn btn-primary" @onclick="Save">설정 저장</button>
+    </div>
+</div>
+
+@code {
+    [Parameter] public ShopConfig Config { get; set; } = default!;
+    [Parameter] public EventCallback<ShopConfig> OnSave { get; set; }
+
+    private bool _isEnabled;
+    private bool _isTestMode;
+    private string _clientKey = string.Empty;
+    private string _secretKeyPlain = string.Empty;
+    private string _saveMessage = string.Empty;
+    private bool _saveError;
+
+    protected override void OnParametersSet()
+    {
+        _isEnabled = Config.Payment.IsEnabled;
+        _isTestMode = Config.Payment.IsTestMode;
+        _clientKey = Config.Payment.TossClientKey;
+    }
+
+    private async Task Save()
+    {
+        _saveMessage = string.Empty;
+        Config.Payment.IsEnabled = _isEnabled;
+        Config.Payment.IsTestMode = _isTestMode;
+        Config.Payment.TossClientKey = _clientKey.Trim();
+
+        if (!string.IsNullOrWhiteSpace(_secretKeyPlain))
+        {
+            Config.Payment.TossSecretKeyEncrypted = KeyProtector.Protect(_secretKeyPlain.Trim());
+            _secretKeyPlain = string.Empty;
+        }
+
+        // 콜백 URL 자동 세팅
+        var slug = Config.Slug;
+        Config.Payment.SuccessReturnUrl = $"/pay/{slug}/return";
+        Config.Payment.FailReturnUrl = $"/pay/{slug}/fail";
+
+        try
+        {
+            await OnSave.InvokeAsync(Config);
+            _saveMessage = "결제 설정이 저장되었습니다.";
+            _saveError = false;
+        }
+        catch (Exception ex)
+        {
+            _saveMessage = $"저장 실패: {ex.Message}";
+            _saveError = true;
+        }
+    }
+}

@@ -1,0 +1,64 @@
+@inject TenantDbContextFactory DbFactory
+
+<div>
+    <h5 class="mb-3">주문 목록</h5>
+
+    @if (_orders == null)
+    {
+        <p>로딩 중...</p>
+    }
+    else if (_orders.Count == 0)
+    {
+        <p class="text-muted">아직 주문이 없습니다.</p>
+    }
+    else
+    {
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>주문번호</th>
+                    <th>고객명</th>
+                    <th>합계</th>
+                    <th>상태</th>
+                    <th>일시</th>
+                    <th>TX ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in _orders)
+                {
+                    <tr>
+                        <td><code>@o.OrderNo</code></td>
+                        <td>@o.CustomerName</td>
+                        <td>@o.TotalAmount.ToString("N0")원</td>
+                        <td>
+                            <span class="badge @StatusBadge(o.Status)">@o.Status</span>
+                        </td>
+                        <td>@o.CreatedAt.ToLocalTime().ToString("MM/dd HH:mm")</td>
+                        <td><small class="text-muted">@o.TransactionId</small></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+
+    private List<Order>? _orders;
+
+    protected override void OnInitialized()
+    {
+        using var db = DbFactory.Create(Slug);
+        _orders = db.Orders.OrderByDescending(o => o.Id).ToList();
+    }
+
+    private static string StatusBadge(string status) => status switch
+    {
+        "paid" => "bg-success",
+        "pending" => "bg-warning text-dark",
+        "cancelled" => "bg-danger",
+        _ => "bg-secondary"
+    };
+}

@@ -7,59 +7,143 @@
     <img class="cm-hero-logo" src="img/Codemaru_Core.jpg" alt="CodeMaru 로고" />
     <h1>Welcome to CodeMaru</h1>
     <p class="lead">
-        CodeMaru는 다양한 서비스를 제공하는 통합 플랫폼입니다.<br />
-        CCTV Viewer · Wedding · Families · Research 프로젝트를 만나보세요.
+        CodeMaru는 일상을 더 스마트하게 만드는 서비스를 만듭니다.<br />
+        명함 관리 · 디지털 청첩장 · 가족 플랫폼 · 실시간 CCTV까지, 모두 여기에 있습니다.
     </p>
 </section>
 
 <section class="cm-cards">
-    <a class="cm-card" href="https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit" target="_blank" rel="noopener noreferrer">
-        <img class="cm-card-img" src="img/Dreamine_1200x630.png" alt="Dreamine" />
-        <h5>Dreamine</h5>
-        <p>새로운 가능성을 탐구하는 연구 프로젝트.</p>
-        <span class="cm-btn">바로가기</span>
+    <a class="cm-card" href="https://dreamine.kr/" target="_blank" rel="noopener">
+        <div class="cm-card-preview">
+            <div class="cm-browser-frame">
+                <div class="cm-browser-bar">
+                    <span class="cm-dot r"></span><span class="cm-dot y"></span><span class="cm-dot g"></span>
+                    <span class="cm-browser-url">dreamine.kr</span>
+                </div>
+                <img class="cm-frame-img" src="@PreviewSrc("dreamine", "img/Dreamine_1200x630.png")" alt="Dreamine" />
+            </div>
+        </div>
+        <div class="cm-card-body">
+            <h5>Dreamine</h5>
+            <p>코드가 설계가 되는 순간. WPF · Blazor를 하나로 묶는 오픈소스 MVVM 프레임워크로, 복잡한 앱을 단순하고 우아하게 만드세요.</p>
+        </div>
+        <div class="cm-card-footer">
+            <span class="cm-btn">사이트 보기</span>
+        </div>
     </a>
 
     <a class="cm-card" href="/cardhybrid">
-        <img class="cm-card-img" src="img/Codemaru_Essence.jpg" alt="CardHybrid" />
-        <h5>CardHybrid</h5>
-        <p>무료 QR, 명함 랜딩 페이지, vCard, 명함 앞뒷면 내보내기를 한 화면에서 관리합니다.</p>
-        <span class="cm-btn">열기</span>
+        <div class="cm-card-preview">
+            <div class="cm-browser-frame">
+                <div class="cm-browser-bar">
+                    <span class="cm-dot r"></span><span class="cm-dot y"></span><span class="cm-dot g"></span>
+                    <span class="cm-browser-url">codemaru.co.kr/cardhybrid</span>
+                </div>
+                <img class="cm-frame-img" src="img/cardhybrid_preview.svg" alt="CardHybrid" />
+            </div>
+        </div>
+        <div class="cm-card-body">
+            <h5>CardHybrid</h5>
+            <p>명함을 건네는 순간이 달라집니다. QR 스캔 하나로 내 소개 페이지 · 연락처 저장 · PDF 명함까지 — 지갑 속 종이 명함은 이제 그만.</p>
+        </div>
+        <div class="cm-card-footer">
+            <span class="cm-btn">명함 만들기</span>
+        </div>
     </a>
 
     <button class="cm-card" type="button" @onclick='() => OpenModal("https://wedding.codemaru.co.kr")'>
-        <img class="cm-card-img" src="img/Wedding_1200x630.jpg" alt="Wedding" />
-        <h5>Wedding</h5>
-        <p>특별한 순간을 위한 디지털 청첩장 서비스.</p>
-        <span class="cm-btn">바로가기</span>
+        <div class="cm-card-preview">
+            <div class="cm-browser-frame">
+                <div class="cm-browser-bar">
+                    <span class="cm-dot r"></span><span class="cm-dot y"></span><span class="cm-dot g"></span>
+                    <span class="cm-browser-url">wedding.codemaru.co.kr</span>
+                </div>
+                <img class="cm-frame-img" src="@PreviewSrc("wedding", "img/Wedding_1200x630.jpg")" alt="Wedding" />
+            </div>
+        </div>
+        <div class="cm-card-body">
+            <h5>Wedding</h5>
+            <p>소중한 날, 더 많은 사람에게. 사진·지도·방명록이 담긴 나만의 청첩장을 5분 만에 완성하고 링크 하나로 전달하세요. 완전 무료.</p>
+        </div>
+        <div class="cm-card-footer">
+            <span class="cm-btn">청첩장 만들기</span>
+        </div>
     </button>
 
     <button class="cm-card" type="button" @onclick='() => OpenModal("https://families.codemaru.co.kr")'>
-        <img class="cm-card-img" src="img/Families_1200x630.jpg" alt="Families" />
-        <h5>Families</h5>
-        <p>가족과 함께하는 라이프 스타일 플랫폼.</p>
-        <span class="cm-btn">바로가기</span>
+        <div class="cm-card-preview">
+            <div class="cm-browser-frame">
+                <div class="cm-browser-bar">
+                    <span class="cm-dot r"></span><span class="cm-dot y"></span><span class="cm-dot g"></span>
+                    <span class="cm-browser-url">families.codemaru.co.kr</span>
+                </div>
+                <img class="cm-frame-img" src="@PreviewSrc("families", "img/Families_1200x630.jpg")" alt="Families" />
+            </div>
+        </div>
+        <div class="cm-card-body">
+            <h5>Families</h5>
+            <p>가족끼리만 공유하는 우리만의 공간. 일정·앨범·메모·연락처를 한곳에서 — 멀리 있어도 매일 가까운 가족 플랫폼.</p>
+        </div>
+        <div class="cm-card-footer">
+            <span class="cm-btn">바로가기</span>
+        </div>
     </button>
 
     <button class="cm-card" type="button" @onclick='() => OpenModal("https://portfolio.codemaru.co.kr/")'>
-        <img class="cm-card-img" src="img/portfolio_og.jpg" alt="Portfolio" />
-        <h5>Portfolio</h5>
-        <p>.NET 8 · Blazor 기반으로 만든 개인 포트폴리오.</p>
-        <span class="cm-btn">바로가기</span>
+        <div class="cm-card-preview">
+            <div class="cm-browser-frame">
+                <div class="cm-browser-bar">
+                    <span class="cm-dot r"></span><span class="cm-dot y"></span><span class="cm-dot g"></span>
+                    <span class="cm-browser-url">portfolio.codemaru.co.kr</span>
+                </div>
+                <img class="cm-frame-img" src="@PreviewSrc("portfolio", "img/portfolio_og.jpg")" alt="Portfolio" />
+            </div>
+        </div>
+        <div class="cm-card-body">
+            <h5>Portfolio</h5>
+            <p>말보다 코드가 증명합니다. .NET · Blazor로 직접 만든 개발자 포트폴리오 — 프로젝트, 기술 스택, 경력을 한눈에 확인하세요.</p>
+        </div>
+        <div class="cm-card-footer">
+            <span class="cm-btn">포트폴리오 보기</span>
+        </div>
     </button>
 
     <button class="cm-card" type="button" @onclick='() => OpenModal("https://cctvviewer.codemaru.co.kr")'>
-        <img class="cm-card-img" src="img/CCTVViewer_1200x630.jpg" alt="CCTV Viewer" />
-        <h5>CCTV Viewer</h5>
-        <p>집과 농장의 안전을 지켜주는 실시간 뷰어.</p>
-        <span class="cm-btn">바로가기</span>
+        <div class="cm-card-preview">
+            <div class="cm-browser-frame">
+                <div class="cm-browser-bar">
+                    <span class="cm-dot r"></span><span class="cm-dot y"></span><span class="cm-dot g"></span>
+                    <span class="cm-browser-url">cctvviewer.codemaru.co.kr</span>
+                </div>
+                <img class="cm-frame-img" src="@PreviewSrc("cctv", "img/CCTVViewer_1200x630.jpg")" alt="CCTV Viewer" />
+            </div>
+        </div>
+        <div class="cm-card-body">
+            <h5>CCTV Viewer</h5>
+            <p>지금 이 순간, 집에 무슨 일이? RTSP 카메라를 브라우저에서 바로 — 앱 설치 없이 집·농장·사무실을 실시간으로 지킵니다.</p>
+        </div>
+        <div class="cm-card-footer">
+            <span class="cm-btn">뷰어 열기</span>
+        </div>
     </button>
 
     <button class="cm-card" type="button" @onclick='() => OpenModal("https://shop.codemaru.co.kr/")'>
-        <img class="cm-card-img" src="img/ShopStore_1200x630.png" alt="Shop Store" />
-        <h5>Shop Store</h5>
-        <p>농산물부터 소프트웨어까지, 여러 상품을 한 곳에서 구매하세요.</p>
-        <span class="cm-btn">바로가기</span>
+        <div class="cm-card-preview">
+            <div class="cm-browser-frame">
+                <div class="cm-browser-bar">
+                    <span class="cm-dot r"></span><span class="cm-dot y"></span><span class="cm-dot g"></span>
+                    <span class="cm-browser-url">shop.codemaru.co.kr</span>
+                </div>
+                <img class="cm-frame-img" src="@PreviewSrc("shop", "img/ShopStore_1200x630.png")" alt="Shop Store" />
+            </div>
+        </div>
+        <div class="cm-card-body">
+            <h5>Shop Store</h5>
+            <p>직접 키우고, 직접 만들고, 직접 팝니다. 농산물부터 소프트웨어까지 — 중간 마진 없이 코드마루가 직영하는 믿을 수 있는 쇼핑몰.</p>
+        </div>
+        <div class="cm-card-footer">
+            <span class="cm-btn">쇼핑하기</span>
+        </div>
     </button>
 </section>
 
@@ -75,6 +159,14 @@
 
 @code {
     private string? modalUrl;
+
+    private static string PreviewSrc(string key, string fallback)
+    {
+        var path = Path.Combine(AppContext.BaseDirectory, "wwwroot", "img", "previews", $"{key}.jpg");
+        return File.Exists(path)
+            ? $"img/previews/{key}.jpg?v={File.GetLastWriteTime(path).Ticks}"
+            : fallback;
+    }
 
     private void OpenModal(string url)
     {

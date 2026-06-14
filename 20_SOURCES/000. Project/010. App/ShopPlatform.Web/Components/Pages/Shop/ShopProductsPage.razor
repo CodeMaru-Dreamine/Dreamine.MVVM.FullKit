@@ -1,0 +1,199 @@
+@page "/{Slug}/products"
+@inject TenantContext Tenant
+@inject IShopTenantStore TenantStore
+@inject TenantDbContextFactory DbFactory
+@inject CartService Cart
+@inject ShopCustomerSession CustomerSession
+
+<PageTitle>전체 상품 — @(Tenant.Config?.ShopName ?? "쇼핑몰")</PageTitle>
+
+@if (!Tenant.IsResolved)
+{
+    <div class="container py-5 text-center"><h2>존재하지 않는 쇼핑몰입니다.</h2></div>
+}
+else
+{
+    var cfg = Tenant.Config!;
+
+    <!-- 헤더 -->
+    <header class="ss-header">
+        <div class="ss-header-inner">
+            <a href="/@Slug" class="ss-brand">
+                @if (!string.IsNullOrEmpty(cfg.LogoPath))
+                {
+                    <img src="@cfg.LogoPath" class="ss-brand-logo" alt="@cfg.ShopName" />
+                }
+                <span class="ss-brand-name">@cfg.ShopName</span>
+            </a>
+            <nav class="ss-nav">
+                <a href="/@Slug">홈</a>
+                <a href="/@Slug/products" class="active">전체 상품</a>
+            </nav>
+            <div class="ss-header-right">
+                @if (CustomerSession.IsLoggedIn)
+                {
+                    <span class="ss-user-name">👤 @CustomerSession.User!.Name</span>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => CustomerSession.Logout()">로그아웃</button>
+                }
+                else
+                {
+                    <a href="/@Slug/login" class="btn btn-sm btn-outline-secondary">로그인</a>
+                    <a href="/@Slug/register" class="btn btn-sm btn-outline-primary">회원가입</a>
+                }
+                <a href="/@Slug/cart" class="ss-cart-btn">
+                    🛒
+                    @if (Cart.Count > 0)
+                    {
+                        <span class="ss-cart-badge">@Cart.Count</span>
+                    }
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="ss-body">
+        <section class="ss-products-page">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="ss-section-title mb-0">전체 상품</h2>
+                    <span class="text-muted small">총 @(_filtered.Count)개</span>
+                </div>
+
+                <!-- 검색/정렬 -->
+                <div class="ss-filters mb-4">
+                    <input class="form-control ss-search"
+                           placeholder="상품명 검색..."
+                           value="@_query"
+                           @oninput="e => { _query = e.Value?.ToString() ?? string.Empty; ApplyFilter(); }" />
+                    <select class="form-select ss-sort" @onchange="OnSortChange">
+                        <option value="name-asc">이름 ↑</option>
+                        <option value="name-desc">이름 ↓</option>
+                        <option value="price-asc">가격 낮은순</option>
+                        <option value="price-desc">가격 높은순</option>
+                    </select>
+                </div>
+
+                @if (_filtered.Count == 0)
+                {
+                    <div class="text-center py-5 text-muted">
+                        <p>검색 결과가 없습니다.</p>
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="ResetFilter">필터 초기화</button>
+                    </div>
+                }
+                else
+                {
+                    <div class="ss-product-grid">
+                        @foreach (var p in _filtered)
+                        {
+                            <div class="ss-product-card">
+                                <a href="/@Slug/products/@p.Id" class="ss-product-img-wrap">
+                                    @if (!string.IsNullOrEmpty(p.ImagePath))
+                                    {
+                                        <img src="@p.ImagePath" alt="@p.Name" />
+                                    }
+                                    else
+                                    {
+                                        <div class="ss-product-img-placeholder">🏷️</div>
+                                    }
+                                    @if (!p.IsAvailable)
+                                    {
+                                        <span class="ss-sold-out">품절</span>
+                                    }
+                                </a>
+                                <div class="ss-product-info">
+                                    <h5 class="ss-product-name">
+                                        <a href="/@Slug/products/@p.Id" class="ss-product-name-link">@p.Name</a>
+                                    </h5>
+                                    @if (!string.IsNullOrEmpty(p.Description))
+                                    {
+                                        <p class="ss-product-desc">@p.Description</p>
+                                    }
+                                    <p class="ss-product-price">@p.Price.ToString("N0")원</p>
+                                    <div class="ss-product-actions">
+                                        <a href="/@Slug/products/@p.Id" class="btn btn-outline-primary btn-sm">자세히</a>
+                                        @if (p.IsAvailable)
+                                        {
+                                            <button class="btn btn-primary btn-sm"
+                                                    @onclick="() => AddToCart(p)">
+                                                🛒 담기
+                                            </button>
+                                        }
+                                        else
+                                        {
+                                            <button class="btn btn-secondary btn-sm" disabled>품절</button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+
+        <ShopPlatform.Components.Pages.Shop.Shared.ShopFooter Config="cfg" Slug="@Slug" />
+    </div>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+
+    private List<ShopPlatform.Models.Product> _all = new();
+    private List<ShopPlatform.Models.Product> _filtered = new();
+    private string _query = string.Empty;
+    private string _sort = "name-asc";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Tenant.IsResolved)
+        {
+            var cfg = await TenantStore.GetAsync(Slug);
+            if (cfg != null) Tenant.Config = cfg;
+        }
+        if (!Tenant.IsResolved) return;
+        using var db = DbFactory.Create(Slug);
+        _all = db.Products
+            .Where(p => p.IsActive)
+            .OrderByDescending(p => p.IsFeatured)
+            .ThenBy(p => p.SortOrder)
+            .ThenBy(p => p.Name)
+            .ToList();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        var q = _query.Trim();
+        var list = string.IsNullOrEmpty(q)
+            ? _all.ToList()
+            : _all.Where(p => p.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
+                           || (p.Description ?? "").Contains(q, StringComparison.OrdinalIgnoreCase)).ToList();
+
+        _filtered = _sort switch
+        {
+            "price-asc"  => list.OrderBy(p => p.Price).ToList(),
+            "price-desc" => list.OrderByDescending(p => p.Price).ToList(),
+            "name-desc"  => list.OrderByDescending(p => p.Name).ToList(),
+            _            => list.OrderBy(p => p.Name).ToList()
+        };
+    }
+
+    private void OnSortChange(ChangeEventArgs e)
+    {
+        _sort = e.Value?.ToString() ?? "name-asc";
+        ApplyFilter();
+    }
+
+    private void ResetFilter()
+    {
+        _query = string.Empty;
+        _sort  = "name-asc";
+        ApplyFilter();
+    }
+
+    private void AddToCart(ShopPlatform.Models.Product p)
+    {
+        Cart.Add(p);
+        StateHasChanged();
+    }
+}

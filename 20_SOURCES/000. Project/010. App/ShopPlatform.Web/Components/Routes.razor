@@ -1,0 +1,16 @@
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>페이지를 찾을 수 없습니다</PageTitle>
+        <LayoutView Layout="typeof(Layout.MainLayout)">
+            <div class="container py-5 text-center">
+                <h1>404</h1>
+                <p>요청하신 페이지를 찾을 수 없습니다.</p>
+                <a href="/">홈으로</a>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>

@@ -1,0 +1,100 @@
+@page "/{Slug}/policy/{PolicyType}"
+@inject TenantContext Tenant
+@inject IShopTenantStore TenantStore
+@using ShopPlatform.Services
+
+@{
+    var cfg   = Tenant.Config;
+    var title = PolicyType switch
+    {
+        "refund"   => "환불 정책",
+        "exchange" => "교환·반품 안내",
+        "delivery" => "배송 안내",
+        _          => "정책 안내"
+    };
+    var content = PolicyType switch
+    {
+        "refund"   => cfg?.Policy.RefundPolicy,
+        "exchange" => cfg?.Policy.ExchangePolicy,
+        "delivery" => cfg?.Policy.DeliveryPolicy,
+        _          => null
+    };
+}
+
+<PageTitle>@title — @(cfg?.ShopName ?? "쇼핑몰")</PageTitle>
+
+@if (cfg == null)
+{
+    <div class="container py-5 text-center"><h2>존재하지 않는 쇼핑몰입니다.</h2></div>
+}
+else
+{
+    <!-- ── 헤더 ── -->
+    <header class="ss-header">
+        <div class="ss-header-inner">
+            <a href="/@Slug" class="ss-brand">
+                @if (!string.IsNullOrEmpty(cfg.LogoPath))
+                {
+                    <img src="@cfg.LogoPath" class="ss-brand-logo" alt="@cfg.ShopName" />
+                }
+                <span class="ss-brand-name">@cfg.ShopName</span>
+            </a>
+            <nav class="ss-nav">
+                <a href="/@Slug">홈</a>
+                <a href="/@Slug/products">전체 상품</a>
+            </nav>
+            <div class="ss-header-right"></div>
+        </div>
+    </header>
+
+    <div class="ss-body">
+        <div class="container py-5" style="max-width:820px">
+            <!-- 브레드크럼 -->
+            <nav aria-label="breadcrumb" class="mb-3">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/@Slug">홈</a></li>
+                    <li class="breadcrumb-item active">@title</li>
+                </ol>
+            </nav>
+
+            <div class="card shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <h1 class="h3 mb-4 fw-bold">@title</h1>
+                    <hr class="mb-4" />
+
+                    @if (string.IsNullOrWhiteSpace(content))
+                    {
+                        <p class="text-muted">아직 등록된 내용이 없습니다.</p>
+                    }
+                    else
+                    {
+                        <div class="policy-content">
+                            @MarkdownHelper.ToHtmlAuto(content)
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <a href="/@Slug" class="btn btn-outline-secondary">← 쇼핑몰로 돌아가기</a>
+            </div>
+        </div>
+
+        <ShopPlatform.Components.Pages.Shop.Shared.ShopFooter Config="cfg" Slug="@Slug" />
+    </div>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+    [Parameter] public string PolicyType { get; set; } = string.Empty;
+
+    private string _loadedSlug = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loadedSlug == Slug) return;
+        _loadedSlug = Slug;
+        var cfg = await TenantStore.GetAsync(Slug);
+        Tenant.Config = cfg;
+    }
+}

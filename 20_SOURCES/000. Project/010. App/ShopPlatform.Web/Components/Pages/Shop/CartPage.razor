@@ -1,0 +1,73 @@
+@page "/{Slug}/cart"
+@inject TenantContext Tenant
+@inject CartService Cart
+
+<PageTitle>장바구니 — @(Tenant.Config?.ShopName ?? "")</PageTitle>
+
+<div class="container py-4">
+    <h2>🛒 장바구니</h2>
+    <a href="/@Slug" class="btn btn-link ps-0">← 쇼핑 계속하기</a>
+
+    @if (Cart.Count == 0)
+    {
+        <div class="text-center py-5 text-muted">
+            <p>장바구니가 비어 있습니다.</p>
+        </div>
+    }
+    else
+    {
+        <table class="table mt-3">
+            <thead>
+                <tr>
+                    <th>상품명</th>
+                    <th>단가</th>
+                    <th>수량</th>
+                    <th>소계</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Cart.Items)
+                {
+                    <tr>
+                        <td>@item.ProductName</td>
+                        <td>@item.UnitPrice.ToString("N0")원</td>
+                        <td>
+                            <input type="number" min="1" class="form-control form-control-sm" style="width:70px"
+                                   value="@item.Quantity"
+                                   @onchange="e => UpdateQty(item.ProductId, e)" />
+                        </td>
+                        <td>@item.Subtotal.ToString("N0")원</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    @onclick="() => Cart.Remove(item.ProductId)">
+                                ✕
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr class="fw-bold">
+                    <td colspan="3" class="text-end">합계</td>
+                    <td>@Cart.Total.ToString("N0")원</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="text-end mt-3">
+            <a href="/@Slug/checkout" class="btn btn-primary btn-lg">결제하기</a>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+
+    private void UpdateQty(int productId, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out int qty))
+            Cart.UpdateQuantity(productId, qty);
+    }
+}

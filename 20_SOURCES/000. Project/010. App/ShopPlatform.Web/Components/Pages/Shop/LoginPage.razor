@@ -1,0 +1,101 @@
+@page "/{Slug}/login"
+@inject TenantContext Tenant
+@inject IShopTenantStore TenantStore
+@inject TenantDbContextFactory DbFactory
+@inject ShopCustomerSession Session
+@inject NavigationManager Nav
+
+<PageTitle>로그인 — @(Tenant.Config?.ShopName ?? "")</PageTitle>
+
+<div class="container py-5" style="max-width:420px">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">로그인</h2>
+        <p class="text-muted">@(Tenant.Config?.ShopName ?? "") 회원</p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <div class="mb-3">
+                <label class="form-label">이메일</label>
+                <input class="form-control" type="email" @bind="_email" @bind:event="oninput" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">비밀번호</label>
+                <input class="form-control" type="password" @bind="_password" @bind:event="oninput"
+                       @onkeypress="OnKey" />
+            </div>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="alert alert-danger py-2">@_error</div>
+            }
+            <button class="btn btn-primary w-100" @onclick="Login" disabled="@_loading">
+                @(_loading ? "로그인 중..." : "로그인")
+            </button>
+            <hr />
+            <p class="text-center mb-0 small">
+                아직 회원이 아니신가요?
+                <a href="/@Slug/register">회원가입</a>
+            </p>
+        </div>
+    </div>
+    <div class="text-center mt-3">
+        <a href="/@Slug" class="text-muted small">← 쇼핑몰로 돌아가기</a>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string _error = string.Empty;
+    private bool _loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Tenant.IsResolved)
+        {
+            var cfg = await TenantStore.GetAsync(Slug);
+            if (cfg != null) Tenant.Config = cfg;
+        }
+        if (Session.IsLoggedIn)
+            Nav.NavigateTo(ReturnUrl ?? $"/{Slug}");
+    }
+
+    private async Task Login()
+    {
+        _error = string.Empty;
+        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "이메일과 비밀번호를 입력해 주세요.";
+            return;
+        }
+        _loading = true;
+        using var db = DbFactory.Create(Slug);
+        var user = db.Users.FirstOrDefault(u => u.Email == _email.Trim().ToLower());
+        if (user == null || !BCrypt.Verify(_password, user.PasswordHash))
+        {
+            _error = "이메일 또는 비밀번호가 올바르지 않습니다.";
+            _loading = false;
+            return;
+        }
+        Session.Login(user);
+        Nav.NavigateTo(ReturnUrl ?? $"/{Slug}");
+    }
+
+    private async Task OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await Login();
+    }
+
+    // 간단한 BCrypt 대체 (실제로는 BCrypt.Net-Next 패키지 사용 권장)
+    private static class BCrypt
+    {
+        public static string Hash(string plain) =>
+            Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(
+                System.Text.Encoding.UTF8.GetBytes(plain + "ShopPlatformSalt2025")));
+
+        public static bool Verify(string plain, string hash) => Hash(plain) == hash;
+    }
+}

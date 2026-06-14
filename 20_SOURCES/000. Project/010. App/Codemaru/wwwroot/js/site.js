@@ -204,3 +204,48 @@ function closeModal() {
     document.getElementById("cctvModal").style.display = "none";
     document.getElementById("cctvFrame").src = "";
 }
+
+/**
+ * @brief .cm-site-preview-wrap 안의 iframe을 컨테이너 크기에 맞게 scale 조정합니다.
+ * @details Blazor afterRender 후 호출. ResizeObserver로 리사이즈 시에도 자동 재조정.
+ */
+window.scaleInternalIframe = function () {
+    const wrap = document.querySelector('.cm-iframe-wrap');
+    const iframe = document.querySelector('.cm-iframe-preview');
+    if (!wrap || !iframe) return;
+
+    const scale = wrap.clientWidth / 1280;
+    iframe.style.transform = `scale(${scale})`;
+    wrap.style.height = (720 * scale) + 'px';
+
+    if (!window._iframeRO) {
+        window._iframeRO = new ResizeObserver(() => {
+            const s = wrap.clientWidth / 1280;
+            iframe.style.transform = `scale(${s})`;
+            wrap.style.height = (720 * s) + 'px';
+        });
+        window._iframeRO.observe(wrap);
+    }
+};
+
+window.scalePreviewIframes = function () {
+    const IFRAME_W = 1280;
+
+    function applyScale(wrap) {
+        const iframe = wrap.querySelector('.cm-site-preview');
+        if (!iframe) return;
+        const scale = wrap.clientWidth / IFRAME_W;
+        iframe.style.transform = `scale(${scale})`;
+        wrap.style.height = (720 * scale) + 'px';
+    }
+
+    const wraps = document.querySelectorAll('.cm-site-preview-wrap');
+    wraps.forEach(applyScale);
+
+    if (!window._previewRO) {
+        window._previewRO = new ResizeObserver(entries => {
+            entries.forEach(e => applyScale(e.target));
+        });
+    }
+    wraps.forEach(w => window._previewRO.observe(w));
+};

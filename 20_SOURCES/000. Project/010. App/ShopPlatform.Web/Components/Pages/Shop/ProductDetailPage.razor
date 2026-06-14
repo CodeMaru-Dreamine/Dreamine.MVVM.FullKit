@@ -1,0 +1,329 @@
+@page "/{Slug}/products/{ProductId:int}"
+@inject TenantContext Tenant
+@inject IShopTenantStore TenantStore
+@inject TenantDbContextFactory DbFactory
+@inject CartService Cart
+@inject ShopCustomerSession CustomerSession
+@inject NavigationManager Nav
+@using System.Text.Json
+@using ShopPlatform.Services
+
+<PageTitle>@(_product?.Name ?? "상품 상세") — @(Tenant.Config?.ShopName ?? "쇼핑몰")</PageTitle>
+
+@if (!Tenant.IsResolved)
+{
+    <div class="container py-5 text-center"><h2>존재하지 않는 쇼핑몰입니다.</h2></div>
+}
+else
+{
+    var cfg = Tenant.Config!;
+
+    <header class="ss-header">
+        <div class="ss-header-inner">
+            <a href="/@Slug" class="ss-brand">
+                @if (!string.IsNullOrEmpty(cfg.LogoPath))
+                {
+                    <img src="@cfg.LogoPath" class="ss-brand-logo" alt="@cfg.ShopName" />
+                }
+                <span class="ss-brand-name">@cfg.ShopName</span>
+            </a>
+            <nav class="ss-nav">
+                <a href="/@Slug">홈</a>
+                <a href="/@Slug/products" class="active">전체 상품</a>
+            </nav>
+            <div class="ss-header-right">
+                @if (CustomerSession.IsLoggedIn)
+                {
+                    <span class="ss-user-name">👤 @CustomerSession.User!.Name</span>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => CustomerSession.Logout()">로그아웃</button>
+                }
+                else
+                {
+                    <a href="/@Slug/login" class="btn btn-sm btn-outline-secondary">로그인</a>
+                    <a href="/@Slug/register" class="btn btn-sm btn-outline-primary">회원가입</a>
+                }
+                <a href="/@Slug/cart" class="ss-cart-btn">
+                    🛒
+                    @if (Cart.Count > 0)
+                    {
+                        <span class="ss-cart-badge">@Cart.Count</span>
+                    }
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="ss-body">
+        @if (_product == null)
+        {
+            <div class="container py-5 text-center">
+                <h3>상품을 찾을 수 없습니다.</h3>
+                <a href="/@Slug/products" class="btn btn-outline-primary mt-3">← 목록으로</a>
+            </div>
+        }
+        else
+        {
+            var p = _product;
+
+            <!-- 상품 메인 영역 -->
+            <section class="ss-detail-main container py-4">
+                <div class="ss-detail-grid">
+
+                    <!-- 이미지 -->
+                    <div class="ss-detail-img-col">
+                        @if (!string.IsNullOrEmpty(p.ImagePath))
+                        {
+                            <img src="@p.ImagePath" alt="@p.Name" class="ss-detail-main-img" />
+                        }
+                        else
+                        {
+                            <div class="ss-detail-img-placeholder">🏷️</div>
+                        }
+                    </div>
+
+                    <!-- 정보 -->
+                    <div class="ss-detail-info-col">
+                        <h1 class="ss-detail-title">@p.Name</h1>
+                        @if (!string.IsNullOrEmpty(p.Description))
+                        {
+                            <p class="ss-detail-desc">@p.Description</p>
+                        }
+
+                        @if (p.IsAvailable)
+                        {
+                            <span class="ss-detail-stock-ok">
+                                @(p.IsUnlimitedStock ? "재고 충분" : $"재고 {p.Stock}개")
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="ss-detail-stock-out">품절</span>
+                        }
+
+                        <div class="ss-detail-divider"></div>
+
+                        <!-- 가격 -->
+                        <div class="ss-detail-price-area">
+                            <span class="ss-detail-price">@p.Price.ToString("N0")원</span>
+                        </div>
+
+                        <!-- 수량 -->
+                        @if (p.IsAvailable)
+                        {
+                            <div class="ss-detail-qty">
+                                <label class="ss-detail-qty-label">수량</label>
+                                <div class="ss-qty-ctrl">
+                                    <button class="ss-qty-btn" @onclick="() => _qty = Math.Max(1, _qty - 1)">−</button>
+                                    <span class="ss-qty-val">@_qty</span>
+                                    <button class="ss-qty-btn" @onclick="() => _qty = p.IsUnlimitedStock ? _qty + 1 : Math.Min(p.Stock, _qty + 1)">+</button>
+                                </div>
+                            </div>
+
+                            <!-- 총액 -->
+                            <div class="ss-detail-total">
+                                총액: <strong>@((p.Price * _qty).ToString("N0"))원</strong>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(_cartMsg))
+                        {
+                            <div class="alert alert-success py-2 mt-2">@_cartMsg</div>
+                        }
+
+                        <!-- 버튼 -->
+                        <div class="ss-detail-btns mt-3">
+                            @if (p.IsAvailable)
+                            {
+                                <button class="btn btn-outline-primary" @onclick="AddToCart">🛒 장바구니 담기</button>
+                                <a href="/@Slug/cart" class="btn btn-secondary">장바구니로 이동</a>
+                                <button class="btn btn-primary" @onclick="BuyNow">바로 결제</button>
+                            }
+                            else
+                            {
+                                <button class="btn btn-secondary w-100" disabled>품절</button>
+                            }
+                        </div>
+
+                        <a href="/@Slug/products" class="ss-detail-back">← 목록으로</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 동영상 -->
+            @if (!string.IsNullOrEmpty(p.VideoUrl))
+            {
+                <section class="container pb-4">
+                    <div class="ss-detail-video-wrap">
+                        @if (p.VideoUrl.Contains("youtube.com") || p.VideoUrl.Contains("youtu.be"))
+                        {
+                            var embedId = GetYoutubeId(p.VideoUrl);
+                            @if (!string.IsNullOrEmpty(embedId))
+                            {
+                                <iframe src="https://www.youtube.com/embed/@embedId"
+                                        title="@p.Name 동영상"
+                                        frameborder="0" allowfullscreen
+                                        class="ss-detail-video"></iframe>
+                            }
+                        }
+                        else
+                        {
+                            <video src="@p.VideoUrl" controls class="ss-detail-video"></video>
+                        }
+                    </div>
+                </section>
+            }
+
+            <!-- 상세 이미지 목록 -->
+            @if (ParseDetailImages(p.DetailImagesJson) is { Count: > 0 } detailImgs)
+            {
+                <section class="container pb-4">
+                    <div class="ss-detail-img-gallery">
+                        @foreach (var imgSrc in detailImgs)
+                        {
+                            <img src="@imgSrc" alt="상세 이미지" class="ss-detail-gallery-img" />
+                        }
+                    </div>
+                </section>
+            }
+
+            <!-- 상세 텍스트 -->
+            @if (!string.IsNullOrEmpty(p.DetailHtml))
+            {
+                <section class="container pb-4">
+                    <div class="ss-detail-html-wrap">
+                        <div class="ss-detail-html-inner">
+                            @MarkdownHelper.ToHtmlAuto(p.DetailHtml)
+                        </div>
+                    </div>
+                </section>
+            }
+
+            <!-- 환불·교환·배송 정책 -->
+            @if (!string.IsNullOrEmpty(cfg.Policy.RefundPolicy)
+              || !string.IsNullOrEmpty(cfg.Policy.ExchangePolicy)
+              || !string.IsNullOrEmpty(cfg.Policy.DeliveryPolicy))
+            {
+                <section class="container pb-5">
+                    <h3 class="ss-policy-title">환불 · 교환/반품 · 배송 정책</h3>
+                    <div class="ss-policy-accordion">
+
+                        @if (!string.IsNullOrEmpty(cfg.Policy.RefundPolicy))
+                        {
+                            <div class="ss-policy-item @(_openPolicy == 1 ? "open" : "")">
+                                <button class="ss-policy-hd" @onclick="() => TogglePolicy(1)">
+                                    <span>1) 환불정책</span>
+                                    <span class="ss-policy-arrow">@(_openPolicy == 1 ? "∧" : "∨")</span>
+                                </button>
+                                @if (_openPolicy == 1)
+                                {
+                                    <div class="ss-policy-body">
+                                        @MarkdownHelper.ToHtmlAuto(cfg.Policy.RefundPolicy)
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(cfg.Policy.ExchangePolicy))
+                        {
+                            <div class="ss-policy-item @(_openPolicy == 2 ? "open" : "")">
+                                <button class="ss-policy-hd" @onclick="() => TogglePolicy(2)">
+                                    <span>2) 교환 및 반품 안내</span>
+                                    <span class="ss-policy-arrow">@(_openPolicy == 2 ? "∧" : "∨")</span>
+                                </button>
+                                @if (_openPolicy == 2)
+                                {
+                                    <div class="ss-policy-body">
+                                        @MarkdownHelper.ToHtmlAuto(cfg.Policy.ExchangePolicy)
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(cfg.Policy.DeliveryPolicy))
+                        {
+                            <div class="ss-policy-item @(_openPolicy == 3 ? "open" : "")">
+                                <button class="ss-policy-hd" @onclick="() => TogglePolicy(3)">
+                                    <span>3) 배송 안내</span>
+                                    <span class="ss-policy-arrow">@(_openPolicy == 3 ? "∧" : "∨")</span>
+                                </button>
+                                @if (_openPolicy == 3)
+                                {
+                                    <div class="ss-policy-body">
+                                        @MarkdownHelper.ToHtmlAuto(cfg.Policy.DeliveryPolicy)
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                    </div>
+                </section>
+            }
+        }
+
+        <ShopPlatform.Components.Pages.Shop.Shared.ShopFooter Config="cfg" Slug="@Slug" />
+    </div>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+    [Parameter] public int ProductId { get; set; }
+
+    private ShopPlatform.Models.Product? _product;
+    private int _qty = 1;
+    private int _openPolicy = 1;
+    private string _cartMsg = string.Empty;
+    private string _loadedSlug = string.Empty;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_loadedSlug != Slug)
+        {
+            _loadedSlug = Slug;
+            var cfg = await TenantStore.GetAsync(Slug);
+            Tenant.Config = cfg;
+        }
+        if (!Tenant.IsResolved) return;
+
+        using var db = DbFactory.Create(Slug);
+        _product = db.Products.FirstOrDefault(p => p.Id == ProductId && p.IsActive);
+        _qty = 1;
+    }
+
+    private void AddToCart()
+    {
+        if (_product == null) return;
+        for (var i = 0; i < _qty; i++) Cart.Add(_product);
+        _cartMsg = $"장바구니에 {_qty}개 담았습니다!";
+        StateHasChanged();
+        Task.Delay(2000).ContinueWith(_ => { _cartMsg = string.Empty; InvokeAsync(StateHasChanged); });
+    }
+
+    private void BuyNow()
+    {
+        if (_product == null) return;
+        for (var i = 0; i < _qty; i++) Cart.Add(_product);
+        Nav.NavigateTo($"/{Slug}/cart");
+    }
+
+    private void TogglePolicy(int idx)
+        => _openPolicy = (_openPolicy == idx) ? 0 : idx;
+
+    private static List<string> ParseDetailImages(string json)
+    {
+        try { return JsonSerializer.Deserialize<List<string>>(json) ?? new(); }
+        catch { return new(); }
+    }
+
+    private static string GetYoutubeId(string url)
+    {
+        try
+        {
+            var uri = new Uri(url);
+            if (uri.Host.Contains("youtu.be"))
+                return uri.AbsolutePath.TrimStart('/');
+            var q = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            return q["v"] ?? string.Empty;
+        }
+        catch { return string.Empty; }
+    }
+}

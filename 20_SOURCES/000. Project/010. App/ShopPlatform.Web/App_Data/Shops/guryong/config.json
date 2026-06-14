@@ -1,0 +1,32 @@
+{
+  "Slug": "guryong",
+  "ShopName": "구룡태양광",
+  "Description": "충남 청양 구룡태양광 직영 쇼핑몰입니다.",
+  "LogoPath": null,
+  "HeroText": "",
+  "HeroSubText": "",
+  "BannerImagePath": null,
+  "FeaturedCount": 4,
+  "IsActive": true,
+  "CreatedAt": "2025-01-01T00:00:00Z",
+  "AdminPasswordHash": "guryong1234",
+  "Business": {
+    "CompanyName": "구룡태양광",
+    "Representative": "장석춘",
+    "BusinessNumber": "405-09-51949",
+    "Address": "충청남도 청양군 남양면 만수로 1589-10",
+    "ManagerName": "장민수 (CodeMaru)",
+    "Email": "admin@codemaru.co.kr",
+    "Phone": "010-4423-2558",
+    "TaxType": "간이과세자(통신판매업 신고번호 없음)",
+    "CopyrightText": "© 2025 구룡태양광 / Dreamine Framework"
+  },
+  "Payment": {
+    "IsEnabled": false,
+    "IsTestMode": true,
+    "TossClientKey": "",
+    "TossSecretKeyEncrypted": "",
+    "SuccessReturnUrl": "",
+    "FailReturnUrl": ""
+  }
+}

@@ -1,0 +1,246 @@
+@page "/{Slug}"
+@inject TenantContext Tenant
+@inject IShopTenantStore TenantStore
+@inject TenantDbContextFactory DbFactory
+@inject CartService Cart
+@inject ShopCustomerSession CustomerSession
+@inject ShopOptions ShopOpts
+@inject IWebHostEnvironment Env
+@using ShopPlatform.Services
+
+<PageTitle>@(Tenant.Config?.ShopName ?? "쇼핑몰")</PageTitle>
+
+@if (Tenant.IsResolved)
+{
+    var cfg2      = Tenant.Config!;
+    var _shopName = !string.IsNullOrEmpty(cfg2.OgTitle) ? cfg2.OgTitle : cfg2.ShopName;
+    var _shopDesc = !string.IsNullOrEmpty(cfg2.OgDescription) ? cfg2.OgDescription
+                    : !string.IsNullOrEmpty(cfg2.Description) ? cfg2.Description
+                    : $"{cfg2.ShopName}에서 쇼핑하세요";
+    // OgImagePath 설정 → 없으면 샵별 자동 생성 이미지, 그것도 없으면 기본 이미지
+    string _shopImg;
+    if (!string.IsNullOrEmpty(cfg2.OgImagePath))
+    {
+        _shopImg = cfg2.OgImagePath.StartsWith("http") ? cfg2.OgImagePath : $"{_baseUrl}{cfg2.OgImagePath}";
+    }
+    else if (!string.IsNullOrEmpty(cfg2.LogoPath))
+    {
+        _shopImg = cfg2.LogoPath.StartsWith("http") ? cfg2.LogoPath : $"{_baseUrl}{cfg2.LogoPath}";
+    }
+    else
+    {
+        // 샵 이름/설명이 담긴 OG 이미지 자동 생성
+        var generatedPath = OgImageGenerator.EnsureShopOg(
+            Env.WebRootPath, Slug, cfg2.ShopName, _shopDesc, _baseUrl);
+        _shopImg = $"{_baseUrl}{generatedPath}";
+    }
+    var _shopUrl  = $"{_baseUrl}/{Slug}";
+    <HeadContent>
+        <meta property="og:type"        content="website" />
+        <meta property="og:site_name"   content="ShopPlatform" />
+        <meta property="og:url"         content="@_shopUrl" />
+        <meta property="og:title"       content="@_shopName" />
+        <meta property="og:description" content="@_shopDesc" />
+        <meta property="og:image"       content="@_shopImg" />
+        <meta property="og:image:width"  content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="description" content="@_shopDesc" />
+    </HeadContent>
+}
+
+@if (!Tenant.IsResolved)
+{
+    <div class="container py-5 text-center">
+        <h2>존재하지 않는 쇼핑몰입니다.</h2>
+        <a href="/">홈으로</a>
+    </div>
+}
+else if (!Tenant.Config!.IsActive)
+{
+    <div class="container py-5 text-center">
+        <h2>준비 중인 쇼핑몰입니다.</h2>
+    </div>
+}
+else
+{
+    var cfg = Tenant.Config!;
+
+    <!-- ── 고정 헤더 ── -->
+    <header class="ss-header">
+        <div class="ss-header-inner">
+            <a href="/@Slug" class="ss-brand">
+                @if (!string.IsNullOrEmpty(cfg.LogoPath))
+                {
+                    <img src="@cfg.LogoPath" class="ss-brand-logo" alt="@cfg.ShopName" />
+                }
+                <span class="ss-brand-name">@cfg.ShopName</span>
+            </a>
+            <nav class="ss-nav">
+                <a href="/@Slug">홈</a>
+                <a href="/@Slug/products">전체 상품</a>
+            </nav>
+            <div class="ss-header-right">
+                @if (CustomerSession.IsLoggedIn)
+                {
+                    <span class="ss-user-name">👤 @CustomerSession.User!.Name</span>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => CustomerSession.Logout()">로그아웃</button>
+                }
+                else
+                {
+                    <a href="/@Slug/login" class="btn btn-sm btn-outline-secondary">로그인</a>
+                    <a href="/@Slug/register" class="btn btn-sm btn-outline-primary">회원가입</a>
+                }
+                <a href="/@Slug/cart" class="ss-cart-btn">
+                    🛒
+                    @if (Cart.Count > 0)
+                    {
+                        <span class="ss-cart-badge">@Cart.Count</span>
+                    }
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="ss-body">
+
+        <!-- ── 히어로 배너 ── -->
+        <section class="ss-hero" style="@(!string.IsNullOrEmpty(cfg.BannerImagePath) ? $"background-image:url({cfg.BannerImagePath})" : "")">
+            <div class="ss-hero-content">
+                @if (!string.IsNullOrEmpty(cfg.LogoPath))
+                {
+                    <img src="@cfg.LogoPath" class="ss-hero-logo" alt="@cfg.ShopName" />
+                }
+                <h1 class="ss-hero-title">@cfg.ShopName</h1>
+                @if (!string.IsNullOrEmpty(cfg.HeroText))
+                {
+                    <p class="ss-hero-tagline">@cfg.HeroText</p>
+                }
+                @if (!string.IsNullOrEmpty(cfg.HeroSubText))
+                {
+                    <p class="ss-hero-sub">@cfg.HeroSubText</p>
+                }
+                else if (!string.IsNullOrEmpty(cfg.Description))
+                {
+                    <p class="ss-hero-sub">@cfg.Description</p>
+                }
+                <div class="ss-hero-cta">
+                    <a href="/@Slug/products" class="btn btn-primary btn-lg">전체 상품 보기</a>
+                    <a href="/@Slug/cart" class="btn btn-outline-light btn-lg">장바구니 🛒</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── 추천 상품 ── -->
+        <section class="ss-featured">
+            <div class="container">
+                <h2 class="ss-section-title">추천 상품</h2>
+
+                @if (_products == null)
+                {
+                    <p class="text-muted text-center py-4">로딩 중...</p>
+                }
+                else if (_products.Count == 0)
+                {
+                    <div class="text-center py-5 text-muted">
+                        <p>등록된 상품이 없습니다.</p>
+                        <a href="/@Slug/admin" class="btn btn-outline-primary">어드민에서 상품 등록하기</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="ss-product-grid">
+                        @foreach (var p in _products.Take(cfg.FeaturedCount > 0 ? cfg.FeaturedCount : 4))
+                        {
+                            <div class="ss-product-card">
+                                <a href="/@Slug/products/@p.Id" class="ss-product-img-wrap">
+                                    @if (!string.IsNullOrEmpty(p.ImagePath))
+                                    {
+                                        <img src="@p.ImagePath" alt="@p.Name" />
+                                    }
+                                    else
+                                    {
+                                        <div class="ss-product-img-placeholder">🏷️</div>
+                                    }
+                                    @if (!p.IsAvailable)
+                                    {
+                                        <span class="ss-sold-out">품절</span>
+                                    }
+                                </a>
+                                <div class="ss-product-info">
+                                    <h5 class="ss-product-name">
+                                        <a href="/@Slug/products/@p.Id" class="ss-product-name-link">@p.Name</a>
+                                    </h5>
+                                    @if (!string.IsNullOrEmpty(p.Description))
+                                    {
+                                        <p class="ss-product-desc">@p.Description</p>
+                                    }
+                                    <p class="ss-product-price">@p.Price.ToString("N0")원</p>
+                                    <div class="ss-product-actions">
+                                        <a href="/@Slug/products/@p.Id" class="btn btn-primary btn-sm">자세히</a>
+                                        @if (p.IsAvailable)
+                                        {
+                                            <button class="btn btn-outline-primary btn-sm"
+                                                    @onclick="() => AddToCart(p)">담기</button>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @if (_products.Count > (cfg.FeaturedCount > 0 ? cfg.FeaturedCount : 4))
+                    {
+                        <div class="text-center mt-4">
+                            <a href="/@Slug/products" class="btn btn-outline-primary btn-lg">
+                                전체 @(_products.Count)개 상품 보기 →
+                            </a>
+                        </div>
+                    }
+                }
+            </div>
+        </section>
+
+        <!-- ── 푸터 ── -->
+        <ShopPlatform.Components.Pages.Shop.Shared.ShopFooter Config="cfg" Slug="@Slug" />
+    </div>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+
+    private List<ShopPlatform.Models.Product>? _products;
+    private string _baseUrl = string.Empty;
+    private string _loadedSlug = string.Empty;
+
+    [Inject] private NavigationManager Nav { get; set; } = default!;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Slug가 바뀌었거나 아직 로드 안 된 경우에만 재로드
+        if (_loadedSlug == Slug) return;
+
+        _loadedSlug = Slug;
+        _baseUrl = ShopOpts.BaseUrl.TrimEnd('/');
+        _products = null;
+
+        // 새 슬러그에 맞게 TenantContext 갱신
+        var cfg = await TenantStore.GetAsync(Slug);
+        Tenant.Config = cfg; // null이면 IsResolved = false
+
+        if (!Tenant.IsResolved) return;
+
+        using var db = DbFactory.Create(Slug);
+        _products = db.Products
+            .Where(p => p.IsActive)
+            .OrderByDescending(p => p.IsFeatured)
+            .ThenBy(p => p.SortOrder)
+            .ThenBy(p => p.Name)
+            .ToList();
+    }
+
+    private void AddToCart(ShopPlatform.Models.Product p)
+    {
+        Cart.Add(p);
+        StateHasChanged();
+    }
+}

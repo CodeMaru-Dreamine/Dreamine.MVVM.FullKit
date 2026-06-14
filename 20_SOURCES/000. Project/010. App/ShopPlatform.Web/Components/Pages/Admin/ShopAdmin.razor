@@ -1,0 +1,131 @@
+@page "/{Slug}/admin"
+@inject TenantContext Tenant
+@inject IShopTenantStore TenantStore
+@inject NavigationManager Nav
+
+<PageTitle>어드민 — @(Tenant.Config?.ShopName ?? "쇼핑몰")</PageTitle>
+
+@if (!Tenant.IsResolved)
+{
+    <div class="container py-5 text-center">
+        <h2>존재하지 않는 쇼핑몰입니다.</h2>
+    </div>
+}
+else if (!_authenticated)
+{
+    <div class="container py-5" style="max-width:400px">
+        <h2>@Tenant.Config!.ShopName 어드민</h2>
+        <div class="mb-3">
+            <label class="form-label">비밀번호</label>
+            <input type="password" class="form-control" @bind="_password" @bind:event="oninput" @onkeypress="OnKeyPress" />
+        </div>
+        @if (!string.IsNullOrEmpty(_loginError))
+        {
+            <div class="alert alert-danger">@_loginError</div>
+        }
+        <button class="btn btn-primary w-100" @onclick="Login">로그인</button>
+    </div>
+}
+else
+{
+    <div class="container-fluid py-3">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>@Tenant.Config!.ShopName 관리</h2>
+            <div>
+                <a href="/@Slug" class="btn btn-outline-secondary me-2" target="_blank">쇼핑몰 보기 ↗</a>
+                <button class="btn btn-outline-danger" @onclick="Logout">로그아웃</button>
+            </div>
+        </div>
+
+        <!-- 탭 네비게이션 -->
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <button class="nav-link @(_tab == "products" ? "active" : "")"
+                        @onclick='() => _tab = "products"'>상품 관리</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(_tab == "orders" ? "active" : "")"
+                        @onclick='() => _tab = "orders"'>주문 관리</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(_tab == "payment" ? "active" : "")"
+                        @onclick='() => _tab = "payment"'>결제 설정</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(_tab == "shop" ? "active" : "")"
+                        @onclick='() => _tab = "shop"'>쇼핑몰 설정</button>
+            </li>
+        </ul>
+
+        @if (_tab == "products")
+        {
+            <ShopPlatform.Components.Pages.Admin.Partials.ProductsTab Slug="@Slug" />
+        }
+        else if (_tab == "orders")
+        {
+            <ShopPlatform.Components.Pages.Admin.Partials.OrdersTab Slug="@Slug" />
+        }
+        else if (_tab == "payment" && _config != null)
+        {
+            <ShopPlatform.Components.Pages.Admin.Partials.PaymentSettingsTab Config="_config" OnSave="SaveConfig" />
+        }
+        else if (_tab == "shop" && _config != null)
+        {
+            <ShopPlatform.Components.Pages.Admin.Partials.ShopSettingsTab Config="_config" OnSave="SaveConfig" />
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+
+    private ShopConfig? _config;
+    private bool _authenticated;
+    private string _password = string.Empty;
+    private string _loginError = string.Empty;
+    private string _tab = "products";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // InteractiveServer 회로는 미들웨어를 거치지 않으므로 직접 로드
+        if (!Tenant.IsResolved)
+        {
+            var cfg = await TenantStore.GetAsync(Slug);
+            if (cfg != null) Tenant.Config = cfg;
+        }
+        _config = Tenant.Config;
+    }
+
+    private void Login()
+    {
+        if (_config == null) return;
+        if (_password == _config.AdminPasswordHash || BCryptVerify(_password, _config.AdminPasswordHash))
+        {
+            _authenticated = true;
+            _loginError = string.Empty;
+        }
+        else
+        {
+            _loginError = "비밀번호가 올바르지 않습니다.";
+        }
+    }
+
+    private void Logout() => _authenticated = false;
+
+    private void OnKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") Login();
+    }
+
+    private async Task SaveConfig(ShopConfig cfg)
+    {
+        await TenantStore.SaveAsync(cfg);
+        StateHasChanged();
+    }
+
+    private static bool BCryptVerify(string plain, string hash)
+    {
+        // BCrypt.Net-Next 미사용 시 단순 비교 (개발 편의)
+        return plain == hash;
+    }
+}

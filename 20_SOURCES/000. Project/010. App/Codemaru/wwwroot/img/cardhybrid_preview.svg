@@ -1,0 +1,122 @@
+<svg width="680" height="400" viewBox="0 0 680 400" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>CardHybrid 미리보기</title>
+<desc>CardHybrid 명함 관리 도구 UI 미리보기 이미지</desc>
+
+<!-- 배경 -->
+<rect width="680" height="400" fill="#0a1020"/>
+
+<!-- 상단 툴바 -->
+<rect x="0" y="0" width="680" height="44" fill="#111827"/>
+<rect x="0" y="44" width="680" height="1" fill="#1f2937"/>
+<text x="20" y="27" font-family="system-ui,sans-serif" font-size="13" font-weight="700" fill="#60a5fa">CardHybrid</text>
+<text x="112" y="27" font-family="system-ui,sans-serif" font-size="11" fill="#4b5563">명함 관리 도구</text>
+
+<!-- 툴바 버튼 -->
+<rect x="558" y="12" width="54" height="22" rx="6" fill="#1d4ed8"/>
+<text x="585" y="27" font-family="system-ui,sans-serif" font-size="10" fill="#fff" text-anchor="middle">QR 갱신</text>
+<rect x="618" y="12" width="54" height="22" rx="6" fill="#374151"/>
+<text x="645" y="27" font-family="system-ui,sans-serif" font-size="10" fill="#d1d5db" text-anchor="middle">이력 저장</text>
+
+<!-- 왼쪽 에디터 패널 -->
+<rect x="10" y="54" width="200" height="336" rx="8" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+<text x="22" y="76" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#e5e7eb">명함 정보</text>
+
+<!-- 입력 필드들 -->
+<rect x="18" y="84" width="186" height="24" rx="4" fill="#1f2937"/>
+<text x="26" y="100" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">앞면 브랜드</text>
+<text x="132" y="100" font-family="system-ui,sans-serif" font-size="10" fill="#93c5fd">Codemaru</text>
+
+<rect x="18" y="112" width="186" height="24" rx="4" fill="#1f2937"/>
+<text x="26" y="128" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">이름</text>
+<text x="132" y="128" font-family="system-ui,sans-serif" font-size="10" fill="#93c5fd">장민수</text>
+
+<rect x="18" y="140" width="186" height="24" rx="4" fill="#1f2937"/>
+<text x="26" y="156" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">직책</text>
+<text x="132" y="156" font-family="system-ui,sans-serif" font-size="10" fill="#93c5fd">Founder &amp; CTO</text>
+
+<rect x="18" y="168" width="186" height="24" rx="4" fill="#1f2937"/>
+<text x="26" y="184" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">이메일</text>
+<text x="132" y="184" font-family="system-ui,sans-serif" font-size="10" fill="#93c5fd">admin@cod...</text>
+
+<rect x="18" y="196" width="186" height="24" rx="4" fill="#1f2937"/>
+<text x="26" y="212" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">강조색</text>
+<rect x="162" y="200" width="36" height="14" rx="3" fill="#5d7f57"/>
+
+<!-- SVG 버튼 -->
+<rect x="18" y="228" width="90" height="22" rx="4" fill="#374151"/>
+<text x="63" y="243" font-family="system-ui,sans-serif" font-size="9" fill="#9ca3af" text-anchor="middle">앞면 SVG</text>
+<rect x="114" y="228" width="90" height="22" rx="4" fill="#374151"/>
+<text x="159" y="243" font-family="system-ui,sans-serif" font-size="9" fill="#9ca3af" text-anchor="middle">뒷면 SVG</text>
+
+<!-- 명함 앞면 카드 -->
+<rect x="220" y="54" width="270" height="156" rx="10" fill="#1a2f1a" stroke="#2d4a2d" stroke-width="1"/>
+<text x="232" y="72" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">앞면</text>
+<text x="355" y="100" font-family="Georgia,serif" font-size="20" font-weight="700" fill="#86a882" text-anchor="middle">Codemaru</text>
+<text x="355" y="118" font-family="system-ui,sans-serif" font-size="9" fill="#4d7a49" text-anchor="middle">Software &amp; Technology</text>
+<text x="355" y="136" font-family="system-ui,sans-serif" font-size="8" fill="#3d5c3a" text-anchor="middle">admin@codemaru.co.kr</text>
+
+<!-- QR 박스 (앞면 우측) -->
+<rect x="434" y="66" width="50" height="50" rx="4" fill="#fff"/>
+<!-- QR 코너 패턴 -->
+<rect x="438" y="70" width="8" height="8" rx="1" fill="#111"/>
+<rect x="472" y="70" width="8" height="8" rx="1" fill="#111"/>
+<rect x="438" y="104" width="8" height="8" rx="1" fill="#111"/>
+<!-- QR 중앙 데이터 패턴 -->
+<rect x="448" y="78" width="4" height="4" fill="#111"/>
+<rect x="454" y="70" width="14" height="4" rx="1" fill="#111"/>
+<rect x="454" y="80" width="8" height="4" fill="#111"/>
+<rect x="464" y="80" width="4" height="14" fill="#111"/>
+<rect x="448" y="92" width="8" height="4" fill="#111"/>
+<rect x="458" y="94" width="4" height="10" fill="#111"/>
+<rect x="464" y="100" width="8" height="6" fill="#111"/>
+<rect x="448" y="104" width="6" height="8" fill="#111"/>
+<rect x="474" y="92" width="6" height="22" fill="#111"/>
+<rect x="438" y="84" width="6" height="12" fill="#111"/>
+
+<!-- 명함 뒷면 카드 -->
+<rect x="220" y="220" width="270" height="156" rx="10" fill="#1e2a3a" stroke="#2d3f52" stroke-width="1"/>
+<text x="232" y="238" font-family="system-ui,sans-serif" font-size="9" fill="#6b7280">뒷면</text>
+<!-- 로고 원 -->
+<circle cx="254" cy="282" r="22" fill="none" stroke="#5d7f57" stroke-width="2"/>
+<text x="254" y="288" font-family="system-ui,sans-serif" font-size="12" font-weight="700" fill="#5d7f57" text-anchor="middle">CM</text>
+<!-- 이름/직책 -->
+<text x="312" y="268" font-family="system-ui,sans-serif" font-size="10" fill="#6b7280">Codemaru</text>
+<text x="312" y="285" font-family="Georgia,serif" font-size="17" font-weight="700" fill="#e5e7eb">장민수</text>
+<text x="312" y="302" font-family="system-ui,sans-serif" font-size="9" fill="#9ca3af">Founder &amp; CTO</text>
+<text x="232" y="340" font-family="system-ui,sans-serif" font-size="8" fill="#4b5563">010-0000-0000  |  admin@codemaru.co.kr</text>
+<text x="232" y="354" font-family="system-ui,sans-serif" font-size="8" fill="#374151">https://codemaru.co.kr/card/minsu</text>
+
+<!-- 오른쪽 이력 패널 -->
+<rect x="500" y="54" width="170" height="336" rx="8" fill="#111827" stroke="#1f2937" stroke-width="1"/>
+<text x="514" y="76" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#e5e7eb">저장 이력</text>
+
+<rect x="510" y="84" width="152" height="52" rx="6" fill="#1f2937"/>
+<text x="520" y="102" font-family="system-ui,sans-serif" font-size="9" fill="#e5e7eb">Codemaru</text>
+<text x="520" y="116" font-family="system-ui,sans-serif" font-size="8" fill="#6b7280">장민수 / Founder &amp; CTO</text>
+<text x="520" y="129" font-family="system-ui,sans-serif" font-size="7" fill="#4b5563">2026.06.14 10:08</text>
+
+<rect x="510" y="142" width="152" height="52" rx="6" fill="#1a2236"/>
+<text x="520" y="160" font-family="system-ui,sans-serif" font-size="9" fill="#9ca3af">Dreamine Corp</text>
+<text x="520" y="174" font-family="system-ui,sans-serif" font-size="8" fill="#4b5563">장민수 / Developer</text>
+<text x="520" y="187" font-family="system-ui,sans-serif" font-size="7" fill="#374151">2026.06.13 09:22</text>
+
+<rect x="510" y="200" width="152" height="52" rx="6" fill="#1a2236"/>
+<text x="520" y="218" font-family="system-ui,sans-serif" font-size="9" fill="#9ca3af">Maru Works</text>
+<text x="520" y="232" font-family="system-ui,sans-serif" font-size="8" fill="#4b5563">장민수 / CTO</text>
+<text x="520" y="245" font-family="system-ui,sans-serif" font-size="7" fill="#374151">2026.06.12 14:45</text>
+
+<!-- 하단 기능 배지 -->
+<rect x="10" y="374" width="660" height="20" fill="#0a1020"/>
+<rect x="14" y="376" width="72" height="14" rx="7" fill="#1d4ed8" fill-opacity="0.3" stroke="#3b82f6" stroke-width="0.5"/>
+<text x="50" y="386" font-family="system-ui,sans-serif" font-size="8" fill="#93c5fd" text-anchor="middle">QR 코드</text>
+<rect x="92" y="376" width="82" height="14" rx="7" fill="#065f46" fill-opacity="0.3" stroke="#10b981" stroke-width="0.5"/>
+<text x="133" y="386" font-family="system-ui,sans-serif" font-size="8" fill="#6ee7b7" text-anchor="middle">랜딩 페이지</text>
+<rect x="180" y="376" width="74" height="14" rx="7" fill="#7c3aed" fill-opacity="0.3" stroke="#8b5cf6" stroke-width="0.5"/>
+<text x="217" y="386" font-family="system-ui,sans-serif" font-size="8" fill="#c4b5fd" text-anchor="middle">vCard 저장</text>
+<rect x="260" y="376" width="90" height="14" rx="7" fill="#92400e" fill-opacity="0.3" stroke="#f59e0b" stroke-width="0.5"/>
+<text x="305" y="386" font-family="system-ui,sans-serif" font-size="8" fill="#fcd34d" text-anchor="middle">PDF 내보내기</text>
+<rect x="356" y="376" width="82" height="14" rx="7" fill="#1e3a5f" fill-opacity="0.3" stroke="#60a5fa" stroke-width="0.5"/>
+<text x="397" y="386" font-family="system-ui,sans-serif" font-size="8" fill="#93c5fd" text-anchor="middle">SVG 앞/뒷면</text>
+<rect x="444" y="376" width="90" height="14" rx="7" fill="#4a1d96" fill-opacity="0.3" stroke="#a78bfa" stroke-width="0.5"/>
+<text x="489" y="386" font-family="system-ui,sans-serif" font-size="8" fill="#c4b5fd" text-anchor="middle">무료 공개 링크</text>
+</svg>

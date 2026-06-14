@@ -1,0 +1,347 @@
+@inject IShopTenantStore TenantStore
+@inject ShopOptions ShopOpts
+@inject TenantDbContextFactory DbFactory
+@using Microsoft.AspNetCore.Components.Forms
+
+<div style="max-width:680px">
+
+    <!-- 기본 정보 -->
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">쇼핑몰 기본 정보</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">쇼핑몰 이름</label>
+                <input class="form-control" @bind="_name" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">설명 (상품 목록 상단에 표시)</label>
+                <textarea class="form-control" rows="2" @bind="_description"></textarea>
+            </div>
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" @bind="_isActive" />
+                <label class="form-check-label">쇼핑몰 운영 활성화</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 히어로 배너 -->
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">히어로 배너 설정</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">배너 메인 문구</label>
+                <input class="form-control" @bind="_heroText"
+                       placeholder="예) 신선한 농산물을 직접 배송합니다" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">배너 서브 문구</label>
+                <input class="form-control" @bind="_heroSubText"
+                       placeholder="예) 당일 수확 · 전국 택배 가능" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">배너 배경 이미지 URL</label>
+                <input class="form-control" @bind="_bannerImagePath"
+                       placeholder="https://... 또는 /shop-img/{slug}/images/..." />
+                <div class="form-text">비워두면 기본 그라데이션 배경이 사용됩니다.</div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">배너 배경 이미지 업로드</label>
+                <InputFile OnChange="UploadBanner" accept="image/*" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">추천 상품 표시 개수</label>
+                <select class="form-select" style="max-width:160px" @bind="_featuredCount">
+                    <option value="3">3개</option>
+                    <option value="4">4개</option>
+                    <option value="6">6개</option>
+                    <option value="8">8개</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- 로고 -->
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">로고 이미지</div>
+        <div class="card-body">
+            @if (!string.IsNullOrEmpty(_logoPath))
+            {
+                <div class="mb-2">
+                    <img src="@_logoPath" alt="로고" style="height:60px;object-fit:contain;border:1px solid #e2e8f0;border-radius:8px;padding:4px" />
+                    <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => _logoPath = null">삭제</button>
+                </div>
+            }
+            <div class="mb-3">
+                <label class="form-label">로고 이미지 URL</label>
+                <input class="form-control" @bind="_logoPath" placeholder="https://... 또는 /shop-img/..." />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">로고 이미지 업로드</label>
+                <InputFile OnChange="UploadLogo" accept="image/*" class="form-control" />
+            </div>
+        </div>
+    </div>
+
+    <!-- 사업자 정보 -->
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">사업자 정보 (푸터 표시)</div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label">상호명</label>
+                    <input class="form-control" @bind="_bizCompany" placeholder="예) 구룡태양광" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">대표자명</label>
+                    <input class="form-control" @bind="_bizRep" placeholder="예) 홍길동" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">사업자등록번호</label>
+                    <input class="form-control" @bind="_bizNumber" placeholder="예) 000-00-00000" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">전화</label>
+                    <input class="form-control" @bind="_bizPhone" placeholder="예) 010-0000-0000" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">주소</label>
+                    <input class="form-control" @bind="_bizAddress" placeholder="예) 충청남도 청양군 남양면 만수로 1589-10" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">운영관리자</label>
+                    <input class="form-control" @bind="_bizManager" placeholder="예) 홍길동 (NickName)" />
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">이메일</label>
+                    <input class="form-control" @bind="_bizEmail" placeholder="예) admin@example.com" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">세금 유형 문구</label>
+                    <input class="form-control" @bind="_bizTaxType"
+                           placeholder="예) 간이과세자(통신판매업 신고번호 없음)" />
+                </div>
+                <div class="col-12">
+                    <label class="form-label">저작권 문구 (푸터 하단)</label>
+                    <input class="form-control" @bind="_bizCopyright"
+                           placeholder="예) © 2025 구룡태양광 / Dreamine Framework" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 환불·교환·배송 정책 -->
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">📋 환불 · 교환/반품 · 배송 정책</div>
+        <div class="card-body">
+            <div class="alert alert-info py-2 mb-3" style="font-size:.85rem">
+                <strong>마크다운(Markdown) 또는 일반 텍스트로 작성하세요.</strong><br />
+                <code>- 항목</code> → 글머리 목록 &nbsp;|&nbsp;
+                <code>**굵게**</code> → <strong>굵게</strong> &nbsp;|&nbsp;
+                <code>## 제목</code> → 소제목 &nbsp;|&nbsp;
+                빈 줄로 문단 구분
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">환불 정책</label>
+                <textarea class="form-control" rows="6" @bind="_policyRefund"
+                          placeholder="- 수령 후 **7일 이내** 환불 신청 가능&#10;- 단순 변심: 왕복 배송비 고객 부담&#10;- 하자/품질 문제: 판매자 부담으로 전액 환불"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">교환 · 반품 안내</label>
+                <textarea class="form-control" rows="6" @bind="_policyExchange"
+                          placeholder="- 신청 방법: 이메일 또는 전화 접수&#10;- 반품 주소: 주소를 입력하세요&#10;- 소프트웨어·디지털 상품은 제공 후 교환/반품 불가"></textarea>
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-semibold">배송 안내</label>
+                <textarea class="form-control" rows="6" @bind="_policyDelivery"
+                          placeholder="- 배송업체: 우체국택배&#10;- 기본 배송비: 3,000원 (2만원 이상 무료)&#10;- 배송기간: 결제일 기준 2~5일 (주말·공휴일 제외)"></textarea>
+            </div>
+        </div>
+    </div>
+
+    <!-- 링크 미리보기 -->
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">🔗 링크 미리보기 설정</div>
+        <div class="card-body">
+            <p class="text-muted small mb-3">카카오톡·문자 등으로 쇼핑몰 링크를 공유할 때 표시되는 제목·설명·이미지입니다.</p>
+            <div class="mb-3">
+                <label class="form-label">미리보기 제목</label>
+                <input class="form-control" @bind="_ogTitle"
+                       placeholder="비우면 쇼핑몰 이름이 사용됩니다" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">미리보기 설명</label>
+                <textarea class="form-control" rows="2" @bind="_ogDescription"
+                          placeholder="비우면 쇼핑몰 설명이 사용됩니다"></textarea>
+            </div>
+            <div class="mb-2">
+                <label class="form-label">미리보기 이미지</label>
+                @if (!string.IsNullOrEmpty(_ogImagePath))
+                {
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <img src="@_ogImagePath" alt="OG 이미지"
+                             style="height:72px;width:128px;object-fit:cover;border:1px solid #e2e8f0;border-radius:6px" />
+                        <span class="text-muted small">@System.IO.Path.GetFileName(_ogImagePath)</span>
+                        <button class="btn btn-sm btn-outline-danger" @onclick="() => _ogImagePath = null">× 제거</button>
+                    </div>
+                }
+                <InputFile OnChange="UploadOgImage" accept="image/*" class="form-control" />
+                <div class="form-text">권장 크기: 1200×630px (가로형). 카카오톡 미리보기는 링크 캐시가 있어 바로 반영 안 될 수 있습니다.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 보안 -->
+    <div class="card mb-4">
+        <div class="card-header fw-semibold">보안</div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">어드민 비밀번호 변경</label>
+                <input class="form-control" type="password" @bind="_newPassword"
+                       placeholder="변경하지 않으려면 비워두세요" />
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(_msg))
+    {
+        <div class="alert alert-success">@_msg</div>
+    }
+    @if (!string.IsNullOrEmpty(_err))
+    {
+        <div class="alert alert-danger">@_err</div>
+    }
+
+    <button class="btn btn-primary" @onclick="Save">저장</button>
+</div>
+
+@code {
+    [Parameter] public ShopConfig Config { get; set; } = default!;
+    [Parameter] public EventCallback<ShopConfig> OnSave { get; set; }
+
+    private string _name        = string.Empty;
+    private string _description = string.Empty;
+    private string _heroText    = string.Empty;
+    private string _heroSubText = string.Empty;
+    private string? _bannerImagePath;
+    private string? _logoPath;
+    private int    _featuredCount = 4;
+    private string _newPassword = string.Empty;
+    private bool   _isActive;
+    private string _msg = string.Empty;
+    private string _err = string.Empty;
+
+    // 정책
+    private string _policyRefund   = string.Empty;
+    private string _policyExchange = string.Empty;
+    private string _policyDelivery = string.Empty;
+
+    // OG 미리보기
+    private string  _ogTitle       = string.Empty;
+    private string  _ogDescription = string.Empty;
+    private string? _ogImagePath;
+
+    // 사업자 정보
+    private string _bizCompany  = string.Empty;
+    private string _bizRep      = string.Empty;
+    private string _bizNumber   = string.Empty;
+    private string _bizPhone    = string.Empty;
+    private string _bizAddress  = string.Empty;
+    private string _bizManager  = string.Empty;
+    private string _bizEmail    = string.Empty;
+    private string _bizTaxType  = string.Empty;
+    private string _bizCopyright = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        _name             = Config.ShopName;
+        _description      = Config.Description;
+        _heroText         = Config.HeroText;
+        _heroSubText      = Config.HeroSubText;
+        _bannerImagePath  = Config.BannerImagePath;
+        _logoPath         = Config.LogoPath;
+        _featuredCount    = Config.FeaturedCount > 0 ? Config.FeaturedCount : 4;
+        _isActive         = Config.IsActive;
+        _ogTitle          = Config.OgTitle;
+        _ogDescription    = Config.OgDescription;
+        _ogImagePath      = Config.OgImagePath;
+        _policyRefund     = Config.Policy.RefundPolicy;
+        _policyExchange   = Config.Policy.ExchangePolicy;
+        _policyDelivery   = Config.Policy.DeliveryPolicy;
+
+        var b = Config.Business;
+        _bizCompany   = b.CompanyName;
+        _bizRep       = b.Representative;
+        _bizNumber    = b.BusinessNumber;
+        _bizPhone     = b.Phone;
+        _bizAddress   = b.Address;
+        _bizManager   = b.ManagerName;
+        _bizEmail     = b.Email;
+        _bizTaxType   = b.TaxType;
+        _bizCopyright = b.CopyrightText;
+    }
+
+    private async Task UploadBanner(InputFileChangeEventArgs e)
+        => _bannerImagePath = await SaveImage(e, "banner");
+
+    private async Task UploadLogo(InputFileChangeEventArgs e)
+        => _logoPath = await SaveImage(e, "logo");
+
+    private async Task UploadOgImage(InputFileChangeEventArgs e)
+        => _ogImagePath = await SaveImage(e, "og");
+
+    private async Task<string?> SaveImage(InputFileChangeEventArgs e, string prefix)
+    {
+        _err = string.Empty;
+        var file = e.File;
+        var allowed = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
+        if (!allowed.Contains(file.ContentType)) { _err = "jpg/png/webp/gif만 가능합니다."; return null; }
+        if (file.Size > 5 * 1024 * 1024) { _err = "5MB 이하만 업로드 가능합니다."; return null; }
+
+        var ext = Path.GetExtension(file.Name).ToLower();
+        var fn  = $"{prefix}-{Guid.NewGuid():N}{ext}";
+        var dir = Path.Combine(ShopOpts.ResolvedDataPath, Config.Slug, "images");
+        Directory.CreateDirectory(dir);
+        var path = Path.Combine(dir, fn);
+        await using var fs = File.Create(path);
+        await file.OpenReadStream(5 * 1024 * 1024).CopyToAsync(fs);
+        return $"/shop-img/{Config.Slug}/images/{fn}";
+    }
+
+    private async Task Save()
+    {
+        Config.ShopName        = _name;
+        Config.Description     = _description;
+        Config.HeroText        = _heroText;
+        Config.HeroSubText     = _heroSubText;
+        Config.BannerImagePath = _bannerImagePath;
+        Config.LogoPath        = _logoPath;
+        Config.FeaturedCount   = _featuredCount;
+        Config.IsActive        = _isActive;
+        Config.OgTitle         = _ogTitle;
+        Config.OgDescription   = _ogDescription;
+        Config.OgImagePath     = _ogImagePath;
+        Config.Policy.RefundPolicy   = _policyRefund;
+        Config.Policy.ExchangePolicy = _policyExchange;
+        Config.Policy.DeliveryPolicy = _policyDelivery;
+
+        Config.Business.CompanyName    = _bizCompany;
+        Config.Business.Representative = _bizRep;
+        Config.Business.BusinessNumber = _bizNumber;
+        Config.Business.Phone          = _bizPhone;
+        Config.Business.Address        = _bizAddress;
+        Config.Business.ManagerName    = _bizManager;
+        Config.Business.Email          = _bizEmail;
+        Config.Business.TaxType        = _bizTaxType;
+        Config.Business.CopyrightText  = _bizCopyright;
+
+        if (!string.IsNullOrWhiteSpace(_newPassword))
+        {
+            Config.AdminPasswordHash = _newPassword;
+            _newPassword = string.Empty;
+        }
+        await OnSave.InvokeAsync(Config);
+        _msg = "저장되었습니다.";
+        await Task.Delay(2000);
+        _msg = string.Empty;
+    }
+}

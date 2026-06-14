@@ -1,0 +1,433 @@
+@inject TenantDbContextFactory DbFactory
+@inject ShopOptions ShopOpts
+@using System.Text.Json
+
+<div>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">상품 목록</h5>
+        <button class="btn btn-success btn-sm" @onclick="() => { _editProduct = null; _form = new(); _showForm = true; }">+ 상품 추가</button>
+    </div>
+
+    @if (_showForm)
+    {
+        <div class="card mb-4">
+            <div class="card-body">
+                <h6>@(_form.Id > 0 ? "상품 수정" : "새 상품")</h6>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">상품명 <span class="text-danger">*</span></label>
+                        <input class="form-control" @bind="_form.Name" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">가격 (원) <span class="text-danger">*</span></label>
+                        <input class="form-control" type="number" @bind="_form.Price" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">재고</label>
+                        <div class="input-group">
+                            <input class="form-control" type="number" @bind="_form.Stock"
+                                   disabled="@_form.IsUnlimitedStock" />
+                            <div class="input-group-text" style="gap:.4rem;cursor:pointer"
+                                 @onclick="() => _form.IsUnlimitedStock = !_form.IsUnlimitedStock">
+                                <input type="checkbox" class="form-check-input mt-0"
+                                       checked="@_form.IsUnlimitedStock" @onchange="() => {}" />
+                                <span style="font-size:.8rem;white-space:nowrap">무한</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">설명</label>
+                        <textarea class="form-control" rows="2" @bind="_form.Description"></textarea>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">카테고리</label>
+                        <input class="form-control" @bind="_form.Category" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">노출 순서 <span class="text-muted small">(낮을수록 먼저)</span></label>
+                        <input class="form-control" type="number" @bind="_form.SortOrder" />
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="form-check form-switch mb-2">
+                            <input class="form-check-input" type="checkbox" @bind="_form.IsFeatured" id="featuredCheck" />
+                            <label class="form-check-label fw-semibold" for="featuredCheck">⭐ 추천 상품</label>
+                        </div>
+                    </div>
+
+                    <!-- 동영상 -->
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">🎬 동영상</label>
+                        <div class="d-flex gap-2 align-items-start flex-wrap mb-2">
+                            <div style="flex:1;min-width:200px">
+                                <InputFile OnChange="OnVideoSelected" accept="video/mp4,video/webm,video/ogg" class="form-control" />
+                                <div class="form-text">MP4/WEBM 파일 업로드 (최대 200MB)</div>
+                            </div>
+                            <div style="flex:2;min-width:200px">
+                                <input class="form-control" @bind="_form.VideoUrl"
+                                       placeholder="또는 유튜브 URL: https://youtu.be/..." />
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(_form.VideoUrl))
+                        {
+                            <div class="d-flex align-items-center gap-2 mt-1">
+                                <span class="badge bg-secondary">@(_form.VideoUrl.Length > 50 ? _form.VideoUrl[..50] + "..." : _form.VideoUrl)</span>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => _form.VideoUrl = string.Empty">제거</button>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(_videoUploadError))
+                        {
+                            <div class="text-danger small mt-1">@_videoUploadError</div>
+                        }
+                    </div>
+
+                    <!-- 상세 이미지 -->
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">🖼️ 상세 이미지 <span class="text-muted small">(여러 장 업로드 가능)</span></label>
+                        <InputFile OnChange="OnDetailImagesSelected" accept="image/*" multiple class="form-control mb-2" />
+                        @if (_detailImages.Count > 0)
+                        {
+                            <div class="d-flex flex-wrap gap-2 mt-2">
+                                @for (var i = 0; i < _detailImages.Count; i++)
+                                {
+                                    var idx = i;
+                                    <div class="position-relative" style="width:110px">
+                                        <img src="@_detailImages[idx]" alt="상세 이미지"
+                                             style="width:110px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0" />
+                                        <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 lh-1"
+                                                style="width:22px;height:22px;font-size:.75rem"
+                                                @onclick="() => RemoveDetailImage(idx)">×</button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- 상세 텍스트 -->
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">📝 상세 텍스트 <span class="text-muted small">(선택 · 마크다운 또는 일반 텍스트)</span></label>
+                        <div class="mb-1" style="font-size:.8rem;color:#6c757d">
+                            <code>- 항목</code> 목록 &nbsp;|&nbsp;
+                            <code>**굵게**</code> &nbsp;|&nbsp;
+                            <code>## 소제목</code> &nbsp;|&nbsp;
+                            빈 줄 = 문단 나누기 &nbsp;|&nbsp; 이미지만 올릴 경우 비워도 됩니다
+                        </div>
+                        <textarea class="form-control" rows="7" @bind="_form.DetailHtml"
+                                  placeholder="## 상품 특징&#10;- 국내산 청양고추 직접 재배&#10;- **당일 수확** 후 포장&#10;&#10;## 주의사항&#10;- 냉장 보관 권장"></textarea>
+                    </div>
+
+                    <!-- 이미지 -->
+                    <div class="col-12">
+                        <label class="form-label">상품 이미지</label>
+                        <div class="d-flex gap-2 align-items-start flex-wrap">
+                            <div>
+                                <InputFile OnChange="OnImageSelected" accept="image/*" class="form-control" style="max-width:300px" />
+                                <div class="form-text">JPG/PNG/WEBP, 최대 5MB</div>
+                            </div>
+                            <div class="flex-grow-1">
+                                <input class="form-control" placeholder="또는 이미지 URL 직접 입력" @bind="_form.ImagePath" />
+                            </div>
+                        </div>
+                        @if (!string.IsNullOrEmpty(_form.ImagePath))
+                        {
+                            <div class="mt-2">
+                                <img src="@_form.ImagePath" alt="미리보기" style="height:100px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0" />
+                                <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => _form.ImagePath = null">이미지 제거</button>
+                            </div>
+                        }
+                        @if (!string.IsNullOrEmpty(_uploadError))
+                        {
+                            <div class="text-danger small mt-1">@_uploadError</div>
+                        }
+                    </div>
+
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" @bind="_form.IsActive" id="activeCheck" />
+                            <label class="form-check-label" for="activeCheck">판매 활성화</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <button class="btn btn-primary me-2" @onclick="SaveProduct" disabled="@_uploading">
+                        @(_uploading ? "업로드 중..." : "저장")
+                    </button>
+                    <button class="btn btn-secondary" @onclick="CancelForm">취소</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (_products == null)
+    {
+        <p>로딩 중...</p>
+    }
+    else if (_products.Count == 0)
+    {
+        <p class="text-muted">등록된 상품이 없습니다.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:60px">이미지</th>
+                        <th>상품명</th>
+                        <th style="width:100px">가격</th>
+                        <th style="width:70px">재고</th>
+                        <th style="width:90px">순서</th>
+                        <th style="width:80px">추천</th>
+                        <th style="width:80px">상태</th>
+                        <th style="width:100px"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var p in _products.OrderBy(x => x.SortOrder).ThenBy(x => x.Id))
+                    {
+                        <tr class="@(p.IsFeatured ? "table-warning" : "")">
+                            <td>
+                                @if (!string.IsNullOrEmpty(p.ImagePath))
+                                {
+                                    <img src="@p.ImagePath" alt="@p.Name" style="width:48px;height:48px;object-fit:cover;border-radius:6px" />
+                                }
+                                else
+                                {
+                                    <div style="width:48px;height:48px;background:#f1f5f9;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem">🏷️</div>
+                                }
+                            </td>
+                            <td class="fw-semibold">@p.Name</td>
+                            <td>@p.Price.ToString("N0")원</td>
+                            <td>@p.Stock</td>
+                            <!-- 순서 인라인 편집 -->
+                            <td>
+                                <input type="number" class="form-control form-control-sm text-center"
+                                       style="width:70px"
+                                       value="@p.SortOrder"
+                                       @onchange="e => UpdateSortOrder(p, e)" />
+                            </td>
+                            <!-- 추천 토글 -->
+                            <td class="text-center">
+                                <button class="btn btn-sm @(p.IsFeatured ? "btn-warning" : "btn-outline-secondary")"
+                                        title="@(p.IsFeatured ? "추천 해제" : "추천 설정")"
+                                        @onclick="() => ToggleFeatured(p)">
+                                    ⭐
+                                </button>
+                            </td>
+                            <td>
+                                <span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(p.IsActive ? "판매중" : "숨김")
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditProduct(p)">수정</button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteProduct(p.Id)">삭제</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="text-muted small mt-1">
+            ⭐ 강조 표시된 행이 추천 상품입니다. 순서 숫자가 낮을수록 먼저 노출됩니다.
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+
+    private List<Product>? _products;
+    private bool _showForm;
+    private Product _form = new();
+    private Product? _editProduct;
+    private bool _uploading;
+    private string _uploadError = string.Empty;
+    private string _videoUploadError = string.Empty;
+    private List<string> _detailImages = new(); // 현재 편집 중인 상세 이미지 경로 목록
+
+    protected override void OnInitialized() => LoadProducts();
+
+    private void LoadProducts()
+    {
+        using var db = DbFactory.Create(Slug);
+        _products = db.Products.ToList();
+    }
+
+    private void EditProduct(Product p)
+    {
+        _editProduct = p;
+        _form = new Product
+        {
+            Id = p.Id, Name = p.Name, Description = p.Description,
+            Price = p.Price, Stock = p.Stock, Category = p.Category,
+            ImagePath = p.ImagePath, IsActive = p.IsActive,
+            IsFeatured = p.IsFeatured, SortOrder = p.SortOrder,
+            IsUnlimitedStock = p.IsUnlimitedStock,
+            DetailHtml = p.DetailHtml, VideoUrl = p.VideoUrl,
+            DetailImagesJson = p.DetailImagesJson
+        };
+        _detailImages = ParseDetailImages(p.DetailImagesJson);
+        _showForm = true;
+        _uploadError = string.Empty;
+        _videoUploadError = string.Empty;
+    }
+
+    private async Task ToggleFeatured(Product p)
+    {
+        using var db = DbFactory.Create(Slug);
+        var existing = db.Products.Find(p.Id);
+        if (existing == null) return;
+        existing.IsFeatured = !existing.IsFeatured;
+        await db.SaveChangesAsync();
+        p.IsFeatured = existing.IsFeatured;
+        StateHasChanged();
+    }
+
+    private async Task UpdateSortOrder(Product p, ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var val)) return;
+        using var db = DbFactory.Create(Slug);
+        var existing = db.Products.Find(p.Id);
+        if (existing == null) return;
+        existing.SortOrder = val;
+        await db.SaveChangesAsync();
+        p.SortOrder = val;
+        StateHasChanged();
+    }
+
+    private async Task OnImageSelected(InputFileChangeEventArgs e)
+    {
+        _uploadError = string.Empty;
+        var file = e.File;
+        if (file.Size > 5 * 1024 * 1024) { _uploadError = "파일 크기는 5MB 이하여야 합니다."; return; }
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp" or ".gif")) { _uploadError = "JPG, PNG, WEBP, GIF 파일만 가능합니다."; return; }
+        _uploading = true;
+        try
+        {
+            var imgDir = Path.Combine(ShopOpts.ResolvedDataPath, Slug, "images");
+            Directory.CreateDirectory(imgDir);
+            var fileName = $"{Guid.NewGuid():N}{ext}";
+            var filePath = Path.Combine(imgDir, fileName);
+            await using var fs = File.Create(filePath);
+            await using var stream = file.OpenReadStream(5 * 1024 * 1024);
+            await stream.CopyToAsync(fs);
+            _form.ImagePath = $"/shop-img/{Slug}/images/{fileName}";
+        }
+        catch (Exception ex) { _uploadError = $"업로드 실패: {ex.Message}"; }
+        finally { _uploading = false; }
+    }
+
+    private async Task SaveProduct()
+    {
+        if (string.IsNullOrWhiteSpace(_form.Name)) return;
+        _form.DetailImagesJson = JsonSerializer.Serialize(_detailImages);
+        using var db = DbFactory.Create(Slug);
+        if (_form.Id > 0)
+        {
+            var existing = db.Products.Find(_form.Id);
+            if (existing != null)
+            {
+                existing.Name = _form.Name; existing.Description = _form.Description;
+                existing.Price = _form.Price; existing.Stock = _form.Stock;
+                existing.Category = _form.Category; existing.ImagePath = _form.ImagePath;
+                existing.IsActive = _form.IsActive;
+                existing.IsFeatured = _form.IsFeatured;
+                existing.SortOrder = _form.SortOrder;
+                existing.IsUnlimitedStock = _form.IsUnlimitedStock;
+                existing.DetailHtml = _form.DetailHtml;
+                existing.VideoUrl = _form.VideoUrl;
+                existing.DetailImagesJson = _form.DetailImagesJson;
+            }
+        }
+        else
+        {
+            _form.CreatedAt = DateTime.UtcNow;
+            db.Products.Add(_form);
+        }
+        await db.SaveChangesAsync();
+        CancelForm();
+        LoadProducts();
+    }
+
+    private async Task DeleteProduct(int id)
+    {
+        using var db = DbFactory.Create(Slug);
+        var p = db.Products.Find(id);
+        if (p != null) db.Products.Remove(p);
+        await db.SaveChangesAsync();
+        LoadProducts();
+    }
+
+    private void CancelForm()
+    {
+        _showForm = false;
+        _form = new();
+        _editProduct = null;
+        _detailImages = new();
+        _uploadError = string.Empty;
+        _videoUploadError = string.Empty;
+    }
+
+    private async Task OnVideoSelected(InputFileChangeEventArgs e)
+    {
+        _videoUploadError = string.Empty;
+        var file = e.File;
+        var allowed = new[] { "video/mp4", "video/webm", "video/ogg" };
+        if (!allowed.Contains(file.ContentType)) { _videoUploadError = "MP4/WEBM/OGG 파일만 가능합니다."; return; }
+        const long maxSize = 200L * 1024 * 1024; // 200MB
+        if (file.Size > maxSize) { _videoUploadError = "200MB 이하 파일만 업로드 가능합니다."; return; }
+
+        _uploading = true;
+        try
+        {
+            var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+            var fn  = $"video-{Guid.NewGuid():N}{ext}";
+            var dir = Path.Combine(ShopOpts.ResolvedDataPath, Slug, "images");
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, fn);
+            await using var fs = File.Create(path);
+            await using var stream = file.OpenReadStream(maxSize);
+            await stream.CopyToAsync(fs);
+            _form.VideoUrl = $"/shop-img/{Slug}/images/{fn}";
+        }
+        catch (Exception ex) { _videoUploadError = $"업로드 실패: {ex.Message}"; }
+        finally { _uploading = false; }
+    }
+
+    private async Task OnDetailImagesSelected(InputFileChangeEventArgs e)
+    {
+        foreach (var file in e.GetMultipleFiles(10))
+        {
+            var allowed = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
+            if (!allowed.Contains(file.ContentType)) continue;
+            if (file.Size > 5 * 1024 * 1024) continue;
+            try
+            {
+                var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+                var fn  = $"detail-{Guid.NewGuid():N}{ext}";
+                var dir = Path.Combine(ShopOpts.ResolvedDataPath, Slug, "images");
+                Directory.CreateDirectory(dir);
+                var path = Path.Combine(dir, fn);
+                await using var fs = File.Create(path);
+                await using var stream = file.OpenReadStream(5 * 1024 * 1024);
+                await stream.CopyToAsync(fs);
+                _detailImages.Add($"/shop-img/{Slug}/images/{fn}");
+            }
+            catch { /* 개별 파일 실패 무시 */ }
+        }
+        StateHasChanged();
+    }
+
+    private void RemoveDetailImage(int idx)
+    {
+        if (idx >= 0 && idx < _detailImages.Count)
+            _detailImages.RemoveAt(idx);
+    }
+
+    private static List<string> ParseDetailImages(string json)
+    {
+        try { return JsonSerializer.Deserialize<List<string>>(json) ?? new(); }
+        catch { return new(); }
+    }
+}

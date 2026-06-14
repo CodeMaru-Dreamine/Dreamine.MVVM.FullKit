@@ -1,0 +1,61 @@
+@using ShopPlatform.Models
+
+<footer class="ss-footer-biz">
+    @{
+        var b = Config.Business;
+        bool hasBiz = !string.IsNullOrEmpty(b.CompanyName) || !string.IsNullOrEmpty(b.BusinessNumber);
+    }
+
+    @if (hasBiz)
+    {
+        <div class="ss-footer-info">
+            @if (!string.IsNullOrEmpty(b.CompanyName) || !string.IsNullOrEmpty(b.Representative) || !string.IsNullOrEmpty(b.BusinessNumber))
+            {
+                <p>
+                    @if (!string.IsNullOrEmpty(b.CompanyName))   { <span>상호명: <strong>@b.CompanyName</strong></span> }
+                    @if (!string.IsNullOrEmpty(b.Representative)) { <span class="ss-footer-sep">|</span><span>대표자명: @b.Representative</span> }
+                    @if (!string.IsNullOrEmpty(b.BusinessNumber)) { <span class="ss-footer-sep">|</span><span>사업자등록번호: @b.BusinessNumber</span> }
+                </p>
+            }
+            @if (!string.IsNullOrEmpty(b.Address))
+            {
+                <p>주소: @b.Address</p>
+            }
+            @if (!string.IsNullOrEmpty(b.ManagerName) || !string.IsNullOrEmpty(b.Email) || !string.IsNullOrEmpty(b.Phone))
+            {
+                <p>
+                    @if (!string.IsNullOrEmpty(b.ManagerName)) { <span>운영관리자: @b.ManagerName</span> }
+                    @if (!string.IsNullOrEmpty(b.Email))       { <span class="ss-footer-sep">|</span><span>이메일: <a href="mailto:@b.Email">@b.Email</a></span> }
+                    @if (!string.IsNullOrEmpty(b.Phone))       { <span class="ss-footer-sep">|</span><span>전화: @b.Phone</span> }
+                </p>
+            }
+        </div>
+
+        <div class="ss-footer-links">
+            <a href="/@Slug/policy/refund">환불정책</a>
+            <a href="/@Slug/policy/exchange">교환·반품안내</a>
+            <a href="/@Slug/policy/delivery">배송안내</a>
+        </div>
+
+        @if (!string.IsNullOrEmpty(b.TaxType))
+        {
+            <p class="ss-footer-tax">※ @b.TaxType</p>
+        }
+    }
+
+    <p class="ss-footer-copy">
+        @if (!string.IsNullOrEmpty(b.CopyrightText))
+        {
+            @b.CopyrightText
+        }
+        else
+        {
+            <span>© @DateTime.Now.Year @Config.ShopName &nbsp;·&nbsp; Powered by <a href="/">ShopPlatform</a></span>
+        }
+    </p>
+</footer>
+
+@code {
+    [Parameter] public ShopConfig Config { get; set; } = default!;
+    [Parameter] public string Slug { get; set; } = string.Empty;
+}

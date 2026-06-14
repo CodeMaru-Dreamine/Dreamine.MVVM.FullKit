@@ -1,0 +1,126 @@
+@page "/{Slug}/order/{OrderNo}"
+@inject TenantContext Tenant
+@inject IShopTenantStore TenantStore
+@inject TenantDbContextFactory DbFactory
+@inject NavigationManager Nav
+
+<PageTitle>주문 완료 — @(Tenant.Config?.ShopName ?? "")</PageTitle>
+
+<div class="container py-5" style="max-width:640px">
+    @if (_order == null)
+    {
+        <div class="text-center py-5">
+            <p class="text-muted">주문 정보를 불러오는 중...</p>
+        </div>
+    }
+    else
+    {
+        <div class="text-center mb-4">
+            <div style="font-size:3.5rem">✅</div>
+            <h2 class="mt-2 fw-bold">주문이 완료되었습니다!</h2>
+            <p class="text-muted">
+                @Tenant.Config?.ShopName 을 이용해 주셔서 감사합니다.
+            </p>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">주문 정보</h5>
+                <dl class="row mb-0">
+                    <dt class="col-4 text-muted">주문번호</dt>
+                    <dd class="col-8"><code>@_order.OrderNo</code></dd>
+
+                    <dt class="col-4 text-muted">주문자</dt>
+                    <dd class="col-8">@_order.CustomerName</dd>
+
+                    <dt class="col-4 text-muted">연락처</dt>
+                    <dd class="col-8">@_order.CustomerPhone</dd>
+
+                    <dt class="col-4 text-muted">배송지</dt>
+                    <dd class="col-8">@_order.ShippingAddress</dd>
+
+                    <dt class="col-4 text-muted">결제금액</dt>
+                    <dd class="col-8 fw-bold text-primary">@_order.TotalAmount.ToString("N0")원</dd>
+
+                    <dt class="col-4 text-muted">결제상태</dt>
+                    <dd class="col-8">
+                        <span class="badge @(_order.Status == "paid" ? "bg-success" : "bg-warning text-dark")">
+                            @(_order.Status == "paid" ? "결제완료" : _order.Status)
+                        </span>
+                        @if (!string.IsNullOrEmpty(_order.TransactionId))
+                        {
+                            <small class="text-muted ms-2">TX: @_order.TransactionId[..Math.Min(20, _order.TransactionId.Length)]...</small>
+                        }
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        @if (_order.Lines.Any())
+        {
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">주문 상품</h5>
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>상품명</th>
+                                <th class="text-end">수량</th>
+                                <th class="text-end">금액</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var line in _order.Lines)
+                            {
+                                <tr>
+                                    <td>@line.ProductName</td>
+                                    <td class="text-end">@line.Quantity</td>
+                                    <td class="text-end">@line.Subtotal.ToString("N0")원</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr class="fw-bold">
+                                <td colspan="2" class="text-end">합계</td>
+                                <td class="text-end">@_order.TotalAmount.ToString("N0")원</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        }
+
+        <div class="text-center">
+            <a href="/@Slug" class="btn btn-primary">쇼핑 계속하기</a>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+    [Parameter] public string OrderNo { get; set; } = string.Empty;
+
+    private Order? _order;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Tenant.IsResolved)
+        {
+            var cfg = await TenantStore.GetAsync(Slug);
+            if (cfg != null) Tenant.Config = cfg;
+        }
+        using var db = DbFactory.Create(Slug);
+        _order = db.Orders
+            .Where(o => o.OrderNo == OrderNo)
+            .Select(o => new Order
+            {
+                Id = o.Id, OrderNo = o.OrderNo,
+                CustomerName = o.CustomerName, CustomerPhone = o.CustomerPhone,
+                CustomerEmail = o.CustomerEmail, ShippingAddress = o.ShippingAddress,
+                TotalAmount = o.TotalAmount, Status = o.Status,
+                TransactionId = o.TransactionId, CreatedAt = o.CreatedAt,
+                Lines = db.OrderLines.Where(l => l.OrderId == o.Id).ToList()
+            })
+            .FirstOrDefault();
+    }
+}

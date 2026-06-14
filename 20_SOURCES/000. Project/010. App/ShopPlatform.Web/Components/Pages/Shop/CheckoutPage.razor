@@ -1,0 +1,350 @@
+@page "/{Slug}/checkout"
+@inject TenantContext Tenant
+@inject IShopTenantStore TenantStore
+@inject CartService Cart
+@inject ShopCustomerSession CustomerSession
+@inject TenantDbContextFactory DbFactory
+@inject PaymentKeyProtector KeyProtector
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject ShopOptions Opts
+
+<PageTitle>결제 — @(Tenant.Config?.ShopName ?? "")</PageTitle>
+
+@if (_tenant == null)
+{
+    <div class="container py-5 text-center"><p class="text-muted">로딩 중...</p></div>
+}
+else if (Cart.Count == 0)
+{
+    <div class="container py-5 text-center">
+        <p class="text-muted">장바구니가 비어 있습니다.</p>
+        <a href="/@Slug" class="btn btn-primary">쇼핑 계속하기</a>
+    </div>
+}
+else
+{
+    <div class="container py-4" style="max-width:780px">
+        <h2 class="fw-bold mb-1">💳 결제 진행</h2>
+        <a href="/@Slug/cart" class="btn btn-link ps-0 mb-3">← 장바구니로</a>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="alert alert-danger">@_error</div>
+        }
+
+        <!-- 주문 상품 요약 -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header fw-semibold">주문 상품</div>
+            <div class="card-body p-0">
+                <table class="table align-middle mb-0">
+                    <tbody>
+                        @foreach (var item in Cart.Items)
+                        {
+                            <tr>
+                                <td class="ps-3">@item.ProductName <small class="text-muted">× @item.Quantity</small></td>
+                                <td class="text-end pe-3">@item.Subtotal.ToString("N0")원</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-light fw-bold">
+                            <td class="ps-3">합계</td>
+                            <td class="text-end pe-3 text-primary">@Cart.Total.ToString("N0")원</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- 주문자 정보 -->
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">주문자 정보</div>
+                    <div class="card-body">
+                        @if (CustomerSession.IsLoggedIn)
+                        {
+                            <div class="alert alert-light py-2 mb-3 small">
+                                👤 <strong>@CustomerSession.User!.Name</strong> 님으로 주문합니다.
+                            </div>
+                        }
+                        <div class="mb-3">
+                            <label class="form-label">이름 <span class="text-danger">*</span></label>
+                            <input class="form-control" @bind="_name" @bind:event="oninput" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">연락처 <span class="text-danger">*</span></label>
+                            <input class="form-control" @bind="_phone" @bind:event="oninput" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">이메일</label>
+                            <input class="form-control" type="email" @bind="_email" @bind:event="oninput" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 배송지 정보 -->
+            <div class="col-12 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">배송지 정보</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">배송 주소 <span class="text-danger">*</span></label>
+                            <input class="form-control" @bind="_address" @bind:event="oninput" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">요청 사항</label>
+                            <input class="form-control" @bind="_memo" @bind:event="oninput" placeholder="예) 문 앞에 놓아주세요" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 결제 수단 -->
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">결제 수단</div>
+                    <div class="card-body">
+                        <div class="d-flex flex-column gap-2 mb-3">
+                            <label class="form-check">
+                                <input type="radio" class="form-check-input" name="payMethod"
+                                       checked="@(_method == "card")"
+                                       @onchange='() => OnMethodChange("card")' />
+                                <span class="ms-2">카드 (카카오/네이버 포함)</span>
+                            </label>
+                            <label class="form-check">
+                                <input type="radio" class="form-check-input" name="payMethod"
+                                       checked="@(_method == "transfer")"
+                                       @onchange='() => OnMethodChange("transfer")' />
+                                <span class="ms-2">계좌 이체 (데모)</span>
+                            </label>
+                            <label class="form-check">
+                                <input type="radio" class="form-check-input" name="payMethod"
+                                       checked="@(_method == "virtual")"
+                                       @onchange='() => OnMethodChange("virtual")' />
+                                <span class="ms-2">가상 계좌 (데모)</span>
+                            </label>
+                        </div>
+
+                        @if (!_tenant.Payment.IsEnabled && _method == "card")
+                        {
+                            <div class="alert alert-info mb-0">
+                                <strong>데모 모드</strong> — 결제 연동은 어드민 → 결제 설정에서 토스 API 키를 입력하면 활성화됩니다.
+                            </div>
+                        }
+                        else if (_method == "card")
+                        {
+                            <!-- Toss v2 위젯 -->
+                            <div id="payment-methods" style="min-height:48px"></div>
+                            <div id="agreement" class="mt-2" style="min-height:24px"></div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- 하단 버튼 -->
+            <div class="col-12 d-flex justify-content-between align-items-center">
+                <a href="/@Slug/cart" class="btn btn-outline-secondary">장바구니로</a>
+
+                @if (!_tenant.Payment.IsEnabled || _method != "card")
+                {
+                    <button class="btn btn-primary btn-lg" @onclick="PlaceDemoOrder" disabled="@_processing">
+                        @(_processing ? "처리 중..." : $"주문하기 (데모) — {Cart.Total:N0}원")
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-success btn-lg" @onclick="PayOrSubmit" disabled="@_processing">
+                        @(_processing ? "처리 중..."
+                          : _widgetReady ? "카드로 결제하기"
+                          : "카드 결제 수단 열기")
+                    </button>
+                }
+            </div>
+        </div>
+
+        @if (!CustomerSession.IsLoggedIn)
+        {
+            <p class="text-center text-muted small mt-4">
+                <a href="/@Slug/login?returnUrl=/@Slug/checkout">로그인</a>하면 배송 정보가 자동으로 채워집니다.
+            </p>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+
+    private ShopConfig? _tenant;
+    private string _name    = string.Empty;
+    private string _email   = string.Empty;
+    private string _phone   = string.Empty;
+    private string _address = string.Empty;
+    private string _memo    = string.Empty;
+    private string _error   = string.Empty;
+    private string _method  = "card";
+    private bool   _processing;
+    private bool   _widgetReady;
+    private string? _successUrl;
+    private string? _failUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Tenant.IsResolved)
+        {
+            var cfg = await TenantStore.GetAsync(Slug);
+            if (cfg != null) Tenant.Config = cfg;
+        }
+        _tenant = Tenant.Config;
+
+        if (CustomerSession.IsLoggedIn)
+        {
+            var u = CustomerSession.User!;
+            _name    = u.Name;
+            _email   = u.Email;
+            _phone   = u.Phone;
+            _address = u.Address;
+        }
+    }
+
+    private void OnMethodChange(string method)
+    {
+        _method = method;
+        if (method != "card")
+        {
+            _widgetReady = false;
+            _successUrl = _failUrl = null;
+        }
+    }
+
+    private async Task PayOrSubmit()
+    {
+        if (!Validate()) return;
+        if (!_widgetReady)
+            await OpenTossWidget();
+        else
+            await RequestPayment();
+    }
+
+    private async Task OpenTossWidget()
+    {
+        _processing = true;
+        _error = string.Empty;
+        try
+        {
+            // 서버측: 주문 ID 생성 및 URL 구성
+            var orderId = GenerateOrderId();
+            var baseUrl = Opts.BaseUrl.TrimEnd('/');
+            _successUrl = $"{baseUrl}/pay/{Slug}/return";
+            _failUrl    = $"{baseUrl}/pay/{Slug}/fail";
+
+            var clientKey    = _tenant!.Payment.TossClientKey;
+            var customerIdRaw = !string.IsNullOrEmpty(_email) ? _email
+                              : !string.IsNullOrEmpty(_name)  ? _name
+                              : "guest";
+
+            // 주문을 미리 DB에 pending 상태로 저장
+            using var db = DbFactory.Create(Slug);
+            var order = new ShopPlatform.Models.Order
+            {
+                OrderNo        = orderId,
+                CustomerName   = _name,
+                CustomerEmail  = _email,
+                CustomerPhone  = _phone,
+                ShippingAddress = _address,
+                TotalAmount    = Cart.Total,
+                Status         = "pending",
+                TransactionId  = string.Empty,
+                Lines = Cart.Items.Select(i => new ShopPlatform.Models.OrderLine
+                {
+                    ProductId   = i.ProductId,
+                    ProductName = i.ProductName,
+                    UnitPrice   = i.UnitPrice,
+                    Quantity    = i.Quantity
+                }).ToList()
+            };
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            await JS.InvokeVoidAsync("openTossWidget",
+                orderId,
+                (double)Cart.Total,
+                clientKey,
+                customerIdRaw,
+                $"{Tenant.Config!.ShopName} 주문");
+
+            _widgetReady = true;
+        }
+        catch (Exception ex)
+        {
+            _error = ex.Message;
+        }
+        finally { _processing = false; }
+    }
+
+    private Task RequestPayment()
+    {
+        try
+        {
+            _ = JS.InvokeVoidAsync("requestTossPayment", _successUrl!, _failUrl!);
+        }
+        catch (Microsoft.JSInterop.JSDisconnectedException) { }
+        catch (TaskCanceledException) { }
+        catch (OperationCanceledException) { }
+        catch (ObjectDisposedException) { }
+        return Task.CompletedTask;
+    }
+
+    private async Task PlaceDemoOrder()
+    {
+        if (!Validate()) return;
+        _processing = true;
+        using var db = DbFactory.Create(Slug);
+        var orderNo = GenerateOrderId();
+        var order = new ShopPlatform.Models.Order
+        {
+            OrderNo         = orderNo,
+            CustomerName    = _name,
+            CustomerEmail   = _email,
+            CustomerPhone   = _phone,
+            ShippingAddress = _address,
+            TotalAmount     = Cart.Total,
+            Status          = "paid",
+            TransactionId   = $"DEMO-{Guid.NewGuid():N}",
+            Lines = Cart.Items.Select(i => new ShopPlatform.Models.OrderLine
+            {
+                ProductId   = i.ProductId,
+                ProductName = i.ProductName,
+                UnitPrice   = i.UnitPrice,
+                Quantity    = i.Quantity
+            }).ToList()
+        };
+        db.Orders.Add(order);
+        // 재고 차감 (무한 재고 제외)
+        foreach (var item in Cart.Items)
+        {
+            var product = db.Products.Find(item.ProductId);
+            if (product == null || product.IsUnlimitedStock) continue;
+            product.Stock = Math.Max(0, product.Stock - item.Quantity);
+        }
+        await db.SaveChangesAsync();
+        Cart.Clear();
+        Nav.NavigateTo($"/{Slug}/order/{orderNo}?demo=1");
+    }
+
+    private bool Validate()
+    {
+        if (string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_address))
+        {
+            _error = "이름과 배송 주소는 필수입니다.";
+            return false;
+        }
+        _error = string.Empty;
+        return true;
+    }
+
+    private static string GenerateOrderId() =>
+        $"ORD-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}"[..36];
+}

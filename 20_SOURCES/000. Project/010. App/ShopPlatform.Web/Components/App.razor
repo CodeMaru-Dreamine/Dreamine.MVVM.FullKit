@@ -1,0 +1,32 @@
+@inject ShopPlatform.Models.ShopOptions ShopOpts
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ShopPlatform</title>
+    <base href="/" />
+
+    <!-- 기본 OG 태그 (SSR — Blazor 없이도 크롤러에게 전달됨) -->
+    <meta property="og:type"        content="website" />
+    <meta property="og:site_name"   content="ShopPlatform" />
+    <meta property="og:url"         content="@ShopOpts.BaseUrl" />
+    <meta property="og:title"       content="ShopPlatform — 나만의 온라인 쇼핑몰" />
+    <meta property="og:description" content="상품 등록부터 결제까지, 5분이면 충분합니다. 토스페이먼츠 API 키만 있으면 바로 결제 연동." />
+    <meta property="og:image"       content="@(ShopOpts.BaseUrl.TrimEnd('/'))/img/shop-og-default.png" />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="description"         content="상품 등록부터 결제까지, 5분이면 충분합니다." />
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="css/shop-site.css" />
+    <HeadOutlet />
+</head>
+<body>
+    <Routes @rendermode="new InteractiveServerRenderMode(prerender: false)" />
+    <script src="_framework/blazor.server.js"></script>
+    <script src="js/site.js"></script>
+    <script src="js/toss-payment.js"></script>
+</body>
+</html>

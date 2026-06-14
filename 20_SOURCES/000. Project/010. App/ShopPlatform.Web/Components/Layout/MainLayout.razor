@@ -1,0 +1,6 @@
+@inherits LayoutComponentBase
+@inject TenantContext Tenant
+
+<div class="shop-layout @(Tenant.IsResolved ? "tenant-active" : "")">
+    @Body
+</div>

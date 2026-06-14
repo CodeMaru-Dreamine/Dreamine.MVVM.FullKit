@@ -1,0 +1,207 @@
+@page "/admin"
+@inject IShopTenantStore TenantStore
+@inject ShopOptions Opts
+@inject NavigationManager Nav
+
+<PageTitle>슈퍼어드민 — ShopPlatform</PageTitle>
+
+@if (!_authenticated)
+{
+    <div class="container py-5" style="max-width:400px">
+        <h2>플랫폼 관리자</h2>
+        <div class="mb-3">
+            <label class="form-label">비밀번호</label>
+            <input type="password" class="form-control" @bind="_password" @bind:event="oninput" @onkeypress="OnKey" />
+        </div>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="alert alert-danger">@_error</div>
+        }
+        <button class="btn btn-primary w-100" @onclick="Login">로그인</button>
+    </div>
+}
+else
+{
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>샵 관리</h2>
+            <div>
+                <button class="btn btn-success me-2" @onclick="() => _showCreate = true">+ 새 샵 생성</button>
+                <button class="btn btn-outline-danger" @onclick="Logout">로그아웃</button>
+            </div>
+        </div>
+
+        @if (_showCreate)
+        {
+            <div class="card mb-4" style="max-width:500px">
+                <div class="card-body">
+                    <h5>새 쇼핑몰 생성</h5>
+                    <div class="mb-3">
+                        <label class="form-label">슬러그 (URL)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">shop.codemaru.co.kr/</span>
+                            <input class="form-control" @bind="_newSlug" placeholder="my-shop" />
+                        </div>
+                        <div class="form-text">소문자 영숫자와 하이픈만 사용. 예: my-shop, store123</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">쇼핑몰 이름</label>
+                        <input class="form-control" @bind="_newName" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">어드민 비밀번호</label>
+                        <input class="form-control" type="password" @bind="_newPassword" />
+                    </div>
+                    @if (!string.IsNullOrEmpty(_createError))
+                    {
+                        <div class="alert alert-danger">@_createError</div>
+                    }
+                    <button class="btn btn-primary me-2" @onclick="CreateShop">생성</button>
+                    <button class="btn btn-secondary" @onclick="() => _showCreate = false">취소</button>
+                </div>
+            </div>
+        }
+
+        @if (_shops == null)
+        {
+            <p>로딩 중...</p>
+        }
+        else if (_shops.Count == 0)
+        {
+            <p class="text-muted">등록된 쇼핑몰이 없습니다. 새 샵을 생성해 보세요.</p>
+        }
+        else
+        {
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>슬러그</th>
+                        <th>쇼핑몰 이름</th>
+                        <th>상태</th>
+                        <th>결제</th>
+                        <th>생성일</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in _shops)
+                    {
+                        <tr>
+                            <td><code>@s.Slug</code></td>
+                            <td>@s.ShopName</td>
+                            <td>
+                                <span class="badge @(s.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(s.IsActive ? "운영중" : "비활성")
+                                </span>
+                            </td>
+                            <td>
+                                @if (s.Payment.IsEnabled)
+                                {
+                                    <span class="badge @(s.Payment.IsTestMode ? "bg-warning text-dark" : "bg-success")">
+                                        @(s.Payment.IsTestMode ? "TEST" : "LIVE")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-light text-dark">미설정</span>
+                                }
+                            </td>
+                            <td>@s.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <a href="/@s.Slug" class="btn btn-sm btn-outline-secondary me-1" target="_blank">보기</a>
+                                <a href="/@s.Slug/admin" class="btn btn-sm btn-outline-primary me-1">어드민</a>
+                                <button class="btn btn-sm btn-outline-danger"
+                                        @onclick="() => DeleteShop(s.Slug)">삭제</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+@code {
+    private bool _authenticated;
+    private string _password = string.Empty;
+    private string _error = string.Empty;
+    private List<ShopConfig>? _shops;
+    private bool _showCreate;
+    private string _newSlug = string.Empty;
+    private string _newName = string.Empty;
+    private string _newPassword = string.Empty;
+    private string _createError = string.Empty;
+
+    private async Task Login()
+    {
+        try
+        {
+            if (_password == Opts.SuperAdminPassword)
+            {
+                _authenticated = true;
+                await LoadShops();
+            }
+            else
+            {
+                _error = $"비밀번호가 올바르지 않습니다. (입력: {_password.Length}자)";
+            }
+        }
+        catch (Exception ex)
+        {
+            _error = $"오류: {ex.Message}";
+        }
+    }
+
+    private void Logout() => _authenticated = false;
+
+    private async Task OnKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await Login();
+    }
+
+    private async Task LoadShops()
+    {
+        _shops = (await TenantStore.GetAllAsync()).ToList();
+    }
+
+    private async Task CreateShop()
+    {
+        _createError = string.Empty;
+        var slug = _newSlug.Trim().ToLowerInvariant();
+
+        if (string.IsNullOrEmpty(slug) || !System.Text.RegularExpressions.Regex.IsMatch(slug, @"^[a-z0-9\-]+$"))
+        {
+            _createError = "슬러그는 소문자 영숫자와 하이픈만 사용 가능합니다.";
+            return;
+        }
+        if (await TenantStore.ExistsAsync(slug))
+        {
+            _createError = "이미 존재하는 슬러그입니다.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_newPassword))
+        {
+            _createError = "어드민 비밀번호를 입력해 주세요.";
+            return;
+        }
+
+        var config = new ShopConfig
+        {
+            Slug = slug,
+            ShopName = string.IsNullOrWhiteSpace(_newName) ? slug : _newName.Trim(),
+            AdminPasswordHash = _newPassword,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        };
+        await TenantStore.SaveAsync(config);
+        _showCreate = false;
+        _newSlug = _newName = _newPassword = string.Empty;
+        await LoadShops();
+    }
+
+    private async Task DeleteShop(string slug)
+    {
+        await TenantStore.DeleteAsync(slug);
+        await LoadShops();
+    }
+}

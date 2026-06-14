@@ -1,0 +1,122 @@
+@page "/{Slug}/register"
+@inject TenantContext Tenant
+@inject IShopTenantStore TenantStore
+@inject TenantDbContextFactory DbFactory
+@inject ShopCustomerSession Session
+@inject NavigationManager Nav
+
+<PageTitle>회원가입 — @(Tenant.Config?.ShopName ?? "")</PageTitle>
+
+<div class="container py-5" style="max-width:480px">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">회원가입</h2>
+        <p class="text-muted">@(Tenant.Config?.ShopName ?? "") 회원</p>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+            <div class="mb-3">
+                <label class="form-label">이름 <span class="text-danger">*</span></label>
+                <input class="form-control" @bind="_name" @bind:event="oninput" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">이메일 <span class="text-danger">*</span></label>
+                <input class="form-control" type="email" @bind="_email" @bind:event="oninput" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">비밀번호 <span class="text-danger">*</span></label>
+                <input class="form-control" type="password" @bind="_password" @bind:event="oninput" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">비밀번호 확인</label>
+                <input class="form-control" type="password" @bind="_confirm" @bind:event="oninput" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">연락처</label>
+                <input class="form-control" @bind="_phone" @bind:event="oninput" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">배송지 주소</label>
+                <input class="form-control" @bind="_address" @bind:event="oninput" />
+            </div>
+            @if (!string.IsNullOrEmpty(_error))
+            {
+                <div class="alert alert-danger py-2">@_error</div>
+            }
+            <button class="btn btn-primary w-100" @onclick="Register" disabled="@_loading">
+                @(_loading ? "가입 중..." : "회원가입")
+            </button>
+            <hr />
+            <p class="text-center mb-0 small">
+                이미 회원이신가요? <a href="/@Slug/login">로그인</a>
+            </p>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = string.Empty;
+
+    private string _name = string.Empty;
+    private string _email = string.Empty;
+    private string _password = string.Empty;
+    private string _confirm = string.Empty;
+    private string _phone = string.Empty;
+    private string _address = string.Empty;
+    private string _error = string.Empty;
+    private bool _loading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!Tenant.IsResolved)
+        {
+            var cfg = await TenantStore.GetAsync(Slug);
+            if (cfg != null) Tenant.Config = cfg;
+        }
+    }
+
+    private async Task Register()
+    {
+        _error = string.Empty;
+        if (string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
+        {
+            _error = "이름, 이메일, 비밀번호는 필수입니다.";
+            return;
+        }
+        if (_password != _confirm)
+        {
+            _error = "비밀번호가 일치하지 않습니다.";
+            return;
+        }
+        if (_password.Length < 6)
+        {
+            _error = "비밀번호는 6자 이상이어야 합니다.";
+            return;
+        }
+        _loading = true;
+        using var db = DbFactory.Create(Slug);
+        var emailLower = _email.Trim().ToLower();
+        if (db.Users.Any(u => u.Email == emailLower))
+        {
+            _error = "이미 가입된 이메일입니다.";
+            _loading = false;
+            return;
+        }
+        var user = new ShopUser
+        {
+            Email = emailLower,
+            PasswordHash = SimpleHash(_password),
+            Name = _name.Trim(),
+            Phone = _phone.Trim(),
+            Address = _address.Trim()
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+        Session.Login(user);
+        Nav.NavigateTo($"/{Slug}");
+    }
+
+    private static string SimpleHash(string plain) =>
+        Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(plain + "ShopPlatformSalt2025")));
+}
