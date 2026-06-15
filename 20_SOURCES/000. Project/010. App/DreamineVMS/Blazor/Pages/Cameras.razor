@@ -114,42 +114,58 @@
                         <option value="uniview">유니뷰 (Uniview)</option>
                         <option value="reolink">리오링크 (Reolink)</option>
                         <option value="axis">Axis</option>
+                        <option value="dshow">PC 웹캠 / 내장 카메라 (DirectShow)</option>
                     </select>
                 </div>
 
                 @if (!string.IsNullOrEmpty(_brandKey))
                 {
-                    <div class="cam-rtsp-fields">
-                        <label>
-                            IP 주소
-                            <input @bind="_genIp" @bind:after="GenerateRtspUrl" placeholder="192.168.0.11" />
-                        </label>
-                        <label>
-                            포트
-                            <input type="number" @bind="_genPort" @bind:after="GenerateRtspUrl" min="1" max="65535" />
-                        </label>
-                        <label>
-                            채널
-                            <input type="number" @bind="_genChannel" @bind:after="GenerateRtspUrl" min="1" max="32" />
-                        </label>
-                        <label>
-                            스트림
-                            <select @bind="_genStream" @bind:after="GenerateRtspUrl">
-                                <option value="0">메인 (고화질)</option>
-                                <option value="1">서브 (저화질)</option>
-                            </select>
-                        </label>
-                    </div>
-                    <div class="cam-rtsp-fields-row2">
-                        <label>
-                            사용자 이름
-                            <input @bind="_genUser" @bind:after="GenerateRtspUrl" placeholder="admin" />
-                        </label>
-                        <label>
-                            비밀번호
-                            <input type="password" @bind="_genPass" @bind:after="GenerateRtspUrl" />
-                        </label>
-                    </div>
+                    @if (_brandKey == "dshow")
+                    {
+                        <div class="cam-rtsp-fields" style="grid-template-columns:1fr;">
+                            <label>
+                                장치 이름 (ffmpeg -list_devices 로 확인)
+                                <input @bind="_genIp" @bind:after="GenerateRtspUrl" placeholder="LGE FHD Camera" />
+                            </label>
+                        </div>
+                        <p style="font-size:12px;color:#64748b;margin-top:8px;">
+                            장치 목록 확인: <code>ffmpeg -list_devices true -f dshow -i dummy</code>
+                        </p>
+                    }
+                    else
+                    {
+                        <div class="cam-rtsp-fields">
+                            <label>
+                                IP 주소
+                                <input @bind="_genIp" @bind:after="GenerateRtspUrl" placeholder="192.168.0.11" />
+                            </label>
+                            <label>
+                                포트
+                                <input type="number" @bind="_genPort" @bind:after="GenerateRtspUrl" min="1" max="65535" />
+                            </label>
+                            <label>
+                                채널
+                                <input type="number" @bind="_genChannel" @bind:after="GenerateRtspUrl" min="1" max="32" />
+                            </label>
+                            <label>
+                                스트림
+                                <select @bind="_genStream" @bind:after="GenerateRtspUrl">
+                                    <option value="0">메인 (고화질)</option>
+                                    <option value="1">서브 (저화질)</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="cam-rtsp-fields-row2">
+                            <label>
+                                사용자 이름
+                                <input @bind="_genUser" @bind:after="GenerateRtspUrl" placeholder="admin" />
+                            </label>
+                            <label>
+                                비밀번호
+                                <input type="password" @bind="_genPass" @bind:after="GenerateRtspUrl" />
+                            </label>
+                        </div>
+                    }
                 }
             </div>
 
@@ -398,11 +414,12 @@
                            ? $"rtsp://{auth}@{ip}:{port}/h264Preview_{ch:D2}_main"
                            : $"rtsp://{auth}@{ip}:{port}/h264Preview_{ch:D2}_sub",
             "axis"      => $"rtsp://{auth}@{ip}:{port}/axis-media/media.amp",
+            "dshow"     => string.IsNullOrWhiteSpace(ip) ? _formRtspUrl : $"dshow://video={ip}",
             _           => _formRtspUrl
         };
 
-        // 호스트 필드도 채움 (비어 있을 때만)
-        if (string.IsNullOrWhiteSpace(_formHost))
+        // 호스트 필드도 채움 (비어 있을 때, IP 카메라일 때만)
+        if (string.IsNullOrWhiteSpace(_formHost) && _brandKey != "dshow")
             _formHost = ip;
     }
 

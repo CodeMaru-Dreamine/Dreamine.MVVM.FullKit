@@ -610,10 +610,11 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
 
     private string BuildArguments(CameraDevice camera)
     {
+        bool isDshow = camera.RtspUrl.StartsWith("dshow://", StringComparison.OrdinalIgnoreCase);
+
         string playlistPath = Quote(GetPlaylistPath(camera.Id));
         string sessionStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
         string segmentPath = Quote(Path.Combine(GetCameraOutputDirectory(camera.Id), $"seg_{sessionStamp}_%05d.ts"));
-        string input = Quote(camera.RtspUrl);
         string videoCodec = (_options.VideoCodec ?? "libx264").ToLowerInvariant();
         string audioCodec = (_options.AudioCodec ?? "an").ToLowerInvariant();
         int segmentSeconds = Math.Max(1, _options.HlsSegmentSeconds);
@@ -621,22 +622,34 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         int videoFps = Math.Max(1, _options.VideoFps);
         int keyFrameInterval = segmentSeconds * videoFps;
 
-        List<string> parts = new()
+        // dshow://video=장치이름 → -f dshow -i "video=장치이름"
+        // rtsp://...           → RTSP 전용 플래그 + -i "rtsp://..."
+        string inputDevice = isDshow
+            ? Quote(camera.RtspUrl["dshow://".Length..])
+            : Quote(camera.RtspUrl);
+
+        List<string> parts = new() { "-hide_banner", "-loglevel warning" };
+
+        if (isDshow)
         {
-            "-hide_banner",
-            "-loglevel warning",
-            "-rtsp_transport tcp",
-            "-rtsp_flags prefer_tcp",
-            "-analyzeduration 2000000",
-            "-probesize 2000000",
-            "-fflags +genpts+discardcorrupt+nobuffer",
-            "-flags low_delay",
-            "-i", input,
-            "-map 0:v:0",
-            "-map 0:a?",
-            "-dn",
-            "-sn"
-        };
+            parts.Add("-f dshow");
+        }
+        else
+        {
+            parts.Add("-rtsp_transport tcp");
+            parts.Add("-rtsp_flags prefer_tcp");
+            parts.Add("-analyzeduration 2000000");
+            parts.Add("-probesize 2000000");
+        }
+
+        parts.Add("-fflags +genpts+discardcorrupt+nobuffer");
+        parts.Add("-flags low_delay");
+        parts.Add("-i");
+        parts.Add(inputDevice);
+        parts.Add("-map 0:v:0");
+        parts.Add("-map 0:a?");
+        parts.Add("-dn");
+        parts.Add("-sn");
 
         if (videoCodec == "copy")
         {
