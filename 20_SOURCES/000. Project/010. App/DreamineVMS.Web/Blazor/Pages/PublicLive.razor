@@ -6,6 +6,7 @@
 @implements IAsyncDisposable
 @inject VmsUserService UserService
 @inject IVmsCameraRepository Repository
+@inject VmsAuthState AuthState
 @inject IJSRuntime JS
 
 <PageTitle>@_ownerName CCTV Live</PageTitle>
@@ -69,6 +70,8 @@
 
         _ownerName = user.DisplayName;
         _ownerLayout = user.LiveLayout;
+
+        // 초기에는 공개 카메라만 (JS 없이도 렌더링 가능)
         _cameras = Repository.GetAll()
             .Where(c => c.TenantId == user.Id && c.Enabled && c.IsPublic)
             .OrderBy(c => c.DisplayOrder)
@@ -77,11 +80,25 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender && !_notFound)
+        if (!firstRender || _notFound) return;
+
+        // 본인 여부 확인 후 비공개 카메라도 표시
+        await AuthState.RestoreAsync(JS);
+        if (AuthState.CurrentUser is not null)
         {
-            foreach (var cam in _cameras)
-                await JS.InvokeVoidAsync("dreamineVmsHls.init", GetPlayerId(cam), cam.HlsUrl);
+            var user = await UserService.FindBySlugAsync(Slug);
+            if (user is not null && AuthState.CurrentUser.Id == user.Id)
+            {
+                _cameras = Repository.GetAll()
+                    .Where(c => c.TenantId == user.Id && c.Enabled)
+                    .OrderBy(c => c.DisplayOrder)
+                    .ToList();
+                StateHasChanged();
+            }
         }
+
+        foreach (var cam in _cameras)
+            await JS.InvokeVoidAsync("dreamineVmsHls.init", GetPlayerId(cam), cam.HlsUrl);
     }
 
     private static string GetPlayerId(CameraDevice cam) => $"pub-player-{cam.Id}";
