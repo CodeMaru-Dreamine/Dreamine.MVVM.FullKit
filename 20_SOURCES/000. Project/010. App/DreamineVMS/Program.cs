@@ -6,8 +6,9 @@ using DreamineVMS.Blazor;
 using DreamineVMS.Blazor.ViewModels;
 using DreamineVMS.Hosting;
 using DreamineVMS.Options;
+using DreamineVMS.Services.Agent;
+using DreamineVMS.Services.Auth;  // VmsDatabase
 using DreamineVMS.Services.Cameras;
-using DreamineVMS.Services.Certificates;
 using DreamineVMS.Services.Dashboard;
 using DreamineVMS.Services.Runtime;
 using DreamineVMS.Services.Streaming;
@@ -17,6 +18,7 @@ using DreamineVMS.Views;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace DreamineVMS;
 
@@ -38,6 +40,17 @@ public static class Program
             .AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
 
         RegisterOptions(builder);
+        RegisterAuthServices(builder);
+
+        // FFmpeg 경로 자동 확인 및 다운로드 (없으면 로컬 ffmpeg\ffmpeg.exe로 대체)
+        string configuredFfmpegPath = builder.Configuration["Ffmpeg:Path"] ?? @"C:\ffmpeg\bin\ffmpeg.exe";
+        var progress = new Progress<string>(msg => Console.WriteLine($"[FFmpeg] {msg}"));
+        string resolvedFfmpegPath = FfmpegBootstrapper.EnsureAsync(configuredFfmpegPath, progress)
+            .GetAwaiter().GetResult();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Ffmpeg:Path"] = resolvedFfmpegPath
+        });
         RegisterDreamineHybrid(builder);
         RegisterApplicationServices(builder);
         RegisterCameraServices(builder);
@@ -71,12 +84,6 @@ public static class Program
 
         builder.Services.Configure<FfmpegOptions>(
             builder.Configuration.GetSection("Ffmpeg"));
-
-        builder.Services.Configure<List<CameraDeviceOptions>>(
-            builder.Configuration.GetSection("Cameras"));
-
-        builder.Services.Configure<CertificateMonitorOptions>(
-            builder.Configuration.GetSection("CertificateMonitor"));
     }
 
     /// <summary>
@@ -92,17 +99,21 @@ public static class Program
     /// \brief WPF Shell 및 ViewModel 서비스를 등록합니다.
     /// </summary>
     /// <param name="builder">애플리케이션 Host Builder입니다.</param>
+    private static void RegisterAuthServices(HostApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<VmsDatabase>();
+
+        // 에이전트: 중앙 서버 통신 + HLS 세그먼트 업로더
+        builder.Services.AddSingleton<AgentApiClient>();
+        builder.Services.AddHostedService<HlsSegmentPusherService>();
+    }
+
     private static void RegisterApplicationServices(HostApplicationBuilder builder)
     {
+        builder.Services.AddSingleton<AgentSettingsWriter>();
+        builder.Services.AddSingleton<AgentSettingsViewModel>();
         builder.Services.AddSingleton<MainWindow>();
         builder.Services.AddSingleton<MainWindowViewModel>();
-        builder.Services.AddSingleton<CertificateMonitorViewModel>();
-
-        builder.Services.AddSingleton<IProcessRunner, ProcessRunner>();
-        builder.Services.AddSingleton<ICertificateMonitorService, X509CertificateMonitorService>();
-        builder.Services.AddSingleton<IWinAcmeService, WinAcmeService>();
-        builder.Services.AddSingleton<INginxReloadService, NginxReloadService>();
-        builder.Services.AddSingleton<ICertificateSettingsWriter, CertificateSettingsWriter>();
     }
 
     /// <summary>
@@ -122,7 +133,7 @@ public static class Program
     /// <param name="builder">애플리케이션 Host Builder입니다.</param>
     private static void RegisterCameraServices(HostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<IVmsCameraRepository, ConfigVmsCameraRepository>();
+        builder.Services.AddSingleton<IVmsCameraRepository, SqliteCameraRepository>();
         builder.Services.AddSingleton<ICameraRuntimeStateService, CameraRuntimeStateService>();
 
         builder.Services.AddSingleton<FfmpegHlsStreamService>();

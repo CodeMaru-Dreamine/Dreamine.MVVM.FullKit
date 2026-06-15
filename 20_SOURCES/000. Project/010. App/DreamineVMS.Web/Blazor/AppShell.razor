@@ -1,0 +1,24 @@
+@namespace DreamineVMS.Web.Blazor
+@using Microsoft.AspNetCore.Components.Web
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CodeMaru CCTV Viewer</title>
+    <meta name="description" content="IP 카메라를 브라우저와 모바일에서 실시간으로 확인할 수 있는 CodeMaru VMS입니다." />
+    <meta property="og:title" content="CodeMaru CCTV Viewer" />
+    <meta property="og:description" content="카메라 주인은 앱 하나 설치, 보는 사람은 링크만으로 실시간 시청" />
+    <meta property="og:url" content="https://cctvviewer.codemaru.co.kr/" />
+    <base href="/" />
+    <link rel="stylesheet" href="/css/app.css?v=20260615-4" />
+    <HeadOutlet />
+</head>
+<body>
+    <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
+    <script src="/js/hls-interop.js?v=20260615-3"></script>
+    <script src="/_framework/blazor.web.js"></script>
+</body>
+</html>

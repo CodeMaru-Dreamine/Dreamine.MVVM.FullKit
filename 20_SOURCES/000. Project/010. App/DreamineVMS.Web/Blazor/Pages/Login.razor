@@ -1,0 +1,79 @@
+@page "/login"
+@namespace DreamineVMS.Web.Blazor.Pages
+@using DreamineVMS.Web.Services.Auth
+@inject VmsUserService UserService
+@inject VmsSessionService Sessions
+@inject VmsAuthState AuthState
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>로그인 — Dreamine VMS</PageTitle>
+
+<div class="page-shell auth-shell">
+    <div class="auth-card">
+        <h1>Dreamine VMS</h1>
+        <p class="muted">로그인하고 카메라를 관리하세요.</p>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="auth-error">@_error</div>
+        }
+
+        <div class="auth-form">
+            <label>
+                이메일
+                <input type="email" @bind="_email" @bind:event="oninput" placeholder="you@example.com"
+                       @onkeydown="OnKeyDown" />
+            </label>
+            <label>
+                비밀번호
+                <input type="password" @bind="_password" @bind:event="oninput" placeholder="••••••"
+                       @onkeydown="OnKeyDown" />
+            </label>
+
+            <button class="primary full-btn" @onclick="SubmitAsync" disabled="@_busy">
+                @(_busy ? "처리 중..." : "로그인")
+            </button>
+
+            <p class="auth-link">계정이 없으신가요? <a href="/register">회원가입</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _email = "";
+    private string _password = "";
+    private string _error = "";
+    private bool _busy;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await AuthState.RestoreAsync(JS);
+            if (AuthState.IsAuthenticated)
+                Nav.NavigateTo($"/{AuthState.CurrentUser?.PublicSlug}/cameras");
+        }
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await SubmitAsync();
+    }
+
+    private async Task SubmitAsync()
+    {
+        _error = "";
+        _busy = true;
+        try
+        {
+            var (ok, error, user) = await UserService.LoginAsync(_email, _password);
+            if (!ok) { _error = error; return; }
+
+            var token = Sessions.CreateSession(user!);
+            await AuthState.SignInAsync(JS, user!, token);
+            Nav.NavigateTo($"/{user!.PublicSlug}/cameras");
+        }
+        finally { _busy = false; }
+    }
+}

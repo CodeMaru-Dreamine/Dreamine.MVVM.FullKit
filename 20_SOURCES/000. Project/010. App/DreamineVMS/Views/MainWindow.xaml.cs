@@ -23,10 +23,10 @@ public partial class MainWindow : Window
 {
     private readonly VmsServerOptions _serverOptions;
     private MainWindowViewModel? _attachedViewModel;
-    private WebView2? _serverDashboardWebView;
     private WebView2? _wpfLiveWebView;
-    private bool _serverLiveInitialized;
+    private WebView2? _camerasWebView;
     private bool _wpfLiveInitialized;
+    private bool _camerasInitialized;
 
     /// <summary>
     /// \brief MainWindow 인스턴스를 초기화합니다.
@@ -36,9 +36,6 @@ public partial class MainWindow : Window
     {
         _serverOptions = serverOptions?.Value ?? throw new ArgumentNullException(nameof(serverOptions));
         InitializeComponent();
-
-        // 탭 헤더의 포트 번호를 실제 옵션 값으로 표시합니다.
-        ServerDashboardTabHeader.Text = $"Server Live ({_serverOptions.Port})";
 
         if (DesignerProperties.GetIsInDesignMode(this))
         {
@@ -107,7 +104,7 @@ public partial class MainWindow : Window
         // WebView2 인스턴스를 명시적으로 정리합니다.
         // Dispose하지 않으면 Chromium 서브프로세스가 살아남아 앱 종료를 막을 수 있습니다.
         TryDisposeWebView(ref _wpfLiveWebView);
-        TryDisposeWebView(ref _serverDashboardWebView);
+        TryDisposeWebView(ref _camerasWebView);
 
         // WPF Shutdown을 명시적으로 트리거합니다.
         // host.RunDreamineWpfApp의 구현에 따라 자동 종료가 안 될 수 있으므로 안전망입니다.
@@ -116,43 +113,39 @@ public partial class MainWindow : Window
 
     private async void OnMainTabSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
-        if (!IsLoaded)
+        if (!IsLoaded) return;
+
+        // 에이전트 설정 탭이 처음 열릴 때 PasswordBox에 저장된 비밀번호를 채워줍니다.
+        // PasswordBox.Password는 DependencyProperty가 아니라 직접 바인딩이 불가능합니다.
+        if (AgentPasswordBox is not null
+            && DataContext is MainWindowViewModel vm
+            && string.IsNullOrEmpty(AgentPasswordBox.Password)
+            && !string.IsNullOrEmpty(vm.AgentSettings.Password))
         {
-            return;
+            AgentPasswordBox.Password = vm.AgentSettings.Password;
         }
 
         await EnsureSelectedLiveWebViewAsync().ConfigureAwait(true);
     }
 
+    private void AgentPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel vm)
+            vm.AgentSettings.Password = AgentPasswordBox.Password;
+    }
+
     private async Task EnsureSelectedLiveWebViewAsync()
     {
-        if (MainTabControl.SelectedItem == ServerDashboardTab)
-        {
-            await EnsureServerLiveWebViewAsync().ConfigureAwait(true);
-            return;
-        }
-
         if (MainTabControl.SelectedItem == WpfLiveTab)
         {
             await EnsureWpfLiveWebViewAsync().ConfigureAwait(true);
-        }
-    }
-
-    private async Task EnsureServerLiveWebViewAsync()
-    {
-        if (_serverLiveInitialized)
-        {
             return;
         }
 
-        WebView2 webView = HybridWebViewHost.CreateWebView();
-        ServerDashboardTab.Content = webView;
-        _serverDashboardWebView = webView;
-
-        string liveUrl = GetLiveUrl();
-        RegisterWebViewRecovery(webView, () => liveUrl);
-        await NavigateServerAsync(webView, liveUrl).ConfigureAwait(true);
-        _serverLiveInitialized = true;
+        if (MainTabControl.SelectedItem == CamerasTab)
+        {
+            await EnsureCamerasWebViewAsync().ConfigureAwait(true);
+        }
     }
 
     private async Task EnsureWpfLiveWebViewAsync()
@@ -170,6 +163,23 @@ public partial class MainWindow : Window
         RegisterWebViewRecovery(webView, () => liveUrl);
         await NavigateServerAsync(webView, liveUrl).ConfigureAwait(true);
         _wpfLiveInitialized = true;
+    }
+
+    private async Task EnsureCamerasWebViewAsync()
+    {
+        if (_camerasInitialized)
+        {
+            return;
+        }
+
+        WebView2 webView = HybridWebViewHost.CreateWebView();
+        CamerasTab.Content = webView;
+        _camerasWebView = webView;
+
+        string camerasUrl = $"http://localhost:{_serverOptions.Port}/cameras";
+        RegisterWebViewRecovery(webView, () => camerasUrl);
+        await NavigateServerAsync(webView, camerasUrl).ConfigureAwait(true);
+        _camerasInitialized = true;
     }
 
     private string GetLiveUrl()

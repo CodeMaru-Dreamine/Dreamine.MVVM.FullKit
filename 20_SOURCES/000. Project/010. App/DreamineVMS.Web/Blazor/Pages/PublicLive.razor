@@ -1,0 +1,106 @@
+@page "/{Slug}/live"
+@namespace DreamineVMS.Web.Blazor.Pages
+@using DreamineVMS.Web.Models
+@using DreamineVMS.Web.Services.Auth
+@using DreamineVMS.Web.Services.Cameras
+@implements IAsyncDisposable
+@inject VmsUserService UserService
+@inject IVmsCameraRepository Repository
+@inject IJSRuntime JS
+
+<PageTitle>@_ownerName CCTV Live</PageTitle>
+
+<div class="page-shell live-shell">
+    @if (_notFound)
+    {
+        <div class="hero"><div><h1>사용자를 찾을 수 없습니다.</h1><p>URL을 확인해 주세요.</p></div></div>
+    }
+    else
+    {
+        <div class="hero compact">
+            <div>
+                <h1>@_ownerName Live</h1>
+                <p>실시간 카메라 스트림</p>
+            </div>
+        </div>
+
+        @if (_cameras.Count == 0)
+        {
+            <p class="muted" style="padding:2rem;">활성화된 카메라가 없습니다.</p>
+        }
+        else
+        {
+            <div class="live-grid @GetLayoutClass()">
+                @{ int _tileIdx = 0; }
+                @foreach (var camera in _cameras)
+                {
+                    _tileIdx++;
+                    <section class="video-tile tile-@_tileIdx" data-status="스트림 연결 중...">
+                        <header>
+                            <strong>@camera.Name</strong>
+                            <span>@camera.Host</span>
+                        </header>
+                        <video id="@GetPlayerId(camera)"
+                               class="video-player"
+                               controls autoplay muted playsinline preload="auto">
+                        </video>
+                        <footer>@camera.HlsUrl</footer>
+                    </section>
+                }
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private List<CameraDevice> _cameras = [];
+    private string _ownerName = "";
+    private string _ownerLayout = "auto";
+    private bool _notFound;
+    private bool _disposed;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var user = await UserService.FindBySlugAsync(Slug);
+        if (user is null) { _notFound = true; return; }
+
+        _ownerName = user.DisplayName;
+        _ownerLayout = user.LiveLayout;
+        _cameras = Repository.GetAll()
+            .Where(c => c.TenantId == user.Id && c.Enabled && c.IsPublic)
+            .OrderBy(c => c.DisplayOrder)
+            .ToList();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && !_notFound)
+        {
+            foreach (var cam in _cameras)
+                await JS.InvokeVoidAsync("dreamineVmsHls.init", GetPlayerId(cam), cam.HlsUrl);
+        }
+    }
+
+    private static string GetPlayerId(CameraDevice cam) => $"pub-player-{cam.Id}";
+
+    private string GetLayoutClass()
+    {
+        var layout = _ownerLayout;
+        if (layout == "auto" || string.IsNullOrEmpty(layout))
+            return $"pub-grid-{Math.Min(_cameras.Count, 4)}";
+        return $"layout-{layout}";
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+        foreach (var cam in _cameras)
+        {
+            try { await JS.InvokeVoidAsync("dreamineVmsHls.destroy", GetPlayerId(cam)); }
+            catch { /* ignore */ }
+        }
+    }
+}

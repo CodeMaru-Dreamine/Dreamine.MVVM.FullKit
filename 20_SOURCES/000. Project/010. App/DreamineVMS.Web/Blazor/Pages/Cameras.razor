@@ -1,0 +1,286 @@
+@page "/{Slug}/cameras"
+@namespace DreamineVMS.Web.Blazor.Pages
+@using DreamineVMS.Web.Models
+@using DreamineVMS.Web.Services.Auth
+@using DreamineVMS.Web.Services.Cameras
+@inject IVmsCameraRepository Repository
+@inject VmsAuthState AuthState
+@inject VmsUserService UserService
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@inject IHttpClientFactory HttpClientFactory
+
+<PageTitle>카메라 관리 — Dreamine VMS</PageTitle>
+
+<div class="page-shell">
+    <div class="hero">
+        <div>
+            <a href="/" style="font-size:0.85rem;color:#6b7280;text-decoration:none;display:inline-block;margin-bottom:0.4rem;">← 홈으로</a>
+            <h1>카메라 관리</h1>
+            @if (AuthState.CurrentUser is not null)
+            {
+                <p>@AuthState.CurrentUser.DisplayName 님 · 공개 링크: <a href="/@AuthState.CurrentUser.PublicSlug/live" target="_blank">/@AuthState.CurrentUser.PublicSlug/live</a></p>
+            }
+        </div>
+        <div class="action-toolbar">
+            @if (AuthState.CurrentUser is not null)
+            {
+                <a class="primary link-button" href="/@AuthState.CurrentUser.PublicSlug/live">내 라이브</a>
+            }
+            <button class="secondary" @onclick="SignOutAsync">로그아웃</button>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="cam-alert @(_isError ? "cam-alert-error" : "cam-alert-ok")">@_message</div>
+    }
+
+    <!-- 카카오 / SNS 공유 미리보기 설정 -->
+    <section class="event-card">
+        <h3>카카오 공유 미리보기 설정</h3>
+        <p class="muted" style="margin-bottom:1rem;">카카오톡으로 내 라이브 링크를 공유할 때 표시되는 제목, 설명, 이미지를 설정합니다.</p>
+
+        <div class="cam-form">
+            <label class="cam-form-full">
+                제목
+                <input @bind="_ogTitle" placeholder="@(AuthState.CurrentUser?.DisplayName) CCTV Live" />
+            </label>
+            <label class="cam-form-full">
+                설명
+                <input @bind="_ogDescription" placeholder="실시간 카메라 스트림입니다." />
+            </label>
+            <label class="cam-form-full">
+                이미지
+                <div style="display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap;">
+                    <label class="upload-btn" style="cursor:pointer;">
+                        <span>📁 이미지 업로드</span>
+                        <InputFile OnChange="UploadOgImageAsync" accept="image/*" style="display:none;" />
+                    </label>
+                    <span style="color:#6b7280;font-size:0.82em;">또는 URL 직접 입력 (JPG·PNG·WebP, 최대 5MB)</span>
+                </div>
+                <input @bind="_ogImage" placeholder="https://..." style="margin-top:8px;" />
+            </label>
+
+            @if (!string.IsNullOrWhiteSpace(_ogImage))
+            {
+                <div style="margin-bottom:1rem;">
+                    <img src="@_ogImage" alt="OG 이미지 미리보기"
+                         style="max-width:300px;max-height:160px;border-radius:8px;border:1px solid #374151;" />
+                </div>
+            }
+            @if (!string.IsNullOrWhiteSpace(_uploadError))
+            {
+                <p style="color:#f87171;font-size:0.85em;margin-bottom:0.5rem;">@_uploadError</p>
+            }
+
+            <div class="cam-form-actions">
+                <button class="primary" @onclick="SaveOgAsync" disabled="@_ogBusy">
+                    @(_ogBusy ? "저장 중..." : "저장")
+                </button>
+                @if (AuthState.CurrentUser is not null)
+                {
+                    <a class="secondary link-button" href="/@AuthState.CurrentUser.PublicSlug/live" target="_blank">
+                        내 라이브 열기
+                    </a>
+                }
+            </div>
+        </div>
+    </section>
+
+    <!-- 카메라 목록 (에이전트 앱에서 자동 동기화됨) -->
+    <section class="event-card">
+        <h3>등록된 카메라 (@_cameras.Count 개)</h3>
+        <p class="muted" style="margin-bottom:1rem;">카메라는 Dreamine VMS 에이전트 앱에서 관리합니다. 앱이 연결되면 자동으로 동기화됩니다.</p>
+
+        @if (_cameras.Count == 0)
+        {
+            <p class="muted">에이전트 앱에서 카메라를 추가하고 연결하세요.</p>
+        }
+        else
+        {
+            <div class="cam-table-wrap">
+                <table class="cam-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>이름</th>
+                            <th>호스트</th>
+                            <th>상태</th>
+                            <th>공개</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cam in _cameras.OrderBy(c => c.DisplayOrder))
+                        {
+                            <tr class="@(cam.Enabled ? "" : "cam-row-disabled")">
+                                <td>@cam.DisplayOrder</td>
+                                <td><strong>@cam.Name</strong></td>
+                                <td>@cam.Host</td>
+                                <td>
+                                    <span class="badge @(cam.Enabled ? "badge-green" : "badge-gray")">
+                                        @(cam.Enabled ? "활성" : "비활성")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge @(cam.IsPublic ? "badge-green" : "badge-gray")">
+                                        @(cam.IsPublic ? "공개" : "비공개")
+                                    </span>
+                                </td>
+                                <td>
+                                    <button class="mini danger" @onclick="() => DeleteCameraAsync(cam)">삭제</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <!-- 라이브 레이아웃 설정 -->
+    <section class="event-card">
+        <h3>라이브 레이아웃 설정</h3>
+        <p class="muted" style="margin-bottom:16px;">라이브 뷰 화면 분할 방식을 선택합니다. 카메라 순서에 따라 위치가 결정됩니다.</p>
+        <div class="layout-picker">
+            @foreach (var opt in _layoutOptions)
+            {
+                <button class="layout-btn @(_selectedLayout == opt.Key ? "active" : "")"
+                        @onclick="() => SelectLayoutAsync(opt.Key)">
+                    <div class="layout-preview">
+                        @((MarkupString)opt.Preview)
+                    </div>
+                    <span>@opt.Label</span>
+                </button>
+            }
+        </div>
+    </section>
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private List<CameraDevice> _cameras = [];
+    private string _message = "";
+    private bool _isError;
+
+    // 레이아웃
+    private string _selectedLayout = "auto";
+    private record LayoutOption(string Key, string Label, string Preview);
+    private static readonly LayoutOption[] _layoutOptions =
+    [
+        new("auto",   "자동",          "<div class='lp-auto'><div></div><div></div><div></div></div>"),
+        new("1",      "1분할",         "<div class='lp-1'><div></div></div>"),
+        new("2h",     "2분할 (가로)",  "<div class='lp-2h'><div></div><div></div></div>"),
+        new("2v",     "2분할 (세로)",  "<div class='lp-2v'><div></div><div></div></div>"),
+        new("3-left", "3분할 (좌 대)", "<div class='lp-3l'><div class='big'></div><div></div><div></div></div>"),
+        new("3-top",  "3분할 (상 대)", "<div class='lp-3t'><div class='big'></div><div></div><div></div></div>"),
+        new("4",      "4분할",         "<div class='lp-4'><div></div><div></div><div></div><div></div></div>"),
+    ];
+
+    // OG 설정
+    private string _ogTitle = "";
+    private string _ogDescription = "";
+    private string _ogImage = "";
+    private bool _ogBusy;
+    private string _uploadError = "";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await AuthState.RestoreAsync(JS);
+        if (!AuthState.IsAuthenticated) { Nav.NavigateTo("/login"); return; }
+
+        // 다른 사용자의 slug로 접근 시 자신의 페이지로 리다이렉트
+        if (!string.IsNullOrWhiteSpace(Slug) &&
+            !string.Equals(Slug, AuthState.CurrentUser?.PublicSlug, StringComparison.OrdinalIgnoreCase))
+        {
+            Nav.NavigateTo($"/{AuthState.CurrentUser?.PublicSlug}/cameras");
+            return;
+        }
+
+        LoadCameras();
+        _selectedLayout = AuthState.CurrentUser?.LiveLayout ?? "auto";
+        _ogTitle = AuthState.CurrentUser?.OgTitle ?? "";
+        _ogDescription = AuthState.CurrentUser?.OgDescription ?? "";
+        _ogImage = AuthState.CurrentUser?.OgImage ?? "";
+        StateHasChanged();
+    }
+
+    private async Task SelectLayoutAsync(string layout)
+    {
+        _selectedLayout = layout;
+        if (AuthState.CurrentUser is not null)
+            await UserService.SetLayoutAsync(AuthState.CurrentUser.Id, layout);
+        ShowMessage($"레이아웃을 '{layout}'로 저장했습니다.");
+    }
+
+    private async Task UploadOgImageAsync(InputFileChangeEventArgs e)
+    {
+        _uploadError = "";
+        var file = e.File;
+        if (file is null) return;
+        if (file.Size > 5 * 1024 * 1024) { _uploadError = "파일이 너무 큽니다 (최대 5MB)."; return; }
+
+        var sessionToken = await JS.InvokeAsync<string?>("localStorage.getItem", "vms_session");
+        if (string.IsNullOrWhiteSpace(sessionToken)) { _uploadError = "세션이 만료되었습니다."; return; }
+
+        using var content = new MultipartFormDataContent();
+        var stream = file.OpenReadStream(5 * 1024 * 1024);
+        content.Add(new StreamContent(stream), "file", file.Name);
+
+        using var req = new HttpRequestMessage(HttpMethod.Post, Nav.BaseUri.TrimEnd('/') + "/api/upload/og-image");
+        req.Headers.Add("X-Session-Token", sessionToken);
+        req.Content = content;
+
+        using var http = HttpClientFactory.CreateClient();
+        using var resp = await http.SendAsync(req);
+        if (!resp.IsSuccessStatusCode) { _uploadError = "업로드 실패: " + resp.StatusCode; return; }
+
+        var json = await resp.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+        _ogImage = json.GetProperty("url").GetString() ?? "";
+        StateHasChanged();
+    }
+
+    private async Task SaveOgAsync()
+    {
+        if (AuthState.CurrentUser is null) return;
+        _ogBusy = true;
+        try
+        {
+            await UserService.UpdateOgAsync(AuthState.CurrentUser.Id, _ogTitle, _ogDescription, _ogImage);
+            ShowMessage("카카오 공유 설정을 저장했습니다.");
+        }
+        finally { _ogBusy = false; }
+    }
+
+    private async Task DeleteCameraAsync(CameraDevice cam)
+    {
+        var confirmed = await JS.InvokeAsync<bool>("confirm", $"'{cam.Name}' 카메라를 삭제하시겠습니까?");
+        if (!confirmed) return;
+        await Repository.DeleteAsync(cam.Id);
+        LoadCameras();
+        ShowMessage($"'{cam.Name}' 삭제됨.");
+    }
+
+    private void LoadCameras()
+    {
+        var tenantId = AuthState.CurrentUser?.Id ?? "";
+        _cameras = Repository.GetAll()
+            .Where(c => c.TenantId == tenantId)
+            .ToList();
+    }
+
+    private async Task SignOutAsync()
+    {
+        await AuthState.SignOutAsync(JS);
+        Nav.NavigateTo("/");
+    }
+
+    private void ShowMessage(string msg, bool error = false)
+    {
+        _message = msg;
+        _isError = error;
+    }
+}

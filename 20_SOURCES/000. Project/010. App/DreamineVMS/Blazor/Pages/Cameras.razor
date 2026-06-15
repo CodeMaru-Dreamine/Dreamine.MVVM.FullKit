@@ -1,0 +1,432 @@
+@page "/cameras"
+@namespace DreamineVMS.Blazor.Pages
+@using DreamineVMS.Models
+@using DreamineVMS.Services.Cameras
+@using DreamineVMS.Services.Streaming
+@inject IVmsCameraRepository Repository
+@inject ICameraStreamService StreamService
+
+<PageTitle>카메라 관리 — Dreamine VMS</PageTitle>
+
+<div class="page-shell">
+    <div class="hero compact">
+        <div>
+            <h1>카메라 관리</h1>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_message))
+    {
+        <div class="cam-alert @(_isError ? "cam-alert-error" : "cam-alert-ok")">@_message</div>
+    }
+
+    <!-- 카메라 목록 -->
+    <section class="event-card">
+        <h3>등록된 카메라 (@_cameras.Count 개)</h3>
+
+        @if (_cameras.Count == 0)
+        {
+            <p class="muted">등록된 카메라가 없습니다. 아래에서 추가하세요.</p>
+        }
+        else
+        {
+            <div class="cam-table-wrap">
+                <table class="cam-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>이름</th>
+                            <th>호스트</th>
+                            <th>스트림 URL</th>
+                            <th>상태</th>
+                            <th>공개</th>
+                            <th>작업</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var cam in _cameras.OrderBy(c => c.DisplayOrder))
+                        {
+                            <tr class="@(cam.Enabled ? "" : "cam-row-disabled")">
+                                <td>@cam.DisplayOrder</td>
+                                <td><strong>@cam.Name</strong></td>
+                                <td>@cam.Host</td>
+                                <td class="cam-url">@cam.RtspUrl</td>
+                                <td>
+                                    <span class="badge @(cam.Enabled ? "badge-green" : "badge-gray")">
+                                        @(cam.Enabled ? "활성" : "비활성")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge @(cam.IsPublic ? "badge-green" : "badge-gray")">
+                                        @(cam.IsPublic ? "공개" : "비공개")
+                                    </span>
+                                </td>
+                                <td class="cam-actions">
+                                    <button class="mini" @onclick="() => BeginEdit(cam)">편집</button>
+                                    @if (cam.Enabled)
+                                    {
+                                        <button class="mini" @onclick="() => DisableAsync(cam)">비활성화</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="mini" @onclick="() => EnableAsync(cam)">활성화</button>
+                                    }
+                                    <button class="mini danger" @onclick="() => DeleteAsync(cam)">삭제</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <!-- 추가 / 편집 폼 -->
+    <section class="event-card">
+        <h3>@(_editingId is null ? "카메라 추가" : $"카메라 편집 — {_formName}")</h3>
+
+        <div class="cam-form">
+            <div class="cam-form-row">
+                <label>
+                    이름 <span class="req">*</span>
+                    <input @bind="_formName" placeholder="현관 카메라" />
+                </label>
+                <label>
+                    호스트 (표시용)
+                    <input @bind="_formHost" placeholder="192.168.0.11" />
+                </label>
+                <label>
+                    표시 순서
+                    <input type="number" @bind="_formOrder" min="1" max="99" />
+                </label>
+            </div>
+
+            <!-- RTSP 자동 생성 -->
+            <div class="cam-rtsp-gen">
+                <div class="cam-rtsp-gen-header">
+                    <span>RTSP URL 자동 생성</span>
+                    <select @bind="_brandKey" @bind:after="GenerateRtspUrl">
+                        <option value="">— 브랜드 선택 —</option>
+                        <option value="hikvision">하이크비전 (Hikvision)</option>
+                        <option value="dahua">다화 (Dahua)</option>
+                        <option value="hanwha">한화비전 / 삼성 (Hanwha)</option>
+                        <option value="sdppath">SDP 경로 방식 (한화·OEM — /user=_password=_.sdp)</option>
+                        <option value="uniview">유니뷰 (Uniview)</option>
+                        <option value="reolink">리오링크 (Reolink)</option>
+                        <option value="axis">Axis</option>
+                    </select>
+                </div>
+
+                @if (!string.IsNullOrEmpty(_brandKey))
+                {
+                    <div class="cam-rtsp-fields">
+                        <label>
+                            IP 주소
+                            <input @bind="_genIp" @bind:after="GenerateRtspUrl" placeholder="192.168.0.11" />
+                        </label>
+                        <label>
+                            포트
+                            <input type="number" @bind="_genPort" @bind:after="GenerateRtspUrl" min="1" max="65535" />
+                        </label>
+                        <label>
+                            채널
+                            <input type="number" @bind="_genChannel" @bind:after="GenerateRtspUrl" min="1" max="32" />
+                        </label>
+                        <label>
+                            스트림
+                            <select @bind="_genStream" @bind:after="GenerateRtspUrl">
+                                <option value="0">메인 (고화질)</option>
+                                <option value="1">서브 (저화질)</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="cam-rtsp-fields-row2">
+                        <label>
+                            사용자 이름
+                            <input @bind="_genUser" @bind:after="GenerateRtspUrl" placeholder="admin" />
+                        </label>
+                        <label>
+                            비밀번호
+                            <input type="password" @bind="_genPass" @bind:after="GenerateRtspUrl" />
+                        </label>
+                    </div>
+                }
+            </div>
+
+            <label class="cam-form-full">
+                스트림 URL <span class="req">*</span>
+                <input @bind="_formRtspUrl" placeholder="rtsp://user:pass@192.168.0.11:554/stream  또는  https://...m3u8" />
+            </label>
+
+            <div class="cam-form-checks">
+                <label class="check-row">
+                    <input type="checkbox" @bind="_formEnabled" />
+                    활성화 (스트리밍 시작)
+                </label>
+                <label class="check-row">
+                    <input type="checkbox" @bind="_formAutoReconnect" />
+                    자동 재접속
+                </label>
+                <label class="check-row">
+                    <input type="checkbox" @bind="_formIsPublic" />
+                    외부 공개
+                </label>
+            </div>
+
+            <div class="cam-form-actions">
+                @if (_editingId is not null)
+                {
+                    <button class="secondary" @onclick="CancelEdit">취소</button>
+                }
+                <button class="primary" @onclick="SubmitAsync" disabled="@_busy">
+                    @(_busy ? "처리 중..." : (_editingId is null ? "추가" : "저장"))
+                </button>
+            </div>
+        </div>
+    </section>
+</div>
+
+@code {
+    private List<CameraDevice> _cameras = [];
+    private string? _editingId;
+    private bool _busy;
+    private string _message = "";
+    private bool _isError;
+
+    // form fields
+    private string _formName = "";
+    private string _formHost = "";
+    private string _formRtspUrl = "";
+    private int _formOrder = 1;
+    private bool _formEnabled = true;
+    private bool _formAutoReconnect = true;
+    private bool _formIsPublic = false;
+
+    // RTSP 자동 생성 필드
+    private string _brandKey = "";
+    private string _genIp = "";
+    private int _genPort = 554;
+    private int _genChannel = 1;
+    private int _genStream = 0;
+    private string _genUser = "admin";
+    private string _genPass = "";
+
+    protected override void OnInitialized()
+    {
+        LoadCameras();
+    }
+
+    private void LoadCameras()
+    {
+        _cameras = Repository.GetAll().ToList();
+        _formOrder = _cameras.Count > 0 ? _cameras.Max(c => c.DisplayOrder) + 1 : 1;
+    }
+
+    private void BeginEdit(CameraDevice cam)
+    {
+        _editingId = cam.Id;
+        _formName = cam.Name;
+        _formHost = cam.Host;
+        _formRtspUrl = cam.RtspUrl;
+        _formOrder = cam.DisplayOrder;
+        _formEnabled = cam.Enabled;
+        _formAutoReconnect = cam.AutoReconnect;
+        _formIsPublic = cam.IsPublic;
+        _message = "";
+    }
+
+    private void CancelEdit()
+    {
+        _editingId = null;
+        ResetForm();
+    }
+
+    private async Task SubmitAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_formName) || string.IsNullOrWhiteSpace(_formRtspUrl))
+        {
+            ShowMessage("이름과 RTSP URL은 필수입니다.", error: true);
+            return;
+        }
+
+        _busy = true;
+        try
+        {
+            if (_editingId is null)
+            {
+                await AddCameraAsync();
+            }
+            else
+            {
+                await SaveEditAsync();
+            }
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+
+    private async Task AddCameraAsync()
+    {
+        var id = $"cam-{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}";
+        var cam = new CameraDevice
+        {
+            Id = id,
+            TenantId = "",
+            Name = _formName.Trim(),
+            Host = _formHost.Trim(),
+            RtspUrl = _formRtspUrl.Trim(),
+            DisplayOrder = _formOrder,
+            Enabled = _formEnabled,
+            AutoReconnect = _formAutoReconnect,
+            IsPublic = _formIsPublic
+        };
+
+        await Repository.AddAsync(cam);
+
+        if (cam.Enabled)
+        {
+            _ = Task.Run(() => StreamService.StartAsync(cam.Id));
+        }
+
+        LoadCameras();
+        ResetForm();
+        ShowMessage($"카메라 '{cam.Name}'을(를) 추가했습니다.");
+    }
+
+    private async Task SaveEditAsync()
+    {
+        var cam = new CameraDevice
+        {
+            Id = _editingId!,
+            TenantId = "",
+            Name = _formName.Trim(),
+            Host = _formHost.Trim(),
+            RtspUrl = _formRtspUrl.Trim(),
+            DisplayOrder = _formOrder,
+            Enabled = _formEnabled,
+            AutoReconnect = _formAutoReconnect,
+            IsPublic = _formIsPublic
+        };
+
+        var before = Repository.GetAll().FirstOrDefault(c => c.Id == _editingId);
+        await Repository.UpdateAsync(cam);
+
+        // 활성 상태 변경 시 스트림 제어
+        if (before is not null)
+        {
+            if (!before.Enabled && cam.Enabled)
+                _ = Task.Run(() => StreamService.StartAsync(cam.Id));
+            else if (before.Enabled && !cam.Enabled)
+                _ = Task.Run(() => StreamService.StopAsync(cam.Id));
+            else if (cam.Enabled)
+            {
+                // RTSP URL 등 설정 변경 시 재시작
+                _ = Task.Run(async () =>
+                {
+                    await StreamService.StopAsync(cam.Id);
+                    await Task.Delay(500);
+                    await StreamService.StartAsync(cam.Id);
+                });
+            }
+        }
+
+        LoadCameras();
+        _editingId = null;
+        ResetForm();
+        ShowMessage($"카메라 '{cam.Name}'을(를) 저장했습니다.");
+    }
+
+    private async Task EnableAsync(CameraDevice cam)
+    {
+        var updated = new CameraDevice
+        {
+            Id = cam.Id, Name = cam.Name, Host = cam.Host,
+            RtspUrl = cam.RtspUrl, DisplayOrder = cam.DisplayOrder,
+            Enabled = true, AutoReconnect = cam.AutoReconnect
+        };
+        await Repository.UpdateAsync(updated);
+        _ = Task.Run(() => StreamService.StartAsync(cam.Id));
+        LoadCameras();
+        ShowMessage($"'{cam.Name}' 활성화됨.");
+    }
+
+    private async Task DisableAsync(CameraDevice cam)
+    {
+        var updated = new CameraDevice
+        {
+            Id = cam.Id, Name = cam.Name, Host = cam.Host,
+            RtspUrl = cam.RtspUrl, DisplayOrder = cam.DisplayOrder,
+            Enabled = false, AutoReconnect = cam.AutoReconnect
+        };
+        await Repository.UpdateAsync(updated);
+        _ = Task.Run(() => StreamService.StopAsync(cam.Id));
+        LoadCameras();
+        ShowMessage($"'{cam.Name}' 비활성화됨.");
+    }
+
+    private async Task DeleteAsync(CameraDevice cam)
+    {
+        _ = Task.Run(() => StreamService.StopAsync(cam.Id));
+        await Repository.DeleteAsync(cam.Id);
+        if (_editingId == cam.Id) { _editingId = null; ResetForm(); }
+        LoadCameras();
+        ShowMessage($"'{cam.Name}' 삭제됨.");
+    }
+
+    private void GenerateRtspUrl()
+    {
+        if (string.IsNullOrEmpty(_brandKey) || string.IsNullOrWhiteSpace(_genIp)) return;
+
+        var ip = _genIp.Trim();
+        var port = _genPort;
+        var ch = _genChannel;
+        var sub = _genStream;
+        var user = Uri.EscapeDataString(_genUser);
+        var pass = Uri.EscapeDataString(_genPass);
+        var auth = string.IsNullOrEmpty(_genPass) ? user : $"{user}:{pass}";
+
+        _formRtspUrl = _brandKey switch
+        {
+            "hikvision" => $"rtsp://{auth}@{ip}:{port}/Streaming/Channels/{ch:D2}{sub + 1}",
+            "dahua"     => $"rtsp://{auth}@{ip}:{port}/cam/realmonitor?channel={ch}&subtype={sub}",
+            "hanwha"    => $"rtsp://{auth}@{ip}:{port}/profile{ch}/media.smp",
+            "sdppath"   => $"rtsp://{ip}:{port}/user={_genUser}_password={_genPass}_channel={ch}_stream={sub}.sdp?real_stream",
+            "uniview"   => $"rtsp://{auth}@{ip}:{port}/unicast/c{ch}/s{sub}/live",
+            "reolink"   => sub == 0
+                           ? $"rtsp://{auth}@{ip}:{port}/h264Preview_{ch:D2}_main"
+                           : $"rtsp://{auth}@{ip}:{port}/h264Preview_{ch:D2}_sub",
+            "axis"      => $"rtsp://{auth}@{ip}:{port}/axis-media/media.amp",
+            _           => _formRtspUrl
+        };
+
+        // 호스트 필드도 채움 (비어 있을 때만)
+        if (string.IsNullOrWhiteSpace(_formHost))
+            _formHost = ip;
+    }
+
+    private void ResetForm()
+    {
+        _formName = "";
+        _formHost = "";
+        _formRtspUrl = "";
+        _formOrder = _cameras.Count > 0 ? _cameras.Max(c => c.DisplayOrder) + 1 : 1;
+        _formEnabled = true;
+        _formAutoReconnect = true;
+        _formIsPublic = false;
+        _brandKey = "";
+        _genIp = "";
+        _genPort = 554;
+        _genChannel = 1;
+        _genStream = 0;
+        _genUser = "admin";
+        _genPass = "";
+    }
+
+    private void ShowMessage(string msg, bool error = false)
+    {
+        _message = msg;
+        _isError = error;
+    }
+}

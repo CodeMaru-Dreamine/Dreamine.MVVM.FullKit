@@ -32,6 +32,21 @@ public sealed class FfmpegOptions
     /// <summary>\brief 비디오 코덱입니다. copy 또는 libx264를 사용합니다.</summary>
     public string VideoCodec { get; set; } = "copy";
 
+    /// <summary>\brief 웹 HLS 출력 FPS입니다. 0 이하이면 FFmpeg 기본값을 사용합니다.</summary>
+    public int VideoFps { get; set; } = 10;
+
+    /// <summary>\brief 웹 HLS 출력 최대 폭입니다. 0 이하이면 원본 해상도를 유지합니다.</summary>
+    public int VideoMaxWidth { get; set; } = 960;
+
+    /// <summary>\brief 웹 HLS 비디오 목표 비트레이트입니다.</summary>
+    public string VideoBitrate { get; set; } = "900k";
+
+    /// <summary>\brief 웹 HLS 비디오 최대 비트레이트입니다.</summary>
+    public string VideoMaxRate { get; set; } = "1200k";
+
+    /// <summary>\brief 웹 HLS 비디오 버퍼 크기입니다.</summary>
+    public string VideoBufferSize { get; set; } = "1800k";
+
     /// <summary>\brief 오디오 코덱입니다. an이면 오디오를 제거합니다.</summary>
     public string AudioCodec { get; set; } = "an";
 

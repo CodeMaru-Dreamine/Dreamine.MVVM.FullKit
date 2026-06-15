@@ -1,0 +1,179 @@
+@page "/"
+@namespace DreamineVMS.Web.Blazor.Pages
+@using DreamineVMS.Web.Models
+@using DreamineVMS.Web.Services.Auth
+@using DreamineVMS.Web.Services.Cameras
+@inject VmsAuthState AuthState
+@inject VmsUserService UserService
+@inject IVmsCameraRepository Repository
+@inject IJSRuntime JS
+
+<PageTitle>Dreamine VMS — IP 카메라 원격 모니터링</PageTitle>
+
+<div class="home-shell">
+
+    <!-- Hero -->
+    <header class="home-hero">
+        <div class="home-hero-inner">
+            <div class="home-badge">무료 CCTV 원격 모니터링</div>
+            <h1 class="home-title">
+                어디서든<br />내 카메라를<br />실시간으로
+            </h1>
+            <p class="home-sub">IP 카메라 RTSP 주소만 입력하면<br />즉시 웹 스트리밍 · 모바일 접속 완료</p>
+            <div class="home-hero-btns">
+                @if (AuthState.IsAuthenticated)
+                {
+                    <a class="primary link-button home-cta" href="/@AuthState.CurrentUser?.PublicSlug/cameras">카메라 관리 →</a>
+                    <a class="secondary link-button" href="/@AuthState.CurrentUser?.PublicSlug/live">라이브 보기</a>
+                }
+                else
+                {
+                    <a class="primary link-button home-cta" href="/register">무료로 시작하기 →</a>
+                    <a class="secondary link-button" href="/login">로그인</a>
+                }
+            </div>
+        </div>
+    </header>
+
+    <!-- 공개 라이브 목록 -->
+    @if (_loaded)
+    {
+        <section class="home-live-section">
+            <h2 class="home-section-title">📹 라이브 목록</h2>
+
+            @if (_publicUsers.Count == 0)
+            {
+                <p class="muted" style="text-align:center;padding:2rem;">
+                    공개 설정된 카메라가 아직 없습니다.
+                </p>
+            }
+            else
+            {
+                <div class="home-live-grid">
+                    @foreach (var user in _publicUsers)
+                    {
+                        var camCount = _camCounts.GetValueOrDefault(user.Id, 0);
+                        <a class="home-live-card" href="/@user.PublicSlug/live">
+                            <div class="home-live-thumb">
+                                @if (!string.IsNullOrWhiteSpace(user.OgImage))
+                                {
+                                    <img src="@user.OgImage" alt="@user.DisplayName" style="width:100%;height:100%;object-fit:cover;border-radius:8px;" />
+                                }
+                                else
+                                {
+                                    <span class="home-live-icon">📷</span>
+                                }
+                            </div>
+                            <div class="home-live-info">
+                                <strong>@user.DisplayName</strong>
+                                <span>카메라 @camCount 대 공개</span>
+                                <span class="home-live-slug">/@user.PublicSlug/live</span>
+                            </div>
+                            <div class="home-live-badge">LIVE</div>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+    }
+
+    <!-- 에이전트 앱 다운로드 -->
+    <section class="home-download">
+        <div class="home-download-inner">
+            <div>
+                <h2>에이전트 앱 다운로드</h2>
+                <p class="muted">카메라가 연결된 PC에 설치하세요. 설치 후 로그인하면 자동으로 스트리밍이 시작됩니다.</p>
+                <ul class="home-download-req">
+                    <li>Windows 10 / 11 (64비트)</li>
+                    <li>FFmpeg 자동 포함 — 별도 설치 불필요</li>
+                    <li>IP 카메라 RTSP 주소 필요</li>
+                </ul>
+                <p style="margin-top:12px;font-size:0.82rem;color:#fbbf24;">
+                    ⚠ 반드시 <strong>관리자 권한으로 실행</strong>하세요. 일반 실행 시 UI가 정상 동작하지 않습니다.<br/>
+                    (마우스 오른쪽 클릭 → "관리자 권한으로 실행")
+                </p>
+            </div>
+            <a class="home-download-btn" href="/Setup/DreamineVMS-Setup-v1.0.0.exe" download>
+                <span>⬇</span>
+                <span>
+                    <strong>Dreamine VMS 설치</strong>
+                    <small>v1.0.0 · Windows 64-bit</small>
+                </span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="home-features">
+        <div class="home-features-grid">
+            <div class="home-feature-card">
+                <span class="home-feat-icon">📡</span>
+                <strong>RTSP → HLS 변환</strong>
+                <p>IP 카메라 주소만 입력하면 FFmpeg가 자동으로 HLS 스트림으로 변환합니다.</p>
+            </div>
+            <div class="home-feature-card">
+                <span class="home-feat-icon">🌐</span>
+                <strong>설치 없이 시청</strong>
+                <p>보는 사람은 앱 설치 불필요. 링크 하나로 어디서든 스마트폰/PC 접속.</p>
+            </div>
+            <div class="home-feature-card">
+                <span class="home-feat-icon">🔒</span>
+                <strong>테넌트 격리</strong>
+                <p>회원가입 후 내 카메라는 나만 관리. 공개 설정한 카메라만 외부 링크에 노출.</p>
+            </div>
+            <div class="home-feature-card">
+                <span class="home-feat-icon">🎥</span>
+                <strong>다중 카메라</strong>
+                <p>카메라 여러 대를 등록하고 그리드 레이아웃으로 한 화면에 모아보기.</p>
+            </div>
+            <div class="home-feature-card">
+                <span class="home-feat-icon">🔗</span>
+                <strong>공개 링크 공유</strong>
+                <p>내 전용 URL <span class="home-slug-sample">/{닉네임}/live</span>를 가족·직원과 공유.</p>
+            </div>
+            <div class="home-feature-card">
+                <span class="home-feat-icon">⚡</span>
+                <strong>FFmpeg 자동 설치</strong>
+                <p>카메라 PC에 WPF 앱 하나만 설치하면 FFmpeg까지 자동 다운로드 완료.</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="home-footer">
+        @if (AuthState.IsAuthenticated)
+        {
+            <a href="/@AuthState.CurrentUser?.PublicSlug/cameras" class="primary link-button">카메라 관리</a>
+            <a href="/@AuthState.CurrentUser?.PublicSlug/live" class="secondary link-button">라이브 보기</a>
+        }
+        else
+        {
+            <a href="/register" class="primary link-button">지금 무료로 시작</a>
+            <a href="/login" class="secondary link-button">이미 계정이 있어요</a>
+        }
+        <a href="/guide" class="secondary link-button">설치 가이드</a>
+    </footer>
+
+</div>
+
+@code {
+    private List<VmsUser> _publicUsers = [];
+    private Dictionary<string, int> _camCounts = [];
+    private bool _loaded;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        await AuthState.RestoreAsync(JS);
+
+        _publicUsers = UserService.GetUsersWithPublicCameras();
+
+        // 각 유저의 공개 카메라 수
+        var allCams = Repository.GetAll();
+        _camCounts = _publicUsers.ToDictionary(
+            u => u.Id,
+            u => allCams.Count(c => c.TenantId == u.Id && c.IsPublic && c.Enabled));
+
+        _loaded = true;
+        StateHasChanged();
+    }
+}

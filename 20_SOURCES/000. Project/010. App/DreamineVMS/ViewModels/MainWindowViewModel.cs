@@ -26,10 +26,9 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     private readonly ICameraStreamService _streamService;
     private readonly IVmsDashboardStateService _dashboardStateService;
     private readonly IDisposable _dashboardSubscription;
+    private readonly AgentSettingsViewModel _agentSettings;
     private CameraRowViewModel? _selectedCamera;
     private string _statusMessage = "VMS application started.";
-    private readonly CertificateMonitorViewModel _certificateMonitor;
-
     /// <summary>
     /// \brief MainWindowViewModel 클래스의 새 인스턴스를 초기화합니다.
     /// </summary>
@@ -38,20 +37,22 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
     /// <param name="streamService">카메라 스트림 서비스입니다.</param>
     /// <param name="dashboardStateService">대시보드 상태 도메인 서비스입니다.</param>
     /// <param name="messageBus">하이브리드 메시지 버스입니다.</param>
+    public AgentSettingsViewModel AgentSettings => _agentSettings;
+
     public MainWindowViewModel(
         IVmsCameraRepository repository,
         ICameraRuntimeStateService runtimeState,
         ICameraStreamService streamService,
         IVmsDashboardStateService dashboardStateService,
         IHybridMessageBus messageBus,
-        CertificateMonitorViewModel certificateMonitor)
+        AgentSettingsViewModel agentSettings)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
         _runtimeState = runtimeState ?? throw new ArgumentNullException(nameof(runtimeState));
         _streamService = streamService ?? throw new ArgumentNullException(nameof(streamService));
         _dashboardStateService = dashboardStateService ?? throw new ArgumentNullException(nameof(dashboardStateService));
         ArgumentNullException.ThrowIfNull(messageBus);
-        _certificateMonitor = certificateMonitor ?? throw new ArgumentNullException(nameof(certificateMonitor));
+        _agentSettings = agentSettings ?? throw new ArgumentNullException(nameof(agentSettings));
 
         foreach (CameraDevice camera in _repository.GetAll())
         {
@@ -77,9 +78,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
 
     /// <summary>\brief Server Dashboard에서 Live 탭으로 이동 요청이 들어왔을 때 발생합니다.</summary>
     public event EventHandler? OpenLiveTabRequested;
-
-    /// <summary>\brief 인증서 모니터 ViewModel입니다.</summary>
-    public CertificateMonitorViewModel CertificateMonitor => _certificateMonitor;
 
     /// <summary>\brief 카메라 목록(행 ViewModel)입니다.</summary>
     public ObservableCollection<CameraRowViewModel> Cameras { get; } = new();

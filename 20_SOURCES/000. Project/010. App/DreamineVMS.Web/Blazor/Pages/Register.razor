@@ -1,0 +1,91 @@
+@page "/register"
+@namespace DreamineVMS.Web.Blazor.Pages
+@using DreamineVMS.Web.Services.Auth
+@inject VmsUserService UserService
+@inject VmsSessionService Sessions
+@inject VmsAuthState AuthState
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>회원가입 — Dreamine VMS</PageTitle>
+
+<div class="page-shell auth-shell">
+    <div class="auth-card">
+        <h1>Dreamine VMS</h1>
+        <p class="muted">카메라를 등록하고 어디서든 실시간으로 확인하세요.</p>
+
+        @if (!string.IsNullOrWhiteSpace(_error))
+        {
+            <div class="auth-error">@_error</div>
+        }
+
+        <div class="auth-form">
+            <label>
+                이름 (공개 URL에 사용됩니다)
+                <input @bind="_displayName" @bind:event="oninput" placeholder="홍길동" />
+            </label>
+            <label>
+                이메일
+                <input type="email" @bind="_email" @bind:event="oninput" placeholder="you@example.com" />
+            </label>
+            <label>
+                비밀번호 (6자 이상)
+                <input type="password" @bind="_password" @bind:event="oninput" placeholder="••••••"
+                       @onkeydown="OnKeyDown" />
+            </label>
+            <label>
+                비밀번호 확인
+                <input type="password" @bind="_confirm" @bind:event="oninput" placeholder="••••••"
+                       @onkeydown="OnKeyDown" />
+            </label>
+
+            <button class="primary full-btn" @onclick="SubmitAsync" disabled="@_busy">
+                @(_busy ? "처리 중..." : "회원가입")
+            </button>
+
+            <p class="auth-link">이미 계정이 있으신가요? <a href="/login">로그인</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string _displayName = "";
+    private string _email = "";
+    private string _password = "";
+    private string _confirm = "";
+    private string _error = "";
+    private bool _busy;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await AuthState.RestoreAsync(JS);
+            if (AuthState.IsAuthenticated)
+                Nav.NavigateTo($"/{AuthState.CurrentUser?.PublicSlug}/cameras");
+        }
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await SubmitAsync();
+    }
+
+    private async Task SubmitAsync()
+    {
+        _error = "";
+        if (_password != _confirm) { _error = "비밀번호가 일치하지 않습니다."; return; }
+
+        _busy = true;
+        try
+        {
+            var (ok, error, user) = await UserService.RegisterAsync(_email, _displayName, _password);
+            if (!ok) { _error = error; return; }
+
+            var token = Sessions.CreateSession(user!);
+            await AuthState.SignInAsync(JS, user!, token);
+            Nav.NavigateTo($"/{user!.PublicSlug}/cameras");
+        }
+        finally { _busy = false; }
+    }
+}

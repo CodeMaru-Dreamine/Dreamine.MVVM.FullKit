@@ -165,7 +165,7 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
     {
         // 직렬로 시작합니다. 시작 자체는 빠르고, FFmpeg 동시 spawn으로 인한
         // 초기 burst를 줄이는 효과가 있습니다.
-        foreach (CameraDevice camera in _repository.GetAll().Where(camera => camera.Enabled))
+        foreach (CameraDevice camera in _repository.GetAll().Where(camera => camera.Enabled && !camera.IsDirectHls))
         {
             await StartAsync(camera.Id, cancellationToken);
         }
@@ -312,7 +312,7 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
 
     private async Task WatchdogAsync(CancellationToken cancellationToken)
     {
-        foreach (CameraDevice camera in _repository.GetAll().Where(camera => camera.Enabled && camera.AutoReconnect))
+        foreach (CameraDevice camera in _repository.GetAll().Where(camera => camera.Enabled && camera.AutoReconnect && !camera.IsDirectHls))
         {
             if (cancellationToken.IsCancellationRequested)
             {
@@ -418,6 +418,12 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
 
     private void StartProcessUnsafe(CameraDevice camera)
     {
+        if (camera.IsDirectHls)
+        {
+            _runtimeState.SetState(camera.Id, CameraConnectionState.Connected, $"Direct HLS: {camera.Name}");
+            return;
+        }
+
         if (string.IsNullOrWhiteSpace(camera.RtspUrl) || camera.RtspUrl.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase))
         {
             _runtimeState.SetState(camera.Id, CameraConnectionState.Faulted, $"RTSP URL is not configured: {camera.Name}");
@@ -612,7 +618,8 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         string audioCodec = (_options.AudioCodec ?? "an").ToLowerInvariant();
         int segmentSeconds = Math.Max(1, _options.HlsSegmentSeconds);
         int listSize = Math.Max(4, _options.HlsListSize);
-        int keyFrameInterval = segmentSeconds * 15;
+        int videoFps = Math.Max(1, _options.VideoFps);
+        int keyFrameInterval = segmentSeconds * videoFps;
 
         List<string> parts = new()
         {
@@ -638,12 +645,22 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         else
         {
             parts.Add("-c:v libx264");
-            parts.Add("-preset veryfast");
+            parts.Add("-preset ultrafast");
             parts.Add("-tune zerolatency");
             parts.Add("-profile:v baseline");
             parts.Add("-level:v 3.1");
             parts.Add("-pix_fmt yuv420p");
-            parts.Add("-r 15");
+            if (_options.VideoMaxWidth > 0)
+            {
+                parts.Add($"-vf {Quote($"scale='min({_options.VideoMaxWidth},iw)':-2,fps={videoFps}")}");
+            }
+            else
+            {
+                parts.Add($"-r {videoFps}");
+            }
+            parts.Add($"-b:v {_options.VideoBitrate}");
+            parts.Add($"-maxrate {_options.VideoMaxRate}");
+            parts.Add($"-bufsize {_options.VideoBufferSize}");
             parts.Add($"-g {keyFrameInterval}");
             parts.Add($"-keyint_min {keyFrameInterval}");
             parts.Add("-sc_threshold 0");

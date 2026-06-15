@@ -3,6 +3,7 @@ using Dreamine.Hybrid.State;
 using DreamineVMS.Blazor.ViewModels;
 using DreamineVMS.Models;
 using DreamineVMS.Options;
+using DreamineVMS.Services.Auth;
 using DreamineVMS.Services.Cameras;
 using DreamineVMS.Services.Dashboard;
 using DreamineVMS.Services.Runtime;
@@ -136,6 +137,7 @@ public sealed class VmsBlazorServerHostedService<TRootComponent> : IHostedServic
         AddShared<ICameraRuntimeStateService>(services);
         AddShared<ICameraStreamService>(services);
         AddShared<IVmsDashboardStateService>(services);
+
     }
 
     /// <summary>
@@ -146,6 +148,7 @@ public sealed class VmsBlazorServerHostedService<TRootComponent> : IHostedServic
     {
         services.AddScoped<LivePageViewModel>();
         services.AddScoped<DashboardPageViewModel>();
+        services.AddScoped<VmsLocalDashboardViewModel>();
     }
 
     /// <summary>

@@ -1,0 +1,126 @@
+@page "/guide"
+@namespace DreamineVMS.Web.Blazor.Pages
+
+<PageTitle>설치 및 사용 방법 — Dreamine VMS</PageTitle>
+
+<div class="guide-shell">
+
+    <div class="guide-hero">
+        <a href="/" class="guide-back">← 홈으로</a>
+        <h1>Dreamine VMS 설치 · 사용 가이드</h1>
+        <p class="muted">IP 카메라를 웹으로 공유하기까지 5단계면 충분합니다.</p>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="guide-step">
+        <div class="guide-step-num">1</div>
+        <div class="guide-step-body">
+            <h2>회원가입</h2>
+            <p>cctvviewer.codemaru.co.kr에 접속해 <strong>무료로 시작하기</strong>를 클릭하고 이메일과 비밀번호로 계정을 만듭니다.</p>
+            <ul class="guide-list">
+                <li>가입 후 <strong>/{닉네임}/live</strong> 형식의 전용 공개 링크가 발급됩니다.</li>
+                <li>카메라 관리 페이지에서 카카오 공유 제목·이미지를 설정할 수 있습니다.</li>
+            </ul>
+            <a class="guide-btn" href="/register">지금 가입하기 →</a>
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="guide-step">
+        <div class="guide-step-num">2</div>
+        <div class="guide-step-body">
+            <h2>에이전트 앱 다운로드 · 설치</h2>
+            <p>카메라가 연결된 Windows PC에 <strong>Dreamine VMS</strong> 앱을 설치합니다.</p>
+            <ul class="guide-list">
+                <li>Windows 10 / 11 (64비트) 필요</li>
+                <li>FFmpeg 자동 포함 — 별도 설치 불필요</li>
+                <li>IP 카메라 RTSP 주소가 필요합니다</li>
+            </ul>
+            <div class="guide-warn">
+                ⚠ 설치 후 반드시 <strong>관리자 권한으로 실행</strong>하세요.<br />
+                파일 탐색기에서 DreamineVMS.exe 우클릭 → <strong>"관리자 권한으로 실행"</strong><br />
+                (일반 실행 시 UI 클릭이 동작하지 않습니다)
+            </div>
+            <a class="guide-btn" href="/Setup/DreamineVMS-Setup-v1.0.0.exe" download>⬇ Dreamine VMS 설치 (v1.0.0)</a>
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="guide-step">
+        <div class="guide-step-num">3</div>
+        <div class="guide-step-body">
+            <h2>앱에서 서버 로그인</h2>
+            <p>앱을 실행하면 <strong>에이전트 설정</strong> 탭이 열립니다. 1단계에서 가입한 이메일과 비밀번호를 입력하고 <strong>저장 → 재연결</strong>을 누릅니다.</p>
+            <ul class="guide-list">
+                <li>서버 URL: <code>https://cctvviewer.codemaru.co.kr</code> (기본값)</li>
+                <li>연결 성공 시 하단 상태 표시줄에 <strong style="color:#4ade80;">연결됨</strong>이 표시됩니다.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="guide-step">
+        <div class="guide-step-num">4</div>
+        <div class="guide-step-body">
+            <h2>카메라 등록</h2>
+            <p>앱의 <strong>카메라 관리</strong> 탭에서 카메라를 추가합니다.</p>
+            <ul class="guide-list">
+                <li><strong>RTSP URL 자동 생성</strong> — 브랜드(하이크비전, 다화, 한화 등) 선택 후 IP·ID·비밀번호만 입력하면 URL이 자동으로 만들어집니다.</li>
+                <li>직접 RTSP URL을 알고 있다면 스트림 URL 칸에 바로 입력해도 됩니다.</li>
+                <li><strong>외부 공개</strong> 체크 시 공개 라이브 링크에 노출됩니다.</li>
+                <li>카메라를 추가하면 서버에 자동 동기화되고 스트리밍이 시작됩니다.</li>
+            </ul>
+            <div class="guide-tip">
+                💡 카메라 브랜드별 기본 RTSP 포트는 대부분 <strong>554</strong>입니다.<br />
+                공유기 포트포워딩 없이 같은 네트워크(LAN) 내에서만 연결 가능합니다.
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="guide-step">
+        <div class="guide-step-num">5</div>
+        <div class="guide-step-body">
+            <h2>라이브 링크 공유</h2>
+            <p>웹의 <strong>카메라 관리</strong> 페이지에서 카카오 공유 제목·설명·미리보기 이미지를 설정하고 <strong>저장</strong>합니다.</p>
+            <ul class="guide-list">
+                <li>공개 링크: <code>https://cctvviewer.codemaru.co.kr/{닉네임}/live</code></li>
+                <li>카카오톡으로 링크를 공유하면 설정한 이미지와 제목이 미리보기로 표시됩니다.</li>
+                <li>보는 사람은 앱 설치 없이 스마트폰·PC 브라우저로 바로 시청 가능합니다.</li>
+            </ul>
+            <a class="guide-btn" href="/login">카메라 관리 페이지 열기 →</a>
+        </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="guide-faq">
+        <h2>자주 묻는 질문</h2>
+
+        <div class="guide-faq-item">
+            <strong>Q. 카메라가 목록에 나타나지 않아요.</strong>
+            <p>앱이 관리자 권한으로 실행 중인지 확인하세요. 에이전트 설정 탭에서 <strong>재연결</strong>을 누르면 서버와 다시 동기화됩니다.</p>
+        </div>
+        <div class="guide-faq-item">
+            <strong>Q. 라이브 화면이 검게 나와요.</strong>
+            <p>RTSP URL이 올바른지 확인하세요. 앱 왼쪽 카메라 목록에서 상태가 <span style="color:#4ade80;">●</span> 녹색이어야 스트리밍 중입니다. 카메라 ID·비밀번호, 포트 번호를 다시 확인해 보세요.</p>
+        </div>
+        <div class="guide-faq-item">
+            <strong>Q. PC가 꺼지면 라이브가 중단되나요?</strong>
+            <p>네. 에이전트 앱이 실행 중인 PC가 켜져 있어야 스트리밍됩니다. PC를 24시간 켜두거나 NAS·미니PC 활용을 권장합니다.</p>
+        </div>
+        <div class="guide-faq-item">
+            <strong>Q. 외부(인터넷)에서 접속이 안 돼요.</strong>
+            <p>에이전트 앱이 설치된 PC는 인터넷 연결만 있으면 됩니다. 공유기 포트포워딩은 필요하지 않습니다. 단, PC의 방화벽이 앱을 차단하고 있으면 허용 설정이 필요합니다.</p>
+        </div>
+        <div class="guide-faq-item">
+            <strong>Q. 카메라 브랜드가 목록에 없어요.</strong>
+            <p>RTSP URL을 직접 입력하세요. 카메라 제조사 매뉴얼이나 구글에서 <code>[브랜드명] RTSP URL</code>로 검색하면 형식을 확인할 수 있습니다.</p>
+        </div>
+    </div>
+
+    <div class="guide-footer">
+        <a href="/" class="secondary link-button">← 홈으로</a>
+        <a href="/register" class="primary link-button">지금 무료로 시작 →</a>
+    </div>
+
+</div>
