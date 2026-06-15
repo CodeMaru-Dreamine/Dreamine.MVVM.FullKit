@@ -167,11 +167,20 @@
 
         _publicUsers = UserService.GetUsersWithPublicCameras();
 
-        // 각 유저의 공개 카메라 수
+        // 로그인한 본인은 비공개 설정이어도 항상 목록에 표시
+        if (AuthState.IsAuthenticated && AuthState.CurrentUser is not null
+            && !_publicUsers.Any(u => u.Id == AuthState.CurrentUser.Id))
+        {
+            _publicUsers.Insert(0, AuthState.CurrentUser);
+        }
+
+        // 본인은 전체 카메라 수, 타인은 공개 카메라 수
         var allCams = Repository.GetAll();
         _camCounts = _publicUsers.ToDictionary(
             u => u.Id,
-            u => allCams.Count(c => c.TenantId == u.Id && c.IsPublic && c.Enabled));
+            u => AuthState.CurrentUser?.Id == u.Id
+                ? allCams.Count(c => c.TenantId == u.Id && c.Enabled)
+                : allCams.Count(c => c.TenantId == u.Id && c.IsPublic && c.Enabled));
 
         _loaded = true;
         StateHasChanged();
