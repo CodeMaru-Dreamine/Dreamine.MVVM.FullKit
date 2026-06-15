@@ -3,8 +3,14 @@
 @using DreamineVMS.Models
 @using DreamineVMS.Services.Cameras
 @using DreamineVMS.Services.Streaming
+@using DreamineVMS.Options
+@using Microsoft.Extensions.Options
+@using System.Diagnostics
+@using System.IO
+@using System.Text.RegularExpressions
 @inject IVmsCameraRepository Repository
 @inject ICameraStreamService StreamService
+@inject IOptions<FfmpegOptions> FfmpegOpts
 
 <PageTitle>카메라 관리 — Dreamine VMS</PageTitle>
 
@@ -122,15 +128,30 @@
                 {
                     @if (_brandKey == "dshow")
                     {
-                        <div class="cam-rtsp-fields" style="grid-template-columns:1fr;">
-                            <label>
-                                장치 이름 (ffmpeg -list_devices 로 확인)
-                                <input @bind="_genIp" @bind:after="GenerateRtspUrl" placeholder="LGE FHD Camera" />
-                            </label>
+                        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+                            @if (_dshowDevices.Count > 0)
+                            {
+                                <select style="flex:1;background:#1e293b;color:#e2e8f0;border:1px solid #334155;border-radius:6px;padding:8px 10px;font-size:13px;"
+                                        @bind="_genIp" @bind:after="GenerateRtspUrl">
+                                    <option value="">— 카메라 선택 —</option>
+                                    @foreach (var d in _dshowDevices)
+                                    {
+                                        <option value="@d">@d</option>
+                                    }
+                                </select>
+                            }
+                            else if (_dshowSearching)
+                            {
+                                <span style="color:#94a3b8;font-size:13px;">검색 중...</span>
+                            }
+                            else if (!string.IsNullOrEmpty(_dshowError))
+                            {
+                                <span style="color:#f87171;font-size:13px;">@_dshowError</span>
+                            }
+                            <button class="secondary" style="white-space:nowrap;" @onclick="SearchDshowDevicesAsync" disabled="@_dshowSearching">
+                                🔍 카메라 검색
+                            </button>
                         </div>
-                        <p style="font-size:12px;color:#64748b;margin-top:8px;">
-                            장치 목록 확인: <code>ffmpeg -list_devices true -f dshow -i dummy</code>
-                        </p>
                     }
                     else
                     {
@@ -226,6 +247,11 @@
     private int _genStream = 0;
     private string _genUser = "admin";
     private string _genPass = "";
+
+    // DirectShow 장치 검색
+    private List<string> _dshowDevices = [];
+    private bool _dshowSearching;
+    private string _dshowError = "";
 
     protected override void OnInitialized()
     {
@@ -391,6 +417,54 @@
         ShowMessage($"'{cam.Name}' 삭제됨.");
     }
 
+    private async Task SearchDshowDevicesAsync()
+    {
+        _dshowSearching = true;
+        _dshowError = "";
+        _dshowDevices = [];
+        StateHasChanged();
+
+        try
+        {
+            string ffmpegPath = FfmpegOpts.Value.Path;
+            if (!File.Exists(ffmpegPath))
+                ffmpegPath = Path.Combine(AppContext.BaseDirectory, "ffmpeg", "ffmpeg.exe");
+
+            using var proc = new Process
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = ffmpegPath,
+                    Arguments = "-list_devices true -f dshow -i dummy",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardError = true,
+                    RedirectStandardOutput = true,
+                }
+            };
+
+            proc.Start();
+            string output = await proc.StandardError.ReadToEndAsync();
+            await proc.WaitForExitAsync();
+
+            // "[dshow @ ...]  "장치이름" (video)" 패턴 파싱
+            var matches = Regex.Matches(output, @"""([^""]+)""\s+\(video\)");
+            _dshowDevices = matches.Select(m => m.Groups[1].Value).ToList();
+
+            if (_dshowDevices.Count == 0)
+                _dshowError = "연결된 카메라를 찾지 못했습니다.";
+        }
+        catch (Exception ex)
+        {
+            _dshowError = "검색 실패: " + ex.Message;
+        }
+        finally
+        {
+            _dshowSearching = false;
+            StateHasChanged();
+        }
+    }
+
     private void GenerateRtspUrl()
     {
         if (string.IsNullOrEmpty(_brandKey) || string.IsNullOrWhiteSpace(_genIp)) return;
@@ -439,6 +513,8 @@
         _genStream = 0;
         _genUser = "admin";
         _genPass = "";
+        _dshowDevices = [];
+        _dshowError = "";
     }
 
     private void ShowMessage(string msg, bool error = false)
