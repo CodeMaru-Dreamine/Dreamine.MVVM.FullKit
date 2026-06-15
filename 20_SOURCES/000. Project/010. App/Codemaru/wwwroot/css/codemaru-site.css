@@ -16,7 +16,6 @@
 }
 
 .cm-body {
-    min-height: calc(100vh - 64px);
     padding: 88px 24px 32px;
     background: var(--cm-bg);
     color: var(--cm-text);
@@ -281,14 +280,44 @@
 }
 
 .cm-footer {
-    padding: 2rem 1rem;
+    padding: 1.5rem 1rem;
     background: #050816;
+    border-top: 1px solid rgba(255,255,255,.06);
     color: var(--cm-muted);
     text-align: center;
+    font-size: .85rem;
 }
 
-.cm-footer p {
-    margin: .5rem 0 0;
+.cm-footer-links {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-bottom: .5rem;
+}
+
+.cm-footer-links a {
+    color: #93c5fd;
+    text-decoration: none;
+}
+
+.cm-footer-links a:hover {
+    text-decoration: underline;
+}
+
+.cm-footer-sep {
+    color: rgba(255,255,255,.2);
+}
+
+.cm-footer-copy {
+    margin: 0;
+    color: var(--cm-muted);
+}
+
+.cm-footer-copy a {
+    color: #93c5fd;
+    text-decoration: none;
 }
 
 .floating-contact {
@@ -536,4 +565,153 @@
     .form-grid-2 {
         grid-template-columns: 1fr;
     }
+}
+
+/* ── 법적 페이지 (개인정보처리방침 / 이용약관) ── */
+.cm-legal {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-bottom: 3rem;
+}
+
+.cm-legal h1 {
+    font-size: 1.8rem;
+    margin-bottom: .25rem;
+}
+
+.cm-legal-date {
+    color: var(--cm-muted);
+    font-size: .85rem;
+    margin-bottom: 2rem;
+}
+
+.cm-legal-block {
+    margin-bottom: 2rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 12px;
+    background: var(--cm-panel);
+    border: 1px solid var(--cm-border);
+}
+
+.cm-legal-block h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0 0 .75rem;
+    color: var(--cm-strong);
+}
+
+.cm-legal-block p,
+.cm-legal-block ul {
+    margin: 0;
+    color: #cbd5e1;
+    font-size: .95rem;
+    line-height: 1.8;
+}
+
+.cm-legal-block ul {
+    padding-left: 1.25rem;
+}
+
+/* ── 서비스 소개 섹션 ── */
+.cm-about {
+    margin-top: 3rem;
+    padding: 2rem 0;
+    border-top: 1px solid var(--cm-border);
+}
+
+.cm-about-title {
+    text-align: center;
+    font-size: clamp(1.4rem, 3vw, 1.9rem);
+    font-weight: 900;
+    margin-bottom: .5rem;
+}
+
+.cm-about-lead {
+    text-align: center;
+    color: var(--cm-muted);
+    font-size: 1rem;
+    max-width: 640px;
+    margin: 0 auto 2rem;
+    line-height: 1.7;
+}
+
+.cm-about-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.cm-about-card {
+    padding: 1.5rem;
+    border: 1px solid var(--cm-border);
+    border-radius: 14px;
+    background: var(--cm-panel);
+}
+
+.cm-about-icon {
+    font-size: 1.75rem;
+    margin-bottom: .5rem;
+}
+
+.cm-about-card h3 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--cm-strong);
+    margin: 0 0 .6rem;
+}
+
+.cm-about-card p {
+    color: #cbd5e1;
+    font-size: .9rem;
+    line-height: 1.75;
+    margin: 0;
+}
+
+/* ── 운영자 소개 섹션 ── */
+.cm-intro {
+    margin-top: 2.5rem;
+    padding: 2rem 2rem 2.5rem;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(96, 165, 250, .07), rgba(168, 85, 247, .07));
+    border: 1px solid rgba(96, 165, 250, .15);
+    text-align: center;
+}
+
+.cm-intro h2 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin: 0 0 .75rem;
+}
+
+.cm-intro p {
+    color: #cbd5e1;
+    font-size: .95rem;
+    line-height: 1.8;
+    max-width: 640px;
+    margin: 0 auto .75rem;
+}
+
+.cm-intro-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: .75rem;
+    margin-top: 1.25rem;
+}
+
+.cm-intro-links a {
+    display: inline-block;
+    padding: .45rem 1.1rem;
+    border-radius: .6rem;
+    background: rgba(96, 165, 250, .15);
+    color: #93c5fd;
+    font-weight: 700;
+    text-decoration: none;
+    border: 1px solid rgba(96, 165, 250, .2);
+    transition: background .15s;
+}
+
+.cm-intro-links a:hover {
+    background: rgba(96, 165, 250, .25);
+    text-decoration: none;
 }

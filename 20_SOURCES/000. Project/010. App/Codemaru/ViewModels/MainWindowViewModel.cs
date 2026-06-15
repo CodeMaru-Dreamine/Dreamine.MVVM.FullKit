@@ -10,6 +10,7 @@ namespace Codemaru.ViewModels;
 public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
 {
     private readonly CardHybridSession _session;
+    private readonly CertificateMonitorViewModel _certificateMonitor;
     private bool _disposed;
 
     [DreamineProperty] private string _title = "Codemaru";
@@ -21,9 +22,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
     [DreamineProperty] private int _historyCount;
     [DreamineProperty] private ObservableCollection<string> _logs = new();
 
-    public MainWindowViewModel(CardHybridSession session)
+    public CertificateMonitorViewModel CertificateMonitor => _certificateMonitor;
+
+    public MainWindowViewModel(CardHybridSession session, CertificateMonitorViewModel certificateMonitor)
     {
         _session = session ?? throw new ArgumentNullException(nameof(session));
+        _certificateMonitor = certificateMonitor ?? throw new ArgumentNullException(nameof(certificateMonitor));
         _session.StateChanged += OnSessionChanged;
         ApplyState(_session.State);
         Logs.Add($"[{DateTime.Now:HH:mm:ss}] CardHybrid started");

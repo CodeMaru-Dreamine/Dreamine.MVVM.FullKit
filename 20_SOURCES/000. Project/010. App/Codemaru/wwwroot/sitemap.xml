@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <!-- 코드마루 메인 사이트 -->
+  <sitemap>
+    <loc>https://codemaru.co.kr/sitemap-main.xml</loc>
+    <lastmod>2026-06-14</lastmod>
+  </sitemap>
+
+  <!-- 하위 서비스 사이트맵 -->
+  <sitemap>
+    <loc>https://wedding.codemaru.co.kr/sitemap.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://families.codemaru.co.kr/sitemap.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://portfolio.codemaru.co.kr/sitemap.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://shop.codemaru.co.kr/sitemap.xml</loc>
+  </sitemap>
+  <sitemap>
+    <loc>https://cctvviewer.codemaru.co.kr/sitemap.xml</loc>
+  </sitemap>
+
+</sitemapindex>

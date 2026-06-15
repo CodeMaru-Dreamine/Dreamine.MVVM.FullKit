@@ -1,0 +1,12 @@
+User-agent: *
+Disallow: /api/
+Disallow: /_blazor/
+Disallow: /query
+Disallow: /search
+Allow: /_framework/
+Allow: /css/
+Allow: /js/
+Allow: /img/
+Allow: /ads.txt
+
+Sitemap: https://codemaru.co.kr/sitemap.xml

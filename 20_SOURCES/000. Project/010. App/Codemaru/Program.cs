@@ -1,7 +1,9 @@
 using Codemaru.Blazor;
 using Codemaru.Blazor.Pages;
 using Codemaru.Models;
+using Codemaru.Options;
 using Codemaru.Services;
+using Codemaru.Services.Certificates;
 using Codemaru.ViewModels;
 using Codemaru.Views;
 using Dreamine.Hybrid.Wpf.DependencyInjection;
@@ -31,6 +33,15 @@ public static class Program
         builder.Services.AddSingleton<CardProfileImporter>();
         builder.Services.AddSingleton<ICardProfileStore, JsonCardProfileStore>();
         builder.Services.AddSingleton<CardHybridSession>();
+        builder.Services.Configure<CertificateMonitorOptions>(
+            builder.Configuration.GetSection("CertificateMonitor"));
+        builder.Services.AddSingleton<IProcessRunner, ProcessRunner>();
+        builder.Services.AddSingleton<ICertificateMonitorService, X509CertificateMonitorService>();
+        builder.Services.AddSingleton<IWinAcmeService, WinAcmeService>();
+        builder.Services.AddSingleton<INginxReloadService, NginxReloadService>();
+        builder.Services.AddSingleton<ICertificateSettingsWriter, CertificateSettingsWriter>();
+        builder.Services.AddSingleton<CertificateMonitorViewModel>();
+
         builder.Services.AddSingleton<MainWindow>();
         builder.Services.AddSingleton<MainWindowViewModel>();
         builder.Services.Configure<Contact.MailSettings>(
@@ -82,8 +93,9 @@ public static class Program
     private static async Task OgTagMiddleware(HttpContext context, RequestDelegate next)
     {
         var ua = context.Request.Headers.UserAgent.ToString();
-        bool isBot = ua.Contains("Kakaotalk", StringComparison.OrdinalIgnoreCase)
-                  || ua.Contains("Kakao", StringComparison.OrdinalIgnoreCase)
+        // 카카오 인앱브라우저(KAKAOTALK/x.x)는 브라우저이므로 제외 — 크롤러만 감지
+        bool isBot = ua.Contains("Kakaotalk-Scrap", StringComparison.OrdinalIgnoreCase)
+                  || ua.Contains("kakaostory-og-reader", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("Naver", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("Googlebot", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("facebookexternalhit", StringComparison.OrdinalIgnoreCase)
@@ -128,7 +140,6 @@ public static class Program
               <meta name="twitter:title" content="{og.Title}" />
               <meta name="twitter:description" content="{og.Desc}" />
               <meta name="twitter:image" content="{og.Image}" />
-              <meta http-equiv="refresh" content="0;url={og.Url}" />
             </head>
             <body></body>
             </html>
