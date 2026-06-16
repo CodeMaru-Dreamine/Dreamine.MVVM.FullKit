@@ -13,6 +13,10 @@
     @if (!Vm.IsAuthenticated)
     {
         <div class="pf-login-box">
+            <div class="pf-login-box__nav">
+                <a href="/" class="pf-login-box__home">← 홈</a>
+                <a href="/@Slug" class="pf-login-box__home">포트폴리오 보기 →</a>
+            </div>
             <h1 class="pf-login-box__title">🧑‍💻 @Slug</h1>
             <p class="pf-login-box__desc">어드민 비밀번호를 입력하세요</p>
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
@@ -635,7 +639,7 @@
     private void OnLogout()
     {
         Vm.Logout();
-        Nav.NavigateTo($"/{Slug}/admin", forceLoad: true);
+        Nav.NavigateTo($"/{Slug}", forceLoad: true);
     }
 
     private void OnVideosSelected(InputFileChangeEventArgs e)

@@ -258,6 +258,9 @@ input, select, textarea { font-family: inherit; }
 .pf-admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
 .pf-admin-header h1 { font-size: 1.6rem; font-weight: 800; }
 .pf-login-box { max-width: 420px; margin: 4rem auto; background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 2.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.pf-login-box__nav { display: flex; justify-content: space-between; margin-bottom: -.2rem; }
+.pf-login-box__home { font-size: .82rem; color: #64748b; transition: color .2s; }
+.pf-login-box__home:hover { color: #a5b4fc; }
 .pf-login-box__title { font-size: 1.4rem; font-weight: 800; text-align: center; }
 .pf-login-box__desc { color: #94a3b8; text-align: center; font-size: .9rem; }
 

@@ -158,7 +158,10 @@ public class PortfolioAdminViewModel
         _media.GetMediaUrl(slug, projectId, fileName);
 
     public string GetImageUrl(string slug, string projectId, string fileName) =>
-        fileName.StartsWith('/') ? fileName : _media.GetMediaUrl(slug, projectId, fileName);
+        IsExternalUrl(fileName) ? fileName : _media.GetMediaUrl(slug, projectId, fileName);
+
+    private static bool IsExternalUrl(string url) =>
+        url.StartsWith('/') || url.StartsWith("http://") || url.StartsWith("https://");
 
     public string GetProfileImageUrl(string slug, string fileName) =>
         _media.GetProfileImageUrl(slug, fileName);
