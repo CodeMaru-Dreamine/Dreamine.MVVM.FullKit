@@ -5,6 +5,7 @@
 
 @inject PortfolioAdminViewModel Vm
 @inject NavigationManager Nav
+@using PortfolioApp.ViewModels
 
 <PageTitle>어드민 — @(Vm.Config?.OwnerName ?? Slug)</PageTitle>
 
@@ -269,8 +270,18 @@
                                 <div class="pf-video-list pf-video-list--admin">
                                     @foreach (var vid in proj.VideoFileNames)
                                     {
+                                        var adminVidUrl = Vm.GetVideoUrl(Slug, proj.Id, vid);
                                         <div class="pf-video-item">
-                                            <video src="@Vm.GetMediaUrl(Slug, proj.Id, vid)" controls class="pf-video--admin" preload="metadata"></video>
+                                            @if (PortfolioPublicViewModel.IsYouTube(adminVidUrl))
+                                            {
+                                                <iframe class="pf-video--admin pf-video--yt" src="@PortfolioPublicViewModel.GetYouTubeEmbedUrl(adminVidUrl)"
+                                                        frameborder="0" allowfullscreen
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                                            }
+                                            else
+                                            {
+                                                <video src="@adminVidUrl" controls class="pf-video--admin" preload="metadata"></video>
+                                            }
                                             <button class="pf-media-item__del"
                                                     @onclick="() => OnDeleteVideo(proj.Id, vid)">✕</button>
                                         </div>

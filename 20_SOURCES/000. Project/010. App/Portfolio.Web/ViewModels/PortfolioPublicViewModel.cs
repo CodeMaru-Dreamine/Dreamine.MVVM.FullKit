@@ -88,6 +88,23 @@ public class PortfolioPublicViewModel
     public string GetImageUrl(string slug, string projectId, string fileName) =>
         IsExternalUrl(fileName) ? fileName : _media.GetMediaUrl(slug, projectId, fileName);
 
+    public string GetVideoUrl(string slug, string projectId, string fileName) =>
+        IsExternalUrl(fileName) ? fileName : _media.GetMediaUrl(slug, projectId, fileName);
+
+    public static bool IsYouTube(string url) =>
+        url.Contains("youtube.com") || url.Contains("youtu.be");
+
+    public static string GetYouTubeEmbedUrl(string url)
+    {
+        // youtu.be/ID 또는 youtube.com/watch?v=ID → /embed/ID
+        var id = "";
+        if (url.Contains("youtu.be/"))
+            id = url.Split("youtu.be/")[1].Split('?')[0].Split('&')[0];
+        else if (url.Contains("v="))
+            id = url.Split("v=")[1].Split('&')[0].Split('?')[0];
+        return string.IsNullOrWhiteSpace(id) ? url : $"https://www.youtube.com/embed/{id}";
+    }
+
     private static bool IsExternalUrl(string url) =>
         url.StartsWith('/') || url.StartsWith("http://") || url.StartsWith("https://");
 

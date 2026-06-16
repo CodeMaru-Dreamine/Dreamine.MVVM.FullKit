@@ -169,6 +169,9 @@ public class PortfolioAdminViewModel
     public string GetImageUrl(string slug, string projectId, string fileName) =>
         IsExternalUrl(fileName) ? fileName : _media.GetMediaUrl(slug, projectId, fileName);
 
+    public string GetVideoUrl(string slug, string projectId, string fileName) =>
+        IsExternalUrl(fileName) ? fileName : _media.GetMediaUrl(slug, projectId, fileName);
+
     private static bool IsExternalUrl(string url) =>
         url.StartsWith('/') || url.StartsWith("http://") || url.StartsWith("https://");
 

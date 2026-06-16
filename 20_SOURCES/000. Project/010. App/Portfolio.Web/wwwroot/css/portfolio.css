@@ -381,6 +381,7 @@ input, select, textarea { font-family: inherit; }
 /* ── 동영상 ──────────────────────────────────  */
 .pf-video-list { display: flex; flex-direction: column; gap: .8rem; margin-top: 1rem; }
 .pf-video { width: 100%; max-width: 640px; border-radius: 10px; background: #000; }
+.pf-video--yt { aspect-ratio: 16/9; height: auto; border: none; }
 .pf-video-list--admin { display: flex; flex-direction: column; gap: .8rem; }
 .pf-video-item { position: relative; display: inline-flex; flex-direction: column; gap: .3rem; max-width: 340px; }
 .pf-video--admin { width: 320px; border-radius: 8px; background: #000; }

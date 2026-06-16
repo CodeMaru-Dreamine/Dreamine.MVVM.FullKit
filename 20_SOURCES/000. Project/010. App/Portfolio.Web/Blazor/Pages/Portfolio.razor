@@ -194,7 +194,17 @@
                                     <div class="pf-video-list">
                                         @foreach (var vid in p.VideoFileNames)
                                         {
-                                            <video src="@Vm.GetImageUrl(Slug, p.Id, vid)" controls class="pf-video" preload="metadata"></video>
+                                            var vidUrl = Vm.GetVideoUrl(Slug, p.Id, vid);
+                                            @if (PortfolioPublicViewModel.IsYouTube(vidUrl))
+                                            {
+                                                <iframe class="pf-video pf-video--yt" src="@PortfolioPublicViewModel.GetYouTubeEmbedUrl(vidUrl)"
+                                                        frameborder="0" allowfullscreen
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                                            }
+                                            else
+                                            {
+                                                <video src="@vidUrl" controls class="pf-video" preload="metadata"></video>
+                                            }
                                         }
                                     </div>
                                 }
@@ -296,7 +306,17 @@
                                     <div class="pf-video-list">
                                         @foreach (var vid in p.VideoFileNames)
                                         {
-                                            <video src="@Vm.GetImageUrl(Slug, p.Id, vid)" controls class="pf-video" preload="metadata"></video>
+                                            var vidUrl = Vm.GetVideoUrl(Slug, p.Id, vid);
+                                            @if (PortfolioPublicViewModel.IsYouTube(vidUrl))
+                                            {
+                                                <iframe class="pf-video pf-video--yt" src="@PortfolioPublicViewModel.GetYouTubeEmbedUrl(vidUrl)"
+                                                        frameborder="0" allowfullscreen
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                                            }
+                                            else
+                                            {
+                                                <video src="@vidUrl" controls class="pf-video" preload="metadata"></video>
+                                            }
                                         }
                                     </div>
                                 }
@@ -371,7 +391,17 @@
                                     <div class="pf-video-list">
                                         @foreach (var vid in p.VideoFileNames)
                                         {
-                                            <video src="@Vm.GetImageUrl(Slug, p.Id, vid)" controls class="pf-video" preload="metadata"></video>
+                                            var vidUrl = Vm.GetVideoUrl(Slug, p.Id, vid);
+                                            @if (PortfolioPublicViewModel.IsYouTube(vidUrl))
+                                            {
+                                                <iframe class="pf-video pf-video--yt" src="@PortfolioPublicViewModel.GetYouTubeEmbedUrl(vidUrl)"
+                                                        frameborder="0" allowfullscreen
+                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
+                                            }
+                                            else
+                                            {
+                                                <video src="@vidUrl" controls class="pf-video" preload="metadata"></video>
+                                            }
                                         }
                                     </div>
                                 }
