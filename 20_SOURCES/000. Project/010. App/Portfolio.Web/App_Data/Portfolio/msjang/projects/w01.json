@@ -1,0 +1,29 @@
+{
+  "Id": "w01",
+  "Title": "VSLibrary",
+  "Description": "VSFrameWork 철학을 보존하면서도 바로 써먹는 DX를 목표로 한 경량 라이브러리 세트.",
+  "Tags": [],
+  "Year": 2025,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 1,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/VSLibrary.png" ],
+  "WorkSubtitle": "VSFrameWork의 진입장벽을 낮추기 위해 설계한 실전형 C# 라이브러리 세트",
+  "WorkBullets": [
+      "VSFrameWork는 SOLID 원칙을 강하게 준수한 구조라 온보딩·러닝커브가 높음 → 현업 투입 전 가벼운 진입로 필요",
+      "의견 있는 기본값(Opinionated Defaults)과 단일 진입점 제공(AppHost, ServiceRegistry) — 설정보다 규약",
+      "Thread/Serial/Socket/Sync/Log 등 공통 모듈을 간결 API로 래핑 — 필요한 것만 바로 쓰는 사용성",
+      "MVVM 스타터 킷(Template/Scaffold): ViewModelBase, Command, Navigation, DI 프리셋 즉시 사용",
+      "점진적 마이그레이션 경로: 기존 WinForms/WPF 코드에서 단계적 치환 → 충분히 익숙해진 뒤 VSFrameWork로 승급",
+      "Blazor(.NET 8) + SignalR 연동 예제 제공 — 동일 ViewModel 구조 재사용 검증",
+      "문서 중심 온보딩(10분 Quickstart, Recipe, Doxygen API 문서)로 도입 비용 최소화"
+  ],
+  "WorkPeriod": "내부 장기 프로젝트(상시 개선)",
+  "WorkRole": "아키텍처 설계 · 핵심 라이브러리 개발 주도",
+  "WorkTech": "C#, .NET 8, WPF, MVVM, WinForms, Blazor, SignalR, Doxygen",
+  "WorkCompany": "Vision Semicon (사내)"
+}

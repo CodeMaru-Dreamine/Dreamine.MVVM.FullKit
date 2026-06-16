@@ -1,0 +1,26 @@
+{
+  "Id": "w02",
+  "Title": "VSFrameWork",
+  "Description": "비전세미콘 공통 C# 프레임워크(아키텍처/라이브러리 주도).",
+  "Tags": [],
+  "Year": 2025,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 2,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/VSFrameWork.png" ],
+  "WorkSubtitle": "비전세미콘 공통 C# 프레임워크(아키텍처/라이브러리 주도)",
+  "WorkBullets": [
+      "MVVM 구조: ViewModel 자동 생성, UI/로직 분리",
+      "Thread/Serial/Socket/Sync/Log 공용 모듈화(재사용성·유지보수성 향상)",
+      "WPF/WinForms/Blazor에서 동일 ViewModel 구조 재활용",
+      "Doxygen 기반 기술 가이드(HTML) 정리"
+  ],
+  "WorkPeriod": "장기 내부 프로젝트",
+  "WorkRole": "아키텍처 설계 · 라이브러리 모듈화 주도",
+  "WorkTech": "C#, WPF, MVVM, SignalR, Doxygen",
+  "WorkCompany": "Vision Semicon (사내)"
+}

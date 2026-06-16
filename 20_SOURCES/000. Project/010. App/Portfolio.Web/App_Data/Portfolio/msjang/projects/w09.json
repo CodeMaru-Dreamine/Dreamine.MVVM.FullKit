@@ -1,0 +1,26 @@
+{
+  "Id": "w09",
+  "Title": "DB 모니터링 · 작업지시(PLC 실시간) 프로그램",
+  "Description": "상위 설계자 요구에 맞추되, 구현/테스트/현장 대응 대부분 단독 처리.",
+  "Tags": [],
+  "Year": 2023,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 9,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/Humin1.png" ],
+  "WorkSubtitle": "MELSEC-Q/Omron PLC 실시간 연동 + 작업지시 편집",
+  "WorkBullets": [
+      "PLC 실시간 통신 및 현장 대응 중심 구현",
+      "Humintech 프로토콜 기반 작업지시 편집기(좌표/속성 편집·검증)",
+      "텍스트/음성(TTS) 알림, Barcode 연동",
+      "MES 연동 없이 오프라인 편집 가능, Material/Tool 상태 표시"
+  ],
+  "WorkPeriod": "개발·테스트·셋업",
+  "WorkRole": "현장 대응 중심 단독 구현",
+  "WorkTech": "C#, WPF(WinForms 스타일), MELSEC-Q, Omron PLC, TTS",
+  "WorkCompany": "㈜휴민로보틱스 / L社"
+}

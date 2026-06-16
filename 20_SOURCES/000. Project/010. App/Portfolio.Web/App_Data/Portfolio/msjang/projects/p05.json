@@ -1,0 +1,21 @@
+{
+  "Id": "p05",
+  "Title": "Families",
+  "Description": "가족 모임 앨범(사진 업로드/보기/공유).",
+  "Tags": [ "Album", "Gallery", "Blazor" ],
+  "Year": 2025,
+  "Emoji": "👨‍👩‍👧‍👦",
+  "ImageFileName": "/portfolio-data/msjang/media/_cover/Families_1200x630.jpg",
+  "GitHub": null,
+  "LiveUrl": "https://families.codemaru.co.kr/",
+  "DocUrl": null,
+  "Category": "Personal",
+  "SortOrder": 5,
+  "WorkImages": [],
+  "WorkSubtitle": null,
+  "WorkBullets": [],
+  "WorkPeriod": null,
+  "WorkRole": null,
+  "WorkTech": null,
+  "WorkCompany": null
+}

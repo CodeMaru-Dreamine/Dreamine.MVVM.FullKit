@@ -1,0 +1,25 @@
+{
+  "Id": "w18",
+  "Title": "Multi/Input LCD Tester Series (StandAlone/Inline)",
+  "Description": "테스터 시리즈 유지보수·현장 대응 중심 역할. UI·통신 소규모 개선과 해외 설치/검증을 다수 수행.",
+  "Tags": [],
+  "Year": 2011,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 18,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
+  "WorkSubtitle": "유지보수·현장 대응 중심 — GUI 튜닝/소규모 기능 추가 및 배포",
+  "WorkBullets": [
+      "선임(사수) 주도 코드베이스를 기반으로 유지보수·배포·현장 이슈 대응을 담당",
+      "사용자 요청 기능 소규모 추가(리본 스타일 UI, 항목/옵션 실시간 추가/삭제 등)",
+      "중국/슬로바키아 등 해외 납품 장비의 설치·검증·장애 대응 출장 수행"
+  ],
+  "WorkPeriod": "2008.07 ~ 2011.10",
+  "WorkRole": "운영/배포·현장 이슈 대응·소규모 기능 추가",
+  "WorkTech": "MFC, .NET, WinForms, ATL/COM, RS-232/IRDA, PLC 연동",
+  "WorkCompany": "㈜엠에스셀텍 (R&D S/W · 주임연구원)"
+}

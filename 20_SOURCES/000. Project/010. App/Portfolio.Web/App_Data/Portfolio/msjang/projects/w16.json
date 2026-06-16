@@ -1,0 +1,27 @@
+{
+  "Id": "w16",
+  "Title": "Burn-In Sorter 시리즈 (JTS-30K/80×0/70×0/32xx)",
+  "Description": "JTS-30K/80x0/70x0/32xx Burn-In Sorter 제품군에 대해 시퀀스·GUI·통신을 안전하게 확장하고 현장 커스터마이징/유지보수를 장기 수행.",
+  "Tags": [],
+  "Year": 2017,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 16,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
+  "WorkSubtitle": "C++Builder 기반 제어/시퀀스 & GUI — 레거시 확장과 현장 커스터마이징",
+  "WorkBullets": [
+      "대량 납품된 Burn-In Sorter 제품군의 안정 운용과 고객 커스터마이징 대응",
+      "기존 C++Builder 5/6 레거시 코드에 신규 기능·GUI 추가 및 장기 유지보수",
+      "SECS/GEM(X-COM) 메시지 맵/상태 플로우 파악 및 인터페이스 보조/반영",
+      "I/O 216/272 → 680/792ch까지 구성 대응, AJIN Motion 및 주변장치 제어",
+      "현장 셋업/검증·장애 대응·로그 분석으로 안정화, 운영자 편의 기능 다수 추가"
+  ],
+  "WorkPeriod": "2014.05 ~ 2017.08 (3년 4개월)",
+  "WorkRole": "시퀀스/GUI 추가 기능 개발 · 유지보수 · 현장 커스터마이징",
+  "WorkTech": "C++(C++Builder 5/6), SECS/GEM(X-COM), AJIN Motion, I/O 216~792ch",
+  "WorkCompany": "㈜제이티 · 제어팀(책임연구원)"
+}

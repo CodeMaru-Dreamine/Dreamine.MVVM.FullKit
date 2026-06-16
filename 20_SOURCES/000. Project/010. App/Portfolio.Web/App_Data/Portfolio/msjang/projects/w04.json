@@ -1,0 +1,27 @@
+{
+  "Id": "w04",
+  "Title": "Conveyor Management System (CMS)",
+  "Description": "중국 S社 납품 CMS. DB 스키마/통신 구조 설계와 PLC·SECS/GEM 연동, 현장 세팅 지원.",
+  "Tags": [],
+  "Year": 2023,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 4,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/CMS.png" ],
+  "WorkSubtitle": "장비 운영 데이터/연동을 위한 백엔드·통신 설계",
+  "WorkBullets": [
+      "Oracle DB 초기 세팅 및 장비 운영 데이터 테이블 구성",
+      "CIM 서버 연동을 위한 기본 통신 구조/시그널 매핑 설계 및 연계 지원",
+      "PLC-PC 통신 연동, 구간별 테스트 및 데이터 교환 포맷 준수",
+      "SECS/GEM(X-COM) 기반 메시지 흐름 파악 및 전달 구조 보조",
+      "프런트엔드(Node.js)는 별도 인력 담당, 로그인/캘린더 등 일부 세팅 대응"
+  ],
+  "WorkPeriod": "2023.05 ~ 2023.11 (7개월)",
+  "WorkRole": "백엔드/DB·통신 구조 설계 및 현장 대응",
+  "WorkTech": "Oracle, C#, PLC 통신, SECS/GEM(X-COM), Node.js",
+  "WorkCompany": "제이이노텍 (SI·임시직/프리랜서)"
+}

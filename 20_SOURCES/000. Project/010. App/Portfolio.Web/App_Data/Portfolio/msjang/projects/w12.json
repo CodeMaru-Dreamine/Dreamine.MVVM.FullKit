@@ -1,0 +1,26 @@
+{
+  "Id": "w12",
+  "Title": "D-IC 유틸리티",
+  "Description": "운영자가 직접 설정·대응 가능한 현장 친화형 유틸리티.",
+  "Tags": [],
+  "Year": 2023,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 12,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/Humin_Util.png" ],
+  "WorkSubtitle": "장치 상태 실시간 모니터링 · 사용자 설정 유틸리티",
+  "WorkBullets": [
+      "GMS/FFU/ESC 등 장치 상태 실시간 모니터링",
+      "트레이 아이콘 상주형 유틸리티로 경량 운용",
+      "통신 포트·PLC 주소·모드 등 사용자 설정 UI 제공",
+      "특정 PLC 주소 쓰기(알람 리셋 등) 로직 포함, 확장성 고려 설계"
+  ],
+  "WorkPeriod": "설치/운영",
+  "WorkRole": "WPF 유틸리티 단독 개발",
+  "WorkTech": "C#, WPF, MELSEC-Q, PLC/포트 설정",
+  "WorkCompany": "㈜휴민로보틱스 / 베트남 S社"
+}

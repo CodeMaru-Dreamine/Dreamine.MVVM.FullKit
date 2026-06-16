@@ -1,0 +1,26 @@
+{
+  "Id": "w17",
+  "Title": "Dispenser 제어 / SI Lens Bonding Support",
+  "Description": "비전 얼라인과 다축 모션을 결합한 Dispenser 제어. 시퀀스/GUI 일체 개발과 데모까지 담당.",
+  "Tags": [],
+  "Year": 2013,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 17,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
+  "WorkSubtitle": "다축 모션 + 비전(Euresys) 연동 Dispenser 제어",
+  "WorkBullets": [
+      "8축(서보·스텝), I/O(32/32) 구성 — 일부 장비는 12축(8축+4축 서보·스텝) 운용",
+      "Euresys 라이브러리 연동(Find/얼라인 기능)로 시각 보정 및 포지셔닝",
+      "IPS-Motion Board(MCX314) 기반 다축 제어 시퀀스 구현",
+      "전체 공정 흐름 UI/상태 표시 GUI 제작, Intel DEMO 진행"
+  ],
+  "WorkPeriod": "2012.01 ~ 2013.12",
+  "WorkRole": "GUI 및 Sequence 설계/구현, 데모 지원",
+  "WorkTech": "MFC, C++(Interop), IPS-Motion(MCX314), Euresys, 8/12축, I/O 32/32",
+  "WorkCompany": "(주)아이피에스시스템 · 상품개발부1팀(대리)"
+}

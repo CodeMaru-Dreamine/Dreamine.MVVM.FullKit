@@ -1,0 +1,26 @@
+{
+  "Id": "w10",
+  "Title": "CIM UI 프로그램",
+  "Description": "기존 솔루션 연계로 라인 요구에 맞춘 실시간 CIM UI 구축.",
+  "Tags": [],
+  "Year": 2023,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 10,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/Humin.png" ],
+  "WorkSubtitle": "MELSEC-Q 통신 기반 실시간 CIM UI 신규 개발",
+  "WorkBullets": [
+      "WinForms 기반 고객 사용자 화면 구성 및 장비 연동",
+      "기존 MFC GUI 대비 UI/사용성 개선, 2~3개 라인 적용",
+      "실시간 알람/이력/모니터링 + 보고서/작업지시 확인",
+      "고객사 DB(MySQL) 기반 운용 데이터 연동"
+  ],
+  "WorkPeriod": "도입/운영 확장",
+  "WorkRole": "UI 신규 개발 · 장비 연동",
+  "WorkTech": "C#, WinForms, MELSEC-Q, MySQL",
+  "WorkCompany": "㈜휴민로보틱스 / U社"
+}

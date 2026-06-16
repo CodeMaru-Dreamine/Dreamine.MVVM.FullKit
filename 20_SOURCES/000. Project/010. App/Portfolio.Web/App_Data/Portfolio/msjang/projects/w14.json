@@ -1,0 +1,25 @@
+{
+  "Id": "w14",
+  "Title": "OHT 제어 및 CIM 연동 시스템",
+  "Description": "장비 제어 UI와 통신 로직 보강을 통해 CIM 연동의 실사용 흐름을 안정화.",
+  "Tags": [],
+  "Year": 2018,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 14,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/OHT.png" ],
+  "WorkSubtitle": "OHT 상태 UI + 통신 로직 보강 + CIM 연동 흐름",
+  "WorkBullets": [
+      "FA 장비 연동 UI로 OHT 상태 표시/제어 흐름 구성",
+      "C++ 기반 모션보드 펌웨어/PC 간 통신 연동 로직 일부 수정·검증",
+      "SECS/GEM(X-COM) 메시지 구성 보조 및 장비 상태 흐름 검토"
+  ],
+  "WorkPeriod": "기간 내 일부 단계 참여",
+  "WorkRole": "WinForms UI · C++ 연동 로직 보완 · 메시지 정의 지원",
+  "WorkTech": "VS2015 C# WinForms, C++ 확장 DLL, SECS/GEM(X-COM)",
+  "WorkCompany": "㈜제이이노텍 / 중국 (B社)"
+}

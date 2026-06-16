@@ -1,0 +1,26 @@
+{
+  "Id": "w11",
+  "Title": "모니터링 시스템",
+  "Description": "품질/라인 모니터링과 데이터 시각화를 한 번에 해결하는 현장 대응 솔루션.",
+  "Tags": [],
+  "Year": 2023,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 11,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/Humin1.png" ],
+  "WorkSubtitle": "WPF 실시간 수집·저장·트렌드 시각화 + NG/OK 판단",
+  "WorkBullets": [
+      "PLC에서 2~4초 간격 수신 데이터를 실시간 저장(Oracle)",
+      "전압/전류/두께 등 멀티 채널 트렌드 그래프 자동 생성",
+      "라인별 NG/OK 판단 및 컬러 피드백(빨간=NG/초록=OK)",
+      "ViewModel 기반 UI 구조 — 신규 라인 확장 시 최소 변경"
+  ],
+  "WorkPeriod": "설치/테스트 완료",
+  "WorkRole": "단독 설계·개발·설치",
+  "WorkTech": "C#, WPF, MELSEC-Q PLC, Oracle DB",
+  "WorkCompany": "㈜휴민로보틱스 / L社"
+}

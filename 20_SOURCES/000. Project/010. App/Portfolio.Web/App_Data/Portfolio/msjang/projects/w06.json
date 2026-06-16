@@ -1,0 +1,26 @@
+{
+  "Id": "w06",
+  "Title": "RESU TRUST Pack Line (PC 제어)",
+  "Description": "PC 직접제어 기반 대형 라인 구축. 이후 프레임워크 설계 철학의 토대가 된 프로젝트.",
+  "Tags": [],
+  "Year": 2023,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 6,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/ResuTrust.png" ],
+  "WorkSubtitle": "PLC 미사용, PC 3대 i9 기반 20~30축 직접 제어 라인",
+  "WorkBullets": [
+      "PLC 없이 PC(i9) 3대가 전체 장비(20~30축)를 직접 제어하도록 설계",
+      "WinForms 기반 3개 프로그램을 구조/패턴 통합 → 재사용성 및 유지보수성 확보",
+      "8대 장비 구성의 대형 라인(60억 규모) 통합 운전",
+      "Dreamine/VSFrameWork 철학의 전단계 — 동기 흐름/장치 유닛 분리/인터페이스 구성 개념 정립"
+  ],
+  "WorkPeriod": "현장 구축 및 테스트 포함",
+  "WorkRole": "PC 기반 제어 아키텍처 · 통신/인터페이스 설계",
+  "WorkTech": "C#, WinForms, Mitsubishi J4(광통신+Ethernet), Fuji Inverter",
+  "WorkCompany": "㈜휴민로보틱스 / P社"
+}

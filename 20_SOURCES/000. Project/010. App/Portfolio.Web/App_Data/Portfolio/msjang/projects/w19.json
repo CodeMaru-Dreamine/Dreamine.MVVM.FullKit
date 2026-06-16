@@ -1,0 +1,26 @@
+{
+  "Id": "w19",
+  "Title": "PCB Depaneling Router Series (Inline) — 엠에스테크",
+  "Description": "입사 초기 주니어로서 Depaneling Router 시리즈의 UI/시퀀스 보조와 장치 연동, 현장 배포·유지보수를 수행.",
+  "Tags": [],
+  "Year": 2008,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 19,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
+  "WorkSubtitle": "C++/VB 제어·UI 보조 — 스핀들/다축/카메라·로봇 연동",
+  "WorkBullets": [
+      "20축(서보/스텝) + I/O(128/64) 기반 라우터 제어 환경 운용",
+      "VB2005로 다국어 지원 사용자 UI 및 항목 실시간 추가/삭제 기능 구현",
+      "USB Camera + OpenCV 오버레이로 상태/가이드 정보 화면 표시",
+      "로봇 컨트롤러(다사 등)와 RS-232 연동, 납품사 맞춤 GUI 제작"
+  ],
+  "WorkPeriod": "2008.01 ~ 2008.07 (7개월)",
+  "WorkRole": "UI/시퀀스 보조 · 장치 연동 · 현장 배포",
+  "WorkTech": "VB2005, C++(COM), RS-232, OpenCV, Comizoa Motion, Kavo Spindle x8, 20축",
+  "WorkCompany": "엠에스테크 (S/W팀 · 사원)"
+}

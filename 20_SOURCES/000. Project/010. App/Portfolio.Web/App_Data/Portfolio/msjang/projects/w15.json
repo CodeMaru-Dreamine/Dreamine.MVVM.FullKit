@@ -1,0 +1,25 @@
+{
+  "Id": "w15",
+  "Title": "Inline Aging System 통계 프로그램",
+  "Description": "Aging 공정 데이터의 저장·조회·보고 체계를 정비하고 CIM 연계 가능성을 검토.",
+  "Tags": [],
+  "Year": 2017,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 15,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
+  "WorkSubtitle": "Aging 생산 데이터 통계·조회 + CIM 연계 검토",
+  "WorkBullets": [
+      "Aging 장비 생산 데이터 통계 및 CIM 연계를 위한 MFC 기반 UI",
+      "MySQL 연동으로 장비별 Slot 데이터(대략 32~64 Slot) 저장·조회 구현",
+      "SECS/GEM(X-COM) 인터페이스 테스트 및 메시지 송수신 흐름 검토"
+  ],
+  "WorkPeriod": "기간 내 일부 단계 참여",
+  "WorkRole": "MFC UI · 저장 포맷/리포트/이력 정비 · 메시지 흐름 검토",
+  "WorkTech": "VS2008 MFC, MySQL, SECS/GEM(X-COM)",
+  "WorkCompany": "㈜제이이노텍 / 중국 (B社)"
+}

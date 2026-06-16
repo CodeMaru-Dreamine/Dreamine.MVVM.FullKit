@@ -1,0 +1,26 @@
+{
+  "Id": "w08",
+  "Title": "미니 Stock 제어 프로그램",
+  "Description": "소형 창고 시스템 통합 제어 및 재고 관리 솔루션.",
+  "Tags": [],
+  "Year": 2023,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 8,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/Humin2.png" ],
+  "WorkSubtitle": "수직형 케리셀(자동 수납장치) 제어 + 재고/입출고 관리",
+  "WorkBullets": [
+      "VS2017 + C# WPF 기반 장비 제어(케리셀 내부 회전/리프트/AC 모터)",
+      "자재 등록·위치/재고·입출고 이력 관리 및 Shelf UI",
+      "작업자 화면에서 위치 선택 또는 바코드 등록",
+      "인터락 패널/현황 패널/상태·로그 시스템 구성"
+  ],
+  "WorkPeriod": "현장 테스트 완료",
+  "WorkRole": "장비 제어 · UI/DB 설계",
+  "WorkTech": "C#, WPF, LS 인버터(AC 모터), MariaDB, 바코드",
+  "WorkCompany": "㈜휴민로보틱스 / S社"
+}

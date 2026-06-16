@@ -1,0 +1,21 @@
+{
+  "Id": "p02",
+  "Title": "CCTV Viewer",
+  "Description": "RTSP→HLS, PTZ 제어, 인증 적용 Blazor 서버 앱.",
+  "Tags": [ "Blazor", "FFmpeg", "HLS", "Security" ],
+  "Year": 2025,
+  "Emoji": "📹",
+  "ImageFileName": "/portfolio-data/msjang/media/_cover/CCTVViewer_1200x630.jpg",
+  "GitHub": null,
+  "LiveUrl": "https://cctvviewer.codemaru.co.kr",
+  "DocUrl": null,
+  "Category": "Personal",
+  "SortOrder": 2,
+  "WorkImages": [],
+  "WorkSubtitle": null,
+  "WorkBullets": [],
+  "WorkPeriod": null,
+  "WorkRole": null,
+  "WorkTech": null,
+  "WorkCompany": null
+}

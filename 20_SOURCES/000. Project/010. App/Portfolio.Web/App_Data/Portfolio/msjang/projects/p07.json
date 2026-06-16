@@ -1,0 +1,21 @@
+{
+  "Id": "p07",
+  "Title": "Wedding",
+  "Description": "다국어/OG/라이트박스/지도 기반 청첩장 웹.",
+  "Tags": [ "Blazor", "i18n", "OG", "UI" ],
+  "Year": 2025,
+  "Emoji": "💍",
+  "ImageFileName": "/portfolio-data/msjang/media/_cover/Wedding_1200x630.jpg",
+  "GitHub": null,
+  "LiveUrl": "https://wedding.codemaru.co.kr",
+  "DocUrl": null,
+  "Category": "Personal",
+  "SortOrder": 7,
+  "WorkImages": [],
+  "WorkSubtitle": null,
+  "WorkBullets": [],
+  "WorkPeriod": null,
+  "WorkRole": null,
+  "WorkTech": null,
+  "WorkCompany": null
+}

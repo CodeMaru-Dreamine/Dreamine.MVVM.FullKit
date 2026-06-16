@@ -1,0 +1,21 @@
+{
+  "Id": "p03",
+  "Title": "Codemaru",
+  "Description": "코드마루 메인 페이지/브랜딩.",
+  "Tags": [ "Branding", "Web" ],
+  "Year": 2025,
+  "Emoji": "🌱",
+  "ImageFileName": "/portfolio-data/msjang/media/_cover/Codemaru_Core.jpg",
+  "GitHub": null,
+  "LiveUrl": "https://codemaru.co.kr",
+  "DocUrl": null,
+  "Category": "Personal",
+  "SortOrder": 3,
+  "WorkImages": [],
+  "WorkSubtitle": null,
+  "WorkBullets": [],
+  "WorkPeriod": null,
+  "WorkRole": null,
+  "WorkTech": null,
+  "WorkCompany": null
+}

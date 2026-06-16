@@ -1,0 +1,26 @@
+{
+  "Id": "w03",
+  "Title": "VSMCS",
+  "Description": "다종 장비 상태 수집·통합·상위 보고(CIM) 시스템.",
+  "Tags": [],
+  "Year": 2024,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 3,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/VsMcs.png" ],
+  "WorkSubtitle": "다종 장비 상태 수집·통합·상위 보고(CIM) 시스템",
+  "WorkBullets": [
+      "로더/오븐(8)/플라즈마(2)/버퍼/언로더/S-OHT 상태 수집",
+      "시퀀스 흐름에 맞춘 단일 보고 포맷으로 상위 CIM 전송",
+      "Polling/타이밍 동기화/이벤트 전파 구조 구현",
+      "단일 UI에서 전체 실시간 모니터링·알람 대응"
+  ],
+  "WorkPeriod": "프로젝트 수행",
+  "WorkRole": "기획 → 개발 → 현장 세팅 단독 수행",
+  "WorkTech": "C#, WPF, MVVM, VSFrameWork Libs(Serial/Thread/Sync)",
+  "WorkCompany": "중국 J社"
+}

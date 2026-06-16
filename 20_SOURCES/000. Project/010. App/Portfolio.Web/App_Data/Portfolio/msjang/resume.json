@@ -1,39 +1,116 @@
 {
   "SkillGroups": [
     {
-      "Category": "Language",
-      "Skills": [ "C#", "SQL", "TypeScript", "HTML/CSS" ]
+      "Category": "Language / UI",
+      "Skills": [ "C#", "C++", "WPF", "WinForms", "MVVM", "XAML", "Blazor" ]
     },
     {
-      "Category": "Framework",
-      "Skills": [ ".NET 8", "WPF", "Blazor Server", "ASP.NET Core" ]
+      "Category": "Framework / Tools",
+      "Skills": [ ".NET 8", "Visual Studio", "SignalR", "Source Generator", "Doxygen" ]
     },
     {
-      "Category": "Architecture",
-      "Skills": [ "MVVM", "멀티테넌트", "DI/IoC", "클린 아키텍처" ]
+      "Category": "Automation / Sequence",
+      "Skills": [ "Motion Control", "SECS/GEM", "MELSEC", "PLC", "FSM", "Serial Communication", "TCP/IP" ]
     },
     {
-      "Category": "Tools",
-      "Skills": [ "Visual Studio", "Git", "GitHub Actions", "WebView2" ]
+      "Category": "Database",
+      "Skills": [ "SQLite", "MySQL", "Oracle", "MSSQL", "MariaDB" ]
     },
     {
-      "Category": "Communication",
-      "Skills": [ "RabbitMQ", "SignalR", "Serial", "TCP/IP" ]
+      "Category": "DevOps / Docs",
+      "Skills": [ "Git", "GitHub", "Doxygen", "Redmine", "Markdown" ]
     }
   ],
   "Experiences": [
     {
-      "Company": "Codemaru",
-      "Role": "풀스택 개발자",
-      "Period": "2020.01 ~ 현재",
-      "Description": "WPF·Blazor 하이브리드 플랫폼 설계 및 멀티테넌트 SaaS 서비스 개발",
+      "Company": "비전세미콘(주)",
+      "Role": "S/W팀 · 수석연구원 · 프로그램설계",
+      "Period": "2024.03 ~ 재직중",
+      "Description": "VSFrameWork / VSLibrary 아키텍처 설계 및 라이브러리 모듈화 주도.",
       "Bullets": [
-        "Dreamine.MVVM.FullKit 하이브리드 앱 프레임워크 설계 및 구현",
-        "DreamineVMS 통합 관제 시스템 개발",
-        "가족 앨범·포트폴리오·웨딩 플랫폼 멀티테넌트 서비스 구축",
-        "Dreamine.Communication 라이브러리 (Serial/Socket/RabbitMQ) 개발"
+        "VSFrameWork 공통 C# 프레임워크 아키텍처 설계 및 라이브러리 모듈화 주도",
+        "VSLibrary 경량 진입점 라이브러리 설계(Opinionated Defaults, AppHost, ServiceRegistry)",
+        "MVVM 스타터 킷 / Blazor+SignalR 연동 예제 / Doxygen 문서화 체계 구축"
       ]
+    },
+    {
+      "Company": "제이이노텍",
+      "Role": "SI · 임시직/프리랜서",
+      "Period": "2023.05 ~ 2023.11 (7개월)",
+      "Description": "CMS(Conveyor Management System) DB 스키마/통신 구조 설계 및 PLC·SECS/GEM 연동.",
+      "Bullets": []
+    },
+    {
+      "Company": "이티에스",
+      "Role": "S/W팀 · 임시직/프리랜서",
+      "Period": "2023.02 ~ 2023.04 (3개월)",
+      "Description": "MTP(베트남 S社 납품) Task 기반 비동기 구조 개선 및 PLC/SECS-GEM 지원.",
+      "Bullets": []
+    },
+    {
+      "Company": "(주)휴민로보틱스",
+      "Role": "S/W팀 · 과장 · 자동제어",
+      "Period": "2020.02 ~ 2023.02 (3년 1개월)",
+      "Description": "PC 직접제어 대형 라인(RESU TRUST), WPF MVVM 모니터링/작업지시 시스템 다수 구축.",
+      "Bullets": [
+        "RESU TRUST Pack Line — PLC 없이 PC(i9) 3대로 20~30축 직접 제어(60억 규모)",
+        "WPF MVVM 기반 DB 모니터링·작업지시·Stock 제어·CIM UI 프로그램 다수 개발",
+        "Dreamine/VSFrameWork 철학의 토대 — 장치 유닛 분리/인터페이스 구성 개념 정립"
+      ]
+    },
+    {
+      "Company": "(주)제이이노텍",
+      "Role": "SI팀 · 과장",
+      "Period": "2017.08 ~ 2019.09 (2년 2개월)",
+      "Description": "중국 B社/T社 CIM 연동 및 통계 시스템, OHT 제어 시스템 구축 지원.",
+      "Bullets": []
+    },
+    {
+      "Company": "(주)제이티",
+      "Role": "제어팀 · 책임연구원",
+      "Period": "2014.05 ~ 2017.08 (3년 4개월)",
+      "Description": "Burn-In Sorter 시리즈(JTS-30K/80×0/70×0/32xx) C++Builder 기반 장기 유지보수 및 기능 확장.",
+      "Bullets": []
+    },
+    {
+      "Company": "(주)아이피에스시스템",
+      "Role": "상품개발부1팀 · 대리",
+      "Period": "2012.01 ~ 2013.12 (2년)",
+      "Description": "Dispenser 제어(다축 모션+비전 연동), 두께측정 제어, 자동 가접기 제어 개발.",
+      "Bullets": []
+    },
+    {
+      "Company": "(주)엠에스셀텍",
+      "Role": "R&D S/W · 주임연구원",
+      "Period": "2008.07 ~ 2011.10 (3년 4개월)",
+      "Description": "Multi/Input LCD Tester 시리즈 유지보수·현장 대응·해외 설치(중국/슬로바키아).",
+      "Bullets": []
+    },
+    {
+      "Company": "엠에스테크",
+      "Role": "S/W팀 · 사원",
+      "Period": "2008.01 ~ 2008.07 (7개월)",
+      "Description": "PCB Depaneling Router Inline 시리즈 UI/시퀀스 보조 및 장치 연동.",
+      "Bullets": []
+    },
+    {
+      "Company": "(주)케이엠티",
+      "Role": "연구 · 연구원",
+      "Period": "2007.03 ~ 2007.12 (10개월)",
+      "Description": "PCB Depaneling Router Inline 시리즈 GUI/Sequence 지원 및 MySQL 로그/리포트 모듈 개발.",
+      "Bullets": []
     }
   ],
-  "Educations": []
+  "Educations": [
+    {
+      "School": "아주자동차대학",
+      "Degree": "디지털정보통신학과 · 전문학사",
+      "Period": "2002.03 ~ 2008.02"
+    },
+    {
+      "School": "청양정산고등학교",
+      "Degree": "인문계 · 졸업",
+      "Period": "1999.03 ~ 2002.02"
+    }
+  ]
 }

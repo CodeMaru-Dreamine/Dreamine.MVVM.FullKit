@@ -1,0 +1,26 @@
+{
+  "Id": "w05",
+  "Title": "MTP (베트남 S社 납품)",
+  "Description": "단기 투입으로 비동기(Task) 구조와 통신 로직 품질을 개선하고, CIM/PLC 연계 구간의 안정성을 보강.",
+  "Tags": [],
+  "Year": 2023,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 5,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
+  "WorkSubtitle": "기존 프로젝트 구조 정리 · Task 기반 비동기 개선 · PLC/SECS-GEM 지원",
+  "WorkBullets": [
+      "기존 소스 구조 정리 및 Task 기반 비동기 처리 구조 재검토",
+      "과도한 Task 생성에 따른 리소스 낭비 해결(스레드/큐 관리, 취소/예외 처리 정비)",
+      "MELSEC Q PLC ↔ PC 연동 구간 일부 로직 테스트 및 데이터 포맷 검토",
+      "SECS/GEM 기반 CIM 소스 분석 및 파라미터 전달 방식 일부 수정"
+  ],
+  "WorkPeriod": "2023.02 ~ 2023.04 (3개월)",
+  "WorkRole": "구조 개선 · 성능/자원 최적화 · 통신 로직 검토",
+  "WorkTech": "C#, .NET, Task/Async, MELSEC Q PLC, SECS/GEM(CIM)",
+  "WorkCompany": "이테에스 (S/W팀 · 임시직/프리랜서)"
+}

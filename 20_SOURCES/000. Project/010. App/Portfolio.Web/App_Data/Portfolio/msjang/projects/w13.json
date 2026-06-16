@@ -1,0 +1,26 @@
+{
+  "Id": "w13",
+  "Title": "CIM 연동 및 통계 시스템",
+  "Description": "현장 운영 안정성과 데이터 흐름 파악에 집중한 CIM 연동/상태·통계 UI 구축 지원.",
+  "Tags": [],
+  "Year": 2019,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 13,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
+  "WorkSubtitle": "장비↔PC 데이터 연동 + 상위 CIM 인터페이스 + 상태/통계 UI",
+  "WorkBullets": [
+      "장비↔PC 간 데이터 통신 연동과 상위 CIM 연결, 시그널 맵 조율",
+      "WinForms UI 수정 및 장비 상태/진행 현황 표시 기능 보조",
+      "Oracle/MySQL/MSSQL 등 고객사 DB 스키마 차이에 따른 테이블 구성 대응",
+      "SECS/GEM(X-COM) 메시지 흐름 분석·테스트 및 일부 메시지 정의/검증"
+  ],
+  "WorkPeriod": "2017.08 ~ 2019.09 (부분 참여)",
+  "WorkRole": "통신/시그널 맵핑 · 상태표시 UI · DB 스키마 대응",
+  "WorkTech": "C#, WinForms, Oracle/MySQL/MSSQL, SECS/GEM(X-COM)",
+  "WorkCompany": "㈜제이이노텍 / 중국 (B社, T社)"
+}

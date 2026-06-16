@@ -1,0 +1,26 @@
+{
+  "Id": "w20",
+  "Title": "PCB Depaneling Router Series (Inline) — 케이엠티",
+  "Description": "N社/K-1社 Inline 라우터 납품: 멀티축·스핀들·그래버·컨베이어 연동과 MySQL 로그/리포트 모듈 설계.",
+  "Tags": [],
+  "Year": 2007,
+  "Emoji": "🏭",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 20,
+  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
+  "WorkSubtitle": "8~16축 모션·스핀들·그래버 연동 라우터 — GUI/Sequence + MySQL 로그/리포트",
+  "WorkBullets": [
+      "8·16축(서보/스텝) + I/O 128/128·128/64 기반 라우터 흐름 GUI/Sequence 지원",
+      "Picolo(Euresys) 프레임그래버 연동 — 화상/좌표/가이드 오버레이 표시",
+      "MySQL 기반 로그 저장·조회·리포팅 프로그램 개발(인쇄/CSV 내보내기)",
+      "MySQL 로깅/리포트 모듈은 졸업작품으로 확장하여 A+ 취득"
+  ],
+  "WorkPeriod": "2007.03 ~ 2007.12 (10개월)",
+  "WorkRole": "GUI/Sequence 제작 지원 · MySQL 로그/리포트 모듈 개발",
+  "WorkTech": "MFC, Euresys Picolo, MMC-Motion, MySQL, 8/16축, I/O 128/128",
+  "WorkCompany": "(주)케이엠티"
+}
