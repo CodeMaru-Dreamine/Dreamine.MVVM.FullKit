@@ -136,12 +136,21 @@
                 <div class="pf-project-grid">
                     @foreach (var p in Vm.Personal)
                     {
+                        var personalImgs = p.WorkImages.Length > 0 ? p.WorkImages : (!string.IsNullOrWhiteSpace(p.ImageFileName) ? [p.ImageFileName] : []);
                         <div class="pf-project-card">
-                            @{ var coverImg = !string.IsNullOrWhiteSpace(p.ImageFileName) ? p.ImageFileName : (p.WorkImages.Length > 0 ? p.WorkImages[0] : null); }
-                            @if (coverImg != null)
+                            @if (personalImgs.Length > 1)
+                            {
+                                <div class="pf-project-card__gallery">
+                                    @foreach (var img in personalImgs)
+                                    {
+                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" />
+                                    }
+                                </div>
+                            }
+                            else if (personalImgs.Length == 1)
                             {
                                 <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, coverImg)')">
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, personalImgs[0])')">
                                 </div>
                             }
                             else
@@ -291,12 +300,21 @@
                 <div class="pf-project-grid">
                     @foreach (var p in Vm.Public)
                     {
+                        var publicImgs = p.WorkImages.Length > 0 ? p.WorkImages : (!string.IsNullOrWhiteSpace(p.ImageFileName) ? [p.ImageFileName] : []);
                         <div class="pf-project-card">
-                            @{ var coverImg = !string.IsNullOrWhiteSpace(p.ImageFileName) ? p.ImageFileName : (p.WorkImages.Length > 0 ? p.WorkImages[0] : null); }
-                            @if (coverImg != null)
+                            @if (publicImgs.Length > 1)
+                            {
+                                <div class="pf-project-card__gallery">
+                                    @foreach (var img in publicImgs)
+                                    {
+                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" />
+                                    }
+                                </div>
+                            }
+                            else if (publicImgs.Length == 1)
                             {
                                 <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, coverImg)')">
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, publicImgs[0])')">
                                 </div>
                             }
                             else

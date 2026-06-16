@@ -604,11 +604,19 @@
 
     private async Task OnDeleteAnyImage(string projectId, string img, ProjectCategory cat)
     {
-        if (cat == ProjectCategory.Work)
+        if (Vm.EditingProject == null) return;
+        // WorkImages에서 제거 (Work/Personal/Public 공통)
+        if (!IsExternalUrl(img))
             await Vm.DeleteProjectMediaAsync(Slug, projectId, img);
         else
-            await Vm.DeleteProjectCoverAsync(Slug, projectId);
+            Vm.EditingProject.WorkImages = Vm.EditingProject.WorkImages.Where(x => x != img).ToArray();
+        // ImageFileName이 이 이미지면 초기화
+        if (Vm.EditingProject.ImageFileName == img)
+            Vm.EditingProject.ImageFileName = Vm.EditingProject.WorkImages.FirstOrDefault();
     }
+
+    private static bool IsExternalUrl(string url) =>
+        url.StartsWith('/') || url.StartsWith("http://") || url.StartsWith("https://");
 
     private void OnAddImageUrl()
     {
@@ -622,7 +630,9 @@
         }
         else
         {
-            Vm.EditingProject.ImageFileName = url;
+            if (!Vm.EditingProject.WorkImages.Contains(url))
+                Vm.EditingProject.WorkImages = [.. Vm.EditingProject.WorkImages, url];
+            Vm.EditingProject.ImageFileName ??= url;
         }
         imageUrlInput = "";
     }

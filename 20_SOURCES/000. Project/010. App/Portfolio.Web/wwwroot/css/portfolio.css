@@ -196,6 +196,8 @@ input, select, textarea { font-family: inherit; }
 .pf-project-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,.3); }
 .pf-project-card__thumb { height: 160px; background: var(--pf-surface2) center/cover; display: flex; align-items: center; justify-content: center; }
 .pf-project-card__thumb--empty span { font-size: 3rem; }
+.pf-project-card__gallery { display: flex; overflow-x: auto; gap: .4rem; padding: .4rem; background: var(--pf-surface2); scrollbar-width: thin; }
+.pf-project-card__gallery-img { height: 150px; width: auto; min-width: 180px; object-fit: cover; border-radius: 6px; flex-shrink: 0; }
 .pf-project-card__body { padding: 1.2rem; }
 .pf-project-card__year { font-size: .75rem; color: var(--pf-accent); margin-bottom: .3rem; }
 .pf-project-card__title { font-size: 1rem; font-weight: 700; margin-bottom: .4rem; color: var(--pf-text); }
