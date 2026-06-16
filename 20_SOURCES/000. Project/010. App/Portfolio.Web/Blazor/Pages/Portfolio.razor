@@ -211,12 +211,25 @@
                 <div class="pf-project-grid">
                     @foreach (var p in Vm.Work)
                     {
+                        var workImgs = p.WorkImages.Length > 0 ? p.WorkImages : (!string.IsNullOrWhiteSpace(p.ImageFileName) ? [p.ImageFileName] : []);
                         <div class="pf-project-card pf-project-card--work">
-                            @{ var workCover = p.WorkImages.Length > 0 ? p.WorkImages[0] : null; }
-                            @if (workCover != null)
+                            @if (workImgs.Length > 1)
+                            {
+                                <div class="pf-project-card__gallery" style="position:relative;">
+                                    @foreach (var img in workImgs)
+                                    {
+                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" />
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(p.WorkPeriod))
+                                    {
+                                        <span class="pf-work-period-badge" style="position:absolute;top:.5rem;left:.5rem;">@p.WorkPeriod</span>
+                                    }
+                                </div>
+                            }
+                            else if (workImgs.Length == 1)
                             {
                                 <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, workCover)')">
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, workImgs[0])')">
                                     @if (!string.IsNullOrWhiteSpace(p.WorkPeriod))
                                     {
                                         <span class="pf-work-period-badge">@p.WorkPeriod</span>
