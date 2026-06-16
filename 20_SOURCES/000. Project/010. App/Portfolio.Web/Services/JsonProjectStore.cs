@@ -29,7 +29,7 @@ public class JsonProjectStore : IProjectStore
             try
             {
                 var json = await File.ReadAllTextAsync(f);
-                var item = JsonSerializer.Deserialize<ProjectItem>(json);
+                var item = JsonSerializer.Deserialize<ProjectItem>(json, _json);
                 if (item != null) list.Add(item);
             }
             catch { }
@@ -43,7 +43,7 @@ public class JsonProjectStore : IProjectStore
         var path = Path_(slug, projectId);
         if (!File.Exists(path)) return null;
         var json = await File.ReadAllTextAsync(path);
-        return JsonSerializer.Deserialize<ProjectItem>(json);
+        return JsonSerializer.Deserialize<ProjectItem>(json, _json);
     }
 
     public async Task SaveAsync(string slug, ProjectItem item)
