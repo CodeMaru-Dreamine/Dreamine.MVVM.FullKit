@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using PortfolioApp.Blazor;
 using PortfolioApp.Services;
-using PortfolioApp.ViewModels;
 
 namespace PortfolioApp;
 
@@ -32,10 +31,6 @@ public static class Program
         builder.Services.AddSingleton<Views.MainWindow>();
         builder.Services.AddHostedService<GhostAccountCleanupService>();
 
-        builder.Services.AddScoped<PortfolioHomeViewModel>();
-        builder.Services.AddScoped<PortfolioAdminViewModel>();
-        builder.Services.AddScoped<PortfolioPublicViewModel>();
-
         builder.Services.AddDreamineBlazorServer<AppShell>(options =>
         {
             options.Port = serverPort;
@@ -47,9 +42,6 @@ public static class Program
             options.SharedServiceTypes.Add(typeof(IContactStore));
             options.SharedServiceTypes.Add(typeof(IMediaService));
             options.AddPhysicalStaticFiles(opts.ResolvedDataPath, "/portfolio-data");
-            options.SharedServiceTypes.Add(typeof(PortfolioHomeViewModel));
-            options.SharedServiceTypes.Add(typeof(PortfolioAdminViewModel));
-            options.SharedServiceTypes.Add(typeof(PortfolioPublicViewModel));
         });
 
         builder.Build().RunDreamineWpfApp<App>();
