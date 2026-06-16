@@ -1,0 +1,351 @@
+/* ══════════════════════════════════════════════
+   Codemaru Portfolio — portfolio.css
+   ══════════════════════════════════════════════ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+    --pf-accent: #6366f1;
+    --pf-accent2: #8b5cf6;
+    --pf-bg: #0f172a;
+    --pf-surface: #1e293b;
+    --pf-surface2: #334155;
+    --pf-text: #f1f5f9;
+    --pf-text2: #94a3b8;
+    --pf-border: #334155;
+    --pf-radius: 12px;
+    --pf-shadow: 0 4px 24px rgba(0,0,0,.4);
+}
+
+/* ── 테마 ───────────────────────────────────── */
+.theme-dark  { --pf-accent:#6366f1; --pf-accent2:#8b5cf6; --pf-bg:#0f172a; --pf-surface:#1e293b; --pf-surface2:#334155; --pf-text:#f1f5f9; --pf-text2:#94a3b8; --pf-border:#334155; }
+.theme-ocean { --pf-accent:#0ea5e9; --pf-accent2:#06b6d4; --pf-bg:#0c1a2e; --pf-surface:#0f2744; --pf-surface2:#1a3a5c; --pf-text:#e0f2fe; --pf-text2:#7dd3fc; --pf-border:#1a3a5c; }
+.theme-forest{ --pf-accent:#22c55e; --pf-accent2:#16a34a; --pf-bg:#0a1f0f; --pf-surface:#0f2918; --pf-surface2:#14532d; --pf-text:#dcfce7; --pf-text2:#86efac; --pf-border:#14532d; }
+.theme-minimal{ --pf-accent:#374151; --pf-accent2:#6b7280; --pf-bg:#ffffff; --pf-surface:#f9fafb; --pf-surface2:#f3f4f6; --pf-text:#111827; --pf-text2:#6b7280; --pf-border:#e5e7eb; }
+.theme-warm  { --pf-accent:#f97316; --pf-accent2:#fb923c; --pf-bg:#1c0a00; --pf-surface:#2d1200; --pf-surface2:#431c00; --pf-text:#fff7ed; --pf-text2:#fed7aa; --pf-border:#431c00; }
+
+body { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; background: #0f172a; color: #f1f5f9; line-height: 1.6; }
+
+/* ── 기본 요소 ──────────────────────────────── */
+.pf-page { min-height: 100vh; }
+.pf-portfolio { background: var(--pf-bg); color: var(--pf-text); }
+#main-content { outline: none; }
+
+a { color: inherit; text-decoration: none; }
+input, select, textarea { font-family: inherit; }
+
+/* ── 네비바 ─────────────────────────────────── */
+.pf-nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 60px;
+    background: rgba(15,23,42,.92); backdrop-filter: blur(12px);
+    border-bottom: 1px solid #1e293b;
+}
+.pf-nav--portfolio { background: rgba(0,0,0,.7); border-bottom: 1px solid var(--pf-border); }
+.pf-nav__brand { font-size: 1.1rem; font-weight: 700; color: #f1f5f9; }
+.pf-nav__links { display: flex; gap: 1.2rem; align-items: center; }
+.pf-nav__link { font-size: .9rem; color: #94a3b8; transition: color .2s; }
+.pf-nav__link:hover { color: #f1f5f9; }
+.pf-nav__link--cta {
+    background: #6366f1; color: #fff; padding: .35rem .9rem;
+    border-radius: 999px; font-weight: 600;
+}
+.pf-nav__link--ghost { border: 1px solid #334155; padding: .3rem .8rem; border-radius: 8px; font-size: .8rem; }
+
+/* ── 히어로 (홈) ────────────────────────────── */
+.pf-hero {
+    min-height: 70vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+    text-align: center; padding: 4rem 2rem;
+}
+.pf-hero__inner { max-width: 680px; }
+.pf-hero__badge {
+    display: inline-block; background: rgba(99,102,241,.15);
+    color: #a5b4fc; border: 1px solid rgba(99,102,241,.3);
+    padding: .3rem 1rem; border-radius: 999px; font-size: .85rem; margin-bottom: 1.2rem;
+}
+.pf-hero__title { font-size: clamp(2rem,5vw,3.2rem); font-weight: 800; line-height: 1.2; margin-bottom: 1rem; color: #f1f5f9; }
+.pf-hero__accent { background: linear-gradient(90deg,#6366f1,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.pf-hero__sub { font-size: 1.1rem; color: #94a3b8; margin-bottom: 2rem; }
+
+/* ── 서비스 안내 배너 ───────────────────────── */
+.pf-service-notice {
+    background: #1e293b; padding: .7rem 2rem;
+    text-align: center; font-size: .85rem; color: #94a3b8;
+    display: flex; flex-wrap: wrap; gap: .5rem; justify-content: center; align-items: center;
+}
+.pf-notice-sep { color: #475569; }
+
+/* ── 기능 소개 ──────────────────────────────── */
+.pf-features {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem; max-width: 1100px; margin: 0 auto; padding: 4rem 2rem;
+}
+.pf-feature {
+    background: #1e293b; border: 1px solid #334155; border-radius: var(--pf-radius);
+    padding: 1.8rem; text-align: center;
+}
+.pf-feature__icon { font-size: 2.4rem; display: block; margin-bottom: .8rem; }
+.pf-feature h3 { font-size: 1rem; font-weight: 700; margin-bottom: .5rem; }
+.pf-feature p { font-size: .9rem; color: #94a3b8; }
+
+/* ── 생성 폼 ─────────────────────────────────  */
+.pf-create { background: #0f172a; padding: 4rem 2rem; }
+.pf-create__box { max-width: 560px; margin: 0 auto; background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 2.5rem; }
+.pf-create__title { font-size: 1.6rem; font-weight: 800; margin-bottom: .5rem; }
+.pf-create__desc { color: #94a3b8; margin-bottom: 1.5rem; }
+.pf-create__notice { margin-top: 1.2rem; font-size: .82rem; color: #64748b; text-align: center; }
+.pf-create__notice code { background: #334155; padding: .1rem .4rem; border-radius: 4px; }
+
+/* ── 폼 공통 ─────────────────────────────────  */
+.pf-form { display: flex; flex-direction: column; gap: 1rem; }
+.pf-form--inline { display: flex; flex-wrap: wrap; gap: .6rem; align-items: flex-end; }
+.pf-form__row { display: flex; flex-direction: column; gap: .4rem; }
+.pf-form__row--check label { display: flex; align-items: center; gap: .5rem; cursor: pointer; }
+.pf-form__row--check input[type=checkbox] { width: 16px; height: 16px; }
+.pf-form__actions { display: flex; gap: .6rem; flex-wrap: wrap; }
+.pf-label { font-size: .85rem; font-weight: 600; color: var(--pf-text, #f1f5f9); }
+.pf-label__hint { font-weight: 400; color: #64748b; margin-left: .4rem; }
+.pf-input {
+    background: #0f172a; border: 1px solid #334155; color: #f1f5f9;
+    padding: .55rem .9rem; border-radius: 8px; font-size: .9rem; width: 100%;
+    transition: border-color .2s;
+}
+.pf-portfolio .pf-input { background: var(--pf-bg); border-color: var(--pf-border); color: var(--pf-text); }
+.pf-input:focus { outline: none; border-color: #6366f1; }
+.pf-textarea { width: 100%; background: #0f172a; border: 1px solid #334155; color: #f1f5f9; padding: .7rem; border-radius: 8px; font-size: .9rem; resize: vertical; }
+.pf-portfolio .pf-textarea { background: var(--pf-bg); border-color: var(--pf-border); color: var(--pf-text); }
+.pf-input-prefix { display: flex; gap: 0; }
+.pf-prefix { background: #334155; color: #64748b; padding: .55rem .8rem; border-radius: 8px 0 0 8px; font-size: .8rem; white-space: nowrap; border: 1px solid #334155; }
+.pf-input-prefix .pf-input { border-radius: 0 8px 8px 0; }
+.pf-slug-preview { font-size: .82rem; color: #6366f1; margin-top: .2rem; }
+.pf-input-file { font-size: .85rem; color: #94a3b8; }
+.pf-file-list { list-style: none; font-size: .82rem; color: #94a3b8; margin-top: .4rem; }
+.pf-cover-preview { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; margin-top: .5rem; }
+
+/* ── 버튼 ────────────────────────────────────  */
+.pf-btn {
+    display: inline-flex; align-items: center; gap: .4rem;
+    padding: .55rem 1.2rem; border-radius: 8px; font-size: .9rem;
+    font-weight: 600; cursor: pointer; border: none; transition: all .2s;
+}
+.pf-btn--primary { background: #6366f1; color: #fff; }
+.pf-btn--primary:hover { background: #4f46e5; }
+.pf-btn--ghost { background: transparent; color: #94a3b8; border: 1px solid #334155; }
+.pf-btn--ghost:hover { color: #f1f5f9; border-color: #475569; }
+.pf-btn--danger { background: #dc2626; color: #fff; }
+.pf-btn--danger:hover { background: #b91c1c; }
+.pf-btn--full { width: 100%; justify-content: center; }
+.pf-btn--sm { padding: .3rem .7rem; font-size: .8rem; }
+.pf-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── 상태 메시지 ─────────────────────────────  */
+.pf-status { padding: .7rem 1rem; border-radius: 8px; font-size: .9rem; margin-bottom: 1rem; }
+.pf-status--ok { background: rgba(34,197,94,.15); color: #86efac; border: 1px solid rgba(34,197,94,.3); }
+.pf-status--err { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+
+/* ── 홈 포트폴리오 목록 ──────────────────────  */
+.pf-list { padding: 3rem 2rem; max-width: 1100px; margin: 0 auto; }
+.pf-list__title { font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; }
+.pf-list__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.2rem; }
+.pf-card { display: flex; flex-direction: column; background: #1e293b; border: 1px solid #334155; border-radius: var(--pf-radius); overflow: hidden; transition: transform .2s, box-shadow .2s; }
+.pf-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,.4); }
+.pf-card__avatar { height: 120px; background: #334155 center/cover; display: flex; align-items: center; justify-content: center; }
+.pf-card__avatar-icon { font-size: 3rem; }
+.pf-card__body { padding: 1rem; }
+.pf-card__name { font-size: 1.1rem; font-weight: 700; }
+.pf-card__title { font-size: .85rem; color: #6366f1; margin-top: .2rem; }
+.pf-card__bio { font-size: .82rem; color: #94a3b8; margin-top: .4rem; }
+
+/* ── 프로필 히어로 ───────────────────────────  */
+.pf-profile-hero {
+    padding: 5rem 2rem 3rem;
+    background: linear-gradient(180deg, var(--pf-bg) 0%, var(--pf-surface) 100%);
+    border-bottom: 1px solid var(--pf-border);
+}
+.pf-profile-hero__inner { max-width: 800px; margin: 0 auto; display: flex; gap: 2.5rem; align-items: center; flex-wrap: wrap; }
+.pf-profile-hero__avatar { width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid var(--pf-accent); flex-shrink: 0; background: var(--pf-surface2); display: flex; align-items: center; justify-content: center; }
+.pf-profile-hero__avatar--empty { font-size: 3rem; }
+.pf-profile-hero__name { font-size: 2rem; font-weight: 800; color: var(--pf-text); }
+.pf-profile-hero__title { color: var(--pf-accent); font-size: 1rem; margin-top: .3rem; }
+.pf-profile-hero__bio { color: var(--pf-text2); margin-top: .6rem; max-width: 480px; }
+.pf-profile-hero__links { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: 1rem; }
+.pf-social-link { display: inline-flex; align-items: center; gap: .4rem; color: var(--pf-text2); border: 1px solid var(--pf-border); padding: .35rem .8rem; border-radius: 8px; font-size: .85rem; transition: all .2s; }
+.pf-social-link:hover { color: var(--pf-text); border-color: var(--pf-accent); }
+
+/* ── 섹션 ────────────────────────────────────  */
+.pf-section { max-width: 1100px; margin: 0 auto; padding: 3rem 2rem; }
+.pf-section__header { display: flex; align-items: center; gap: .8rem; margin-bottom: 2rem; }
+.pf-section__header h2 { font-size: 1.5rem; font-weight: 800; color: var(--pf-text); }
+.pf-section__header h2 i { color: var(--pf-accent); margin-right: .3rem; }
+.pf-sub-header { font-size: 1.1rem; font-weight: 700; color: var(--pf-text2); margin: 2rem 0 1rem; padding-bottom: .5rem; border-bottom: 1px solid var(--pf-border); }
+
+/* ── 검색/필터 툴바 ──────────────────────────  */
+.pf-toolbar { display: flex; flex-wrap: wrap; gap: .8rem; margin-bottom: 1.5rem; }
+.pf-tool { display: flex; align-items: center; gap: .5rem; }
+.pf-tool label { font-size: .8rem; color: var(--pf-text2); white-space: nowrap; }
+.pf-tool--search { flex: 1; min-width: 200px; }
+.pf-tool--search i { color: var(--pf-text2); }
+.pf-tool--search .pf-input { border-radius: 999px; }
+
+/* ── Personal 프로젝트 그리드 ────────────────  */
+.pf-project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.2rem; }
+.pf-project-card { background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: var(--pf-radius); overflow: hidden; transition: transform .2s, box-shadow .2s; }
+.pf-project-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,.3); }
+.pf-project-card__thumb { height: 160px; background: var(--pf-surface2) center/cover; display: flex; align-items: center; justify-content: center; }
+.pf-project-card__thumb--empty span { font-size: 3rem; }
+.pf-project-card__body { padding: 1.2rem; }
+.pf-project-card__year { font-size: .75rem; color: var(--pf-accent); margin-bottom: .3rem; }
+.pf-project-card__title { font-size: 1rem; font-weight: 700; margin-bottom: .4rem; color: var(--pf-text); }
+.pf-project-card__desc { font-size: .85rem; color: var(--pf-text2); margin-bottom: .8rem; line-height: 1.5; }
+.pf-project-card__tags { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .8rem; }
+.pf-project-card__links { display: flex; gap: .5rem; flex-wrap: wrap; }
+.pf-tag { background: rgba(99,102,241,.15); color: #a5b4fc; padding: .2rem .6rem; border-radius: 999px; font-size: .75rem; }
+.pf-link-btn { display: inline-flex; align-items: center; gap: .3rem; font-size: .78rem; color: var(--pf-text2); border: 1px solid var(--pf-border); padding: .25rem .6rem; border-radius: 6px; transition: all .2s; }
+.pf-link-btn:hover { color: var(--pf-text); border-color: var(--pf-accent); }
+
+/* ── Work 프로젝트 카드 ──────────────────────  */
+.pf-work-list { display: flex; flex-direction: column; gap: 2rem; }
+.pf-work-card { background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: var(--pf-radius); overflow: hidden; }
+.pf-work-card__hero { height: 280px; background: var(--pf-surface2) center/cover; }
+.pf-work-card__body { padding: 1.8rem; }
+.pf-work-card__meta { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: .8rem; }
+.pf-work-meta-chip { font-size: .78rem; background: rgba(99,102,241,.12); color: var(--pf-text2); padding: .25rem .65rem; border-radius: 999px; border: 1px solid var(--pf-border); }
+.pf-work-card__title { font-size: 1.3rem; font-weight: 800; margin-bottom: .4rem; color: var(--pf-text); }
+.pf-work-card__subtitle { color: var(--pf-accent); font-size: .95rem; margin-bottom: .6rem; }
+.pf-work-card__desc { color: var(--pf-text2); font-size: .9rem; margin-bottom: .8rem; }
+.pf-work-card__bullets { list-style: none; padding: 0; margin-bottom: .8rem; }
+.pf-work-card__bullets li::before { content: "▹ "; color: var(--pf-accent); }
+.pf-work-card__bullets li { color: var(--pf-text2); font-size: .88rem; margin-bottom: .3rem; padding-left: 1.2rem; text-indent: -1.2rem; }
+.pf-work-card__tech { font-size: .85rem; color: var(--pf-text2); margin-bottom: .8rem; }
+.pf-work-images { display: flex; gap: .6rem; flex-wrap: wrap; margin-top: 1rem; }
+.pf-work-img { width: 200px; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid var(--pf-border); }
+
+/* ── Resume ──────────────────────────────────  */
+.pf-resume-block { background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: var(--pf-radius); padding: 1.5rem; margin-bottom: 1.5rem; }
+.pf-resume-block__title { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--pf-text); }
+.pf-skill-group { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: .8rem; flex-wrap: wrap; }
+.pf-skill-group__label { font-size: .8rem; font-weight: 700; color: var(--pf-text2); min-width: 100px; padding-top: .2rem; }
+.pf-skill-chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.pf-skill-chip { background: rgba(99,102,241,.15); color: var(--pf-text); border: 1px solid rgba(99,102,241,.3); padding: .25rem .7rem; border-radius: 999px; font-size: .8rem; }
+.pf-exp-card { background: var(--pf-surface2); border-radius: 8px; padding: 1.2rem; margin-bottom: 1rem; }
+.pf-exp-card__header { display: flex; flex-wrap: wrap; align-items: center; gap: .8rem; margin-bottom: .5rem; }
+.pf-exp-card__role { color: var(--pf-accent); font-size: .9rem; }
+.pf-exp-card__period { color: var(--pf-text2); font-size: .82rem; margin-left: auto; }
+.pf-exp-card__desc { color: var(--pf-text2); font-size: .88rem; margin-bottom: .5rem; }
+.pf-exp-card__bullets { list-style: none; padding: 0; }
+.pf-exp-card__bullets li::before { content: "▹ "; color: var(--pf-accent); }
+.pf-exp-card__bullets li { color: var(--pf-text2); font-size: .85rem; margin-bottom: .2rem; padding-left: 1.2rem; text-indent: -1.2rem; }
+.pf-edu-card { display: flex; flex-wrap: wrap; gap: .8rem; align-items: center; padding: 1rem; background: var(--pf-surface2); border-radius: 8px; margin-bottom: .6rem; }
+.pf-edu-card__degree { color: var(--pf-accent); font-size: .88rem; }
+.pf-edu-card__period { color: var(--pf-text2); font-size: .82rem; margin-left: auto; }
+
+/* ── Contact 폼 ──────────────────────────────  */
+.pf-contact-form { max-width: 560px; }
+
+/* ── 어드민 ──────────────────────────────────  */
+.pf-admin { max-width: 900px; margin: 0 auto; padding: 2rem; }
+.pf-admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.pf-admin-header h1 { font-size: 1.6rem; font-weight: 800; }
+.pf-login-box { max-width: 420px; margin: 4rem auto; background: #1e293b; border: 1px solid #334155; border-radius: 20px; padding: 2.5rem; display: flex; flex-direction: column; gap: 1rem; }
+.pf-login-box__title { font-size: 1.4rem; font-weight: 800; text-align: center; }
+.pf-login-box__desc { color: #94a3b8; text-align: center; font-size: .9rem; }
+
+/* ── 탭 ──────────────────────────────────────  */
+.pf-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; border-bottom: 1px solid #334155; padding-bottom: 0; }
+.pf-tab { background: none; border: none; color: #94a3b8; padding: .6rem 1.2rem; cursor: pointer; font-size: .9rem; font-weight: 600; border-bottom: 2px solid transparent; margin-bottom: -1px; display: flex; align-items: center; gap: .4rem; }
+.pf-tab--active { color: #f1f5f9; border-bottom-color: #6366f1; }
+.pf-tab__badge { background: #dc2626; color: #fff; font-size: .7rem; padding: .1rem .4rem; border-radius: 999px; }
+.pf-tab-body { padding: 1rem 0; }
+
+/* ── 프로젝트 어드민 목록 ────────────────────  */
+.pf-project-admin-list { display: flex; flex-direction: column; gap: .6rem; margin-top: 1rem; }
+.pf-project-admin-item { display: flex; align-items: center; gap: 1rem; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: .8rem 1rem; flex-wrap: wrap; }
+.pf-project-admin-item__emoji { font-size: 1.3rem; }
+.pf-project-admin-item__title { flex: 1; font-weight: 600; }
+.pf-project-admin-item__year { font-size: .82rem; color: #64748b; }
+.pf-project-admin-item__actions { display: flex; gap: .4rem; margin-left: auto; }
+.pf-post-editor { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem; }
+
+/* ── 배지 ────────────────────────────────────  */
+.pf-badge { display: inline-block; font-size: .72rem; font-weight: 700; padding: .2rem .6rem; border-radius: 999px; }
+.pf-badge--green { background: rgba(34,197,94,.15); color: #86efac; }
+.pf-badge--blue { background: rgba(59,130,246,.15); color: #93c5fd; }
+.pf-badge--new { background: #dc2626; color: #fff; }
+
+/* ── Resume 어드민 ───────────────────────────  */
+.pf-skill-admin-item { display: flex; align-items: center; gap: 1rem; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: .7rem 1rem; margin-top: .5rem; flex-wrap: wrap; }
+.pf-exp-admin-item { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; padding: .7rem 0; border-bottom: 1px solid #1e293b; font-size: .9rem; }
+
+/* ── 메시지 ──────────────────────────────────  */
+.pf-message-item { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 1.2rem; margin-bottom: .8rem; }
+.pf-message-item--unread { border-left: 3px solid #6366f1; }
+.pf-message-item__header { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-bottom: .6rem; font-size: .9rem; }
+.pf-message-item__email { color: #6366f1; font-size: .82rem; }
+.pf-message-item__date { color: #64748b; font-size: .78rem; margin-left: auto; }
+.pf-message-item__body { color: #94a3b8; font-size: .88rem; margin-bottom: .8rem; line-height: 1.6; }
+.pf-message-item__actions { display: flex; gap: .4rem; }
+
+/* ── 슈퍼어드민 ──────────────────────────────  */
+.pf-superadmin-list h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; }
+.pf-superadmin-item { display: flex; align-items: center; justify-content: space-between; background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: .8rem 1rem; margin-bottom: .6rem; flex-wrap: wrap; gap: .5rem; }
+.pf-superadmin-item__info { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.pf-superadmin-item__slug { font-weight: 700; font-size: .9rem; }
+.pf-superadmin-item__name { color: #94a3b8; font-size: .85rem; }
+.pf-superadmin-item__date { color: #64748b; font-size: .78rem; }
+.pf-superadmin-item__pub { font-size: .75rem; padding: .15rem .5rem; border-radius: 999px; background: #334155; color: #64748b; }
+.pf-superadmin-item__pub.pf-badge--green { background: rgba(34,197,94,.15); color: #86efac; }
+.pf-superadmin-item__actions { display: flex; gap: .4rem; }
+
+/* ── 설정 ────────────────────────────────────  */
+.pf-settings { display: flex; flex-direction: column; gap: 1rem; }
+.pf-divider { border: none; border-top: 1px solid #334155; margin: 1rem 0; }
+.pf-danger-zone { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.3); border-radius: 10px; padding: 1.2rem; }
+.pf-danger-zone h3 { color: #fca5a5; margin-bottom: .4rem; font-size: .95rem; }
+.pf-danger-zone p { color: #94a3b8; font-size: .85rem; margin-bottom: .8rem; }
+.pf-delete-confirm p { color: #fca5a5; font-size: .9rem; margin-bottom: .8rem; }
+
+/* ── 미디어 그리드 ───────────────────────────  */
+.pf-media-grid--admin { display: flex; flex-wrap: wrap; gap: .6rem; }
+.pf-media-item { position: relative; width: 90px; height: 70px; }
+.pf-media-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+.pf-media-item__del { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; background: #dc2626; color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: .65rem; display: flex; align-items: center; justify-content: center; }
+
+/* ── 가이드 ──────────────────────────────────  */
+.pf-guide__inner { max-width: 760px; margin: 0 auto; padding: 3rem 2rem; }
+.pf-guide__title { font-size: 2rem; font-weight: 800; margin-bottom: 2rem; }
+.pf-guide__steps { list-style: none; counter-reset: step; display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 3rem; }
+.pf-guide__steps > li { counter-increment: step; position: relative; padding: 1.5rem 1.5rem 1.5rem 4rem; background: #1e293b; border: 1px solid #334155; border-radius: 12px; }
+.pf-guide__steps > li::before { content: counter(step); position: absolute; left: 1rem; top: 1.4rem; width: 28px; height: 28px; background: #6366f1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .85rem; font-weight: 700; color: #fff; }
+.pf-guide__steps strong { display: block; font-size: 1rem; margin-bottom: .4rem; }
+.pf-guide__steps p { color: #94a3b8; font-size: .9rem; }
+.pf-guide__steps code { background: #334155; padding: .1rem .4rem; border-radius: 4px; font-size: .85rem; }
+.pf-guide__faq-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 1rem; }
+.pf-guide__faq { display: flex; flex-direction: column; gap: .8rem; }
+.pf-guide__faq dt { font-weight: 700; color: #f1f5f9; }
+.pf-guide__faq dd { color: #94a3b8; font-size: .9rem; margin-left: 1rem; }
+.pf-guide__contact { margin-top: 2rem; color: #64748b; font-size: .85rem; }
+.pf-guide__contact a { color: #6366f1; }
+
+/* ── 푸터 ────────────────────────────────────  */
+.pf-footer { text-align: center; padding: 2rem; color: #475569; font-size: .82rem; border-top: 1px solid #1e293b; }
+.pf-footer a { color: #6366f1; }
+.pf-admin-link { display: block; margin-top: .5rem; color: #334155; font-size: .75rem; }
+.pf-portfolio .pf-footer { border-top-color: var(--pf-border); }
+
+/* ── 기타 ────────────────────────────────────  */
+.pf-empty { color: #64748b; padding: 2rem 0; text-align: center; }
+.pf-not-found { text-align: center; padding: 6rem 2rem; }
+.pf-not-found h1 { font-size: 5rem; font-weight: 900; color: #334155; }
+.pf-not-found p { color: #94a3b8; margin: 1rem 0 2rem; }
+
+/* ── 반응형 ──────────────────────────────────  */
+@media (max-width: 600px) {
+    .pf-nav { padding: 0 1rem; }
+    .pf-hero__title { font-size: 1.8rem; }
+    .pf-profile-hero__inner { flex-direction: column; align-items: flex-start; }
+    .pf-tabs { gap: .3rem; }
+    .pf-tab { padding: .5rem .8rem; font-size: .8rem; }
+    .pf-work-card__hero { height: 180px; }
+}

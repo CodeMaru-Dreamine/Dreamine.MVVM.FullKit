@@ -1,0 +1,530 @@
+@page "/{Slug}/admin"
+@layout PortfolioApp.Blazor.Layout.PortfolioLayout
+@namespace PortfolioApp.Blazor.Pages
+@rendermode InteractiveServer
+
+@inject PortfolioAdminViewModel Vm
+@inject NavigationManager Nav
+
+<PageTitle>어드민 — @(Vm.Config?.OwnerName ?? Slug)</PageTitle>
+
+<div class="pf-page pf-admin">
+
+    @if (!Vm.IsAuthenticated)
+    {
+        <div class="pf-login-box">
+            <h1 class="pf-login-box__title">🧑‍💻 @Slug</h1>
+            <p class="pf-login-box__desc">어드민 비밀번호를 입력하세요</p>
+            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            {
+                <p class="pf-status pf-status--err">@Vm.StatusMessage</p>
+            }
+            <input class="pf-input" type="password"
+                   value="@Vm.LoginPassword"
+                   @oninput="OnPasswordInput"
+                   @onkeydown="OnLoginKey"
+                   placeholder="비밀번호" autocomplete="current-password" />
+            <button class="pf-btn pf-btn--primary pf-btn--full" @onclick="OnLogin">로그인</button>
+        </div>
+    }
+    else
+    {
+        <div class="pf-admin-header">
+            <h1>@(Vm.Config?.OwnerName ?? Slug) 어드민</h1>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button class="pf-btn pf-btn--ghost" @onclick="OnRefresh">🔄</button>
+                <a href="/@Slug" class="pf-btn pf-btn--ghost">포트폴리오 보기 →</a>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+        {
+            <p class="pf-status @(Vm.StatusMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">
+                @Vm.StatusMessage
+            </p>
+        }
+
+        <div class="pf-tabs">
+            <button class="pf-tab @(activeTab == "project" ? "pf-tab--active" : "")" @onclick='() => SetTab("project")'>🛠️ 프로젝트</button>
+            <button class="pf-tab @(activeTab == "resume" ? "pf-tab--active" : "")" @onclick='() => SetTab("resume")'>📄 Resume</button>
+            <button class="pf-tab @(activeTab == "messages" ? "pf-tab--active" : "")" @onclick='() => SetTab("messages")'>
+                📬 메시지
+                @if (Vm.Messages.Count(m => !m.IsRead) > 0)
+                {
+                    <span class="pf-tab__badge">@Vm.Messages.Count(m => !m.IsRead)</span>
+                }
+            </button>
+            <button class="pf-tab @(activeTab == "settings" ? "pf-tab--active" : "")" @onclick='() => SetTab("settings")'>⚙️ 설정</button>
+        </div>
+
+        <!-- ── 탭: 프로젝트 ── -->
+        @if (activeTab == "project")
+        {
+            <div class="pf-tab-body">
+                @if (Vm.EditingProject == null)
+                {
+                    <button class="pf-btn pf-btn--primary" @onclick="Vm.NewProject">+ 새 프로젝트 추가</button>
+
+                    @if (Vm.Projects.Count == 0)
+                    {
+                        <p class="pf-empty">등록된 프로젝트가 없습니다.</p>
+                    }
+                    else
+                    {
+                        <div class="pf-project-admin-list">
+                            @foreach (var p in Vm.Projects)
+                            {
+                                <div class="pf-project-admin-item">
+                                    <span class="pf-project-admin-item__emoji">@p.Emoji</span>
+                                    <span class="pf-project-admin-item__title">@p.Title</span>
+                                    <span class="pf-project-admin-item__year">@p.Year</span>
+                                    <span class="pf-badge @(p.Category == ProjectCategory.Work ? "pf-badge--blue" : "pf-badge--green")">
+                                        @p.Category
+                                    </span>
+                                    <div class="pf-project-admin-item__actions">
+                                        <button class="pf-btn pf-btn--sm pf-btn--ghost"
+                                                @onclick="() => Vm.EditProject(p)">편집</button>
+                                        <button class="pf-btn pf-btn--sm pf-btn--danger"
+                                                @onclick="() => OnDeleteProject(p.Id)">삭제</button>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                }
+                else
+                {
+                    var proj = Vm.EditingProject;
+                    <div class="pf-post-editor">
+                        <div class="pf-form__row">
+                            <label class="pf-label">카테고리</label>
+                            <select class="pf-input" @bind="proj.Category">
+                                <option value="@ProjectCategory.Personal">Personal</option>
+                                <option value="@ProjectCategory.Work">Work</option>
+                            </select>
+                        </div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">이모지</label>
+                            <input class="pf-input" @bind="proj.Emoji" style="max-width:80px" />
+                        </div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">제목</label>
+                            <input class="pf-input" @bind="proj.Title" placeholder="프로젝트 제목" />
+                        </div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">설명</label>
+                            <textarea class="pf-textarea" @bind="proj.Description" rows="3"></textarea>
+                        </div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">태그 <span class="pf-label__hint">쉼표로 구분 (예: C#, WPF, MVVM)</span></label>
+                            <input class="pf-input" value="@string.Join(", ", proj.Tags)"
+                                   @onchange="OnTagsChange" />
+                        </div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">연도</label>
+                            <input class="pf-input" type="number" @bind="proj.Year" style="max-width:100px" />
+                        </div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">GitHub URL</label>
+                            <input class="pf-input" @bind="proj.GitHub" placeholder="https://github.com/..." />
+                        </div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">Live URL</label>
+                            <input class="pf-input" @bind="proj.LiveUrl" placeholder="https://..." />
+                        </div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">문서 URL</label>
+                            <input class="pf-input" @bind="proj.DocUrl" placeholder="https://..." />
+                        </div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">순서 <span class="pf-label__hint">낮을수록 앞에 표시 (0=자동)</span></label>
+                            <input class="pf-input" type="number" @bind="proj.SortOrder" style="max-width:80px" />
+                        </div>
+
+                        @if (proj.Category == ProjectCategory.Work)
+                        {
+                            <hr class="pf-divider" />
+                            <h4>Work 전용 정보</h4>
+                            <div class="pf-form__row">
+                                <label class="pf-label">부제 (한 줄 요약)</label>
+                                <input class="pf-input" @bind="proj.WorkSubtitle" />
+                            </div>
+                            <div class="pf-form__row">
+                                <label class="pf-label">기간</label>
+                                <input class="pf-input" @bind="proj.WorkPeriod" placeholder="2023.01 ~ 2023.12" />
+                            </div>
+                            <div class="pf-form__row">
+                                <label class="pf-label">역할</label>
+                                <input class="pf-input" @bind="proj.WorkRole" placeholder="메인 개발자" />
+                            </div>
+                            <div class="pf-form__row">
+                                <label class="pf-label">회사/고객</label>
+                                <input class="pf-input" @bind="proj.WorkCompany" />
+                            </div>
+                            <div class="pf-form__row">
+                                <label class="pf-label">기술 스택 (텍스트)</label>
+                                <input class="pf-input" @bind="proj.WorkTech" placeholder="C#, WPF, SQL Server" />
+                            </div>
+                            <div class="pf-form__row">
+                                <label class="pf-label">주요 성과 <span class="pf-label__hint">줄바꿈으로 구분</span></label>
+                                <textarea class="pf-textarea" rows="4"
+                                          value="@string.Join("\n", proj.WorkBullets)"
+                                          @onchange="OnWorkBulletsChange"></textarea>
+                            </div>
+                        }
+
+                        <div class="pf-form__row">
+                            <label class="pf-label">이미지 업로드</label>
+                            <InputFile class="pf-input-file" multiple OnChange="OnFilesSelected" accept="image/*" />
+                            @if (Vm.PendingFiles.Count > 0)
+                            {
+                                <ul class="pf-file-list">
+                                    @foreach (var f in Vm.PendingFiles)
+                                    {
+                                        <li>📎 @f.Name</li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+
+                        @if (proj.WorkImages.Length > 0)
+                        {
+                            <div class="pf-form__row">
+                                <label class="pf-label">등록된 이미지</label>
+                                <div class="pf-media-grid pf-media-grid--admin">
+                                    @foreach (var img in proj.WorkImages)
+                                    {
+                                        <div class="pf-media-item">
+                                            <img src="@Vm.GetMediaUrl(Slug, proj.Id, img)" alt="" />
+                                            <button class="pf-media-item__del"
+                                                    @onclick="() => OnDeleteMedia(proj.Id, img)">✕</button>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+
+                        <div class="pf-form__actions">
+                            <button class="pf-btn pf-btn--primary" @onclick="OnSaveProject" disabled="@Vm.IsUploading">
+                                @(Vm.IsUploading ? "업로드 중..." : "저장")
+                            </button>
+                            <button class="pf-btn pf-btn--ghost" @onclick="Vm.CancelEdit">취소</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- ── 탭: Resume ── -->
+        @if (activeTab == "resume")
+        {
+            <div class="pf-tab-body">
+
+                <h3>🛠 기술 스택</h3>
+                <div class="pf-form pf-form--inline">
+                    <input class="pf-input" @bind="Vm.NewSkillCategory" placeholder="카테고리 (예: Backend)" />
+                    <input class="pf-input" @bind="Vm.NewSkillNames" placeholder="기술 (쉼표 구분: C#, .NET, WPF)" />
+                    <button class="pf-btn pf-btn--primary" @onclick="Vm.AddSkillGroup">+ 추가</button>
+                </div>
+                @foreach (var g in Vm.Resume.SkillGroups)
+                {
+                    <div class="pf-skill-admin-item">
+                        <strong>@g.Category</strong>
+                        <span>@string.Join(", ", g.Skills)</span>
+                        <button class="pf-btn pf-btn--sm pf-btn--danger"
+                                @onclick="() => Vm.RemoveSkillGroup(g)">삭제</button>
+                    </div>
+                }
+
+                <hr class="pf-divider" />
+
+                <h3>💼 경력</h3>
+                @if (Vm.EditingExp == null)
+                {
+                    <button class="pf-btn pf-btn--primary" @onclick="Vm.NewExperience">+ 경력 추가</button>
+                    @foreach (var exp in Vm.Resume.Experiences)
+                    {
+                        <div class="pf-exp-admin-item">
+                            <strong>@exp.Company</strong> · @exp.Role · @exp.Period
+                            <button class="pf-btn pf-btn--sm pf-btn--ghost"
+                                    @onclick="() => Vm.EditExperience(exp)">편집</button>
+                            <button class="pf-btn pf-btn--sm pf-btn--danger"
+                                    @onclick="() => Vm.RemoveExperience(exp)">삭제</button>
+                        </div>
+                    }
+                }
+                else
+                {
+                    var exp = Vm.EditingExp;
+                    <div class="pf-post-editor">
+                        <div class="pf-form__row"><label class="pf-label">회사</label><input class="pf-input" @bind="exp.Company" /></div>
+                        <div class="pf-form__row"><label class="pf-label">역할</label><input class="pf-input" @bind="exp.Role" /></div>
+                        <div class="pf-form__row"><label class="pf-label">기간</label><input class="pf-input" @bind="exp.Period" placeholder="2020.01 ~ 2023.12" /></div>
+                        <div class="pf-form__row"><label class="pf-label">설명</label><textarea class="pf-textarea" @bind="exp.Description" rows="2"></textarea></div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">주요 성과 <span class="pf-label__hint">줄바꿈 구분</span></label>
+                            <textarea class="pf-textarea" rows="4"
+                                      value="@string.Join("\n", exp.Bullets)"
+                                      @onchange="OnExpBulletsChange"></textarea>
+                        </div>
+                        <div class="pf-form__actions">
+                            <button class="pf-btn pf-btn--primary" @onclick="Vm.SaveExperience">저장</button>
+                            <button class="pf-btn pf-btn--ghost" @onclick="Vm.CancelExp">취소</button>
+                        </div>
+                    </div>
+                }
+
+                <hr class="pf-divider" />
+
+                <h3>🎓 학력</h3>
+                @if (Vm.EditingEdu == null)
+                {
+                    <button class="pf-btn pf-btn--primary" @onclick="Vm.NewEducation">+ 학력 추가</button>
+                    @foreach (var edu in Vm.Resume.Educations)
+                    {
+                        <div class="pf-exp-admin-item">
+                            <strong>@edu.School</strong> · @edu.Degree · @edu.Period
+                            <button class="pf-btn pf-btn--sm pf-btn--ghost"
+                                    @onclick="() => Vm.EditEducation(edu)">편집</button>
+                            <button class="pf-btn pf-btn--sm pf-btn--danger"
+                                    @onclick="() => Vm.RemoveEducation(edu)">삭제</button>
+                        </div>
+                    }
+                }
+                else
+                {
+                    var edu = Vm.EditingEdu;
+                    <div class="pf-post-editor">
+                        <div class="pf-form__row"><label class="pf-label">학교</label><input class="pf-input" @bind="edu.School" /></div>
+                        <div class="pf-form__row"><label class="pf-label">전공/학위</label><input class="pf-input" @bind="edu.Degree" /></div>
+                        <div class="pf-form__row"><label class="pf-label">기간</label><input class="pf-input" @bind="edu.Period" placeholder="2010.03 ~ 2014.02" /></div>
+                        <div class="pf-form__actions">
+                            <button class="pf-btn pf-btn--primary" @onclick="Vm.SaveEducation">저장</button>
+                            <button class="pf-btn pf-btn--ghost" @onclick="Vm.CancelEdu">취소</button>
+                        </div>
+                    </div>
+                }
+
+                <hr class="pf-divider" />
+                <button class="pf-btn pf-btn--primary" @onclick="OnSaveResume">💾 Resume 저장</button>
+            </div>
+        }
+
+        <!-- ── 탭: 메시지 ── -->
+        @if (activeTab == "messages")
+        {
+            <div class="pf-tab-body">
+                @if (Vm.Messages.Count == 0)
+                {
+                    <p class="pf-empty">받은 메시지가 없습니다.</p>
+                }
+                else
+                {
+                    @foreach (var msg in Vm.Messages)
+                    {
+                        <div class="pf-message-item @(msg.IsRead ? "" : "pf-message-item--unread")">
+                            <div class="pf-message-item__header">
+                                <strong>@msg.SenderName</strong>
+                                @if (!string.IsNullOrWhiteSpace(msg.Email))
+                                {
+                                    <a href="mailto:@msg.Email" class="pf-message-item__email">@msg.Email</a>
+                                }
+                                <span class="pf-message-item__date">@msg.SentAt.ToString("yy.MM.dd HH:mm")</span>
+                                @if (!msg.IsRead)
+                                {
+                                    <span class="pf-badge pf-badge--new">NEW</span>
+                                }
+                            </div>
+                            <p class="pf-message-item__body">@msg.Message</p>
+                            <div class="pf-message-item__actions">
+                                @if (!msg.IsRead)
+                                {
+                                    <button class="pf-btn pf-btn--sm pf-btn--ghost"
+                                            @onclick="() => OnMarkRead(msg.Id)">읽음 처리</button>
+                                }
+                                <button class="pf-btn pf-btn--sm pf-btn--danger"
+                                        @onclick="() => OnDeleteMessage(msg.Id)">삭제</button>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+
+        <!-- ── 탭: 설정 ── -->
+        @if (activeTab == "settings" && Vm.Config is not null)
+        {
+            var cfg = Vm.Config;
+            <div class="pf-tab-body pf-settings">
+                <div class="pf-form__row">
+                    <label class="pf-label">이름</label>
+                    <input class="pf-input" @bind="cfg.OwnerName" />
+                </div>
+                <div class="pf-form__row">
+                    <label class="pf-label">직함/타이틀</label>
+                    <input class="pf-input" @bind="cfg.Title" placeholder="C# · WPF · MVVM 개발자" />
+                </div>
+                <div class="pf-form__row">
+                    <label class="pf-label">한 줄 소개</label>
+                    <textarea class="pf-textarea" @bind="cfg.Bio" rows="2"></textarea>
+                </div>
+                <div class="pf-form__row">
+                    <label class="pf-label">프로필 사진</label>
+                    <InputFile class="pf-input-file" OnChange="OnProfileSelected" accept="image/*" />
+                    @if (!string.IsNullOrWhiteSpace(cfg.ProfileImageFileName))
+                    {
+                        <img class="pf-cover-preview"
+                             src="@Vm.GetProfileImageUrl(Slug, cfg.ProfileImageFileName)" alt="프로필" />
+                    }
+                </div>
+                <div class="pf-form__row">
+                    <label class="pf-label">테마</label>
+                    <select class="pf-input" @bind="cfg.ThemeName">
+                        <option value="dark">🌑 Dark</option>
+                        <option value="ocean">🌊 Ocean</option>
+                        <option value="forest">🌲 Forest</option>
+                        <option value="minimal">⬜ Minimal</option>
+                        <option value="warm">🍊 Warm</option>
+                    </select>
+                </div>
+                <div class="pf-form__row">
+                    <label class="pf-label">GitHub URL</label>
+                    <input class="pf-input" @bind="cfg.GithubUrl" placeholder="https://github.com/username" />
+                </div>
+                <div class="pf-form__row">
+                    <label class="pf-label">LinkedIn URL</label>
+                    <input class="pf-input" @bind="cfg.LinkedInUrl" placeholder="https://linkedin.com/in/..." />
+                </div>
+                <div class="pf-form__row">
+                    <label class="pf-label">공개 이메일</label>
+                    <input class="pf-input" type="email" @bind="cfg.ContactEmail" />
+                </div>
+                <div class="pf-form__row pf-form__row--check">
+                    <label>
+                        <input type="checkbox" @bind="cfg.AllowContact" />
+                        📬 방문자 Contact 폼 허용
+                    </label>
+                </div>
+                <div class="pf-form__row pf-form__row--check">
+                    <label>
+                        <input type="checkbox" @bind="cfg.ShowOnHome" />
+                        🏠 홈 목록에 공개
+                    </label>
+                </div>
+                <div class="pf-form__row">
+                    <label class="pf-label">OG 제목 (링크 미리보기)</label>
+                    <input class="pf-input" @bind="cfg.OgTitle" placeholder="비우면 이름 사용" />
+                </div>
+                <div class="pf-form__row">
+                    <label class="pf-label">OG 설명</label>
+                    <input class="pf-input" @bind="cfg.OgDescription" />
+                </div>
+
+                <button class="pf-btn pf-btn--primary" @onclick="OnSaveConfig">💾 설정 저장</button>
+
+                <hr class="pf-divider" />
+
+                <div class="pf-danger-zone">
+                    <h3>⚠️ 위험 구역</h3>
+                    <p>아래 작업은 되돌릴 수 없습니다.</p>
+                    @if (!confirmDelete)
+                    {
+                        <button class="pf-btn pf-btn--danger" @onclick="() => confirmDelete = true">
+                            🗑 이 포트폴리오 삭제
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="pf-delete-confirm">
+                            <p><strong>정말로 '@Slug' 포트폴리오를 삭제할까요?</strong><br />모든 프로젝트·이미지·Resume가 삭제됩니다.</p>
+                            <div class="pf-form__actions">
+                                <button class="pf-btn pf-btn--danger" @onclick="OnDeleteSelf">확인, 삭제</button>
+                                <button class="pf-btn pf-btn--ghost" @onclick="() => confirmDelete = false">취소</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    private string activeTab = "project";
+    private bool confirmDelete = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Vm.IsLoaded) await Vm.LoadAsync(Slug);
+    }
+
+    private void OnPasswordInput(ChangeEventArgs e) => Vm.LoginPassword = e.Value?.ToString() ?? string.Empty;
+
+    private async Task OnLogin()
+    {
+        var ok = await Vm.LoginAsync(Slug);
+        if (ok) await Vm.LoadAsync(Slug);
+    }
+
+    private async Task OnLoginKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await OnLogin();
+    }
+
+    private void SetTab(string tab) { activeTab = tab; Vm.CancelEdit(); }
+
+    private async Task OnRefresh() => await Vm.LoadAsync(Slug);
+
+    private void OnFilesSelected(InputFileChangeEventArgs e)
+    {
+        Vm.PendingFiles.Clear();
+        Vm.PendingFiles.AddRange(e.GetMultipleFiles(20));
+    }
+
+    private async Task OnSaveProject() => await Vm.SaveProjectAsync(Slug);
+
+    private async Task OnDeleteProject(string projectId) => await Vm.DeleteProjectAsync(Slug, projectId);
+
+    private async Task OnDeleteMedia(string projectId, string fileName) =>
+        await Vm.DeleteProjectMediaAsync(Slug, projectId, fileName);
+
+    private async Task OnSaveResume() => await Vm.SaveResumeAsync(Slug);
+
+    private async Task OnSaveConfig() => await Vm.SaveConfigAsync();
+
+    private async Task OnProfileSelected(InputFileChangeEventArgs e) =>
+        await Vm.UploadProfileImageAsync(Slug, e.File);
+
+    private async Task OnMarkRead(string msgId) => await Vm.MarkReadAsync(Slug, msgId);
+
+    private async Task OnDeleteMessage(string msgId) => await Vm.DeleteMessageAsync(Slug, msgId);
+
+    private async Task OnDeleteSelf()
+    {
+        await Vm.DeleteSelfAsync(Slug);
+        Nav.NavigateTo("/");
+    }
+
+    private void OnTagsChange(ChangeEventArgs e)
+    {
+        if (Vm.EditingProject == null) return;
+        Vm.EditingProject.Tags = (e.Value?.ToString() ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+
+    private void OnWorkBulletsChange(ChangeEventArgs e)
+    {
+        if (Vm.EditingProject == null) return;
+        Vm.EditingProject.WorkBullets = (e.Value?.ToString() ?? string.Empty)
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+    }
+
+    private void OnExpBulletsChange(ChangeEventArgs e)
+    {
+        if (Vm.EditingExp == null) return;
+        Vm.EditingExp.Bullets = (e.Value?.ToString() ?? string.Empty)
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+    }
+}

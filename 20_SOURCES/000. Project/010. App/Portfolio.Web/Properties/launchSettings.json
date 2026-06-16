@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Portfolio.Web": {
+      "commandName": "Project",
+      "dotnetRunMessages": true
+    }
+  }
+}

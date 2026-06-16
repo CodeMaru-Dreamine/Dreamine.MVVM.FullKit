@@ -1,0 +1,64 @@
+@page "/guide"
+@layout PortfolioApp.Blazor.Layout.PortfolioLayout
+@namespace PortfolioApp.Blazor.Pages
+
+<PageTitle>사용법 — Codemaru Portfolio</PageTitle>
+
+<div class="pf-page pf-guide">
+    <nav class="pf-nav">
+        <a href="/" class="pf-nav__brand">🧑‍💻 Codemaru Portfolio</a>
+        <div class="pf-nav__links">
+            <a href="/" class="pf-nav__link">홈</a>
+            <a href="#create" class="pf-nav__link pf-nav__link--cta">시작하기 →</a>
+        </div>
+    </nav>
+
+    <div class="pf-guide__inner">
+        <h1 class="pf-guide__title">📖 사용법 가이드</h1>
+
+        <ol class="pf-guide__steps">
+            <li>
+                <strong>포트폴리오 생성</strong>
+                <p>홈 화면에서 URL 주소(예: <code>msjang</code>), 이름, 비밀번호를 입력하고 만들기 버튼을 누르세요.</p>
+            </li>
+            <li>
+                <strong>어드민 접속</strong>
+                <p><code>/{슬러그}/admin</code> 주소로 이동해 비밀번호로 로그인하세요.</p>
+            </li>
+            <li>
+                <strong>프로젝트 등록</strong>
+                <p>🛠️ 프로젝트 탭에서 Personal · Work 카테고리를 선택해 프로젝트를 추가하세요. 이미지, GitHub, Live URL도 함께 등록할 수 있습니다.</p>
+            </li>
+            <li>
+                <strong>Resume 작성</strong>
+                <p>📄 Resume 탭에서 기술 스택, 경력, 학력을 입력하고 저장하세요.</p>
+            </li>
+            <li>
+                <strong>프로필 설정</strong>
+                <p>⚙️ 설정 탭에서 프로필 사진, 직함, 소개글, 테마, GitHub/LinkedIn 링크를 설정하세요.</p>
+            </li>
+            <li>
+                <strong>공유</strong>
+                <p><code>/{슬러그}</code> 주소를 공유하면 방문자가 포트폴리오를 볼 수 있습니다. KakaoTalk 링크 미리보기도 지원합니다.</p>
+            </li>
+        </ol>
+
+        <h2 class="pf-guide__faq-title">❓ 자주 묻는 질문</h2>
+        <dl class="pf-guide__faq">
+            <dt>비밀번호를 잊어버렸어요.</dt>
+            <dd>비밀번호 찾기 기능은 없습니다. 슈퍼관리자(<code>/admin</code>)에게 문의하세요.</dd>
+            <dt>포트폴리오가 자동 삭제됐어요.</dt>
+            <dd>프로젝트를 하나도 등록하지 않은 계정은 생성 후 24시간이 지나면 자동 삭제됩니다.</dd>
+            <dt>Work 카드와 Personal 카드가 다르게 보이나요?</dt>
+            <dd>Work 프로젝트는 상세 설명 카드(기간·역할·성과·이미지 갤러리) 형태로 표시됩니다.</dd>
+            <dt>포트폴리오를 비공개로 설정하려면?</dt>
+            <dd>설정 탭에서 <strong>홈 목록에 공개</strong> 체크를 해제하면 목록에서 숨겨집니다. URL을 알면 여전히 접근 가능합니다.</dd>
+            <dt>포트폴리오를 삭제하려면?</dt>
+            <dd>어드민 → 설정 탭 맨 아래 <strong>위험 구역</strong>에서 삭제할 수 있습니다.</dd>
+        </dl>
+
+        <div class="pf-guide__contact">
+            문의: <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a>
+        </div>
+    </div>
+</div>

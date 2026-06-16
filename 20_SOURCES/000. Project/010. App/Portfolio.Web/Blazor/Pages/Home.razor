@@ -1,0 +1,229 @@
+@page "/"
+@layout PortfolioApp.Blazor.Layout.PortfolioLayout
+@namespace PortfolioApp.Blazor.Pages
+@rendermode InteractiveServer
+
+@inject PortfolioHomeViewModel Vm
+@inject NavigationManager Nav
+
+<PageTitle>🧑‍💻 무료 포트폴리오 — Codemaru Portfolio</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="나만의 개발자 포트폴리오를 5분 만에 만들어보세요. 프로젝트, 이력서, 기술스택까지 한 곳에." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="@Nav.Uri" />
+    <meta property="og:title" content="🧑‍💻 무료 포트폴리오 — Codemaru Portfolio" />
+    <meta property="og:description" content="나만의 개발자 포트폴리오를 5분 만에 만들어보세요." />
+    <meta property="og:image" content="@(Nav.BaseUri.TrimEnd('/') + "/img/og-platform.png")" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+</HeadContent>
+
+<div class="pf-page">
+
+    <!-- ── 네비바 ── -->
+    <nav class="pf-nav">
+        <a href="/" class="pf-nav__brand">🧑‍💻 Codemaru Portfolio</a>
+        <div class="pf-nav__links">
+            <a href="/guide" class="pf-nav__link">사용법</a>
+            <a href="#create" class="pf-nav__link pf-nav__link--cta">시작하기 →</a>
+        </div>
+    </nav>
+
+    <!-- ── 히어로 ── -->
+    <section class="pf-hero">
+        <div class="pf-hero__inner">
+            <p class="pf-hero__badge">✨ 무료 개발자 포트폴리오</p>
+            <h1 class="pf-hero__title">나만의 포트폴리오를<br /><span class="pf-hero__accent">5분 만에</span> 완성하세요</h1>
+            <p class="pf-hero__sub">프로젝트 · 이력서 · 기술스택 · 연락처 — 전부 한 곳에</p>
+            <a href="#create" class="pf-btn pf-btn--primary">지금 무료로 만들기 →</a>
+        </div>
+    </section>
+
+    <!-- ── 서비스 안내 ── -->
+    <div class="pf-service-notice">
+        <span>⚡ 무료 서비스 특성상 일시적인 접속 지연이 발생할 수 있습니다.</span>
+        <span class="pf-notice-sep">·</span>
+        <span>🗑 프로젝트 미등록 계정은 <strong>24시간 후 자동 삭제</strong>됩니다.</span>
+    </div>
+
+    <!-- ── 기능 소개 ── -->
+    <section class="pf-features">
+        <div class="pf-feature">
+            <span class="pf-feature__icon">🛠️</span>
+            <h3>프로젝트 관리</h3>
+            <p>Personal / Work 카테고리로 구분해 프로젝트를 체계적으로 전시</p>
+        </div>
+        <div class="pf-feature">
+            <span class="pf-feature__icon">📄</span>
+            <h3>이력서</h3>
+            <p>경력, 학력, 기술스택을 깔끔한 카드 형태로 정리</p>
+        </div>
+        <div class="pf-feature">
+            <span class="pf-feature__icon">🔍</span>
+            <h3>검색 &amp; 필터</h3>
+            <p>태그·카테고리·키워드로 프로젝트 빠르게 탐색</p>
+        </div>
+        <div class="pf-feature">
+            <span class="pf-feature__icon">📬</span>
+            <h3>연락처</h3>
+            <p>방문자가 직접 메시지를 남길 수 있는 Contact 폼</p>
+        </div>
+        <div class="pf-feature">
+            <span class="pf-feature__icon">🎨</span>
+            <h3>5가지 테마</h3>
+            <p>Dark · Ocean · Forest · Minimal · Warm 테마 선택</p>
+        </div>
+        <div class="pf-feature">
+            <span class="pf-feature__icon">🔗</span>
+            <h3>GitHub 연동</h3>
+            <p>GitHub · Live URL · 문서 링크를 프로젝트별로 등록</p>
+        </div>
+    </section>
+
+    <!-- ── 가입 폼 ── -->
+    <section class="pf-create" id="create">
+        <div class="pf-create__box">
+            <h2 class="pf-create__title">무료로 시작하기</h2>
+            <p class="pf-create__desc">아래 정보를 입력하면 바로 포트폴리오가 생성됩니다.</p>
+
+            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            {
+                <p class="pf-status @(Vm.StatusMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">
+                    @Vm.StatusMessage
+                </p>
+            }
+
+            <div class="pf-form">
+                <div class="pf-form__row">
+                    <label class="pf-label">
+                        URL 주소
+                        <span class="pf-label__hint">영문·숫자·하이픈만 (예: msjang)</span>
+                    </label>
+                    <div class="pf-input-prefix">
+                        <span class="pf-prefix">@Nav.BaseUri</span>
+                        <input class="pf-input" @bind="Vm.NewSlug" placeholder="msjang"
+                               @oninput="OnSlugInput" spellcheck="false" autocomplete="off" />
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(slugPreview))
+                    {
+                        <p class="pf-slug-preview">👉 @slugPreview</p>
+                    }
+                </div>
+
+                <div class="pf-form__row">
+                    <label class="pf-label">이름</label>
+                    <input class="pf-input" @bind="Vm.NewOwnerName" placeholder="장민수" />
+                </div>
+
+                <div class="pf-form__row">
+                    <label class="pf-label">
+                        어드민 비밀번호
+                        <span class="pf-label__hint">포트폴리오 편집 시 사용</span>
+                    </label>
+                    <input class="pf-input" type="password" @bind="Vm.NewPassword"
+                           placeholder="4자 이상" autocomplete="new-password" />
+                </div>
+
+                <button class="pf-btn pf-btn--primary pf-btn--full"
+                        @onclick="OnCreate" disabled="@isCreating">
+                    @(isCreating ? "생성 중..." : "🚀 포트폴리오 만들기")
+                </button>
+            </div>
+
+            <p class="pf-create__notice">
+                생성 후 <code>/{슬러그}/admin</code> 에서 프로젝트와 이력서를 편집할 수 있습니다.
+            </p>
+        </div>
+    </section>
+
+    <!-- ── 공개 포트폴리오 목록 ── -->
+    @if (publicList.Count > 0)
+    {
+        <section class="pf-list">
+            <h2 class="pf-list__title">🧑‍💻 포트폴리오 목록</h2>
+            <div class="pf-list__grid">
+                @foreach (var t in publicList)
+                {
+                    var imgUrl = !string.IsNullOrWhiteSpace(t.ProfileImageFileName)
+                        ? $"/portfolio-data/{t.Slug}/media/_profile/{Uri.EscapeDataString(t.ProfileImageFileName)}"
+                        : null;
+
+                    <a href="/@t.Slug" class="pf-card">
+                        <div class="pf-card__avatar"
+                             style="@(imgUrl != null ? $"background-image:url('{imgUrl}')" : "")">
+                            @if (imgUrl == null)
+                            {
+                                <span class="pf-card__avatar-icon">🧑‍💻</span>
+                            }
+                        </div>
+                        <div class="pf-card__body">
+                            <div class="pf-card__name">@t.OwnerName</div>
+                            <div class="pf-card__title">@t.Title</div>
+                            @if (!string.IsNullOrWhiteSpace(t.Bio))
+                            {
+                                <div class="pf-card__bio">@t.Bio</div>
+                            }
+                        </div>
+                    </a>
+                }
+            </div>
+        </section>
+    }
+
+    <footer class="pf-footer">
+        <p>Powered by Codemaru Portfolio · <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a></p>
+        <a href="/admin" class="pf-admin-link">관리자</a>
+    </footer>
+</div>
+
+@code {
+    private bool isCreating;
+    private string slugPreview = "";
+    private List<PortfolioConfig> publicList = [];
+
+    protected override void OnInitialized()
+    {
+        Vm.NewSlug = "";
+        Vm.NewOwnerName = "";
+        Vm.NewPassword = "";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Vm.LoadAsync();
+        publicList = Vm.Tenants
+            .Where(t => t.ShowOnHome)
+            .OrderBy(t => t.PinOrder == 0 ? int.MaxValue : t.PinOrder)
+            .ThenByDescending(t => t.CreatedAt)
+            .ToList();
+    }
+
+    private void OnSlugInput(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        var clean = new string(raw.ToLowerInvariant()
+            .Select(c => char.IsLetterOrDigit(c) || c == '-' ? c : '-').ToArray())
+            .Trim('-');
+        Vm.NewSlug = clean;
+        slugPreview = string.IsNullOrWhiteSpace(clean) ? "" : $"{Nav.BaseUri}{clean}";
+    }
+
+    private async Task OnCreate()
+    {
+        isCreating = true;
+        StateHasChanged();
+        try
+        {
+            var slug = Vm.NewSlug.Trim().ToLowerInvariant();
+            var ok = await Vm.CreateTenantAsync();
+            if (ok)
+            {
+                await Task.Delay(1200);
+                Nav.NavigateTo($"/{slug}/admin");
+            }
+        }
+        finally { isCreating = false; }
+    }
+}

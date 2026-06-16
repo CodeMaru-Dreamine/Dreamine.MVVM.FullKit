@@ -1,0 +1,404 @@
+@page "/{Slug}"
+@layout PortfolioApp.Blazor.Layout.PortfolioLayout
+@namespace PortfolioApp.Blazor.Pages
+@rendermode InteractiveServer
+
+@inject PortfolioPublicViewModel Vm
+@inject NavigationManager Nav
+
+<PageTitle>@(Vm.Config?.OwnerName ?? Slug) — Portfolio</PageTitle>
+
+@if (Vm.Config != null)
+{
+    var cfg = Vm.Config;
+    var ogTitle = string.IsNullOrWhiteSpace(cfg.OgTitle) ? $"{cfg.OwnerName} — Portfolio" : cfg.OgTitle;
+    var ogDesc = string.IsNullOrWhiteSpace(cfg.OgDescription) ? cfg.Bio : cfg.OgDescription;
+
+    <HeadContent>
+        <meta property="og:title" content="@ogTitle" />
+        <meta property="og:description" content="@ogDesc" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="@Nav.Uri" />
+    </HeadContent>
+}
+
+<div class="pf-page pf-portfolio theme-@(Vm.Config?.ThemeName ?? "dark")">
+
+    @if (Vm.Config == null)
+    {
+        <div class="pf-not-found">
+            <h1>404</h1>
+            <p>존재하지 않는 포트폴리오입니다.</p>
+            <a href="/" class="pf-btn pf-btn--primary">홈으로</a>
+        </div>
+    }
+    else
+    {
+        var cfg = Vm.Config;
+
+        <!-- ── 네비바 ── -->
+        <nav class="pf-nav pf-nav--portfolio">
+            <a href="/" class="pf-nav__brand">🧑‍💻 Codemaru Portfolio</a>
+            <div class="pf-nav__links">
+                <a href="#projects" class="pf-nav__link">Projects</a>
+                <a href="#resume" class="pf-nav__link">Resume</a>
+                @if (cfg.AllowContact)
+                {
+                    <a href="#contact" class="pf-nav__link">Contact</a>
+                }
+                <a href="/@Slug/admin" class="pf-nav__link pf-nav__link--ghost">Admin</a>
+            </div>
+        </nav>
+
+        <!-- ── 히어로 ── -->
+        <section class="pf-profile-hero">
+            <div class="pf-profile-hero__inner">
+                @if (!string.IsNullOrWhiteSpace(cfg.ProfileImageFileName))
+                {
+                    <img class="pf-profile-hero__avatar"
+                         src="@Vm.GetProfileImageUrl(Slug, cfg.ProfileImageFileName)"
+                         alt="@cfg.OwnerName" />
+                }
+                else
+                {
+                    <div class="pf-profile-hero__avatar pf-profile-hero__avatar--empty">🧑‍💻</div>
+                }
+                <div class="pf-profile-hero__meta">
+                    <h1 class="pf-profile-hero__name">@cfg.OwnerName</h1>
+                    <p class="pf-profile-hero__title">@cfg.Title</p>
+                    @if (!string.IsNullOrWhiteSpace(cfg.Bio))
+                    {
+                        <p class="pf-profile-hero__bio">@cfg.Bio</p>
+                    }
+                    <div class="pf-profile-hero__links">
+                        @if (!string.IsNullOrWhiteSpace(cfg.GithubUrl))
+                        {
+                            <a href="@cfg.GithubUrl" target="_blank" class="pf-social-link">
+                                <i class="fab fa-github"></i> GitHub
+                            </a>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(cfg.LinkedInUrl))
+                        {
+                            <a href="@cfg.LinkedInUrl" target="_blank" class="pf-social-link">
+                                <i class="fab fa-linkedin"></i> LinkedIn
+                            </a>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(cfg.ContactEmail))
+                        {
+                            <a href="mailto:@cfg.ContactEmail" class="pf-social-link">
+                                <i class="fas fa-envelope"></i> @cfg.ContactEmail
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Projects ── -->
+        <section class="pf-section" id="projects">
+            <div class="pf-section__header">
+                <h2><i class="fas fa-diagram-project"></i> Projects</h2>
+            </div>
+
+            <!-- 검색/필터 -->
+            <div class="pf-toolbar">
+                <div class="pf-tool pf-tool--search">
+                    <i class="fas fa-magnifying-glass"></i>
+                    <input class="pf-input" placeholder="검색: 제목/설명/태그…"
+                           value="@Vm.Query" @oninput="OnQueryInput" />
+                </div>
+                <div class="pf-tool">
+                    <label>태그</label>
+                    <select class="pf-input" @bind="Vm.SelectedTag">
+                        <option value="">모든 태그</option>
+                        @foreach (var t in Vm.AllTags)
+                        {
+                            <option value="@t">@t</option>
+                        }
+                    </select>
+                </div>
+                <div class="pf-tool">
+                    <label>카테고리</label>
+                    <select class="pf-input" @bind="Vm.SelectedCategory">
+                        <option value="">모두</option>
+                        <option value="Personal">Personal</option>
+                        <option value="Work">Work</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Personal -->
+            @if (Vm.Personal.Count > 0)
+            {
+                <h3 class="pf-sub-header">Personal</h3>
+                <div class="pf-project-grid">
+                    @foreach (var p in Vm.Personal)
+                    {
+                        <div class="pf-project-card">
+                            @if (!string.IsNullOrWhiteSpace(p.ImageFileName))
+                            {
+                                <div class="pf-project-card__thumb"
+                                     style="background-image:url('@Vm.GetMediaUrl(Slug, p.Id, p.ImageFileName)')">
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="pf-project-card__thumb pf-project-card__thumb--empty">
+                                    <span>@p.Emoji</span>
+                                </div>
+                            }
+                            <div class="pf-project-card__body">
+                                <div class="pf-project-card__year">@p.Year</div>
+                                <h4 class="pf-project-card__title">@p.Title</h4>
+                                <p class="pf-project-card__desc">@p.Description</p>
+                                <div class="pf-project-card__tags">
+                                    @foreach (var tag in p.Tags)
+                                    {
+                                        <span class="pf-tag">@tag</span>
+                                    }
+                                </div>
+                                <div class="pf-project-card__links">
+                                    @if (!string.IsNullOrWhiteSpace(p.GitHub))
+                                    {
+                                        <a href="@p.GitHub" target="_blank" class="pf-link-btn">
+                                            <i class="fab fa-github"></i> GitHub
+                                        </a>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(p.LiveUrl))
+                                    {
+                                        <a href="@p.LiveUrl" target="_blank" class="pf-link-btn">
+                                            <i class="fas fa-external-link-alt"></i> Live
+                                        </a>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(p.DocUrl))
+                                    {
+                                        <a href="@p.DocUrl" target="_blank" class="pf-link-btn">
+                                            <i class="fas fa-book"></i> Docs
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Work -->
+            @if (Vm.Work.Count > 0)
+            {
+                <h3 class="pf-sub-header">Work</h3>
+                <div class="pf-work-list">
+                    @foreach (var p in Vm.Work)
+                    {
+                        <div class="pf-work-card">
+                            @if (p.WorkImages.Length > 0)
+                            {
+                                <div class="pf-work-card__hero"
+                                     style="background-image:url('@Vm.GetMediaUrl(Slug, p.Id, p.WorkImages[0])')">
+                                </div>
+                            }
+                            <div class="pf-work-card__body">
+                                <div class="pf-work-card__meta">
+                                    @if (!string.IsNullOrWhiteSpace(p.WorkPeriod))
+                                    {
+                                        <span class="pf-work-meta-chip">📅 @p.WorkPeriod</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(p.WorkRole))
+                                    {
+                                        <span class="pf-work-meta-chip">👤 @p.WorkRole</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(p.WorkCompany))
+                                    {
+                                        <span class="pf-work-meta-chip">🏢 @p.WorkCompany</span>
+                                    }
+                                </div>
+                                <h4 class="pf-work-card__title">@p.Emoji @p.Title</h4>
+                                @if (!string.IsNullOrWhiteSpace(p.WorkSubtitle))
+                                {
+                                    <p class="pf-work-card__subtitle">@p.WorkSubtitle</p>
+                                }
+                                <p class="pf-work-card__desc">@p.Description</p>
+                                @if (p.WorkBullets.Length > 0)
+                                {
+                                    <ul class="pf-work-card__bullets">
+                                        @foreach (var b in p.WorkBullets)
+                                        {
+                                            <li>@b</li>
+                                        }
+                                    </ul>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(p.WorkTech))
+                                {
+                                    <p class="pf-work-card__tech"><strong>Tech:</strong> @p.WorkTech</p>
+                                }
+                                <div class="pf-project-card__tags">
+                                    @foreach (var tag in p.Tags)
+                                    {
+                                        <span class="pf-tag">@tag</span>
+                                    }
+                                </div>
+                                <div class="pf-project-card__links">
+                                    @if (!string.IsNullOrWhiteSpace(p.GitHub))
+                                    {
+                                        <a href="@p.GitHub" target="_blank" class="pf-link-btn">
+                                            <i class="fab fa-github"></i> GitHub
+                                        </a>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(p.LiveUrl))
+                                    {
+                                        <a href="@p.LiveUrl" target="_blank" class="pf-link-btn">
+                                            <i class="fas fa-external-link-alt"></i> Live
+                                        </a>
+                                    }
+                                </div>
+                                <!-- Work 추가 이미지 -->
+                                @if (p.WorkImages.Length > 1)
+                                {
+                                    <div class="pf-work-images">
+                                        @foreach (var img in p.WorkImages.Skip(1))
+                                        {
+                                            <img src="@Vm.GetMediaUrl(Slug, p.Id, img)" alt="" class="pf-work-img" />
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (Vm.Personal.Count == 0 && Vm.Work.Count == 0)
+            {
+                <p class="pf-empty">등록된 프로젝트가 없습니다.</p>
+            }
+        </section>
+
+        <!-- ── Resume ── -->
+        @if (Vm.Resume.SkillGroups.Count > 0 || Vm.Resume.Experiences.Count > 0 || Vm.Resume.Educations.Count > 0)
+        {
+            <section class="pf-section" id="resume">
+                <div class="pf-section__header">
+                    <h2><i class="fas fa-file-lines"></i> Resume</h2>
+                </div>
+
+                @if (Vm.Resume.SkillGroups.Count > 0)
+                {
+                    <div class="pf-resume-block">
+                        <h3 class="pf-resume-block__title">🛠 기술 스택</h3>
+                        @foreach (var g in Vm.Resume.SkillGroups)
+                        {
+                            <div class="pf-skill-group">
+                                <span class="pf-skill-group__label">@g.Category</span>
+                                <div class="pf-skill-chips">
+                                    @foreach (var s in g.Skills)
+                                    {
+                                        <span class="pf-skill-chip">@s</span>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (Vm.Resume.Experiences.Count > 0)
+                {
+                    <div class="pf-resume-block">
+                        <h3 class="pf-resume-block__title">💼 경력</h3>
+                        @foreach (var exp in Vm.Resume.Experiences)
+                        {
+                            <div class="pf-exp-card">
+                                <div class="pf-exp-card__header">
+                                    <strong>@exp.Company</strong>
+                                    <span class="pf-exp-card__role">@exp.Role</span>
+                                    <span class="pf-exp-card__period">@exp.Period</span>
+                                </div>
+                                @if (!string.IsNullOrWhiteSpace(exp.Description))
+                                {
+                                    <p class="pf-exp-card__desc">@exp.Description</p>
+                                }
+                                @if (exp.Bullets.Count > 0)
+                                {
+                                    <ul class="pf-exp-card__bullets">
+                                        @foreach (var b in exp.Bullets)
+                                        {
+                                            <li>@b</li>
+                                        }
+                                    </ul>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (Vm.Resume.Educations.Count > 0)
+                {
+                    <div class="pf-resume-block">
+                        <h3 class="pf-resume-block__title">🎓 학력</h3>
+                        @foreach (var edu in Vm.Resume.Educations)
+                        {
+                            <div class="pf-edu-card">
+                                <strong>@edu.School</strong>
+                                <span class="pf-edu-card__degree">@edu.Degree</span>
+                                <span class="pf-edu-card__period">@edu.Period</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+        }
+
+        <!-- ── Contact ── -->
+        @if (cfg.AllowContact)
+        {
+            <section class="pf-section" id="contact">
+                <div class="pf-section__header">
+                    <h2><i class="fas fa-envelope"></i> Contact</h2>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+                {
+                    <p class="pf-status @(Vm.StatusMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">
+                        @Vm.StatusMessage
+                    </p>
+                }
+
+                <div class="pf-contact-form">
+                    <div class="pf-form__row">
+                        <label class="pf-label">이름</label>
+                        <input class="pf-input" @bind="Vm.ContactName" placeholder="홍길동" />
+                    </div>
+                    <div class="pf-form__row">
+                        <label class="pf-label">이메일 (선택)</label>
+                        <input class="pf-input" type="email" @bind="Vm.ContactEmail" placeholder="hong@example.com" />
+                    </div>
+                    <div class="pf-form__row">
+                        <label class="pf-label">메시지</label>
+                        <textarea class="pf-textarea" @bind="Vm.ContactMessage" rows="4"
+                                  placeholder="안녕하세요! 협업 제안 드리고 싶습니다…"></textarea>
+                    </div>
+                    <button class="pf-btn pf-btn--primary" @onclick="OnSendContact">📬 메시지 보내기</button>
+                </div>
+            </section>
+        }
+
+        <footer class="pf-footer">
+            <p>@cfg.OwnerName · Powered by <a href="/">Codemaru Portfolio</a></p>
+        </footer>
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Vm.LoadAsync(Slug);
+    }
+
+    private void OnQueryInput(ChangeEventArgs e) => Vm.Query = e.Value?.ToString() ?? string.Empty;
+
+    private async Task OnSendContact()
+    {
+        await Vm.SendContactAsync(Slug);
+    }
+}

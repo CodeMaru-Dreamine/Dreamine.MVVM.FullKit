@@ -1,0 +1,92 @@
+@page "/admin"
+@layout PortfolioApp.Blazor.Layout.PortfolioLayout
+@namespace PortfolioApp.Blazor.Pages
+@rendermode InteractiveServer
+
+@inject PortfolioHomeViewModel Vm
+@inject NavigationManager Nav
+
+<PageTitle>슈퍼 관리자 — Codemaru Portfolio</PageTitle>
+
+<div class="pf-page pf-admin">
+    <div class="pf-admin-header">
+        <h1>🔑 슈퍼 관리자</h1>
+        @if (Vm.IsAuthenticated)
+        {
+            <button class="pf-btn pf-btn--ghost" @onclick="OnRefresh">🔄 새로고침</button>
+        }
+    </div>
+
+    @if (!Vm.IsAuthenticated)
+    {
+        <div class="pf-login-box">
+            <p class="pf-login-box__desc">슈퍼 관리자 비밀번호</p>
+            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            {
+                <p class="pf-status pf-status--err">@Vm.StatusMessage</p>
+            }
+            <input class="pf-input" type="password"
+                   value="@Vm.LoginPassword"
+                   @oninput="OnPasswordInput"
+                   @onkeydown="OnLoginKey"
+                   placeholder="비밀번호" />
+            <button class="pf-btn pf-btn--primary pf-btn--full" @onclick="OnLogin">로그인</button>
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+        {
+            <p class="pf-status @(Vm.StatusMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">
+                @Vm.StatusMessage
+            </p>
+        }
+
+        <div class="pf-superadmin-list">
+            <h2>포트폴리오 목록 (@(Vm.Tenants.Count)개)</h2>
+            @foreach (var t in Vm.Tenants.OrderByDescending(x => x.CreatedAt))
+            {
+                <div class="pf-superadmin-item">
+                    <div class="pf-superadmin-item__info">
+                        <span class="pf-superadmin-item__slug">@t.Slug</span>
+                        <span class="pf-superadmin-item__name">@t.OwnerName</span>
+                        <span class="pf-superadmin-item__date">생성: @t.CreatedAt.ToString("yy.MM.dd")</span>
+                        <span class="pf-superadmin-item__pub @(t.ShowOnHome ? "pf-badge--green" : "")">
+                            @(t.ShowOnHome ? "공개" : "비공개")
+                        </span>
+                    </div>
+                    <div class="pf-superadmin-item__actions">
+                        <a href="/@t.Slug" class="pf-btn pf-btn--sm pf-btn--ghost">보기</a>
+                        <a href="/@t.Slug/admin" class="pf-btn pf-btn--sm pf-btn--ghost">어드민</a>
+                        <button class="pf-btn pf-btn--sm pf-btn--danger"
+                                @onclick="() => OnDelete(t.Slug)">삭제</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        if (Vm.IsAuthenticated) await Vm.LoadAsync();
+    }
+
+    private void OnPasswordInput(ChangeEventArgs e) => Vm.LoginPassword = e.Value?.ToString() ?? string.Empty;
+
+    private async Task OnLogin()
+    {
+        var ok = await Vm.LoginAsync();
+        if (ok) await Vm.LoadAsync();
+    }
+
+    private async Task OnLoginKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await OnLogin();
+    }
+
+    private async Task OnRefresh() => await Vm.LoadAsync();
+
+    private async Task OnDelete(string slug) => await Vm.DeleteTenantAsync(slug);
+}
