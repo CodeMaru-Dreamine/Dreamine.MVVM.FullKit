@@ -1,0 +1,39 @@
+{
+  "SkillGroups": [
+    {
+      "Category": "Language",
+      "Skills": [ "C#", "SQL", "TypeScript", "HTML/CSS" ]
+    },
+    {
+      "Category": "Framework",
+      "Skills": [ ".NET 8", "WPF", "Blazor Server", "ASP.NET Core" ]
+    },
+    {
+      "Category": "Architecture",
+      "Skills": [ "MVVM", "멀티테넌트", "DI/IoC", "클린 아키텍처" ]
+    },
+    {
+      "Category": "Tools",
+      "Skills": [ "Visual Studio", "Git", "GitHub Actions", "WebView2" ]
+    },
+    {
+      "Category": "Communication",
+      "Skills": [ "RabbitMQ", "SignalR", "Serial", "TCP/IP" ]
+    }
+  ],
+  "Experiences": [
+    {
+      "Company": "Codemaru",
+      "Role": "풀스택 개발자",
+      "Period": "2020.01 ~ 현재",
+      "Description": "WPF·Blazor 하이브리드 플랫폼 설계 및 멀티테넌트 SaaS 서비스 개발",
+      "Bullets": [
+        "Dreamine.MVVM.FullKit 하이브리드 앱 프레임워크 설계 및 구현",
+        "DreamineVMS 통합 관제 시스템 개발",
+        "가족 앨범·포트폴리오·웨딩 플랫폼 멀티테넌트 서비스 구축",
+        "Dreamine.Communication 라이브러리 (Serial/Socket/RabbitMQ) 개발"
+      ]
+    }
+  ],
+  "Educations": []
+}

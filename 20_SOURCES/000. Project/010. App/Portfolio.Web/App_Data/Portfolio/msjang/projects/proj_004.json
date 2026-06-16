@@ -1,0 +1,25 @@
+{
+  "Id": "proj_004",
+  "Title": "DreamineVMS",
+  "Description": "통합 관제·모니터링 시스템. WPF 기반 실시간 데이터 시각화 및 장치 관리 플랫폼.",
+  "Tags": [ "WPF", ".NET", "MVVM", "모니터링", "시리얼통신" ],
+  "Year": 2024,
+  "Emoji": "📡",
+  "ImageFileName": null,
+  "GitHub": null,
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Work",
+  "SortOrder": 1,
+  "WorkImages": [],
+  "WorkSubtitle": "통합 관제 솔루션",
+  "WorkBullets": [
+    "WPF MVVM 아키텍처 기반 실시간 모니터링",
+    "시리얼/소켓 통신 디바이스 연동",
+    "멀티스크린 레이아웃 및 알람 관리"
+  ],
+  "WorkPeriod": "2024.01 ~ 현재",
+  "WorkRole": "메인 개발자",
+  "WorkTech": "C#, WPF, .NET 8, Serial, SignalR",
+  "WorkCompany": "Codemaru"
+}

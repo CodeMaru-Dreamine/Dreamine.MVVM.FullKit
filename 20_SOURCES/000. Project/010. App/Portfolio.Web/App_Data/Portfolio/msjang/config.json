@@ -1,0 +1,18 @@
+{
+  "Slug": "msjang",
+  "OwnerName": "장민수",
+  "Title": ".NET / WPF / Blazor 풀스택 개발자",
+  "Bio": "WPF·Blazor 하이브리드 앱과 멀티테넌트 플랫폼을 설계·개발합니다.\n개발 생산성을 높이는 도구와 아키텍처를 좋아합니다.",
+  "ProfileImageFileName": "",
+  "ThemeName": "dark",
+  "PasswordHash": "f931c308fc5b60b421c09969912839dff2776957d98b8d2f91c554ed8fc80f78",
+  "ShowOnHome": true,
+  "PinOrder": 1,
+  "CreatedAt": "2026-06-16T00:00:00",
+  "GithubUrl": "https://github.com/CodeMaru-Dreamine",
+  "LinkedInUrl": "",
+  "ContactEmail": "togood1983@gmail.com",
+  "AllowContact": true,
+  "OgTitle": "장민수 — .NET / Blazor 개발자 포트폴리오",
+  "OgDescription": "WPF·Blazor 하이브리드 앱과 멀티테넌트 플랫폼을 설계·개발하는 풀스택 개발자입니다."
+}

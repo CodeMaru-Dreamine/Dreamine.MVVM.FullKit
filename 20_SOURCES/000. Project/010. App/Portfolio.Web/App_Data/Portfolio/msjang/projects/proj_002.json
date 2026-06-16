@@ -1,0 +1,21 @@
+{
+  "Id": "proj_002",
+  "Title": "Codemaru Family",
+  "Description": "가족 앨범 & 소셜 플랫폼. 포스트·앨범·반응·댓글을 지원하는 프라이빗 가족 공간.",
+  "Tags": [ "Blazor Server", "WPF", "멀티테넌트", "가족앨범" ],
+  "Year": 2026,
+  "Emoji": "👨‍👩‍👧‍👦",
+  "ImageFileName": null,
+  "GitHub": "https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit",
+  "LiveUrl": null,
+  "DocUrl": null,
+  "Category": "Personal",
+  "SortOrder": 2,
+  "WorkImages": [],
+  "WorkSubtitle": null,
+  "WorkBullets": [],
+  "WorkPeriod": null,
+  "WorkRole": null,
+  "WorkTech": null,
+  "WorkCompany": null
+}
