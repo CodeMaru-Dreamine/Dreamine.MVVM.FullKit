@@ -137,10 +137,11 @@
                     @foreach (var p in Vm.Personal)
                     {
                         <div class="pf-project-card">
-                            @if (!string.IsNullOrWhiteSpace(p.ImageFileName))
+                            @{ var coverImg = !string.IsNullOrWhiteSpace(p.ImageFileName) ? p.ImageFileName : (p.WorkImages.Length > 0 ? p.WorkImages[0] : null); }
+                            @if (coverImg != null)
                             {
                                 <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, p.ImageFileName)')">
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, coverImg)')">
                                 </div>
                             }
                             else
@@ -295,10 +296,11 @@
                     @foreach (var p in Vm.Public)
                     {
                         <div class="pf-project-card">
-                            @if (!string.IsNullOrWhiteSpace(p.ImageFileName))
+                            @{ var coverImg = !string.IsNullOrWhiteSpace(p.ImageFileName) ? p.ImageFileName : (p.WorkImages.Length > 0 ? p.WorkImages[0] : null); }
+                            @if (coverImg != null)
                             {
                                 <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, p.ImageFileName)')">
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, coverImg)')">
                                 </div>
                             }
                             else

@@ -74,6 +74,8 @@ public class PortfolioAdminViewModel
     }
 
     // ── 프로젝트 ────────────────────────────────────────────────
+    public void Logout() { IsAuthenticated = false; IsLoaded = false; LoginPassword = ""; StatusMessage = ""; EditingProject = null; }
+
     public void NewProject() => EditingProject = new ProjectItem();
     public void EditProject(ProjectItem p) { EditingProject = p.ShallowClone(); PendingFiles.Clear(); PendingVideos.Clear(); }
     public void CancelEdit() { EditingProject = null; PendingFiles.Clear(); PendingVideos.Clear(); }
@@ -99,8 +101,10 @@ public class PortfolioAdminViewModel
                 }
                 else
                 {
-                    // Personal / Public: 첫 번째 이미지를 커버로, 이후는 교체
-                    EditingProject.ImageFileName = saved;
+                    // Personal / Public: WorkImages에 모아두고 첫 번째를 커버로
+                    if (!EditingProject.WorkImages.Contains(saved))
+                        EditingProject.WorkImages = [.. EditingProject.WorkImages, saved];
+                    EditingProject.ImageFileName ??= saved;
                 }
             }
             foreach (var v in PendingVideos)

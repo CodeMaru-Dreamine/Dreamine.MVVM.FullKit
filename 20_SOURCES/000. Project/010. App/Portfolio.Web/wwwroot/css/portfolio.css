@@ -359,6 +359,12 @@ input, select, textarea { font-family: inherit; }
 .pf-img-guide__badge:not([class*='--']) { background: #0f172a; color: #94a3b8; border: 1px solid #1e293b; }
 .pf-img-guide__tip { font-size: .73rem; color: #64748b; }
 
+/* ── 미디어 URL 입력 ─────────────────────────  */
+.pf-media-input-row { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin-bottom: .4rem; }
+.pf-media-input-or { font-size: .78rem; color: #64748b; white-space: nowrap; }
+.pf-url-add { display: flex; gap: .4rem; flex: 1; min-width: 200px; }
+.pf-input--sm { padding: .4rem .6rem; font-size: .85rem; flex: 1; }
+
 /* ── 동영상 ──────────────────────────────────  */
 .pf-video-list { display: flex; flex-direction: column; gap: .8rem; margin-top: 1rem; }
 .pf-video { width: 100%; max-width: 640px; border-radius: 10px; background: #000; }
