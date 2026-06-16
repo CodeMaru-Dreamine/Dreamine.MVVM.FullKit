@@ -28,6 +28,7 @@ public class PortfolioPublicViewModel
 
     public List<ProjectItem> Personal => FilteredProjects.Where(p => p.Category == ProjectCategory.Personal).ToList();
     public List<ProjectItem> Work => FilteredProjects.Where(p => p.Category == ProjectCategory.Work).ToList();
+    public List<ProjectItem> Public => FilteredProjects.Where(p => p.Category == ProjectCategory.Public).ToList();
 
     public IEnumerable<string> AllTags => Projects
         .SelectMany(p => p.Tags)

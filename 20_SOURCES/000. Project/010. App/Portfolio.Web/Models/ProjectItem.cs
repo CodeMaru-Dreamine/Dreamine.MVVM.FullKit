@@ -1,6 +1,6 @@
 namespace PortfolioApp.Models;
 
-public enum ProjectCategory { Personal, Work }
+public enum ProjectCategory { Personal, Work, Public }
 
 public class ProjectItem
 {

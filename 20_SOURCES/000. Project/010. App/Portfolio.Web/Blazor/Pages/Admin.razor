@@ -78,7 +78,7 @@
                                     <span class="pf-project-admin-item__emoji">@p.Emoji</span>
                                     <span class="pf-project-admin-item__title">@p.Title</span>
                                     <span class="pf-project-admin-item__year">@p.Year</span>
-                                    <span class="pf-badge @(p.Category == ProjectCategory.Work ? "pf-badge--blue" : "pf-badge--green")">
+                                    <span class="pf-badge @(p.Category == ProjectCategory.Work ? "pf-badge--blue" : p.Category == ProjectCategory.Public ? "pf-badge--purple" : "pf-badge--green")">
                                         @p.Category
                                     </span>
                                     <div class="pf-project-admin-item__actions">
@@ -101,6 +101,7 @@
                             <select class="pf-input" @bind="proj.Category">
                                 <option value="@ProjectCategory.Personal">Personal</option>
                                 <option value="@ProjectCategory.Work">Work</option>
+                                <option value="@ProjectCategory.Public">Public</option>
                             </select>
                         </div>
                         <div class="pf-form__row">

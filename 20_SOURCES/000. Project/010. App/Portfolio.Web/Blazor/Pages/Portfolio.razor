@@ -124,6 +124,7 @@
                         <option value="">모두</option>
                         <option value="Personal">Personal</option>
                         <option value="Work">Work</option>
+                        <option value="Public">Public</option>
                     </select>
                 </div>
             </div>
@@ -268,7 +269,63 @@
                 </div>
             }
 
-            @if (Vm.Personal.Count == 0 && Vm.Work.Count == 0)
+            <!-- Public -->
+            @if (Vm.Public.Count > 0)
+            {
+                <h3 class="pf-sub-header">Public</h3>
+                <div class="pf-project-grid">
+                    @foreach (var p in Vm.Public)
+                    {
+                        <div class="pf-project-card">
+                            @if (!string.IsNullOrWhiteSpace(p.ImageFileName))
+                            {
+                                <div class="pf-project-card__thumb"
+                                     style="background-image:url('@Vm.GetMediaUrl(Slug, p.Id, p.ImageFileName)')">
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="pf-project-card__thumb pf-project-card__thumb--empty">
+                                    <span>@p.Emoji</span>
+                                </div>
+                            }
+                            <div class="pf-project-card__body">
+                                <div class="pf-project-card__year">@p.Year</div>
+                                <h4 class="pf-project-card__title">@p.Title</h4>
+                                <p class="pf-project-card__desc">@p.Description</p>
+                                <div class="pf-project-card__tags">
+                                    @foreach (var tag in p.Tags)
+                                    {
+                                        <span class="pf-tag">@tag</span>
+                                    }
+                                </div>
+                                <div class="pf-project-card__links">
+                                    @if (!string.IsNullOrWhiteSpace(p.GitHub))
+                                    {
+                                        <a href="@p.GitHub" target="_blank" class="pf-link-btn">
+                                            <i class="fab fa-github"></i> GitHub
+                                        </a>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(p.LiveUrl))
+                                    {
+                                        <a href="@p.LiveUrl" target="_blank" class="pf-link-btn">
+                                            <i class="fas fa-external-link-alt"></i> Live
+                                        </a>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(p.DocUrl))
+                                    {
+                                        <a href="@p.DocUrl" target="_blank" class="pf-link-btn">
+                                            <i class="fas fa-book"></i> Docs
+                                        </a>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (Vm.Personal.Count == 0 && Vm.Work.Count == 0 && Vm.Public.Count == 0)
             {
                 <p class="pf-empty">등록된 프로젝트가 없습니다.</p>
             }
