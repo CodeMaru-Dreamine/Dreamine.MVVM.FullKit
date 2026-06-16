@@ -199,43 +199,49 @@
             @if (Vm.Work.Count > 0)
             {
                 <h3 class="pf-sub-header">Work</h3>
-                <div class="pf-work-list">
+                <div class="pf-project-grid">
                     @foreach (var p in Vm.Work)
                     {
-                        <div class="pf-work-card">
-                            @if (p.WorkImages.Length > 0)
+                        <div class="pf-project-card pf-project-card--work">
+                            @{ var workCover = p.WorkImages.Length > 0 ? p.WorkImages[0] : null; }
+                            @if (workCover != null)
                             {
-                                <div class="pf-work-card__hero"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, p.WorkImages[0])')">
-                                </div>
-                            }
-                            <div class="pf-work-card__body">
-                                <div class="pf-work-card__meta">
+                                <div class="pf-project-card__thumb"
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, workCover)')">
                                     @if (!string.IsNullOrWhiteSpace(p.WorkPeriod))
                                     {
-                                        <span class="pf-work-meta-chip">📅 @p.WorkPeriod</span>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(p.WorkRole))
-                                    {
-                                        <span class="pf-work-meta-chip">👤 @p.WorkRole</span>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(p.WorkCompany))
-                                    {
-                                        <span class="pf-work-meta-chip">🏢 @p.WorkCompany</span>
+                                        <span class="pf-work-period-badge">@p.WorkPeriod</span>
                                     }
                                 </div>
-                                <h4 class="pf-work-card__title">@p.Emoji @p.Title</h4>
+                            }
+                            else
+                            {
+                                <div class="pf-project-card__thumb pf-project-card__thumb--empty">
+                                    <span>@p.Emoji</span>
+                                    @if (!string.IsNullOrWhiteSpace(p.WorkPeriod))
+                                    {
+                                        <span class="pf-work-period-badge">@p.WorkPeriod</span>
+                                    }
+                                </div>
+                            }
+                            <div class="pf-project-card__body">
+                                <div class="pf-project-card__year">@p.Year</div>
+                                <h4 class="pf-project-card__title">@p.Emoji @p.Title</h4>
                                 @if (!string.IsNullOrWhiteSpace(p.WorkSubtitle))
                                 {
                                     <p class="pf-work-card__subtitle">@p.WorkSubtitle</p>
                                 }
-                                <p class="pf-work-card__desc">@p.Description</p>
+                                <p class="pf-project-card__desc">@p.Description</p>
                                 @if (p.WorkBullets.Length > 0)
                                 {
-                                    <ul class="pf-work-card__bullets">
-                                        @foreach (var b in p.WorkBullets)
+                                    <ul class="pf-work-card__bullets pf-work-card__bullets--compact">
+                                        @foreach (var b in p.WorkBullets.Take(3))
                                         {
                                             <li>@b</li>
+                                        }
+                                        @if (p.WorkBullets.Length > 3)
+                                        {
+                                            <li class="pf-work-card__bullets-more">+@(p.WorkBullets.Length - 3)개 더보기</li>
                                         }
                                     </ul>
                                 }
@@ -244,7 +250,7 @@
                                     <p class="pf-work-card__tech"><strong>Tech:</strong> @p.WorkTech</p>
                                 }
                                 <div class="pf-project-card__tags">
-                                    @foreach (var tag in p.Tags)
+                                    @foreach (var tag in p.Tags.Take(4))
                                     {
                                         <span class="pf-tag">@tag</span>
                                     }
@@ -263,16 +269,6 @@
                                         </a>
                                     }
                                 </div>
-                                <!-- Work 추가 이미지 -->
-                                @if (p.WorkImages.Length > 1)
-                                {
-                                    <div class="pf-work-images">
-                                        @foreach (var img in p.WorkImages.Skip(1))
-                                        {
-                                            <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-work-img" />
-                                        }
-                                    </div>
-                                }
                                 @if (p.VideoFileNames.Length > 0)
                                 {
                                     <div class="pf-video-list">
