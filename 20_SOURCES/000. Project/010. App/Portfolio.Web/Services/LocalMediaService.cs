@@ -7,6 +7,7 @@ public class LocalMediaService : IMediaService
 {
     private readonly string _root;
     private const long MaxImageBytes = 20 * 1024 * 1024;
+    private const long MaxVideoBytes = 500 * 1024 * 1024;
 
     public LocalMediaService(PortfolioOptions opts) => _root = opts.ResolvedDataPath;
 
@@ -19,6 +20,18 @@ public class LocalMediaService : IMediaService
         var path = Path.Combine(dir, safe);
         await using var fs = new FileStream(path, FileMode.Create);
         await file.OpenReadStream(MaxImageBytes).CopyToAsync(fs);
+        return safe;
+    }
+
+    public async Task<string> SaveVideoAsync(string slug, string projectId, IBrowserFile file)
+    {
+        var dir = Path.Combine(_root, slug, "media", projectId);
+        Directory.CreateDirectory(dir);
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        var safe = $"vid_{Guid.NewGuid():N}{ext}";
+        var path = Path.Combine(dir, safe);
+        await using var fs = new FileStream(path, FileMode.Create);
+        await file.OpenReadStream(MaxVideoBytes).CopyToAsync(fs);
         return safe;
     }
 

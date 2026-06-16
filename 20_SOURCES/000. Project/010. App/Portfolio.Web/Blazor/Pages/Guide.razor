@@ -16,6 +16,7 @@
     <div class="pf-guide__inner">
         <h1 class="pf-guide__title">📖 사용법 가이드</h1>
 
+        <!-- 빠른 시작 -->
         <ol class="pf-guide__steps">
             <li>
                 <strong>포트폴리오 생성</strong>
@@ -27,7 +28,7 @@
             </li>
             <li>
                 <strong>프로젝트 등록</strong>
-                <p>🛠️ 프로젝트 탭에서 Personal · Work 카테고리를 선택해 프로젝트를 추가하세요. 이미지, GitHub, Live URL도 함께 등록할 수 있습니다.</p>
+                <p>🛠️ 프로젝트 탭에서 Personal · Work · Public 카테고리를 선택해 프로젝트를 추가하세요. 이미지, 동영상, GitHub, Live URL도 함께 등록할 수 있습니다.</p>
             </li>
             <li>
                 <strong>Resume 작성</strong>
@@ -43,6 +44,84 @@
             </li>
         </ol>
 
+        <!-- 이미지 가이드 -->
+        <h2 class="pf-guide__section-title">🖼 이미지 최적 사이즈 가이드</h2>
+        <p class="pf-guide__section-desc">이미지 크기가 맞지 않으면 잘리거나 흐릿하게 보일 수 있습니다. 아래 권장 사이즈를 사용하면 가장 선명하게 표시됩니다.</p>
+
+        <div class="pf-guide__img-table">
+            <div class="pf-guide__img-row pf-guide__img-row--header">
+                <span>이미지 용도</span>
+                <span>권장 크기</span>
+                <span>비율</span>
+                <span>설명</span>
+            </div>
+            <div class="pf-guide__img-row">
+                <span><span class="pf-img-guide__badge pf-img-guide__badge--profile" style="font-size:.75rem">프로필 사진</span></span>
+                <span class="pf-guide__img-size">400 × 400</span>
+                <span class="pf-guide__img-ratio">1 : 1</span>
+                <span class="pf-guide__img-desc">원형으로 잘려 표시됨. 얼굴이 중앙에 오도록 촬영.</span>
+            </div>
+            <div class="pf-guide__img-row">
+                <span><span class="pf-img-guide__badge pf-img-guide__badge--thumb" style="font-size:.75rem">Personal / Public 커버</span></span>
+                <span class="pf-guide__img-size">1200 × 630</span>
+                <span class="pf-guide__img-ratio">16 : 9</span>
+                <span class="pf-guide__img-desc">카드 썸네일로 표시됨. OG(SNS) 이미지로도 활용.</span>
+            </div>
+            <div class="pf-guide__img-row">
+                <span><span class="pf-img-guide__badge pf-img-guide__badge--hero" style="font-size:.75rem">Work 히어로 배너</span></span>
+                <span class="pf-guide__img-size">1920 × 600</span>
+                <span class="pf-guide__img-ratio">16 : 5</span>
+                <span class="pf-guide__img-desc">Work 카드 상단 와이드 배너. 첫 번째 이미지가 사용됨.</span>
+            </div>
+            <div class="pf-guide__img-row">
+                <span><span class="pf-img-guide__badge" style="font-size:.75rem">Work 추가 이미지</span></span>
+                <span class="pf-guide__img-size">1200 × 675</span>
+                <span class="pf-guide__img-ratio">16 : 9</span>
+                <span class="pf-guide__img-desc">히어로 아래 갤러리로 표시됨. 두 번째 이미지부터 해당.</span>
+            </div>
+        </div>
+
+        <div class="pf-guide__tip-box">
+            <strong>💡 팁</strong>
+            <ul>
+                <li>파일 형식은 <strong>PNG · JPG · WebP</strong> 모두 지원합니다.</li>
+                <li>최대 업로드 크기는 이미지 <strong>20MB</strong>, 동영상 <strong>500MB</strong>입니다.</li>
+                <li>배경이 있는 이미지보다 <strong>여백 없이 꽉 찬 이미지</strong>가 썸네일에 더 잘 어울립니다.</li>
+                <li>Work 히어로 배너는 세로 중앙이 보이므로 중요 요소를 <strong>상하 여백 150px</strong> 안에 배치하세요.</li>
+                <li>Figma, Canva, Adobe Express 등 무료 툴에서 위 사이즈로 캔버스를 만들면 편리합니다.</li>
+            </ul>
+        </div>
+
+        <!-- 동영상 가이드 -->
+        <h2 class="pf-guide__section-title">🎬 동영상 가이드</h2>
+        <div class="pf-guide__tip-box">
+            <ul>
+                <li>지원 형식: <strong>MP4 (H.264)</strong> 권장 · WebM · MOV 등 브라우저 지원 형식</li>
+                <li>최대 파일 크기: <strong>500MB</strong> per 파일, 프로젝트당 여러 개 업로드 가능</li>
+                <li>권장 해상도: <strong>1920×1080 (Full HD)</strong> 또는 <strong>1280×720 (HD)</strong></li>
+                <li>용량을 줄이려면 <strong>HandBrake</strong>(무료)로 CRF 23~26, H.264로 인코딩하세요.</li>
+                <li>프로젝트 시연 화면 녹화에는 <strong>OBS Studio</strong>(무료)를 추천합니다.</li>
+            </ul>
+        </div>
+
+        <!-- 카테고리 가이드 -->
+        <h2 class="pf-guide__section-title">🏷 카테고리 사용 기준</h2>
+        <div class="pf-guide__cat-grid">
+            <div class="pf-guide__cat-card">
+                <div class="pf-guide__cat-badge pf-guide__cat-badge--personal">Personal</div>
+                <p>개인 취미·학습·사이드 프로젝트. 자유 형식 카드로 표시됩니다.</p>
+            </div>
+            <div class="pf-guide__cat-card">
+                <div class="pf-guide__cat-badge pf-guide__cat-badge--work">Work</div>
+                <p>실제 업무·고객 프로젝트. 기간·역할·성과 등 상세 정보를 입력할 수 있습니다.</p>
+            </div>
+            <div class="pf-guide__cat-card">
+                <div class="pf-guide__cat-badge pf-guide__cat-badge--public">Public</div>
+                <p>오픈소스·공개 배포 프로젝트. Personal과 같은 카드 형식으로 표시됩니다.</p>
+            </div>
+        </div>
+
+        <!-- FAQ -->
         <h2 class="pf-guide__faq-title">❓ 자주 묻는 질문</h2>
         <dl class="pf-guide__faq">
             <dt>비밀번호를 잊어버렸어요.</dt>
@@ -53,6 +132,10 @@
             <dd>Work 프로젝트는 상세 설명 카드(기간·역할·성과·이미지 갤러리) 형태로 표시됩니다.</dd>
             <dt>포트폴리오를 비공개로 설정하려면?</dt>
             <dd>설정 탭에서 <strong>홈 목록에 공개</strong> 체크를 해제하면 목록에서 숨겨집니다. URL을 알면 여전히 접근 가능합니다.</dd>
+            <dt>이미지를 올렸는데 흐릿하게 보여요.</dt>
+            <dd>권장 사이즈보다 작은 이미지를 올리면 늘어나 흐릿해집니다. 위 표의 권장 크기 이상으로 준비해 주세요.</dd>
+            <dt>동영상이 재생되지 않아요.</dt>
+            <dd>MP4 (H.264) 형식을 사용하세요. MOV나 AVI는 브라우저에 따라 재생이 안 될 수 있습니다.</dd>
             <dt>포트폴리오를 삭제하려면?</dt>
             <dd>어드민 → 설정 탭 맨 아래 <strong>위험 구역</strong>에서 삭제할 수 있습니다.</dd>
         </dl>

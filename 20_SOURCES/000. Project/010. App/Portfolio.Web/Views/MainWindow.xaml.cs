@@ -27,7 +27,7 @@ public partial class MainWindow : Window
         WebViewHost.Child = webView;
 
         await NavigateAsync(webView, $"http://localhost:{_serverOptions.Port}",
-            _serverOptions.InstanceId, "/");
+            _serverOptions.InstanceId, "/admin");
     }
 
     private static async Task NavigateAsync(WebView2 webView, string baseUrl, string expectedInstanceId,

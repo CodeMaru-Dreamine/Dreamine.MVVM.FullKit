@@ -102,7 +102,7 @@
                         <span class="pf-label__hint">영문·숫자·하이픈만 (예: msjang)</span>
                     </label>
                     <div class="pf-input-prefix">
-                        <span class="pf-prefix">@Nav.BaseUri</span>
+                        <span class="pf-prefix" title="@Nav.BaseUri">@(new Uri(Nav.BaseUri).Authority)/</span>
                         <input class="pf-input" @bind="Vm.NewSlug" placeholder="msjang"
                                @oninput="OnSlugInput" spellcheck="false" autocomplete="off" />
                     </div>

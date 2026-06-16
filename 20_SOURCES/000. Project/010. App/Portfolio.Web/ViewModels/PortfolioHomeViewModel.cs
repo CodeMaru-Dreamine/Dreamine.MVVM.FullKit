@@ -8,9 +8,11 @@ namespace PortfolioApp.ViewModels;
 public class PortfolioHomeViewModel
 {
     private readonly IPortfolioTenantStore _tenants;
+    private readonly IProjectStore _projects;
     private readonly PortfolioOptions _opts;
 
     public List<PortfolioConfig> Tenants { get; private set; } = [];
+    public Dictionary<string, int> ProjectCounts { get; private set; } = [];
     public string StatusMessage { get; set; } = "";
     public bool IsAuthenticated { get; private set; }
     public string LoginPassword { get; set; } = "";
@@ -20,13 +22,24 @@ public class PortfolioHomeViewModel
     public string NewOwnerName { get; set; } = "";
     public string NewPassword { get; set; } = "";
 
-    public PortfolioHomeViewModel(IPortfolioTenantStore tenants, PortfolioOptions opts)
+    public PortfolioHomeViewModel(IPortfolioTenantStore tenants, IProjectStore projects, PortfolioOptions opts)
     {
         _tenants = tenants;
+        _projects = projects;
         _opts = opts;
     }
 
-    public async Task LoadAsync() => Tenants = await _tenants.GetAllAsync();
+    public async Task LoadAsync()
+    {
+        Tenants = await _tenants.GetAllAsync();
+        var counts = new Dictionary<string, int>();
+        foreach (var t in Tenants)
+        {
+            var list = await _projects.GetAllAsync(t.Slug);
+            counts[t.Slug] = list.Count;
+        }
+        ProjectCounts = counts;
+    }
 
     public async Task<bool> CreateTenantAsync()
     {
@@ -65,6 +78,12 @@ public class PortfolioHomeViewModel
         }
         StatusMessage = "❌ 비밀번호가 틀렸습니다.";
         return Task.FromResult(false);
+    }
+
+    public async Task SaveTenantAsync(PortfolioConfig cfg)
+    {
+        await _tenants.SaveAsync(cfg);
+        StatusMessage = $"✅ '{cfg.Slug}' 저장 완료.";
     }
 
     public async Task DeleteTenantAsync(string slug)

@@ -29,6 +29,7 @@ public class PortfolioAdminViewModel
     // 프로젝트 편집
     public ProjectItem? EditingProject { get; private set; }
     public List<IBrowserFile> PendingFiles { get; } = [];
+    public List<IBrowserFile> PendingVideos { get; } = [];
 
     // 새 스킬 그룹 편집
     public string NewSkillCategory { get; set; } = "";
@@ -74,8 +75,8 @@ public class PortfolioAdminViewModel
 
     // ── 프로젝트 ────────────────────────────────────────────────
     public void NewProject() => EditingProject = new ProjectItem();
-    public void EditProject(ProjectItem p) { EditingProject = p.ShallowClone(); PendingFiles.Clear(); }
-    public void CancelEdit() { EditingProject = null; PendingFiles.Clear(); }
+    public void EditProject(ProjectItem p) { EditingProject = p.ShallowClone(); PendingFiles.Clear(); PendingVideos.Clear(); }
+    public void CancelEdit() { EditingProject = null; PendingFiles.Clear(); PendingVideos.Clear(); }
 
     public async Task SaveProjectAsync(string slug)
     {
@@ -83,18 +84,33 @@ public class PortfolioAdminViewModel
         StatusMessage = "";
         if (string.IsNullOrWhiteSpace(EditingProject.Title)) { StatusMessage = "❌ 제목을 입력하세요."; return; }
 
-        if (PendingFiles.Count > 0)
+        if (PendingFiles.Count > 0 || PendingVideos.Count > 0)
         {
             IsUploading = true;
             foreach (var f in PendingFiles)
             {
                 var saved = await _media.SaveAsync(slug, EditingProject.Id, f);
-                if (!EditingProject.WorkImages.Contains(saved))
-                    EditingProject.WorkImages = [.. EditingProject.WorkImages, saved];
-                if (EditingProject.ImageFileName == null)
+                if (EditingProject.Category == ProjectCategory.Work)
+                {
+                    if (!EditingProject.WorkImages.Contains(saved))
+                        EditingProject.WorkImages = [.. EditingProject.WorkImages, saved];
+                    if (EditingProject.ImageFileName == null)
+                        EditingProject.ImageFileName = saved;
+                }
+                else
+                {
+                    // Personal / Public: 첫 번째 이미지를 커버로, 이후는 교체
                     EditingProject.ImageFileName = saved;
+                }
+            }
+            foreach (var v in PendingVideos)
+            {
+                var saved = await _media.SaveVideoAsync(slug, EditingProject.Id, v);
+                if (!EditingProject.VideoFileNames.Contains(saved))
+                    EditingProject.VideoFileNames = [.. EditingProject.VideoFileNames, saved];
             }
             PendingFiles.Clear();
+            PendingVideos.Clear();
             IsUploading = false;
         }
 
@@ -118,8 +134,27 @@ public class PortfolioAdminViewModel
             EditingProject.WorkImages = EditingProject.WorkImages.Where(f => f != fileName).ToArray();
     }
 
+    public async Task DeleteProjectCoverAsync(string slug, string projectId)
+    {
+        if (EditingProject == null || string.IsNullOrWhiteSpace(EditingProject.ImageFileName)) return;
+        var fn = EditingProject.ImageFileName;
+        if (!fn.StartsWith('/'))
+            await _media.DeleteAsync(slug, projectId, fn);
+        EditingProject.ImageFileName = null;
+    }
+
+    public async Task DeleteProjectVideoAsync(string slug, string projectId, string fileName)
+    {
+        await _media.DeleteAsync(slug, projectId, fileName);
+        if (EditingProject != null)
+            EditingProject.VideoFileNames = EditingProject.VideoFileNames.Where(f => f != fileName).ToArray();
+    }
+
     public string GetMediaUrl(string slug, string projectId, string fileName) =>
         _media.GetMediaUrl(slug, projectId, fileName);
+
+    public string GetImageUrl(string slug, string projectId, string fileName) =>
+        fileName.StartsWith('/') ? fileName : _media.GetMediaUrl(slug, projectId, fileName);
 
     public string GetProfileImageUrl(string slug, string fileName) =>
         _media.GetProfileImageUrl(slug, fileName);
@@ -174,6 +209,18 @@ public class PortfolioAdminViewModel
         StatusMessage = "✅ 설정이 저장되었습니다.";
     }
 
+    public async Task<bool> ChangePasswordAsync(string slug, string current, string next, string confirm)
+    {
+        if (Config == null) { StatusMessage = "❌ 설정을 먼저 불러오세요."; return false; }
+        if (Hash(current) != Config.PasswordHash) { StatusMessage = "❌ 현재 비밀번호가 틀렸습니다."; return false; }
+        if (next.Length < 4) { StatusMessage = "❌ 새 비밀번호는 4자 이상이어야 합니다."; return false; }
+        if (next != confirm) { StatusMessage = "❌ 새 비밀번호가 일치하지 않습니다."; return false; }
+        Config.PasswordHash = Hash(next);
+        await _tenants.SaveAsync(Config);
+        StatusMessage = "✅ 비밀번호가 변경되었습니다.";
+        return true;
+    }
+
     public async Task UploadProfileImageAsync(string slug, IBrowserFile file)
     {
         if (Config == null) return;
@@ -216,7 +263,7 @@ internal static class ProjectItemExtensions
         Tags = [.. p.Tags], Year = p.Year, Emoji = p.Emoji,
         ImageFileName = p.ImageFileName, GitHub = p.GitHub,
         LiveUrl = p.LiveUrl, DocUrl = p.DocUrl, Category = p.Category,
-        SortOrder = p.SortOrder, WorkImages = [.. p.WorkImages],
+        SortOrder = p.SortOrder, VideoFileNames = [.. p.VideoFileNames], WorkImages = [.. p.WorkImages],
         WorkSubtitle = p.WorkSubtitle, WorkBullets = [.. p.WorkBullets],
         WorkPeriod = p.WorkPeriod, WorkRole = p.WorkRole,
         WorkTech = p.WorkTech, WorkCompany = p.WorkCompany,

@@ -17,6 +17,9 @@ public class ProjectItem
     public ProjectCategory Category { get; set; } = ProjectCategory.Personal;
     public int SortOrder { get; set; } = 0;
 
+    // 미디어
+    public string[] VideoFileNames { get; set; } = [];
+
     // Work 전용
     public string[] WorkImages { get; set; } = [];
     public string? WorkSubtitle { get; set; }

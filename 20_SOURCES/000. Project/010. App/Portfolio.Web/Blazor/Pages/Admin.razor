@@ -176,6 +176,21 @@
 
                         <div class="pf-form__row">
                             <label class="pf-label">이미지 업로드</label>
+                            @if (proj.Category == ProjectCategory.Work)
+                            {
+                                <div class="pf-img-guide">
+                                    <span class="pf-img-guide__badge pf-img-guide__badge--hero">히어로 1920×600</span>
+                                    <span class="pf-img-guide__badge">추가 이미지 1200×675</span>
+                                    <span class="pf-img-guide__tip">첫 번째 이미지가 상단 히어로 배너로 사용됩니다 · PNG/JPG · 최대 20MB</span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="pf-img-guide">
+                                    <span class="pf-img-guide__badge pf-img-guide__badge--thumb">커버 1200×630</span>
+                                    <span class="pf-img-guide__tip">카드 썸네일로 표시됩니다 · PNG/JPG · 최대 20MB · 16:9 권장</span>
+                                </div>
+                            }
                             <InputFile class="pf-input-file" multiple OnChange="OnFilesSelected" accept="image/*" />
                             @if (Vm.PendingFiles.Count > 0)
                             {
@@ -188,17 +203,67 @@
                             }
                         </div>
 
-                        @if (proj.WorkImages.Length > 0)
+                        @if (proj.Category == ProjectCategory.Work)
+                        {
+                            @if (proj.WorkImages.Length > 0)
+                            {
+                                <div class="pf-form__row">
+                                    <label class="pf-label">등록된 이미지</label>
+                                    <div class="pf-media-grid pf-media-grid--admin">
+                                        @foreach (var img in proj.WorkImages)
+                                        {
+                                            <div class="pf-media-item">
+                                                <img src="@Vm.GetMediaUrl(Slug, proj.Id, img)" alt="" />
+                                                <button class="pf-media-item__del"
+                                                        @onclick="() => OnDeleteMedia(proj.Id, img)">✕</button>
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            @if (!string.IsNullOrWhiteSpace(proj.ImageFileName))
+                            {
+                                <div class="pf-form__row">
+                                    <label class="pf-label">등록된 커버 이미지</label>
+                                    <div class="pf-media-grid pf-media-grid--admin">
+                                        <div class="pf-media-item">
+                                            <img src="@Vm.GetImageUrl(Slug, proj.Id, proj.ImageFileName)" alt="" />
+                                            <button class="pf-media-item__del"
+                                                    @onclick="() => OnDeleteCover(proj.Id)">✕</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+
+                        <div class="pf-form__row">
+                            <label class="pf-label">동영상 업로드 <span class="pf-label__hint">최대 500MB, 여러 개 가능</span></label>
+                            <InputFile class="pf-input-file" multiple OnChange="OnVideosSelected" accept="video/*" />
+                            @if (Vm.PendingVideos.Count > 0)
+                            {
+                                <ul class="pf-file-list">
+                                    @foreach (var v in Vm.PendingVideos)
+                                    {
+                                        <li>🎬 @v.Name (@(v.Size / 1024 / 1024)MB)</li>
+                                    }
+                                </ul>
+                            }
+                        </div>
+
+                        @if (proj.VideoFileNames.Length > 0)
                         {
                             <div class="pf-form__row">
-                                <label class="pf-label">등록된 이미지</label>
-                                <div class="pf-media-grid pf-media-grid--admin">
-                                    @foreach (var img in proj.WorkImages)
+                                <label class="pf-label">등록된 동영상</label>
+                                <div class="pf-video-list pf-video-list--admin">
+                                    @foreach (var vid in proj.VideoFileNames)
                                     {
-                                        <div class="pf-media-item">
-                                            <img src="@Vm.GetMediaUrl(Slug, proj.Id, img)" alt="" />
+                                        <div class="pf-video-item">
+                                            <video src="@Vm.GetMediaUrl(Slug, proj.Id, vid)" controls class="pf-video--admin" preload="metadata"></video>
                                             <button class="pf-media-item__del"
-                                                    @onclick="() => OnDeleteMedia(proj.Id, img)">✕</button>
+                                                    @onclick="() => OnDeleteVideo(proj.Id, vid)">✕</button>
                                         </div>
                                     }
                                 </div>
@@ -371,6 +436,10 @@
                 </div>
                 <div class="pf-form__row">
                     <label class="pf-label">프로필 사진</label>
+                    <div class="pf-img-guide">
+                        <span class="pf-img-guide__badge pf-img-guide__badge--profile">400×400</span>
+                        <span class="pf-img-guide__tip">정사각형 얼굴 사진 권장 · PNG/JPG · 최대 20MB · 원형으로 표시됩니다</span>
+                    </div>
                     <InputFile class="pf-input-file" OnChange="OnProfileSelected" accept="image/*" />
                     @if (!string.IsNullOrWhiteSpace(cfg.ProfileImageFileName))
                     {
@@ -425,6 +494,31 @@
 
                 <hr class="pf-divider" />
 
+                <div class="pf-form__row">
+                    <h3 style="margin-bottom:.8rem">🔑 비밀번호 변경</h3>
+                    <div class="pf-pw-change">
+                        <div class="pf-form__row">
+                            <label class="pf-label">현재 비밀번호</label>
+                            <input class="pf-input" type="password" @bind="currentPw" placeholder="현재 비밀번호" />
+                        </div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">새 비밀번호 <span class="pf-label__hint">4자 이상</span></label>
+                            <input class="pf-input" type="password" @bind="newPw" placeholder="새 비밀번호" />
+                        </div>
+                        <div class="pf-form__row">
+                            <label class="pf-label">새 비밀번호 확인</label>
+                            <input class="pf-input" type="password" @bind="newPwConfirm" placeholder="다시 입력" />
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(pwMessage))
+                        {
+                            <p class="pf-status @(pwMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">@pwMessage</p>
+                        }
+                        <button class="pf-btn pf-btn--primary" @onclick="OnChangePassword">🔑 비밀번호 변경</button>
+                    </div>
+                </div>
+
+                <hr class="pf-divider" />
+
                 <div class="pf-danger-zone">
                     <h3>⚠️ 위험 구역</h3>
                     <p>아래 작업은 되돌릴 수 없습니다.</p>
@@ -454,6 +548,10 @@
     [Parameter] public string Slug { get; set; } = "";
     private string activeTab = "project";
     private bool confirmDelete = false;
+    private string currentPw = "";
+    private string newPw = "";
+    private string newPwConfirm = "";
+    private string pwMessage = "";
 
     protected override async Task OnParametersSetAsync()
     {
@@ -490,9 +588,29 @@
     private async Task OnDeleteMedia(string projectId, string fileName) =>
         await Vm.DeleteProjectMediaAsync(Slug, projectId, fileName);
 
+    private async Task OnDeleteCover(string projectId) =>
+        await Vm.DeleteProjectCoverAsync(Slug, projectId);
+
+    private void OnVideosSelected(InputFileChangeEventArgs e)
+    {
+        Vm.PendingVideos.Clear();
+        Vm.PendingVideos.AddRange(e.GetMultipleFiles(10));
+    }
+
+    private async Task OnDeleteVideo(string projectId, string fileName) =>
+        await Vm.DeleteProjectVideoAsync(Slug, projectId, fileName);
+
     private async Task OnSaveResume() => await Vm.SaveResumeAsync(Slug);
 
     private async Task OnSaveConfig() => await Vm.SaveConfigAsync();
+
+    private async Task OnChangePassword()
+    {
+        pwMessage = "";
+        var ok = await Vm.ChangePasswordAsync(Slug, currentPw, newPw, newPwConfirm);
+        pwMessage = Vm.StatusMessage;
+        if (ok) { currentPw = ""; newPw = ""; newPwConfirm = ""; }
+    }
 
     private async Task OnProfileSelected(InputFileChangeEventArgs e) =>
         await Vm.UploadProfileImageAsync(Slug, e.File);
