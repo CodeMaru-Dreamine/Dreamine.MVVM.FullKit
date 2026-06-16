@@ -1,0 +1,220 @@
+@page "/"
+@layout FamiliesApp.Blazor.Layout.FamilyLayout
+@namespace FamiliesApp.Blazor.Pages
+@rendermode InteractiveServer
+
+@inject FamilyHomeViewModel Vm
+@inject NavigationManager Nav
+
+<PageTitle>👨‍👩‍👧‍👦 무료 가족 앨범 — Codemaru Family</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="아이 탄생, 첫 걸음마, 가족 여행까지 — 소중한 순간을 가족 앨범으로 공유하세요" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="@Nav.Uri" />
+    <meta property="og:title" content="👨‍👩‍👧‍👦 무료 가족 앨범 — Codemaru Family" />
+    <meta property="og:description" content="아이 탄생, 첫 걸음마, 가족 여행까지 — 소중한 순간을 가족 앨범으로 공유하세요" />
+    <meta property="og:image" content="@(Nav.BaseUri.TrimEnd('/') + "/img/og-platform.png")" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+</HeadContent>
+
+<div class="fa-page">
+
+    <!-- ── 히어로 배너 ── -->
+    <section class="fa-hero">
+        <div class="fa-hero__inner">
+            <p class="fa-hero__badge">✨ 무료 가족 앨범</p>
+            <h1 class="fa-hero__title">소중한 순간을<br />가족 앨범으로 기록하세요</h1>
+            <p class="fa-hero__sub">사진·동영상·이야기 — 5분이면 완성</p>
+            <a href="#create" class="fa-btn fa-btn--primary">지금 무료로 만들기 →</a>
+        </div>
+    </section>
+
+    <!-- ── 서비스 안내 ── -->
+    <div class="fa-service-notice">
+        <span>⚡ 무료 서비스 특성상 일시적인 접속 지연이 발생할 수 있습니다. 문의: <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a></span>
+        <span class="fa-notice-sep">·</span>
+        <span>🗑 포스트 미등록 계정은 <strong>24시간 후 자동 삭제</strong>됩니다.</span>
+    </div>
+
+    <!-- ── 기능 소개 ── -->
+    <section class="fa-features">
+        <div class="fa-feature">
+            <span class="fa-feature__icon">📸</span>
+            <h3>사진 &amp; 동영상</h3>
+            <p>아기 첫 걸음마부터 가족 여행 영상까지 함께 업로드</p>
+        </div>
+        <div class="fa-feature">
+            <span class="fa-feature__icon">📖</span>
+            <h3>이야기 기록</h3>
+            <p>사진과 함께 그날의 이야기를 마크다운으로 작성</p>
+        </div>
+        <div class="fa-feature">
+            <span class="fa-feature__icon">🗂</span>
+            <h3>앨범 분류</h3>
+            <p>신생아·돌잔치·여행 등 앨범 폴더로 깔끔하게 정리</p>
+        </div>
+        <div class="fa-feature">
+            <span class="fa-feature__icon">❤️</span>
+            <h3>반응 &amp; 댓글</h3>
+            <p>가족·친지가 이모지 반응과 댓글로 함께 기뻐해요</p>
+        </div>
+        <div class="fa-feature">
+            <span class="fa-feature__icon">🔒</span>
+            <h3>비공개 설정</h3>
+            <p>외부에 공개하지 않고 가족끼리만 볼 수 있어요</p>
+        </div>
+        <div class="fa-feature">
+            <span class="fa-feature__icon">🎨</span>
+            <h3>5가지 테마</h3>
+            <p>웜·민트·라벤더·스카이·피치 테마 선택</p>
+        </div>
+    </section>
+
+    <!-- ── 가입 폼 ── -->
+    <section class="fa-create" id="create">
+        <div class="fa-create__box">
+            <h2 class="fa-create__title">무료로 시작하기</h2>
+            <p class="fa-create__desc">아래 정보를 입력하면 바로 가족 앨범이 생성됩니다.</p>
+
+            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            {
+                <p class="fa-status @(Vm.StatusMessage.StartsWith("✅") ? "fa-status--ok" : "fa-status--err")">
+                    @Vm.StatusMessage
+                </p>
+            }
+
+            <div class="fa-form">
+                <div class="fa-form__row">
+                    <label class="fa-label">
+                        URL 주소
+                        <span class="fa-label__hint">영문·숫자·하이픈만 (예: kim-family)</span>
+                    </label>
+                    <div class="fa-input-prefix">
+                        <span class="fa-prefix">@Nav.BaseUri</span>
+                        <input class="fa-input" @bind="Vm.NewSlug" placeholder="kim-family"
+                               @oninput="OnSlugInput" spellcheck="false" autocomplete="off" />
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(slugPreview))
+                    {
+                        <p class="fa-slug-preview">👉 @slugPreview</p>
+                    }
+                </div>
+
+                <div class="fa-form__row">
+                    <label class="fa-label">가족 이름</label>
+                    <input class="fa-input" @bind="Vm.NewFamilyName" placeholder="김민수네 가족" />
+                </div>
+
+                <div class="fa-form__row">
+                    <label class="fa-label">
+                        어드민 비밀번호
+                        <span class="fa-label__hint">앨범 편집 시 사용</span>
+                    </label>
+                    <input class="fa-input" type="password" @bind="Vm.NewPassword"
+                           placeholder="8자 이상 권장" autocomplete="new-password" />
+                </div>
+
+                <button class="fa-btn fa-btn--primary fa-btn--full"
+                        @onclick="OnCreate" disabled="@isCreating">
+                    @(isCreating ? "생성 중..." : "✨ 가족 앨범 만들기")
+                </button>
+            </div>
+
+            <p class="fa-create__notice">
+                생성 후 <code>/{슬러그}/admin</code> 에서 포스트 작성과 설정을 할 수 있습니다.
+            </p>
+        </div>
+    </section>
+
+    <!-- ── 공개 앨범 목록 ── -->
+    @if (publicAlbums.Count > 0)
+    {
+        <section class="fa-albums-list">
+            <h2 class="fa-albums-list__title">👨‍👩‍👧‍👦 가족 앨범 목록</h2>
+            <div class="fa-albums-list__grid">
+                @foreach (var t in publicAlbums)
+                {
+                    var imgUrl = !string.IsNullOrWhiteSpace(t.CoverImageFileName)
+                        ? $"/family-data/{t.Slug}/{Uri.EscapeDataString(t.CoverImageFileName)}"
+                        : null;
+
+                    <a href="/@t.Slug" class="fa-album-card">
+                        <div class="fa-album-card__thumb"
+                             style="@(imgUrl != null ? $"background-image:url('{imgUrl}')" : "")">
+                            @if (imgUrl == null)
+                            {
+                                <span class="fa-album-card__no-img">👨‍👩‍👧‍👦</span>
+                            }
+                        </div>
+                        <div class="fa-album-card__body">
+                            <div class="fa-album-card__name">@t.FamilyName</div>
+                            @if (!string.IsNullOrWhiteSpace(t.Bio))
+                            {
+                                <div class="fa-album-card__bio">@t.Bio</div>
+                            }
+                        </div>
+                    </a>
+                }
+            </div>
+        </section>
+    }
+
+    <!-- ── 하단 ── -->
+    <footer class="fa-footer">
+        <p>Powered by Codemaru Family · <a href="mailto:admin@codemaru.co.kr" class="fa-footer__contact">admin@codemaru.co.kr</a></p>
+        <a href="/admin" class="fa-admin-link">관리자</a>
+    </footer>
+</div>
+
+@code {
+    private bool isCreating;
+    private string slugPreview = "";
+    private List<FamilyConfig> publicAlbums = [];
+
+    protected override void OnInitialized()
+    {
+        Vm.NewSlug = "";
+        Vm.NewFamilyName = "";
+        Vm.NewPassword = "";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Vm.LoadAsync();
+        publicAlbums = Vm.Tenants
+            .Where(t => t.ShowOnHome)
+            .OrderBy(t => t.PinOrder == 0 ? int.MaxValue : t.PinOrder)
+            .ThenByDescending(t => t.CreatedAt)
+            .ToList();
+    }
+
+    private void OnSlugInput(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        var clean = new string(raw.ToLowerInvariant()
+            .Select(c => char.IsLetterOrDigit(c) || c == '-' ? c : '-').ToArray())
+            .Trim('-');
+        Vm.NewSlug = clean;
+        slugPreview = string.IsNullOrWhiteSpace(clean) ? "" : $"{Nav.BaseUri}{clean}";
+    }
+
+    private async Task OnCreate()
+    {
+        isCreating = true;
+        StateHasChanged();
+        try
+        {
+            var slug = Vm.NewSlug.Trim().ToLowerInvariant();
+            var ok = await Vm.CreateTenantAsync();
+            if (ok)
+            {
+                await Task.Delay(1200);
+                Nav.NavigateTo($"/{slug}/admin");
+            }
+        }
+        finally { isCreating = false; }
+    }
+}

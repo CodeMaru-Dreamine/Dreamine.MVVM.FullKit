@@ -1,0 +1,133 @@
+@page "/guide"
+@layout FamiliesApp.Blazor.Layout.FamilyLayout
+@namespace FamiliesApp.Blazor.Pages
+
+<PageTitle>사용법 — Codemaru Family</PageTitle>
+
+<div class="fa-page fa-guide">
+
+    <div class="fa-guide__hero">
+        <h1>📖 Codemaru Family 사용법</h1>
+        <p>가족 앨범을 5분 안에 만들고 소중한 순간을 함께 기록하세요</p>
+    </div>
+
+    <!-- ── STEP 1 ── -->
+    <section class="fa-guide__step">
+        <div class="fa-guide__step-num">1</div>
+        <div class="fa-guide__step-body">
+            <h2>앨범 만들기</h2>
+            <p><a href="/" class="fa-link">홈</a>에서 <strong>URL 주소, 가족 이름, 비밀번호</strong>를 입력하고 <em>✨ 가족 앨범 만들기</em> 버튼을 누르세요.</p>
+            <ul class="fa-guide__list">
+                <li><strong>URL 주소</strong> — 영문·숫자·하이픈만 사용 (예: <code>kim-family</code>)<br/>앨범 주소가 <code>http://도메인/kim-family</code> 가 됩니다.</li>
+                <li><strong>비밀번호</strong> — 나중에 어드민 페이지에서 포스트를 작성할 때 사용합니다.</li>
+            </ul>
+            <div class="fa-guide__tip">💡 앨범 생성 후 포스트를 1개 이상 올리지 않으면 <strong>24시간 후 자동 삭제</strong>됩니다.</div>
+        </div>
+    </section>
+
+    <!-- ── STEP 2 ── -->
+    <section class="fa-guide__step">
+        <div class="fa-guide__step-num">2</div>
+        <div class="fa-guide__step-body">
+            <h2>어드민 페이지 접속</h2>
+            <p>앨범이 생성되면 자동으로 어드민 페이지(<code>/슬러그/admin</code>)로 이동합니다.<br/>
+            비밀번호를 입력해 로그인하면 4가지 탭이 나타납니다.</p>
+            <div class="fa-guide__tabs-preview">
+                <span>✏️ 포스트 작성</span>
+                <span>📋 포스트 관리</span>
+                <span>📂 앨범 관리</span>
+                <span>⚙️ 기본 설정</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- ── STEP 3 ── -->
+    <section class="fa-guide__step">
+        <div class="fa-guide__step-num">3</div>
+        <div class="fa-guide__step-body">
+            <h2>포스트 작성하기</h2>
+            <p><strong>✏️ 포스트 작성</strong> 탭에서 <em>+ 새 포스트 작성</em>을 누르세요.</p>
+            <ul class="fa-guide__list">
+                <li><strong>제목</strong> — 오늘의 주제 (예: 첫 이유식 도전!)</li>
+                <li><strong>날짜</strong> — 기록하고 싶은 날짜·시간 선택</li>
+                <li><strong>앨범</strong> — 소속 앨범 폴더 선택 (없으면 타임라인에만 표시)</li>
+                <li><strong>내용</strong> — <strong>Markdown</strong> 지원. <code>**굵게**</code>, <code># 제목</code>, <code>- 목록</code> 사용 가능</li>
+                <li><strong>사진 / 동영상</strong> — 여러 장 동시 선택 가능 (이미지 20MB, 동영상 500MB 이하)</li>
+                <li><strong>📌 상단 고정</strong> — 체크하면 타임라인 최상단에 고정</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ── STEP 4 ── -->
+    <section class="fa-guide__step">
+        <div class="fa-guide__step-num">4</div>
+        <div class="fa-guide__step-body">
+            <h2>앨범 폴더 만들기</h2>
+            <p><strong>📂 앨범 관리</strong> 탭에서 앨범 이름을 입력하고 추가하세요.<br/>
+            포스트 작성 시 앨범을 선택하면 해당 폴더에 분류됩니다.</p>
+            <ul class="fa-guide__list">
+                <li>예시 앨범: <code>신생아 시절</code> / <code>돌잔치</code> / <code>가족 여행</code> / <code>어린이집</code></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ── STEP 5 ── -->
+    <section class="fa-guide__step">
+        <div class="fa-guide__step-num">5</div>
+        <div class="fa-guide__step-body">
+            <h2>기본 설정</h2>
+            <p><strong>⚙️ 기본 설정</strong> 탭에서 앨범을 꾸밀 수 있습니다.</p>
+            <ul class="fa-guide__list">
+                <li><strong>커버 이미지</strong> — 앨범 대문에 표시되는 사진</li>
+                <li><strong>테마</strong> — 5가지 컬러 테마 선택 (웜/민트/라벤더/스카이/피치)</li>
+                <li><strong>방문자 반응</strong> — ❤️ 😍 🥰 😂 😮 👏 이모지 반응 ON/OFF</li>
+                <li><strong>댓글</strong> — 방문자 댓글 ON/OFF</li>
+                <li><strong>홈 공개</strong> — 체크하면 메인 홈 목록에 앨범이 노출됩니다</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ── STEP 6 ── -->
+    <section class="fa-guide__step">
+        <div class="fa-guide__step-num">6</div>
+        <div class="fa-guide__step-body">
+            <h2>가족과 공유하기</h2>
+            <p>앨범 URL(<code>http://도메인/슬러그</code>)을 카카오톡·문자로 공유하세요.</p>
+            <ul class="fa-guide__list">
+                <li>방문자는 포스트를 보고 <strong>이모지 반응</strong>과 <strong>댓글</strong>을 남길 수 있습니다.</li>
+                <li>어드민 비밀번호가 없으면 포스트 작성·편집은 불가합니다.</li>
+            </ul>
+            <div class="fa-guide__tip">💡 링크 미리보기(카카오톡 썸네일)를 예쁘게 하려면 ⚙️ 기본 설정에서 <strong>OG 제목/설명/커버 이미지</strong>를 설정하세요.</div>
+        </div>
+    </section>
+
+    <!-- ── FAQ ── -->
+    <section class="fa-guide__faq">
+        <h2>자주 묻는 질문</h2>
+
+        <div class="fa-faq-item">
+            <div class="fa-faq-item__q">Q. 비밀번호를 잊어버렸어요.</div>
+            <div class="fa-faq-item__a">관리자(<a href="mailto:admin@codemaru.co.kr" class="fa-link">admin@codemaru.co.kr</a>)에게 문의해주세요.</div>
+        </div>
+
+        <div class="fa-faq-item">
+            <div class="fa-faq-item__q">Q. 사진이 안 올라가요.</div>
+            <div class="fa-faq-item__a">이미지는 <strong>20MB</strong>, 동영상은 <strong>500MB</strong> 이하만 업로드 가능합니다. 허용 형식: jpg, png, webp, gif, mp4, webm, mov</div>
+        </div>
+
+        <div class="fa-faq-item">
+            <div class="fa-faq-item__q">Q. 앨범을 삭제하고 싶어요.</div>
+            <div class="fa-faq-item__a"><code>/슬러그/admin</code> → <strong>⚙️ 기본 설정</strong> 탭 맨 아래 <strong>위험 구역</strong>에서 삭제할 수 있습니다. 포스트·사진·동영상 모두 삭제되므로 신중하게 사용하세요.</div>
+        </div>
+
+        <div class="fa-faq-item">
+            <div class="fa-faq-item__q">Q. 포스트 순서를 바꿀 수 있나요?</div>
+            <div class="fa-faq-item__a">포스트 날짜를 수정하면 타임라인 순서가 바뀝니다. 특정 포스트를 항상 맨 위에 두려면 <strong>📌 상단 고정</strong>을 체크하세요.</div>
+        </div>
+    </section>
+
+    <div class="fa-guide__cta">
+        <a href="/" class="fa-btn fa-btn--primary">👨‍👩‍👧‍👦 지금 앨범 만들기 →</a>
+    </div>
+
+</div>

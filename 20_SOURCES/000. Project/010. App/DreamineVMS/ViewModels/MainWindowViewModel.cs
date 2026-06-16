@@ -300,7 +300,6 @@ public sealed class MainWindowViewModel : INotifyPropertyChanged, IDisposable
         System.Windows.Application? app = System.Windows.Application.Current;
         if (app is null)
         {
-            action();
             return;
         }
 

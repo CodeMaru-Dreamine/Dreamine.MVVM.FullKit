@@ -1,0 +1,8 @@
+@namespace FamiliesApp.Blazor
+
+<Router AppAssembly="typeof(Routes).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.FamilyLayout)" />
+        <FocusOnNavigate RouteData="routeData" Selector="#main-content" />
+    </Found>
+</Router>

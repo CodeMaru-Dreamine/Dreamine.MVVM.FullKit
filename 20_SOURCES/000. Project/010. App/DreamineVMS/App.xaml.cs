@@ -28,6 +28,25 @@ public partial class App : Application, IDreamineServiceProviderAware
     {
         base.OnStartup(e);
 
+        DispatcherUnhandledException += (_, args) =>
+        {
+            System.Windows.MessageBox.Show(
+                args.Exception.ToString(),
+                "오류 발생 — DreamineVMS",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
+            args.Handled = true;
+        };
+
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            System.Windows.MessageBox.Show(
+                args.ExceptionObject?.ToString() ?? "알 수 없는 오류",
+                "치명적 오류 — DreamineVMS",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
+        };
+
         if (ServiceProvider is null)
         {
             throw new InvalidOperationException("ServiceProvider initialization failed.");

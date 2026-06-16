@@ -1,0 +1,94 @@
+@page "/admin"
+@layout FamiliesApp.Blazor.Layout.FamilyLayout
+@namespace FamiliesApp.Blazor.Pages
+@rendermode InteractiveServer
+
+@inject FamilyHomeViewModel Vm
+@inject NavigationManager Nav
+
+<PageTitle>슈퍼 관리자 — Codemaru Family</PageTitle>
+
+<div class="fa-page fa-admin">
+    <div class="fa-admin-header">
+        <h1>🔑 슈퍼 관리자</h1>
+        @if (Vm.IsAuthenticated)
+        {
+            <button class="fa-btn fa-btn--ghost" @onclick="OnRefresh">🔄 새로고침</button>
+        }
+    </div>
+
+    @if (!Vm.IsAuthenticated)
+    {
+        <div class="fa-login-box">
+            <p class="fa-login-box__desc">슈퍼 관리자 비밀번호</p>
+            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            {
+                <p class="fa-status fa-status--err">@Vm.StatusMessage</p>
+            }
+            <input class="fa-input" type="password"
+                   value="@Vm.LoginPassword"
+                   @oninput="OnPasswordInput"
+                   @onkeydown="OnLoginKey" placeholder="비밀번호" />
+            <button class="fa-btn fa-btn--primary fa-btn--full" @onclick="OnLogin">로그인</button>
+        </div>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+        {
+            <p class="fa-status @(Vm.StatusMessage.StartsWith("✅") ? "fa-status--ok" : "fa-status--err")">
+                @Vm.StatusMessage
+            </p>
+        }
+
+        <div class="fa-superadmin-list">
+            <h2>앨범 목록 (@(Vm.Tenants.Count)개)</h2>
+            @foreach (var t in Vm.Tenants.OrderByDescending(x => x.CreatedAt))
+            {
+                <div class="fa-superadmin-item">
+                    <div class="fa-superadmin-item__info">
+                        <span class="fa-superadmin-item__slug">@t.Slug</span>
+                        <span class="fa-superadmin-item__name">@t.FamilyName</span>
+                        <span class="fa-superadmin-item__date">생성: @t.CreatedAt.ToString("yy.MM.dd")</span>
+                        <span class="fa-superadmin-item__pub @(t.ShowOnHome ? "fa-badge--green" : "")">
+                            @(t.ShowOnHome ? "공개" : "비공개")
+                        </span>
+                    </div>
+                    <div class="fa-superadmin-item__actions">
+                        <a href="/@t.Slug" class="fa-btn fa-btn--sm fa-btn--ghost">보기</a>
+                        <a href="/@t.Slug/admin" class="fa-btn fa-btn--sm fa-btn--ghost">어드민</a>
+                        <button class="fa-btn fa-btn--sm fa-btn--danger"
+                                @onclick="() => OnDelete(t.Slug)">삭제</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        if (Vm.IsAuthenticated) await Vm.LoadAsync();
+    }
+
+    private async Task OnLogin()
+    {
+        var ok = await Vm.LoginAsync();
+        if (ok) await Vm.LoadAsync();
+    }
+
+    private async Task OnLoginKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await OnLogin();
+    }
+
+    private void OnPasswordInput(ChangeEventArgs e) => Vm.LoginPassword = e.Value?.ToString() ?? string.Empty;
+
+    private async Task OnRefresh() => await Vm.LoadAsync();
+
+    private async Task OnDelete(string slug)
+    {
+        await Vm.DeleteTenantAsync(slug);
+    }
+}

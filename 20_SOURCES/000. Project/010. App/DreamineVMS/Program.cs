@@ -79,6 +79,11 @@ public static class Program
     /// <param name="builder">애플리케이션 Host Builder입니다.</param>
     private static void RegisterOptions(HostApplicationBuilder builder)
     {
+        builder.Services.Configure<HostOptions>(options =>
+        {
+            options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore;
+        });
+
         builder.Services.Configure<VmsServerOptions>(
             builder.Configuration.GetSection("VmsServer"));
 

@@ -1,0 +1,412 @@
+@page "/{Slug}/admin"
+@layout FamiliesApp.Blazor.Layout.FamilyLayout
+@namespace FamiliesApp.Blazor.Pages
+@rendermode InteractiveServer
+
+@inject FamilyAdminViewModel Vm
+@inject NavigationManager Nav
+
+<PageTitle>어드민 — @(Vm.Config?.FamilyName ?? Slug)</PageTitle>
+
+<div class="fa-page fa-admin">
+
+    @if (!Vm.IsAuthenticated)
+    {
+        <!-- ── 로그인 ── -->
+        <div class="fa-login-box">
+            <h1 class="fa-login-box__title">👨‍👩‍👧‍👦 @Slug</h1>
+            <p class="fa-login-box__desc">어드민 비밀번호를 입력하세요</p>
+
+            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            {
+                <p class="fa-status fa-status--err">@Vm.StatusMessage</p>
+            }
+
+            <input class="fa-input" type="password"
+                   value="@Vm.LoginPassword"
+                   @oninput="OnPasswordInput"
+                   @onkeydown="OnLoginKey" placeholder="비밀번호" autocomplete="current-password" />
+            <button class="fa-btn fa-btn--primary fa-btn--full" @onclick="OnLogin">로그인</button>
+        </div>
+    }
+    else
+    {
+        <!-- ── 어드민 탭 ── -->
+        <div class="fa-admin-header">
+            <h1>@(Vm.Config?.FamilyName ?? Slug) 어드민</h1>
+            <div style="display:flex;gap:8px;align-items:center;">
+                <button class="fa-btn fa-btn--ghost" @onclick="OnRefresh">🔄</button>
+                <a href="/@Slug" class="fa-btn fa-btn--ghost">앨범 보기 →</a>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+        {
+            <p class="fa-status @(Vm.StatusMessage.StartsWith("✅") || Vm.StatusMessage.Contains("저장") || Vm.StatusMessage.Contains("추가") || Vm.StatusMessage.Contains("업로드") ? "fa-status--ok" : "fa-status--err")">
+                @Vm.StatusMessage
+            </p>
+        }
+
+        <div class="fa-tabs">
+            <button class="fa-tab @(activeTab == "post" ? "fa-tab--active" : "")" @onclick='() => SetTab("post")'>✏️ 포스트 작성</button>
+            <button class="fa-tab @(activeTab == "manage" ? "fa-tab--active" : "")" @onclick='() => SetTab("manage")'>📋 포스트 관리</button>
+            <button class="fa-tab @(activeTab == "albums" ? "fa-tab--active" : "")" @onclick='() => SetTab("albums")'>📂 앨범 관리</button>
+            <button class="fa-tab @(activeTab == "settings" ? "fa-tab--active" : "")" @onclick='() => SetTab("settings")'>⚙️ 기본 설정</button>
+        </div>
+
+        <!-- ── 탭: 포스트 작성 ── -->
+        @if (activeTab == "post")
+        {
+            var post = Vm.EditingPost;
+            if (post is null)
+            {
+                <div class="fa-tab-body">
+                    <button class="fa-btn fa-btn--primary" @onclick="Vm.NewPost">+ 새 포스트 작성</button>
+                </div>
+            }
+            else
+            {
+                <div class="fa-tab-body fa-post-editor">
+                    <div class="fa-form__row">
+                        <label class="fa-label">제목</label>
+                        <input class="fa-input" @bind="post.Title" placeholder="포스트 제목" />
+                    </div>
+
+                    <div class="fa-form__row">
+                        <label class="fa-label">날짜</label>
+                        <input class="fa-input" type="datetime-local"
+                               value="@post.PostedAt.ToString("yyyy-MM-ddTHH:mm")"
+                               @onchange="e => post.PostedAt = DateTime.Parse(e.Value?.ToString() ?? DateTime.Now.ToString())" />
+                    </div>
+
+                    <div class="fa-form__row">
+                        <label class="fa-label">앨범</label>
+                        <select class="fa-input" @bind="post.AlbumId">
+                            <option value="">-- 앨범 없음 (타임라인만) --</option>
+                            @foreach (var album in Vm.Albums)
+                            {
+                                <option value="@album.Id">@album.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="fa-form__row">
+                        <label class="fa-label">
+                            내용
+                            <span class="fa-label__hint">Markdown 지원</span>
+                        </label>
+                        <textarea class="fa-textarea fa-textarea--tall" @bind="post.Content"
+                                  placeholder="오늘의 이야기를 써주세요..." rows="8"></textarea>
+                    </div>
+
+                    <div class="fa-form__row">
+                        <label class="fa-label">사진 / 동영상 업로드</label>
+                        <InputFile class="fa-input-file" multiple OnChange="OnFilesSelected" accept="image/*,video/*" />
+                        @if (Vm.PendingFiles.Count > 0)
+                        {
+                            <ul class="fa-file-list">
+                                @foreach (var f in Vm.PendingFiles)
+                                {
+                                    <li>📎 @f.Name (@(f.Size / 1024)KB)</li>
+                                }
+                            </ul>
+                        }
+                    </div>
+
+                    <!-- 기존 미디어 -->
+                    @if (post.PhotoFileNames.Count + post.VideoFileNames.Count > 0)
+                    {
+                        <div class="fa-form__row">
+                            <label class="fa-label">등록된 미디어</label>
+                            <div class="fa-media-grid fa-media-grid--admin">
+                                @foreach (var fn in post.PhotoFileNames)
+                                {
+                                    <div class="fa-media-item">
+                                        <img src="@Vm.GetThumbUrl(Slug, post.Id, fn)" alt="" />
+                                        <button class="fa-media-item__del"
+                                                @onclick="() => OnDeleteMedia(post.Id, fn)">✕</button>
+                                    </div>
+                                }
+                                @foreach (var fn in post.VideoFileNames)
+                                {
+                                    <div class="fa-media-item fa-media-item--video">
+                                        <span>🎬 @fn</span>
+                                        <button class="fa-media-item__del"
+                                                @onclick="() => OnDeleteMedia(post.Id, fn)">✕</button>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div class="fa-form__row fa-form__row--check">
+                        <label>
+                            <input type="checkbox" @bind="post.IsPinned" />
+                            📌 상단 고정
+                        </label>
+                    </div>
+
+                    <div class="fa-form__actions">
+                        <button class="fa-btn fa-btn--primary" @onclick="OnSavePost" disabled="@Vm.IsUploading">
+                            @(Vm.IsUploading ? "업로드 중..." : "저장")
+                        </button>
+                        <button class="fa-btn fa-btn--ghost" @onclick="Vm.CancelEdit">취소</button>
+                    </div>
+                </div>
+            }
+        }
+
+        <!-- ── 탭: 포스트 관리 ── -->
+        @if (activeTab == "manage")
+        {
+            <div class="fa-tab-body">
+                @if (Vm.Posts.Count == 0)
+                {
+                    <p class="fa-empty">등록된 포스트가 없습니다.</p>
+                }
+                else
+                {
+                    <div class="fa-post-list">
+                        @foreach (var post in Vm.Posts)
+                        {
+                            <div class="fa-post-list__item">
+                                <div class="fa-post-list__info">
+                                    @if (post.IsPinned) { <span class="fa-pin-badge">📌</span> }
+                                    <span class="fa-post-list__title">@post.Title</span>
+                                    <span class="fa-post-list__date">@post.PostedAt.ToString("yyyy.MM.dd")</span>
+                                    <span class="fa-post-list__count">📷@post.PhotoFileNames.Count 🎬@post.VideoFileNames.Count</span>
+                                </div>
+                                <div class="fa-post-list__actions">
+                                    <button class="fa-btn fa-btn--sm fa-btn--ghost"
+                                            @onclick="() => OnEditPost(post)">편집</button>
+                                    <button class="fa-btn fa-btn--sm fa-btn--danger"
+                                            @onclick="() => OnDeletePost(post.Id)">삭제</button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+
+        <!-- ── 탭: 앨범 관리 ── -->
+        @if (activeTab == "albums")
+        {
+            <div class="fa-tab-body">
+                <div class="fa-form">
+                    <div class="fa-form__row fa-form__row--inline">
+                        <input class="fa-input" @bind="Vm.NewAlbumName" placeholder="앨범 이름 (예: 돌잔치)" />
+                        <input class="fa-input" @bind="Vm.NewAlbumDesc" placeholder="설명 (선택)" />
+                        <button class="fa-btn fa-btn--primary" @onclick="OnAddAlbum">+ 앨범 추가</button>
+                    </div>
+                </div>
+
+                @if (Vm.Albums.Count > 0)
+                {
+                    <div class="fa-album-admin-list">
+                        @foreach (var album in Vm.Albums)
+                        {
+                            <div class="fa-album-admin-item">
+                                <span class="fa-album-admin-item__name">📁 @album.Name</span>
+                                @if (!string.IsNullOrWhiteSpace(album.Description))
+                                {
+                                    <span class="fa-album-admin-item__desc">@album.Description</span>
+                                }
+                                <button class="fa-btn fa-btn--sm fa-btn--danger"
+                                        @onclick="() => OnDeleteAlbum(album.Id)">삭제</button>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="fa-empty">등록된 앨범이 없습니다.</p>
+                }
+            </div>
+        }
+
+        <!-- ── 탭: 기본 설정 ── -->
+        @if (activeTab == "settings" && Vm.Config is not null)
+        {
+            var cfg = Vm.Config;
+            <div class="fa-tab-body fa-settings">
+                <div class="fa-form__row">
+                    <label class="fa-label">가족 이름</label>
+                    <input class="fa-input" @bind="cfg.FamilyName" />
+                </div>
+
+                <div class="fa-form__row">
+                    <label class="fa-label">소개글</label>
+                    <textarea class="fa-textarea" @bind="cfg.Bio" rows="3" placeholder="가족 소개 한 줄"></textarea>
+                </div>
+
+                <div class="fa-form__row">
+                    <label class="fa-label">테마</label>
+                    <select class="fa-input" @bind="cfg.ThemeName">
+                        <option value="warm">🍊 웜 (Warm)</option>
+                        <option value="mint">🌿 민트 (Mint)</option>
+                        <option value="lavender">💜 라벤더 (Lavender)</option>
+                        <option value="sky">🩵 스카이 (Sky)</option>
+                        <option value="peach">🍑 피치 (Peach)</option>
+                    </select>
+                </div>
+
+                <div class="fa-form__row">
+                    <label class="fa-label">커버 이미지 업로드</label>
+                    <InputFile class="fa-input-file" OnChange="OnCoverSelected" accept="image/*" />
+                    @if (!string.IsNullOrWhiteSpace(cfg.CoverImageFileName))
+                    {
+                        <img class="fa-cover-preview"
+                             src="@Vm.GetCoverUrl(Slug, cfg.CoverImageFileName)" alt="커버" />
+                    }
+                </div>
+
+                <div class="fa-form__row fa-form__row--check">
+                    <label>
+                        <input type="checkbox" @bind="cfg.AllowReactions" />
+                        ❤️ 방문자 반응(이모지) 허용
+                    </label>
+                </div>
+
+                <div class="fa-form__row fa-form__row--check">
+                    <label>
+                        <input type="checkbox" @bind="cfg.AllowComments" />
+                        💬 방문자 댓글 허용
+                    </label>
+                </div>
+
+                <div class="fa-form__row fa-form__row--check">
+                    <label>
+                        <input type="checkbox" @bind="cfg.ShowOnHome" />
+                        🏠 홈 목록에 공개
+                    </label>
+                </div>
+
+                <div class="fa-form__row">
+                    <label class="fa-label">OG 제목 (링크 미리보기)</label>
+                    <input class="fa-input" @bind="cfg.OgTitle" placeholder="비우면 가족 이름 사용" />
+                </div>
+
+                <div class="fa-form__row">
+                    <label class="fa-label">OG 설명</label>
+                    <input class="fa-input" @bind="cfg.OgDescription" />
+                </div>
+
+                <button class="fa-btn fa-btn--primary" @onclick="OnSaveConfig">💾 설정 저장</button>
+
+                <hr class="fa-divider" />
+
+                <div class="fa-danger-zone">
+                    <h3>⚠️ 위험 구역</h3>
+                    <p>아래 작업은 되돌릴 수 없습니다.</p>
+                    @if (!confirmDelete)
+                    {
+                        <button class="fa-btn fa-btn--danger" @onclick="() => confirmDelete = true">
+                            🗑 이 앨범 삭제
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="fa-delete-confirm">
+                            <p><strong>정말로 '@Slug' 앨범을 삭제할까요?</strong><br/>포스트·사진·동영상 모두 삭제됩니다.</p>
+                            <div class="fa-form__actions">
+                                <button class="fa-btn fa-btn--danger" @onclick="OnDeleteSelf">확인, 삭제</button>
+                                <button class="fa-btn fa-btn--ghost" @onclick="() => confirmDelete = false">취소</button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    private string activeTab = "post";
+    private bool confirmDelete = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!Vm.IsLoaded)
+            await Vm.LoadAsync(Slug);
+    }
+
+    private void OnPasswordInput(ChangeEventArgs e) => Vm.LoginPassword = e.Value?.ToString() ?? string.Empty;
+
+    private async Task OnRefresh() => await Vm.LoadAsync(Slug);
+
+    private async Task OnLogin()
+    {
+        var ok = await Vm.LoginAsync(Slug);
+        if (ok)
+            await Vm.LoadAsync(Slug);
+    }
+
+    private async Task OnLoginKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await OnLogin();
+    }
+
+    private void SetTab(string tab)
+    {
+        activeTab = tab;
+        if (tab != "post") Vm.CancelEdit();
+    }
+
+    private void OnFilesSelected(InputFileChangeEventArgs e)
+    {
+        Vm.PendingFiles.Clear();
+        Vm.PendingFiles.AddRange(e.GetMultipleFiles(50));
+    }
+
+    private async Task OnSavePost()
+    {
+        await Vm.SavePostAsync(Slug);
+        if (Vm.EditingPost is null)
+            activeTab = "manage";
+    }
+
+    private void OnEditPost(PostEntry post)
+    {
+        Vm.EditPost(post);
+        activeTab = "post";
+    }
+
+    private async Task OnDeletePost(string postId)
+    {
+        await Vm.DeletePostAsync(Slug, postId);
+    }
+
+    private async Task OnDeleteMedia(string postId, string fileName)
+    {
+        await Vm.DeletePostMediaAsync(Slug, postId, fileName);
+    }
+
+    private async Task OnAddAlbum()
+    {
+        await Vm.AddAlbumAsync(Slug);
+    }
+
+    private async Task OnDeleteAlbum(string albumId)
+    {
+        await Vm.DeleteAlbumAsync(Slug, albumId);
+    }
+
+    private async Task OnCoverSelected(InputFileChangeEventArgs e)
+    {
+        await Vm.UploadCoverAsync(Slug, e.File);
+    }
+
+    private async Task OnSaveConfig()
+    {
+        await Vm.SaveConfigAsync();
+    }
+
+    private async Task OnDeleteSelf()
+    {
+        await Vm.DeleteSelfAsync(Slug);
+        Nav.NavigateTo("/");
+    }
+}

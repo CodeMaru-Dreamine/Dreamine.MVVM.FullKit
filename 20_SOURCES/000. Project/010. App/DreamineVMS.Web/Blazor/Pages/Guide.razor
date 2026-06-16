@@ -35,11 +35,20 @@
                 <li>Windows 10 / 11 (64비트) 필요</li>
                 <li>FFmpeg 자동 포함 — 별도 설치 불필요</li>
                 <li>IP 카메라 RTSP 주소가 필요합니다</li>
+                <li>설치 용량 약 300MB · 설치 파일 약 90MB</li>
+                <li>스트리밍 중 디스크 사용량: 카메라 1대당 약 <strong>180MB/시간</strong> (400kbps 기준)<br/>
+                    앱 또는 카메라 재시작 시 오래된 세그먼트 파일 자동 정리됩니다.<br/>
+                    장시간 무중단 운영 시 수 GB까지 쌓일 수 있으니 여유 공간을 확보하세요.</li>
             </ul>
             <div class="guide-warn">
-                ⚠ 설치 후 반드시 <strong>관리자 권한으로 실행</strong>하세요.<br />
-                파일 탐색기에서 DreamineVMS.exe 우클릭 → <strong>"관리자 권한으로 실행"</strong><br />
-                (일반 실행 시 UI 클릭이 동작하지 않습니다)
+                ⚠ <strong>최초 설치 시 Microsoft WebView2 Runtime을 자동으로 다운로드·설치</strong>합니다.<br />
+                인터넷 속도에 따라 수 분이 걸릴 수 있으며, 설치 진행 중 화면에서 기다려 주세요.
+            </div>
+            <div class="guide-tip" style="margin-top:8px;">
+                💡 <strong>관리자 권한 안내</strong><br />
+                기본 설치 경로(사용자 AppData 폴더)에서는 일반 실행으로 충분합니다.<br />
+                <code>C:\Program Files</code> 등 쓰기 권한이 없는 폴더에 설치한 경우에만<br />
+                우클릭 → <strong>"관리자 권한으로 실행"</strong>이 필요합니다.
             </div>
             <a class="guide-btn" href="/Setup/DreamineVMS-Setup-v1.0.0.exe" download>⬇ Dreamine VMS 설치 (v1.0.0)</a>
         </div>
@@ -105,7 +114,7 @@
 
         <div class="guide-faq-item">
             <strong>Q. 카메라가 목록에 나타나지 않아요.</strong>
-            <p>앱이 관리자 권한으로 실행 중인지 확인하세요. 에이전트 설정 탭에서 <strong>재연결</strong>을 누르면 서버와 다시 동기화됩니다.</p>
+            <p>에이전트 설정 탭에서 이메일·비밀번호가 올바르게 입력되었는지 확인 후 <strong>재연결</strong>을 누르세요. 서버와 다시 동기화됩니다.</p>
         </div>
         <div class="guide-faq-item">
             <strong>Q. 라이브 화면이 검게 나와요.</strong>

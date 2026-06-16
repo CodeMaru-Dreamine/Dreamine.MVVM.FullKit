@@ -1,0 +1,22 @@
+@namespace FamiliesApp.Blazor.Layout
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+
+<header class="fa-nav">
+    <div class="fa-nav__inner">
+        <a href="/" class="fa-nav__logo">👨‍👩‍👧‍👦 Codemaru Family</a>
+        <nav class="fa-nav__links">
+            <a href="/" class="fa-nav__link @(IsHome ? "fa-nav__link--active" : "")">홈</a>
+            <a href="/guide" class="fa-nav__link @(IsGuide ? "fa-nav__link--active" : "")">사용법</a>
+        </nav>
+    </div>
+</header>
+
+<div id="main-content" tabindex="-1">
+    @Body
+</div>
+
+@code {
+    private bool IsHome => Nav.Uri == Nav.BaseUri || Nav.Uri == Nav.BaseUri.TrimEnd('/');
+    private bool IsGuide => Nav.Uri.Contains("/guide");
+}

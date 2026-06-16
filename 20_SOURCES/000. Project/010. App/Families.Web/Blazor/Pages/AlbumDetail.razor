@@ -1,0 +1,81 @@
+@page "/{Slug}/album/{AlbumId}"
+@layout FamiliesApp.Blazor.Layout.FamilyLayout
+@namespace FamiliesApp.Blazor.Pages
+@rendermode InteractiveServer
+
+@inject FamilyAlbumViewModel Vm
+@inject NavigationManager Nav
+
+@if (!Vm.IsLoaded)
+{
+    <div class="fa-loading">불러오는 중...</div>
+}
+else if (Vm.NotFound || currentAlbum is null)
+{
+    <div class="fa-notfound">
+        <h2>앨범을 찾을 수 없습니다.</h2>
+        <a href="/@Slug" class="fa-btn fa-btn--ghost">← 뒤로</a>
+    </div>
+}
+else
+{
+    <PageTitle>@currentAlbum.Name — @Vm.FamilyName</PageTitle>
+
+    <div class="fa-page fa-theme-@Vm.ThemeName">
+        <div class="fa-post-nav">
+            <a href="/@Slug" class="fa-back-link">← @Vm.FamilyName</a>
+        </div>
+
+        <section class="fa-album-detail">
+            <h1 class="fa-album-detail__title">📁 @currentAlbum.Name</h1>
+            @if (!string.IsNullOrWhiteSpace(currentAlbum.Description))
+            {
+                <p class="fa-album-detail__desc">@currentAlbum.Description</p>
+            }
+        </section>
+
+        @if (albumPosts.Count == 0)
+        {
+            <div class="fa-empty">이 앨범에는 아직 포스트가 없습니다.</div>
+        }
+        else
+        {
+            <div class="fa-timeline__list">
+                @foreach (var post in albumPosts)
+                {
+                    <a href="/@Slug/post/@post.Id" class="fa-post-card">
+                        @if (post.PhotoFileNames.Count > 0)
+                        {
+                            <div class="fa-post-card__thumb"
+                                 style="background-image:url('@Vm.GetThumbUrl(post.Id, post.PhotoFileNames[0])')">
+                            </div>
+                        }
+                        <div class="fa-post-card__body">
+                            <div class="fa-post-card__title">@post.Title</div>
+                            <div class="fa-post-card__date">@post.PostedAt.ToString("yyyy. MM. dd")</div>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+
+        <footer class="fa-footer">
+            <p>Powered by <a href="/">Codemaru Family</a></p>
+        </footer>
+    </div>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    [Parameter] public string AlbumId { get; set; } = "";
+
+    private AlbumInfo? currentAlbum;
+    private IReadOnlyList<PostEntry> albumPosts = [];
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Vm.LoadAsync(Slug);
+        currentAlbum = Vm.Albums.FirstOrDefault(a => a.Id == AlbumId);
+        albumPosts = await Vm.GetAlbumPostsAsync(Slug, AlbumId);
+    }
+}

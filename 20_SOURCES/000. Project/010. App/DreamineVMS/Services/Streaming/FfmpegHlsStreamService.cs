@@ -90,6 +90,10 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
             {
                 break;
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "WatchdogAsync 오류 발생 — 서비스 계속 실행.");
+            }
 
             try
             {

@@ -1,0 +1,188 @@
+@page "/{Slug}/post/{PostId}"
+@layout FamiliesApp.Blazor.Layout.FamilyLayout
+@namespace FamiliesApp.Blazor.Pages
+@rendermode InteractiveServer
+
+@inject FamilyPostViewModel Vm
+@inject NavigationManager Nav
+
+@if (!Vm.IsLoaded)
+{
+    <div class="fa-loading">불러오는 중...</div>
+}
+else if (Vm.NotFound)
+{
+    <div class="fa-notfound">
+        <h2>포스트를 찾을 수 없습니다.</h2>
+        <a href="/@Slug" class="fa-btn fa-btn--ghost">앨범으로 →</a>
+    </div>
+}
+else
+{
+    var post = Vm.Post!;
+
+    <PageTitle>@post.Title — @Vm.FamilyName</PageTitle>
+
+    <div class="fa-page fa-theme-@Vm.ThemeName">
+
+        <!-- ── 상단 내비 ── -->
+        <div class="fa-post-nav">
+            <a href="/@Slug" class="fa-back-link">← @Vm.FamilyName</a>
+        </div>
+
+        <!-- ── 포스트 본문 ── -->
+        <article class="fa-post">
+            <header class="fa-post__header">
+                @if (post.IsPinned) { <span class="fa-pin-badge">📌 고정됨</span> }
+                <h1 class="fa-post__title">@post.Title</h1>
+                <time class="fa-post__date">@post.PostedAt.ToString("yyyy년 MM월 dd일")</time>
+            </header>
+
+            @if (!string.IsNullOrWhiteSpace(Vm.ContentHtml))
+            {
+                <div class="fa-post__content">@((MarkupString)Vm.ContentHtml)</div>
+            }
+
+            <!-- ── 사진 갤러리 ── -->
+            @if (post.PhotoFileNames.Count > 0)
+            {
+                <div class="fa-media-grid">
+                    @foreach (var (fn, idx) in post.PhotoFileNames.Select((f, i) => (f, i)))
+                    {
+                        <div class="fa-media-grid__item" @onclick="() => OpenLightbox(idx)">
+                            <img src="@Vm.GetThumbUrl(fn)" alt="" loading="lazy" />
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- ── 동영상 ── -->
+            @if (post.VideoFileNames.Count > 0)
+            {
+                <div class="fa-videos">
+                    @foreach (var fn in post.VideoFileNames)
+                    {
+                        <div class="fa-video-wrap">
+                            <video controls preload="metadata" class="fa-video">
+                                <source src="@Vm.GetMediaUrl(fn)" />
+                            </video>
+                        </div>
+                    }
+                </div>
+            }
+        </article>
+
+        <!-- ── 반응 ── -->
+        @if (Vm.AllowReactions)
+        {
+            <section class="fa-reactions">
+                <div class="fa-reactions__buttons">
+                    @foreach (var emoji in new[] { "❤️", "😍", "🥰", "😂", "😮", "👏" })
+                    {
+                        var count = Vm.Reactions.EmojiCounts.GetValueOrDefault(emoji, 0);
+                        <button class="fa-emoji-btn @(count > 0 ? "fa-emoji-btn--active" : "")"
+                                @onclick="() => OnReact(emoji)">
+                            @emoji @(count > 0 ? count.ToString() : "")
+                        </button>
+                    }
+                </div>
+            </section>
+        }
+
+        <!-- ── 댓글 ── -->
+        @if (Vm.AllowComments)
+        {
+            <section class="fa-comments">
+                <h2 class="fa-section-title">💬 댓글 (@Vm.Reactions.Comments.Count)</h2>
+
+                <!-- 댓글 목록 -->
+                @foreach (var comment in Vm.Reactions.Comments.OrderByDescending(c => c.CreatedAt))
+                {
+                    <div class="fa-comment">
+                        <div class="fa-comment__header">
+                            <span class="fa-comment__author">@comment.AuthorName</span>
+                            <span class="fa-comment__date">@comment.CreatedAt.ToString("MM/dd HH:mm")</span>
+                        </div>
+                        <div class="fa-comment__body">@comment.Body</div>
+                    </div>
+                }
+
+                <!-- 댓글 작성 -->
+                @if (!string.IsNullOrWhiteSpace(Vm.CommentStatus))
+                {
+                    <p class="fa-status @(Vm.CommentStatus.StartsWith("댓글이") ? "fa-status--ok" : "fa-status--err")">
+                        @Vm.CommentStatus
+                    </p>
+                }
+                <div class="fa-comment-form">
+                    <input class="fa-input" @bind="Vm.CommentAuthor" placeholder="이름" />
+                    <textarea class="fa-textarea" @bind="Vm.CommentBody" placeholder="댓글을 입력하세요..." rows="3"></textarea>
+                    <button class="fa-btn fa-btn--primary" @onclick="OnAddComment" disabled="@Vm.IsSavingComment">
+                        @(Vm.IsSavingComment ? "등록 중..." : "댓글 등록")
+                    </button>
+                </div>
+            </section>
+        }
+
+        <!-- ── 라이트박스 ── -->
+        @if (lightboxOpen && post.PhotoFileNames.Count > 0)
+        {
+            <div class="fa-lightbox" @onclick="CloseLightbox">
+                <div class="fa-lightbox__inner" @onclick:stopPropagation>
+                    <button class="fa-lightbox__close" @onclick="CloseLightbox">✕</button>
+                    <button class="fa-lightbox__prev" @onclick="LightboxPrev">‹</button>
+                    <img class="fa-lightbox__img" src="@Vm.GetMediaUrl(post.PhotoFileNames[lightboxIdx])" alt="" />
+                    <button class="fa-lightbox__next" @onclick="LightboxNext">›</button>
+                    <div class="fa-lightbox__counter">@(lightboxIdx + 1) / @post.PhotoFileNames.Count</div>
+                </div>
+            </div>
+        }
+
+        <footer class="fa-footer">
+            <p>Powered by <a href="/">Codemaru Family</a></p>
+        </footer>
+    </div>
+}
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    [Parameter] public string PostId { get; set; } = "";
+
+    private bool lightboxOpen;
+    private int lightboxIdx;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await Vm.LoadAsync(Slug, PostId);
+    }
+
+    private async Task OnReact(string emoji)
+    {
+        await Vm.AddReactionAsync(Slug, emoji);
+    }
+
+    private async Task OnAddComment()
+    {
+        await Vm.AddCommentAsync(Slug);
+    }
+
+    private void OpenLightbox(int idx)
+    {
+        lightboxIdx = idx;
+        lightboxOpen = true;
+    }
+
+    private void CloseLightbox() => lightboxOpen = false;
+
+    private void LightboxPrev()
+    {
+        var count = Vm.Post?.PhotoFileNames.Count ?? 1;
+        lightboxIdx = (lightboxIdx - 1 + count) % count;
+    }
+
+    private void LightboxNext()
+    {
+        var count = Vm.Post?.PhotoFileNames.Count ?? 1;
+        lightboxIdx = (lightboxIdx + 1) % count;
+    }
+}
