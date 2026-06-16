@@ -5,6 +5,7 @@
 
 @inject PortfolioPublicViewModel Vm
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>@(Vm.Config?.OwnerName ?? Slug) — Portfolio</PageTitle>
 
@@ -40,11 +41,11 @@
         <nav class="pf-nav pf-nav--portfolio">
             <a href="/" class="pf-nav__brand">🧑‍💻 Codemaru Portfolio</a>
             <div class="pf-nav__links">
-                <a href="#projects" class="pf-nav__link">Projects</a>
-                <a href="#resume" class="pf-nav__link">Resume</a>
+                <a href="#" @onclick="ScrollToProjects" @onclick:preventDefault class="pf-nav__link">Projects</a>
+                <a href="#" @onclick="ScrollToResume" @onclick:preventDefault class="pf-nav__link">Resume</a>
                 @if (cfg.AllowContact)
                 {
-                    <a href="#contact" class="pf-nav__link">Contact</a>
+                    <a href="#" @onclick="ScrollToContact" @onclick:preventDefault class="pf-nav__link">Contact</a>
                 }
                 <a href="/@Slug/admin" class="pf-nav__link pf-nav__link--ghost">Admin</a>
             </div>
@@ -394,6 +395,13 @@
     {
         await Vm.LoadAsync(Slug);
     }
+
+    private Task ScrollTo(string id) =>
+        JS.InvokeVoidAsync("eval", $"document.getElementById('{id}')?.scrollIntoView({{behavior:'smooth'}})").AsTask();
+
+    private Task ScrollToProjects() => ScrollTo("projects");
+    private Task ScrollToResume() => ScrollTo("resume");
+    private Task ScrollToContact() => ScrollTo("contact");
 
     private void OnQueryInput(ChangeEventArgs e) => Vm.Query = e.Value?.ToString() ?? string.Empty;
 
