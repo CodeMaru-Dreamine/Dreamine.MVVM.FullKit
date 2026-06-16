@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using PortfolioApp.Models;
 
 namespace PortfolioApp.Services;
@@ -7,7 +8,11 @@ namespace PortfolioApp.Services;
 public class JsonProjectStore : IProjectStore
 {
     private readonly string _root;
-    private static readonly JsonSerializerOptions _json = new() { WriteIndented = true };
+    private static readonly JsonSerializerOptions _json = new()
+    {
+        WriteIndented = true,
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     public JsonProjectStore(PortfolioOptions opts) => _root = opts.ResolvedDataPath;
 
