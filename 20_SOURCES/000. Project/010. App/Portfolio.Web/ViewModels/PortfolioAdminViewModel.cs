@@ -70,6 +70,10 @@ public class PortfolioAdminViewModel
         Projects = await _projects.GetAllAsync(slug);
         Resume = await _resumes.GetAsync(slug);
         Messages = await _contacts.GetAllAsync(slug);
+        // 기존 데이터 마이그레이션: ImageFileName → WorkImages
+        foreach (var p in Projects.Where(p =>
+            !string.IsNullOrWhiteSpace(p.ImageFileName) && p.WorkImages.Length == 0))
+            p.WorkImages = [p.ImageFileName!];
         IsLoaded = true;
     }
 
@@ -117,6 +121,11 @@ public class PortfolioAdminViewModel
             PendingVideos.Clear();
             IsUploading = false;
         }
+
+        // ImageFileName이 있지만 WorkImages가 비어있으면 자동 포함
+        if (!string.IsNullOrWhiteSpace(EditingProject.ImageFileName) &&
+            !EditingProject.WorkImages.Contains(EditingProject.ImageFileName))
+            EditingProject.WorkImages = [EditingProject.ImageFileName, .. EditingProject.WorkImages];
 
         await _projects.SaveAsync(slug, EditingProject);
         Projects = await _projects.GetAllAsync(slug);

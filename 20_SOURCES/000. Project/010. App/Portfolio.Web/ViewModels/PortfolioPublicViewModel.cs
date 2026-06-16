@@ -76,6 +76,10 @@ public class PortfolioPublicViewModel
         if (Config == null) return;
         Projects = await _projects.GetAllAsync(slug);
         Resume = await _resumes.GetAsync(slug);
+        // 기존 데이터 마이그레이션: ImageFileName → WorkImages (표시 전용, 저장 안 함)
+        foreach (var p in Projects.Where(p =>
+            !string.IsNullOrWhiteSpace(p.ImageFileName) && p.WorkImages.Length == 0))
+            p.WorkImages = [p.ImageFileName!];
     }
 
     public string GetMediaUrl(string slug, string projectId, string fileName) =>
