@@ -81,6 +81,10 @@ public class PortfolioPublicViewModel
     public string GetMediaUrl(string slug, string projectId, string fileName) =>
         _media.GetMediaUrl(slug, projectId, fileName);
 
+    // 이미 절대 경로(/로 시작)이면 그대로, 아니면 GetMediaUrl로 조합
+    public string GetImageUrl(string slug, string projectId, string fileName) =>
+        fileName.StartsWith('/') ? fileName : _media.GetMediaUrl(slug, projectId, fileName);
+
     public string GetProfileImageUrl(string slug, string fileName) =>
         _media.GetProfileImageUrl(slug, fileName);
 

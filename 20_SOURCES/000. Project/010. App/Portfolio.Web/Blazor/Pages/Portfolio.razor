@@ -140,7 +140,7 @@
                             @if (!string.IsNullOrWhiteSpace(p.ImageFileName))
                             {
                                 <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetMediaUrl(Slug, p.Id, p.ImageFileName)')">
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, p.ImageFileName)')">
                                 </div>
                             }
                             else
@@ -196,7 +196,7 @@
                             @if (p.WorkImages.Length > 0)
                             {
                                 <div class="pf-work-card__hero"
-                                     style="background-image:url('@Vm.GetMediaUrl(Slug, p.Id, p.WorkImages[0])')">
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, p.WorkImages[0])')">
                                 </div>
                             }
                             <div class="pf-work-card__body">
@@ -259,7 +259,7 @@
                                     <div class="pf-work-images">
                                         @foreach (var img in p.WorkImages.Skip(1))
                                         {
-                                            <img src="@Vm.GetMediaUrl(Slug, p.Id, img)" alt="" class="pf-work-img" />
+                                            <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-work-img" />
                                         }
                                     </div>
                                 }
@@ -280,7 +280,7 @@
                             @if (!string.IsNullOrWhiteSpace(p.ImageFileName))
                             {
                                 <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetMediaUrl(Slug, p.Id, p.ImageFileName)')">
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, p.ImageFileName)')">
                                 </div>
                             }
                             else
