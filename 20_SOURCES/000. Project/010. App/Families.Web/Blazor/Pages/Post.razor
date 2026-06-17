@@ -38,38 +38,21 @@ else
                 <time class="fa-post__date">@post.PostedAt.ToString("yyyy년 MM월 dd일")</time>
             </header>
 
+            @{
+                // 미디어 렌더링 로컬 함수 대신 플래그로 두 번 조건 분기
+                bool mediaTop = post.MediaPosition == FamiliesApp.Models.MediaPosition.Top;
+            }
+
+            <!-- ── 미디어 (내용 위) ── -->
+            @if (mediaTop) { @RenderMedia(post) }
+
             @if (!string.IsNullOrWhiteSpace(Vm.ContentHtml))
             {
                 <div class="fa-post__content">@((MarkupString)Vm.ContentHtml)</div>
             }
 
-            <!-- ── 사진 갤러리 ── -->
-            @if (post.PhotoFileNames.Count > 0)
-            {
-                <div class="fa-media-grid">
-                    @foreach (var (fn, idx) in post.PhotoFileNames.Select((f, i) => (f, i)))
-                    {
-                        <div class="fa-media-grid__item" @onclick="() => OpenLightbox(idx)">
-                            <img src="@Vm.GetThumbUrl(fn)" alt="" loading="lazy" />
-                        </div>
-                    }
-                </div>
-            }
-
-            <!-- ── 동영상 ── -->
-            @if (post.VideoFileNames.Count > 0)
-            {
-                <div class="fa-videos">
-                    @foreach (var fn in post.VideoFileNames)
-                    {
-                        <div class="fa-video-wrap">
-                            <video controls preload="metadata" class="fa-video">
-                                <source src="@Vm.GetMediaUrl(fn)" />
-                            </video>
-                        </div>
-                    }
-                </div>
-            }
+            <!-- ── 미디어 (내용 아래) ── -->
+            @if (!mediaTop) { @RenderMedia(post) }
         </article>
 
         <!-- ── 반응 ── -->
@@ -173,6 +156,66 @@ else
     }
 
     private void CloseLightbox() => lightboxOpen = false;
+
+    private RenderFragment RenderMedia(PostEntry post) => __builder =>
+    {
+        // 사진 갤러리
+        if (post.PhotoFileNames.Count > 0)
+        {
+            __builder.OpenElement(0, "div");
+            __builder.AddAttribute(1, "class", "fa-media-grid");
+            foreach (var (fn, idx) in post.PhotoFileNames.Select((f, i) => (f, i)))
+            {
+                var capturedIdx = idx;
+                __builder.OpenElement(2, "div");
+                __builder.AddAttribute(3, "class", "fa-media-grid__item");
+                __builder.AddAttribute(4, "onclick", EventCallback.Factory.Create(this, () => OpenLightbox(capturedIdx)));
+                __builder.OpenElement(5, "img");
+                __builder.AddAttribute(6, "src", Vm.GetThumbUrl(fn));
+                __builder.AddAttribute(7, "loading", "lazy");
+                __builder.AddAttribute(8, "alt", "");
+                __builder.CloseElement();
+                __builder.CloseElement();
+            }
+            __builder.CloseElement();
+        }
+        // 동영상
+        if (post.VideoFileNames.Count > 0)
+        {
+            __builder.OpenElement(9, "div");
+            __builder.AddAttribute(10, "class", "fa-videos");
+            foreach (var fn in post.VideoFileNames)
+            {
+                var vidUrl = Vm.GetVideoUrl(fn);
+                if (FamilyPostViewModel.IsYouTube(vidUrl))
+                {
+                    __builder.OpenElement(11, "div");
+                    __builder.AddAttribute(12, "class", "fa-video-wrap fa-video-wrap--yt");
+                    __builder.OpenElement(13, "iframe");
+                    __builder.AddAttribute(14, "src", FamilyPostViewModel.GetYouTubeEmbedUrl(vidUrl));
+                    __builder.AddAttribute(15, "allowfullscreen", true);
+                    __builder.AddAttribute(16, "allow", "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture");
+                    __builder.CloseElement();
+                    __builder.CloseElement();
+                }
+                else
+                {
+                    __builder.OpenElement(17, "div");
+                    __builder.AddAttribute(18, "class", "fa-video-wrap");
+                    __builder.OpenElement(19, "video");
+                    __builder.AddAttribute(20, "controls", true);
+                    __builder.AddAttribute(21, "preload", "metadata");
+                    __builder.AddAttribute(22, "class", "fa-video");
+                    __builder.OpenElement(23, "source");
+                    __builder.AddAttribute(24, "src", vidUrl);
+                    __builder.CloseElement();
+                    __builder.CloseElement();
+                    __builder.CloseElement();
+                }
+            }
+            __builder.CloseElement();
+        }
+    };
 
     private void LightboxPrev()
     {

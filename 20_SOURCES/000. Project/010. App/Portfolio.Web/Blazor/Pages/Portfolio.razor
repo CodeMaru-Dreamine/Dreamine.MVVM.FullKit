@@ -137,20 +137,21 @@
                     @foreach (var p in Vm.Personal)
                     {
                         var personalImgs = p.WorkImages.Length > 0 ? p.WorkImages : (!string.IsNullOrWhiteSpace(p.ImageFileName) ? [p.ImageFileName] : []);
+                        var personalBlur = BlurStyle(p.ImageBlurLevel);
                         <div class="pf-project-card">
                             @if (personalImgs.Length > 1)
                             {
                                 <div class="pf-project-card__gallery">
                                     @foreach (var img in personalImgs)
                                     {
-                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" />
+                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" style="@personalBlur" />
                                     }
                                 </div>
                             }
                             else if (personalImgs.Length == 1)
                             {
                                 <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, personalImgs[0])')">
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, personalImgs[0])');@personalBlur">
                                 </div>
                             }
                             else
@@ -222,13 +223,14 @@
                     @foreach (var p in Vm.Work)
                     {
                         var workImgs = p.WorkImages.Length > 0 ? p.WorkImages : (!string.IsNullOrWhiteSpace(p.ImageFileName) ? [p.ImageFileName] : []);
+                        var workBlur = BlurStyle(p.ImageBlurLevel);
                         <div class="pf-project-card pf-project-card--work">
                             @if (workImgs.Length > 1)
                             {
                                 <div class="pf-project-card__gallery" style="position:relative;">
                                     @foreach (var img in workImgs)
                                     {
-                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" />
+                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" style="@workBlur" />
                                     }
                                     @if (!string.IsNullOrWhiteSpace(p.WorkPeriod))
                                     {
@@ -239,7 +241,7 @@
                             else if (workImgs.Length == 1)
                             {
                                 <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, workImgs[0])')">
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, workImgs[0])');@workBlur">
                                     @if (!string.IsNullOrWhiteSpace(p.WorkPeriod))
                                     {
                                         <span class="pf-work-period-badge">@p.WorkPeriod</span>
@@ -334,20 +336,21 @@
                     @foreach (var p in Vm.Public)
                     {
                         var publicImgs = p.WorkImages.Length > 0 ? p.WorkImages : (!string.IsNullOrWhiteSpace(p.ImageFileName) ? [p.ImageFileName] : []);
+                        var publicBlur = BlurStyle(p.ImageBlurLevel);
                         <div class="pf-project-card">
                             @if (publicImgs.Length > 1)
                             {
                                 <div class="pf-project-card__gallery">
                                     @foreach (var img in publicImgs)
                                     {
-                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" />
+                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" style="@publicBlur" />
                                     }
                                 </div>
                             }
                             else if (publicImgs.Length == 1)
                             {
                                 <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, publicImgs[0])')">
+                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, publicImgs[0])');@publicBlur">
                                 </div>
                             }
                             else
@@ -533,6 +536,14 @@
 
 @code {
     [Parameter] public string Slug { get; set; } = "";
+
+    private static string BlurStyle(int level) => level switch
+    {
+        1 => "filter:blur(4px);",
+        2 => "filter:blur(8px);",
+        3 => "filter:blur(16px);",
+        _ => ""
+    };
 
     protected override async Task OnParametersSetAsync()
     {

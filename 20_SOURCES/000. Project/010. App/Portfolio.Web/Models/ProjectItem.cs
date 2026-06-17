@@ -17,6 +17,9 @@ public class ProjectItem
     public ProjectCategory Category { get; set; } = ProjectCategory.Personal;
     public int SortOrder { get; set; } = 0;
 
+    // 이미지 블러 (0=없음, 1=약하게 4px, 2=중간 8px, 3=강하게 16px) — 사내 로고 등 법적 보호
+    public int ImageBlurLevel { get; set; } = 0;
+
     // 미디어
     public string[] VideoFileNames { get; set; } = [];
 

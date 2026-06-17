@@ -44,6 +44,28 @@ public sealed class FamilyPostViewModel
     public string GetThumbUrl(string fileName) =>
         Post is null ? "" : _media.GetThumbUrl(Config?.Slug ?? "", Post.Id, fileName);
 
+    public string GetVideoUrl(string fileName) =>
+        IsExternalUrl(fileName) ? fileName : GetMediaUrl(fileName);
+
+    public static bool IsExternalUrl(string s) =>
+        s.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+        s.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
+
+    public static bool IsYouTube(string url) =>
+        url.Contains("youtube.com/watch", StringComparison.OrdinalIgnoreCase) ||
+        url.Contains("youtu.be/", StringComparison.OrdinalIgnoreCase);
+
+    public static string GetYouTubeEmbedUrl(string url)
+    {
+        if (url.Contains("youtu.be/", StringComparison.OrdinalIgnoreCase))
+        {
+            var id = url.Split("youtu.be/")[1].Split('?')[0];
+            return $"https://www.youtube.com/embed/{id}";
+        }
+        var m = System.Text.RegularExpressions.Regex.Match(url, @"[?&]v=([^&]+)");
+        return m.Success ? $"https://www.youtube.com/embed/{m.Groups[1].Value}" : url;
+    }
+
     // ── 댓글 작성 ──────────────────────────────────────────
     public string CommentAuthor { get; set; } = "";
     public string CommentBody { get; set; } = "";

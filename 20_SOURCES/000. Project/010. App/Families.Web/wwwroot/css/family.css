@@ -350,15 +350,29 @@ a { color: inherit; text-decoration: none; }
 /* ── 미디어 그리드 ── */
 .fa-media-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(130px, 200px));
     gap: 8px;
     margin-bottom: 24px;
 }
-.fa-media-grid__item { aspect-ratio: 1; overflow: hidden; border-radius: 8px; cursor: pointer; }
+.fa-media-grid__item { aspect-ratio: 1; max-height: 200px; overflow: hidden; border-radius: 8px; cursor: pointer; position: relative; }
 .fa-media-grid__item img { width: 100%; height: 100%; object-fit: cover; transition: .2s; }
 .fa-media-grid__item:hover img { transform: scale(1.04); }
+/* 클릭 가능 힌트 오버레이 */
+.fa-media-grid__item::after {
+    content: '🔍';
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    background: rgba(0,0,0,.35);
+    opacity: 0;
+    transition: .2s;
+}
+.fa-media-grid__item:hover::after { opacity: 1; }
 .fa-media-grid--admin .fa-media-item { position: relative; }
-.fa-media-item { aspect-ratio: 1; position: relative; }
+.fa-media-item { aspect-ratio: 1; max-height: 200px; position: relative; }
 .fa-media-item img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
 .fa-media-item__del {
     position: absolute;
@@ -372,6 +386,7 @@ a { color: inherit; text-decoration: none; }
     cursor: pointer;
 }
 .fa-media-item--video {
+    aspect-ratio: unset;
     background: #1f2937;
     color: #fff;
     border-radius: 8px;
@@ -381,12 +396,18 @@ a { color: inherit; text-decoration: none; }
     flex-direction: column;
     justify-content: center;
     gap: 6px;
+    min-height: 80px;
 }
+.fa-media-item--video video { width: 100%; max-height: 140px; border-radius: 6px; }
 
 /* ── 동영상 ── */
-.fa-videos { margin-bottom: 24px; display: flex; flex-direction: column; gap: 12px; }
-.fa-video-wrap { border-radius: 10px; overflow: hidden; background: #000; }
-.fa-video { width: 100%; max-height: 420px; display: block; }
+.fa-videos { margin-bottom: 24px; display: flex; flex-direction: column; gap: 16px; }
+.fa-video-wrap { border-radius: 10px; overflow: hidden; background: #000; max-height: 400px; }
+.fa-video { width: 100%; max-height: 400px; display: block; }
+.fa-video-wrap--yt { position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; background: #000; border-radius: 10px; max-height: none; }
+.fa-video-wrap--yt iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; border-radius: 10px; }
+/* 어드민 동영상 URL 입력 */
+.fa-video-url-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
 
 /* ── 반응 ── */
 .fa-reactions { margin-bottom: 28px; }

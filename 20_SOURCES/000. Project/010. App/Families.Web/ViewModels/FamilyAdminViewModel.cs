@@ -88,10 +88,11 @@ public sealed class FamilyAdminViewModel
         PendingFiles.Clear();
     }
 
-    public async Task SavePostAsync(string slug, CancellationToken ct = default)
+    // 파일 선택 즉시 업로드 — 편집 상태 유지, 포스트 메타는 저장하지 않음
+    public async Task UploadPendingFilesAsync(string slug, CancellationToken ct = default)
     {
-        if (EditingPost is null) return;
-        IsUploading = PendingFiles.Count > 0;
+        if (EditingPost is null || PendingFiles.Count == 0) return;
+        IsUploading = true;
         try
         {
             foreach (var file in PendingFiles)
@@ -103,11 +104,25 @@ public sealed class FamilyAdminViewModel
                 else
                     EditingPost.PhotoFileNames.Add(fn);
             }
+            PendingFiles.Clear();
+            StatusMessage = "파일이 추가되었습니다.";
+        }
+        catch (Exception ex) { StatusMessage = $"업로드 오류: {ex.Message}"; }
+        finally { IsUploading = false; }
+    }
 
+    public async Task SavePostAsync(string slug, CancellationToken ct = default)
+    {
+        if (EditingPost is null) return;
+        // 혹시 아직 대기 중인 파일이 있으면 먼저 업로드
+        if (PendingFiles.Count > 0)
+            await UploadPendingFilesAsync(slug, ct).ConfigureAwait(false);
+        IsUploading = true;
+        try
+        {
             await _posts.SaveAsync(slug, EditingPost, ct).ConfigureAwait(false);
             Posts = await _posts.GetAllAsync(slug, ct).ConfigureAwait(false);
             EditingPost = null;
-            PendingFiles.Clear();
             StatusMessage = "포스트가 저장되었습니다. ✅";
         }
         catch (Exception ex) { StatusMessage = $"저장 오류: {ex.Message}"; }
@@ -187,4 +202,8 @@ public sealed class FamilyAdminViewModel
     public string GetCoverUrl(string slug, string fileName) => _media.GetCoverUrl(slug, fileName);
     public string GetMediaUrl(string slug, string postId, string fileName) => _media.GetMediaUrl(slug, postId, fileName);
     public string GetThumbUrl(string slug, string postId, string fileName) => _media.GetThumbUrl(slug, postId, fileName);
+
+    public static bool IsYouTube(string url) =>
+        url.Contains("youtube.com/watch", StringComparison.OrdinalIgnoreCase) ||
+        url.Contains("youtu.be/", StringComparison.OrdinalIgnoreCase);
 }

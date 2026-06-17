@@ -111,6 +111,12 @@
                                 }
                             </ul>
                         }
+                        <div class="fa-video-url-row">
+                            <span style="font-size:12px;color:var(--fa-text-muted);">동영상 URL</span>
+                            <input class="fa-input" style="flex:1;min-width:200px;" @bind="videoUrlInput"
+                                   placeholder="https://...YouTube 또는 동영상 URL" />
+                            <button class="fa-btn fa-btn--sm fa-btn--ghost" @onclick="OnAddVideoUrl">+ 추가</button>
+                        </div>
                     </div>
 
                     <!-- 기존 미디어 -->
@@ -129,8 +135,18 @@
                                 }
                                 @foreach (var fn in post.VideoFileNames)
                                 {
+                                    var isExt = fn.StartsWith("http", StringComparison.OrdinalIgnoreCase);
+                                    var vidSrc = isExt ? fn : Vm.GetMediaUrl(Slug, post.Id, fn);
                                     <div class="fa-media-item fa-media-item--video">
-                                        <span>🎬 @fn</span>
+                                        @if (FamilyAdminViewModel.IsYouTube(fn))
+                                        {
+                                            <span style="font-size:11px">▶ YouTube</span>
+                                            <span style="font-size:10px;word-break:break-all;opacity:.7">@fn</span>
+                                        }
+                                        else
+                                        {
+                                            <video src="@vidSrc" preload="metadata" controls></video>
+                                        }
                                         <button class="fa-media-item__del"
                                                 @onclick="() => OnDeleteMedia(post.Id, fn)">✕</button>
                                     </div>
@@ -143,6 +159,23 @@
                         <label>
                             <input type="checkbox" @bind="post.IsPinned" />
                             📌 상단 고정
+                        </label>
+                    </div>
+                    <div class="fa-form__row fa-form__row--check">
+                        <label style="gap:12px">
+                            이미지/동영상 위치
+                            <label style="font-weight:normal;cursor:pointer">
+                                <input type="radio" name="mediaPos_@post.Id"
+                                       checked="@(post.MediaPosition == MediaPosition.Top)"
+                                       @onchange="() => post.MediaPosition = MediaPosition.Top" />
+                                📷 내용 위
+                            </label>
+                            <label style="font-weight:normal;cursor:pointer">
+                                <input type="radio" name="mediaPos_@post.Id"
+                                       checked="@(post.MediaPosition == MediaPosition.Bottom)"
+                                       @onchange="() => post.MediaPosition = MediaPosition.Bottom" />
+                                📷 내용 아래
+                            </label>
                         </label>
                     </div>
 
@@ -326,6 +359,7 @@
 
     private string activeTab = "post";
     private bool confirmDelete = false;
+    private string videoUrlInput = "";
 
     protected override async Task OnParametersSetAsync()
     {
@@ -355,10 +389,11 @@
         if (tab != "post") Vm.CancelEdit();
     }
 
-    private void OnFilesSelected(InputFileChangeEventArgs e)
+    private async Task OnFilesSelected(InputFileChangeEventArgs e)
     {
         Vm.PendingFiles.Clear();
         Vm.PendingFiles.AddRange(e.GetMultipleFiles(50));
+        await Vm.UploadPendingFilesAsync(Slug);
     }
 
     private async Task OnSavePost()
@@ -377,6 +412,15 @@
     private async Task OnDeletePost(string postId)
     {
         await Vm.DeletePostAsync(Slug, postId);
+    }
+
+    private void OnAddVideoUrl()
+    {
+        if (string.IsNullOrWhiteSpace(videoUrlInput) || Vm.EditingPost is null) return;
+        var url = videoUrlInput.Trim();
+        if (!Vm.EditingPost.VideoFileNames.Contains(url))
+            Vm.EditingPost.VideoFileNames.Add(url);
+        videoUrlInput = "";
     }
 
     private async Task OnDeleteMedia(string postId, string fileName)

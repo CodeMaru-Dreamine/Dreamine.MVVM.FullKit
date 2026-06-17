@@ -180,6 +180,17 @@
                             </div>
                         }
 
+                        <!-- 이미지 블러 설정 -->
+                        <div class="pf-form__row">
+                            <label class="pf-label">이미지 블러 <span class="pf-label__hint">사내 로고 등 식별 방지 (공개 뷰에만 적용)</span></label>
+                            <select class="pf-input" style="max-width:200px" @bind="proj.ImageBlurLevel">
+                                <option value="0">없음 (그대로 표시)</option>
+                                <option value="1">약하게 — 윤곽 보임</option>
+                                <option value="2">중간 — 색감만</option>
+                                <option value="3">강하게 — 식별 불가</option>
+                            </select>
+                        </div>
+
                         <!-- 이미지 업로드 -->
                         <div class="pf-form__row">
                             <label class="pf-label">이미지</label>
