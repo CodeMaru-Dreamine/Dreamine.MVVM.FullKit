@@ -178,9 +178,9 @@ public partial class MainViewModel : ObservableObject
             // 3. 응답 추출
             LoopStatus = $"🔍 [{albumName}] 응답 추출 중...";
             var raw = await ExecuteScriptAsync(ResponseExtractor.BuildExtractScript());
-            var text = ParseExtractedText(raw);
+            var result = ParseStructuredResponse(raw);
 
-            if (string.IsNullOrWhiteSpace(text))
+            if (result is null || string.IsNullOrWhiteSpace(result.Content))
             {
                 LoopStatus = $"❌ [{albumName}] 응답 추출 실패 — AI가 아직 응답 중일 수 있습니다. 대기 시간을 늘려보세요.";
                 return;
@@ -190,14 +190,22 @@ public partial class MainViewModel : ObservableObject
             var post = new PostEntry
             {
                 Title = $"[{albumName}] {DateTime.Now:MM/dd HH:mm}",
-                Content = text,
+                Content = result.Content,
                 AlbumId = album?.Id ?? "",
                 PostedAt = DateTime.Now,
                 MediaPosition = MediaPosition,
             };
+            // AI가 찾아준 이미지 URL 추가
+            foreach (var img in result.Images)
+                if (!post.PhotoFileNames.Contains(img)) post.PhotoFileNames.Add(img);
+            // AI가 찾아준 유튜브 URL 추가
+            if (!string.IsNullOrWhiteSpace(result.Video) && !post.VideoFileNames.Contains(result.Video))
+                post.VideoFileNames.Add(result.Video);
 
             await _writer.SavePostAsync(SelectedSlug, post, PendingPhotos);
-            LoopStatus = $"✅ [{albumName}] 저장 완료! ({DateTime.Now:HH:mm}) — 총 {text.Length}자";
+            var mediaInfo = result.Images.Count > 0 || result.Video != null
+                ? $" | 📷{result.Images.Count} 🎬{(result.Video != null ? 1 : 0)}" : "";
+            LoopStatus = $"✅ [{albumName}] 저장 완료! ({DateTime.Now:HH:mm}) — {result.Content.Length}자{mediaInfo}";
 
             // 5. 앨범 로테이션
             if (AlbumRotationEnabled) RotateAlbum();
@@ -236,9 +244,9 @@ public partial class MainViewModel : ObservableObject
 
         StatusMessage = "⏳ AI 응답 추출 중...";
         var raw = await ExecuteScriptAsync(ResponseExtractor.BuildExtractScript());
-        var text = ParseExtractedText(raw);
+        var result = ParseStructuredResponse(raw);
 
-        if (string.IsNullOrWhiteSpace(text))
+        if (result is null || string.IsNullOrWhiteSpace(result.Content))
         {
             StatusMessage = "❌ AI 응답을 찾을 수 없습니다. AI 응답이 완료됐는지 확인하세요.";
             return;
@@ -249,17 +257,23 @@ public partial class MainViewModel : ObservableObject
         {
             Title = string.IsNullOrWhiteSpace(PostTitle)
                 ? $"[{albumName}] {DateTime.Now:MM/dd HH:mm}" : PostTitle.Trim(),
-            Content = text,
+            Content = result.Content,
             AlbumId = SelectedAlbum?.Id ?? "",
             IsPinned = IsPinned,
             MediaPosition = MediaPosition,
             PostedAt = DateTime.Now,
         };
+        foreach (var img in result.Images)
+            if (!post.PhotoFileNames.Contains(img)) post.PhotoFileNames.Add(img);
+        if (!string.IsNullOrWhiteSpace(result.Video) && !post.VideoFileNames.Contains(result.Video))
+            post.VideoFileNames.Add(result.Video);
 
         try
         {
             await _writer.SavePostAsync(SelectedSlug, post, PendingPhotos);
-            StatusMessage = $"✅ [{albumName}] 저장 완료! ({DateTime.Now:HH:mm})";
+            var mediaInfo = result.Images.Count > 0 || result.Video != null
+                ? $" (📷{result.Images.Count} 🎬{(result.Video != null ? 1 : 0)})" : "";
+            StatusMessage = $"✅ [{albumName}] 저장 완료! ({DateTime.Now:HH:mm}){mediaInfo}";
             PostTitle = "";
             PendingPhotos.Clear();
         }
@@ -315,33 +329,120 @@ public partial class MainViewModel : ObservableObject
     }
 
     // ── 헬퍼 ─────────────────────────────────────────────────────
-    private static string? ParseExtractedText(string? raw)
+
+    // AI 응답에서 구조화된 데이터 파싱
+    private sealed record AiPostResult(string Content, List<string> Images, string? Video);
+
+    private static AiPostResult? ParseStructuredResponse(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
+
+        // ResponseExtractor가 { source, text } 형태로 감쌈 → text 꺼내기
+        string text = raw;
         try
         {
             var unescaped = JsonSerializer.Deserialize<string>(raw) ?? raw;
-            var doc = JsonDocument.Parse(unescaped);
-            return doc.RootElement.GetProperty("text").GetString();
+            var outer = JsonDocument.Parse(unescaped);
+            if (outer.RootElement.TryGetProperty("text", out var textProp))
+                text = textProp.GetString() ?? unescaped;
         }
-        catch
+        catch { text = raw.Trim('"').Replace("\\n", "\n").Replace("\\\"", "\""); }
+
+        // text 안에서 ```json ... ``` 블록 추출
+        var jsonBlock = ExtractJsonBlock(text);
+        if (jsonBlock != null)
         {
-            return raw.Trim('"').Replace("\\n", "\n").Replace("\\\"", "\"");
+            try
+            {
+                var doc = JsonDocument.Parse(jsonBlock);
+                var root = doc.RootElement;
+                var content = root.TryGetProperty("content", out var c) ? c.GetString() ?? "" : "";
+                var images = new List<string>();
+                if (root.TryGetProperty("images", out var imgs) && imgs.ValueKind == JsonValueKind.Array)
+                    foreach (var img in imgs.EnumerateArray())
+                    {
+                        var u = img.GetString();
+                        if (!string.IsNullOrWhiteSpace(u)) images.Add(u!);
+                    }
+                string? video = null;
+                if (root.TryGetProperty("video", out var vid))
+                    video = vid.GetString();
+                if (!string.IsNullOrWhiteSpace(content))
+                    return new AiPostResult(content, images, video);
+            }
+            catch { }
         }
+
+        // JSON 파싱 실패 시 텍스트 전체를 content로
+        return string.IsNullOrWhiteSpace(text) ? null : new AiPostResult(text, [], null);
+    }
+
+    private static string? ExtractJsonBlock(string text)
+    {
+        // ```json ... ``` 블록 찾기
+        var start = text.IndexOf("```json", StringComparison.OrdinalIgnoreCase);
+        if (start >= 0)
+        {
+            start = text.IndexOf('\n', start) + 1;
+            var end = text.IndexOf("```", start);
+            if (end > start) return text[start..end].Trim();
+        }
+        // ``` ... ``` (언어 없음)
+        start = text.IndexOf("```");
+        if (start >= 0)
+        {
+            start = text.IndexOf('\n', start) + 1;
+            var end = text.IndexOf("```", start);
+            if (end > start)
+            {
+                var candidate = text[start..end].Trim();
+                if (candidate.StartsWith('{')) return candidate;
+            }
+        }
+        // { 로 시작하는 JSON 직접
+        var brace = text.IndexOf('{');
+        if (brace >= 0)
+        {
+            var lastBrace = text.LastIndexOf('}');
+            if (lastBrace > brace) return text[brace..(lastBrace + 1)];
+        }
+        return null;
     }
 
     private static string BuildDefaultPrompt() =>
         """
-        {앨범} 주제로 가족 여행 블로그 포스트를 한 개 작성해줘.
+        {앨범} 주제로 가족 여행 블로그 포스트를 한 개 작성하고, 관련 이미지와 유튜브 영상 URL도 찾아줘.
 
-        조건:
+        반드시 아래 JSON 형식으로만 답변해줘 (다른 설명 없이):
+
+        ```json
+        {
+          "content": "포스트 본문 (마크다운 형식, 500~800자)",
+          "images": [
+            "https://실제_이미지_URL_1.jpg",
+            "https://실제_이미지_URL_2.jpg",
+            "https://실제_이미지_URL_3.jpg"
+          ],
+          "video": "https://www.youtube.com/watch?v=실제_영상ID"
+        }
+        ```
+
+        본문 조건:
         - 제목 없이 본문만 작성 (제목은 앱에서 자동 설정)
         - 마크다운 형식 (## 소제목, **강조**, - 목록 사용)
-        - 3~5 문단, 500~800자
-        - 실제 경험처럼 자연스럽게, 구체적인 장소나 상황 포함
+        - 3~5 문단, 실제 경험처럼 자연스럽게
+        - 구체적인 장소나 식당, 활동 포함
         - 마지막에 팁 또는 추천 한 줄로 마무리
 
-        지금 바로 본문만 작성해줘.
+        이미지 조건:
+        - {앨범} 주제와 관련된 실제 존재하는 이미지 URL 3~4개
+        - .jpg, .jpeg, .png, .webp 로 끝나는 직접 링크
+
+        영상 조건:
+        - {앨범} 주제 관련 유튜브 영상 URL 1개
+        - youtube.com/watch?v= 또는 youtu.be/ 형식
+
+        지금 바로 JSON만 출력해줘.
         """;
 
     private static string DetectDefaultRoot()

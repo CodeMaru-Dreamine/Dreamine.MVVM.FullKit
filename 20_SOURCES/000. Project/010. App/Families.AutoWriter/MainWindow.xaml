@@ -31,6 +31,26 @@
             <Setter Property="BorderBrush" Value="#334155"/>
             <Setter Property="Padding" Value="7,4"/>
             <Setter Property="FontSize" Value="12"/>
+            <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                    <Style TargetType="ComboBoxItem">
+                        <Setter Property="Background" Value="#1e293b"/>
+                        <Setter Property="Foreground" Value="#e2e8f0"/>
+                        <Setter Property="Padding" Value="8,5"/>
+                        <Setter Property="FontSize" Value="12"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsHighlighted" Value="True">
+                                <Setter Property="Background" Value="#334155"/>
+                                <Setter Property="Foreground" Value="#ffffff"/>
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="Background" Value="#6366f1"/>
+                                <Setter Property="Foreground" Value="#ffffff"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Setter.Value>
+            </Setter>
         </Style>
         <Style TargetType="Button" x:Key="Btn">
             <Setter Property="Background" Value="#6366f1"/>
