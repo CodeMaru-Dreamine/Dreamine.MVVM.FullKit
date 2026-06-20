@@ -440,28 +440,52 @@ public partial class MainViewModel : ObservableObject
     private static string BuildDefaultPrompt() =>
         """
         {앨범} 주제로 한국 가족 여행 블로그 포스트 1개를 작성해줘.
-        저작권 없는 무료 이미지(Unsplash, Pexels, Pixabay 등)의 직링크 URL 3개와
+        저작권 없는 무료 이미지(Unsplash, Pexels, Pixabay)의 직링크 URL 3개와
         유튜브 영상 URL 1개도 찾아줘.
 
         아래 형식 그대로 출력해줘 (===섹션=== 구분자 포함, 다른 설명 없이):
 
         ===TITLE===
-        {앨범} 여행기 — 가족과 함께한 하루
+        [장소/활동명], [실용적인 팁 또는 핵심 주의사항]을 한 문장으로
+
+        예시 제목 스타일:
+        - 수원화성 주말 반나절 산책, 행궁과 성곽길은 오전에 나누어 보는 게 편합니다
+        - 서울어린이대공원 아이와 반나절 코스, 무료 입장이라도 주차 시간은 먼저 봐야 합니다
+        - 순천만국가정원 아이와 걷는 1박 2일 가족여행, 정원은 오전에 보는 게 편합니다
 
         ===CONTENT===
-        ## 도착
-        아침 일찍 출발해서... (본문 내용, 500~800자)
+        ## 한눈에 보는 포인트
+        이 장소/여행의 핵심 특징 2~3줄 요약
 
-        ## 점심
+        ## [소제목1 - 장소 특성에 맞게]
+        구체적인 내용 (실제 가격, 시간, 주소, 팁 포함)...
+
+        <img src="[IMAGES에서 첫 번째 URL 그대로]" style="width:100%;border-radius:8px;margin:12px 0" />
+
+        ## [소제목2]
         내용...
 
-        ## 오후
+        <img src="[IMAGES에서 두 번째 URL 그대로]" style="width:100%;border-radius:8px;margin:12px 0" />
+
+        ## [소제목3]
         내용...
 
-        ## 마무리
-        내용...
+        <img src="[IMAGES에서 세 번째 URL 그대로]" style="width:100%;border-radius:8px;margin:12px 0" />
 
-        > 💡 팁: 한 줄 추천으로 마무리
+        ## 여행 경비 예상
+        | 항목 | 예상 비용 | 메모 |
+        |------|----------|------|
+        | 입장료 | 0원~얼마 | 내용 |
+        | 식사 | 얼마 | 내용 |
+        | 교통 | 얼마 | 내용 |
+
+        ## 주차/화장실/유모차 포인트
+        실용 정보...
+
+        ## 이런 가족에게 추천
+        어떤 연령대, 어떤 성향의 가족에게 맞는지...
+
+        > 💡 팁: 방문 전 꼭 알아야 할 핵심 한 줄
 
         ===IMAGES===
         https://images.unsplash.com/photo-실제ID?w=800
@@ -472,9 +496,11 @@ public partial class MainViewModel : ObservableObject
         https://www.youtube.com/watch?v=실제영상ID
 
         조건:
-        - Content: 마크다운 형식, ## 소제목, **강조**, > 인용 사용
-        - IMAGES: Unsplash/Pexels/Pixabay 직링크만, 반드시 실제 존재하는 URL
-        - VIDEO: {앨범} 관련 유튜브 영상 1개
+        - TITLE: "[장소], [팁]" 형태의 구체적이고 실용적인 제목
+        - CONTENT: 마크다운 형식, 이미지는 각 소제목 바로 아래에 삽입
+          IMAGES의 URL을 순서대로 <img src=""> 태그에 넣을 것
+        - IMAGES: Unsplash/Pexels/Pixabay 직링크 3개, 실제 존재하는 URL만
+        - VIDEO: {앨범} 관련 유튜브 1개
         - 지금 바로 위 형식대로만 출력
         """;
 
