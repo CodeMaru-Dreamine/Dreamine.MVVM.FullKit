@@ -10,6 +10,7 @@ namespace FamiliesAutoWriter.Services;
 /// </summary>
 public sealed class PromptHistoryService
 {
+    private static readonly object _fileGate = new();
     private readonly string _historyFile;
     private readonly HashSet<string> _sentHashes;
 
@@ -23,18 +24,34 @@ public sealed class PromptHistoryService
         _sentHashes = Load();
     }
 
-    public bool IsDuplicate(string prompt) => _sentHashes.Contains(Hash(prompt));
+    public bool IsDuplicate(string prompt)
+    {
+        lock (_fileGate)
+        {
+            foreach (var hash in Load())
+                _sentHashes.Add(hash);
+            return _sentHashes.Contains(Hash(prompt));
+        }
+    }
 
     public void MarkSent(string prompt)
     {
-        _sentHashes.Add(Hash(prompt));
-        Save();
+        lock (_fileGate)
+        {
+            foreach (var hash in Load())
+                _sentHashes.Add(hash);
+            _sentHashes.Add(Hash(prompt));
+            Save();
+        }
     }
 
     public void Clear()
     {
-        _sentHashes.Clear();
-        Save();
+        lock (_fileGate)
+        {
+            _sentHashes.Clear();
+            Save();
+        }
     }
 
     private HashSet<string> Load()
