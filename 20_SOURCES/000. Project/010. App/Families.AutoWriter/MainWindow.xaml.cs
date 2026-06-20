@@ -17,6 +17,10 @@ public partial class MainWindow : Window
         await WebBrowser.EnsureCoreWebView2Async();
         var vm = (MainViewModel)DataContext;
         WebBrowser.Source = new Uri(vm.BrowserUrl);
+
+        // WebView2 스크립트 실행 위임 연결
+        vm.ExecuteScriptAsync = async script =>
+            await WebBrowser.ExecuteScriptAsync(script);
     }
 
     private void OnNavigateClick(object sender, RoutedEventArgs e) => Navigate();
