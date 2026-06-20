@@ -381,23 +381,52 @@ public partial class MainViewModel : ObservableObject
 
     private static string? ExtractJsonBlock(string text)
     {
+        string? raw = null;
+
         var start = text.IndexOf("```json", StringComparison.OrdinalIgnoreCase);
         if (start >= 0)
         {
             start = text.IndexOf('\n', start) + 1;
             var end = text.IndexOf("```", start);
-            if (end > start) return text[start..end].Trim();
+            if (end > start) raw = text[start..end].Trim();
         }
-        start = text.IndexOf("```");
-        if (start >= 0)
+        if (raw == null)
         {
-            start = text.IndexOf('\n', start) + 1;
-            var end = text.IndexOf("```", start);
-            if (end > start) { var c = text[start..end].Trim(); if (c.StartsWith('{')) return c; }
+            start = text.IndexOf("```");
+            if (start >= 0)
+            {
+                start = text.IndexOf('\n', start) + 1;
+                var end = text.IndexOf("```", start);
+                if (end > start) { var c = text[start..end].Trim(); if (c.StartsWith('{')) raw = c; }
+            }
         }
-        var brace = text.IndexOf('{');
-        if (brace >= 0) { var last = text.LastIndexOf('}'); if (last > brace) return text[brace..(last + 1)]; }
-        return null;
+        if (raw == null)
+        {
+            var brace = text.IndexOf('{');
+            if (brace >= 0) { var last = text.LastIndexOf('}'); if (last > brace) raw = text[brace..(last + 1)]; }
+        }
+
+        // AI가 문자열 값 안에 줄바꿈을 넣는 경우 JSON이 깨짐 → 문자열 안 줄바꿈 제거
+        if (raw != null) raw = SanitizeJsonStringNewlines(raw);
+        return raw;
+    }
+
+    // JSON 문자열 값 내부의 실제 줄바꿈을 공백으로 치환 (키-값 구조는 보존)
+    private static string SanitizeJsonStringNewlines(string json)
+    {
+        var sb = new System.Text.StringBuilder(json.Length);
+        bool inString = false;
+        bool escaped = false;
+        foreach (var ch in json)
+        {
+            if (escaped) { escaped = false; sb.Append(ch); continue; }
+            if (ch == '\\') { escaped = true; sb.Append(ch); continue; }
+            if (ch == '"') inString = !inString;
+            // 문자열 안에서 실제 줄바꿈 → 공백으로
+            if (inString && (ch == '\n' || ch == '\r')) { sb.Append(' '); continue; }
+            sb.Append(ch);
+        }
+        return sb.ToString();
     }
 
     private static string BuildDefaultPrompt() =>
