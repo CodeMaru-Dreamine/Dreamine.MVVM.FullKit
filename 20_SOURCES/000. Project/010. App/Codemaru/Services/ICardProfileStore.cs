@@ -24,6 +24,14 @@ public interface ICardProfileStore
     Task<CardHybridSnapshot?> LoadAsync(string userId, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// \brief Finds a snapshot whose profile LandingSlug matches the given slug segment.
+    /// </summary>
+    /// <param name="slug">The URL slug segment (e.g. "minsu" from /card/minsu).</param>
+    /// <param name="cancellationToken">A token used to cancel the operation.</param>
+    /// <returns>The matching snapshot, or null when no match exists.</returns>
+    Task<CardHybridSnapshot?> LoadBySlugAsync(string slug, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// \brief Saves the CardHybrid snapshot.
     /// </summary>
     /// <param name="userId">The signed-in user ID.</param>

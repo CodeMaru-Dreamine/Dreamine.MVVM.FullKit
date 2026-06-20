@@ -83,9 +83,14 @@ else
 
         <!-- ── 타임라인 ── -->
         <section class="fa-timeline">
-            <h2 class="fa-section-title">📅 타임라인</h2>
+            <h2 class="fa-section-title">📅 타임라인
+                @if (Vm.TotalCount > 0)
+                {
+                    <span class="fa-timeline__count">(@Vm.TotalCount)</span>
+                }
+            </h2>
 
-            @if (Vm.Posts.Count == 0)
+            @if (Vm.TotalCount == 0)
             {
                 <div class="fa-empty">아직 등록된 포스트가 없습니다.</div>
             }
@@ -131,6 +136,25 @@ else
                         </a>
                     }
                 </div>
+
+                @if (Vm.TotalPages > 1)
+                {
+                    <nav class="fa-pager" aria-label="페이지 이동">
+                        <button class="fa-pager__btn" disabled="@(Vm.CurrentPage <= 1)"
+                                @onclick="() => GoToPage(Vm.CurrentPage - 1)">‹ 이전</button>
+
+                        @for (int p = Math.Max(1, Vm.CurrentPage - 2);
+                                  p <= Math.Min(Vm.TotalPages, Vm.CurrentPage + 2); p++)
+                        {
+                            var pg = p;
+                            <button class="fa-pager__btn @(pg == Vm.CurrentPage ? "fa-pager__btn--active" : "")"
+                                    @onclick="() => GoToPage(pg)">@pg</button>
+                        }
+
+                        <button class="fa-pager__btn" disabled="@(Vm.CurrentPage >= Vm.TotalPages)"
+                                @onclick="() => GoToPage(Vm.CurrentPage + 1)">다음 ›</button>
+                    </nav>
+                }
             }
         </section>
 
@@ -146,5 +170,11 @@ else
     protected override async Task OnParametersSetAsync()
     {
         await Vm.LoadAsync(Slug);
+    }
+
+    private async Task GoToPage(int page)
+    {
+        await Vm.LoadPageAsync(Slug, page);
+        StateHasChanged();
     }
 }

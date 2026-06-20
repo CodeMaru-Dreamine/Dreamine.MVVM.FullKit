@@ -21,4 +21,7 @@ public sealed class FamilyConfig
 
     /// <summary>방문자 댓글 허용 여부</summary>
     public bool AllowComments { get; set; } = true;
+
+    /// <summary>타임라인 / 앨범 페이지당 포스트 수 (5~100)</summary>
+    public int PageSize { get; set; } = 20;
 }

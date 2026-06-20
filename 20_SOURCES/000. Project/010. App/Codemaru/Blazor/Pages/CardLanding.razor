@@ -1,61 +1,82 @@
 @page "/card/{Slug}"
 @namespace Codemaru.Blazor.Pages
-@inject CardHybridSession Session
+@inject ICardProfileStore Store
 
-<PageTitle>@Profile.Name - @Profile.BackBrand</PageTitle>
+@if (_profile is null)
+{
+    <main class="public-card-page">
+        <section class="public-card">
+            <p>명함을 찾을 수 없습니다.</p>
+        </section>
+    </main>
+}
+else
+{
+    <PageTitle>@_profile.Name - @_profile.BackBrand</PageTitle>
 
-<main class="public-card-page theme-@Profile.LandingTheme">
-    <section class="public-card">
-        <div class="public-logo" style="border-color:@Profile.AccentColor">
-            @if (string.IsNullOrWhiteSpace(Profile.LogoImageDataUrl))
-            {
-                <span style="background:@Profile.AccentColor"></span>
-            }
-            else
-            {
-                <img src="@Profile.LogoImageDataUrl" alt="@Profile.BackBrand logo" />
-            }
-        </div>
-
-        <p class="eyebrow">@Profile.BackBrand</p>
-        <h1>@Profile.Name</h1>
-        <p class="role">@Profile.Role</p>
-        <p class="description">@Profile.LandingDescription</p>
-
-        <div class="public-actions">
-            <a href="mailto:@Profile.Email">메일 보내기</a>
-            @if (!string.IsNullOrWhiteSpace(Profile.Phone))
-            {
-                <a href="tel:@Profile.Phone">전화하기</a>
-            }
-            <a href="@Profile.Website" target="_blank">웹사이트</a>
-        </div>
-
-        <dl class="public-contact">
-            <div>
-                <dt>Email</dt>
-                <dd>@Profile.Email</dd>
+    <main class="public-card-page theme-@_profile.LandingTheme">
+        <section class="public-card">
+            <div class="public-logo" style="border-color:@_profile.AccentColor">
+                @if (string.IsNullOrWhiteSpace(_profile.LogoImageDataUrl))
+                {
+                    <span style="background:@_profile.AccentColor"></span>
+                }
+                else
+                {
+                    <img src="@_profile.LogoImageDataUrl" alt="@_profile.BackBrand logo" />
+                }
             </div>
-            <div>
-                <dt>Company</dt>
-                <dd>@Profile.BackBrand</dd>
+
+            <p class="eyebrow">@_profile.BackBrand</p>
+            <h1>@_profile.Name</h1>
+            <p class="role">@_profile.Role</p>
+            <p class="description">@_profile.LandingDescription</p>
+
+            <div class="public-actions">
+                <a href="mailto:@_profile.Email">메일 보내기</a>
+                @if (!string.IsNullOrWhiteSpace(_profile.Phone))
+                {
+                    <a href="tel:@_profile.Phone">전화하기</a>
+                }
+                <a href="@_profile.Website" target="_blank">웹사이트</a>
             </div>
-            <div>
-                <dt>Phone</dt>
-                <dd>@Display(Profile.Phone)</dd>
-            </div>
-            <div>
-                <dt>Address</dt>
-                <dd>@Display(Profile.Address)</dd>
-            </div>
-        </dl>
-    </section>
-</main>
+
+            <dl class="public-contact">
+                <div>
+                    <dt>Email</dt>
+                    <dd>@_profile.Email</dd>
+                </div>
+                <div>
+                    <dt>Company</dt>
+                    <dd>@_profile.BackBrand</dd>
+                </div>
+                <div>
+                    <dt>Phone</dt>
+                    <dd>@Display(_profile.Phone)</dd>
+                </div>
+                <div>
+                    <dt>Address</dt>
+                    <dd>@Display(_profile.Address)</dd>
+                </div>
+            </dl>
+        </section>
+    </main>
+}
 
 @code {
     [Parameter] public string? Slug { get; set; }
 
-    private CardProfile Profile => Session.State.Profile;
+    private CardProfile? _profile;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _profile = null;
+        if (!string.IsNullOrWhiteSpace(Slug))
+        {
+            var snapshot = await Store.LoadBySlugAsync(Slug);
+            _profile = snapshot?.Profile;
+        }
+    }
 
     private static string Display(string value)
     {

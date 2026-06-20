@@ -109,6 +109,43 @@ public sealed class JsonCardProfileStore : ICardProfileStore
         await SaveJsonAsync(GetSnapshotPath(userId), snapshot, cancellationToken);
     }
 
+    /// <inheritdoc />
+    public async Task<CardHybridSnapshot?> LoadBySlugAsync(string slug, CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(slug))
+        {
+            return null;
+        }
+
+        var normalizedSlug = slug.Trim().Trim('/').ToLowerInvariant();
+        var files = Directory.GetFiles(_directory, "cardhybrid-profile-*.json");
+
+        foreach (var filePath in files)
+        {
+            try
+            {
+                await using var stream = File.OpenRead(filePath);
+                var snapshot = await JsonSerializer.DeserializeAsync<CardHybridSnapshot>(stream, SerializerOptions, cancellationToken);
+                if (snapshot?.Profile is null)
+                {
+                    continue;
+                }
+
+                var profileSlug = snapshot.Profile.LandingSlug.Trim().Trim('/').ToLowerInvariant();
+                if (profileSlug == $"card/{normalizedSlug}" || profileSlug == normalizedSlug)
+                {
+                    return snapshot;
+                }
+            }
+            catch
+            {
+                // skip corrupt files
+            }
+        }
+
+        return null;
+    }
+
     private async Task SaveJsonAsync<T>(string filePath, T value, CancellationToken cancellationToken)
     {
         var tempPath = $"{filePath}.tmp";

@@ -664,7 +664,204 @@
     color: #cbd5e1;
     font-size: .9rem;
     line-height: 1.75;
+    margin: 0 0 1rem;
+}
+
+.cm-about-actions {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-top: auto;
+}
+
+.cm-btn-outline,
+.cm-btn-guide {
+    display: inline-flex;
+    align-items: center;
+    padding: .35rem .85rem;
+    border-radius: 8px;
+    font-size: .8rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: background .15s, color .15s;
+}
+
+.cm-btn-outline {
+    background: transparent;
+    border: 1px solid var(--cm-accent, #5d7f57);
+    color: var(--cm-accent, #5d7f57);
+}
+
+.cm-btn-outline:hover {
+    background: var(--cm-accent, #5d7f57);
+    color: #fff;
+}
+
+.cm-btn-guide {
+    background: rgba(148, 163, 184, .12);
+    color: #94a3b8;
+}
+
+.cm-btn-guide:hover {
+    background: rgba(148, 163, 184, .22);
+    color: #e2e8f0;
+}
+
+.cm-about-card {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── 가이드 페이지 ── */
+.guide-page {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 2rem;
+    align-items: start;
+    margin-top: 1.5rem;
+}
+
+.guide-nav {
+    position: sticky;
+    top: 1rem;
+    background: var(--cm-panel);
+    border: 1px solid var(--cm-border);
+    border-radius: 14px;
+    padding: 1.25rem;
+}
+
+.guide-nav h2 {
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--cm-muted);
+    margin: 0 0 .75rem;
+}
+
+.guide-nav ul {
+    list-style: none;
     margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .25rem;
+}
+
+.guide-nav a {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .45rem .65rem;
+    border-radius: 8px;
+    font-size: .88rem;
+    color: #94a3b8;
+    text-decoration: none;
+    transition: background .12s, color .12s;
+}
+
+.guide-nav a:hover {
+    background: rgba(255,255,255,.06);
+    color: #e2e8f0;
+}
+
+.guide-nav a.active {
+    background: rgba(93, 127, 87, .18);
+    color: #86efac;
+    font-weight: 600;
+}
+
+.guide-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid var(--cm-border);
+}
+
+.guide-icon {
+    font-size: 2.5rem;
+    flex-shrink: 0;
+}
+
+.guide-header h1 {
+    font-size: clamp(1.2rem, 2.5vw, 1.6rem);
+    font-weight: 900;
+    margin: 0 0 .25rem;
+}
+
+.guide-subtitle {
+    color: var(--cm-muted);
+    font-size: .9rem;
+    margin: 0;
+}
+
+.guide-body section {
+    margin-bottom: 2rem;
+}
+
+.guide-body h2 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--cm-strong);
+    margin: 0 0 .75rem;
+    padding-bottom: .4rem;
+    border-bottom: 1px solid var(--cm-border);
+}
+
+.guide-body ol,
+.guide-body ul {
+    padding-left: 1.4rem;
+    color: #cbd5e1;
+    font-size: .93rem;
+    line-height: 1.9;
+}
+
+.guide-body dl {
+    display: grid;
+    gap: .75rem;
+}
+
+.guide-body dt {
+    font-weight: 700;
+    color: #e2e8f0;
+    font-size: .93rem;
+}
+
+.guide-body dd {
+    margin: .2rem 0 0 1rem;
+    color: #94a3b8;
+    font-size: .88rem;
+    line-height: 1.7;
+}
+
+.guide-body a {
+    color: #86efac;
+}
+
+.guide-body code {
+    background: rgba(148,163,184,.12);
+    padding: .15rem .4rem;
+    border-radius: 5px;
+    font-size: .85em;
+}
+
+@media (max-width: 680px) {
+    .guide-page {
+        grid-template-columns: 1fr;
+    }
+
+    .guide-nav {
+        position: static;
+    }
+
+    .guide-nav ul {
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
 }
 
 /* ── 운영자 소개 섹션 ── */

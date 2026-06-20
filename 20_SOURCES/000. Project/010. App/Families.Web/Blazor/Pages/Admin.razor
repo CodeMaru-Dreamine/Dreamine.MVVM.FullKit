@@ -112,6 +112,12 @@
                             </ul>
                         }
                         <div class="fa-video-url-row">
+                            <span style="font-size:12px;color:var(--fa-text-muted);">이미지 URL</span>
+                            <input class="fa-input" style="flex:1;min-width:200px;" @bind="imageUrlInput"
+                                   placeholder="https://...이미지 URL" />
+                            <button class="fa-btn fa-btn--sm fa-btn--ghost" @onclick="OnAddImageUrl">+ 추가</button>
+                        </div>
+                        <div class="fa-video-url-row">
                             <span style="font-size:12px;color:var(--fa-text-muted);">동영상 URL</span>
                             <input class="fa-input" style="flex:1;min-width:200px;" @bind="videoUrlInput"
                                    placeholder="https://...YouTube 또는 동영상 URL" />
@@ -127,8 +133,14 @@
                             <div class="fa-media-grid fa-media-grid--admin">
                                 @foreach (var fn in post.PhotoFileNames)
                                 {
-                                    <div class="fa-media-item">
-                                        <img src="@Vm.GetThumbUrl(Slug, post.Id, fn)" alt="" />
+                                    var isExtImg = fn.StartsWith("http", StringComparison.OrdinalIgnoreCase);
+                                    var imgSrc = isExtImg ? fn : Vm.GetThumbUrl(Slug, post.Id, fn);
+                                    <div class="fa-media-item @(isExtImg ? "fa-media-item--exturl" : "")">
+                                        <img src="@imgSrc" alt="" />
+                                        @if (isExtImg)
+                                        {
+                                            <span class="fa-media-item__url-badge">🔗</span>
+                                        }
                                         <button class="fa-media-item__del"
                                                 @onclick="() => OnDeleteMedia(post.Id, fn)">✕</button>
                                     </div>
@@ -192,6 +204,10 @@
         <!-- ── 탭: 포스트 관리 ── -->
         @if (activeTab == "manage")
         {
+            var adminPageSize = Vm.Config?.PageSize ?? 20;
+            var managePaged = Vm.Posts.Skip((managePage - 1) * adminPageSize).Take(adminPageSize).ToList();
+            var manageTotalPages = (int)Math.Ceiling((double)Vm.Posts.Count / adminPageSize);
+
             <div class="fa-tab-body">
                 @if (Vm.Posts.Count == 0)
                 {
@@ -199,8 +215,11 @@
                 }
                 else
                 {
+                    <div style="font-size:13px;color:var(--fa-text-muted);margin-bottom:8px;">
+                        전체 @Vm.Posts.Count 개 · 페이지 @managePage / @manageTotalPages
+                    </div>
                     <div class="fa-post-list">
-                        @foreach (var post in Vm.Posts)
+                        @foreach (var post in managePaged)
                         {
                             <div class="fa-post-list__item">
                                 <div class="fa-post-list__info">
@@ -218,6 +237,21 @@
                             </div>
                         }
                     </div>
+                    @if (manageTotalPages > 1)
+                    {
+                        <nav class="fa-pager" aria-label="포스트 관리 페이지">
+                            <button class="fa-pager__btn" disabled="@(managePage <= 1)"
+                                    @onclick="() => managePage--">‹ 이전</button>
+                            @for (int p = Math.Max(1, managePage - 2); p <= Math.Min(manageTotalPages, managePage + 2); p++)
+                            {
+                                var pg = p;
+                                <button class="fa-pager__btn @(pg == managePage ? "fa-pager__btn--active" : "")"
+                                        @onclick="() => managePage = pg">@pg</button>
+                            }
+                            <button class="fa-pager__btn" disabled="@(managePage >= manageTotalPages)"
+                                    @onclick="() => managePage++">다음 ›</button>
+                        </nav>
+                    }
                 }
             </div>
         }
@@ -225,6 +259,10 @@
         <!-- ── 탭: 앨범 관리 ── -->
         @if (activeTab == "albums")
         {
+            const int albumPageSize = 20;
+            var albumPaged = Vm.Albums.Skip((albumPage - 1) * albumPageSize).Take(albumPageSize).ToList();
+            var albumTotalPages = (int)Math.Ceiling((double)Vm.Albums.Count / albumPageSize);
+
             <div class="fa-tab-body">
                 <div class="fa-form">
                     <div class="fa-form__row fa-form__row--inline">
@@ -237,7 +275,7 @@
                 @if (Vm.Albums.Count > 0)
                 {
                     <div class="fa-album-admin-list">
-                        @foreach (var album in Vm.Albums)
+                        @foreach (var album in albumPaged)
                         {
                             <div class="fa-album-admin-item">
                                 <span class="fa-album-admin-item__name">📁 @album.Name</span>
@@ -250,6 +288,21 @@
                             </div>
                         }
                     </div>
+                    @if (albumTotalPages > 1)
+                    {
+                        <nav class="fa-pager" aria-label="앨범 관리 페이지">
+                            <button class="fa-pager__btn" disabled="@(albumPage <= 1)"
+                                    @onclick="() => albumPage--">‹ 이전</button>
+                            @for (int p = Math.Max(1, albumPage - 2); p <= Math.Min(albumTotalPages, albumPage + 2); p++)
+                            {
+                                var pg = p;
+                                <button class="fa-pager__btn @(pg == albumPage ? "fa-pager__btn--active" : "")"
+                                        @onclick="() => albumPage = pg">@pg</button>
+                            }
+                            <button class="fa-pager__btn" disabled="@(albumPage >= albumTotalPages)"
+                                    @onclick="() => albumPage++">다음 ›</button>
+                        </nav>
+                    }
                 }
                 else
                 {
@@ -316,6 +369,23 @@
                 </div>
 
                 <div class="fa-form__row">
+                    <label class="fa-label">
+                        페이지당 포스트 수
+                        <span class="fa-label__hint">타임라인·앨범에서 한 번에 표시되는 개수</span>
+                    </label>
+                    <select class="fa-input" style="max-width:160px"
+                            value="@cfg.PageSize"
+                            @onchange="OnPageSizeChanged">
+                        <option value="5">5개</option>
+                        <option value="10">10개</option>
+                        <option value="20">20개 (기본)</option>
+                        <option value="30">30개</option>
+                        <option value="50">50개</option>
+                        <option value="100">100개</option>
+                    </select>
+                </div>
+
+                <div class="fa-form__row">
                     <label class="fa-label">OG 제목 (링크 미리보기)</label>
                     <input class="fa-input" @bind="cfg.OgTitle" placeholder="비우면 가족 이름 사용" />
                 </div>
@@ -360,6 +430,9 @@
     private string activeTab = "post";
     private bool confirmDelete = false;
     private string videoUrlInput = "";
+    private string imageUrlInput = "";
+    private int managePage = 1;
+    private int albumPage = 1;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -386,6 +459,8 @@
     private void SetTab(string tab)
     {
         activeTab = tab;
+        managePage = 1;
+        albumPage = 1;
         if (tab != "post") Vm.CancelEdit();
     }
 
@@ -412,6 +487,15 @@
     private async Task OnDeletePost(string postId)
     {
         await Vm.DeletePostAsync(Slug, postId);
+    }
+
+    private void OnAddImageUrl()
+    {
+        if (string.IsNullOrWhiteSpace(imageUrlInput) || Vm.EditingPost is null) return;
+        var url = imageUrlInput.Trim();
+        if (!Vm.EditingPost.PhotoFileNames.Contains(url))
+            Vm.EditingPost.PhotoFileNames.Add(url);
+        imageUrlInput = "";
     }
 
     private void OnAddVideoUrl()
@@ -446,6 +530,13 @@
     private async Task OnSaveConfig()
     {
         await Vm.SaveConfigAsync();
+    }
+
+    private void OnPageSizeChanged(ChangeEventArgs e)
+    {
+        if (Vm.Config is null) return;
+        if (int.TryParse(e.Value?.ToString(), out var v))
+            Vm.Config.PageSize = v;
     }
 
     private async Task OnDeleteSelf()

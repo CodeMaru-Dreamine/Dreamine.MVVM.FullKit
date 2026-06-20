@@ -34,7 +34,7 @@ else
             }
         </section>
 
-        @if (albumPosts.Count == 0)
+        @if (totalCount == 0)
         {
             <div class="fa-empty">이 앨범에는 아직 포스트가 없습니다.</div>
         }
@@ -57,6 +57,25 @@ else
                     </a>
                 }
             </div>
+
+            @if (TotalPages > 1)
+            {
+                <nav class="fa-pager" aria-label="페이지 이동">
+                    <button class="fa-pager__btn" disabled="@(currentPage <= 1)"
+                            @onclick="() => GoToPage(currentPage - 1)">‹ 이전</button>
+
+                    @for (int p = Math.Max(1, currentPage - 2);
+                              p <= Math.Min(TotalPages, currentPage + 2); p++)
+                    {
+                        var pg = p;
+                        <button class="fa-pager__btn @(pg == currentPage ? "fa-pager__btn--active" : "")"
+                                @onclick="() => GoToPage(pg)">@pg</button>
+                    }
+
+                    <button class="fa-pager__btn" disabled="@(currentPage >= TotalPages)"
+                            @onclick="() => GoToPage(currentPage + 1)">다음 ›</button>
+                </nav>
+            }
         }
 
         <footer class="fa-footer">
@@ -71,11 +90,28 @@ else
 
     private AlbumInfo? currentAlbum;
     private IReadOnlyList<PostEntry> albumPosts = [];
+    private int currentPage = 1;
+    private int totalCount;
+    private int TotalPages => (int)Math.Ceiling((double)totalCount / Vm.PageSize);
 
     protected override async Task OnParametersSetAsync()
     {
         await Vm.LoadAsync(Slug);
         currentAlbum = Vm.Albums.FirstOrDefault(a => a.Id == AlbumId);
-        albumPosts = await Vm.GetAlbumPostsAsync(Slug, AlbumId);
+        await LoadPage(1);
+    }
+
+    private async Task LoadPage(int page)
+    {
+        currentPage = page;
+        var (items, total) = await Vm.GetAlbumPageAsync(Slug, AlbumId, page);
+        albumPosts = items;
+        totalCount = total;
+    }
+
+    private async Task GoToPage(int page)
+    {
+        await LoadPage(page);
+        StateHasChanged();
     }
 }

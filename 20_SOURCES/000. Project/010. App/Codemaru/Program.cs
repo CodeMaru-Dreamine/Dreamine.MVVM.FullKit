@@ -33,6 +33,7 @@ public static class Program
         builder.Services.AddSingleton<CardProfileImporter>();
         builder.Services.AddSingleton<ICardProfileStore, JsonCardProfileStore>();
         builder.Services.AddSingleton<CardHybridSession>();
+        builder.Services.AddScoped<CardHybridCircuitSession>();
         builder.Services.Configure<CertificateMonitorOptions>(
             builder.Configuration.GetSection("CertificateMonitor"));
         builder.Services.AddSingleton<IProcessRunner, ProcessRunner>();
@@ -57,6 +58,8 @@ public static class Program
             options.Port = serverPort;
             options.ListenAnyIp = listenAnyIp;
             options.SharedServiceTypes.Add(typeof(CardHybridSession));
+            options.SharedServiceTypes.Add(typeof(ICardProfileStore));
+            options.ConfigureServices = services => services.AddScoped<CardHybridCircuitSession>();
             options.SharedServiceTypes.Add(typeof(IQrSvgGenerator));
             options.SharedServiceTypes.Add(typeof(ImageBackgroundRemover));
             options.SharedServiceTypes.Add(typeof(LandingPageExporter));
@@ -80,14 +83,64 @@ public static class Program
             "https://codemaru.co.kr/"),
         ["/cardhybrid"] = (
             "CardHybrid — 무료 명함 QR · vCard · 랜딩 페이지 | CodeMaru",
-            "명함을 건네는 순간이 달라집니다. QR 스캔 하나로 내 소개 페이지 · 연락처 저장 · PDF 명함까지 — 지갑 속 종이 명함은 이제 그만.",
+            "QR 코드 하나로 내 정보를 전달합니다. 스캔만 하면 모바일 랜딩 페이지가 열리고 vCard로 연락처 저장까지. 앞뒤 명함 디자인 편집, AI 배경 제거, SVG 내보내기 무료 제공.",
             "https://codemaru.co.kr/img/cardhybrid_og.png",
             "https://codemaru.co.kr/cardhybrid"),
+        ["/guide"] = (
+            "이용 설명서 | CodeMaru",
+            "CardHybrid 명함, Wedding 청첩장, Families 가족 앨범, CCTV Viewer, Shop Store, Portfolio, Dreamine 프레임워크의 상세 이용 가이드를 제공합니다.",
+            "https://codemaru.co.kr/img/codemaru_og.png",
+            "https://codemaru.co.kr/guide"),
+        ["/guide/cardhybrid"] = (
+            "CardHybrid 이용 설명서 — QR 명함 · vCard · 랜딩 페이지 | CodeMaru",
+            "CardHybrid 시작하기부터 QR 생성, vCard 저장, 명함 디자인 편집, AI 배경 제거, SVG 내보내기까지 단계별 사용 방법을 안내합니다.",
+            "https://codemaru.co.kr/img/cardhybrid_og.png",
+            "https://codemaru.co.kr/guide/cardhybrid"),
+        ["/guide/wedding"] = (
+            "Wedding 이용 설명서 — 디지털 청첩장 만들기 | CodeMaru",
+            "5분이면 완성되는 디지털 청첩장. 지도·갤러리·방명록·배경음악·계좌 안내까지 설정하는 방법을 단계별로 안내합니다.",
+            "https://codemaru.co.kr/img/codemaru_og.png",
+            "https://codemaru.co.kr/guide/wedding"),
+        ["/guide/families"] = (
+            "Families 이용 설명서 — 가족 앨범 플랫폼 | CodeMaru",
+            "가족끼리만 공유하는 비공개 앨범·타임라인. 포스트 작성, 앨범 폴더, 이모지 반응, 댓글 기능 사용법을 안내합니다.",
+            "https://codemaru.co.kr/img/codemaru_og.png",
+            "https://codemaru.co.kr/guide/families"),
+        ["/guide/cctv"] = (
+            "CCTV Viewer 이용 설명서 — 실시간 카메라 | CodeMaru",
+            "DreamineVMS 에이전트 설치부터 RTSP 카메라 등록, 공개 라이브 링크 발급까지 단계별 사용 방법을 안내합니다.",
+            "https://codemaru.co.kr/img/codemaru_og.png",
+            "https://codemaru.co.kr/guide/cctv"),
+        ["/guide/shop"] = (
+            "Shop Store 이용 설명서 — 직영 쇼핑몰 | CodeMaru",
+            "농산물·소프트웨어·개발 용역 구매 방법, 장바구니, 주문·환불 정책 안내.",
+            "https://codemaru.co.kr/img/codemaru_og.png",
+            "https://codemaru.co.kr/guide/shop"),
+        ["/guide/portfolio"] = (
+            "Portfolio 이용 설명서 — 개발자 포트폴리오 | CodeMaru",
+            "장민수 개발자의 프로젝트·이력서·기술 스택 포트폴리오 사이트 구성과 이용 방법을 안내합니다.",
+            "https://codemaru.co.kr/img/codemaru_og.png",
+            "https://codemaru.co.kr/guide/portfolio"),
+        ["/guide/dreamine"] = (
+            "Dreamine 이용 설명서 — MVVM 프레임워크 | CodeMaru",
+            "WPF·Blazor 하이브리드를 위한 오픈소스 MVVM 프레임워크 Dreamine의 패키지 구성과 빠른 시작 방법을 안내합니다.",
+            "https://codemaru.co.kr/img/codemaru_og.png",
+            "https://codemaru.co.kr/guide/dreamine"),
         ["/contact"] = (
             "문의하기 | CodeMaru",
-            "CodeMaru에 궁금한 점이나 제안 사항을 남겨주세요.",
+            "CodeMaru 서비스에 대한 문의, 제안, 협업 요청을 남겨주세요. 24시간 이내에 답변드립니다.",
             "https://codemaru.co.kr/img/codemaru_og.png",
             "https://codemaru.co.kr/contact"),
+        ["/privacy"] = (
+            "개인정보처리방침 | CodeMaru",
+            "CodeMaru가 수집·이용·보관하는 개인정보에 대한 처리방침을 안내합니다.",
+            "https://codemaru.co.kr/img/codemaru_og.png",
+            "https://codemaru.co.kr/privacy"),
+        ["/terms"] = (
+            "이용약관 | CodeMaru",
+            "CodeMaru 서비스 이용에 관한 약관을 안내합니다.",
+            "https://codemaru.co.kr/img/codemaru_og.png",
+            "https://codemaru.co.kr/terms"),
     };
 
     private static async Task OgTagMiddleware(HttpContext context, RequestDelegate next)
@@ -98,6 +151,8 @@ public static class Program
                   || ua.Contains("kakaostory-og-reader", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("Naver", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("Googlebot", StringComparison.OrdinalIgnoreCase)
+                  || ua.Contains("Mediapartners-Google", StringComparison.OrdinalIgnoreCase)
+                  || ua.Contains("AdsBot-Google", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("facebookexternalhit", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("Twitterbot", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("Discordbot", StringComparison.OrdinalIgnoreCase)
