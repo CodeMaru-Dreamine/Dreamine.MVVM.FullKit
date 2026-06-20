@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Net.Http;
 using System.Text.Json;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -186,7 +187,15 @@ public partial class MainViewModel : ObservableObject
                 return;
             }
 
-            // 4. JSON 저장
+            // 4. 이미지 URL 실제 로드 검증
+            List<string> validPhotos = [];
+            if (result.Photos.Count > 0)
+            {
+                LoopStatus = $"🔍 [{albumName}] 이미지 URL 검증 중...";
+                validPhotos = await ValidateImageUrlsAsync(result.Photos, msg => LoopStatus = msg);
+            }
+
+            // 5. 저장
             var post = new PostEntry
             {
                 Title = !string.IsNullOrWhiteSpace(result.Title)
@@ -195,12 +204,12 @@ public partial class MainViewModel : ObservableObject
                 AlbumId = album?.Id ?? "",
                 PostedAt = DateTime.Now,
                 MediaPosition = MediaPosition,
-                PhotoFileNames = result.Photos,
+                PhotoFileNames = validPhotos,
                 VideoFileNames = result.Videos,
             };
 
             await _writer.SavePostAsync(SelectedSlug, post, PendingPhotos);
-            LoopStatus = $"✅ [{albumName}] 저장 완료! ({DateTime.Now:HH:mm}) — {result.Content.Length}자 📷{result.Photos.Count} 🎬{result.Videos.Count}";
+            LoopStatus = $"✅ [{albumName}] 저장 완료! ({DateTime.Now:HH:mm}) — {result.Content.Length}자 📷{validPhotos.Count}/{result.Photos.Count} 🎬{result.Videos.Count}";
 
             // 5. 앨범 로테이션
             if (AlbumRotationEnabled) RotateAlbum();
@@ -248,6 +257,15 @@ public partial class MainViewModel : ObservableObject
         }
 
         var albumName = SelectedAlbum?.Name ?? "전체";
+
+        // 이미지 검증
+        List<string> validPhotos = [];
+        if (result.Photos.Count > 0)
+        {
+            StatusMessage = "🔍 이미지 URL 검증 중...";
+            validPhotos = await ValidateImageUrlsAsync(result.Photos, msg => StatusMessage = msg);
+        }
+
         var autoTitle = !string.IsNullOrWhiteSpace(result.Title) ? result.Title
             : !string.IsNullOrWhiteSpace(PostTitle) ? PostTitle.Trim()
             : $"[{albumName}] {DateTime.Now:MM/dd HH:mm}";
@@ -259,7 +277,7 @@ public partial class MainViewModel : ObservableObject
             IsPinned = IsPinned,
             MediaPosition = MediaPosition,
             PostedAt = DateTime.Now,
-            PhotoFileNames = result.Photos,
+            PhotoFileNames = validPhotos,
             VideoFileNames = result.Videos,
         };
 
@@ -325,6 +343,7 @@ public partial class MainViewModel : ObservableObject
 
     private sealed record AiPostResult(string Title, string Content, List<string> Photos, List<string> Videos);
 
+    // ===SECTION=== 구분자 방식으로 파싱 (JSON보다 훨씬 안정적)
     private static AiPostResult? ParseStructuredResponse(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;
@@ -340,130 +359,123 @@ public partial class MainViewModel : ObservableObject
         }
         catch { text = raw.Trim('"').Replace("\\n", "\n").Replace("\\\"", "\""); }
 
-        // ```json ... ``` 또는 { } 블록 추출
-        var jsonBlock = ExtractJsonBlock(text);
-        if (jsonBlock != null)
-        {
-            try
-            {
-                var doc = JsonDocument.Parse(jsonBlock);
-                var root = doc.RootElement;
+        // ===SECTION=== 방식 파싱
+        var result = ParseSectioned(text);
+        if (result != null) return result;
 
-                var title  = GetStr(root, "Title") ?? GetStr(root, "title") ?? "";
-                var content= GetStr(root, "Content") ?? GetStr(root, "content") ?? "";
-                var photos = GetStrArray(root, "PhotoFileNames");
-                var videos = GetStrArray(root, "VideoFileNames");
-
-                if (!string.IsNullOrWhiteSpace(content))
-                    return new AiPostResult(title, content, photos, videos);
-            }
-            catch { }
-        }
-
-        // JSON 실패 → 텍스트 전체를 content 로
+        // fallback: 텍스트 전체를 content 로 (JSON 포함 어떤 형태든 그냥 받음)
         return string.IsNullOrWhiteSpace(text) ? null : new AiPostResult("", text, [], []);
     }
 
-    private static string? GetStr(JsonElement el, string key) =>
-        el.TryGetProperty(key, out var p) ? p.GetString() : null;
-
-    private static List<string> GetStrArray(JsonElement el, string key)
+    private static AiPostResult? ParseSectioned(string text)
     {
-        var list = new List<string>();
-        if (!el.TryGetProperty(key, out var arr) || arr.ValueKind != JsonValueKind.Array) return list;
-        foreach (var item in arr.EnumerateArray())
+        // ===TITLE===, ===CONTENT===, ===IMAGES===, ===VIDEO=== 구분자로 섹션 분리
+        string GetSection(string tag)
         {
-            var s = item.GetString();
-            if (!string.IsNullOrWhiteSpace(s)) list.Add(s!);
+            var marker = $"==={tag}===";
+            var s = text.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (s < 0) return "";
+            s += marker.Length;
+            // 다음 ===...=== 까지
+            var nextMarker = text.IndexOf("===", s);
+            var end = nextMarker > s ? nextMarker : text.Length;
+            return text[s..end].Trim();
         }
-        return list;
+
+        var title   = GetSection("TITLE");
+        var content = GetSection("CONTENT");
+        var imgBlock= GetSection("IMAGES");
+        var vidBlock= GetSection("VIDEO");
+
+        if (string.IsNullOrWhiteSpace(content)) return null;
+
+        var photos = imgBlock
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(l => l.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            .Select(l => l.Trim())
+            .ToList();
+
+        var videos = vidBlock
+            .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Where(l => l.StartsWith("http", StringComparison.OrdinalIgnoreCase))
+            .Select(l => l.Trim())
+            .ToList();
+
+        return new AiPostResult(title, content, photos, videos);
     }
 
-    private static string? ExtractJsonBlock(string text)
-    {
-        string? raw = null;
+    // 이미지 URL 실제 로드 여부 검증 (저작권 없는 이미지, 직접 링크만 허용)
+    private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(5) };
 
-        var start = text.IndexOf("```json", StringComparison.OrdinalIgnoreCase);
-        if (start >= 0)
+    private static async Task<List<string>> ValidateImageUrlsAsync(List<string> urls, Action<string>? onStatus = null)
+    {
+        var valid = new List<string>();
+        foreach (var url in urls)
         {
-            start = text.IndexOf('\n', start) + 1;
-            var end = text.IndexOf("```", start);
-            if (end > start) raw = text[start..end].Trim();
-        }
-        if (raw == null)
-        {
-            start = text.IndexOf("```");
-            if (start >= 0)
+            try
             {
-                start = text.IndexOf('\n', start) + 1;
-                var end = text.IndexOf("```", start);
-                if (end > start) { var c = text[start..end].Trim(); if (c.StartsWith('{')) raw = c; }
+                onStatus?.Invoke($"🔍 이미지 확인 중: {url[..Math.Min(50, url.Length)]}...");
+                var req = new HttpRequestMessage(HttpMethod.Head, url);
+                req.Headers.UserAgent.ParseAdd("Mozilla/5.0");
+                var res = await _http.SendAsync(req);
+                if (res.IsSuccessStatusCode &&
+                    res.Content.Headers.ContentType?.MediaType?.StartsWith("image/") == true)
+                {
+                    valid.Add(url);
+                    onStatus?.Invoke($"✅ 이미지 OK: {url[..Math.Min(50, url.Length)]}");
+                }
+                else
+                {
+                    onStatus?.Invoke($"❌ 이미지 불량 ({(int)res.StatusCode}): 제외");
+                }
+            }
+            catch
+            {
+                onStatus?.Invoke($"❌ 이미지 접속 실패: 제외");
             }
         }
-        if (raw == null)
-        {
-            var brace = text.IndexOf('{');
-            if (brace >= 0) { var last = text.LastIndexOf('}'); if (last > brace) raw = text[brace..(last + 1)]; }
-        }
-
-        // AI가 문자열 값 안에 줄바꿈을 넣는 경우 JSON이 깨짐 → 문자열 안 줄바꿈 제거
-        if (raw != null) raw = SanitizeJsonStringNewlines(raw);
-        return raw;
-    }
-
-    // JSON 문자열 값 내부의 실제 줄바꿈을 공백으로 치환 (키-값 구조는 보존)
-    private static string SanitizeJsonStringNewlines(string json)
-    {
-        var sb = new System.Text.StringBuilder(json.Length);
-        bool inString = false;
-        bool escaped = false;
-        foreach (var ch in json)
-        {
-            if (escaped) { escaped = false; sb.Append(ch); continue; }
-            if (ch == '\\') { escaped = true; sb.Append(ch); continue; }
-            if (ch == '"') inString = !inString;
-            // 문자열 안에서 실제 줄바꿈 → 공백으로
-            if (inString && (ch == '\n' || ch == '\r')) { sb.Append(' '); continue; }
-            sb.Append(ch);
-        }
-        return sb.ToString();
+        return valid;
     }
 
     private static string BuildDefaultPrompt() =>
         """
         {앨범} 주제로 한국 가족 여행 블로그 포스트 1개를 작성해줘.
-        관련 이미지 URL 3~4개와 유튜브 영상 URL 1개도 함께 찾아서 채워줘.
+        저작권 없는 무료 이미지(Unsplash, Pexels, Pixabay 등)의 직링크 URL 3개와
+        유튜브 영상 URL 1개도 찾아줘.
 
-        **아래 JSON 형식 그대로** 출력해줘 (설명이나 다른 텍스트 없이 JSON만):
+        아래 형식 그대로 출력해줘 (===섹션=== 구분자 포함, 다른 설명 없이):
 
-        ```json
-        {
-          "Title": "{앨범} 여행기 — 가족과 함께한 하루",
-          "Content": "## 도착\n본문 내용...\n\n<img src=\"https://이미지URL1.jpg\" style=\"width:100%;border-radius:8px;margin:8px 0\" />\n\n## 점심\n내용...\n\n<img src=\"https://이미지URL2.jpg\" style=\"width:100%;border-radius:8px;margin:8px 0\" />\n\n## 오후\n내용...\n\n<iframe width=\"100%\" height=\"315\" src=\"https://www.youtube.com/embed/영상ID\" frameborder=\"0\" allowfullscreen style=\"border-radius:8px;margin:8px 0\"></iframe>\n\n## 마무리\n내용...\n\n> 💡 팁: ...",
-          "PhotoFileNames": [
-            "https://실제이미지URL1.jpg",
-            "https://실제이미지URL2.jpg",
-            "https://실제이미지URL3.jpg"
-          ],
-          "VideoFileNames": [
-            "https://www.youtube.com/watch?v=실제영상ID"
-          ],
-          "IsPinned": false,
-          "MediaPosition": 0
-        }
-        ```
+        ===TITLE===
+        {앨범} 여행기 — 가족과 함께한 하루
 
-        Content 조건:
-        - 마크다운 + HTML 혼합 (## 소제목, **강조**, > 인용)
-        - 이미지는 Content 중간중간에 <img> 태그로 자연스럽게 삽입
-        - 유튜브는 <iframe> embed URL(youtube.com/embed/ID) 로 삽입
-        - 500~800자, 구체적인 장소·식당·활동 포함
-        - 마지막 문단은 > 💡 팁: 으로 마무리
+        ===CONTENT===
+        ## 도착
+        아침 일찍 출발해서... (본문 내용, 500~800자)
 
-        PhotoFileNames: .jpg/.jpeg/.png/.webp 직링크 3~4개
-        VideoFileNames: youtube.com/watch?v= 형식 1개
+        ## 점심
+        내용...
 
-        지금 바로 JSON 블록만 출력해줘.
+        ## 오후
+        내용...
+
+        ## 마무리
+        내용...
+
+        > 💡 팁: 한 줄 추천으로 마무리
+
+        ===IMAGES===
+        https://images.unsplash.com/photo-실제ID?w=800
+        https://images.pexels.com/photos/실제ID/pexels-photo-실제ID.jpeg
+        https://cdn.pixabay.com/photo/실제경로.jpg
+
+        ===VIDEO===
+        https://www.youtube.com/watch?v=실제영상ID
+
+        조건:
+        - Content: 마크다운 형식, ## 소제목, **강조**, > 인용 사용
+        - IMAGES: Unsplash/Pexels/Pixabay 직링크만, 반드시 실제 존재하는 URL
+        - VIDEO: {앨범} 관련 유튜브 영상 1개
+        - 지금 바로 위 형식대로만 출력
         """;
 
     private static string DetectDefaultRoot()
