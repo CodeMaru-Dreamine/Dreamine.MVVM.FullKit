@@ -39,10 +39,12 @@ public sealed class FamilyPostViewModel
     public string FamilyName => Config?.FamilyName ?? "";
 
     public string GetMediaUrl(string fileName) =>
-        Post is null ? "" : _media.GetMediaUrl(Config?.Slug ?? "", Post.Id, fileName);
+        IsExternalUrl(fileName) ? fileName
+        : Post is null ? "" : _media.GetMediaUrl(Config?.Slug ?? "", Post.Id, fileName);
 
     public string GetThumbUrl(string fileName) =>
-        Post is null ? "" : _media.GetThumbUrl(Config?.Slug ?? "", Post.Id, fileName);
+        IsExternalUrl(fileName) ? fileName
+        : Post is null ? "" : _media.GetThumbUrl(Config?.Slug ?? "", Post.Id, fileName);
 
     public string GetVideoUrl(string fileName) =>
         IsExternalUrl(fileName) ? fileName : GetMediaUrl(fileName);
@@ -52,18 +54,38 @@ public sealed class FamilyPostViewModel
         s.StartsWith("https://", StringComparison.OrdinalIgnoreCase);
 
     public static bool IsYouTube(string url) =>
-        url.Contains("youtube.com/watch", StringComparison.OrdinalIgnoreCase) ||
+        url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase) ||
         url.Contains("youtu.be/", StringComparison.OrdinalIgnoreCase);
 
     public static string GetYouTubeEmbedUrl(string url)
     {
+        url = url.Trim();
+
+        // 이미 embed URL이면 그대로
+        if (url.Contains("/embed/", StringComparison.OrdinalIgnoreCase))
+            return url.Split('?')[0]; // 불필요한 쿼리 제거
+
+        // youtu.be/ID 단축 URL
         if (url.Contains("youtu.be/", StringComparison.OrdinalIgnoreCase))
         {
-            var id = url.Split("youtu.be/")[1].Split('?')[0];
+            var after = url.Split(new[] { "youtu.be/" }, StringSplitOptions.None)[1];
+            var id = after.Split('?')[0].Split('#')[0].Trim();
             return $"https://www.youtube.com/embed/{id}";
         }
-        var m = System.Text.RegularExpressions.Regex.Match(url, @"[?&]v=([^&]+)");
-        return m.Success ? $"https://www.youtube.com/embed/{m.Groups[1].Value}" : url;
+
+        // youtube.com/shorts/ID
+        var shortsMatch = System.Text.RegularExpressions.Regex.Match(
+            url, @"youtube\.com/shorts/([^?&#/]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        if (shortsMatch.Success)
+            return $"https://www.youtube.com/embed/{shortsMatch.Groups[1].Value}";
+
+        // youtube.com/watch?v=ID (또는 &v=ID)
+        var watchMatch = System.Text.RegularExpressions.Regex.Match(url, @"[?&]v=([^?&#]+)");
+        if (watchMatch.Success)
+            return $"https://www.youtube.com/embed/{watchMatch.Groups[1].Value}";
+
+        // 그래도 못 찾으면 원본 반환 (브라우저가 처리)
+        return url;
     }
 
     // ── 댓글 작성 ──────────────────────────────────────────

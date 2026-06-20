@@ -204,6 +204,6 @@ public sealed class FamilyAdminViewModel
     public string GetThumbUrl(string slug, string postId, string fileName) => _media.GetThumbUrl(slug, postId, fileName);
 
     public static bool IsYouTube(string url) =>
-        url.Contains("youtube.com/watch", StringComparison.OrdinalIgnoreCase) ||
+        url.Contains("youtube.com", StringComparison.OrdinalIgnoreCase) ||
         url.Contains("youtu.be/", StringComparison.OrdinalIgnoreCase);
 }
