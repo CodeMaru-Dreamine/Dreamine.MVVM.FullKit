@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text.Json;
 using System.Windows.Threading;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -177,6 +178,61 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void RemovePhoto(string path) => PendingPhotos.Remove(path);
+
+    // ── AI 응답 추출 → 바로 저장 ─────────────────────────────────
+    [RelayCommand]
+    private async Task ExtractAndSaveAsync()
+    {
+        if (string.IsNullOrWhiteSpace(SelectedSlug)) { StatusMessage = "❌ 가족 슬러그를 선택하세요."; return; }
+        if (ExecuteScriptAsync == null) { StatusMessage = "❌ 브라우저가 준비되지 않았습니다."; return; }
+
+        StatusMessage = "⏳ AI 응답 추출 중...";
+
+        var raw = await ExecuteScriptAsync(ResponseExtractor.BuildExtractScript());
+        if (string.IsNullOrWhiteSpace(raw)) { StatusMessage = "❌ 응답 추출 실패"; return; }
+
+        // JSON 파싱 (WebView2는 결과를 JSON 문자열로 반환)
+        string? text = null;
+        string? source = null;
+        try
+        {
+            // raw = "\"{ \\\"source\\\": ... }\"" 형태로 이중 직렬화될 수 있음
+            var unescaped = JsonSerializer.Deserialize<string>(raw) ?? raw;
+            var doc = JsonDocument.Parse(unescaped);
+            text = doc.RootElement.GetProperty("text").GetString();
+            source = doc.RootElement.GetProperty("source").GetString();
+        }
+        catch
+        {
+            // fallback: 그냥 raw 텍스트 사용
+            text = raw.Trim('"').Replace("\\n", "\n").Replace("\\\"", "\"");
+        }
+
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            StatusMessage = $"❌ AI 응답을 찾을 수 없습니다. (site={source ?? "unknown"}) — AI가 응답을 완료했는지 확인하세요.";
+            return;
+        }
+
+        var post = new PostEntry
+        {
+            Title = string.IsNullOrWhiteSpace(PostTitle) ? $"[{source?.ToUpper() ?? "AI"}] {DateTime.Now:MM/dd HH:mm}" : PostTitle.Trim(),
+            Content = text,
+            AlbumId = AlbumId.Trim(),
+            IsPinned = IsPinned,
+            MediaPosition = MediaPosition,
+            PostedAt = DateTime.Now,
+        };
+
+        try
+        {
+            await _writer.SavePostAsync(SelectedSlug, post, PendingPhotos);
+            StatusMessage = $"✅ AI 응답을 Families에 바로 저장했습니다! ({source}, {DateTime.Now:HH:mm})";
+            PostTitle = "";
+            PendingPhotos.Clear();
+        }
+        catch (Exception ex) { StatusMessage = $"❌ 저장 오류: {ex.Message}"; }
+    }
 
     // ── 포스트 저장 ───────────────────────────────────────────────
     [RelayCommand]

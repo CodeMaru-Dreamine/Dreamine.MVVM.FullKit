@@ -285,8 +285,24 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel Margin="16,14,16,16">
 
-                            <TextBlock Text="✍️ Families 포스트 작성" Foreground="#e2e8f0"
-                                       FontSize="14" FontWeight="Bold" Margin="0,0,0,14"/>
+                            <!-- AI 응답 바로 저장 버튼 (핵심 기능) -->
+                            <Border Background="#0c1a0c" BorderBrush="#16a34a" BorderThickness="1"
+                                    CornerRadius="8" Padding="12,10" Margin="0,0,0,14">
+                                <StackPanel>
+                                    <TextBlock Text="⚡ AI 응답 → 바로 저장" Foreground="#4ade80"
+                                               FontSize="13" FontWeight="Bold" Margin="0,0,0,6"/>
+                                    <TextBlock Foreground="#64748b" FontSize="11" Margin="0,0,0,10"
+                                               TextWrapping="Wrap"
+                                               Text="AI가 응답을 완료하면 아래 버튼 클릭 — 복사/붙여넣기 없이 바로 JSON 저장"/>
+                                    <Button Style="{StaticResource BtnGreen}"
+                                            Content="🤖 AI 응답 추출 &amp; Families 저장"
+                                            FontSize="14" FontWeight="Bold" Padding="12,10"
+                                            Command="{Binding ExtractAndSaveCommand}"/>
+                                </StackPanel>
+                            </Border>
+
+                            <TextBlock Text="✍️ 또는 직접 작성" Foreground="#64748b"
+                                       FontSize="12" Margin="0,0,0,10"/>
 
                             <!-- 가족 선택 -->
                             <TextBlock Style="{StaticResource Label}" Text="가족 (슬러그)"/>
@@ -395,7 +411,7 @@
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <Button Grid.Column="0" Style="{StaticResource Btn}"
-                                        Content="📤 Families에 저장" FontSize="14" FontWeight="Bold"
+                                        Content="📤 직접 작성 내용 저장" FontSize="13" FontWeight="Bold"
                                         Padding="12,10" Command="{Binding SavePostCommand}"/>
                                 <Button Grid.Column="2" Style="{StaticResource BtnGhost}"
                                         Content="🗑 초기화" Command="{Binding ClearFormCommand}"/>
