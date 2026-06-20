@@ -1,6 +1,5 @@
 using System.IO;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using FamiliesAutoWriter.Models;
 
 
@@ -8,11 +7,12 @@ namespace FamiliesAutoWriter.Services;
 
 public sealed class PostWriterService
 {
+    // JsonStringEnumConverter 미사용 → MediaPosition을 숫자(0/1)로 저장
+    // Families.Web이 숫자 형식을 기본으로 읽기 때문
     private static readonly JsonSerializerOptions _opts = new()
     {
         WriteIndented = true,
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
     };
 
     public string AppDataRoot { get; set; } = "";
