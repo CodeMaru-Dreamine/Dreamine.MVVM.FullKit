@@ -4,53 +4,50 @@
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         xmlns:vm="clr-namespace:FamiliesAutoWriter.ViewModels"
         xmlns:conv="clr-namespace:FamiliesAutoWriter.Converters"
-        Title="Families AutoWriter 🤖" Height="880" Width="1440"
-        Background="#1a1a2e" WindowStartupLocation="CenterScreen">
+        Title="Families AutoWriter 🤖" Height="900" Width="1480"
+        Background="#0d1117" WindowStartupLocation="CenterScreen">
 
-    <Window.DataContext>
-        <vm:MainViewModel />
-    </Window.DataContext>
+    <Window.DataContext><vm:MainViewModel /></Window.DataContext>
 
     <Window.Resources>
         <conv:EnumToBoolConverter x:Key="EnumToBoolConverter"/>
-        <conv:MinutesSuffixConverter x:Key="MinutesSuffix"/>
-
-        <Style TargetType="TextBlock" x:Key="Label">
+        <Style TargetType="TextBlock" x:Key="Lbl">
             <Setter Property="Foreground" Value="#94a3b8"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Margin" Value="0,0,0,3"/>
         </Style>
         <Style TargetType="TextBox" x:Key="Input">
             <Setter Property="Background" Value="#0f172a"/>
             <Setter Property="Foreground" Value="#e2e8f0"/>
             <Setter Property="BorderBrush" Value="#334155"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="8,6"/>
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="7,5"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="CaretBrush" Value="#e2e8f0"/>
-            <Setter Property="SelectionBrush" Value="#6366f1"/>
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="#0f172a"/>
+            <Setter Property="Foreground" Value="#e2e8f0"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="Padding" Value="7,4"/>
+            <Setter Property="FontSize" Value="12"/>
         </Style>
         <Style TargetType="Button" x:Key="Btn">
             <Setter Property="Background" Value="#6366f1"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="12,7"/>
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="FontSize" Value="12"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="6"
-                                Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#4f46e5"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter Property="Background" Value="#3730a3"/>
-                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#4f46e5"/></Trigger>
+                            <Trigger Property="IsPressed" Value="True"><Setter Property="Background" Value="#3730a3"/></Trigger>
                         </ControlTemplate.Triggers>
                     </ControlTemplate>
                 </Setter.Value>
@@ -58,46 +55,26 @@
         </Style>
         <Style TargetType="Button" x:Key="BtnGhost" BasedOn="{StaticResource Btn}">
             <Setter Property="Background" Value="#1e293b"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#334155"/>
-                </Trigger>
-            </Style.Triggers>
+            <Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#334155"/></Trigger></Style.Triggers>
         </Style>
         <Style TargetType="Button" x:Key="BtnGreen" BasedOn="{StaticResource Btn}">
             <Setter Property="Background" Value="#059669"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#047857"/>
-                </Trigger>
-            </Style.Triggers>
+            <Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#047857"/></Trigger></Style.Triggers>
         </Style>
-        <Style TargetType="ComboBox">
-            <Setter Property="Background" Value="#0f172a"/>
-            <Setter Property="Foreground" Value="#e2e8f0"/>
-            <Setter Property="BorderBrush" Value="#334155"/>
-            <Setter Property="Padding" Value="8,5"/>
-            <Setter Property="FontSize" Value="13"/>
+        <Style TargetType="Button" x:Key="BtnRed" BasedOn="{StaticResource Btn}">
+            <Setter Property="Background" Value="#dc2626"/>
+            <Style.Triggers><Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="#b91c1c"/></Trigger></Style.Triggers>
         </Style>
-        <Style TargetType="CheckBox">
-            <Setter Property="Foreground" Value="#94a3b8"/>
-            <Setter Property="FontSize" Value="13"/>
-        </Style>
-        <Style TargetType="RadioButton">
-            <Setter Property="Foreground" Value="#94a3b8"/>
-            <Setter Property="FontSize" Value="13"/>
-        </Style>
-        <Style TargetType="ToggleButton" x:Key="ToggleSwitch">
+        <Style TargetType="ToggleButton" x:Key="Toggle">
             <Setter Property="Background" Value="#1e293b"/>
             <Setter Property="Foreground" Value="#94a3b8"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Padding" Value="10,6"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ToggleButton">
-                        <Border Background="{TemplateBinding Background}" CornerRadius="5"
-                                Padding="{TemplateBinding Padding}">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="5" Padding="{TemplateBinding Padding}">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -110,6 +87,14 @@
                 </Setter.Value>
             </Setter>
         </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="#94a3b8"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style TargetType="RadioButton">
+            <Setter Property="Foreground" Value="#94a3b8"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
     </Window.Resources>
 
     <Grid>
@@ -119,7 +104,7 @@
         </Grid.RowDefinitions>
 
         <!-- 상단 툴바 -->
-        <Border Grid.Row="0" Background="#0a0f1e" Padding="12,8"
+        <Border Grid.Row="0" Background="#0a0f1e" Padding="10,7"
                 BorderThickness="0,0,0,1" BorderBrush="#1e293b">
             <Grid>
                 <Grid.ColumnDefinitions>
@@ -127,25 +112,29 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="📁 App_Data:" Foreground="#64748b"
-                           VerticalAlignment="Center" Margin="0,0,10,0" FontSize="12"/>
+                <TextBlock Grid.Column="0" Text="📁" Foreground="#64748b" VerticalAlignment="Center" Margin="0,0,6,0"/>
                 <TextBox Grid.Column="1" Style="{StaticResource Input}"
                          Text="{Binding AppDataRoot, UpdateSourceTrigger=PropertyChanged}"
                          VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <Button Grid.Column="2" Style="{StaticResource BtnGhost}" Content="📂 찾기"
-                        Command="{Binding BrowseAppDataCommand}" Margin="0,0,6,0"/>
-                <Button Grid.Column="3" Style="{StaticResource BtnGhost}" Content="🔄"
-                        ToolTip="슬러그 목록 새로고침" Command="{Binding RefreshSlugListCommand}"/>
+                <Button Grid.Column="2" Style="{StaticResource BtnGhost}" Content="📂" ToolTip="App_Data 폴더 선택"
+                        Command="{Binding BrowseAppDataCommand}" Margin="0,0,4,0"/>
+                <TextBlock Grid.Column="3" Text="가족:" Foreground="#64748b" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                <ComboBox Grid.Column="4" ItemsSource="{Binding Slugs}" SelectedItem="{Binding SelectedSlug}"
+                          Width="100" Margin="0,0,4,0"/>
+                <Button Grid.Column="5" Style="{StaticResource BtnGhost}" Content="🔄"
+                        Command="{Binding RefreshSlugListCommand}"/>
             </Grid>
         </Border>
 
         <!-- 메인 -->
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" MinWidth="420"/>
-                <ColumnDefinition Width="5"/>
-                <ColumnDefinition Width="440" MinWidth="400"/>
+                <ColumnDefinition Width="*" MinWidth="400"/>
+                <ColumnDefinition Width="4"/>
+                <ColumnDefinition Width="480" MinWidth="440"/>
             </Grid.ColumnDefinitions>
 
             <!-- ── 왼쪽: AI 브라우저 ── -->
@@ -154,10 +143,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-
-                <!-- 주소바 -->
-                <Border Grid.Row="0" Background="#0a0f1e" Padding="8,6"
-                        BorderThickness="0,0,0,1" BorderBrush="#1e293b">
+                <Border Grid.Row="0" Background="#0a0f1e" Padding="8,6" BorderThickness="0,0,0,1" BorderBrush="#1e293b">
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto"/>
@@ -165,61 +151,73 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,8,0">
-                            <Button Style="{StaticResource BtnGhost}" Content="🤖 Claude" Padding="8,5"
-                                    Margin="0,0,4,0" Click="OnClaudeClick"/>
-                            <Button Style="{StaticResource BtnGhost}" Content="💬 ChatGPT" Padding="8,5"
-                                    Margin="0,0,4,0" Click="OnChatGptClick"/>
-                            <Button Style="{StaticResource BtnGhost}" Content="✨ Gemini" Padding="8,5"
-                                    Click="OnGeminiClick"/>
+                            <Button Style="{StaticResource BtnGhost}" Content="🤖 Claude" Padding="8,5" Margin="0,0,3,0" Click="OnClaudeClick"/>
+                            <Button Style="{StaticResource BtnGhost}" Content="💬 ChatGPT" Padding="8,5" Margin="0,0,3,0" Click="OnChatGptClick"/>
+                            <Button Style="{StaticResource BtnGhost}" Content="✨ Gemini" Padding="8,5" Click="OnGeminiClick"/>
                         </StackPanel>
                         <TextBox Grid.Column="1" x:Name="UrlBox" Style="{StaticResource Input}"
                                  Text="{Binding BrowserUrl, UpdateSourceTrigger=PropertyChanged}"
                                  KeyDown="OnUrlKeyDown" VerticalAlignment="Center"/>
-                        <Button Grid.Column="2" Style="{StaticResource Btn}" Content="이동"
-                                Margin="6,0,0,0" Click="OnNavigateClick"/>
+                        <Button Grid.Column="2" Style="{StaticResource Btn}" Content="이동" Margin="6,0,0,0" Click="OnNavigateClick"/>
                     </Grid>
                 </Border>
-
-                <!-- WebView2 -->
                 <wv2:WebView2 Grid.Row="1" x:Name="WebBrowser"/>
             </Grid>
 
-            <!-- 구분선 -->
-            <GridSplitter Grid.Column="1" Width="5" HorizontalAlignment="Stretch" Background="#0a0f1e"/>
+            <GridSplitter Grid.Column="1" Width="4" HorizontalAlignment="Stretch" Background="#0a0f1e"/>
 
-            <!-- ── 오른쪽: 프롬프트 + 포스트 작성 ── -->
+            <!-- ── 오른쪽: 컨트롤 패널 ── -->
             <Grid Grid.Column="2">
                 <Grid.RowDefinitions>
-                    <!-- 프롬프트 패널 (고정) -->
+                    <!-- 자동화 루프 패널 -->
                     <RowDefinition Height="Auto"/>
-                    <!-- 포스트 편집 (스크롤) -->
+                    <!-- 하단: 수동 저장 -->
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
 
-                <!-- ── 프롬프트 자동 전송 패널 ── -->
-                <Border Grid.Row="0" Background="#0d1117"
-                        BorderThickness="0,0,0,2" BorderBrush="#6366f1" Padding="16,14">
+                <!-- ━━━━━ 자동화 루프 패널 ━━━━━ -->
+                <Border Grid.Row="0" Background="#080e08"
+                        BorderThickness="0,0,0,2" BorderBrush="#16a34a" Padding="14,12">
                     <StackPanel>
+
                         <!-- 헤더 -->
                         <DockPanel Margin="0,0,0,10">
-                            <TextBlock Text="🚀 AI 프롬프트 자동 전송" Foreground="#a5b4fc"
-                                       FontSize="14" FontWeight="Bold" DockPanel.Dock="Left"
-                                       VerticalAlignment="Center"/>
-                            <!-- 중복 히스토리 초기화 -->
+                            <TextBlock Text="🔄 자동 글쓰기 루프" Foreground="#4ade80"
+                                       FontSize="14" FontWeight="Bold" VerticalAlignment="Center"/>
                             <Button DockPanel.Dock="Right" Style="{StaticResource BtnGhost}"
-                                    Content="🗑 히스토리 초기화" Padding="8,4" FontSize="11"
+                                    Content="🗑 히스토리 초기화" Padding="7,3" FontSize="10"
                                     Command="{Binding ClearPromptHistoryCommand}"/>
                         </DockPanel>
 
+                        <!-- 앨범 선택 + 로테이션 -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="앨범:" Style="{StaticResource Lbl}"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox Grid.Column="1" ItemsSource="{Binding Albums}"
+                                      SelectedItem="{Binding SelectedAlbum}"
+                                      DisplayMemberPath="Name" Margin="0,0,8,0"/>
+                            <CheckBox Grid.Column="2" Content="🔄 자동 로테이션"
+                                      IsChecked="{Binding AlbumRotationEnabled}"
+                                      VerticalAlignment="Center"/>
+                        </Grid>
+
                         <!-- 프롬프트 입력 -->
-                        <TextBlock Style="{StaticResource Label}" Text="프롬프트 내용"/>
+                        <TextBlock Style="{StaticResource Lbl}" Margin="0,0,0,3">
+                            프롬프트 — <Run Foreground="#6366f1">{앨범}</Run> 을 쓰면 현재 앨범명으로 자동 치환
+                        </TextBlock>
                         <TextBox Style="{StaticResource Input}"
                                  Text="{Binding PromptText, UpdateSourceTrigger=PropertyChanged}"
                                  AcceptsReturn="True" TextWrapping="Wrap"
-                                 Height="90" VerticalScrollBarVisibility="Auto"
-                                 Margin="0,0,0,10"/>
+                                 Height="110" VerticalScrollBarVisibility="Auto"
+                                 FontFamily="Consolas" FontSize="12"
+                                 Margin="0,0,0,8"/>
 
-                        <!-- 자동 전송 설정 -->
+                        <!-- 루프 설정 -->
                         <Grid Margin="0,0,0,8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -227,158 +225,126 @@
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <!-- 자동 전송 ON/OFF 토글 -->
-                            <ToggleButton Grid.Column="0" Style="{StaticResource ToggleSwitch}"
-                                          IsChecked="{Binding AutoSendEnabled}"
-                                          Content="{Binding AutoSendLabel}"
-                                          Margin="0,0,10,0"/>
+                            <!-- 루프 ON/OFF -->
+                            <ToggleButton Grid.Column="0" Style="{StaticResource Toggle}"
+                                          IsChecked="{Binding LoopEnabled}"
+                                          Content="{Binding LoopLabel}"
+                                          FontWeight="Bold" Padding="10,6" Margin="0,0,10,0"/>
 
-                            <!-- 남은 시간 -->
-                            <TextBlock Grid.Column="1" Text="{Binding NextSendIn}"
-                                       Foreground="#64748b" FontSize="11"
-                                       VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <!-- 카운트다운 -->
+                            <TextBlock Grid.Column="1" Text="{Binding LoopCountdown}"
+                                       Foreground="#475569" FontSize="11"
+                                       VerticalAlignment="Center" Margin="0,0,6,0"/>
 
-                            <!-- 간격 선택 -->
-                            <TextBlock Grid.Column="2" Text="간격:" Foreground="#64748b"
-                                       FontSize="12" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="0,0,8,0">
+                            <!-- 간격 -->
+                            <TextBlock Grid.Column="2" Text="간격:" Style="{StaticResource Lbl}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <StackPanel Grid.Column="3" Orientation="Horizontal" Margin="0,0,10,0">
                                 <ComboBox ItemsSource="{Binding IntervalOptions}"
-                                          SelectedItem="{Binding AutoIntervalMinutes}"
-                                          Width="55"/>
-                                <TextBlock Text="분" Foreground="#64748b" FontSize="12"
+                                          SelectedItem="{Binding LoopIntervalMinutes}" Width="48"/>
+                                <TextBlock Text="분" Foreground="#64748b" FontSize="11"
                                            VerticalAlignment="Center" Margin="4,0,0,0"/>
                             </StackPanel>
 
-                            <!-- 지금 바로 전송 -->
-                            <Button Grid.Column="4" Style="{StaticResource BtnGreen}"
-                                    Content="▶ 지금 전송" Padding="10,6"
-                                    Command="{Binding SendPromptNowCommand}"/>
+                            <!-- AI 대기 -->
+                            <TextBlock Grid.Column="4" Text="AI대기:" Style="{StaticResource Lbl}"
+                                       VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <StackPanel Grid.Column="5" Orientation="Horizontal" Margin="0,0,10,0">
+                                <ComboBox ItemsSource="{Binding WaitOptions}"
+                                          SelectedItem="{Binding AiWaitSeconds}" Width="48"/>
+                                <TextBlock Text="초" Foreground="#64748b" FontSize="11"
+                                           VerticalAlignment="Center" Margin="4,0,0,0"/>
+                            </StackPanel>
+
+                            <!-- 지금 실행 -->
+                            <Button Grid.Column="6" Style="{StaticResource BtnGreen}"
+                                    Content="▶ 지금 실행" Command="{Binding RunNowCommand}"/>
                         </Grid>
 
-                        <!-- 상태 -->
-                        <TextBlock Text="{Binding PromptStatus}" FontSize="11"
-                                   Foreground="#6ee7b7" TextWrapping="Wrap">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Setter Property="Foreground" Value="#6ee7b7"/>
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding PromptStatus[0]}" Value="❌">
-                                            <Setter Property="Foreground" Value="#f87171"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding PromptStatus[0]}" Value="⚠">
-                                            <Setter Property="Foreground" Value="#fbbf24"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding PromptStatus[0]}" Value="⏭">
-                                            <Setter Property="Foreground" Value="#64748b"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                        <!-- 루프 상태 -->
+                        <Border Background="#0d1a0d" CornerRadius="4" Padding="8,6">
+                            <TextBlock Text="{Binding LoopStatus}" FontSize="11"
+                                       TextWrapping="Wrap" Foreground="#6ee7b7"/>
+                        </Border>
+
+                        <!-- 수동 전송만 -->
+                        <DockPanel Margin="0,8,0,0">
+                            <TextBlock DockPanel.Dock="Left" Text="프롬프트만 전송 (AI 응답은 수동 저장):"
+                                       Foreground="#475569" FontSize="10" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                            <Button DockPanel.Dock="Right" Style="{StaticResource BtnGhost}"
+                                    Content="📤 프롬프트 전송" Padding="8,4" FontSize="11"
+                                    Command="{Binding SendPromptNowCommand}"/>
+                            <TextBlock Text="{Binding PromptStatus}" Foreground="#64748b"
+                                       FontSize="10" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
+                        </DockPanel>
                     </StackPanel>
                 </Border>
 
-                <!-- ── 포스트 작성 패널 ── -->
+                <!-- ━━━━━ 수동 저장 패널 ━━━━━ -->
                 <Border Grid.Row="1" Background="#0d1117">
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <StackPanel Margin="16,14,16,16">
+                        <StackPanel Margin="14,12,14,14">
 
-                            <!-- AI 응답 바로 저장 버튼 (핵심 기능) -->
+                            <!-- AI 응답 즉시 저장 -->
                             <Border Background="#0c1a0c" BorderBrush="#16a34a" BorderThickness="1"
-                                    CornerRadius="8" Padding="12,10" Margin="0,0,0,14">
+                                    CornerRadius="6" Padding="10,8" Margin="0,0,0,12">
                                 <StackPanel>
-                                    <TextBlock Text="⚡ AI 응답 → 바로 저장" Foreground="#4ade80"
-                                               FontSize="13" FontWeight="Bold" Margin="0,0,0,6"/>
-                                    <TextBlock Foreground="#64748b" FontSize="11" Margin="0,0,0,10"
-                                               TextWrapping="Wrap"
-                                               Text="AI가 응답을 완료하면 아래 버튼 클릭 — 복사/붙여넣기 없이 바로 JSON 저장"/>
+                                    <TextBlock Text="⚡ AI 응답 추출 → 현재 앨범에 바로 저장"
+                                               Foreground="#4ade80" FontSize="12" FontWeight="Bold"
+                                               Margin="0,0,0,6"/>
                                     <Button Style="{StaticResource BtnGreen}"
-                                            Content="🤖 AI 응답 추출 &amp; Families 저장"
-                                            FontSize="14" FontWeight="Bold" Padding="12,10"
+                                            Content="🤖 AI 응답 추출 &amp; 저장"
+                                            FontSize="13" FontWeight="Bold" Padding="10,8"
                                             Command="{Binding ExtractAndSaveCommand}"/>
                                 </StackPanel>
                             </Border>
 
-                            <TextBlock Text="✍️ 또는 직접 작성" Foreground="#64748b"
-                                       FontSize="12" Margin="0,0,0,10"/>
+                            <!-- 직접 작성 -->
+                            <TextBlock Text="✍️ 또는 직접 작성" Foreground="#475569" FontSize="11" Margin="0,0,0,8"/>
 
-                            <!-- 가족 선택 -->
-                            <TextBlock Style="{StaticResource Label}" Text="가족 (슬러그)"/>
-                            <ComboBox ItemsSource="{Binding Slugs}"
-                                      SelectedItem="{Binding SelectedSlug}"
-                                      Margin="0,0,0,12"/>
-
-                            <!-- 제목 -->
-                            <TextBlock Style="{StaticResource Label}" Text="제목 (선택)"/>
+                            <TextBlock Style="{StaticResource Lbl}" Text="제목 (비우면 자동 생성)"/>
                             <TextBox Style="{StaticResource Input}"
                                      Text="{Binding PostTitle, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="0,0,0,12"/>
+                                     Margin="0,0,0,8"/>
 
-                            <!-- 내용 -->
-                            <DockPanel Margin="0,0,0,4">
-                                <TextBlock Style="{StaticResource Label}" Text="내용" DockPanel.Dock="Left"/>
-                                <TextBlock DockPanel.Dock="Right" Foreground="#475569" FontSize="11"
-                                           Text="Markdown 지원" VerticalAlignment="Bottom"/>
-                            </DockPanel>
+                            <TextBlock Style="{StaticResource Lbl}" Text="내용 (Markdown)"/>
                             <TextBox Style="{StaticResource Input}"
                                      Text="{Binding PostContent, UpdateSourceTrigger=PropertyChanged}"
                                      AcceptsReturn="True" TextWrapping="Wrap"
-                                     Height="160" VerticalScrollBarVisibility="Auto"
-                                     Margin="0,0,0,4"/>
-                            <Border Background="#0f172a" CornerRadius="4" Padding="8,5" Margin="0,0,0,12">
-                                <TextBlock Foreground="#475569" FontSize="11"
-                                           Text="💡 AI가 생성한 글 복사(Ctrl+C) → 여기서 Ctrl+V"/>
-                            </Border>
+                                     Height="130" VerticalScrollBarVisibility="Auto"
+                                     Margin="0,0,0,8"/>
 
-                            <!-- 앨범 ID -->
-                            <TextBlock Style="{StaticResource Label}" Text="앨범 ID (비우면 전체 타임라인)"/>
-                            <TextBox Style="{StaticResource Input}"
-                                     Text="{Binding AlbumId, UpdateSourceTrigger=PropertyChanged}"
-                                     Margin="0,0,0,12"/>
-
-                            <!-- 미디어 위치 -->
-                            <TextBlock Style="{StaticResource Label}" Text="사진/영상 위치"/>
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
-                                <RadioButton Content="본문 아래" Margin="0,0,20,0"
-                                             IsChecked="{Binding MediaPosition,
-                                                 Converter={StaticResource EnumToBoolConverter},
-                                                 ConverterParameter=Bottom}"/>
-                                <RadioButton Content="본문 위"
-                                             IsChecked="{Binding MediaPosition,
-                                                 Converter={StaticResource EnumToBoolConverter},
-                                                 ConverterParameter=Top}"/>
+                            <!-- 미디어 위치 + 핀 -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                <RadioButton Content="사진 아래" Margin="0,0,14,0"
+                                             IsChecked="{Binding MediaPosition, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Bottom}"/>
+                                <RadioButton Content="사진 위" Margin="0,0,14,0"
+                                             IsChecked="{Binding MediaPosition, Converter={StaticResource EnumToBoolConverter}, ConverterParameter=Top}"/>
+                                <CheckBox Content="📌 고정" IsChecked="{Binding IsPinned}"/>
                             </StackPanel>
 
-                            <!-- 핀 -->
-                            <CheckBox Content="📌 상단 고정 (Pin)" IsChecked="{Binding IsPinned}"
-                                      Margin="0,0,0,12"/>
-
                             <!-- 사진 -->
-                            <TextBlock Style="{StaticResource Label}" Text="사진 첨부 (로컬 파일)"/>
                             <Button Style="{StaticResource BtnGhost}" Content="🖼️ 사진 추가..."
-                                    Command="{Binding AddPhotosCommand}"
-                                    HorizontalAlignment="Left" Margin="0,0,0,8"/>
-                            <ItemsControl ItemsSource="{Binding PendingPhotos}" Margin="0,0,0,12">
+                                    Command="{Binding AddPhotosCommand}" HorizontalAlignment="Left" Margin="0,0,0,6"/>
+                            <ItemsControl ItemsSource="{Binding PendingPhotos}" Margin="0,0,0,8">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="#1e293b" CornerRadius="4"
-                                                Padding="8,5" Margin="0,0,0,3">
+                                        <Border Background="#1e293b" CornerRadius="3" Padding="6,4" Margin="0,0,0,2">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
                                                     <ColumnDefinition Width="Auto"/>
                                                 </Grid.ColumnDefinitions>
-                                                <TextBlock Grid.Column="0" Text="{Binding}"
-                                                           Foreground="#94a3b8" FontSize="11"
-                                                           TextTrimming="CharacterEllipsis"
-                                                           VerticalAlignment="Center"/>
-                                                <Button Grid.Column="1" Content="✕"
-                                                        Foreground="#f87171" Background="Transparent"
-                                                        BorderThickness="0" Padding="6,0" Cursor="Hand"
-                                                        Command="{Binding DataContext.RemovePhotoCommand,
-                                                            RelativeSource={RelativeSource AncestorType=Window}}"
+                                                <TextBlock Text="{Binding}" Foreground="#94a3b8" FontSize="10"
+                                                           TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                <Button Grid.Column="1" Content="✕" Foreground="#f87171"
+                                                        Background="Transparent" BorderThickness="0"
+                                                        Padding="5,0" Cursor="Hand"
+                                                        Command="{Binding DataContext.RemovePhotoCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                         CommandParameter="{Binding}"/>
                                             </Grid>
                                         </Border>
@@ -386,35 +352,22 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
 
-                            <Separator Background="#1e293b" Margin="0,0,0,12"/>
-
                             <!-- 상태 -->
-                            <TextBlock Text="{Binding StatusMessage}" FontSize="13"
-                                       TextWrapping="Wrap" Margin="0,0,0,10">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="Foreground" Value="#6ee7b7"/>
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding StatusMessage[0]}" Value="❌">
-                                                <Setter Property="Foreground" Value="#f87171"/>
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
+                            <TextBlock Text="{Binding StatusMessage}" FontSize="11"
+                                       TextWrapping="Wrap" Margin="0,0,0,8" Foreground="#6ee7b7"/>
 
                             <!-- 저장 버튼 -->
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="8"/>
+                                    <ColumnDefinition Width="6"/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <Button Grid.Column="0" Style="{StaticResource Btn}"
-                                        Content="📤 직접 작성 내용 저장" FontSize="13" FontWeight="Bold"
-                                        Padding="12,10" Command="{Binding SavePostCommand}"/>
+                                        Content="📤 직접 작성 저장" FontSize="12" FontWeight="Bold"
+                                        Padding="10,8" Command="{Binding SavePostCommand}"/>
                                 <Button Grid.Column="2" Style="{StaticResource BtnGhost}"
-                                        Content="🗑 초기화" Command="{Binding ClearFormCommand}"/>
+                                        Content="🗑" ToolTip="초기화" Command="{Binding ClearFormCommand}"/>
                             </Grid>
 
                         </StackPanel>

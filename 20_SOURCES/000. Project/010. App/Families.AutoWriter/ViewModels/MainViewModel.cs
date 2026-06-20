@@ -14,94 +14,69 @@ public partial class MainViewModel : ObservableObject
 {
     private readonly PostWriterService _writer = new();
     private readonly PromptHistoryService _history = new();
-    private readonly DispatcherTimer _autoTimer = new();
 
-    // ── 브라우저/설정 ─────────────────────────────────────────────
+    // ── 브라우저 ──────────────────────────────────────────────────
     [ObservableProperty] private string _appDataRoot = DetectDefaultRoot();
     [ObservableProperty] private string _browserUrl = "https://claude.ai/new";
     [ObservableProperty] private string _selectedSlug = "";
     public ObservableCollection<string> Slugs { get; } = [];
+    public Func<string, Task<string?>>? ExecuteScriptAsync { get; set; }
 
-    // ── 프롬프트 자동 전송 ────────────────────────────────────────
-    [ObservableProperty] private string _promptText = "";
-    [ObservableProperty] private bool _autoSendEnabled = false;
-    public string AutoSendLabel => AutoSendEnabled ? "▶ 자동 전송 ON" : "⏸ 자동 꺼짐";
-    [ObservableProperty] private int _autoIntervalMinutes = 30;
-    [ObservableProperty] private string _promptStatus = "";
-    [ObservableProperty] private string _nextSendIn = "";
+    // ── 앨범 ──────────────────────────────────────────────────────
+    public ObservableCollection<AlbumInfo> Albums { get; } = [];
+    [ObservableProperty] private AlbumInfo? _selectedAlbum;
+    [ObservableProperty] private bool _albumRotationEnabled = false;
+    private int _albumIndex = 0;
 
-    public int[] IntervalOptions { get; } = [5, 10, 15, 30, 60, 120];
+    // ── 자동화 루프 ───────────────────────────────────────────────
+    // 상태: Idle → Sending → WaitingAI → Extracting → Saving → Idle
+    [ObservableProperty] private bool _loopEnabled = false;
+    [ObservableProperty] private int _loopIntervalMinutes = 10;
+    [ObservableProperty] private int _aiWaitSeconds = 30;      // AI 응답 대기 시간
+    [ObservableProperty] private string _loopStatus = "⏸ 자동 루프 꺼짐";
+    [ObservableProperty] private string _loopCountdown = "";
+    public string LoopLabel => LoopEnabled ? "▶ 루프 실행 중" : "⏸ 자동 루프 꺼짐";
 
-    // 자동전송 남은 시간 카운트다운
-    private DateTime _nextSendAt = DateTime.MaxValue;
+    public int[] IntervalOptions { get; } = [5, 10, 15, 20, 30, 60];
+    public int[] WaitOptions { get; } = [15, 20, 30, 45, 60, 90];
+
+    private readonly DispatcherTimer _loopTimer = new();
     private readonly DispatcherTimer _countdownTimer = new() { Interval = TimeSpan.FromSeconds(1) };
+    private DateTime _nextLoopAt = DateTime.MaxValue;
+    private CancellationTokenSource? _loopCts;
+
+    // ── 프롬프트 ─────────────────────────────────────────────────
+    [ObservableProperty] private string _promptText = BuildDefaultPrompt();
+    [ObservableProperty] private string _promptStatus = "";
 
     // ── 포스트 편집 ───────────────────────────────────────────────
     [ObservableProperty] private string _postTitle = "";
     [ObservableProperty] private string _postContent = "";
-    [ObservableProperty] private string _albumId = "";
     [ObservableProperty] private bool _isPinned = false;
     [ObservableProperty] private MediaPosition _mediaPosition = MediaPosition.Bottom;
     [ObservableProperty] private string _statusMessage = "";
     public ObservableCollection<string> PendingPhotos { get; } = [];
 
-    // 외부에서 WebView2 실행 위임
-    public Func<string, Task<string?>>? ExecuteScriptAsync { get; set; }
-
     // ── 초기화 ───────────────────────────────────────────────────
     public MainViewModel()
     {
         RefreshSlugs();
-        _autoTimer.Tick += OnAutoTimerTick;
+        _loopTimer.Tick += OnLoopTick;
         _countdownTimer.Tick += OnCountdownTick;
         _countdownTimer.Start();
     }
 
     partial void OnAppDataRootChanged(string value) { _writer.AppDataRoot = value; RefreshSlugs(); }
-
-    partial void OnAutoSendEnabledChanged(bool value)
+    partial void OnSelectedSlugChanged(string value) => RefreshAlbums();
+    partial void OnLoopEnabledChanged(bool value)
     {
-        OnPropertyChanged(nameof(AutoSendLabel));
-        if (value) StartAutoTimer();
-        else StopAutoTimer();
+        OnPropertyChanged(nameof(LoopLabel));
+        if (value) StartLoop();
+        else StopLoop();
     }
+    partial void OnLoopIntervalMinutesChanged(int value) { if (LoopEnabled) StartLoop(); }
 
-    partial void OnAutoIntervalMinutesChanged(int value)
-    {
-        if (AutoSendEnabled) StartAutoTimer();
-    }
-
-    private void StartAutoTimer()
-    {
-        _autoTimer.Stop();
-        _autoTimer.Interval = TimeSpan.FromMinutes(AutoIntervalMinutes);
-        _nextSendAt = DateTime.Now.AddMinutes(AutoIntervalMinutes);
-        _autoTimer.Start();
-        PromptStatus = $"⏱ 자동 전송 ON — {AutoIntervalMinutes}분 간격";
-    }
-
-    private void StopAutoTimer()
-    {
-        _autoTimer.Stop();
-        _nextSendAt = DateTime.MaxValue;
-        NextSendIn = "";
-        PromptStatus = "⏸ 자동 전송 꺼짐";
-    }
-
-    private void OnCountdownTick(object? sender, EventArgs e)
-    {
-        if (_nextSendAt == DateTime.MaxValue || !AutoSendEnabled) return;
-        var remaining = _nextSendAt - DateTime.Now;
-        if (remaining < TimeSpan.Zero) { NextSendIn = "전송 중..."; return; }
-        NextSendIn = $"다음 전송까지 {(int)remaining.TotalMinutes:D2}:{remaining.Seconds:D2}";
-    }
-
-    private async void OnAutoTimerTick(object? sender, EventArgs e)
-    {
-        _nextSendAt = DateTime.Now.AddMinutes(AutoIntervalMinutes);
-        await SendPromptAsync(isAuto: true);
-    }
-
+    // ── 슬러그/앨범 ───────────────────────────────────────────────
     private void RefreshSlugs()
     {
         _writer.AppDataRoot = AppDataRoot;
@@ -111,114 +86,171 @@ public partial class MainViewModel : ObservableObject
             SelectedSlug = Slugs[0];
     }
 
-    // ── 프롬프트 전송 ─────────────────────────────────────────────
-    [RelayCommand]
-    private async Task SendPromptNowAsync() => await SendPromptAsync(isAuto: false);
-
-    private async Task SendPromptAsync(bool isAuto)
+    private void RefreshAlbums()
     {
-        if (string.IsNullOrWhiteSpace(PromptText))
+        Albums.Clear();
+        if (string.IsNullOrWhiteSpace(SelectedSlug)) return;
+        foreach (var a in _writer.GetAlbums(SelectedSlug)) Albums.Add(a);
+        _albumIndex = 0;
+        SelectedAlbum = Albums.FirstOrDefault();
+    }
+
+    [RelayCommand] private void RefreshSlugList() { RefreshSlugs(); RefreshAlbums(); }
+
+    // ── 자동화 루프 ───────────────────────────────────────────────
+    private void StartLoop()
+    {
+        _loopCts?.Cancel();
+        _loopTimer.Stop();
+        _loopTimer.Interval = TimeSpan.FromMinutes(LoopIntervalMinutes);
+        _nextLoopAt = DateTime.Now.AddMinutes(LoopIntervalMinutes);
+        _loopTimer.Start();
+        LoopStatus = $"✅ 루프 시작 — {LoopIntervalMinutes}분 간격 | AI 대기 {AiWaitSeconds}초 | 앨범 로테이션 {(AlbumRotationEnabled ? "ON" : "OFF")}";
+    }
+
+    private void StopLoop()
+    {
+        _loopCts?.Cancel();
+        _loopTimer.Stop();
+        _nextLoopAt = DateTime.MaxValue;
+        LoopCountdown = "";
+        LoopStatus = "⏸ 자동 루프 꺼짐";
+    }
+
+    private void OnCountdownTick(object? sender, EventArgs e)
+    {
+        if (_nextLoopAt == DateTime.MaxValue || !LoopEnabled) return;
+        var r = _nextLoopAt - DateTime.Now;
+        if (r < TimeSpan.Zero) { LoopCountdown = "실행 중..."; return; }
+        LoopCountdown = $"다음 실행까지 {(int)r.TotalMinutes:D2}:{r.Seconds:D2}";
+    }
+
+    private async void OnLoopTick(object? sender, EventArgs e)
+    {
+        _nextLoopAt = DateTime.Now.AddMinutes(LoopIntervalMinutes);
+        await RunLoopCycleAsync();
+    }
+
+    [RelayCommand]
+    private async Task RunNowAsync() => await RunLoopCycleAsync();
+
+    private async Task RunLoopCycleAsync()
+    {
+        _loopCts = new CancellationTokenSource();
+        var ct = _loopCts.Token;
+
+        if (string.IsNullOrWhiteSpace(SelectedSlug)) { LoopStatus = "❌ 슬러그를 선택하세요."; return; }
+        if (string.IsNullOrWhiteSpace(PromptText)) { LoopStatus = "❌ 프롬프트를 입력하세요."; return; }
+        if (ExecuteScriptAsync == null) { LoopStatus = "❌ 브라우저가 준비되지 않았습니다."; return; }
+
+        // 현재 앨범 결정
+        var album = SelectedAlbum;
+        var albumName = album?.Name ?? "전체 타임라인";
+
+        // 프롬프트에 앨범명 치환
+        var prompt = PromptText.Replace("{앨범}", albumName).Replace("{album}", albumName);
+
+        // 중복 체크
+        var promptKey = $"{SelectedSlug}:{album?.Id ?? "all"}:{prompt}";
+        if (_history.IsDuplicate(promptKey))
         {
-            PromptStatus = "❌ 프롬프트를 입력하세요.";
+            LoopStatus = $"⏭ [{albumName}] 중복 스킵 ({DateTime.Now:HH:mm}) — 다음 앨범으로";
+            RotateAlbum();
             return;
         }
 
-        if (_history.IsDuplicate(PromptText))
+        try
         {
-            PromptStatus = isAuto
-                ? $"⏭ 중복 프롬프트 스킵 ({DateTime.Now:HH:mm})"
-                : "⚠️ 이미 전송한 프롬프트입니다. 히스토리를 초기화하거나 내용을 변경하세요.";
-            return;
-        }
+            // 1. 프롬프트 전송
+            LoopStatus = $"📤 [{albumName}] 프롬프트 전송 중...";
+            var injectScript = PromptInjector.BuildInjectScript(prompt);
+            await ExecuteScriptAsync(injectScript);
+            _history.MarkSent(promptKey);
 
-        if (ExecuteScriptAsync == null)
-        {
-            PromptStatus = "❌ 브라우저가 준비되지 않았습니다.";
-            return;
-        }
+            // 2. AI 응답 대기
+            for (int i = AiWaitSeconds; i > 0; i--)
+            {
+                if (ct.IsCancellationRequested) return;
+                LoopStatus = $"⏳ [{albumName}] AI 응답 대기 중... {i}초";
+                await Task.Delay(1000, ct);
+            }
 
-        var script = Services.PromptInjector.BuildInjectScript(PromptText);
+            // 3. 응답 추출
+            LoopStatus = $"🔍 [{albumName}] 응답 추출 중...";
+            var raw = await ExecuteScriptAsync(ResponseExtractor.BuildExtractScript());
+            var text = ParseExtractedText(raw);
+
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                LoopStatus = $"❌ [{albumName}] 응답 추출 실패 — AI가 아직 응답 중일 수 있습니다. 대기 시간을 늘려보세요.";
+                return;
+            }
+
+            // 4. JSON 저장
+            var post = new PostEntry
+            {
+                Title = $"[{albumName}] {DateTime.Now:MM/dd HH:mm}",
+                Content = text,
+                AlbumId = album?.Id ?? "",
+                PostedAt = DateTime.Now,
+                MediaPosition = MediaPosition,
+            };
+
+            await _writer.SavePostAsync(SelectedSlug, post, PendingPhotos);
+            LoopStatus = $"✅ [{albumName}] 저장 완료! ({DateTime.Now:HH:mm}) — 총 {text.Length}자";
+
+            // 5. 앨범 로테이션
+            if (AlbumRotationEnabled) RotateAlbum();
+        }
+        catch (OperationCanceledException) { LoopStatus = "⏹ 루프 취소됨"; }
+        catch (Exception ex) { LoopStatus = $"❌ 오류: {ex.Message}"; }
+    }
+
+    private void RotateAlbum()
+    {
+        if (Albums.Count == 0) return;
+        _albumIndex = (_albumIndex + 1) % Albums.Count;
+        SelectedAlbum = Albums[_albumIndex];
+        LoopStatus += $" → 다음: {SelectedAlbum.Name}";
+    }
+
+    // ── 프롬프트 수동 전송 ────────────────────────────────────────
+    [RelayCommand]
+    private async Task SendPromptNowAsync()
+    {
+        if (string.IsNullOrWhiteSpace(PromptText)) { PromptStatus = "❌ 프롬프트를 입력하세요."; return; }
+        if (ExecuteScriptAsync == null) { PromptStatus = "❌ 브라우저 준비 안 됨"; return; }
+        var albumName = SelectedAlbum?.Name ?? "전체";
+        var prompt = PromptText.Replace("{앨범}", albumName).Replace("{album}", albumName);
+        var script = PromptInjector.BuildInjectScript(prompt);
         var result = await ExecuteScriptAsync(script);
-        _history.MarkSent(PromptText);
-
         PromptStatus = $"✅ 전송 완료 ({DateTime.Now:HH:mm}) — {result?.Trim('"') ?? "ok"}";
     }
-
-    [RelayCommand]
-    private void ClearPromptHistory()
-    {
-        _history.Clear();
-        PromptStatus = "🗑 히스토리 초기화 완료. 다음 전송 시 중복 검사 없이 진행합니다.";
-    }
-
-    // ── 앱데이터 / 슬러그 ────────────────────────────────────────
-    [RelayCommand]
-    private void BrowseAppData()
-    {
-        var dlg = new OpenFolderDialog { Title = "Families.Web App_Data 폴더 선택" };
-        if (dlg.ShowDialog() == true) AppDataRoot = dlg.FolderName;
-    }
-
-    [RelayCommand]
-    private void RefreshSlugList() => RefreshSlugs();
-
-    // ── 사진 ─────────────────────────────────────────────────────
-    [RelayCommand]
-    private void AddPhotos()
-    {
-        var dlg = new OpenFileDialog
-        {
-            Multiselect = true,
-            Filter = "이미지 파일|*.jpg;*.jpeg;*.png;*.gif;*.webp|모든 파일|*.*"
-        };
-        if (dlg.ShowDialog() == true)
-            foreach (var f in dlg.FileNames)
-                if (!PendingPhotos.Contains(f)) PendingPhotos.Add(f);
-    }
-
-    [RelayCommand]
-    private void RemovePhoto(string path) => PendingPhotos.Remove(path);
 
     // ── AI 응답 추출 → 바로 저장 ─────────────────────────────────
     [RelayCommand]
     private async Task ExtractAndSaveAsync()
     {
         if (string.IsNullOrWhiteSpace(SelectedSlug)) { StatusMessage = "❌ 가족 슬러그를 선택하세요."; return; }
-        if (ExecuteScriptAsync == null) { StatusMessage = "❌ 브라우저가 준비되지 않았습니다."; return; }
+        if (ExecuteScriptAsync == null) { StatusMessage = "❌ 브라우저 준비 안 됨"; return; }
 
         StatusMessage = "⏳ AI 응답 추출 중...";
-
         var raw = await ExecuteScriptAsync(ResponseExtractor.BuildExtractScript());
-        if (string.IsNullOrWhiteSpace(raw)) { StatusMessage = "❌ 응답 추출 실패"; return; }
-
-        // JSON 파싱 (WebView2는 결과를 JSON 문자열로 반환)
-        string? text = null;
-        string? source = null;
-        try
-        {
-            // raw = "\"{ \\\"source\\\": ... }\"" 형태로 이중 직렬화될 수 있음
-            var unescaped = JsonSerializer.Deserialize<string>(raw) ?? raw;
-            var doc = JsonDocument.Parse(unescaped);
-            text = doc.RootElement.GetProperty("text").GetString();
-            source = doc.RootElement.GetProperty("source").GetString();
-        }
-        catch
-        {
-            // fallback: 그냥 raw 텍스트 사용
-            text = raw.Trim('"').Replace("\\n", "\n").Replace("\\\"", "\"");
-        }
+        var text = ParseExtractedText(raw);
 
         if (string.IsNullOrWhiteSpace(text))
         {
-            StatusMessage = $"❌ AI 응답을 찾을 수 없습니다. (site={source ?? "unknown"}) — AI가 응답을 완료했는지 확인하세요.";
+            StatusMessage = "❌ AI 응답을 찾을 수 없습니다. AI 응답이 완료됐는지 확인하세요.";
             return;
         }
 
+        var albumName = SelectedAlbum?.Name ?? "전체";
         var post = new PostEntry
         {
-            Title = string.IsNullOrWhiteSpace(PostTitle) ? $"[{source?.ToUpper() ?? "AI"}] {DateTime.Now:MM/dd HH:mm}" : PostTitle.Trim(),
+            Title = string.IsNullOrWhiteSpace(PostTitle)
+                ? $"[{albumName}] {DateTime.Now:MM/dd HH:mm}" : PostTitle.Trim(),
             Content = text,
-            AlbumId = AlbumId.Trim(),
+            AlbumId = SelectedAlbum?.Id ?? "",
             IsPinned = IsPinned,
             MediaPosition = MediaPosition,
             PostedAt = DateTime.Now,
@@ -227,18 +259,18 @@ public partial class MainViewModel : ObservableObject
         try
         {
             await _writer.SavePostAsync(SelectedSlug, post, PendingPhotos);
-            StatusMessage = $"✅ AI 응답을 Families에 바로 저장했습니다! ({source}, {DateTime.Now:HH:mm})";
+            StatusMessage = $"✅ [{albumName}] 저장 완료! ({DateTime.Now:HH:mm})";
             PostTitle = "";
             PendingPhotos.Clear();
         }
         catch (Exception ex) { StatusMessage = $"❌ 저장 오류: {ex.Message}"; }
     }
 
-    // ── 포스트 저장 ───────────────────────────────────────────────
+    // ── 포스트 직접 저장 ─────────────────────────────────────────
     [RelayCommand]
     private async Task SavePostAsync()
     {
-        if (string.IsNullOrWhiteSpace(SelectedSlug)) { StatusMessage = "❌ 가족 슬러그를 선택하세요."; return; }
+        if (string.IsNullOrWhiteSpace(SelectedSlug)) { StatusMessage = "❌ 슬러그 선택"; return; }
         if (string.IsNullOrWhiteSpace(PostTitle) && string.IsNullOrWhiteSpace(PostContent))
         { StatusMessage = "❌ 제목 또는 내용을 입력하세요."; return; }
 
@@ -246,7 +278,7 @@ public partial class MainViewModel : ObservableObject
         {
             Title = PostTitle.Trim(),
             Content = PostContent.Trim(),
-            AlbumId = AlbumId.Trim(),
+            AlbumId = SelectedAlbum?.Id ?? "",
             IsPinned = IsPinned,
             MediaPosition = MediaPosition,
             PostedAt = DateTime.Now,
@@ -261,13 +293,56 @@ public partial class MainViewModel : ObservableObject
         catch (Exception ex) { StatusMessage = $"❌ 오류: {ex.Message}"; }
     }
 
-    [RelayCommand]
-    private void ClearForm()
+    // ── 기타 커맨드 ──────────────────────────────────────────────
+    [RelayCommand] private void ClearPromptHistory() { _history.Clear(); PromptStatus = "🗑 히스토리 초기화 완료"; }
+    [RelayCommand] private void BrowseAppData()
     {
-        PostTitle = ""; PostContent = ""; AlbumId = "";
-        IsPinned = false; MediaPosition = MediaPosition.Bottom;
-        PendingPhotos.Clear();
+        var dlg = new OpenFolderDialog { Title = "Families.Web App_Data 폴더 선택" };
+        if (dlg.ShowDialog() == true) AppDataRoot = dlg.FolderName;
     }
+    [RelayCommand] private void AddPhotos()
+    {
+        var dlg = new OpenFileDialog { Multiselect = true, Filter = "이미지|*.jpg;*.jpeg;*.png;*.gif;*.webp|모든 파일|*.*" };
+        if (dlg.ShowDialog() == true)
+            foreach (var f in dlg.FileNames)
+                if (!PendingPhotos.Contains(f)) PendingPhotos.Add(f);
+    }
+    [RelayCommand] private void RemovePhoto(string path) => PendingPhotos.Remove(path);
+    [RelayCommand] private void ClearForm()
+    {
+        PostTitle = ""; PostContent = ""; IsPinned = false;
+        MediaPosition = MediaPosition.Bottom; PendingPhotos.Clear();
+    }
+
+    // ── 헬퍼 ─────────────────────────────────────────────────────
+    private static string? ParseExtractedText(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return null;
+        try
+        {
+            var unescaped = JsonSerializer.Deserialize<string>(raw) ?? raw;
+            var doc = JsonDocument.Parse(unescaped);
+            return doc.RootElement.GetProperty("text").GetString();
+        }
+        catch
+        {
+            return raw.Trim('"').Replace("\\n", "\n").Replace("\\\"", "\"");
+        }
+    }
+
+    private static string BuildDefaultPrompt() =>
+        """
+        {앨범} 주제로 가족 여행 블로그 포스트를 한 개 작성해줘.
+
+        조건:
+        - 제목 없이 본문만 작성 (제목은 앱에서 자동 설정)
+        - 마크다운 형식 (## 소제목, **강조**, - 목록 사용)
+        - 3~5 문단, 500~800자
+        - 실제 경험처럼 자연스럽게, 구체적인 장소나 상황 포함
+        - 마지막에 팁 또는 추천 한 줄로 마무리
+
+        지금 바로 본문만 작성해줘.
+        """;
 
     private static string DetectDefaultRoot()
     {

@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using FamiliesAutoWriter.Models;
 
+
 namespace FamiliesAutoWriter.Services;
 
 public sealed class PostWriterService
@@ -15,6 +16,24 @@ public sealed class PostWriterService
     };
 
     public string AppDataRoot { get; set; } = "";
+
+    public IReadOnlyList<AlbumInfo> GetAlbums(string slug)
+    {
+        var dir = Path.Combine(AppDataRoot, "Family", slug, "albums");
+        if (!Directory.Exists(dir)) return [];
+        var list = new List<AlbumInfo>();
+        foreach (var f in Directory.GetFiles(dir, "*.json"))
+        {
+            try
+            {
+                var json = File.ReadAllText(f);
+                var a = JsonSerializer.Deserialize<AlbumInfo>(json, _opts);
+                if (a != null) list.Add(a);
+            }
+            catch { }
+        }
+        return list.OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToList();
+    }
 
     public IReadOnlyList<string> GetSlugs()
     {
