@@ -135,10 +135,9 @@ public sealed class PostWriterService
                 if (post is null || !IsCookingPost(post.Title)) continue;
 
                 if (lastPostedAt is null || post.PostedAt > lastPostedAt.Value)
-                {
                     lastPostedAt = post.PostedAt;
-                    lastNumber = ExtractCookingNumber(post.Title);
-                }
+
+                lastNumber = Math.Max(lastNumber, ExtractCookingNumber(post.Title));
             }
             catch { }
         }

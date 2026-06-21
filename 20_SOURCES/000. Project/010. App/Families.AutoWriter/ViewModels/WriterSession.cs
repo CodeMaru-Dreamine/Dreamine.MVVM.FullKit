@@ -48,7 +48,10 @@ public sealed partial class WriterSession : ViewModelBase
     private CancellationTokenSource? _loopCts;
     private Task? _loopTask;
     private int _cycleCount;
+    private readonly HashSet<string> _usedImageUrls = new(StringComparer.OrdinalIgnoreCase);
     private int _albumIndex;
+    private const int ExtractionRetryDelaySeconds = 30;
+    private const int ExtractionRetryMaxAttempts = 10;
 
     // ── 컬렉션 ─────────────────────────────────────────────────
     public ObservableCollection<string>    Slugs  { get; } = [];
@@ -223,28 +226,45 @@ public sealed partial class WriterSession : ViewModelBase
             while (!ct.IsCancellationRequested)
             {
                 // 카운트다운
-                while (!ct.IsCancellationRequested && DateTime.Now < _nextLoopAt)
+                try
                 {
-                    var r = _nextLoopAt - DateTime.Now;
-                    if (r > TimeSpan.Zero)
+                    while (!ct.IsCancellationRequested && DateTime.Now < _nextLoopAt)
                     {
-                        var text = r.TotalHours >= 1
-                            ? $"다음 {(int)r.TotalHours}:{r.Minutes:D2}:{r.Seconds:D2}"
-                            : $"다음 {r.Minutes:D2}:{r.Seconds:D2}";
-                        await _uiDispatcher.InvokeAsync(() => LoopCountdown = text);
+                        var r = _nextLoopAt - DateTime.Now;
+                        if (r > TimeSpan.Zero)
+                        {
+                            var text = r.TotalHours >= 1
+                                ? $"다음 {(int)r.TotalHours}:{r.Minutes:D2}:{r.Seconds:D2}"
+                                : $"다음 {r.Minutes:D2}:{r.Seconds:D2}";
+                            await _uiDispatcher.InvokeAsync(() => LoopCountdown = text);
+                        }
+                        await Task.Delay(1000, ct).ConfigureAwait(false);
                     }
-                    await Task.Delay(1000, ct).ConfigureAwait(false);
                 }
+                catch (OperationCanceledException) { break; }
 
                 if (ct.IsCancellationRequested) break;
 
-                await RunLoopCycleAsync(ct).ConfigureAwait(false);
+                try
+                {
+                    await RunLoopCycleAsync(ct).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) { break; }
+                catch (Exception ex)
+                {
+                    await _uiDispatcher.InvokeAsync(() => LoopStatus = $"❌ 루프 오류: {ex.Message}");
+                    await Task.Delay(3000, ct).ConfigureAwait(false);
+                }
 
                 if (!ct.IsCancellationRequested)
                     _nextLoopAt = DateTime.Now.AddMinutes(IntervalMinutes);
             }
         }
         catch (OperationCanceledException) { }
+        catch (Exception ex)
+        {
+            await _uiDispatcher.InvokeAsync(() => LoopStatus = $"❌ 루프 중단: {ex.Message}");
+        }
         finally
         {
             await _uiDispatcher.InvokeAsync(() => LoopCountdown = "");
@@ -263,32 +283,86 @@ public sealed partial class WriterSession : ViewModelBase
         if (execFn == null)                    { await SetStatus("❌ 브라우저 준비 안 됨"); return; }
 
         var albumName = album?.Name ?? "전체 타임라인";
-        var filled    = prompt.Replace("{앨범}", albumName).Replace("{album}", albumName);
-        var key       = $"{slug}:{album?.Id ?? "all"}:{filled}";
+        var filled = prompt.Replace("{앨범}", albumName).Replace("{album}", albumName);
 
-        if (_history.IsDuplicate(key))
-        {
-            await SetStatus("⏭ 중복 스킵");
-            await _uiDispatcher.InvokeAsync(() => RotateAlbum());
-            return;
-        }
 
         try
         {
+            // 전송 전 현재 마지막 응답을 베이스라인으로 캡처 — 이전 응답 오탐 방지
+            var baselineRaw = await await _uiDispatcher.InvokeAsync(() => execFn(ResponseExtractor.BuildExtractScript()));
+            string baselineText = "";
+            try
+            {
+                using var bd = System.Text.Json.JsonDocument.Parse(baselineRaw ?? "{}");
+                baselineText = bd.RootElement.TryGetProperty("text", out var bt) ? bt.GetString() ?? "" : "";
+            }
+            catch { }
+
             await SetStatus($"📤 [{albumName}] 전송 중...");
             await await _uiDispatcher.InvokeAsync(() => execFn(PromptInjector.BuildInjectScript(filled)));
-            _history.MarkSent(key);
 
-            var waitSec = await _uiDispatcher.InvokeAsync(() => AiWaitOption?.Seconds ?? 30);
-            for (int i = waitSec; i > 0; i--)
+            // AI 시작 대기 (10초)
+            await SetStatus($"⏳ [{albumName}] AI 시작 대기...");
+            await Task.Delay(10_000, ct).ConfigureAwait(false);
+
+            // 완료 판정:
+            //   1순위 — ===VIDEO=== 발견 시 즉시 완료 (completed 플래그)
+            //   2순위 — 종료 마커가 있는 텍스트 안정화: 15초 간격으로 2회 연속 동일하면 완료
+            string? raw = null;
+            string prevText = "";
+            int stableCount = 0;
+            for (int retry = 0; retry <= 60; retry++)   // 최대 15분
             {
                 if (ct.IsCancellationRequested) return;
-                await SetStatus($"⏳ [{albumName}] {i}초...");
-                await Task.Delay(1000, ct).ConfigureAwait(false);
+
+                var extracted = await await _uiDispatcher.InvokeAsync(() => execFn(ResponseExtractor.BuildExtractScript()));
+                string curText = "";
+                bool completed = false;
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(extracted ?? "{}");
+                    curText = doc.RootElement.TryGetProperty("text", out var t) ? t.GetString() ?? "" : "";
+                    completed = doc.RootElement.TryGetProperty("completed", out var c) && c.GetBoolean();
+                }
+                catch { curText = extracted ?? ""; }
+
+                // 이전 응답(베이스라인)과 동일하면 아직 새 응답이 아님 → 스킵
+                bool isNewResponse = curText.Length > 20 && curText != baselineText;
+
+                // 1순위: 종료 마커 확인 (새 응답일 때만)
+                if (completed && isNewResponse)
+                {
+                    raw = extracted;
+                    break;
+                }
+
+                // 2순위: 텍스트 안정화 (새 응답일 때만)
+                var hasEndMarker = curText.Contains("===VIDEO===", StringComparison.OrdinalIgnoreCase);
+                if (isNewResponse && hasEndMarker && curText == prevText)
+                {
+                    stableCount++;
+                    if (stableCount >= 2)
+                    {
+                        raw = extracted;
+                        break;
+                    }
+                }
+                else
+                {
+                    stableCount = 0;
+                }
+                prevText = curText;
+
+                var elapsed = 8 + retry * 15;
+                await SetStatus($"⏳ [{albumName}] AI 생성 중... ({elapsed}s)");
+                await Task.Delay(15_000, ct).ConfigureAwait(false);
             }
 
-            await SetStatus($"🔍 [{albumName}] 추출 중...");
-            var raw = await await _uiDispatcher.InvokeAsync(() => execFn(ResponseExtractor.BuildExtractScript()));
+            if (raw == null)
+            {
+                await SetStatus("⏱ AI 응답 대기 시간 초과 (응답 없음)");
+                return;
+            }
 
             var mode       = await _uiDispatcher.InvokeAsync(() => Mode);
             var mediaPos   = await _uiDispatcher.InvokeAsync(() => MediaPosition);
@@ -296,50 +370,113 @@ public sealed partial class WriterSession : ViewModelBase
             var newChatN   = await _uiDispatcher.InvokeAsync(() => NewChatEveryN);
             var rotEnabled = await _uiDispatcher.InvokeAsync(() => AlbumRotationEnabled);
 
-            if (mode == SessionMode.Cooking)
+            for (var extractAttempt = 1; extractAttempt <= ExtractionRetryMaxAttempts; extractAttempt++)
             {
-                var posts = await ParseCookingResponseAsync(raw);
-                if (posts.Count == 0) { await SetStatus("❌ 요리 포맷 추출 실패"); return; }
-                foreach (var p in posts) await _writer.SavePostAsync(slug, p, []);
-                _cycleCount++;
-                await SetStatus($"✅ [{albumName}] #{_cycleCount} {posts.Count}개 저장! ({DateTime.Now:HH:mm})");
-            }
-            else
-            {
-                var result = ParseTravelResponse(raw);
-                if (result is null || string.IsNullOrWhiteSpace(result.Content))
-                { await SetStatus("❌ 추출 실패"); return; }
-
-                List<string> validPhotos = [];
-                if (result.Photos.Count > 0)
+                if (mode == SessionMode.Cooking)
                 {
-                    await SetStatus("🔍 이미지 검증 중...");
-                    validPhotos = await ValidateImageUrlsAsync(result.Photos, msg => _ = SetStatus(msg));
+                    var posts = await ParseCookingResponseAsync(raw);
+                    if (posts.Count == 0)
+                    {
+                        if (extractAttempt >= ExtractionRetryMaxAttempts)
+                        {
+                            await SetStatus("❌ 요리 포맷 추출 실패 (===DETAIL_NNN=== 섹션 없음)");
+                            return;
+                        }
+
+                        await SetStatus($"⏳ [{albumName}] AI 응답 불완전 - {ExtractionRetryDelaySeconds}초 후 재추출 ({extractAttempt}/{ExtractionRetryMaxAttempts})");
+                        await Task.Delay(TimeSpan.FromSeconds(ExtractionRetryDelaySeconds), ct).ConfigureAwait(false);
+                        raw = await await _uiDispatcher.InvokeAsync(() => execFn(ResponseExtractor.BuildExtractScript()));
+                        continue;
+                    }
+
+                    // 중복 제목 방지
+                    var existingCookingTitles = _writer.GetExistingTitles(slug);
+                    var existingCookingNumbers = existingCookingTitles
+                        .Select(ExtractCookingNumberFromTitle)
+                        .Where(n => n > 0)
+                        .ToHashSet();
+                    var newPosts = posts.Where(p =>
+                        !existingCookingTitles.Any(t => string.Equals(t, p.Title, StringComparison.OrdinalIgnoreCase)) &&
+                        !existingCookingNumbers.Contains(ExtractCookingNumberFromTitle(p.Title))
+                    ).ToList();
+                    if (newPosts.Count == 0) { await SetStatus($"⏭ [{albumName}] 모두 중복 제목 스킵"); return; }
+
+                    foreach (var p in newPosts) await _writer.SavePostAsync(slug, p, []);
+                    _cycleCount++;
+                    await SetStatus($"✅ [{albumName}] #{_cycleCount} {newPosts.Count}개 저장! ({DateTime.Now:HH:mm})");
+                    break;
                 }
-                var content = NormalizeTravelContent(RemoveInvalidInlineImages(result.Content, validPhotos));
-
-                var post = new PostEntry
+                else
                 {
-                    Title          = !string.IsNullOrWhiteSpace(result.Title) ? result.Title : $"[{albumName}] {DateTime.Now:MM/dd HH:mm}",
-                    Content        = content,
-                    AlbumId        = albumId,
-                    PostedAt       = DateTime.Now,
-                    MediaPosition  = mediaPos,
-                    PhotoFileNames = validPhotos,
-                    VideoFileNames = result.Videos,
-                };
-                await _writer.SavePostAsync(slug, post, []);
-                _cycleCount++;
-                await SetStatus($"✅ [{albumName}] #{_cycleCount} 저장! ({DateTime.Now:HH:mm}) 📷{validPhotos.Count} 🎬{result.Videos.Count}");
+                    var result = ParseTravelResponse(raw);
+                    if (result is null || string.IsNullOrWhiteSpace(result.Content))
+                    {
+                        if (extractAttempt >= ExtractionRetryMaxAttempts)
+                        {
+                            await SetStatus("❌ 추출 실패 (===CONTENT=== 섹션 없음 — AI 응답 불완전)");
+                            return;
+                        }
+
+                        await SetStatus($"⏳ [{albumName}] AI 응답 불완전 - {ExtractionRetryDelaySeconds}초 후 재추출 ({extractAttempt}/{ExtractionRetryMaxAttempts})");
+                        await Task.Delay(TimeSpan.FromSeconds(ExtractionRetryDelaySeconds), ct).ConfigureAwait(false);
+                        raw = await await _uiDispatcher.InvokeAsync(() => execFn(ResponseExtractor.BuildExtractScript()));
+                        continue;
+                    }
+
+                    List<string> validPhotos = [];
+                    if (result.Photos.Count > 0)
+                    {
+                        await SetStatus("🔍 이미지 검증 중...");
+                        var allValid = await ValidateImageUrlsAsync(result.Photos, msg => _ = SetStatus(msg));
+                        validPhotos = allValid.Take(3).ToList();  // 여행: 최대 3개 사용
+                    }
+                    var content = NormalizeTravelContent(RemoveInvalidInlineImages(result.Content, validPhotos));
+
+                    var postTitle = !string.IsNullOrWhiteSpace(result.Title) ? result.Title : $"[{albumName}] {DateTime.Now:MM/dd HH:mm}";
+
+                    // 중복 제목 방지 — 같은 제목이 이미 저장됐으면 스킵
+                    var existingTitles = _writer.GetExistingTitles(slug);
+                    if (existingTitles.Any(t => string.Equals(t, postTitle, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        await SetStatus($"⏭ [{albumName}] 중복 제목 스킵: {postTitle[..Math.Min(30, postTitle.Length)]}...");
+                        return;
+                    }
+
+                    var post = new PostEntry
+                    {
+                        Title          = postTitle,
+                        Content        = content,
+                        AlbumId        = albumId,
+                        PostedAt       = DateTime.Now,
+                        MediaPosition  = mediaPos,
+                        PhotoFileNames = validPhotos,
+                        VideoFileNames = result.Videos,
+                    };
+                    await _writer.SavePostAsync(slug, post, []);
+                    _cycleCount++;
+                    await SetStatus($"✅ [{albumName}] #{_cycleCount} 저장! ({DateTime.Now:HH:mm}) 📷{validPhotos.Count} 🎬{result.Videos.Count}");
+                    break;
+                }
             }
+
+            // 저장 완료 후 프롬프트 갱신 — 방금 쓴 제목이 다음 사이클 "제외 목록"에 반영됨
+            await _uiDispatcher.InvokeAsync(() => RefreshPromptWithExisting());
 
             if (rotEnabled) await _uiDispatcher.InvokeAsync(() => RotateAlbum());
 
             if (newChatN > 0 && _cycleCount % newChatN == 0)
             {
-                await SetStatus(await _uiDispatcher.InvokeAsync(() => LoopStatus) + " → 새 채팅 이동...");
+                await SetStatus("🔄 새 채팅으로 이동 중...");
                 await Task.Delay(2000, ct).ConfigureAwait(false);
                 await _uiDispatcher.InvokeAsync(() => NavigateTab?.Invoke("__new_chat__"));
+                // 새 채팅 페이지 로딩 완료까지 충분히 대기
+                for (int i = 15; i > 0; i--)
+                {
+                    if (ct.IsCancellationRequested) return;
+                    await SetStatus($"🔄 새 채팅 로딩 대기 {i}초...");
+                    await Task.Delay(1000, ct).ConfigureAwait(false);
+                }
+                await SetStatus("✅ 새 채팅 준비 완료");
             }
         }
         catch (OperationCanceledException) { await SetStatus("⏹ 취소됨"); }
@@ -376,39 +513,81 @@ public sealed partial class WriterSession : ViewModelBase
 
         try
         {
-            if (Mode == SessionMode.Cooking)
+            for (var extractAttempt = 1; extractAttempt <= ExtractionRetryMaxAttempts; extractAttempt++)
             {
-                var posts = await ParseCookingResponseAsync(raw);
-                if (posts.Count == 0) { ExtractStatus = "❌ 요리 포맷 추출 실패 (===DETAIL_NNN_CONTENT=== 없음)"; return; }
-                foreach (var p in posts) await _writer.SavePostAsync(SelectedSlug, p, []);
-                ExtractStatus = $"✅ {posts.Count}개 저장! ({DateTime.Now:HH:mm})";
-            }
-            else
-            {
-                var result = ParseTravelResponse(raw);
-                if (result is null || string.IsNullOrWhiteSpace(result.Content)) { ExtractStatus = "❌ 응답 없음"; return; }
-
-                var albumName = SelectedAlbum?.Name ?? "전체";
-                List<string> validPhotos = [];
-                if (result.Photos.Count > 0)
+                if (Mode == SessionMode.Cooking)
                 {
-                    ExtractStatus = "🔍 이미지 검증...";
-                    validPhotos = await ValidateImageUrlsAsync(result.Photos, msg => ExtractStatus = msg);
+                    var posts = await ParseCookingResponseAsync(raw);
+                    if (posts.Count == 0)
+                    {
+                        if (extractAttempt >= ExtractionRetryMaxAttempts)
+                        {
+                            ExtractStatus = "❌ 요리 포맷 추출 실패 (===DETAIL_NNN_CONTENT=== 없음)";
+                            return;
+                        }
+
+                        ExtractStatus = $"⏳ AI 응답 불완전 - {ExtractionRetryDelaySeconds}초 후 재추출 ({extractAttempt}/{ExtractionRetryMaxAttempts})";
+                        await Task.Delay(TimeSpan.FromSeconds(ExtractionRetryDelaySeconds));
+                        raw = await ExecuteScriptAsync(ResponseExtractor.BuildExtractScript());
+                        continue;
+                    }
+
+                    var existingCookingTitles = _writer.GetExistingTitles(SelectedSlug);
+                    var existingCookingNumbers = existingCookingTitles
+                        .Select(ExtractCookingNumberFromTitle)
+                        .Where(n => n > 0)
+                        .ToHashSet();
+                    var newPosts = posts.Where(p =>
+                        !existingCookingTitles.Any(t => string.Equals(t, p.Title, StringComparison.OrdinalIgnoreCase)) &&
+                        !existingCookingNumbers.Contains(ExtractCookingNumberFromTitle(p.Title))
+                    ).ToList();
+                    if (newPosts.Count == 0) { ExtractStatus = "⏭ 모두 중복 제목/번호 스킵"; return; }
+
+                    foreach (var p in newPosts) await _writer.SavePostAsync(SelectedSlug, p, []);
+                    ExtractStatus = $"✅ {newPosts.Count}개 저장! ({DateTime.Now:HH:mm})";
+                    break;
                 }
-                var content = NormalizeTravelContent(RemoveInvalidInlineImages(result.Content, validPhotos));
-
-                var post = new PostEntry
+                else
                 {
-                    Title          = !string.IsNullOrWhiteSpace(result.Title) ? result.Title : $"[{albumName}] {DateTime.Now:MM/dd HH:mm}",
-                    Content        = content,
-                    AlbumId        = SelectedAlbum?.Id ?? "",
-                    MediaPosition  = MediaPosition,
-                    PostedAt       = DateTime.Now,
-                    PhotoFileNames = validPhotos,
-                    VideoFileNames = result.Videos,
-                };
-                await _writer.SavePostAsync(SelectedSlug, post, []);
-                ExtractStatus = $"✅ [{albumName}] 저장! ({DateTime.Now:HH:mm}) 📷{validPhotos.Count} 🎬{result.Videos.Count}";
+                    var result = ParseTravelResponse(raw);
+                    if (result is null || string.IsNullOrWhiteSpace(result.Content))
+                    {
+                        if (extractAttempt >= ExtractionRetryMaxAttempts)
+                        {
+                            ExtractStatus = "❌ 응답 없음";
+                            return;
+                        }
+
+                        ExtractStatus = $"⏳ AI 응답 불완전 - {ExtractionRetryDelaySeconds}초 후 재추출 ({extractAttempt}/{ExtractionRetryMaxAttempts})";
+                        await Task.Delay(TimeSpan.FromSeconds(ExtractionRetryDelaySeconds));
+                        raw = await ExecuteScriptAsync(ResponseExtractor.BuildExtractScript());
+                        continue;
+                    }
+
+                    var albumName = SelectedAlbum?.Name ?? "전체";
+                    List<string> validPhotos = [];
+                    if (result.Photos.Count > 0)
+                    {
+                        ExtractStatus = "🔍 이미지 검증...";
+                        var allValid = await ValidateImageUrlsAsync(result.Photos, msg => ExtractStatus = msg);
+                        validPhotos = allValid.Take(3).ToList();  // 여행: 최대 3개
+                    }
+                    var content = NormalizeTravelContent(RemoveInvalidInlineImages(result.Content, validPhotos));
+
+                    var post = new PostEntry
+                    {
+                        Title          = !string.IsNullOrWhiteSpace(result.Title) ? result.Title : $"[{albumName}] {DateTime.Now:MM/dd HH:mm}",
+                        Content        = content,
+                        AlbumId        = SelectedAlbum?.Id ?? "",
+                        MediaPosition  = MediaPosition,
+                        PostedAt       = DateTime.Now,
+                        PhotoFileNames = validPhotos,
+                        VideoFileNames = result.Videos,
+                    };
+                    await _writer.SavePostAsync(SelectedSlug, post, []);
+                    ExtractStatus = $"✅ [{albumName}] 저장! ({DateTime.Now:HH:mm}) 📷{validPhotos.Count} 🎬{result.Videos.Count}";
+                    break;
+                }
             }
         }
         catch (Exception ex) { ExtractStatus = $"❌ {ex.Message}"; }
@@ -482,7 +661,22 @@ public sealed partial class WriterSession : ViewModelBase
 
         var content = GetSection(text, "CONTENT");
         if (string.IsNullOrWhiteSpace(content))
-            return string.IsNullOrWhiteSpace(text) ? null : new AiPostResult("", text, [], []);
+        {
+            // ===CONTENT=== 마커를 AI가 빠뜨린 경우 — ===TITLE=== 다음 줄 ~ ===IMAGES=== 앞 텍스트로 fallback
+            var titleEnd   = text.IndexOf("===TITLE===", StringComparison.OrdinalIgnoreCase);
+            var imagesIdx  = text.IndexOf("===IMAGES===", StringComparison.OrdinalIgnoreCase);
+            if (titleEnd >= 0 && imagesIdx > titleEnd)
+            {
+                var afterTitle = text.IndexOf('\n', titleEnd + "===TITLE===".Length);
+                if (afterTitle >= 0)
+                {
+                    var afterTitleLine = text.IndexOf('\n', afterTitle + 1);
+                    if (afterTitleLine >= 0 && afterTitleLine < imagesIdx)
+                        content = text[afterTitleLine..imagesIdx].Trim();
+                }
+            }
+            if (string.IsNullOrWhiteSpace(content)) return null;
+        }
 
         var photos = GetSection(text, "IMAGES")
             .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -510,9 +704,12 @@ public sealed partial class WriterSession : ViewModelBase
             .Where(l => l.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             .Where(IsPlausibleImageUrl)
             .ToList();
+        // 이미 사용한 이미지 URL 제외하여 중복 이미지 방지
         var validImages = rawImageUrls.Count > 0
-            ? await ValidateImageUrlsAsync(rawImageUrls, null)
+            ? await ValidateImageUrlsAsync(rawImageUrls, null, _usedImageUrls)
             : [];
+        // 요리: 포스트당 최대 2개 사용 — 검증 통과한 전체 풀에서 순서대로 배분
+        const int CookingImagesPerPost = 2;
         var imageUrls = validImages.ToArray();
 
         var posts = new List<PostEntry>();
@@ -543,13 +740,19 @@ public sealed partial class WriterSession : ViewModelBase
             var mealName = GetCookingMealName(postedAt);
             title = NormalizeCookingTitle(title, nextNumber, mealName);
 
-            // 이 포스트에 해당하는 이미지 (순번 기반)
-            var postImage = imgIdx < imageUrls.Length ? imageUrls[imgIdx] : null;
+            // 이 포스트에 해당하는 이미지 — 검증 풀에서 최대 CookingImagesPerPost개 순서대로
+            var postImages = imageUrls
+                .Skip(imgIdx)
+                .Take(CookingImagesPerPost)
+                .ToList();
+            imgIdx += CookingImagesPerPost;
 
-            var substitutedSource = SubstituteImages(content, postImage != null ? [postImage] : []);
+            var substitutedSource = SubstituteImages(content, postImages);
             var bodyImages = ExtractImageUrls(substitutedSource);
             var substituted = NormalizeCookingContent(substitutedSource);
-            imgIdx++;
+
+            // 사용된 이미지 URL 추적 (다음 사이클에서 중복 방지)
+            foreach (var img in postImages) _usedImageUrls.Add(img);
 
             posts.Add(new PostEntry
             {
@@ -558,7 +761,7 @@ public sealed partial class WriterSession : ViewModelBase
                 AlbumId        = SelectedAlbum?.Id ?? "",
                 PostedAt       = postedAt,
                 MediaPosition  = MediaPosition,
-                PhotoFileNames = MergeUrls(postImage != null ? [postImage] : [], bodyImages),
+                PhotoFileNames = MergeUrls(postImages, bodyImages),
                 VideoFileNames = [],
             });
 
@@ -614,6 +817,12 @@ public sealed partial class WriterSession : ViewModelBase
         return normalized;
     }
 
+    private static int ExtractCookingNumberFromTitle(string title)
+    {
+        var match = Regex.Match(title ?? "", @"#(?<n>\d+)");
+        return match.Success && int.TryParse(match.Groups["n"].Value, out var number) ? number : 0;
+    }
+
     private static List<string> ExtractImageUrls(string content) =>
         Regex.Matches(content, @"<img\b[^>]*\bsrc\s*=\s*[""'](?<url>https?://[^""']+)[""'][^>]*>", RegexOptions.IgnoreCase)
             .Select(m => System.Net.WebUtility.HtmlDecode(m.Groups["url"].Value.Trim()))
@@ -640,7 +849,7 @@ public sealed partial class WriterSession : ViewModelBase
                     return "";
 
                 var url = System.Net.WebUtility.HtmlDecode(src.Groups["url"].Value.Trim());
-                return allowed.Contains(url) || IsLikelyDirectImageUrl(url) ? match.Value : "";
+                return allowed.Contains(url) ? match.Value : "";  // 검증 통과 URL만 유지
             },
             RegexOptions.IgnoreCase);
     }
@@ -913,7 +1122,19 @@ public sealed partial class WriterSession : ViewModelBase
         return builder.ToString().TrimEnd();
     }
 
-    private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(5) };
+    private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(15) };
+
+    // HTTP 검증 없이 신뢰하는 도메인 — 실제 이미지 파일만 제공하는 공식 CDN
+    private static readonly string[] _trustedImageHosts =
+    [
+        "upload.wikimedia.org",
+        "images.unsplash.com",
+        "images.pexels.com",
+        "cdn.imweb.me",
+        "tong.visitkorea.or.kr",
+        "korean.visitkorea.or.kr",
+        "cdn.visitkorea.or.kr",
+    ];
 
     private static bool IsPlausibleImageUrl(string url)
     {
@@ -949,23 +1170,35 @@ public sealed partial class WriterSession : ViewModelBase
                host.Contains("cdn.imweb.me", StringComparison.Ordinal);
     }
 
-    private static async Task<List<string>> ValidateImageUrlsAsync(List<string> urls, Action<string>? onStatus = null)
+    private static async Task<List<string>> ValidateImageUrlsAsync(List<string> urls, Action<string>? onStatus = null, ISet<string>? excludeUrls = null)
     {
         var valid = new List<string>();
         foreach (var url in urls)
         {
             if (!IsPlausibleImageUrl(url))
                 continue;
+            if (excludeUrls != null && excludeUrls.Contains(url))
+                continue;
 
             try
             {
+                // 신뢰 도메인 + 이미지 확장자 → HTTP 검증 생략
+                if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                {
+                    var host = uri.Host.ToLowerInvariant();
+                    var path = uri.AbsolutePath;
+                    bool trustedHost = _trustedImageHosts.Any(h => host.Contains(h, StringComparison.Ordinal));
+                    bool imageExt   = Regex.IsMatch(path, @"\.(jpe?g|png|webp|gif|bmp)$", RegexOptions.IgnoreCase);
+                    if (trustedHost && imageExt)
+                    {
+                        valid.Add(url);
+                        continue;
+                    }
+                }
+
                 onStatus?.Invoke($"🔍 {url[..Math.Min(60, url.Length)]}");
                 if (await IsReachableImageAsync(url, HttpMethod.Head) ||
                     await IsReachableImageAsync(url, HttpMethod.Get))
-                {
-                    valid.Add(url);
-                }
-                else if (IsLikelyDirectImageUrl(url))
                 {
                     valid.Add(url);
                 }
@@ -980,10 +1213,12 @@ public sealed partial class WriterSession : ViewModelBase
         try
         {
             using var req = new HttpRequestMessage(method, url);
-            req.Headers.UserAgent.ParseAdd("Mozilla/5.0");
+            req.Headers.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36");
             using var res = await _http.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
-            return res.IsSuccessStatusCode &&
-                   res.Content.Headers.ContentType?.MediaType?.StartsWith("image/", StringComparison.OrdinalIgnoreCase) == true;
+            if (!res.IsSuccessStatusCode) return false;
+            // Content-Type이 있으면 image/* 인지 확인, 없으면 2xx 성공만으로 통과
+            var ct = res.Content.Headers.ContentType?.MediaType;
+            return ct == null || ct.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
         }
         catch
         {
@@ -1013,9 +1248,13 @@ public sealed partial class WriterSession : ViewModelBase
         - 여행 경비 예상 표는 반드시 Markdown 표로 출력한다. 표 전체를 한 줄에 붙여 쓰지 말고, 헤더/구분선/각 항목 행을 각각 줄바꿈한다.
 
         이미지 조건:
-        - IMAGES 섹션에 실제 접근 가능한 이미지 URL을 3개 출력한다. "없음" 금지.
+        - IMAGES 섹션에 실제 접근 가능한 이미지 URL을 6개 출력한다. "없음" 금지. (많이 줄수록 좋음 — 검증 실패 대비 여유분)
         - 각 URL은 http 또는 https로 시작하는 이미지 직접 URL이어야 한다.
         - URL 줄에는 설명, 번호, 마크다운 이미지 문법을 붙이지 말고 URL만 쓴다.
+        - 실제 브라우저에서 열리는 직접 이미지 URL만 사용한다. 엑박이 뜰 수 있는 URL은 쓰지 않는다.
+        - URL은 가능하면 .jpg, .jpeg, .png, .webp 로 끝나는 주소를 고른다.
+        - URL에 공백, 한글, 괄호, 따옴표가 있으면 반드시 퍼센트 인코딩된 정상 URL로 출력한다.
+        - 블로그 글 페이지, 검색 결과 페이지, redirect URL, 썸네일 페이지 URL은 금지한다.
         - 가로 1000px 이상 선명한 대표 이미지를 고른다. 작은 썸네일, 흐릿한 사진, 야간 저화질 사진은 금지.
         - 해당 장소 공식 사이트의 큰 이미지 또는 장소 안내 이미지/지도/전시 이미지를 1순위로 사용한다.
         - 공식 이미지가 작거나 흐리면 Wikimedia, 공공기관 보도자료, Unsplash/Pexels의 실제 큰 이미지로 대체한다.
@@ -1122,6 +1361,10 @@ public sealed partial class WriterSession : ViewModelBase
         - 이 응답은 Families.Web App_Data/Family/{선택슬러그}/posts/*.json 으로 파싱 저장된다.
         - AutoWriter는 ===IMAGES===의 URL 1개와 ===DETAIL_NNN_TITLE===, ===DETAIL_NNN_DATE===, ===DETAIL_NNN_CONTENT=== 섹션만 실제 포스트로 저장한다.
         - DETAIL 번호 NNN은 숫자만 사용한다. 예: 231, 232, 233.
+        - 이미 작성된 제목 목록에 있는 번호(#숫자), 식사구분, 메뉴명, 비슷한 메뉴는 절대 다시 쓰지 않는다.
+        - 기존 제목에 "#220"이 있으면 새 제목은 #220을 절대 쓰지 말고, 타임라인 강제 조건의 새 번호만 사용한다.
+        - 기존 메뉴가 "생선구이"면 고등어구이, 갈치구이, 조기구이처럼 거의 같은 생선구이류도 피한다.
+        - 기존 메뉴가 "김밥"이면 주먹밥, 유부초밥처럼 같은 도시락/밥말이류 반복도 피한다.
         - ALBUMS, TIMELINE, 표 형태 요약은 출력하지 마. 저장되지 않으므로 금지.
         - 모든 [대괄호 안내문]은 실제 값으로 바꾼다. 대괄호 안내문을 그대로 남기지 마.
         - TITLE은 파일 목록에 보이는 글 제목이므로 한 줄만 작성한다.
@@ -1139,6 +1382,8 @@ public sealed partial class WriterSession : ViewModelBase
         - 날짜는 1983년 중 자유롭게 (매 실행마다 다르게)
         - 아기에게 직접 먹이는 음식인지 어른 밥상인지 반드시 구분
         - TITLE의 식사구분(아침/점심/저녁), 메뉴명, 본문 음식, 이미지 음식은 반드시 서로 일치한다.
+        - 이번 메뉴는 이미 작성된 메뉴 목록과 겹치지 않는 새 메뉴여야 한다.
+        - 같은 주재료 반복을 피한다. 최근 목록에 생선 메뉴가 많으면 두부/나물/국/찌개/전/조림/볶음 등 다른 계열로 바꾼다.
 
         레시피 작성 기준 (초보자가 실제로 따라 만들 수 있어야 함):
         - 재료는 g, ml, cm 단위로 정확히
@@ -1148,11 +1393,16 @@ public sealed partial class WriterSession : ViewModelBase
         - 간이 맞지 않을 때, 탈 것 같을 때 복구 방법 포함
 
         이미지 조건:
-        - IMAGES 섹션에 메뉴 음식 사진 URL 1개를 출력한다.
+        - IMAGES 섹션에 메뉴 음식 사진 URL을 6개 출력한다. (검증 실패 대비 여유분)
         - 각 URL은 http 또는 https로 시작하는 이미지 직접 URL이어야 한다.
         - URL 줄에는 설명, 번호, 마크다운 이미지 문법을 붙이지 말고 URL만 쓴다.
         - 메뉴와 다른 음식 사진 금지. 예: 고등어조림 글에 샐러드/덮밥/피자 사진 금지.
         - 가로 1000px 이상 선명한 음식 사진만 사용한다. 작은 썸네일, 흐릿한 사진, 생성 이미지 느낌의 사진 금지.
+        - 실제 브라우저에서 열리는 직접 이미지 URL만 사용한다. 엑박이 뜰 수 있는 URL은 쓰지 않는다.
+        - URL은 가능하면 .jpg, .jpeg, .png, .webp 로 끝나는 주소를 고른다.
+        - 우선순위는 upload.wikimedia.org, images.unsplash.com, images.pexels.com 같은 안정적인 이미지 CDN이다.
+        - 블로그 글 페이지, 검색 결과 페이지, commons.wikimedia.org/wiki/... 페이지, redirect URL, 썸네일 페이지 URL은 금지한다.
+        - URL에 공백, 한글, 괄호, 따옴표가 있으면 반드시 퍼센트 인코딩된 정상 URL로 출력한다.
         - Unsplash/Pexels/Wikimedia/공공 이미지 중 실제 존재하는 직접 이미지 URL만 사용. 가짜 URL 절대 금지.
         - 메뉴 사진을 확실히 찾기 어렵다면 그 메뉴를 쓰지 말고, 사진을 확실히 찾을 수 있는 한국 집밥 메뉴로 바꾼다.
         - Wikimedia를 쓸 때는 upload.wikimedia.org의 실제 파일 URL을 사용한다. commons.wikimedia.org/wiki/... 페이지 URL은 금지한다.

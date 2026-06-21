@@ -310,18 +310,7 @@
                                   SelectedItem="{Binding ActiveSession.SelectedInterval}"/>
                     </Grid>
 
-                    <!-- AI 응답 대기 -->
-                    <Grid Margin="0,0,0,6">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="AI 대기 시간 " Style="{StaticResource Lbl}" VerticalAlignment="Center" Margin="0,0,6,3"/>
-                        <ComboBox Grid.Column="1"
-                                  ItemsSource="{Binding ActiveSession.WaitOptions}"
-                                  DisplayMemberPath="Label"
-                                  SelectedItem="{Binding ActiveSession.AiWaitOption}"/>
-                    </Grid>
+                    <!-- AI 응답 대기 — 30초 폴링으로 대체되어 숨김 -->
 
                     <!-- 새 채팅 임계값 -->
                     <Grid Margin="0,0,0,8">

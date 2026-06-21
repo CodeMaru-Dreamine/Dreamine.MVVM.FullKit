@@ -51,7 +51,7 @@ public partial class MainWindow : Window
         var vm      = (MainViewModel)DataContext;
         var session = new WriterSession(initialPrompt) { Mode = mode };
 
-        var wv = new WebView2 { Visibility = Visibility.Collapsed };
+        var wv = new WebView2 { Visibility = Visibility.Hidden };
         WebViewHost.Children.Add(wv);
 
         var tab = new BrowserTab
@@ -124,7 +124,8 @@ public partial class MainWindow : Window
 
         foreach (var t in _tabs)
         {
-            t.WebView.Visibility = t == tab ? Visibility.Visible : Visibility.Collapsed;
+            // Collapsed이면 숨겨진 WebView2에서 JS focus()가 안 됨 → Hidden으로 레이아웃 유지
+            t.WebView.Visibility = t == tab ? Visibility.Visible : Visibility.Hidden;
             if (t.HeaderBtn != null)
                 t.HeaderBtn.IsChecked = t == tab;
         }
