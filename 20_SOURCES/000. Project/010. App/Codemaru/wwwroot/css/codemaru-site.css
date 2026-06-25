@@ -16,6 +16,7 @@
 }
 
 .cm-body {
+    min-height: 100vh;
     padding: 88px 24px 32px;
     background: var(--cm-bg);
     color: var(--cm-text);
@@ -374,6 +375,54 @@
     gap: 18px;
 }
 
+.hire-card {
+    margin-bottom: 18px;
+}
+
+.hire-subtitle {
+    margin: 16px 0 8px;
+    color: #d5dcff;
+    font-weight: 700;
+    font-size: .95rem;
+}
+
+.hire-list {
+    margin: 0;
+    padding-left: 1.1rem;
+    color: #c7d2fe;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 16px;
+}
+
+.price-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .92rem;
+}
+
+.price-table td {
+    padding: 8px 6px;
+    border-bottom: 1px dashed rgba(255, 255, 255, .07);
+    color: #c7d2fe;
+}
+
+.price-table td:first-child {
+    color: #d5dcff;
+    font-weight: 700;
+    width: 45%;
+}
+
+.price-table td:last-child {
+    color: #a855f7;
+    text-align: right;
+}
+
+.hire-footnote {
+    margin-top: 14px;
+    font-size: .85rem;
+}
+
 .section-card {
     padding: 22px 24px;
     border: 1px solid rgba(255, 255, 255, .06);
@@ -562,7 +611,8 @@
     }
 
     .contact-grid,
-    .form-grid-2 {
+    .form-grid-2,
+    .hire-list {
         grid-template-columns: 1fr;
     }
 }
