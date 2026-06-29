@@ -6,7 +6,7 @@ namespace Dreamine.FullKit.Tests.ViewModels;
 public sealed class CounterViewModelTests
 {
     private static CounterViewModel CreateSut() =>
-        new CounterViewModel(new CounterService());
+        new CounterViewModel(new CounterEvent(new CounterService()));
 
     [Fact]
     public void Increment_IncreasesCountByOne()

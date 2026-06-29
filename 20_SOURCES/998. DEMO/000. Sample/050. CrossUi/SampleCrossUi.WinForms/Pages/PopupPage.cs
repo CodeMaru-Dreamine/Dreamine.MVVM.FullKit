@@ -1,5 +1,7 @@
 using Dreamine.UI.WinForms;
 using Dreamine.UI.WinForms.Controls;
+using Dreamine.UI.WinForms.MessageBox;
+using Dreamine.UI.WinForms.Popup;
 
 namespace SampleCrossUi.WinForms.Pages;
 
@@ -8,41 +10,61 @@ public sealed class PopupPage : UserControl
     private Label         _title       = null!;
     private Label         _resultLabel = null!;
     private DreamineButton _btnMsgBox  = null!;
-    private DreamineButton _btnInfo    = null!;
-    private DreamineButton _btnWarn    = null!;
-    private DreamineButton _btnError   = null!;
+    private DreamineButton _btnBlinkOk = null!;
+    private DreamineButton _btnBlinkAlarm = null!;
     private FlowLayoutPanel _layout    = null!;
 
     public PopupPage()
     {
         InitializeComponent();
 
+        // DreamineMessageBox — WPF DreamineMessageBox(5초 후 자동 OK)와 동일한 동작.
         _btnMsgBox.Click += (_, _) =>
         {
-            var r = MessageBox.Show(
-                "DreamineButton으로 트리거된 MessageBox 데모입니다.\n확인 또는 취소를 클릭하세요.",
+            DreamineMessageBox.ShowAsync(
+                "DreamineMessageBox 데모입니다.\n버튼을 클릭하거나 기다리면 자동으로 닫힙니다.",
                 "MessageBox Demo",
                 MessageBoxButtons.OKCancel,
-                MessageBoxIcon.Information);
-            _resultLabel.Text = $"Last result: MessageBox → {r}";
+                MessageBoxIcon.Information,
+                autoClick: DialogResult.OK,
+                autoClickDelaySeconds: 5,
+                callback: r => _resultLabel.Text = $"Last result: MessageBox → {r}");
         };
 
-        _btnInfo.Click += (_, _) =>
+        // DreamineBlinkPopup(완료 알림) — WPF ShowBlinkAsync(UseBlink=false)와 동일한 동작.
+        _btnBlinkOk.Click += async (_, _) =>
         {
-            MessageBox.Show("작업이 성공적으로 완료되었습니다.", "완료", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            _resultLabel.Text = "Last result: Info dialog closed";
+            var result = await DreamineBlinkPopup.ShowAsync(FindForm(), new BlinkPopupOptions
+            {
+                Title = "작업 완료",
+                Message = "작업이 성공적으로 완료되었습니다.",
+                UseBlink = false,
+                Color1 = Color.FromArgb(13, 27, 62),
+                Color2 = Color.FromArgb(13, 27, 62),
+                ForegroundColor = Color.White,
+                OkText = "확인",
+                IsModal = true
+            });
+            _resultLabel.Text = $"Last result: BlinkPopup(OK) → {result}";
         };
 
-        _btnWarn.Click += (_, _) =>
+        // DreamineBlinkPopup(설비 ALARM, 점멸) — WPF ShowBlinkAsync(UseBlink=true)와 동일한 동작.
+        _btnBlinkAlarm.Click += async (_, _) =>
         {
-            var r = MessageBox.Show("주의가 필요한 작업입니다.\n계속 진행할까요?", "경고", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-            _resultLabel.Text = $"Last result: Warning → {r}";
-        };
-
-        _btnError.Click += (_, _) =>
-        {
-            MessageBox.Show("오류가 발생했습니다.\n운영자에게 문의하세요.", "오류", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            _resultLabel.Text = "Last result: Error dialog closed";
+            var result = await DreamineBlinkPopup.ShowAsync(FindForm(), new BlinkPopupOptions
+            {
+                Title = "⚠ ALARM",
+                Message = "설비 이상이 감지되었습니다.\n운영자 확인이 필요합니다.",
+                UseBlink = true,
+                BlinkIntervalMs = 400,
+                Color1 = Color.FromArgb(180, 30, 30),
+                Color2 = Color.FromArgb(80, 10, 10),
+                ForegroundColor = Color.Yellow,
+                OkText = "확인",
+                CancelText = "취소",
+                IsModal = true
+            });
+            _resultLabel.Text = $"Last result: BlinkPopup(Alarm) → {result}";
         };
     }
 
@@ -51,15 +73,14 @@ public sealed class PopupPage : UserControl
         _title = new Label();
         _resultLabel = new Label();
         _btnMsgBox = new DreamineButton();
-        _btnInfo = new DreamineButton();
-        _btnWarn = new DreamineButton();
-        _btnError = new DreamineButton();
+        _btnBlinkOk = new DreamineButton();
+        _btnBlinkAlarm = new DreamineButton();
         _layout = new FlowLayoutPanel();
         _layout.SuspendLayout();
         SuspendLayout();
-        // 
+        //
         // _title
-        // 
+        //
         _title.AutoSize = true;
         _title.Font = new Font("Segoe UI", 18F, FontStyle.Bold);
         _title.ForeColor = Color.White;
@@ -69,9 +90,9 @@ public sealed class PopupPage : UserControl
         _title.Size = new Size(163, 32);
         _title.TabIndex = 0;
         _title.Text = "Popup Demo";
-        // 
+        //
         // _resultLabel
-        // 
+        //
         _resultLabel.AutoSize = true;
         _resultLabel.Font = new Font("Segoe UI", 10F);
         _resultLabel.ForeColor = Color.FromArgb(136, 153, 170);
@@ -79,16 +100,16 @@ public sealed class PopupPage : UserControl
         _resultLabel.Margin = new Padding(0, 16, 0, 0);
         _resultLabel.Name = "_resultLabel";
         _resultLabel.Size = new Size(93, 19);
-        _resultLabel.TabIndex = 5;
+        _resultLabel.TabIndex = 4;
         _resultLabel.Text = "Last result: —";
-        // 
+        //
         // _btnMsgBox
-        // 
+        //
         _btnMsgBox.BackColor = Color.FromArgb(13, 27, 62);
         _btnMsgBox.BorderColor = Color.FromArgb(45, 74, 110);
         _btnMsgBox.Command = null;
         _btnMsgBox.CommandParameter = null;
-        _btnMsgBox.Content = "Show MessageBox";
+        _btnMsgBox.Content = "DreamineMessageBox (5s auto-close)";
         _btnMsgBox.CornerRadius = 6;
         _btnMsgBox.Font = new Font("Segoe UI", 10F);
         _btnMsgBox.ForeColor = Color.White;
@@ -97,71 +118,52 @@ public sealed class PopupPage : UserControl
         _btnMsgBox.Margin = new Padding(0, 0, 0, 8);
         _btnMsgBox.Name = "_btnMsgBox";
         _btnMsgBox.ShineColor = Color.Empty;
-        _btnMsgBox.Size = new Size(200, 40);
+        _btnMsgBox.Size = new Size(260, 40);
         _btnMsgBox.TabIndex = 1;
-        // 
-        // _btnInfo
-        // 
-        _btnInfo.BackColor = Color.FromArgb(13, 27, 62);
-        _btnInfo.BorderColor = Color.FromArgb(45, 74, 110);
-        _btnInfo.Command = null;
-        _btnInfo.CommandParameter = null;
-        _btnInfo.Content = "Show Info Dialog";
-        _btnInfo.CornerRadius = 6;
-        _btnInfo.Font = new Font("Segoe UI", 10F);
-        _btnInfo.ForeColor = Color.White;
-        _btnInfo.IsSelected = false;
-        _btnInfo.Location = new Point(0, 104);
-        _btnInfo.Margin = new Padding(0, 0, 0, 8);
-        _btnInfo.Name = "_btnInfo";
-        _btnInfo.ShineColor = Color.Empty;
-        _btnInfo.Size = new Size(200, 40);
-        _btnInfo.TabIndex = 2;
-        // 
-        // _btnWarn
-        // 
-        _btnWarn.BackColor = Color.FromArgb(13, 27, 62);
-        _btnWarn.BorderColor = Color.FromArgb(45, 74, 110);
-        _btnWarn.Command = null;
-        _btnWarn.CommandParameter = null;
-        _btnWarn.Content = "Show Warning";
-        _btnWarn.CornerRadius = 6;
-        _btnWarn.Font = new Font("Segoe UI", 10F);
-        _btnWarn.ForeColor = Color.White;
-        _btnWarn.IsSelected = false;
-        _btnWarn.Location = new Point(0, 152);
-        _btnWarn.Margin = new Padding(0, 0, 0, 8);
-        _btnWarn.Name = "_btnWarn";
-        _btnWarn.ShineColor = Color.Empty;
-        _btnWarn.Size = new Size(200, 40);
-        _btnWarn.TabIndex = 3;
-        // 
-        // _btnError
-        // 
-        _btnError.BackColor = Color.FromArgb(13, 27, 62);
-        _btnError.BorderColor = Color.FromArgb(45, 74, 110);
-        _btnError.Command = null;
-        _btnError.CommandParameter = null;
-        _btnError.Content = "Show Error";
-        _btnError.CornerRadius = 6;
-        _btnError.Font = new Font("Segoe UI", 10F);
-        _btnError.ForeColor = Color.White;
-        _btnError.IsSelected = false;
-        _btnError.Location = new Point(0, 200);
-        _btnError.Margin = new Padding(0, 0, 0, 8);
-        _btnError.Name = "_btnError";
-        _btnError.ShineColor = Color.Empty;
-        _btnError.Size = new Size(200, 40);
-        _btnError.TabIndex = 4;
-        // 
+        //
+        // _btnBlinkOk
+        //
+        _btnBlinkOk.BackColor = Color.FromArgb(13, 27, 62);
+        _btnBlinkOk.BorderColor = Color.FromArgb(45, 74, 110);
+        _btnBlinkOk.Command = null;
+        _btnBlinkOk.CommandParameter = null;
+        _btnBlinkOk.Content = "BlinkPopup — 완료 알림";
+        _btnBlinkOk.CornerRadius = 6;
+        _btnBlinkOk.Font = new Font("Segoe UI", 10F);
+        _btnBlinkOk.ForeColor = Color.White;
+        _btnBlinkOk.IsSelected = false;
+        _btnBlinkOk.Location = new Point(0, 104);
+        _btnBlinkOk.Margin = new Padding(0, 0, 0, 8);
+        _btnBlinkOk.Name = "_btnBlinkOk";
+        _btnBlinkOk.ShineColor = Color.Empty;
+        _btnBlinkOk.Size = new Size(260, 40);
+        _btnBlinkOk.TabIndex = 2;
+        //
+        // _btnBlinkAlarm
+        //
+        _btnBlinkAlarm.BackColor = Color.FromArgb(13, 27, 62);
+        _btnBlinkAlarm.BorderColor = Color.FromArgb(45, 74, 110);
+        _btnBlinkAlarm.Command = null;
+        _btnBlinkAlarm.CommandParameter = null;
+        _btnBlinkAlarm.Content = "BlinkPopup — 설비 ALARM (점멸)";
+        _btnBlinkAlarm.CornerRadius = 6;
+        _btnBlinkAlarm.Font = new Font("Segoe UI", 10F);
+        _btnBlinkAlarm.ForeColor = Color.White;
+        _btnBlinkAlarm.IsSelected = false;
+        _btnBlinkAlarm.Location = new Point(0, 152);
+        _btnBlinkAlarm.Margin = new Padding(0, 0, 0, 8);
+        _btnBlinkAlarm.Name = "_btnBlinkAlarm";
+        _btnBlinkAlarm.ShineColor = Color.Empty;
+        _btnBlinkAlarm.Size = new Size(260, 40);
+        _btnBlinkAlarm.TabIndex = 3;
+        //
         // _layout
-        // 
+        //
         _layout.AutoSize = true;
         _layout.Controls.Add(_title);
         _layout.Controls.Add(_btnMsgBox);
-        _layout.Controls.Add(_btnInfo);
-        _layout.Controls.Add(_btnWarn);
-        _layout.Controls.Add(_btnError);
+        _layout.Controls.Add(_btnBlinkOk);
+        _layout.Controls.Add(_btnBlinkAlarm);
         _layout.Controls.Add(_resultLabel);
         _layout.Dock = DockStyle.Fill;
         _layout.FlowDirection = FlowDirection.TopDown;
@@ -170,9 +172,9 @@ public sealed class PopupPage : UserControl
         _layout.Size = new Size(1133, 1225);
         _layout.TabIndex = 0;
         _layout.WrapContents = false;
-        // 
+        //
         // PopupPage
-        // 
+        //
         BackColor = Color.FromArgb(26, 26, 46);
         Controls.Add(_layout);
         Name = "PopupPage";

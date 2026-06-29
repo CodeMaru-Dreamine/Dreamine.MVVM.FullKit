@@ -4,36 +4,15 @@
              x:Class="SampleCrossUi.Maui.MainPage"
              Title="Dreamine Cross-UI — MAUI">
 
-    <ScrollView>
-        <VerticalStackLayout Padding="20" Spacing="16">
+    <Grid RowDefinitions="Auto,*">
 
-            <Label Text="Dreamine Cross-UI Sample — MAUI"
-                   FontSize="20" FontAttributes="Bold" />
+        <HorizontalStackLayout Grid.Row="0" Spacing="8" Padding="12" BackgroundColor="#0d1b3e">
+            <Button x:Name="BtnCounter"  Text="Counter"  Clicked="OnNavCounterClicked"  TextColor="White" />
+            <Button x:Name="BtnControls" Text="Controls" Clicked="OnNavControlsClicked" TextColor="White" />
+            <Button x:Name="BtnPopup"    Text="Popup"    Clicked="OnNavPopupClicked"    TextColor="White" />
+        </HorizontalStackLayout>
 
-            <Label x:Name="CountLabel"
-                   FontSize="48" FontAttributes="Bold"
-                   HorizontalOptions="Center" />
+        <ContentView x:Name="PageHost" Grid.Row="1" />
 
-            <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
-                <Button Text="Increment"
-                        Clicked="OnIncrementClicked"
-                        BackgroundColor="#0d6efd" TextColor="White" />
-                <Button Text="Reset"
-                        Clicked="OnResetClicked"
-                        BackgroundColor="#6c757d" TextColor="White" />
-            </HorizontalStackLayout>
-
-            <Label Text="Operation Log" FontAttributes="Bold" />
-
-            <CollectionView x:Name="LogList"
-                            HeightRequest="300">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="x:String">
-                        <Label Text="{Binding .}" FontSize="13" Padding="4,2" />
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
-
-        </VerticalStackLayout>
-    </ScrollView>
+    </Grid>
 </ContentPage>

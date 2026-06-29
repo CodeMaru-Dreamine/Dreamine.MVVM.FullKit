@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:dc="clr-namespace:Dreamine.UI.Maui;assembly=Dreamine.UI.Maui"
+             x:Class="SampleCrossUi.Maui.Views.ControlsPage">
+
+    <Grid RowDefinitions="Auto,*">
+
+        <!-- 탭 버튼 행 (WPF/WinForms의 TabControl을 흉내냄) -->
+        <ScrollView Grid.Row="0" Orientation="Horizontal">
+            <HorizontalStackLayout x:Name="TabRow" Spacing="6" Padding="0,0,0,8" />
+        </ScrollView>
+
+        <ScrollView Grid.Row="1">
+            <Grid Padding="4,8,4,24">
+
+                <!-- ① Button -->
+                <VerticalStackLayout x:Name="TabButton" Spacing="12">
+                    <Label Text="Button" FontAttributes="Bold" FontSize="16" />
+                    <Button Text="{Binding ClickCount, StringFormat='Click Me ({0})'}"
+                            Command="{Binding ClickMeCommand}"
+                            BackgroundColor="#0d6efd" TextColor="White" />
+
+                    <Label Text="Color Variants" FontAttributes="Bold" />
+                    <HorizontalStackLayout Spacing="8">
+                        <Button Text="Primary" BackgroundColor="#0d6efd" TextColor="White" WidthRequest="90" Clicked="OnVariantButtonClicked" />
+                        <Button Text="Success" BackgroundColor="#198754" TextColor="White" WidthRequest="90" Clicked="OnVariantButtonClicked" />
+                        <Button Text="Warning" BackgroundColor="#ffc107" TextColor="Black" WidthRequest="90" Clicked="OnVariantButtonClicked" />
+                        <Button Text="Danger" BackgroundColor="#dc3545" TextColor="White" WidthRequest="90" Clicked="OnVariantButtonClicked" />
+                    </HorizontalStackLayout>
+
+                    <Label Text="Size Variants" FontAttributes="Bold" />
+                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                        <Button Text="Small" BackgroundColor="#0d1b3e" TextColor="White" HeightRequest="28" FontSize="11" Clicked="OnVariantButtonClicked" />
+                        <Button Text="Normal" BackgroundColor="#0d1b3e" TextColor="White" HeightRequest="38" FontSize="14" Clicked="OnVariantButtonClicked" />
+                        <Button Text="Large" BackgroundColor="#0d1b3e" TextColor="White" HeightRequest="48" FontSize="17" Clicked="OnVariantButtonClicked" />
+                    </HorizontalStackLayout>
+
+                    <Label Text="Disabled" FontAttributes="Bold" />
+                    <Button Text="Disabled Button" IsEnabled="False" BackgroundColor="#0d1b3e" TextColor="White" />
+
+                    <Label x:Name="ButtonTabStatus" Text="(버튼을 눌러보세요)" FontAttributes="Italic" TextColor="#0d6efd" />
+                </VerticalStackLayout>
+
+                <!-- ② CheckBox / Radio -->
+                <VerticalStackLayout x:Name="TabCheckRadio" Spacing="12" IsVisible="False">
+                    <Label Text="Check Boxes" FontAttributes="Bold" FontSize="16" />
+                    <HorizontalStackLayout Spacing="20">
+                        <dc:DreamineCheckBox IsChecked="{Binding Check1}" Text="Option 1" />
+                        <dc:DreamineCheckBox IsChecked="{Binding Check2}" Text="Option 2" />
+                        <dc:DreamineCheckBox IsChecked="{Binding Check3}" Text="Option 3" />
+                    </HorizontalStackLayout>
+
+                    <Label Text="Radio Buttons" FontAttributes="Bold" />
+                    <HorizontalStackLayout Spacing="16">
+                        <RadioButton x:Name="RadioOptionA" Content="Option A" GroupName="DemoRadio"
+                                     CheckedChanged="OnRadioCheckedChanged" />
+                        <RadioButton x:Name="RadioOptionB" Content="Option B" GroupName="DemoRadio"
+                                     CheckedChanged="OnRadioCheckedChanged" />
+                    </HorizontalStackLayout>
+                    <Label Text="{Binding SelectedRadio, StringFormat='Selected: {0}'}" />
+                </VerticalStackLayout>
+
+                <!-- ③ CheckLed -->
+                <VerticalStackLayout x:Name="TabCheckLed" Spacing="12" IsVisible="False">
+                    <Label Text="CheckLed" FontAttributes="Bold" FontSize="16" />
+                    <HorizontalStackLayout Spacing="12">
+                        <Button Text="Toggle LED" Command="{Binding ToggleLedCommand}" />
+                        <Button Text="Toggle Pulse" Command="{Binding TogglePulseCommand}" />
+                        <dc:DreamineCheckLed x:Name="MainLed" IsOn="{Binding LedIsOn}" IsPulse="{Binding LedIsPulse}" VerticalOptions="Center" />
+                        <Label Text="{Binding LedIsOn, StringFormat='LED: {0}'}" VerticalOptions="Center" />
+                        <Label Text="{Binding LedIsPulse, StringFormat='Pulse: {0}'}" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+
+                    <Label Text="Corner Position 변형" FontAttributes="Bold" />
+                    <HorizontalStackLayout Spacing="16">
+                        <Border Stroke="#2D4A6E" StrokeThickness="1" WidthRequest="60" HeightRequest="60" Padding="6">
+                            <dc:DreamineCheckLed IsOn="True" Corner="TopLeft" />
+                        </Border>
+                        <Border Stroke="#2D4A6E" StrokeThickness="1" WidthRequest="60" HeightRequest="60" Padding="6">
+                            <dc:DreamineCheckLed IsOn="True" Corner="TopRight" />
+                        </Border>
+                        <Border Stroke="#2D4A6E" StrokeThickness="1" WidthRequest="60" HeightRequest="60" Padding="6">
+                            <dc:DreamineCheckLed IsOn="True" Corner="BottomLeft" />
+                        </Border>
+                        <Border Stroke="#2D4A6E" StrokeThickness="1" WidthRequest="60" HeightRequest="60" Padding="6">
+                            <dc:DreamineCheckLed IsOn="False" Corner="BottomRight" />
+                        </Border>
+                    </HorizontalStackLayout>
+
+                    <Label Text="Diameter 변형" FontAttributes="Bold" />
+                    <HorizontalStackLayout Spacing="12" VerticalOptions="Center">
+                        <dc:DreamineCheckLed IsOn="True" Diameter="10" />
+                        <dc:DreamineCheckLed IsOn="True" Diameter="18" />
+                        <dc:DreamineCheckLed IsOn="True" Diameter="26" />
+                        <dc:DreamineCheckLed IsOn="True" Diameter="34" />
+                        <dc:DreamineCheckLed IsOn="True" Diameter="42" />
+                    </HorizontalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- ④ TextBox -->
+                <VerticalStackLayout x:Name="TabTextBox" Spacing="12" IsVisible="False">
+                    <Label Text="Text Input" FontAttributes="Bold" FontSize="16" />
+                    <Entry x:Name="MainEntry" Placeholder="Type something (가상 키보드 데모)" Text="{Binding TextInput}" />
+                    <Button Text="Clear Text" Command="{Binding ClearTextCommand}" />
+
+                    <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
+                    <Button Text="Clear Password" Command="{Binding ClearPasswordCommand}" />
+
+                    <Label Text="Read-Only" FontAttributes="Bold" />
+                    <Entry Text="수정할 수 없는 텍스트입니다." IsReadOnly="True" />
+
+                    <dc:DreamineVirtualKeyboard x:Name="VirtualKeyboard" />
+                </VerticalStackLayout>
+
+                <!-- ⑤ ComboBox -->
+                <VerticalStackLayout x:Name="TabComboBox" Spacing="12" IsVisible="False">
+                    <Label Text="Fruit Picker" FontAttributes="Bold" FontSize="16" />
+                    <Picker ItemsSource="{Binding FruitItems}" SelectedItem="{Binding SelectedFruit}" />
+
+                    <Label Text="Disabled" FontAttributes="Bold" />
+                    <Picker ItemsSource="{Binding FruitItems}" SelectedIndex="0" IsEnabled="False" />
+                </VerticalStackLayout>
+
+                <!-- ⑥ DataGrid / ListBox -->
+                <VerticalStackLayout x:Name="TabGridList" Spacing="12" IsVisible="False">
+                    <Label Text="DataGrid" FontAttributes="Bold" FontSize="16" />
+                    <Border Stroke="#2D4A6E" StrokeThickness="1">
+                        <VerticalStackLayout>
+                            <Grid ColumnDefinitions="60,*,100" BackgroundColor="#0D1B3E" Padding="8,6">
+                                <Label Grid.Column="0" Text="No" TextColor="White" FontAttributes="Bold" />
+                                <Label Grid.Column="1" Text="Name" TextColor="White" FontAttributes="Bold" />
+                                <Label Grid.Column="2" Text="Status" TextColor="White" FontAttributes="Bold" />
+                            </Grid>
+                            <CollectionView x:Name="GridCollectionView" ItemsSource="{Binding GridRows}" HeightRequest="160"
+                                            SelectionMode="Single" SelectionChanged="OnGridSelectionChanged">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid ColumnDefinitions="60,*,100" Padding="8,6">
+                                            <Label Grid.Column="0" Text="{Binding No}" />
+                                            <Label Grid.Column="1" Text="{Binding Name}" />
+                                            <Label Grid.Column="2" Text="{Binding Status}" />
+
+                                            <VisualStateManager.VisualStateGroups>
+                                                <VisualStateGroup x:Name="CommonStates">
+                                                    <VisualState x:Name="Normal" />
+                                                    <VisualState x:Name="Selected">
+                                                        <VisualState.Setters>
+                                                            <Setter Property="BackgroundColor" Value="#1E3A6E" />
+                                                        </VisualState.Setters>
+                                                    </VisualState>
+                                                </VisualStateGroup>
+                                            </VisualStateManager.VisualStateGroups>
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+                        </VerticalStackLayout>
+                    </Border>
+                    <Label x:Name="GridSelectionLabel" Text="(선택된 행 없음)" FontAttributes="Italic" TextColor="#0d6efd" />
+
+                    <Label Text="ListBox (더블탭으로 활성화)" FontAttributes="Bold" />
+                    <Border Stroke="#2D4A6E" StrokeThickness="1">
+                        <CollectionView ItemsSource="{Binding FruitItems}" HeightRequest="140"
+                                         SelectionMode="Single">
+                            <CollectionView.ItemTemplate>
+                                <DataTemplate>
+                                    <Label Text="{Binding .}" Padding="10,6">
+                                        <Label.GestureRecognizers>
+                                            <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="OnFruitItemDoubleTapped" />
+                                        </Label.GestureRecognizers>
+
+                                        <VisualStateManager.VisualStateGroups>
+                                            <VisualStateGroup x:Name="CommonStates">
+                                                <VisualState x:Name="Normal" />
+                                                <VisualState x:Name="Selected">
+                                                    <VisualState.Setters>
+                                                        <Setter Property="BackgroundColor" Value="#1E3A6E" />
+                                                        <Setter Property="TextColor" Value="White" />
+                                                    </VisualState.Setters>
+                                                </VisualState>
+                                            </VisualStateGroup>
+                                        </VisualStateManager.VisualStateGroups>
+                                    </Label>
+                                </DataTemplate>
+                            </CollectionView.ItemTemplate>
+                        </CollectionView>
+                    </Border>
+                    <Label Text="{Binding StatusMessage, StringFormat='활성화 결과: {0}'}" FontAttributes="Italic" TextColor="#0d6efd" />
+
+                    <Label Text="AutoScroll 로그" FontAttributes="Bold" />
+                    <Button Text="Click Me" Clicked="OnLogClickClicked" />
+                    <Border Stroke="#2D4A6E" StrokeThickness="1">
+                        <CollectionView x:Name="LogList" ItemsSource="{Binding ActivityLog}" HeightRequest="120" />
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- ⑦ Misc -->
+                <VerticalStackLayout x:Name="TabMisc" Spacing="12" IsVisible="False">
+                    <Label Text="Misc" FontAttributes="Bold" FontSize="16" />
+
+                    <dc:DreamineExpander Header="자세히 보기" IsExpanded="{Binding IsExpanded}">
+                        <dc:DreamineExpander.ExpanderContent>
+                            <Label Text="Expander 안쪽 콘텐츠입니다. WPF/WinForms와 같은 펼치기/접기 동작을 보여줍니다." />
+                        </dc:DreamineExpander.ExpanderContent>
+                    </dc:DreamineExpander>
+
+                    <Label Text="Numeric Range" FontAttributes="Bold" />
+                    <Slider Minimum="0" Maximum="100" Value="{Binding NumericInput}" />
+                    <Label Text="{Binding NumericInput, StringFormat='Value: {0:F0}'}" />
+
+                    <Label Text="{Binding StatusMessage, StringFormat='Status: {0}'}" FontAttributes="Italic" />
+                    <Label Text="{Binding ActivationLog}" FontAttributes="Italic" />
+                </VerticalStackLayout>
+
+            </Grid>
+        </ScrollView>
+    </Grid>
+</ContentView>

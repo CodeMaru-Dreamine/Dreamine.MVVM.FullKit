@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SampleCrossUi.Maui.Views.CounterPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16">
+
+            <Label Text="Counter Demo" FontSize="20" FontAttributes="Bold" />
+
+            <Label x:Name="CountLabel"
+                   FontSize="48" FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                <Button Text="Increment"
+                        Clicked="OnIncrementClicked"
+                        BackgroundColor="#0d6efd" TextColor="White" />
+                <Button Text="Reset"
+                        Clicked="OnResetClicked"
+                        BackgroundColor="#6c757d" TextColor="White" />
+            </HorizontalStackLayout>
+
+            <Label Text="Operation Log" FontAttributes="Bold" />
+
+            <CollectionView x:Name="LogList" HeightRequest="300">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <Label Text="{Binding .}" FontSize="13" Padding="4,2" />
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

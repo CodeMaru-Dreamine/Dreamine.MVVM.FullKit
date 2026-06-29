@@ -20,7 +20,7 @@ public sealed class CounterPage : UserControl
     private readonly CounterViewModel _vm;
 
     /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>
-    public CounterPage() : this(new CounterViewModel(new CounterService())) { }
+    public CounterPage() : this(new CounterViewModel(new CounterEvent(new CounterService()))) { }
 
     public CounterPage(CounterViewModel vm)
     {

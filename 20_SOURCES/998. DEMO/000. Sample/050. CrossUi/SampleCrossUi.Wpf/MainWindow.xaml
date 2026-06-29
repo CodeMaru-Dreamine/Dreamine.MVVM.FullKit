@@ -6,10 +6,14 @@
     xmlns:vm="clr-namespace:SampleCrossUi.Wpf.ViewModels"
     xmlns:views="clr-namespace:SampleCrossUi.Wpf.Views"
     xmlns:shared="clr-namespace:SampleCrossUi.Shared.ViewModels;assembly=SampleCrossUi.Shared"
+    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+    xmlns:behaviors="clr-namespace:Dreamine.UI.Wpf.Behaviors;assembly=Dreamine.UI.Wpf"
+    xmlns:loc="clr-namespace:Dreamine.UI.Wpf.Localization;assembly=Dreamine.UI.Wpf"
     Title="Dreamine UI Kit — Sample"
-    Width="900" Height="740"
+    Width="900" Height="920"
     WindowStartupLocation="CenterScreen"
-    Background="#FF1A1A2E">
+    Background="#FF1A1A2E"
+    loc:DreamineLocalization.Language="{Binding Source={StaticResource LangProxy}, Path=CurrentLanguage}">
 
     <Window.Resources>
         <DataTemplate DataType="{x:Type shared:CounterViewModel}">
@@ -24,13 +28,20 @@
     </Window.Resources>
 
     <Grid>
+        <!-- Lets the user drag the window by clicking empty (non-control) background area. -->
+        <i:Interaction.Behaviors>
+            <behaviors:WindowDragBehavior />
+        </i:Interaction.Behaviors>
+
         <Grid.RowDefinitions>
             <RowDefinition Height="64" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
         <!-- Navigation bar -->
         <nav:DreamineNavigationBar
+            x:Name="MainNavBar"
             Grid.Row="0"
             Margin="5"
             ButtonDatas="{Binding NavButtons}"
@@ -39,9 +50,23 @@
             FontSize="14"
             FontWeight="SemiBold" />
 
+        <!-- DreamineLocalization demo + DreamineNavigationBar 고급 기능(AutoLogoutTimeout/OnceLogin) 데모 -->
+        <DockPanel Grid.Row="1" LastChildFill="False" Margin="10,0,10,6">
+            <TextBlock DockPanel.Dock="Left" Foreground="#FF8899AA" VerticalAlignment="Center"
+                loc:DreamineLocalization.LocalizationSection="Main"
+                loc:DreamineLocalization.LocalizationKey="Greeting" />
+            <Button DockPanel.Dock="Right" Content="한국어 / English" Padding="8,2" Margin="4,0,0,0"
+                Click="OnToggleLanguageClick" />
+            <CheckBox DockPanel.Dock="Right" Content="OnceLogin" Foreground="#FF8899AA"
+                VerticalAlignment="Center" Margin="8,0,0,0"
+                IsChecked="{Binding ElementName=MainNavBar, Path=OnceLogin}" />
+            <Button DockPanel.Dock="Right" Content="자동 로그아웃 테스트 (8초)" Padding="8,2" Margin="4,0,0,0"
+                Click="OnStartAutoLogoutTestClick" />
+        </DockPanel>
+
         <!-- Page content -->
         <ContentControl
-            Grid.Row="1"
+            Grid.Row="2"
             Content="{Binding CurrentView}" />
     </Grid>
 </Window>

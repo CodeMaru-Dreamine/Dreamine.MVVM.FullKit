@@ -1,0 +1,56 @@
+@page "/popup"
+@rendermode InteractiveServer
+
+<h3>Popup Demo</h3>
+
+<button class="btn" style="background-color:#0d1b3e;color:white;" @onclick='() => Show("MessageBox Demo", "버튼으로 트리거된 MessageBox 데모입니다.", true)'>Show MessageBox</button>
+<button class="btn ms-2" style="background-color:#0d1b3e;color:white;" @onclick='() => Show("완료", "작업이 성공적으로 완료되었습니다.", false)'>Show Info Dialog</button>
+<button class="btn ms-2" style="background-color:#0d1b3e;color:white;" @onclick='() => Show("경고", "주의가 필요한 작업입니다.\n계속 진행할까요?", true)'>Show Warning</button>
+<button class="btn ms-2" style="background-color:#0d1b3e;color:white;" @onclick='() => Show("오류", "오류가 발생했습니다.\n운영자에게 문의하세요.", false)'>Show Error</button>
+
+<p class="mt-3 fst-italic">@LastResult</p>
+
+@if (_isOpen)
+{
+    <div class="modal d-block" style="background-color:rgba(0,0,0,0.5);" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@_title</h5>
+                </div>
+                <div class="modal-body">
+                    <p>@_message</p>
+                </div>
+                <div class="modal-footer">
+                    @if (_showCancel)
+                    {
+                        <button class="btn btn-secondary" @onclick="() => Close(false)">취소</button>
+                    }
+                    <button class="btn btn-primary" @onclick="() => Close(true)">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _isOpen;
+    private bool _showCancel;
+    private string _title = string.Empty;
+    private string _message = string.Empty;
+    private string LastResult = "Last result: —";
+
+    private void Show(string title, string message, bool showCancel)
+    {
+        _title = title;
+        _message = message;
+        _showCancel = showCancel;
+        _isOpen = true;
+    }
+
+    private void Close(bool confirmed)
+    {
+        _isOpen = false;
+        LastResult = $"Last result: {_title} → {(confirmed ? "OK" : "Cancel")}";
+    }
+}

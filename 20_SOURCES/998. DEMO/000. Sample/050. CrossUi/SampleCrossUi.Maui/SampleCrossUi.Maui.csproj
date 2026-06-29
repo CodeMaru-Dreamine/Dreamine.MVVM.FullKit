@@ -32,6 +32,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SampleCrossUi.Shared\SampleCrossUi.Shared.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\UI.Maui\Dreamine.UI.Maui.csproj" />
   </ItemGroup>
 
 </Project>

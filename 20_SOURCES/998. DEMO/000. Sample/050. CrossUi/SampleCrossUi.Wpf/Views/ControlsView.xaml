@@ -4,10 +4,111 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ctrl="clr-namespace:Dreamine.UI.Wpf.Controls;assembly=Dreamine.UI.Wpf.Controls"
     xmlns:vk="clr-namespace:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard;assembly=Dreamine.UI.Wpf.Equipment"
+    xmlns:conv="clr-namespace:Dreamine.UI.Wpf.Converters;assembly=Dreamine.UI.Wpf"
+    xmlns:behaviors="clr-namespace:Dreamine.UI.Wpf.Behaviors;assembly=Dreamine.UI.Wpf"
+    xmlns:mvvmBehaviors="clr-namespace:Dreamine.MVVM.Behaviors.MVVM;assembly=Dreamine.MVVM.Behaviors"
+    xmlns:local="clr-namespace:SampleCrossUi.Shared.ViewModels;assembly=SampleCrossUi.Shared"
     Background="#FF1A1A2E"
     Foreground="White">
 
     <UserControl.Resources>
+        <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <conv:BooleanToBrushConverter x:Key="LedStatusBrushConverter" OnBrush="#FF4CAF50" OffBrush="#FF8899AA" />
+        <conv:BoolToFontWeightConverter x:Key="BoolToFontWeightConverter" />
+        <conv:ComparisonConverter x:Key="ComparisonConverter" />
+        <conv:BooleanNegationConverter x:Key="BooleanNegationConverter" />
+
+        <!-- ════ Converters 탭에서만 쓰는 57개 컨버터 리소스 ════ -->
+        <!-- Boolean → other -->
+        <conv:BooleanConverter x:Key="BooleanConverter" />
+        <conv:BooleanToColorConverter x:Key="BooleanToColorConverter" />
+        <conv:BooleanToIconConverter x:Key="BooleanToIconConverter" />
+        <conv:BoolToFontStyleConverter x:Key="BoolToFontStyleConverter" />
+        <conv:BoolToScrollBarVisibilityConverter x:Key="BoolToScrollBarVisibilityConverter" />
+        <conv:BoolToIntDynamicConverter x:Key="BoolToIntDynamicConverter" />
+        <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <conv:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisibilityConverter" />
+        <conv:NullableToBoolConverter x:Key="NullableToBoolConverter" />
+        <conv:BrushOrUnsetConverter x:Key="BrushOrUnsetConverter" />
+
+        <!-- Boolean multi-value -->
+        <conv:AndConverter x:Key="AndConverter" />
+        <conv:OrBooleanMultiConverter x:Key="OrBooleanMultiConverter" />
+        <conv:BothTrueMultiConverter x:Key="BothTrueMultiConverter" />
+        <conv:BothFalseMultiConverter x:Key="BothFalseMultiConverter" />
+        <conv:MultiBoolOrToVisibilityConverter x:Key="MultiBoolOrToVisibilityConverter" />
+
+        <!-- Numeric -->
+        <conv:AddOffsetConverter x:Key="AddOffsetConverter" />
+        <conv:DoubleEqualsConverter x:Key="DoubleEqualsConverter" Format="0.00" />
+        <conv:DoubleEqualsBoolConverter x:Key="DoubleEqualsBoolConverter" />
+        <conv:DoubleToStringConverter x:Key="DoubleToStringConverter" />
+        <conv:DoubleToIsCheckedConverter x:Key="DoubleToIsCheckedConverter" />
+        <conv:Int64ToInt32Converter x:Key="Int64ToInt32Converter" />
+        <conv:IntEqualsToBoolConverter x:Key="IntEqualsToBoolConverter" />
+        <conv:StringToDoubleConverter x:Key="StringToDoubleConverter" Format="0.0" />
+        <conv:NumberClampConverter x:Key="NumberClampConverter" />
+        <conv:NumberComparisonConverter x:Key="NumberComparisonConverter" />
+        <conv:MathConverter x:Key="MathConverter" />
+        <conv:ScreenBreakpointConverter x:Key="ScreenBreakpointConverter" />
+        <conv:SelectedItemsCountRangeConverter x:Key="SelectedItemsCountRangeConverter" />
+
+        <!-- Enum -->
+        <conv:EnumDescriptionConverter x:Key="EnumDescriptionConverter" />
+        <conv:EnumEqualsConverter x:Key="EnumEqualsConverter" />
+        <conv:EnumToBooleanConverter x:Key="EnumToBooleanConverter" />
+        <conv:EnumToStringConverter x:Key="EnumToStringConverter" IsUpper="True" />
+        <conv:EnumToVisibilityConverter x:Key="EnumToVisibilityConverter" />
+        <conv:FormatToExampleConverter x:Key="FormatToExampleConverter" />
+
+        <!-- String -->
+        <conv:UppercaseConverter x:Key="UppercaseConverter" />
+        <conv:BoolPickNameConverter x:Key="BoolPickNameConverter" />
+        <conv:ValueUnitCombinationConverter x:Key="ValueUnitCombinationConverter" />
+
+        <!-- Visibility -->
+        <conv:EmptyStringToVisibilityConverter x:Key="EmptyStringToVisibilityConverter" />
+        <conv:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+        <conv:ValueComparisionToVisibilityConverter x:Key="ValueComparisionToVisibilityConverter" />
+        <conv:TextShapeVisibilityConverter x:Key="TextShapeVisibilityConverter" />
+        <conv:VisibilityToIntegerConverter x:Key="VisibilityToIntegerConverter" />
+        <conv:ComparisionConverter x:Key="ComparisionConverter" />
+
+        <!-- Date/Time -->
+        <conv:DateTimeToTimeSpanConverter x:Key="DateTimeToTimeSpanConverter" />
+        <conv:TimeSpanHmEditConverter x:Key="TimeSpanHmEditConverter" />
+        <conv:LanguageToXmlLanguageConverter x:Key="LanguageToXmlLanguageConverter" />
+
+        <!-- Multi-value/composition -->
+        <conv:MultiParameterConverter x:Key="MultiParameterConverter" />
+        <conv:TupleConverter x:Key="TupleConverter" />
+        <conv:PropertyPathValueConverter x:Key="PropertyPathValueConverter" />
+        <conv:PropertyAccessorConverter x:Key="PropertyAccessorConverter" />
+
+        <!-- Internal/template-support (일반 화면용은 아니지만 동작 확인용으로 포함) -->
+        <conv:DatagridRowNoConverter x:Key="DatagridRowNoConverter" />
+        <conv:OffsetMarginConverter x:Key="OffsetMarginConverter" />
+        <conv:LedBrushConverter x:Key="LedBrushConverter" />
+        <conv:LedInnerDiameterConverter x:Key="LedInnerDiameterConverter" />
+        <conv:LedPositionConverter x:Key="LedPositionConverter" />
+
+        <!-- 외부 이미지 파일 없이 DreamineImage를 시연하기 위한 벡터 DrawingImage -->
+        <DrawingImage x:Key="DemoDrawingImage">
+            <DrawingImage.Drawing>
+                <DrawingGroup>
+                    <GeometryDrawing Brush="#FF1E90FF">
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="50,50" RadiusX="50" RadiusY="50" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                    <GeometryDrawing Brush="White">
+                        <GeometryDrawing.Geometry>
+                            <EllipseGeometry Center="50,50" RadiusX="22" RadiusY="22" />
+                        </GeometryDrawing.Geometry>
+                    </GeometryDrawing>
+                </DrawingGroup>
+            </DrawingImage.Drawing>
+        </DrawingImage>
         <Style x:Key="DemoCard" TargetType="Border">
             <Setter Property="Background" Value="#FF0F1E3A" />
             <Setter Property="BorderBrush" Value="#FF2D4A6E" />
@@ -217,6 +318,16 @@
                                         VerticalAlignment="Center" Margin="16,0,8,0" />
                                     <TextBlock Text="{Binding LedIsPulse}" Foreground="#FF4FC3F7" />
                                 </StackPanel>
+
+                                <!-- BoolToVisibilityConverter 데모: 위 ON/OFF 버튼과 같은 LedIsOn 값을 사용합니다. -->
+                                <TextBlock Text="BoolToVisibilityConverter (LedIsOn → Visibility)"
+                                    Style="{StaticResource PropLabel}" Margin="0,14,0,4" />
+                                <TextBlock Text="● LedIsOn = True 인 동안만 표시됩니다."
+                                    Foreground="#FF4CAF50"
+                                    Visibility="{Binding LedIsOn, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                <TextBlock Text="● LedIsOn = False 인 동안만 표시됩니다."
+                                    Foreground="#FFFF5252"
+                                    Visibility="{Binding LedIsOn, Converter={StaticResource BoolToVisibilityConverter}, ConverterParameter=Inverse}" />
                             </StackPanel>
                         </Border>
 
@@ -296,7 +407,7 @@
                                 <ctrl:DreamineTextBox
                                     Text="{Binding TextInput, UpdateSourceTrigger=PropertyChanged}"
                                     Hint="여기에 텍스트를 입력하세요..."
-                                    Height="40" Foreground="White" Background="#FF162040"
+                                    Height="40" Foreground="Black" Background="#FFE9EEF5"
                                     Margin="0,0,0,8" />
                                 <StackPanel Orientation="Horizontal">
                                     <ctrl:DreamineButton Content="Clear" Foreground="White"
@@ -310,12 +421,26 @@
 
                         <Border Style="{StaticResource DemoCard}">
                             <StackPanel>
+                                <TextBlock Text="FocusOnLoadedBehavior + EnterKeyCommandBehavior" Style="{StaticResource CardTitle}" />
+                                <TextBlock Text="이 탭이 열리면 아래 입력칸에 자동으로 포커스가 가고, Enter를 누르면 ClearTextCommand가 실행됩니다."
+                                    Foreground="#FF8899AA" TextWrapping="Wrap" Margin="0,0,0,8" />
+                                <ctrl:DreamineTextBox
+                                    Text="{Binding TextInput, UpdateSourceTrigger=PropertyChanged}"
+                                    Hint="포커스 자동 진입 + Enter로 Clear..."
+                                    Height="40" Foreground="Black" Background="#FFE9EEF5"
+                                    mvvmBehaviors:FocusOnLoadedBehavior.IsEnabled="True"
+                                    mvvmBehaviors:EnterKeyCommandBehavior.Command="{Binding ClearTextCommand}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
                                 <TextBlock Text="DreamineTextBox — 가상 키보드 (UseVirtualKeyBoard=True)" Style="{StaticResource CardTitle}" />
                                 <ctrl:DreamineTextBox
                                     Text="{Binding TextInput, UpdateSourceTrigger=PropertyChanged}"
                                     vk:DreamineVirtualKeyboardAssist.UseVirtualKeyBoard="True"
                                     Hint="클릭하면 가상 키보드가 열립니다..."
-                                    Height="40" Foreground="White" Background="#FF162040" />
+                                    Height="40" Foreground="Black" Background="#FFE9EEF5" />
                             </StackPanel>
                         </Border>
 
@@ -331,11 +456,27 @@
 
                         <Border Style="{StaticResource DemoCard}">
                             <StackPanel>
+                                <TextBlock Text="NumericRangeBehavior — 0~100 범위로 강제 보정(Clamp)" Style="{StaticResource CardTitle}" />
+                                <TextBox
+                                    Text="{Binding NumericInput, UpdateSourceTrigger=PropertyChanged}"
+                                    behaviors:NumericRangeBehavior.IsEnabled="True"
+                                    behaviors:NumericRangeBehavior.Min="0"
+                                    behaviors:NumericRangeBehavior.Max="100"
+                                    behaviors:NumericRangeBehavior.Mode="Clamp"
+                                    Width="120" Height="30" Padding="6,4"
+                                    HorizontalAlignment="Left" />
+                                <TextBlock Style="{StaticResource ResultText}"
+                                    Text="{Binding NumericInput, StringFormat='값: {0} (범위를 벗어나면 자동으로 0~100 사이로 보정됩니다)'}" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
                                 <TextBlock Text="DreaminePasswordBox" Style="{StaticResource CardTitle}" />
                                 <ctrl:DreaminePasswordBox
                                     Password="{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                     Hint="비밀번호를 입력하세요..."
-                                    Height="40" Foreground="White" Background="#FF162040"
+                                    Height="40" Foreground="Black" Background="#FFE9EEF5"
                                     Margin="0,0,0,8" />
                                 <StackPanel Orientation="Horizontal">
                                     <ctrl:DreamineButton Content="Clear" Foreground="White"
@@ -387,6 +528,60 @@
                 </ScrollViewer>
             </TabItem>
 
+            <!-- ═══════════ TAB 5.5: DataGrid / ListBox ═══════════ -->
+            <TabItem Header="DataGrid / ListBox">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4,8,4,8">
+                    <StackPanel MaxWidth="640">
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="DreamineDataGrid + DataGridBehaviors.EnableClickToDeselect" Style="{StaticResource CardTitle}" />
+                                <ctrl:DreamineDataGrid
+                                    ItemsSource="{Binding GridRows}"
+                                    AutoGenerateColumns="False"
+                                    behaviors:DataGridBehaviors.EnableClickToDeselect="True"
+                                    Height="150" Foreground="Black" Background="White"
+                                    IsReadOnly="True">
+                                    <ctrl:DreamineDataGrid.Columns>
+                                        <DataGridTextColumn Header="No" Binding="{Binding No}" Width="50" />
+                                        <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="150" />
+                                        <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="120" />
+                                    </ctrl:DreamineDataGrid.Columns>
+                                </ctrl:DreamineDataGrid>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="DreamineListBox.Command — 더블클릭 시 ListBoxActivatedCommand 실행" Style="{StaticResource CardTitle}" />
+                                <ctrl:DreamineListBox
+                                    ItemsSource="{Binding FruitItems}"
+                                    ctrl:DreamineListBox.Command="{Binding ListBoxActivatedCommand}"
+                                    ctrl:DreamineListBox.CommandParameter="{Binding SelectedFruit}"
+                                    ctrl:DreamineListBox.CommandTriggerName="MouseDoubleClick"
+                                    SelectedItem="{Binding SelectedFruit}"
+                                    Height="100" Foreground="Black" Background="White" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="AutoScrollListBoxBehavior — 클릭할 때마다 로그가 추가되며 자동으로 맨 아래로 스크롤" Style="{StaticResource CardTitle}" />
+                                <ctrl:DreamineButton Content="Click Me" Foreground="White"
+                                    Background="#FF1E90FF" Width="100" Height="32" Margin="0,0,0,8"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding ClickMeCommand}" />
+                                <ListBox
+                                    ItemsSource="{Binding ActivityLog}"
+                                    behaviors:AutoScrollListBoxBehavior.IsEnabled="True"
+                                    Height="120" Foreground="Black" Background="White" />
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
             <!-- ═══════════ TAB 6: Misc ═══════════ -->
             <TabItem Header="Misc">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4,8,4,8">
@@ -408,6 +603,24 @@
 
                         <Border Style="{StaticResource DemoCard}">
                             <StackPanel>
+                                <TextBlock Text="DreamineImage — CornerRadius / ClickCommand / FallbackSource" Style="{StaticResource CardTitle}" />
+                                <StackPanel Orientation="Horizontal">
+                                    <ctrl:DreamineImage
+                                        Source="{StaticResource DemoDrawingImage}"
+                                        CornerRadius="12"
+                                        Width="64" Height="64" Margin="0,0,16,0"
+                                        ClickCommand="{Binding ClickMeCommand}" />
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="이미지를 클릭하면 ClickMeCommand가 실행됩니다." Foreground="White" TextWrapping="Wrap" />
+                                        <TextBlock Style="{StaticResource ResultText}"
+                                            Text="{Binding ClickCount, StringFormat='클릭 횟수: {0}'}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
                                 <TextBlock Text="DreamineTimeSpinner — Time 바인딩 (HH:mm:ss)" Style="{StaticResource CardTitle}" />
                                 <ctrl:DreamineTimeSpinner
                                     Time="{Binding Time, Mode=TwoWay}"
@@ -419,6 +632,458 @@
                             </StackPanel>
                         </Border>
 
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="추가 Converter 데모 (Check1 / LedIsOn / SelectedFruit 기반)" Style="{StaticResource CardTitle}" />
+
+                                <!-- BooleanToBrushConverter -->
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <Border Width="16" Height="16" CornerRadius="8" Margin="0,0,8,0"
+                                        Background="{Binding LedIsOn, Converter={StaticResource LedStatusBrushConverter}}" />
+                                    <TextBlock Text="BooleanToBrushConverter — LedIsOn → 색상" Foreground="#FF8899AA" FontSize="11" VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <!-- BoolToFontWeightConverter -->
+                                <TextBlock Margin="0,0,0,6"
+                                    Text="BoolToFontWeightConverter — Check1이 켜져 있으면 굵게"
+                                    FontWeight="{Binding Check1, Converter={StaticResource BoolToFontWeightConverter}}" />
+
+                                <!-- ComparisonConverter -->
+                                <TextBlock Margin="0,0,0,6">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="#FF8899AA" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedFruit}" Value="Cherry">
+                                                    <Setter Property="Foreground" Value="#FF4FC3F7" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                    <Run Text="ComparisonConverter — SelectedFruit == &quot;Cherry&quot; 일치 여부:" />
+                                    <Run Text="{Binding SelectedFruit, Converter={StaticResource ComparisonConverter}, ConverterParameter=Cherry}" />
+                                </TextBlock>
+
+                                <!-- BooleanNegationConverter -->
+                                <StackPanel Orientation="Horizontal">
+                                    <ctrl:DreamineButton Content="Check1이 꺼져 있을 때만 활성화" Foreground="White"
+                                        Background="#FF2D4A6E" Width="220" Height="30"
+                                        IsEnabled="{Binding Check1, Converter={StaticResource BooleanNegationConverter}}"
+                                        Command="{Binding ClickMeCommand}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ═══════════ TAB 7: Converters (Dreamine.UI.Wpf.Converters 57개 전부) ═══════════ -->
+            <TabItem Header="Converters">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="4,8,4,8">
+                    <StackPanel MaxWidth="640">
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="Boolean → 다른 타입" Style="{StaticResource CardTitle}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="BooleanConverter (&quot;1&quot;/&quot;0&quot; → bool):" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding DemoFlagString, Converter={StaticResource BooleanConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="BooleanToColorConverter — Check1 → Color:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding Check1, Converter={StaticResource BooleanToColorConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="BooleanToIconConverter — Check1 → 아이콘명:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding Check1, Converter={StaticResource BooleanToIconConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="BoolToFontStyleConverter — Check1 → Italic:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="White" FontSize="11" Text="Italic 예시 텍스트" FontStyle="{Binding Check1, Converter={StaticResource BoolToFontStyleConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="BoolToScrollBarVisibilityConverter — Check1:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding Check1, Converter={StaticResource BoolToScrollBarVisibilityConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="BoolToIntDynamicConverter — Check1, Param=&quot;ON,OFF&quot;:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding Check1, Converter={StaticResource BoolToIntDynamicConverter}, ConverterParameter='ON,OFF'}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="InverseBooleanConverter — !Check1:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding Check1, Converter={StaticResource InverseBooleanConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="InverseBoolToVisibilityConverter — Check1:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding Check1, Converter={StaticResource InverseBoolToVisibilityConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="NullableToBoolConverter — DemoNullable == null:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding DemoNullable, Converter={StaticResource NullableToBoolConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="BrushOrUnsetConverter — Check1 → Brush(Unset 지원):" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <Border Width="14" Height="14" Background="{Binding Check1, Converter={StaticResource BrushOrUnsetConverter}}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="Boolean Multi-Value (IMultiValueConverter)" Style="{StaticResource CardTitle}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="AndConverter — Check1 &amp;&amp; Check2:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource AndConverter}" StringFormat="{}{0}">
+                                                <Binding Path="Check1" />
+                                                <Binding Path="Check2" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="OrBooleanMultiConverter — Check1 || Check2:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource OrBooleanMultiConverter}" StringFormat="{}{0}">
+                                                <Binding Path="Check1" />
+                                                <Binding Path="Check2" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="BothTrueMultiConverter — Check1 &amp; Check2 모두 True:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource BothTrueMultiConverter}" StringFormat="{}{0}">
+                                                <Binding Path="Check1" />
+                                                <Binding Path="Check2" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="BothFalseMultiConverter — Check1 &amp; Check2 모두 False:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource BothFalseMultiConverter}" StringFormat="{}{0}">
+                                                <Binding Path="Check1" />
+                                                <Binding Path="Check2" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="MultiBoolOrToVisibilityConverter (3개 중 1개):" Foreground="#FF8899AA" FontSize="10" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource MultiBoolOrToVisibilityConverter}" StringFormat="{}{0}">
+                                                <Binding Path="Check1" />
+                                                <Binding Path="Check2" />
+                                                <Binding Path="Check3" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="숫자(Numeric) 관련" Style="{StaticResource CardTitle}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="AddOffsetConverter — NumericInput, Param=10:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding NumericInput, Converter={StaticResource AddOffsetConverter}, ConverterParameter=10}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="DoubleEqualsConverter — NumericInput, Format=0.00:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding NumericInput, Converter={StaticResource DoubleEqualsConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="DoubleEqualsBoolConverter — NumericInput == 50:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding NumericInput, Converter={StaticResource DoubleEqualsBoolConverter}, ConverterParameter=50}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="DoubleToStringConverter — NumericInput:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding NumericInput, Converter={StaticResource DoubleToStringConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="DoubleToIsCheckedConverter — NumericInput == 50:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding NumericInput, Converter={StaticResource DoubleToIsCheckedConverter}, ConverterParameter=50}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="Int64ToInt32Converter — ClickCount:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding ClickCount, Converter={StaticResource Int64ToInt32Converter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="IntEqualsToBoolConverter — ClickCount == 0:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding ClickCount, Converter={StaticResource IntEqualsToBoolConverter}, ConverterParameter=0}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="StringToDoubleConverter — TextInput → double:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding TextInput, Converter={StaticResource StringToDoubleConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="NumberClampConverter — NumericInput, Param=&quot;0;80&quot;:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding NumericInput, Converter={StaticResource NumberClampConverter}, ConverterParameter='0;80'}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="NumberComparisonConverter — '&gt; 10 &amp;&amp; &lt; 90':" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding NumericInput, Converter={StaticResource NumberComparisonConverter}, ConverterParameter='&gt; 10 &amp;&amp; &lt; 90'}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="MathConverter — ClickCount, Param=&quot;*2&quot;:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding ClickCount, Converter={StaticResource MathConverter}, ConverterParameter='*2'}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="ScreenBreakpointConverter — NumericInput &gt;= 50:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding NumericInput, Converter={StaticResource ScreenBreakpointConverter}, ConverterParameter=50}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="SelectedItemsCountRangeConverter — GridRows, &quot;1-10&quot;:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding GridRows, Converter={StaticResource SelectedItemsCountRangeConverter}, ConverterParameter='1-10'}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="Enum 관련 (DemoEnum = Running)" Style="{StaticResource CardTitle}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="EnumDescriptionConverter — [Description]:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding DemoEnum, Converter={StaticResource EnumDescriptionConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="EnumEqualsConverter — DemoEnum == Running:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding DemoEnum, Converter={StaticResource EnumEqualsConverter}, ConverterParameter={x:Static local:DemoStatus.Running}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="EnumToBooleanConverter — DemoEnum == &quot;Running&quot;:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding DemoEnum, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Running}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="EnumToStringConverter — IsUpper=True:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding DemoEnum, Converter={StaticResource EnumToStringConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="EnumToVisibilityConverter — Param=&quot;Running,Error&quot;:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding DemoEnum, Converter={StaticResource EnumToVisibilityConverter}, ConverterParameter='Running,Error'}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="FormatToExampleConverter — InputFormat.ASCII:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding Source={x:Static conv:InputFormat.ASCII}, Converter={StaticResource FormatToExampleConverter}}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="문자열(String) 관련" Style="{StaticResource CardTitle}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="UppercaseConverter — SelectedFruit:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding SelectedFruit, Converter={StaticResource UppercaseConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="BoolPickNameConverter (MultiBinding) — LedIsOn:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource BoolPickNameConverter}">
+                                                <Binding Path="LedIsOn" />
+                                                <Binding Path="DemoWireName" />
+                                                <Binding Path="DemoEmName" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="ValueUnitCombinationConverter (MultiBinding):" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource ValueUnitCombinationConverter}">
+                                                <Binding Path="NumericInput" />
+                                                <Binding Source="%" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="Visibility 관련" Style="{StaticResource CardTitle}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="EmptyStringToVisibilityConverter — TextInput:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding TextInput, Converter={StaticResource EmptyStringToVisibilityConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="NullToVisibilityConverter — DemoNullable:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding DemoNullable, Converter={StaticResource NullToVisibilityConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="ValueComparisionToVisibilityConverter — NumericInput &gt; 50:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding NumericInput, Converter={StaticResource ValueComparisionToVisibilityConverter}, ConverterParameter=50}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="TextShapeVisibilityConverter — SelectedFruit == &quot;Text&quot;:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding SelectedFruit, Converter={StaticResource TextShapeVisibilityConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="VisibilityToIntegerConverter — BoolToVisibilityConverter(Check1):" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding Check1, Converter={StaticResource BoolToVisibilityConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="ComparisionConverter — SelectedFruit == &quot;Cherry&quot;:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding SelectedFruit, Converter={StaticResource ComparisionConverter}, ConverterParameter=Cherry}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="날짜/시간 관련" Style="{StaticResource CardTitle}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="DateTimeToTimeSpanConverter — DemoDateTime:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding DemoDateTime, Converter={StaticResource DateTimeToTimeSpanConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="TimeSpanHmEditConverter — Time → &quot;H:MM&quot;:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding Time, Converter={StaticResource TimeSpanHmEditConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="LanguageToXmlLanguageConverter — 현재 언어:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11"
+                                        Text="{Binding Source={StaticResource LangProxy}, Path=CurrentLanguage, Converter={StaticResource LanguageToXmlLanguageConverter}}" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="Multi-value / 합성(Composition)" Style="{StaticResource CardTitle}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="MultiParameterConverter — (SelectedFruit, ClickCount):" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource MultiParameterConverter}" StringFormat="{}{0}">
+                                                <Binding Path="SelectedFruit" />
+                                                <Binding Path="ClickCount" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="TupleConverter — (SelectedFruit, NumericInput):" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource TupleConverter}" StringFormat="{}{0}">
+                                                <Binding Path="SelectedFruit" />
+                                                <Binding Path="NumericInput" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="PropertyPathValueConverter — (this, &quot;ClickCount&quot;):" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource PropertyPathValueConverter}" StringFormat="{}{0}">
+                                                <Binding Path="." />
+                                                <Binding Source="ClickCount" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="PropertyAccessorConverter — (this, &quot;StatusMessage&quot;):" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11">
+                                        <TextBlock.Text>
+                                            <MultiBinding Converter="{StaticResource PropertyAccessorConverter}">
+                                                <Binding Path="." />
+                                                <Binding Source="StatusMessage" />
+                                            </MultiBinding>
+                                        </TextBlock.Text>
+                                    </TextBlock>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource DemoCard}">
+                            <StackPanel>
+                                <TextBlock Text="내부/특수 용도 (DataGrid 행 템플릿, CheckLed 템플릿 전용 등)" Style="{StaticResource CardTitle}" />
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="DatagridRowNoConverter — index 2 → 행번호:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <TextBlock Foreground="#FF4FC3F7" FontSize="11" Text="{Binding ClickCount, Converter={StaticResource DatagridRowNoConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                                    <TextBlock Text="OffsetMarginConverter — NumericInput → Margin:" Foreground="#FF8899AA" FontSize="11" Width="300" />
+                                    <Border Margin="{Binding NumericInput, Converter={StaticResource OffsetMarginConverter}}"
+                                        Width="10" Height="10" Background="#FF4FC3F7" />
+                                </StackPanel>
+
+                                <TextBlock Text="↓ DreamineCheckLed 내부 템플릿 전용(LedBrushConverter/LedInnerDiameterConverter/LedPositionConverter) — 일반 화면 바인딩 대상이 아니라 직접 사용하는 예시는 없습니다. CheckLed 탭의 LED 표시 자체가 이 3개를 내부적으로 쓰고 있는 실제 사용처입니다."
+                                    Foreground="#FF8899AA" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0" />
+
+                                <TextBlock Text="↓ SelfTextConverterExtension(MarkupExtension)·IconToImageSourceConverter(System.Drawing.Icon 필요) — 외부 리소스/특수 호출 규약이 필요해 라이브 데모는 생략합니다."
+                                    Foreground="#FF8899AA" FontSize="10" TextWrapping="Wrap" Margin="0,4,0,0" />
+                            </StackPanel>
+                        </Border>
+
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
@@ -427,9 +1092,14 @@
 
         <!-- ════ Status Bar ════ -->
         <Border Grid.Row="1" Background="#FF0A1525" BorderBrush="#FF2D4A6E" BorderThickness="0,1,0,0">
-            <TextBlock Text="{Binding StatusMessage}"
-                Foreground="#FF4FC3F7" FontSize="11"
-                VerticalAlignment="Center" Margin="16,0,0,0" />
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding StatusMessage}"
+                    Foreground="#FF4FC3F7" FontSize="11"
+                    VerticalAlignment="Center" Margin="16,0,0,0" />
+                <TextBlock Text="{Binding ActivationLog, StringFormat='  |  ViewSwitcher: {0}'}"
+                    Foreground="#FF8899AA" FontSize="11"
+                    VerticalAlignment="Center" Margin="8,0,0,0" />
+            </StackPanel>
         </Border>
 
     </Grid>

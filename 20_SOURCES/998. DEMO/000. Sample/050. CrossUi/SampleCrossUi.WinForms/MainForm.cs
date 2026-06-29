@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Linq;
 using Dreamine.UI.WinForms;
 using Dreamine.UI.WinForms.Controls;
 using SampleCrossUi.Shared.ViewModels;
@@ -12,8 +13,6 @@ public sealed class MainForm : Form
     private Panel _pageHost = null!;
     private Panel _navPanel = null!;
     private FlowLayoutPanel _navFlow = null!;
-    private Label _appTitle = null!;
-    private Panel _navDivider = null!;
     private DreamineButton _btnCounter = null!;
     private DreamineButton _btnControls = null!;
     private DreamineButton _btnPopup = null!;
@@ -26,11 +25,14 @@ public sealed class MainForm : Form
     private PopupPage _popupPage = null!;
 
     /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>
-    public MainForm() : this(new CounterViewModel(new SampleCrossUi.Shared.Services.CounterService())) { }
+    public MainForm() : this(new CounterViewModel(new CounterEvent(new SampleCrossUi.Shared.Services.CounterService()))) { }
 
     public MainForm(CounterViewModel counterVm)
     {
         InitializeComponent();
+
+        Resize += (_, _) => CenterNavFlow();
+        Load += (_, _) => CenterNavFlow();
 
         _navButtons = [_btnCounter, _btnControls, _btnPopup];
         for (int i = 0; i < _navButtons.Length; i++)
@@ -43,7 +45,7 @@ public sealed class MainForm : Form
             return;
 
         _counterPage  = new CounterPage(counterVm);
-        _controlsPage = new ControlsPage(new ControlsViewModel());
+        _controlsPage = new ControlsPage(new ControlsViewModel(new ControlsEvent()));
         _popupPage    = new PopupPage();
 
         Navigate(0);
@@ -75,8 +77,6 @@ public sealed class MainForm : Form
 
     private void InitializeComponent()
     {
-        _appTitle    = new Label();
-        _navDivider  = new Panel();
         _btnCounter  = new DreamineButton();
         _btnControls = new DreamineButton();
         _btnPopup    = new DreamineButton();
@@ -86,61 +86,46 @@ public sealed class MainForm : Form
 
         SuspendLayout();
 
-        // _appTitle
-        _appTitle.Text      = "Dreamine\nCross-UI";
-        _appTitle.ForeColor = Color.White;
-        _appTitle.Font      = new Font("Segoe UI", 13f, FontStyle.Bold, GraphicsUnit.Point);
-        _appTitle.Dock      = DockStyle.Top;
-        _appTitle.Height    = 64;
-        _appTitle.TextAlign = ContentAlignment.MiddleCenter;
-        _appTitle.Padding   = new Padding(8, 8, 8, 0);
-
-        // _navDivider
-        _navDivider.Dock      = DockStyle.Top;
-        _navDivider.Height    = 1;
-        _navDivider.BackColor = DreamineTheme.BorderNormal;
-
-        // _btnCounter
+        // _btnCounter — WPF DreamineNavigationBar 버튼과 동일한 크기/배치(가로 나열)
         _btnCounter.Content      = "Counter";
-        _btnCounter.Width        = 172;
-        _btnCounter.Height       = 44;
+        _btnCounter.Width        = 140;
+        _btnCounter.Height       = 40;
         _btnCounter.CornerRadius = 6;
-        _btnCounter.Margin       = new Padding(4, 2, 4, 2);
+        _btnCounter.Margin       = new Padding(4);
         _btnCounter.Name         = "_btnCounter";
 
         // _btnControls
         _btnControls.Content      = "Controls";
-        _btnControls.Width        = 172;
-        _btnControls.Height       = 44;
+        _btnControls.Width        = 140;
+        _btnControls.Height       = 40;
         _btnControls.CornerRadius = 6;
-        _btnControls.Margin       = new Padding(4, 2, 4, 2);
+        _btnControls.Margin       = new Padding(4);
         _btnControls.Name         = "_btnControls";
 
         // _btnPopup
         _btnPopup.Content      = "Popup";
-        _btnPopup.Width        = 172;
-        _btnPopup.Height       = 44;
+        _btnPopup.Width        = 140;
+        _btnPopup.Height       = 40;
         _btnPopup.CornerRadius = 6;
-        _btnPopup.Margin       = new Padding(4, 2, 4, 2);
+        _btnPopup.Margin       = new Padding(4);
         _btnPopup.Name         = "_btnPopup";
 
-        // _navFlow
+        // _navFlow — WPF처럼 가로로 나열되는 네비게이션 버튼들
         _navFlow.Dock            = DockStyle.Fill;
-        _navFlow.FlowDirection   = FlowDirection.TopDown;
+        _navFlow.FlowDirection   = FlowDirection.LeftToRight;
         _navFlow.WrapContents    = false;
-        _navFlow.BackColor       = DreamineTheme.CardBackground;
+        _navFlow.Anchor          = AnchorStyles.None;
+        _navFlow.AutoSize        = true;
         _navFlow.Controls.Add(_btnCounter);
         _navFlow.Controls.Add(_btnControls);
         _navFlow.Controls.Add(_btnPopup);
 
-        // _navPanel
-        _navPanel.Dock      = DockStyle.Left;
-        _navPanel.Width     = 180;
-        _navPanel.BackColor = DreamineTheme.CardBackground;
-        _navPanel.Padding   = new Padding(0, 8, 0, 8);
+        // _navPanel — 상단 가로 네비게이션 바(WPF MainWindow의 DreamineNavigationBar 행과 동일한 위치)
+        _navPanel.Dock      = DockStyle.Top;
+        _navPanel.Height    = 64;
+        _navPanel.BackColor = DreamineTheme.NavBackground;
+        _navPanel.Padding   = new Padding(5);
         _navPanel.Controls.Add(_navFlow);
-        _navPanel.Controls.Add(_navDivider);
-        _navPanel.Controls.Add(_appTitle);
 
         // _pageHost
         _pageHost.Dock      = DockStyle.Fill;
@@ -148,8 +133,8 @@ public sealed class MainForm : Form
 
         // MainForm
         Text             = "Dreamine Cross-UI — WinForms";
-        ClientSize       = new Size(900, 660);
-        MinimumSize      = new Size(900, 600);
+        ClientSize       = new Size(1100, 860);
+        MinimumSize      = new Size(960, 700);
         StartPosition    = FormStartPosition.CenterScreen;
         BackColor        = DreamineTheme.AppBackground;
         Name             = "MainForm";
@@ -157,6 +142,15 @@ public sealed class MainForm : Form
         Controls.Add(_navPanel);
 
         ResumeLayout(false);
+    }
+
+    /// <summary>네비게이션 바 버튼들을 가운데로 정렬한다(WPF DreamineNavigationBar는 자체적으로 처리하지만,
+    /// WinForms FlowLayoutPanel은 가운데 정렬을 직접 지원하지 않아 패딩으로 흉내낸다).</summary>
+    private void CenterNavFlow()
+    {
+        var totalWidth = _navFlow.Controls.Cast<Control>().Sum(c => c.Width + c.Margin.Horizontal);
+        var offset = Math.Max(0, (_navPanel.Width - totalWidth) / 2);
+        _navFlow.Padding = new Padding(offset, 0, 0, 0);
     }
 
     protected override void Dispose(bool disposing)

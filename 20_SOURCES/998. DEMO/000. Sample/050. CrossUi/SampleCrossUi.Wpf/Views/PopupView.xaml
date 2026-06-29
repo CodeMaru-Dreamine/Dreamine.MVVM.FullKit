@@ -33,6 +33,12 @@
             Content="BlinkPopup — 설비 ALARM (점멸)"
             Command="{Binding ShowBlinkAlarmCommand}"
             Foreground="White"
+            Height="42" Margin="0,0,0,8" />
+
+        <ctrl:DreamineButton
+            Content="이 화면을 별도 창으로 열기 (ViewLoader + PopupWindowManager)"
+            Command="{Binding OpenAsWindowCommand}"
+            Foreground="White"
             Height="42" Margin="0,0,0,16" />
 
         <Border

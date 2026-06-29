@@ -19,6 +19,11 @@
     <ProjectReference Include="..\..\..\..\100. Library\UI.Wpf.Controls\Dreamine.UI.Wpf.Controls.csproj" />
     <ProjectReference Include="..\..\..\..\100. Library\UI.Wpf.Equipment\Dreamine.UI.Wpf.Equipment.csproj" />
     <ProjectReference Include="..\..\..\..\100. Library\UI.Wpf.Themes\Dreamine.UI.Wpf.Themes.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Attributes\Dreamine.MVVM.Attributes.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\..\..\..\100. Library\Behaviors.Core\Dreamine.MVVM.Behaviors.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Behaviors\Dreamine.MVVM.Behaviors.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Behaviors.Wpf\Dreamine.MVVM.Behaviors.Wpf.csproj" />
   </ItemGroup>
 
 </Project>

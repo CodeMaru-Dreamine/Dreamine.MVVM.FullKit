@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="SampleCrossUi.Maui.Views.PopupPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16">
+
+            <Label Text="Popup Demo" FontSize="20" FontAttributes="Bold" />
+
+            <Button Text="DreamineMessageBox (5s auto-close)" Clicked="OnShowMessageBoxClicked"
+                    BackgroundColor="#0d1b3e" TextColor="White" />
+            <Button Text="BlinkPopup — 완료 알림" Clicked="OnShowBlinkOkClicked"
+                    BackgroundColor="#0d1b3e" TextColor="White" />
+            <Button Text="BlinkPopup — 설비 ALARM (점멸)" Clicked="OnShowBlinkAlarmClicked"
+                    BackgroundColor="#0d1b3e" TextColor="White" />
+
+            <Label x:Name="ResultLabel" Text="Last result: —" FontAttributes="Italic" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

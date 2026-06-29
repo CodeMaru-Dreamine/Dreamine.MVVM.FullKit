@@ -8,10 +8,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// Register shared services — same ICounterService and CounterViewModel
-// used by the WPF and WinForms samples.
+// Register shared services/view models — same ones used by the WPF, WinForms and MAUI samples.
 builder.Services.AddScoped<ICounterService, CounterService>();
+builder.Services.AddScoped<CounterEvent>();
 builder.Services.AddScoped<CounterViewModel>();
+builder.Services.AddScoped<ControlsEvent>();
+builder.Services.AddScoped<ControlsViewModel>();
 
 var app = builder.Build();
 

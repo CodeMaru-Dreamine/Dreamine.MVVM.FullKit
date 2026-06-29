@@ -12,6 +12,7 @@ internal static class Program
         ApplicationConfiguration.Initialize();
 
         DMContainer.Register<ICounterService, CounterService>();
+        DMContainer.Register<CounterEvent>();
         DMContainer.Register<CounterViewModel>();
 
         var counterVm = DMContainer.Resolve<CounterViewModel>();

@@ -10,6 +10,8 @@
     <ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
     <ProjectReference Include="..\..\..\..\100. Library\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
     <ProjectReference Include="..\..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Attributes\Dreamine.MVVM.Attributes.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer" />
   </ItemGroup>
 
 </Project>

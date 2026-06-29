@@ -1,0 +1,77 @@
+@page "/controls"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject ControlsViewModel ViewModel
+
+<h3>Controls Demo</h3>
+
+<button class="btn btn-primary" @onclick="() => ViewModel.ClickMeCommand.Execute(null)">
+    Click Me (@ViewModel.ClickCount)
+</button>
+
+<hr />
+
+<h5>Check Boxes</h5>
+<div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" @bind="ViewModel.Check1" />
+    <label class="form-check-label">Option 1</label>
+</div>
+<div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" @bind="ViewModel.Check2" />
+    <label class="form-check-label">Option 2</label>
+</div>
+<div class="form-check form-check-inline">
+    <input class="form-check-input" type="checkbox" @bind="ViewModel.Check3" />
+    <label class="form-check-label">Option 3</label>
+</div>
+
+<h5 class="mt-3">Radio Buttons</h5>
+<div class="form-check form-check-inline">
+    <input class="form-check-input" type="radio" name="radioDemo"
+           checked='@(ViewModel.SelectedRadio == "Option A")'
+           @onchange='() => ViewModel.SelectRadioCommand.Execute("Option A")' />
+    <label class="form-check-label">Option A</label>
+</div>
+<div class="form-check form-check-inline">
+    <input class="form-check-input" type="radio" name="radioDemo"
+           checked='@(ViewModel.SelectedRadio == "Option B")'
+           @onchange='() => ViewModel.SelectRadioCommand.Execute("Option B")' />
+    <label class="form-check-label">Option B</label>
+</div>
+
+<h5 class="mt-3">LED</h5>
+<button class="btn btn-outline-light" style="border-color:#0d1b3e;color:#0d1b3e;"
+        @onclick="() => ViewModel.ToggleLedCommand.Execute(null)">Toggle LED</button>
+<button class="btn btn-outline-light ms-2" style="border-color:#0d1b3e;color:#0d1b3e;"
+        @onclick="() => ViewModel.TogglePulseCommand.Execute(null)">Toggle Pulse</button>
+<span class="ms-2">LED: @(ViewModel.LedIsOn ? "ON" : "OFF") / Pulse: @(ViewModel.LedIsPulse ? "ON" : "OFF")</span>
+
+<h5 class="mt-3">Text Input</h5>
+<input class="form-control" style="max-width:300px;" @bind="ViewModel.TextInput" @bind:event="oninput" placeholder="Type something" />
+<button class="btn btn-secondary mt-2" @onclick="() => ViewModel.ClearTextCommand.Execute(null)">Clear Text</button>
+
+<input type="password" class="form-control mt-2" style="max-width:300px;" @bind="ViewModel.Password" @bind:event="oninput" placeholder="Password" />
+<button class="btn btn-secondary mt-2" @onclick="() => ViewModel.ClearPasswordCommand.Execute(null)">Clear Password</button>
+
+<h5 class="mt-3">Fruit Picker</h5>
+<select class="form-select" style="max-width:200px;" @bind="ViewModel.SelectedFruit">
+    @foreach (var fruit in ViewModel.FruitItems)
+    {
+        <option value="@fruit">@fruit</option>
+    }
+</select>
+
+<p class="mt-3 fst-italic">Status: @ViewModel.StatusMessage</p>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ViewModel.PropertyChanged += OnPropertyChanged;
+    }
+
+    private void OnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+        => ViewModel.PropertyChanged -= OnPropertyChanged;
+}

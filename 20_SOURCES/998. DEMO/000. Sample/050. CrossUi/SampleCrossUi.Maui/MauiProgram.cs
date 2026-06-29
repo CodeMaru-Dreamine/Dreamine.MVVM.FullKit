@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using SampleCrossUi.Maui.Views;
 using SampleCrossUi.Shared.Services;
 using SampleCrossUi.Shared.ViewModels;
 
@@ -17,9 +18,16 @@ public static class MauiProgram
                 fonts.AddFont("OpenSans-Semibold.ttf", "OpenSansSemibold");
             });
 
-        // Register the same shared services used by WPF / WinForms / Blazor
+        // Register the same shared services/view models used by WPF / WinForms / Blazor
         builder.Services.AddSingleton<ICounterService, CounterService>();
+        builder.Services.AddSingleton<CounterEvent>();
         builder.Services.AddSingleton<CounterViewModel>();
+        builder.Services.AddSingleton<ControlsEvent>();
+        builder.Services.AddSingleton<ControlsViewModel>();
+
+        builder.Services.AddSingleton<CounterPage>();
+        builder.Services.AddSingleton<ControlsPage>();
+        builder.Services.AddSingleton<PopupPage>();
         builder.Services.AddSingleton<MainPage>();
 
 
