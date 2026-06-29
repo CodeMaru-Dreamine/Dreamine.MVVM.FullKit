@@ -1,3 +1,4 @@
+using Dreamine.UI.Blazor;
 using SampleCrossUi.Blazor;
 using SampleCrossUi.Blazor.Components;
 using SampleCrossUi.Shared.Services;
@@ -14,6 +15,7 @@ builder.Services.AddScoped<CounterEvent>();
 builder.Services.AddScoped<CounterViewModel>();
 builder.Services.AddScoped<ControlsEvent>();
 builder.Services.AddScoped<ControlsViewModel>();
+builder.Services.AddScoped<DreamineDialogService>();
 
 var app = builder.Build();
 

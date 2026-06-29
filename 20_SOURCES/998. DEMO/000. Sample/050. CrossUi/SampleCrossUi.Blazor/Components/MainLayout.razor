@@ -1,6 +1,6 @@
 @inherits LayoutComponentBase
 
-<nav class="navbar navbar-dark" style="background-color:#0d1b3e;">
+<nav class="navbar navbar-dark" style="background-color:#0d1b3e; position:sticky; top:0; z-index:1030;">
     <div class="container">
         <NavLink class="btn btn-link text-white" href="/" Match="NavLinkMatch.All">Counter</NavLink>
         <NavLink class="btn btn-link text-white" href="/controls">Controls</NavLink>
@@ -11,3 +11,8 @@
 <div class="container mt-4">
     @Body
 </div>
+
+@* MainLayout 자체는 인터랙티브가 아니라서(@rendermode 미지정), 이 호스트도 그냥 두면
+   정적 SSR로만 렌더링되어 버튼 클릭/상태 갱신이 전혀 동작하지 않는다. 컴포넌트 단위로
+   InteractiveServer를 강제해서, 페이지 쪽 렌더 모드와 무관하게 항상 살아있게 한다. *@
+<DreamineDialogHost @rendermode="InteractiveServer" />

@@ -2,68 +2,199 @@
 @rendermode InteractiveServer
 @implements IDisposable
 @inject ControlsViewModel ViewModel
+@inject IJSRuntime JS
 
 <h3>Controls Demo</h3>
 
-<button class="btn btn-primary" @onclick="() => ViewModel.ClickMeCommand.Execute(null)">
-    Click Me (@ViewModel.ClickCount)
-</button>
-
-<hr />
-
-<h5>Check Boxes</h5>
-<div class="form-check form-check-inline">
-    <input class="form-check-input" type="checkbox" @bind="ViewModel.Check1" />
-    <label class="form-check-label">Option 1</label>
-</div>
-<div class="form-check form-check-inline">
-    <input class="form-check-input" type="checkbox" @bind="ViewModel.Check2" />
-    <label class="form-check-label">Option 2</label>
-</div>
-<div class="form-check form-check-inline">
-    <input class="form-check-input" type="checkbox" @bind="ViewModel.Check3" />
-    <label class="form-check-label">Option 3</label>
-</div>
-
-<h5 class="mt-3">Radio Buttons</h5>
-<div class="form-check form-check-inline">
-    <input class="form-check-input" type="radio" name="radioDemo"
-           checked='@(ViewModel.SelectedRadio == "Option A")'
-           @onchange='() => ViewModel.SelectRadioCommand.Execute("Option A")' />
-    <label class="form-check-label">Option A</label>
-</div>
-<div class="form-check form-check-inline">
-    <input class="form-check-input" type="radio" name="radioDemo"
-           checked='@(ViewModel.SelectedRadio == "Option B")'
-           @onchange='() => ViewModel.SelectRadioCommand.Execute("Option B")' />
-    <label class="form-check-label">Option B</label>
-</div>
-
-<h5 class="mt-3">LED</h5>
-<button class="btn btn-outline-light" style="border-color:#0d1b3e;color:#0d1b3e;"
-        @onclick="() => ViewModel.ToggleLedCommand.Execute(null)">Toggle LED</button>
-<button class="btn btn-outline-light ms-2" style="border-color:#0d1b3e;color:#0d1b3e;"
-        @onclick="() => ViewModel.TogglePulseCommand.Execute(null)">Toggle Pulse</button>
-<span class="ms-2">LED: @(ViewModel.LedIsOn ? "ON" : "OFF") / Pulse: @(ViewModel.LedIsPulse ? "ON" : "OFF")</span>
-
-<h5 class="mt-3">Text Input</h5>
-<input class="form-control" style="max-width:300px;" @bind="ViewModel.TextInput" @bind:event="oninput" placeholder="Type something" />
-<button class="btn btn-secondary mt-2" @onclick="() => ViewModel.ClearTextCommand.Execute(null)">Clear Text</button>
-
-<input type="password" class="form-control mt-2" style="max-width:300px;" @bind="ViewModel.Password" @bind:event="oninput" placeholder="Password" />
-<button class="btn btn-secondary mt-2" @onclick="() => ViewModel.ClearPasswordCommand.Execute(null)">Clear Password</button>
-
-<h5 class="mt-3">Fruit Picker</h5>
-<select class="form-select" style="max-width:200px;" @bind="ViewModel.SelectedFruit">
-    @foreach (var fruit in ViewModel.FruitItems)
+<div class="dreamine-tabs mb-3">
+    @foreach (var tab in _tabs)
     {
-        <option value="@fruit">@fruit</option>
+        <button class="dreamine-tab-button @(tab == _activeTab ? "active" : "")"
+                @onclick="() => _activeTab = tab">@tab</button>
     }
-</select>
+</div>
 
-<p class="mt-3 fst-italic">Status: @ViewModel.StatusMessage</p>
+@if (_activeTab == "Button")
+{
+    <h5>Button</h5>
+    <button class="btn btn-primary" @onclick="() => ViewModel.ClickMeCommand.Execute(null)">
+        Click Me (@ViewModel.ClickCount)
+    </button>
+
+    <h6 class="mt-3">Color Variants</h6>
+    <button class="btn btn-primary" @onclick='() => SetButtonStatus("Primary")'>Primary</button>
+    <button class="btn btn-success ms-2" @onclick='() => SetButtonStatus("Success")'>Success</button>
+    <button class="btn btn-warning ms-2" @onclick='() => SetButtonStatus("Warning")'>Warning</button>
+    <button class="btn btn-danger ms-2" @onclick='() => SetButtonStatus("Danger")'>Danger</button>
+
+    <h6 class="mt-3">Size Variants</h6>
+    <button class="btn btn-dark btn-sm" @onclick='() => SetButtonStatus("Small")'>Small</button>
+    <button class="btn btn-dark ms-2" @onclick='() => SetButtonStatus("Normal")'>Normal</button>
+    <button class="btn btn-dark btn-lg ms-2" @onclick='() => SetButtonStatus("Large")'>Large</button>
+
+    <h6 class="mt-3">Disabled</h6>
+    <button class="btn btn-dark" disabled>Disabled Button</button>
+
+    <p class="mt-3 fst-italic text-primary">@_buttonTabStatus</p>
+}
+else if (_activeTab == "CheckBox / Radio")
+{
+    <h5>Check Boxes</h5>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" @bind="ViewModel.Check1" />
+        <label class="form-check-label">Option 1</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" @bind="ViewModel.Check2" />
+        <label class="form-check-label">Option 2</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="checkbox" @bind="ViewModel.Check3" />
+        <label class="form-check-label">Option 3</label>
+    </div>
+
+    <h5 class="mt-3">Radio Buttons</h5>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="radioDemo"
+               checked='@(ViewModel.SelectedRadio == "Option A")'
+               @onchange='() => ViewModel.SelectRadioCommand.Execute("Option A")' />
+        <label class="form-check-label">Option A</label>
+    </div>
+    <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="radioDemo"
+               checked='@(ViewModel.SelectedRadio == "Option B")'
+               @onchange='() => ViewModel.SelectRadioCommand.Execute("Option B")' />
+        <label class="form-check-label">Option B</label>
+    </div>
+    <p>Selected: @ViewModel.SelectedRadio</p>
+}
+else if (_activeTab == "CheckLed")
+{
+    <h5>CheckLed</h5>
+    <button class="btn btn-outline-dark" @onclick="() => ViewModel.ToggleLedCommand.Execute(null)">Toggle LED</button>
+    <button class="btn btn-outline-dark ms-2" @onclick="() => ViewModel.TogglePulseCommand.Execute(null)">Toggle Pulse</button>
+    <DreamineCheckLed IsOn="ViewModel.LedIsOn" IsPulse="ViewModel.LedIsPulse" />
+    <span class="ms-2">LED: @ViewModel.LedIsOn / Pulse: @ViewModel.LedIsPulse</span>
+
+    <h6 class="mt-3">Corner Position 변형</h6>
+    <div class="d-flex gap-3">
+        <div class="dreamine-led-box"><DreamineCheckLed IsOn="true" Corner="DreamineCheckLedCorner.TopLeft" /></div>
+        <div class="dreamine-led-box"><DreamineCheckLed IsOn="true" Corner="DreamineCheckLedCorner.TopRight" /></div>
+        <div class="dreamine-led-box"><DreamineCheckLed IsOn="true" Corner="DreamineCheckLedCorner.BottomLeft" /></div>
+        <div class="dreamine-led-box"><DreamineCheckLed IsOn="false" Corner="DreamineCheckLedCorner.BottomRight" /></div>
+    </div>
+
+    <h6 class="mt-3">Diameter 변형</h6>
+    <div class="d-flex align-items-center gap-2">
+        <DreamineCheckLed IsOn="true" Diameter="10" />
+        <DreamineCheckLed IsOn="true" Diameter="18" />
+        <DreamineCheckLed IsOn="true" Diameter="26" />
+        <DreamineCheckLed IsOn="true" Diameter="34" />
+        <DreamineCheckLed IsOn="true" Diameter="42" />
+    </div>
+}
+else if (_activeTab == "TextBox")
+{
+    <h5>Text Input</h5>
+    <input class="form-control" style="max-width:300px;" @bind="ViewModel.TextInput" @bind:event="oninput"
+           @onfocus="() => _showKeyboard = true" placeholder="Type something (가상 키보드 데모)" />
+    <button class="btn btn-secondary mt-2" @onclick="() => ViewModel.ClearTextCommand.Execute(null)">Clear Text</button>
+
+    <input type="password" class="form-control mt-2" style="max-width:300px;" @bind="ViewModel.Password" @bind:event="oninput" placeholder="Password" />
+    <button class="btn btn-secondary mt-2" @onclick="() => ViewModel.ClearPasswordCommand.Execute(null)">Clear Password</button>
+
+    <h6 class="mt-3">Read-Only</h6>
+    <input class="form-control" style="max-width:300px;" value="수정할 수 없는 텍스트입니다." readonly />
+
+    <div class="mt-3">
+        <DreamineVirtualKeyboard IsVisible="_showKeyboard"
+                                 Value="@ViewModel.TextInput"
+                                 ValueChanged="v => ViewModel.TextInput = v"
+                                 OnEnter="() => _showKeyboard = false" />
+    </div>
+}
+else if (_activeTab == "ComboBox")
+{
+    <h5>Fruit Picker</h5>
+    <select class="form-select" style="max-width:200px;" @bind="ViewModel.SelectedFruit">
+        @foreach (var fruit in ViewModel.FruitItems)
+        {
+            <option value="@fruit">@fruit</option>
+        }
+    </select>
+
+    <h6 class="mt-3">Disabled</h6>
+    <select class="form-select" style="max-width:200px;" disabled>
+        <option>@ViewModel.FruitItems.First()</option>
+    </select>
+}
+else if (_activeTab == "DataGrid / ListBox")
+{
+    <h5>DataGrid</h5>
+    <table class="table table-bordered table-hover" style="max-width:600px;">
+        <thead style="background-color:#0D1B3E; color:white;">
+            <tr><th>No</th><th>Name</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var row in ViewModel.GridRows)
+            {
+                <tr class="@(row == _selectedGridRow ? "table-primary" : "")" @onclick="() => _selectedGridRow = row">
+                    <td>@row.No</td><td>@row.Name</td><td>@row.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p class="fst-italic text-primary">@(_selectedGridRow is null ? "(선택된 행 없음)" : $"선택된 행: No.{_selectedGridRow.No} {_selectedGridRow.Name} ({_selectedGridRow.Status})")</p>
+
+    <h6 class="mt-3">ListBox (더블클릭으로 활성화)</h6>
+    <ul class="list-group" style="max-width:300px;">
+        @foreach (var fruit in ViewModel.FruitItems)
+        {
+            <li class="list-group-item @(fruit == _selectedFruitItem ? "active" : "")"
+                @onclick="() => _selectedFruitItem = fruit"
+                @ondblclick="() => ViewModel.ListBoxActivatedCommand.Execute(fruit)">@fruit</li>
+        }
+    </ul>
+    <p class="fst-italic text-primary">활성화 결과: @ViewModel.StatusMessage</p>
+
+    <h6 class="mt-3">AutoScroll 로그</h6>
+    <button class="btn btn-secondary" @onclick="() => ViewModel.ClickMeCommand.Execute(null)">Click Me</button>
+    <div class="dreamine-log-list mt-2" @ref="_logListRef">
+        @foreach (var entry in ViewModel.ActivityLog)
+        {
+            <div>@entry</div>
+        }
+    </div>
+}
+else if (_activeTab == "Misc")
+{
+    <h5>Misc</h5>
+    <DreamineExpander Header="자세히 보기" @bind-IsExpanded="ViewModel.IsExpanded">
+        Expander 안쪽 콘텐츠입니다. WPF/WinForms/MAUI와 같은 펼치기/접기 동작을 보여줍니다.
+    </DreamineExpander>
+
+    <h6 class="mt-3">Numeric Range</h6>
+    <input type="range" class="form-range" style="max-width:300px;" min="0" max="100"
+           value="@ViewModel.NumericInput" @oninput="OnNumericInputChanged" />
+    <p>Value: @ViewModel.NumericInput.ToString("F0")</p>
+
+    <p class="mt-3 fst-italic">Status: @ViewModel.StatusMessage</p>
+}
 
 @code {
+    private static readonly string[] _tabs =
+    {
+        "Button", "CheckBox / Radio", "CheckLed", "TextBox", "ComboBox", "DataGrid / ListBox", "Misc"
+    };
+
+    private string _activeTab = "Button";
+    private string _buttonTabStatus = "(버튼을 눌러보세요)";
+    private ControlsDemoRow? _selectedGridRow;
+    private string? _selectedFruitItem;
+    private bool _showKeyboard;
+    private ElementReference _logListRef;
+    private int _lastLogCount;
+
     protected override void OnInitialized()
     {
         ViewModel.PropertyChanged += OnPropertyChanged;
@@ -71,6 +202,26 @@
 
     private void OnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
         => InvokeAsync(StateHasChanged);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // 로그 항목이 늘어났을 때만 스크롤시킨다(매 렌더마다 부르면 사용자가 위로
+        // 스크롤해서 과거 로그를 보는 중에도 자꾸 맨 아래로 끌려간다).
+        if (_activeTab == "DataGrid / ListBox" && ViewModel.ActivityLog.Count != _lastLogCount)
+        {
+            _lastLogCount = ViewModel.ActivityLog.Count;
+            await JS.InvokeVoidAsync("dreamineScrollToBottom", _logListRef);
+        }
+    }
+
+    private void SetButtonStatus(string name)
+        => _buttonTabStatus = $"[{DateTime.Now:HH:mm:ss}] '{name}' 버튼이 클릭되었습니다.";
+
+    private void OnNumericInputChanged(ChangeEventArgs e)
+    {
+        if (double.TryParse(e.Value?.ToString(), out var value))
+            ViewModel.NumericInput = value;
+    }
 
     public void Dispose()
         => ViewModel.PropertyChanged -= OnPropertyChanged;

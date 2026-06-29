@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SampleCrossUi.Shared\SampleCrossUi.Shared.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\UI.Blazor\Dreamine.UI.Blazor.csproj" />
   </ItemGroup>
 
 </Project>

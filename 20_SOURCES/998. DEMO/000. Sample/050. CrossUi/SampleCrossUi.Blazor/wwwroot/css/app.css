@@ -1,0 +1,38 @@
+.dreamine-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.dreamine-tab-button {
+    background-color: #0D1B3E;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.dreamine-tab-button.active {
+    background-color: #0d6efd;
+}
+
+.dreamine-led-box {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border: 1px solid #2D4A6E;
+    border-radius: 4px;
+}
+
+.dreamine-log-list {
+    max-width: 600px;
+    height: 120px;
+    overflow-y: auto;
+    border: 1px solid #2D4A6E;
+    border-radius: 4px;
+    padding: 8px;
+    font-family: monospace;
+    font-size: 0.85rem;
+}

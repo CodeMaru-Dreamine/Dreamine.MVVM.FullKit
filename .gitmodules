@@ -142,3 +142,6 @@
 [submodule "20_SOURCES/100. Library/UI.Maui"]
 	path = 20_SOURCES/100. Library/UI.Maui
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.UI.Maui
+[submodule "20_SOURCES/100. Library/UI.Blazor"]
+	path = 20_SOURCES/100. Library/UI.Blazor
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.UI.Blazor
