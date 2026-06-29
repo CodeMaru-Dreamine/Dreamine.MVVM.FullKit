@@ -181,6 +181,9 @@
         public string From { get; set; } = string.Empty;
         public string FromName { get; set; } = "Website";
         public string To { get; set; } = string.Empty;
+
+        /// <summary>Cc로 추가 발송할 주소(콤마/세미콜론으로 여러 개 구분).</summary>
+        public string? Cc { get; set; }
     }
 
     public sealed class ContactFormModel
@@ -240,6 +243,15 @@
 
             msg.From = new MailAddress(fromAddress, cfg.FromName);
             msg.To.Add(new MailAddress(toAddress));
+
+            if (!string.IsNullOrWhiteSpace(cfg.Cc))
+            {
+                foreach (string address in cfg.Cc.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                {
+                    msg.CC.Add(new MailAddress(address));
+                }
+            }
+
             msg.Subject = $"[Contact] {Form.Name} 님 문의";
             msg.IsBodyHtml = true;
             msg.Body =

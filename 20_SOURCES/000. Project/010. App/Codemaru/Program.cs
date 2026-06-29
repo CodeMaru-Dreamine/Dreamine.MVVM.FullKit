@@ -59,7 +59,18 @@ public static class Program
             options.ListenAnyIp = listenAnyIp;
             options.SharedServiceTypes.Add(typeof(CardHybridSession));
             options.SharedServiceTypes.Add(typeof(ICardProfileStore));
-            options.ConfigureServices = services => services.AddScoped<CardHybridCircuitSession>();
+            options.ConfigureServices = services =>
+            {
+                services.AddScoped<CardHybridCircuitSession>();
+
+                // DreamineBlazorServerHostedService는 Blazor 서버용으로 완전히 별도의
+                // DI 컨테이너를 새로 만들기 때문에, 위에서 바깥쪽 호스트에 등록한
+                // Configure<Contact.MailSettings>(...)가 전달되지 않는다(SharedServiceTypes에
+                // 명시한 것만 복사됨). 그래서 Contact.razor가 주입받는 IOptions<MailSettings>가
+                // 항상 기본값(빈 문자열)이 되어 "Host/User/Password 값이 비어 있습니다" 가드가
+                // appsettings.json 내용과 무관하게 항상 걸렸다. 여기서 다시 등록해서 고친다.
+                services.Configure<Contact.MailSettings>(builder.Configuration.GetSection("MailSettings"));
+            };
             options.SharedServiceTypes.Add(typeof(IQrSvgGenerator));
             options.SharedServiceTypes.Add(typeof(ImageBackgroundRemover));
             options.SharedServiceTypes.Add(typeof(LandingPageExporter));
