@@ -1,6 +1,5 @@
 using System.IO;
 using DreamineWeb.Models;
-using Microsoft.AspNetCore.Hosting;
 
 namespace DreamineWeb.Services;
 
@@ -14,10 +13,10 @@ public class XmlDocAutoLinker
     private readonly ILibraryStore _store;
     private readonly string _xmlDocRoot;
 
-    public XmlDocAutoLinker(ILibraryStore store, IWebHostEnvironment env)
+    public XmlDocAutoLinker(ILibraryStore store)
     {
         _store = store;
-        _xmlDocRoot = Path.Combine(env.WebRootPath, "xmldocs");
+        _xmlDocRoot = Path.Combine(AppContext.BaseDirectory, "wwwroot", "xmldocs");
     }
 
     public async Task<int> LinkAsync()

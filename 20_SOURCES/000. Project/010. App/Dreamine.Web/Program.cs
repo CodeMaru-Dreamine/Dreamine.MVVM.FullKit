@@ -34,7 +34,6 @@ public static class Program
             options.ListenAnyIp = listenAny;
             options.SharedServiceTypes.Add(typeof(ILibraryStore));
             options.SharedServiceTypes.Add(typeof(DreamineOptions));
-            options.SharedServiceTypes.Add(typeof(Microsoft.AspNetCore.Hosting.IWebHostEnvironment));
             options.ConfigureServices = services =>
             {
                 services.AddScoped<XmlDocAutoLinker>();

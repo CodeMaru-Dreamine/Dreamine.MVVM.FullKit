@@ -3,7 +3,6 @@ using Dreamine.MVVM.ViewModels;
 using DreamineWeb.Models;
 using DreamineWeb.Services;
 using Markdig;
-using Microsoft.AspNetCore.Hosting;
 
 namespace DreamineWeb.ViewModels;
 
@@ -36,10 +35,10 @@ public class DocViewModel : ViewModelBase
                .OrderBy(m => m.TypeName).ThenBy(m => m.Kind).ThenBy(m => m.ShortName)
                .GroupBy(m => m.TypeName);
 
-    public DocViewModel(ILibraryStore store, IWebHostEnvironment env)
+    public DocViewModel(ILibraryStore store)
     {
         _store = store;
-        _xmlDocRoot = Path.Combine(env.WebRootPath, "xmldocs");
+        _xmlDocRoot = Path.Combine(AppContext.BaseDirectory, "wwwroot", "xmldocs");
     }
 
     public async Task LoadAsync(string libraryId)
