@@ -36,6 +36,7 @@ public static class Program
             options.SharedServiceTypes.Add(typeof(DreamineOptions));
             options.ConfigureServices = services =>
             {
+                services.AddScoped<XmlDocAutoLinker>();
                 services.AddScoped<HomeViewModel>();
                 services.AddScoped<DocViewModel>();
                 services.AddScoped<AdminViewModel>();

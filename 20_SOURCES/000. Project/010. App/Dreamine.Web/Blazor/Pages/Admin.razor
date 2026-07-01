@@ -99,7 +99,10 @@
     {
         <div class="dw-admin-toolbar">
             <span class="dw-admin__count">라이브러리 @(Vm.Libraries.Count)개</span>
-            <button class="dw-btn dw-btn--primary dw-btn--sm" @onclick="Vm.StartNew">+ 추가</button>
+            <div style="display:flex;gap:8px">
+                <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="OnAutoLink">🔍 XML 자동 연결</button>
+                <button class="dw-btn dw-btn--primary dw-btn--sm" @onclick="Vm.StartNew">+ 추가</button>
+            </div>
         </div>
 
         <div class="dw-lib-list">
@@ -155,6 +158,12 @@
     private async Task OnDelete(string id)
     {
         await Vm.DeleteAsync(id);
+        StateHasChanged();
+    }
+
+    private async Task OnAutoLink()
+    {
+        await Vm.AutoLinkXmlAsync();
         StateHasChanged();
     }
 }

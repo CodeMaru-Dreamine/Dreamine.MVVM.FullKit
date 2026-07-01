@@ -40,4 +40,8 @@
     <ProjectReference Include="..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="wwwroot\img\icon.ico" />
+  </ItemGroup>
+
 </Project>

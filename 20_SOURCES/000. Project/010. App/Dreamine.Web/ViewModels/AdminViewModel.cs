@@ -8,6 +8,7 @@ public class AdminViewModel : ViewModelBase
 {
     private readonly ILibraryStore _store;
     private readonly DreamineOptions _opts;
+    private readonly XmlDocAutoLinker _autoLinker;
 
     public bool IsAuthenticated { get; private set; }
     public string LoginPassword { get; set; } = string.Empty;
@@ -19,10 +20,11 @@ public class AdminViewModel : ViewModelBase
     public LibraryInfo? Editing { get; private set; }
     public bool IsEditing => Editing is not null;
 
-    public AdminViewModel(ILibraryStore store, DreamineOptions opts)
+    public AdminViewModel(ILibraryStore store, DreamineOptions opts, XmlDocAutoLinker autoLinker)
     {
         _store = store;
         _opts = opts;
+        _autoLinker = autoLinker;
     }
 
     public Task<bool> LoginAsync()
@@ -83,6 +85,15 @@ public class AdminViewModel : ViewModelBase
         await _store.DeleteAsync(id);
         await LoadAsync();
         StatusMessage = "✅ 삭제됐습니다.";
+    }
+
+    public async Task AutoLinkXmlAsync()
+    {
+        var count = await _autoLinker.LinkAsync();
+        await LoadAsync();
+        StatusMessage = count > 0
+            ? $"✅ XML 문서 {count}개 자동 연결됐습니다."
+            : "XML 파일을 찾지 못했습니다. ScanRoot 설정과 빌드 여부를 확인하세요.";
     }
 
     public void SetEditingTags(string raw)
