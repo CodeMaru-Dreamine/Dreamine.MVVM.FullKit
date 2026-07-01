@@ -71,9 +71,8 @@ public class DocViewModel : ViewModelBase
         }
     }
 
-    public void ToggleLanguage()
+    public void RefreshReadme()
     {
-        IsKorean = !IsKorean;
         if (Library is not null)
             LoadReadme(Path.Combine(_xmlDocRoot, Library.Name));
     }
