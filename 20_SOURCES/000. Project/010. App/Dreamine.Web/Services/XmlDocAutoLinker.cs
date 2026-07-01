@@ -42,7 +42,7 @@ public class XmlDocAutoLinker
                 map[name] = xml; // 더 얕은 경로 우선
         }
 
-        var libs = await _store.GetAllAsync();
+        var libs = (await _store.GetAllAsync()).ToList(); // 캐시 리스트 복사본으로 순회
         int count = 0;
 
         foreach (var lib in libs)
