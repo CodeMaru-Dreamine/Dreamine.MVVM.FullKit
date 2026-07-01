@@ -1,0 +1,56 @@
+@page "/"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@inject HomeViewModel Vm
+
+<PageTitle>Dreamine — Modular Architecture for Real Applications</PageTitle>
+
+<section class="dw-hero">
+    <div class="dw-eyebrow">
+        <span class="dw-eyebrow__dot"></span>
+        <span>Open Source · MIT License</span>
+    </div>
+    <h1 class="dw-hero__title">Dreamine</h1>
+    <p class="dw-hero__lead">
+        C# WPF MVVM 기반의 모듈형 애플리케이션 아키텍처.<br />
+        낮은 결합도, 높은 응집도, 테스트 가능한 구조.
+    </p>
+    <div class="dw-hero__actions">
+        <a class="dw-btn dw-btn--primary" href="@Vm.GitHubOrgUrl" target="_blank" rel="noopener">GitHub Organization</a>
+        <a class="dw-btn dw-btn--ghost" href="/libraries">라이브러리 목록</a>
+    </div>
+</section>
+
+<section class="dw-section">
+    <div class="dw-section__head">
+        <h2 class="dw-section__title">라이브러리</h2>
+        <p class="dw-section__copy">플랫폼별로 분리된 모듈형 구조 — 필요한 것만 참조합니다.</p>
+    </div>
+
+    @foreach (var group in Vm.GroupedLibraries)
+    {
+        <div class="dw-lib-group">
+            <h3 class="dw-lib-group__name">@group.Key</h3>
+            <div class="dw-lib-cards">
+                @foreach (var lib in group.Take(4))
+                {
+                    <a href="/docs/@lib.Id" class="dw-lib-card">
+                        <div class="dw-lib-card__top">
+                            <span class="dw-lib-card__name">@lib.Name</span>
+                            <span class="dw-badge dw-badge--@lib.Status">@lib.Status</span>
+                        </div>
+                        <p class="dw-lib-card__desc">@lib.Description</p>
+                        <span class="dw-lib-card__ver">v@lib.Version</span>
+                    </a>
+                }
+            </div>
+        </div>
+    }
+</section>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        await Vm.LoadAsync();
+    }
+}

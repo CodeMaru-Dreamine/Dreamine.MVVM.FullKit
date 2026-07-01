@@ -1,0 +1,42 @@
+@namespace DreamineWeb.Blazor
+@using Microsoft.AspNetCore.Components.Web
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <base href="/" />
+    <title>Dreamine</title>
+    <meta name="description" content="Modular Architecture for Real Applications" />
+    <meta property="og:title" content="Dreamine" />
+    <meta property="og:description" content="Modular Architecture for Real Applications" />
+    <meta property="og:url" content="https://dreamine.kr/" />
+    <meta property="og:image" content="https://dreamine.kr/img/og.png" />
+    <meta property="og:type" content="website" />
+    <link rel="icon" href="/img/icon.ico" />
+    <link rel="stylesheet" href="/css/dreamine.css?v=20260701" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet" />
+    <HeadOutlet />
+</head>
+<body>
+    <DreamineWeb.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
+    <script src="/_framework/blazor.web.js" autostart="false"></script>
+    <script>
+        Blazor.start({
+            circuit: {
+                reconnectionOptions: {
+                    maxRetries: 10,
+                    retryIntervalMilliseconds: (n) => Math.min(1000 * Math.pow(2, n), 30000)
+                },
+                configureSignalR: function (builder) {
+                    builder.withUrl('/_blazor', { transport: 7 })
+                           .withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 15000, 30000, 30000, 30000, 30000]);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

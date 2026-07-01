@@ -1,0 +1,18 @@
+namespace DreamineWeb.Models;
+
+public sealed class LibraryInfo
+{
+    public string Id { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public string Status { get; set; } = "stable";   // stable | beta | wip
+    public string Version { get; set; } = "1.0.0";
+    public string? NuGetId { get; set; }
+    public string? RepoUrl { get; set; }
+    public string? XmlDocPath { get; set; }           // 빌드 출력 .xml 경로
+    public string[] Tags { get; set; } = [];
+    public int SortOrder { get; set; }
+    public bool IsVisible { get; set; } = true;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+}

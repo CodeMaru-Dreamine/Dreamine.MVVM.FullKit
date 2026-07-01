@@ -1,0 +1,16 @@
+<Window x:Class="DreamineWeb.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Dreamine.Web"
+        Width="1440" Height="900"
+        MinWidth="1024" MinHeight="680"
+        Background="#030913"
+        WindowStartupLocation="CenterScreen">
+    <Grid Background="#030913">
+        <!-- WebView2가 런타임에 채워집니다 -->
+        <Border x:Name="WebViewHost" />
+    </Grid>
+</Window>

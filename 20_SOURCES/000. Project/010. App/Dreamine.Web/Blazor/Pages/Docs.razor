@@ -1,0 +1,125 @@
+@page "/docs/{LibraryId}"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@inject DocViewModel Vm
+
+<PageTitle>@(Vm.Library?.Name ?? "문서") — Dreamine</PageTitle>
+
+<div class="dw-page">
+    @if (Vm.Library is null)
+    {
+        <p class="dw-empty">라이브러리를 찾을 수 없습니다.</p>
+    }
+    else
+    {
+        <div class="dw-doc-header">
+            <a href="/libraries" class="dw-back">← 목록</a>
+            <div>
+                <div class="dw-doc-header__top">
+                    <h1 class="dw-doc-header__name">@Vm.Library.Name</h1>
+                    <span class="dw-badge dw-badge--@Vm.Library.Status">@Vm.Library.Status</span>
+                    <span class="dw-doc-header__ver">v@Vm.Library.Version</span>
+                </div>
+                <p class="dw-doc-header__desc">@Vm.Library.Description</p>
+                <div class="dw-doc-header__links">
+                    @if (!string.IsNullOrEmpty(Vm.Library.NuGetId))
+                    {
+                        <a href="https://www.nuget.org/packages/@Vm.Library.NuGetId" target="_blank" class="dw-btn dw-btn--sm">NuGet</a>
+                    }
+                    @if (!string.IsNullOrEmpty(Vm.Library.RepoUrl))
+                    {
+                        <a href="@Vm.Library.RepoUrl" target="_blank" class="dw-btn dw-btn--sm dw-btn--ghost">GitHub</a>
+                    }
+                </div>
+                @if (Vm.Library.Tags.Length > 0)
+                {
+                    <div class="dw-tags">
+                        @foreach (var tag in Vm.Library.Tags)
+                        {
+                            <span class="dw-tag">#@tag</span>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (!Vm.Members.Any())
+        {
+            <div class="dw-doc-empty">
+                <p>XML 문서 경로가 설정되지 않았거나 파일이 없습니다.</p>
+                <p class="dw-sub">어드민 → 라이브러리 편집 → XML Doc 경로를 설정하면 자동으로 문서가 생성됩니다.</p>
+            </div>
+        }
+        else
+        {
+            <!-- 타입 목록 -->
+            @if (Vm.Types.Any())
+            {
+                <div class="dw-doc-section">
+                    <h2 class="dw-doc-section__title">타입</h2>
+                    <div class="dw-doc-members">
+                        @foreach (var t in Vm.Types)
+                        {
+                            <div class="dw-doc-member">
+                                <div class="dw-doc-member__name">@t.ShortName</div>
+                                @if (!string.IsNullOrEmpty(t.Summary))
+                                {
+                                    <p class="dw-doc-member__summary">@t.Summary</p>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- 타입별 멤버 -->
+            @foreach (var typeGroup in Vm.MembersByType)
+            {
+                <div class="dw-doc-section">
+                    <h2 class="dw-doc-section__title">@(typeGroup.Key ?? "Global")</h2>
+                    <div class="dw-doc-members">
+                        @foreach (var m in typeGroup)
+                        {
+                            <div class="dw-doc-member">
+                                <div class="dw-doc-member__top">
+                                    <span class="dw-doc-member__name">@m.ShortName</span>
+                                    <span class="dw-doc-kind dw-doc-kind--@m.Kind.ToString().ToLower()">@m.Kind</span>
+                                </div>
+                                @if (!string.IsNullOrEmpty(m.Summary))
+                                {
+                                    <p class="dw-doc-member__summary">@m.Summary</p>
+                                }
+                                @if (m.Params.Count > 0)
+                                {
+                                    <div class="dw-doc-params">
+                                        @foreach (var p in m.Params)
+                                        {
+                                            <div class="dw-doc-param">
+                                                <code>@p.Name</code>
+                                                @if (!string.IsNullOrEmpty(p.Description))
+                                                {
+                                                    <span>— @p.Description</span>
+                                                }
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(m.Returns))
+                                {
+                                    <p class="dw-doc-returns"><strong>반환:</strong> @m.Returns</p>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    }
+</div>
+
+@code {
+    [Parameter] public string LibraryId { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync() => await Vm.LoadAsync(LibraryId);
+    protected override async Task OnParametersSetAsync() => await Vm.LoadAsync(LibraryId);
+}

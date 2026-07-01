@@ -1,0 +1,57 @@
+@page "/libraries"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@inject HomeViewModel Vm
+
+<PageTitle>라이브러리 목록 — Dreamine</PageTitle>
+
+<div class="dw-page">
+    <div class="dw-page__head">
+        <h1 class="dw-page__title">라이브러리</h1>
+        <p class="dw-page__copy">Dreamine 라이브러리 목록입니다. 각 라이브러리 클릭 시 API 문서를 확인할 수 있습니다.</p>
+    </div>
+
+    <div class="dw-search">
+        <input class="dw-input" type="search" placeholder="이름·설명·태그 검색..."
+               @bind="SearchText" @bind:event="oninput" />
+    </div>
+
+    @foreach (var group in FilteredGroups)
+    {
+        <div class="dw-lib-group">
+            <h2 class="dw-lib-group__name">@group.Key</h2>
+            <div class="dw-lib-table">
+                @foreach (var lib in group)
+                {
+                    <a href="/docs/@lib.Id" class="dw-lib-row">
+                        <span class="dw-lib-row__name">@lib.Name</span>
+                        <span class="dw-badge dw-badge--@lib.Status">@lib.Status</span>
+                        <span class="dw-lib-row__desc">@lib.Description</span>
+                        <span class="dw-lib-row__ver">v@lib.Version</span>
+                    </a>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string SearchText { get; set; } = string.Empty;
+
+    private IEnumerable<IGrouping<string, LibraryInfo>> FilteredGroups =>
+        Vm.Libraries
+          .Where(x => x.IsVisible && Matches(x))
+          .OrderBy(x => x.SortOrder)
+          .GroupBy(x => x.Category);
+
+    private bool Matches(LibraryInfo lib)
+    {
+        if (string.IsNullOrWhiteSpace(SearchText)) return true;
+        var q = SearchText.Trim();
+        return lib.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
+            || lib.Description.Contains(q, StringComparison.OrdinalIgnoreCase)
+            || lib.Tags.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase));
+    }
+
+    protected override async Task OnInitializedAsync() => await Vm.LoadAsync();
+}

@@ -1,0 +1,13 @@
+@namespace DreamineWeb.Blazor
+@using Microsoft.AspNetCore.Components.Routing
+
+<Router AppAssembly="@typeof(Routes).Assembly">
+    <Found Context="routeData">
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
+    </Found>
+    <NotFound>
+        <main class="dw-page">
+            <p style="color:var(--sub)">페이지를 찾을 수 없습니다.</p>
+        </main>
+    </NotFound>
+</Router>

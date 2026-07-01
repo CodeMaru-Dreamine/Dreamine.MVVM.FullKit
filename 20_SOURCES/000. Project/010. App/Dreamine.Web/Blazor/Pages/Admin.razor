@@ -1,0 +1,160 @@
+@page "/admin"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@inject AdminViewModel Vm
+@inject NavigationManager Nav
+
+<PageTitle>관리자 — Dreamine</PageTitle>
+
+<div class="dw-page dw-admin">
+    <div class="dw-page__head">
+        <h1 class="dw-page__title">⚙ 관리자</h1>
+        @if (Vm.IsAuthenticated)
+        {
+            <div style="display:flex;gap:10px">
+                <a href="/" class="dw-btn dw-btn--ghost dw-btn--sm">사이트 보기</a>
+                <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="OnRefresh">🔄 새로고침</button>
+            </div>
+        }
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+    {
+        <p class="dw-status @(Vm.StatusMessage.StartsWith("✅") ? "dw-status--ok" : "dw-status--err")">
+            @Vm.StatusMessage
+        </p>
+    }
+
+    @if (!Vm.IsAuthenticated)
+    {
+        <div class="dw-login">
+            <p class="dw-login__desc">슈퍼 어드민 비밀번호</p>
+            <input class="dw-input" type="password"
+                   value="@Vm.LoginPassword"
+                   @oninput="e => Vm.LoginPassword = e.Value?.ToString() ?? string.Empty"
+                   @onkeydown="OnLoginKey"
+                   placeholder="비밀번호" />
+            <button class="dw-btn dw-btn--primary" @onclick="OnLogin">로그인</button>
+        </div>
+    }
+    else if (Vm.IsEditing)
+    {
+        <!-- 라이브러리 편집 폼 -->
+        <div class="dw-edit-form">
+            <h2>@(string.IsNullOrEmpty(Vm.Editing!.Name) ? "새 라이브러리" : Vm.Editing.Name)</h2>
+
+            <div class="dw-form-grid">
+                <label class="dw-label">ID (고정)<input class="dw-input" readonly value="@Vm.Editing.Id" /></label>
+                <label class="dw-label">패키지 이름<input class="dw-input" @bind="Vm.Editing.Name" placeholder="Dreamine.MVVM.Core" /></label>
+                <label class="dw-label">카테고리
+                    <select class="dw-input" @bind="Vm.Editing.Category">
+                        <option>MVVM</option>
+                        <option>WPF</option>
+                        <option>Hybrid</option>
+                        <option>UI</option>
+                        <option>Infrastructure</option>
+                        <option>Database</option>
+                        <option>Communication</option>
+                        <option>PLC</option>
+                        <option>IO</option>
+                    </select>
+                </label>
+                <label class="dw-label">상태
+                    <select class="dw-input" @bind="Vm.Editing.Status">
+                        <option value="stable">stable</option>
+                        <option value="beta">beta</option>
+                        <option value="wip">wip</option>
+                    </select>
+                </label>
+                <label class="dw-label">버전<input class="dw-input" @bind="Vm.Editing.Version" placeholder="1.0.0" /></label>
+                <label class="dw-label">정렬 순서<input class="dw-input" type="number" @bind="Vm.Editing.SortOrder" /></label>
+                <label class="dw-label dw-label--full">설명<textarea class="dw-input dw-textarea" @bind="Vm.Editing.Description" rows="3" /></label>
+                <label class="dw-label">NuGet ID<input class="dw-input" @bind="Vm.Editing.NuGetId" placeholder="Dreamine.MVVM.Core" /></label>
+                <label class="dw-label">GitHub URL<input class="dw-input" @bind="Vm.Editing.RepoUrl" placeholder="https://github.com/..." /></label>
+                <label class="dw-label dw-label--full">
+                    XML Doc 경로 (빌드 출력 .xml)
+                    <input class="dw-input" @bind="Vm.Editing.XmlDocPath"
+                           placeholder="D:\Work\...\bin\Debug\net8.0\Dreamine.MVVM.Core.xml" />
+                </label>
+                <label class="dw-label dw-label--full">
+                    태그 (쉼표 구분)
+                    <input class="dw-input"
+                           value="@string.Join(", ", Vm.Editing.Tags)"
+                           @onchange="e => Vm.SetEditingTags(e.Value?.ToString() ?? string.Empty)"
+                           placeholder="mvvm, core, interface" />
+                </label>
+                <label class="dw-label dw-label--check">
+                    <input type="checkbox" @bind="Vm.Editing.IsVisible" />
+                    공개 (사이트에 표시)
+                </label>
+            </div>
+
+            <div class="dw-edit-actions">
+                <button class="dw-btn dw-btn--primary" @onclick="OnSave">💾 저장</button>
+                <button class="dw-btn dw-btn--ghost" @onclick="Vm.CancelEdit">취소</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="dw-admin-toolbar">
+            <span class="dw-admin__count">라이브러리 @(Vm.Libraries.Count)개</span>
+            <button class="dw-btn dw-btn--primary dw-btn--sm" @onclick="Vm.StartNew">+ 추가</button>
+        </div>
+
+        <div class="dw-lib-list">
+            @foreach (var lib in Vm.Libraries.OrderBy(x => x.SortOrder))
+            {
+                <div class="dw-lib-row dw-lib-row--admin">
+                    <span class="dw-lib-row__order">@lib.SortOrder</span>
+                    <span class="dw-lib-row__name">@lib.Name</span>
+                    <span class="dw-badge dw-badge--@lib.Status">@lib.Status</span>
+                    <span class="dw-badge @(lib.IsVisible ? "dw-badge--visible" : "dw-badge--hidden")">
+                        @(lib.IsVisible ? "공개" : "비공개")
+                    </span>
+                    <span class="dw-lib-row__desc">@lib.Description</span>
+                    <span class="dw-lib-row__xml @(string.IsNullOrEmpty(lib.XmlDocPath) ? "dw-lib-row__xml--none" : "")">
+                        @(string.IsNullOrEmpty(lib.XmlDocPath) ? "XML 미설정" : "XML 설정됨")
+                    </span>
+                    <div class="dw-lib-row__actions">
+                        <a href="/docs/@lib.Id" target="_blank" class="dw-btn dw-btn--sm dw-btn--ghost">문서</a>
+                        <button class="dw-btn dw-btn--sm" @onclick="() => Vm.StartEdit(lib)">편집</button>
+                        <button class="dw-btn dw-btn--sm dw-btn--danger" @onclick="() => OnDelete(lib.Id)">삭제</button>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        if (Vm.IsAuthenticated) await Vm.LoadAsync();
+    }
+
+    private async Task OnLogin()
+    {
+        var ok = await Vm.LoginAsync();
+        if (ok) await Vm.LoadAsync();
+    }
+
+    private async Task OnLoginKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await OnLogin();
+    }
+
+    private async Task OnRefresh() => await Vm.LoadAsync();
+
+    private async Task OnSave()
+    {
+        await Vm.SaveEditAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnDelete(string id)
+    {
+        await Vm.DeleteAsync(id);
+        StateHasChanged();
+    }
+}
