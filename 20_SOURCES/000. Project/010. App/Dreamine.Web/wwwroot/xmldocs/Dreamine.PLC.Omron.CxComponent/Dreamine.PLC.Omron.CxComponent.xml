@@ -1,0 +1,127 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.PLC.Omron.CxComponent</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient">
+            <summary>
+            Provides an Omron CX-Compolet/CX-Component PLC client.
+            </summary>
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient.#ctor(Dreamine.PLC.Omron.CxComponent.Options.OmronCxComponentOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient"/> class.
+            </summary>
+            <param name="options">The CX-Compolet options.</param>
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient.#ctor(Dreamine.PLC.Omron.CxComponent.Options.OmronCxComponentOptions,Dreamine.PLC.Omron.CxComponent.Internal.IComObjectFactory)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient"/> class.
+            </summary>
+            <param name="options">The CX-Compolet options.</param>
+            <param name="factory">The COM object factory.</param>
+        </member>
+        <member name="P:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient.Options">
+            <summary>
+            Gets the CX-Compolet options.
+            </summary>
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient.ConnectCoreAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient.DisconnectCoreAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient.ReadBitsCoreAsync(Dreamine.PLC.Abstractions.Devices.PlcAddress,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient.ReadWordsCoreAsync(Dreamine.PLC.Abstractions.Devices.PlcAddress,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient.WriteBitsCoreAsync(Dreamine.PLC.Abstractions.Devices.PlcAddress,System.Collections.Generic.IReadOnlyList{System.Boolean},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient.WriteWordsCoreAsync(Dreamine.PLC.Abstractions.Devices.PlcAddress,System.Collections.Generic.IReadOnlyList{System.Int16},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Clients.OmronCxComponentPlcClient.DisposeAsync">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.PLC.Omron.CxComponent.Devices.OmronCxAddressNameFormatter">
+            <summary>
+            Formats Dreamine PLC addresses for CX-Compolet variable/address strings.
+            </summary>
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Devices.OmronCxAddressNameFormatter.Format(Dreamine.PLC.Abstractions.Devices.PlcAddress)">
+            <summary>
+            Formats a PLC address for CX-Compolet.
+            </summary>
+            <param name="address">The PLC address.</param>
+            <returns>The CX-Compolet address string.</returns>
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Devices.OmronCxAddressNameFormatter.FormatOffset(Dreamine.PLC.Abstractions.Devices.PlcAddress,System.Int32)">
+            <summary>
+            Formats a PLC address after applying an offset delta.
+            </summary>
+            <param name="address">The start PLC address.</param>
+            <param name="delta">The address delta.</param>
+            <returns>The CX-Compolet address string.</returns>
+        </member>
+        <member name="T:Dreamine.PLC.Omron.CxComponent.Internal.DefaultComObjectFactory">
+            <summary>
+            Creates installed COM objects through their ProgID.
+            </summary>
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Internal.DefaultComObjectFactory.Create(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.PLC.Omron.CxComponent.Internal.IComObjectFactory">
+            <summary>
+            Creates late-bound COM objects.
+            </summary>
+        </member>
+        <member name="M:Dreamine.PLC.Omron.CxComponent.Internal.IComObjectFactory.Create(System.String)">
+            <summary>
+            Creates a COM object from a ProgID.
+            </summary>
+            <param name="progId">The COM ProgID.</param>
+            <returns>The created COM object.</returns>
+        </member>
+        <member name="T:Dreamine.PLC.Omron.CxComponent.Options.OmronCxComponentOptions">
+            <summary>
+            Provides Omron CX-Compolet/CX-Component connection options.
+            </summary>
+        </member>
+        <member name="P:Dreamine.PLC.Omron.CxComponent.Options.OmronCxComponentOptions.ProgId">
+            <summary>
+            Gets or sets the CX-Compolet COM ProgID.
+            </summary>
+        </member>
+        <member name="P:Dreamine.PLC.Omron.CxComponent.Options.OmronCxComponentOptions.PeerAddress">
+            <summary>
+            Gets or sets the peer address or node name property value.
+            </summary>
+        </member>
+        <member name="P:Dreamine.PLC.Omron.CxComponent.Options.OmronCxComponentOptions.PeerAddressPropertyName">
+            <summary>
+            Gets or sets the property name used for the peer address.
+            </summary>
+        </member>
+        <member name="P:Dreamine.PLC.Omron.CxComponent.Options.OmronCxComponentOptions.ActivePropertyName">
+            <summary>
+            Gets or sets the active/connection property name.
+            </summary>
+        </member>
+        <member name="P:Dreamine.PLC.Omron.CxComponent.Options.OmronCxComponentOptions.ReadVariableMethodName">
+            <summary>
+            Gets or sets the read variable method name.
+            </summary>
+        </member>
+        <member name="P:Dreamine.PLC.Omron.CxComponent.Options.OmronCxComponentOptions.WriteVariableMethodName">
+            <summary>
+            Gets or sets the write variable method name.
+            </summary>
+        </member>
+    </members>
+</doc>

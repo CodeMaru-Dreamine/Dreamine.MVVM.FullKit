@@ -1,0 +1,468 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.IO.Fastech.Ethernet</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Channels.FastechAnalogInputChannel">
+            <summary>
+            Provides Fastech Ethernet analog input operations.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Channels.FastechAnalogInputChannel.ReadAsync(Dreamine.IO.Abstractions.Models.AnalogIoPoint,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Channels.FastechAnalogInputChannel.ReadAsync(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.AnalogIoPoint},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Channels.FastechAnalogOutputChannel">
+            <summary>
+            Provides Fastech Ethernet analog output operations.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Channels.FastechAnalogOutputChannel.ReadAsync(Dreamine.IO.Abstractions.Models.AnalogIoPoint,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Channels.FastechAnalogOutputChannel.WriteAsync(Dreamine.IO.Abstractions.Models.AnalogIoPoint,System.Double,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Channels.FastechAnalogOutputChannel.WriteAsync(System.Collections.Generic.IReadOnlyDictionary{Dreamine.IO.Abstractions.Models.AnalogIoPoint,System.Double},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Channels.FastechDigitalInputChannel">
+            <summary>
+            Provides Fastech Ethernet digital input operations.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Channels.FastechDigitalInputChannel.ReadAsync(Dreamine.IO.Abstractions.Models.IoPoint,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Channels.FastechDigitalInputChannel.ReadAsync(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.IoPoint},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Channels.FastechDigitalOutputChannel">
+            <summary>
+            Provides Fastech Ethernet digital output operations.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Channels.FastechDigitalOutputChannel.ReadAsync(Dreamine.IO.Abstractions.Models.IoPoint,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Channels.FastechDigitalOutputChannel.ReadAsync(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.IoPoint},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Channels.FastechDigitalOutputChannel.WriteAsync(Dreamine.IO.Abstractions.Models.IoPoint,System.Boolean,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Channels.FastechDigitalOutputChannel.WriteAsync(System.Collections.Generic.IReadOnlyDictionary{Dreamine.IO.Abstractions.Models.IoPoint,System.Boolean},System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController">
+            <summary>
+            Provides a Fastech Ethernet I/O controller implementation.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.#ctor(Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController"/> class.
+            </summary>
+            <param name="options">The Fastech Ethernet I/O options.</param>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.#ctor(Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions,Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController"/> class.
+            </summary>
+            <param name="options">The Fastech Ethernet I/O options.</param>
+            <param name="protocol">The Fastech Ethernet I/O protocol implementation.</param>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.#ctor(Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions,Dreamine.IO.Fastech.Ethernet.Transport.IFastechEthernetIoTransport,Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController"/> class.
+            </summary>
+            <param name="options">The Fastech Ethernet I/O options.</param>
+            <param name="transport">The Fastech Ethernet I/O transport.</param>
+            <param name="protocol">The Fastech Ethernet I/O protocol implementation.</param>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.Options">
+            <summary>
+            Gets the Fastech Ethernet I/O options.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.State">
+            <inheritdoc />
+        </member>
+        <member name="E:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.StateChanged">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.DigitalInputs">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.DigitalOutputs">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.AnalogInputs">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.AnalogOutputs">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.ConnectAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.DisconnectAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Controllers.FastechEthernetIoController.DisposeAsync">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions">
+            <summary>
+            Represents Fastech Ethernet I/O connection options.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions.Host">
+            <summary>
+            Gets or sets the target host.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions.Port">
+            <summary>
+            Gets or sets the target port.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions.LocalPort">
+            <summary>
+            Gets or sets the local UDP port. Zero lets Windows choose an ephemeral source port.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions.TransportType">
+            <summary>
+            Gets or sets the transport type.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions.DeviceIndex">
+            <summary>
+            Gets or sets the board, device, or controller index.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions.ConnectTimeoutMs">
+            <summary>
+            Gets or sets the connect timeout in milliseconds.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions.ReceiveTimeoutMs">
+            <summary>
+            Gets or sets the receive timeout in milliseconds.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions.RetryCount">
+            <summary>
+            Gets or sets the retry count.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions.ExpectedResponseLength">
+            <summary>
+            Gets or sets the expected response length. Zero means the transport reads until the first available packet ends.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions.Properties">
+            <summary>
+            Gets provider-specific properties that should be interpreted only by the concrete protocol implementation.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions.ToIoConnectionOptions">
+            <summary>
+            Converts these options to provider-neutral I/O connection options.
+            </summary>
+            <returns>The provider-neutral options.</returns>
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoTransportType">
+            <summary>
+            Represents the Fastech Ethernet I/O transport type.
+            </summary>
+        </member>
+        <member name="F:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoTransportType.Udp">
+            <summary>
+            UDP transport for Ezi-IO Plus-E protocol communication.
+            </summary>
+        </member>
+        <member name="F:Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoTransportType.Tcp">
+            <summary>
+            TCP transport for custom or future Fastech Ethernet I/O communication.
+            </summary>
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol">
+            <summary>
+            Provides the Fastech Ezi-IO Plus-E 16-point digital I/O UDP protocol.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.BuildGetSlaveInfo">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.ParseSlaveInfo(System.Collections.Generic.IReadOnlyList{System.Byte})">
+            <summary>
+            Parses a slave information response.
+            </summary>
+            <param name="responseFrame">The response frame.</param>
+            <returns>The slave information text.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.BuildReadDigitalInputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.IoPoint})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.ParseDigitalInputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.BuildReadDigitalOutputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.IoPoint})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.ParseDigitalOutputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.BuildWriteDigitalOutputs(System.Collections.Generic.IReadOnlyDictionary{Dreamine.IO.Abstractions.Models.IoPoint,System.Boolean})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.BuildReadAnalogInputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.AnalogIoPoint})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.ParseAnalogInputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.BuildReadAnalogOutputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.AnalogIoPoint})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.ParseAnalogOutputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.BuildWriteAnalogOutputs(System.Collections.Generic.IReadOnlyDictionary{Dreamine.IO.Abstractions.Models.AnalogIoPoint,System.Double})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol.ParseWriteResponse(System.Collections.Generic.IReadOnlyList{System.Byte})">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol">
+            <summary>
+            Defines protocol frame building and parsing for Fastech Ethernet I/O.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol.BuildReadDigitalInputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.IoPoint})">
+            <summary>
+            Builds a digital input read request.
+            </summary>
+            <param name="points">The digital input points.</param>
+            <returns>The request frame.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol.ParseDigitalInputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <summary>
+            Parses a digital input read response.
+            </summary>
+            <param name="responseFrame">The response frame.</param>
+            <param name="count">The expected point count.</param>
+            <returns>The digital input values.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol.BuildReadDigitalOutputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.IoPoint})">
+            <summary>
+            Builds a digital output read request.
+            </summary>
+            <param name="points">The digital output points.</param>
+            <returns>The request frame.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol.ParseDigitalOutputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <summary>
+            Parses a digital output read response.
+            </summary>
+            <param name="responseFrame">The response frame.</param>
+            <param name="count">The expected point count.</param>
+            <returns>The digital output values.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol.BuildWriteDigitalOutputs(System.Collections.Generic.IReadOnlyDictionary{Dreamine.IO.Abstractions.Models.IoPoint,System.Boolean})">
+            <summary>
+            Builds a digital output write request.
+            </summary>
+            <param name="values">The digital output values keyed by point.</param>
+            <returns>The request frame.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol.BuildReadAnalogInputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.AnalogIoPoint})">
+            <summary>
+            Builds an analog input read request.
+            </summary>
+            <param name="points">The analog input points.</param>
+            <returns>The request frame.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol.ParseAnalogInputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <summary>
+            Parses an analog input read response.
+            </summary>
+            <param name="responseFrame">The response frame.</param>
+            <param name="count">The expected point count.</param>
+            <returns>The analog input values.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol.BuildReadAnalogOutputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.AnalogIoPoint})">
+            <summary>
+            Builds an analog output read request.
+            </summary>
+            <param name="points">The analog output points.</param>
+            <returns>The request frame.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol.ParseAnalogOutputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <summary>
+            Parses an analog output read response.
+            </summary>
+            <param name="responseFrame">The response frame.</param>
+            <param name="count">The expected point count.</param>
+            <returns>The analog output values.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol.BuildWriteAnalogOutputs(System.Collections.Generic.IReadOnlyDictionary{Dreamine.IO.Abstractions.Models.AnalogIoPoint,System.Double})">
+            <summary>
+            Builds an analog output write request.
+            </summary>
+            <param name="values">The analog output values keyed by point.</param>
+            <returns>The request frame.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.IFastechEthernetIoProtocol.ParseWriteResponse(System.Collections.Generic.IReadOnlyList{System.Byte})">
+            <summary>
+            Parses a write response.
+            </summary>
+            <param name="responseFrame">The response frame.</param>
+            <returns>The I/O operation result.</returns>
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol">
+            <summary>
+            Provides an explicit fail-fast protocol for unsupported or not-yet-verified Fastech Ethernet I/O models.
+            </summary>
+            <remarks>
+            The default controller uses <see cref="T:Dreamine.IO.Fastech.Ethernet.Protocol.FastechPlusE16PointProtocol"/> for the real-hardware-verified
+            Ezi-IO Plus-E 16-point DIO device. Use this implementation only when an application wants a protocol
+            object that satisfies dependency injection while preventing accidental network frames for an unsupported model.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol.BuildReadDigitalInputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.IoPoint})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol.ParseDigitalInputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol.BuildReadDigitalOutputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.IoPoint})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol.ParseDigitalOutputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol.BuildWriteDigitalOutputs(System.Collections.Generic.IReadOnlyDictionary{Dreamine.IO.Abstractions.Models.IoPoint,System.Boolean})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol.BuildReadAnalogInputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.AnalogIoPoint})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol.ParseAnalogInputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol.BuildReadAnalogOutputs(System.Collections.Generic.IReadOnlyList{Dreamine.IO.Abstractions.Models.AnalogIoPoint})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol.ParseAnalogOutputs(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol.BuildWriteAnalogOutputs(System.Collections.Generic.IReadOnlyDictionary{Dreamine.IO.Abstractions.Models.AnalogIoPoint,System.Double})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Protocol.UnsupportedFastechEthernetIoProtocol.ParseWriteResponse(System.Collections.Generic.IReadOnlyList{System.Byte})">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Transport.IFastechEthernetIoTransport">
+            <summary>
+            Defines transport operations for Fastech Ethernet I/O communication.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Transport.IFastechEthernetIoTransport.IsConnected">
+            <summary>
+            Gets whether the transport is connected.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.IFastechEthernetIoTransport.ConnectAsync(System.Threading.CancellationToken)">
+            <summary>
+            Connects the transport.
+            </summary>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The I/O operation result.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.IFastechEthernetIoTransport.DisconnectAsync(System.Threading.CancellationToken)">
+            <summary>
+            Disconnects the transport.
+            </summary>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The I/O operation result.</returns>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.IFastechEthernetIoTransport.SendAndReceiveAsync(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Sends a request frame and receives a response frame.
+            </summary>
+            <param name="requestFrame">The request frame.</param>
+            <param name="receiveTimeoutMs">The receive timeout in milliseconds.</param>
+            <param name="expectedResponseLength">The expected response length. Zero reads the first available packet.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The response frame.</returns>
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Transport.TcpFastechEthernetIoTransport">
+            <summary>
+            Provides TCP transport for Fastech Ethernet I/O communication.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.TcpFastechEthernetIoTransport.#ctor(Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.IO.Fastech.Ethernet.Transport.TcpFastechEthernetIoTransport"/> class.
+            </summary>
+            <param name="options">The Fastech Ethernet I/O options.</param>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Transport.TcpFastechEthernetIoTransport.IsConnected">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.TcpFastechEthernetIoTransport.ConnectAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.TcpFastechEthernetIoTransport.DisconnectAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.TcpFastechEthernetIoTransport.SendAndReceiveAsync(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.TcpFastechEthernetIoTransport.DisposeAsync">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.IO.Fastech.Ethernet.Transport.UdpFastechEthernetIoTransport">
+            <summary>
+            Provides UDP transport for Fastech Ezi-IO Plus-E communication.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.UdpFastechEthernetIoTransport.#ctor(Dreamine.IO.Fastech.Ethernet.Options.FastechEthernetIoOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.IO.Fastech.Ethernet.Transport.UdpFastechEthernetIoTransport"/> class.
+            </summary>
+            <param name="options">The Fastech Ethernet I/O options.</param>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Transport.UdpFastechEthernetIoTransport.IsConnected">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Transport.UdpFastechEthernetIoTransport.LastRequestFrame">
+            <summary>
+            Gets the last request frame sent by this transport.
+            </summary>
+        </member>
+        <member name="P:Dreamine.IO.Fastech.Ethernet.Transport.UdpFastechEthernetIoTransport.LastResponseFrame">
+            <summary>
+            Gets the last response frame received by this transport.
+            </summary>
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.UdpFastechEthernetIoTransport.ConnectAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.UdpFastechEthernetIoTransport.DisconnectAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.UdpFastechEthernetIoTransport.SendAndReceiveAsync(System.Collections.Generic.IReadOnlyList{System.Byte},System.Int32,System.Int32,System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.IO.Fastech.Ethernet.Transport.UdpFastechEthernetIoTransport.DisposeAsync">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

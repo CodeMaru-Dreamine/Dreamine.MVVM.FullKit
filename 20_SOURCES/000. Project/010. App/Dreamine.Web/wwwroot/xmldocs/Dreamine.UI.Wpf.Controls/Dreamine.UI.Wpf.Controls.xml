@@ -1,0 +1,2638 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.UI.Wpf.Controls</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector">
+            <summary>
+            Interaction logic for DreamineCheckSelector.xaml.
+            This control provides a checkbox with two associated radio buttons (Left/Right),
+            along with a text input box for configuring the maximum axis value.
+            </summary>
+            <summary>
+            DreamineCheckSelector
+            </summary>
+        </member>
+        <member name="E:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.ValueChanged">
+            <summary>
+            Event raised when any internal value (checkbox, radio, or textbox) changes.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.#ctor">
+            <summary>
+            Initializes a new Instance of the <see cref="T:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector"/> class.
+            Subscribes to internal control events.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.OnCheckedChanged(System.Boolean)">
+            <summary>
+            Handles logic when the checkbox is checked or unchecked.
+            Automatically restores or resets the radio button states.
+            </summary>
+            <Param name="isChecked">Indicates whether the checkbox is checked.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.RememberRadio(System.Boolean)">
+            <summary>
+            Stores the last selected radio button State for restoration.
+            </summary>
+            <Param name="left">True if Left radio button is selected; otherwise false.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.RaiseValueChanged">
+            <summary>
+            Raises the <see cref="E:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.ValueChanged"/> event to notify external consumers of a State change.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.IsCheckedProperty">
+            <summary>
+            Gets or sets whether the checkbox is checked.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.IsChecked">
+            <inheritdoc cref="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.IsCheckedProperty"/>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.IsLeftCheckedProperty">
+            <summary>
+            Gets or sets whether the Left radio button is selected.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.IsLeftChecked">
+            <inheritdoc cref="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.IsLeftCheckedProperty"/>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.IsRightCheckedProperty">
+            <summary>
+            Gets or sets whether the Right radio button is selected.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.IsRightChecked">
+            <inheritdoc cref="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.IsRightCheckedProperty"/>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.CheckTextProperty">
+            <summary>
+            Gets or sets the display text next to the checkbox.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.CheckText">
+            <inheritdoc cref="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.CheckTextProperty"/>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.LeftRadioTextProperty">
+            <summary>
+            Gets or sets the display text for the Left radio button.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.LeftRadioText">
+            <inheritdoc cref="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.LeftRadioTextProperty"/>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.RightRadioTextProperty">
+            <summary>
+            Gets or sets the display text for the Right radio button.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.RightRadioText">
+            <inheritdoc cref="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.RightRadioTextProperty"/>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.GroupNameProperty">
+            <summary>
+            Gets or sets the group name for the radio buttons. 
+            This ensures mutual exclusivity if multiple instances are on the same form.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.GroupName">
+            <inheritdoc cref="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.GroupNameProperty"/>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.AxisMaxProperty">
+            <summary>
+            Gets or sets the maximum value of the axis as string. 
+            This value is typically used for input binding from the textbox.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.AxisMax">
+            <inheritdoc cref="F:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.AxisMaxProperty"/>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.VsCustomControls.DreamineCheckSelector.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.SelectedVisualMode">
+            <summary>Selection visual presentation mode for DreamineButton.</summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.IconPosition">
+            <summary>Icon position for DreamineButton.</summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineButton">
+            \class DreamineButton
+            \brief Custom button control for VsLibrary framework.
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.PART_ShadowHost">
+            \brief Template part name for the shadow host. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton._shadowHost">
+            \brief Shadow host of the current template. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.IconSize">
+            \brief Controls the default icon size (Width/Height) at once.
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.IconSizeProperty">
+            \brief DP for \ref IconSize. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.IconMargin">
+            \brief Controls the icon margin.
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.IconMarginProperty">
+            \brief DP for \ref IconMargin. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.IconStretch">
+            \brief Icon stretch mode.
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.IconStretchProperty">
+            \brief DP for \ref IconStretch. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.UseShadow">
+            \brief Enables or disables DropShadowEffect.
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.UseShadowProperty">
+            \brief DP for \ref UseShadow. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.ShadowBlurRadius">
+            \brief Shadow blur radius. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.ShadowBlurRadiusProperty">
+            \brief DP for \ref ShadowBlurRadius. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.ShadowOpacity">
+            \brief Shadow opacity. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.ShadowOpacityProperty">
+            \brief DP for \ref ShadowOpacity. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.ShadowDepth">
+            \brief Shadow depth. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.ShadowDepthProperty">
+            \brief DP for \ref ShadowDepth. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.ShadowDirection">
+            \brief Shadow direction in degrees. 0=Left, 90=Down, 180=Right, 270=Up.
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.ShadowDirectionProperty">
+            \brief DP for \ref ShadowDirection. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.ShadowColor">
+            \brief Shadow color. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.ShadowColorProperty">
+            \brief DP for \ref ShadowColor. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.OnShadowPropertyChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            \brief Updates template Effect when any shadow DP changes.
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.SelectedVisualMode">
+            \brief Dependency property for selection visual presentation mode.
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.SelectedVisualModeProperty">
+            \brief DP identifier for \ref SelectedVisualMode.
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.SelectedBorderBrush">
+            \brief Selected border brush.
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.SelectedBorderBrushProperty">
+            \brief DP identifier for \ref SelectedBorderBrush.
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.SelectedBorderThickness">
+            \brief Selected border thickness.
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.SelectedBorderThicknessProperty">
+            \brief DP identifier for \ref SelectedBorderThickness.
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.SelectedBackgroundOverlay">
+            \brief Selected background overlay brush (alpha recommended).
+            \details Template overlay uses this brush for BackgroundOnly/Both modes.
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.SelectedBackgroundOverlayProperty">
+            \brief DP identifier for \ref SelectedBackgroundOverlay.
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.ImagePosition">
+            \brief Icon layout position. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.ImagePositionProperty">
+            \brief DP for \ref ImagePosition. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.OnceLogin">
+            \brief Enables one-time login session reuse. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.OnceLoginProperty">
+            \brief DP for \ref OnceLogin. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.OnOnceLoginChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            \brief Updates global navigation helper when OnceLogin changes.
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.#cctor">
+            \brief Applies default style key and auto-merges ResourceDictionary.
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.#ctor">
+            \brief Constructor: subscribes to login changed event.
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.OnApplyTemplate">
+            \brief Caches template parts and updates shadow effect after template is applied.
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.UpdateShadowEffect">
+            \brief Applies shadow effect to ShadowHost.
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.ImageSource">
+            \brief Bitmap icon source. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.ImageSourceProperty">
+            \brief DP for \ref ImageSource. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.IconPath">
+            \brief Vector icon geometry (Path). 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.IconPathProperty">
+            \brief DP for \ref IconPath. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.CommandProperty">
+            \brief Attached command (separate from Button.Command). 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.Command">
+            \brief Command get/set. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.CommandParameterProperty">
+            \brief Attached command parameter. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.SetCommandParameter(System.Windows.DependencyObject,System.Object)">
+            \brief Sets CommandParameter attached property. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.GetCommandParameter(System.Windows.DependencyObject)">
+            \brief Gets CommandParameter attached property. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.CommandTriggerNameProperty">
+            \brief Comma-separated trigger event names. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.SetCommandTriggerName(System.Windows.DependencyObject,System.String)">
+            \brief Sets CommandTriggerName attached property. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.GetCommandTriggerName(System.Windows.DependencyObject)">
+            \brief Gets CommandTriggerName attached property. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.SetCommand(System.Windows.DependencyObject,System.Windows.Input.ICommand)">
+            \brief Attached Command helper set. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.GetCommand(System.Windows.DependencyObject)">
+            \brief Attached Command helper get. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.IsHandlersHookedProperty">
+            \brief Prevents duplicate event handler hooking. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.GetIsHandlersHooked(System.Windows.DependencyObject)">
+            \brief Gets IsHandlersHooked attached property. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.SetIsHandlersHooked(System.Windows.DependencyObject,System.Boolean)">
+            \brief Sets IsHandlersHooked attached property. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.IsExecutingProperty">
+            \brief Reentrancy guard flag. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.GetIsExecuting(System.Windows.DependencyObject)">
+            \brief Gets IsExecuting attached property. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.SetIsExecuting(System.Windows.DependencyObject,System.Boolean)">
+            \brief Sets IsExecuting attached property. 
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.OnCommandChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            \brief Hooks internal event handlers once when Command changes.
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineButton.TryExecuteCommand(System.Windows.DependencyObject,System.String,System.Windows.RoutedEventArgs)">
+            \brief Executes the command only when the trigger name matches.
+            <summary>
+            Tries to execute the bound command for a routed event trigger.
+            Includes trigger filtering, re-entrancy guard, and optional login/permission handling for <see cref="T:Dreamine.UI.Wpf.Controls.DreamineButton"/>.
+            </summary>
+            <param name="d">The target <see cref="T:System.Windows.DependencyObject"/> that raised the event.</param>
+            <param name="eventName">The routed event name.</param>
+            <param name="eventArgs">The routed event arguments.</param>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.BackgroundTopProperty">
+            \brief Gradient top color. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.ShineColorProperty">
+            \brief Shine top color. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.ShineColorBottomProperty">
+            \brief Shine bottom color. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.BackgroundTop">
+            \brief Gets/sets BackgroundTop. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.ShineColor">
+            \brief Gets/sets ShineColor. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.ShineColorBottom">
+            \brief Gets/sets ShineColorBottom. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.IsSelectedProperty">
+            \brief Selection state. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.IsSelected">
+            \brief Gets/sets IsSelected. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.IsFocusableExProperty">
+            \brief Extended Focusable flag. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.IsFocusableEx">
+            \brief Gets/sets IsFocusableEx. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.RestoreFocusTargetProperty">
+            \brief Focus restore target element. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.RestoreFocusTarget">
+            \brief Gets/sets RestoreFocusTarget. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.GradeProperty">
+            \brief Current user grade. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.Grade">
+            \brief Gets/sets Grade. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.MinimumGradeProperty">
+            \brief Minimum required grade. 
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.MinimumGrade">
+            \brief Gets/sets MinimumGrade. 
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineButton.UseSolidBackgroundProperty">
+            \brief Enables solid background mode.
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineButton.UseSolidBackground">
+            \brief Gets/sets UseSolidBackground. 
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineCheckBox">
+             <summary>
+             \class DreamineCheckBox
+             \brief Custom CheckBox control for VsLibrary.
+            
+             \details
+             - Attached Command/CommandParameter/CommandTriggerName 지원
+             - PreviewMouseUp/MouseDoubleClick/PreviewKeyDown/PreviewKeyUp/TouchUp/Click 트리거 지원
+             - CheckBox 표준( Space 토글 ) + Enter/Return 토글을 함께 지원 (Enter는 기본 WPF에서 토글이 아님)
+             - /UiComponent/Styles/DreamineCheckBoxStyle.xaml 자동 Merge
+             </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckBox.#cctor">
+            <summary>
+            \brief Static ctor: style dictionary merge and default style key override
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckBox.IsHandlersHookedProperty">
+            <summary> \brief Prevents duplicate event handler hooking. </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckBox.GetIsHandlersHooked(System.Windows.DependencyObject)">
+            <summary> \brief Gets IsHandlersHooked attached property. </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckBox.SetIsHandlersHooked(System.Windows.DependencyObject,System.Boolean)">
+            <summary> \brief Sets IsHandlersHooked attached property. </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckBox.CommandProperty">
+            <summary>
+            \brief Attached property: Command
+            \details SetCommand / GetCommand 로 사용한다. (인스턴스 Command와 혼동 주의)
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckBox.CommandParameterProperty">
+            <summary>
+            \brief Attached property: CommandParameter
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckBox.CommandTriggerNameProperty">
+            <summary>
+            \brief Attached property: CommandTriggerName
+            \details Comma-separated triggers. Example: "Click,PreviewMouseUp,PreviewKeyUp"
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckBox.SetCommandTriggerName(System.Windows.DependencyObject,System.String)">
+            <summary> \brief Sets CommandTriggerName. </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckBox.GetCommandTriggerName(System.Windows.DependencyObject)">
+            <summary> \brief Gets CommandTriggerName. </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckBox.SetCommand(System.Windows.DependencyObject,System.Windows.Input.ICommand)">
+            <summary> \brief Sets Command. </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckBox.GetCommand(System.Windows.DependencyObject)">
+            <summary> \brief Gets Command. </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckBox.SetCommandParameter(System.Windows.DependencyObject,System.Object)">
+            <summary> \brief Sets CommandParameter. </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckBox.GetCommandParameter(System.Windows.DependencyObject)">
+            <summary> \brief Gets CommandParameter. </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckBox.OnCommandChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            \brief Hooks handlers once when attached Command changes.
+            \details
+            - PreviewMouseUp
+            - MouseDoubleClick
+            - PreviewKeyDown (Enter/Return 토글 보장)
+            - PreviewKeyUp (Enter/Return/Space)
+            - TouchUp
+            - Click
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckBox.TryExecuteCommand(System.Windows.DependencyObject,System.String,System.Windows.RoutedEventArgs)">
+            <summary>
+            \brief Executes attached command if trigger matches.
+            \details
+            - CommandTriggerName은 콤마로 분리하여 비교한다.
+            - CommandParameter가 없으면 eventArgs를 전달한다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineCheckLed">
+            <summary>
+            @brief 버튼 등의 코너에 LED(외곽 원 + 내부 코어)를 오버레이처럼 얹는 경량 컨트롤입니다.
+            @details 템플릿 내부 Canvas 위에 두 개의 Ellipse(Outer/Inner)를 배치하고,
+            IsOn/IsPulse에 따라 브러시와 애니메이션을 전환합니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckLed.CreateRadial(System.ValueTuple{System.String,System.Double}[],System.Double,System.Double)">
+            <summary> @brief 방사형 그라데이션 브러시 생성 유틸 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckLed.IsOnProperty">
+            <summary> @brief LED On/Off 상태 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckLed.IsPulseProperty">
+            <summary> @brief LED가 숨쉬기(pulse) 애니메이션을 수행할지 여부 </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckLed.OnPulseStateChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            @brief IsOn/IsPulse가 모두 true일 때 컨트롤 자체의 Opacity를 직접 애니메이션합니다.
+            @details 템플릿의 트리거/스토리보드에 의존하지 않으므로, 테마/템플릿이 교체되어도 항상 동작합니다.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckLed.CornerProperty">
+            <summary> @brief 표시 코너 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckLed.DiameterProperty">
+            <summary> @brief LED 지름(px) </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckLed.EdgeOffsetProperty">
+            <summary> @brief 가장자리 여백(px) </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckLed.InnerScaleProperty">
+            <summary> @brief 내부 원 지름 비율(0~1). 기본 0.45 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckLed.OnOuterFillProperty">
+            <summary> @brief On/Off 브러시들 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckLed.StrokeBrushProperty">
+            <summary> @brief 외곽선(링) 브러시/두께 </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.IsOn">
+            <summary>LED On/Off</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.IsPulse">
+            <summary>Pulse 애니메이션 사용</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.Corner">
+            <summary>표시 코너</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.Diameter">
+            <summary>LED 지름(px)</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.EdgeOffset">
+            <summary>가장자리 여백(px)</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.InnerScale">
+            <summary>내부 원 지름 비율(0~1)</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.OnOuterFill">
+            <summary>On 외곽 브러시</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.OnInnerFill">
+            <summary>On 내부 브러시</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.OffOuterFill">
+            <summary>Off 외곽 브러시(기본 투명)</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.OffInnerFill">
+            <summary>Off 내부 브러시(기본 투명)</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.StrokeBrush">
+            <summary>외곽선 브러시</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.StrokeThickness">
+            <summary>외곽선 두께</summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineCheckLedAttach" -->
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckLedAttach.IsPulseProperty">
+            <summary>@brief Pulse 애니메이션 사용 여부</summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckLedAttach.MarginProperty">
+            <summary>@brief 가장자리 여백(px) — 이름은 Margin(double)로 노출</summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineCheckLedAttach.Bind(System.Windows.DependencyObject,System.Windows.DependencyProperty,System.Windows.DependencyObject,System.Windows.DependencyProperty)">
+            <summary>@brief DreamineCheckLed의 DP를 대상 요소의 Attached DP에 바인딩합니다.</summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineComboBox">
+            <summary>
+            \class DreamineComboBox
+            \brief ComboBox with MVVM-style attached command trigger support.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineComboBox.DreamineComboBoxCommandContext">
+            <summary>
+            \class DreamineComboBoxCommandContext
+            \brief Command execution context passed to ICommand when CommandParameter is not provided.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineComboBox.DreamineComboBoxCommandContext.EventName">
+            <summary> \brief Trigger event name. </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineComboBox.DreamineComboBoxCommandContext.Sender">
+            <summary> \brief Original sender (usually ComboBox). </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineComboBox.DreamineComboBoxCommandContext.EventArgs">
+            <summary> \brief Original event args. </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineComboBox.DreamineComboBoxCommandContext.ComboBox">
+            <summary> \brief ComboBox instance if Sender is ComboBox or d is ComboBox. </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineComboBox.DreamineComboBoxCommandContext.SelectedItem">
+            <summary> \brief Current SelectedItem snapshot. </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineComboBox.DreamineComboBoxCommandContext.SelectedValue">
+            <summary> \brief Current SelectedValue snapshot. </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineComboBox.DreamineComboBoxCommandContext.SelectedIndex">
+            <summary> \brief Current SelectedIndex snapshot. </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.DreamineComboBoxCommandContext.#ctor(System.String,System.Object,System.Object,System.Windows.Controls.ComboBox)">
+            <summary>
+            \brief Create context from sender/d and args.
+            </summary>
+            <param name="eventName"> \brief Trigger event name </param>
+            <param name="sender"> \brief Original sender </param>
+            <param name="args"> \brief Original args </param>
+            <param name="combo"> \brief ComboBox instance </param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.DreamineComboBoxCommandContext.ToString">
+            <summary> \brief Debug-friendly string. </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineComboBox.IsHandlersHookedProperty">
+            <summary> \brief Routed/Handler 훅 중복 방지 플래그 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineComboBox.IsDropDownClosedHookedProperty">
+            <summary> \brief DropDownClosed 구독 중복 방지 플래그 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineComboBox.IsUnloadedHookedProperty">
+            <summary> \brief Unloaded 핸들러 구독 중복 방지 플래그 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineComboBox.DropDownClosedHandlerProperty">
+            <summary> \brief DropDownClosed 핸들러 인스턴스 저장(해제용) </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineComboBox.UnloadedHandlerProperty">
+            <summary> \brief Unloaded 핸들러 인스턴스 저장(해제용) </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.GetIsHandlersHooked(System.Windows.DependencyObject)">
+            <summary> \brief Get flag </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.SetIsHandlersHooked(System.Windows.DependencyObject,System.Boolean)">
+            <summary> \brief Set flag </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.GetIsDropDownClosedHooked(System.Windows.DependencyObject)">
+            <summary> \brief Get flag </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.SetIsDropDownClosedHooked(System.Windows.DependencyObject,System.Boolean)">
+            <summary> \brief Set flag </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.GetIsUnloadedHooked(System.Windows.DependencyObject)">
+            <summary> \brief Get flag </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.SetIsUnloadedHooked(System.Windows.DependencyObject,System.Boolean)">
+            <summary> \brief Set flag </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.SetDropDownClosedHandler(System.Windows.DependencyObject,System.EventHandler)">
+            <summary> \brief DropDownClosed handler 저장 </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.GetDropDownClosedHandler(System.Windows.DependencyObject)">
+            <summary> \brief DropDownClosed handler 조회 </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.SetUnloadedHandler(System.Windows.DependencyObject,System.Windows.RoutedEventHandler)">
+            <summary> \brief Unloaded handler 저장 </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.GetUnloadedHandler(System.Windows.DependencyObject)">
+            <summary> \brief Unloaded handler 조회 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineComboBox.CommandProperty">
+            <summary> \brief Attached Command </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineComboBox.CommandParameterProperty">
+            <summary> \brief Attached CommandParameter </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineComboBox.CommandTriggerNameProperty">
+            <summary> \brief Attached CommandTriggerName (comma-separated) </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.SetCommandTriggerName(System.Windows.DependencyObject,System.String)">
+            <summary> \brief Set trigger list </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.GetCommandTriggerName(System.Windows.DependencyObject)">
+            <summary> \brief Get trigger list </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.SetCommand(System.Windows.DependencyObject,System.Windows.Input.ICommand)">
+            <summary> \brief Set command </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.GetCommand(System.Windows.DependencyObject)">
+            <summary> \brief Get command </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.SetCommandParameter(System.Windows.DependencyObject,System.Object)">
+            <summary> \brief Set command parameter </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.GetCommandParameter(System.Windows.DependencyObject)">
+            <summary> \brief Get command parameter </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.OnCommandChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            \brief Command가 설정될 때 이벤트 훅을 1회만 수행한다.
+            \details
+            - AddHandler는 제거가 어려우므로 "중복 훅" 자체를 반드시 막아야 한다.
+            - DropDownClosed는 ComboBox 이벤트이므로 명시적으로 핸들러를 저장하고 Unloaded에서 해제한다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.TryExecuteCommand(System.Windows.DependencyObject,System.Object,System.String,System.Windows.RoutedEventArgs)">
+            <summary>
+            \brief RoutedEventArgs 기반 트리거 커맨드 실행
+            \details
+            - PreviewKeyDown은 키 반복 입력(IsRepeat)으로 여러 번 들어올 수 있으므로 기본적으로 차단한다.
+            - parameter =
+               - CommandParameter가 있으면 그것(명시 오버라이드)
+               - 없으면 DreamineComboBoxCommandContext(eventName, sender, eventArgs, combo)
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineComboBox.TryExecuteCommand(System.Windows.DependencyObject,System.Object,System.String,System.EventArgs)">
+            <summary>
+            \brief EventArgs 기반 트리거 커맨드 실행 (DropDownClosed 등)
+            \details
+            - parameter =
+               - CommandParameter가 있으면 그것(명시 오버라이드)
+               - 없으면 DreamineComboBoxCommandContext(eventName, sender, eventArgs, combo)
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineTabHost" -->
+        <!-- Badly formed XML comment ignored for member "P:Dreamine.UI.Wpf.Controls.DreamineTabHost.Items" -->
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost._currentView">
+            <summary>
+            \brief Last active root view instance (non-popup).
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost._views">
+            <summary>
+            \brief Runtime/design view map keyed by logical view name.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost._order">
+            <summary>
+            \brief Ordered logical key list for index-based switching.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost._popupManager">
+            <summary>
+            \brief Popup manager (singleton).
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost._viewSwitcher">
+            <summary>
+            \brief Switch helper.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost._containerGrid">
+            <summary>
+            \brief Visual host for current views.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost._isSwitchScheduled">
+            <summary>
+            \brief Coalesce switch requests into one dispatcher tick.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost._designLastIndex">
+            <summary>
+            \brief Design-time last selected index.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost._lastVisibilityState">
+            <summary>
+            \brief Cache last visibility state per root view to avoid duplicate callbacks.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.TargetAnalyzedProperty">
+            <summary>
+            \brief Optional flag to compute/expose popup-ness before switching.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.TargetAnalyzed">
+            <summary>
+            \brief Gets or sets whether to compute and expose popup-ness before switching.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.IsCurrentTargetPopupPropertyKey">
+            <summary>
+            \brief Read-only DP key for IsCurrentTargetPopup.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.IsCurrentTargetPopupProperty">
+            <summary>
+            \brief Read-only DP that indicates whether the pending target is a popup.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.IsCurrentTargetPopup">
+            <summary>
+            \brief Gets whether the pending switch target is a popup.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.#ctor">
+            <summary>
+            \brief Initializes a new instance.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.ContentListProperty">
+            <summary>
+            \brief DP backing field for ContentList.
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "P:Dreamine.UI.Wpf.Controls.DreamineTabHost.ContentList" -->
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.ContentTypeListProperty">
+            <summary>
+            \brief DP backing field for ContentTypeList.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.ContentTypeList">
+            <summary>
+            \brief Optional list of concrete view type names (matched by index with ContentList).
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.CurrentViewProperty">
+            <summary>
+            \brief DP backing field for CurrentView.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.CurrentView">
+            <summary>
+            \brief Current view logical name (string-based navigation).
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.SelectViewProperty">
+            <summary>
+            \brief DP backing field for SelectView.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.SelectView">
+            <summary>
+            \brief Current view index (0-based).
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.UseSingletonViewProperty">
+            <summary>
+            \brief DP backing field for UseSingletonView.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.UseSingletonView">
+            <summary>
+            \brief Whether views are reused as singletons.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.DesignBaseNamespaceHintProperty">
+            <summary>
+            \brief DP backing field for DesignBaseNamespaceHint.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.DesignBaseNamespaceHint">
+            <summary>
+            \brief Base namespace hint for design-time short name resolution.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.DesignAssemblyHintProperty">
+            <summary>
+            \brief DP backing field for DesignAssemblyHint.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.DesignAssemblyHint">
+            <summary>
+            \brief Assembly hint for design-time short name resolution.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.AutoWireDesignViewModelProperty">
+            <summary>
+            \brief DP backing field for AutoWireDesignViewModel.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.AutoWireDesignViewModel">
+            <summary>
+            \brief Whether to attach a design-time ViewModel if DataContext is null.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.OnContentInputsChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            \brief Re-init when content inputs change.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.OnDesignHintChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            \brief Re-init when design hints change (design-mode only).
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.OnCurrentViewChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            \brief Handle CurrentView changes.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.OnSelectViewChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            \brief Handle SelectView changes by scheduling switch.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.OnInitialized(System.EventArgs)">
+            <summary>
+            \brief Initialize after XAML parse is done.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.ScheduleSwitch">
+            <summary>
+            \brief Coalesce rapid selection changes into a single tick.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.SwitchToViewInternal(System.String)">
+            <summary>
+            \brief Internal view switch by logical key.
+            </summary>
+            <param name="targetKey">Logical view key.</param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.UpdateVisibleView">
+            <summary>
+            \brief Runtime switch by SelectView index.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.UpdateVisibleViewDesign">
+            <summary>
+            \brief Design-time switch by swapping the single child for O(1) switching.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.OnRootIsVisibleChanged(System.Object,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            \brief Handles IsVisibleChanged on the root view to call IVisibilityAware hooks.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.TryInitViews">
+            <summary>
+            \brief Initializes and materializes views based on Items / ContentList / ContentTypeList.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.BuildPairsFromItemsOrDps">
+            <summary>
+            \brief Build name/type pairs from Items first; fallback to DPs.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.BuildPairsFromItems">
+            <summary>
+            \brief Build pairs from XAML children Items.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.GetDeclaredRawEntryAt(System.Int32)">
+            <summary>
+            \brief Gets the declared raw entry at index, from Items first or ContentList as fallback.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.InitDesignViews(System.Collections.Generic.List{System.ValueTuple{System.String,System.String}})">
+            <summary>
+            \brief Design-time: initialize views.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.IsInDesignMode">
+            <summary>
+            \brief Returns whether this control is currently in design mode.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.EnsureUniqueNames(System.Collections.Generic.List{System.ValueTuple{System.String,System.String}})">
+            <summary>
+            \brief Ensure unique logical names.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.BuildNameTypePairs_NoMutation(System.Collections.ObjectModel.ObservableCollection{System.String},System.Collections.ObjectModel.ObservableCollection{System.String})">
+            <summary>
+            \brief Builds logical name and type name pairs from name/type collections without mutating the DPs.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.DeriveSimpleKeyFromType(System.String)">
+            <summary>
+            \brief Derives a simple key name from a raw type name.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.BuildDesignTypeCandidates(System.String,System.String,System.String)">
+            <summary>
+            \brief Builds candidate type names for design-time resolution.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.TryCreateDesignView(System.String)">
+            <summary>
+            \brief Creates a UserControl instance by type name at design-time.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.FindTypeByName(System.String)">
+            <summary>
+            \brief Searches for a Type across loaded assemblies by full or short name.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.MakeDesignPlaceholder(System.String)">
+            <summary>
+            \brief Creates a placeholder control when design-time view cannot be instantiated.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.AttachDesignViewModelIfEmpty(System.Windows.Controls.UserControl)">
+            <summary>
+            \brief Attaches a design-time ViewModel if DataContext is empty.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabHost.ResolveDesignViewModelType(System.Type)">
+            <summary>
+            \brief Resolves a ViewModel type from a View type using common naming conventions.
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineTabHostItem" -->
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHostItem.PopupProperty">
+            <summary>
+            \brief DP backing field for Popup.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHostItem.Popup">
+            <summary>
+            \brief Gets or sets whether this item represents a popup view.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHostItem.KeyProperty">
+            <summary>
+            \brief DP backing field for Key.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHostItem.Key">
+            <summary>
+            \brief Optional logical key override.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHostItem.TypeProperty">
+            <summary>
+            \brief DP backing field for Type.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHostItem.Type">
+            <summary>
+            \brief Optional concrete type name override.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineDataGrid">
+            <summary>
+            \class DreamineDataGrid
+            \brief Custom DataGrid control for VsLibrary with style auto-merging and MVVM-friendly extensions.
+            
+            This class extends the standard <see cref="T:System.Windows.Controls.DataGrid"/> to provide:
+            - Automatic style merging without requiring App.xaml registration.
+            - Foundation for future MVVM features such as dynamic column binding or row-level command support.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineDataGrid.#cctor">
+            <summary>
+            Static constructor for <see cref="T:Dreamine.UI.Wpf.Controls.DreamineDataGrid"/>.
+            
+            This static constructor overrides the default style key and ensures that
+            the DreamineDataGrid style is applied automatically from an embedded XAML resource.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineExpander">
+             <summary>
+             \class DreamineExpander
+             \brief Custom expandable container with additional styling and command features for VsLibrary.
+            
+             This control extends <see cref="T:System.Windows.Controls.HeaderedContentControl"/> and provides:
+             - Custom styling without requiring App.xaml registration.
+             - Command binding on expand/collapse State change.
+             - Arrow icon positioning (Left/Right).
+             - Expand animation toggle.
+             </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineExpander.#cctor">
+            <summary>
+            Static constructor for <see cref="T:Dreamine.UI.Wpf.Controls.DreamineExpander"/>.
+            
+            - Overrides the default style key to apply custom styles.
+            - Automatically merges the DreamineExpander style XAML into application resources at runtime.
+              This eliminates the need to manually register styles in App.xaml.
+            - Ensures the resource dictionary is added only once to avoid duplication.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineExpander.IsExpanded">
+            <summary>
+            Gets or sets whether the expander is currently expanded.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineExpander.IsExpandedProperty">
+            <summary>
+            Identifies the IsExpanded dependency property.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineExpander.OnIsExpandedChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            Called when the IsExpanded property is changed.
+            Executes the bound <see cref="P:Dreamine.UI.Wpf.Controls.DreamineExpander.ExpandChangedCommand"/> if present.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineExpander.ExpandChangedCommand">
+            <summary>
+            Gets or sets the command to execute when the expanded State changes.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineExpander.ExpandChangedCommandProperty">
+            <summary>
+            Identifies the ExpandChangedCommand dependency property.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineExpander.UseExpandAnimation">
+            <summary>
+            Gets or sets whether to use animation when expanding or collapsing.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineExpander.UseExpandAnimationProperty">
+            <summary>
+            Identifies the UseExpandAnimation dependency property.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineExpander.ArrowPlacement">
+            <summary>
+            Gets or sets the position of the expand arrow icon (Left or Right).
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineExpander.ArrowPlacementProperty">
+            <summary>
+            Identifies the ArrowPlacement dependency property.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineExpander.HeaderFontSize">
+            <summary>
+            Gets or sets the font size used in the header.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineExpander.HeaderFontSizeProperty">
+            <summary>
+            Identifies the HeaderFontSize dependency property.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineExpander.HeaderFontWeight">
+            <summary>
+            Gets or sets the font weight used in the header.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineExpander.HeaderFontWeightProperty">
+            <summary>
+            Identifies the HeaderFontWeight dependency property.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineExpander.HeaderForeground">
+            <summary>
+            Gets or sets the foreground brush of the header text.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineExpander.HeaderForegroundProperty">
+            <summary>
+            Identifies the HeaderForeground dependency property.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineExpander.ShowExpandIcon">
+            <summary>
+            Gets or sets whether the expand/collapse icon is visible.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineExpander.ShowExpandIconProperty">
+            <summary>
+            Identifies the ShowExpandIcon dependency property.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.ExpanderArrowPlacement">
+            <summary>
+            \enum ExpanderArrowPlacement
+            \brief Defines the alignment of the expand/collapse arrow icon in the <see cref="T:Dreamine.UI.Wpf.Controls.DreamineExpander"/>.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.ExpanderArrowPlacement.Left">
+            <summary>
+            Arrow is displayed on the Left side of the header.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.ExpanderArrowPlacement.Right">
+            <summary>
+            Arrow is displayed on the Right side of the header.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineImage">
+             <summary>
+             @brief VsLibrary 공통 이미지 컨트롤.
+            
+             @details
+             - 전역 스타일 자동 병합(DreamineImageStyle.xaml).
+             - CornerRadius 클리핑 지원.
+             - FallbackSource(로드 실패 시 대체 이미지) 지원.
+             - ClickCommand, CommandParameter 지원.
+             - IsWindowDragEnabled=true 시 제목표시줄처럼 드래그(DragMove) 가능.
+             - IsDoubleClickToggleMaximize=true 시 더블클릭으로 최대화/복원 토글.
+             </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineImage.#cctor">
+            <summary>
+            @brief 정적 생성자: 스타일 병합 및 컨테이너 바인딩.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineImage.#ctor">
+            <summary>
+            @brief 생성자: 마우스/로드 이벤트 연결.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineImage.OnPreviewMouseLeftButtonDown(System.Object,System.Windows.Input.MouseButtonEventArgs)">
+            <summary>
+            @brief 마우스 다운: 더블클릭/드래그 시작 판단.
+            @details
+            - e.ClickCount == 2 이고 IsDoubleClickToggleMaximize 가 true이면 최대화/복원 토글 후 종료.
+            - 그렇지 않으면 드래그 기준점 기록 및 캡처.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineImage.OnMouseMove(System.Object,System.Windows.Input.MouseEventArgs)">
+            <summary>
+            @brief 마우스 무브: 드래그 임계값 초과 시 DragMove 실행.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineImage.OnMouseLeftButtonUp(System.Object,System.Windows.Input.MouseButtonEventArgs)">
+            <summary>
+            @brief 마우스 업: 드래그가 아니면 ClickCommand 실행.
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineLabel" -->
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineLabel.#cctor" -->
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineLabel.CommandProperty">
+            <summary>
+            \brief Attached ICommand to execute when trigger event fires.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineLabel.CommandParameterProperty">
+            <summary>
+            \brief Attached command parameter.
+            \details If null, event args will be passed.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineLabel.CommandTriggerNameProperty">
+            <summary>
+            \brief Attached trigger event name list (comma-separated).
+            \details Example: "PreviewMouseUp,MouseDoubleClick,TouchUp"
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineLabel.IsHandlersHookedProperty">
+            <summary>
+            \brief Internal flag: prevent duplicate handler hookup.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineLabel.SetCommandTriggerName(System.Windows.DependencyObject,System.String)">
+            <summary>
+            \brief Sets trigger names.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineLabel.GetCommandTriggerName(System.Windows.DependencyObject)">
+            <summary>
+            \brief Gets trigger names.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineLabel.SetCommand(System.Windows.DependencyObject,System.Windows.Input.ICommand)">
+            <summary>
+            \brief Sets command.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineLabel.GetCommand(System.Windows.DependencyObject)">
+            <summary>
+            \brief Gets command.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineLabel.SetCommandParameter(System.Windows.DependencyObject,System.Object)">
+            <summary>
+            \brief Sets command parameter.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineLabel.GetCommandParameter(System.Windows.DependencyObject)">
+            <summary>
+            \brief Gets command parameter.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineLabel.OnCommandChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            \brief Hooks internal event handlers once when Command is first set.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineLabel.TryExecuteCommand(System.Windows.DependencyObject,System.String,System.Windows.RoutedEventArgs)">
+            <summary>
+            \brief Executes ICommand if eventName is included in trigger list.
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineListBox" -->
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineListBox.#cctor" -->
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineListBox.#ctor" -->
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.TryMergeStyleOnce">
+            <summary>
+            \brief DreamineListBoxStyle.xaml을 Application Resource에 1회만 병합한다.
+            \note 디자인타임/테스트 환경에서 Application.Current가 null일 수 있으므로 null-safe 처리한다.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineListBox.CommandProperty">
+             <summary>
+             \property Command
+             \brief Defines an ICommand to be executed when a specified event occurs.
+            
+             This property is defined as an AttachedProperty and  
+             executes the bound ICommand when events like Click, TouchUp, or PreviewKeyUp are triggered.
+             </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineListBox.CommandParameterProperty">
+             <summary>
+             \property CommandParameter
+             \brief The parameter to pass when executing the Command.
+            
+             If this property is not set, the event argument (e.g., RoutedEventArgs or MouseButtonEventArgs)  
+             will be passed automatically as the default parameter.
+             </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineListBox.CommandTriggerNameProperty">
+             <summary>
+             \property CommandTriggerName
+             \brief The event name that determines when the Command should be executed.
+            
+             For example: "Click", "PreviewMouseUp", "PreviewKeyUp", "TouchUp", etc.  
+             The command will only be executed if the specified event name matches the actual triggered event.
+             </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.SetCommandTriggerName(System.Windows.DependencyObject,System.String)">
+            <summary>
+            Sets the value of the CommandTriggerName property.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.GetCommandTriggerName(System.Windows.DependencyObject)">
+            <summary>
+            Gets the value of the CommandTriggerName property.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.SetCommand(System.Windows.DependencyObject,System.Windows.Input.ICommand)">
+            <summary>
+            Sets the value of the Command attached property.
+            </summary>
+            <Param name="obj">The target DependencyObject.</Param>
+            <Param name="value">The ICommand Instance to bind.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.GetCommand(System.Windows.DependencyObject)">
+            <summary>
+            Gets the value of the Command attached property.
+            </summary>
+            <Param name="obj">The target DependencyObject.</Param>
+            <returns>The currently bound ICommand.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.SetCommandParameter(System.Windows.DependencyObject,System.Object)">
+            <summary>
+            Sets the value of the CommandParameter attached property.
+            </summary>
+            <Param name="obj">The target DependencyObject.</Param>
+            <Param name="value">The parameter to pass when executing the command.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.GetCommandParameter(System.Windows.DependencyObject)">
+            <summary>
+            Gets the value of the CommandParameter attached property.
+            </summary>
+            <Param name="obj">The target DependencyObject.</Param>
+            <returns>The currently set command parameter object.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.OnCommandChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+             <summary>
+             Registers event handlers when the Command property is changed.
+            
+             Supported internal events:
+             - PreviewMouseUp (MouseButtonEventArgs)
+             - MouseDoubleClick (MouseButtonEventArgs)
+             - PreviewKeyDown (interpreted as PreviewKeyUp)
+             - TouchUp (TouchEventArgs)
+             - Click (RoutedEventArgs)
+            
+             During runtime, only the events whose names match the `CommandTriggerName` will invoke the bound ICommand.
+             </summary>
+             <Param name="d">The DependencyObject to which the command is attached (usually a DreamineListBox or other UIElement).</Param>
+             <Param name="e">The event arguments for the property change.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.TryExecuteCommand(System.Windows.DependencyObject,System.String,System.Windows.RoutedEventArgs)">
+             <summary>
+             Executes the attached command if the given event name matches one of the values specified in `CommandTriggerName`.
+            
+             The `CommandTriggerName` supports multiple values separated by commas.  
+             If any value matches the actual event name, the command will be executed.
+            
+             If `CommandParameter` is set, it will be passed to the command execution.  
+             Otherwise, the event arguments (e.g., RoutedEventArgs, MouseButtonEventArgs) are used as the default parameter.
+             </summary>
+             <Param name="d">The object where the command and trigger properties are set.</Param>
+             <Param name="eventName">The actual name of the event that occurred (e.g., "Click", "PreviewMouseUp").</Param>
+             <Param name="eventArgs">The arguments for the event that triggered the command.</Param>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreaminePasswordBox" -->
+        <member name="F:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.HintProperty">
+            <summary> \brief 비어있을 때 표시할 힌트 텍스트 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.ErrorProperty">
+            <summary> \brief 에러 메시지 표시 텍스트 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.IsPasswordEmptyProperty">
+            <summary> \brief 내부 PasswordBox가 비었는지 여부(힌트 표시 제어용) </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.PasswordProperty">
+            <summary>
+            \brief 바인딩 가능한 패스워드 문자열 (TwoWay)
+            \details VM에 TwoWay 바인딩하여 사용
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.Password">
+            <summary> \brief Password 문자열 (DP) </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.Hint">
+            <summary> \brief Hint 문자열 (DP) </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.Error">
+            <summary> \brief Error 문자열 (DP) </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.IsPasswordEmpty">
+            <summary> \brief 비었는지 여부 (DP) </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreaminePasswordBox._partPasswordBox">
+            <summary> \brief 템플릿 내부 PasswordBox 캐시 </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreaminePasswordBox._passwordChangedHandler">
+            <summary> \brief PasswordBox.PasswordChanged 핸들러 참조(중복등록/해제용) </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreaminePasswordBox._isSyncing">
+            <summary> \brief 재진입(무한루프) 방지 플래그 </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.OnApplyTemplate">
+            <summary>
+            \brief 템플릿 적용 시 PART_PasswordBox를 찾아 이벤트를 연결
+            \details 템플릿이 다시 적용될 수 있으므로, 이전 핸들러를 해제하고 다시 연결한다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.DetachPartHandlers">
+            <summary> \brief 템플릿 재적용 대비: PART 및 이벤트 해제 </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.OnHostMouseDown(System.Object,System.Windows.Input.MouseButtonEventArgs)">
+            <summary> \brief 컨트롤 클릭 시 PART로 포커스 </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.OnHostGotKeyboardFocus(System.Object,System.Windows.Input.KeyboardFocusChangedEventArgs)">
+            <summary> \brief 키보드 포커스 진입 시 PART로 포커스 </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.OnPasswordChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            \brief Password DP가 외부에서 변경되면 PART_PasswordBox에도 반영
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.SyncDpToPart(System.String)">
+            <summary> \brief DP 값을 PART에 반영(재진입 가드 포함) </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineRadioButton">
+            <summary>
+            \class DreamineRadioButton
+            \brief A custom RadioButton with built-in command binding functionality.
+            
+            This control allows you to bind commands to interaction events like Click, MouseUp, KeyUp, or TouchUp
+            using attached properties. XAML style is auto-merged without requiring App.xaml modification.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineRadioButton.#cctor">
+            <summary>
+            Static constructor that overrides the default style and merges the style resource.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineRadioButton.CommandProperty">
+             <summary>
+             \property Command
+             \brief Defines an <see cref="T:System.Windows.Input.ICommand"/> to be executed when a specified event occurs.
+            
+             Declared as an attached property to support command behavior from XAML.
+             </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineRadioButton.CommandParameterProperty">
+             <summary>
+             \property CommandParameter
+             \brief Parameter passed to the command when executed.
+            
+             If not specified, the event arguments will be used as the default parameter.
+             </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineRadioButton.CommandTriggerNameProperty">
+             <summary>
+             \property CommandTriggerName
+             \brief Specifies which event(s) will trigger command execution.
+            
+             Example values: "Click", "PreviewMouseUp", "PreviewKeyUp", "TouchUp"
+             </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineRadioButton.SetCommandTriggerName(System.Windows.DependencyObject,System.String)">
+            <summary>
+            Sets the CommandTriggerName property value.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineRadioButton.GetCommandTriggerName(System.Windows.DependencyObject)">
+            <summary>
+            Gets the CommandTriggerName property value.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineRadioButton.SetCommand(System.Windows.DependencyObject,System.Windows.Input.ICommand)">
+            <summary>
+            Sets the Command property.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineRadioButton.GetCommand(System.Windows.DependencyObject)">
+            <summary>
+            Gets the Command property.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineRadioButton.SetCommandParameter(System.Windows.DependencyObject,System.Object)">
+            <summary>
+            Sets the CommandParameter property.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineRadioButton.GetCommandParameter(System.Windows.DependencyObject)">
+            <summary>
+            Gets the CommandParameter property.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineRadioButton.OnCommandChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+             <summary>
+             Registers event handlers for relevant UI events when the Command property changes.
+            
+             Supported events:
+             - PreviewMouseUp
+             - MouseDoubleClick
+             - PreviewKeyDown (internally mapped to PreviewKeyUp)
+             - TouchUp
+             - Click
+             </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineRadioButton.TryExecuteCommand(System.Windows.DependencyObject,System.String,System.Windows.RoutedEventArgs)">
+             <summary>
+             Executes the command if the given event matches the CommandTriggerName.
+            
+             Supports comma-separated multiple event names in CommandTriggerName.
+             Falls back to event arguments if CommandParameter is not explicitly set.
+             </summary>
+             <Param name="d">The element that has the command and trigger properties assigned.</Param>
+             <Param name="eventName">The name of the event that occurred (e.g., "Click", "MouseDoubleClick").</Param>
+             <Param name="eventArgs">The event arguments associated with the triggered event.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabControl.DetachTab(Dreamine.UI.Wpf.Controls.VsTabItem)">
+            <summary>
+            Detach the tab into a separate floating window.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTabControl.AddTab(System.String,System.Windows.UIElement,System.Windows.Media.ImageSource,System.Boolean)">
+            <summary>
+            Add a new tab to the control.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.VsTabItem">
+            <summary>
+            Custom TabItem with extended design properties and detachable features.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineTextBlock">
+            <summary>
+            \class DreamineTextBlock
+            \brief A custom TextBlock control used in VsLibrary.
+            
+            Inherits from the default WPF TextBlock and provides automatic style application
+            and resource merging. Designed to work without requiring manual style registration
+            in App.xaml.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBlock.#cctor">
+             <summary>
+             Static constructor for the DreamineTextBlock class.
+            
+             - Overrides the default style key to apply DreamineTextBlock-specific styles.
+             - Merges the DreamineTextBlockStyle.xaml resource into the global resources to ensure
+               automatic style application without requiring App.xaml registration.
+             </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTextBlock.CommandProperty">
+             <summary>
+             \property Command
+             \brief Defines the ICommand to execute when the specified event is triggered.
+            
+             This property is defined as an AttachedProperty and executes the bound ICommand  
+             when events such as Click, TouchUp, or PreviewKeyUp occur.
+             </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTextBlock.CommandParameterProperty">
+             <summary>
+             \property CommandParameter
+             \brief Specifies the parameter to pass when executing the Command.
+            
+             If this property is not set, the event argument (e.g., RoutedEventArgs or MouseButtonEventArgs)  
+             will be automatically passed to the command.
+             </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTextBlock.CommandTriggerNameProperty">
+            <summary>
+            \property CommandTriggerName
+            \brief Determines which event will trigger the execution of the associated ICommand.
+            
+            Examples include: "Click", "PreviewMouseUp", "PreviewKeyUp", "TouchUp", etc.  
+            The command will only execute if the specified event name matches the name of the raised event.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBlock.SetCommandTriggerName(System.Windows.DependencyObject,System.String)">
+            <summary>
+            Sets the value of the CommandTriggerName attached property.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBlock.GetCommandTriggerName(System.Windows.DependencyObject)">
+            <summary>
+            Gets the value of the CommandTriggerName attached property.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBlock.SetCommand(System.Windows.DependencyObject,System.Windows.Input.ICommand)">
+            <summary>
+            Sets the value of the Command attached property.
+            </summary>
+            <Param name="obj">The target DependencyObject.</Param>
+            <Param name="value">The ICommand Instance to bind.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBlock.GetCommand(System.Windows.DependencyObject)">
+            <summary>
+            Gets the value of the Command attached property.
+            </summary>
+            <Param name="obj">The target DependencyObject.</Param>
+            <returns>The currently assigned ICommand Instance.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBlock.SetCommandParameter(System.Windows.DependencyObject,System.Object)">
+            <summary>
+            Sets the CommandParameter attached property.
+            </summary>
+            <Param name="obj">The target DependencyObject.</Param>
+            <Param name="value">The parameter to pass when executing the command.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBlock.GetCommandParameter(System.Windows.DependencyObject)">
+            <summary>
+            Gets the CommandParameter attached property.
+            </summary>
+            <Param name="obj">The target DependencyObject.</Param>
+            <returns>The parameter object set for command execution.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBlock.OnCommandChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+             <summary>
+             Registers event handlers when the Command attached property is changed.
+            
+             Internally supported events:
+             - PreviewMouseUp (MouseButtonEventArgs)
+             - PreviewKeyDown (handled as PreviewKeyUp)
+             - TouchUp (TouchEventArgs)
+             - Click (RoutedEventArgs)
+            
+             During event invocation, the value of CommandTriggerName is compared to determine whether the command should execute.
+             </summary>
+             <Param name="d">The DependencyObject to which the command is attached (typically a DreamineTextBlock).</Param>
+             <Param name="e">Information about the property change event.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBlock.TryExecuteCommand(System.Windows.DependencyObject,System.String,System.Windows.RoutedEventArgs)">
+             <summary>
+             Executes the bound ICommand if the specified event name matches any entry in the CommandTriggerName list.
+            
+             CommandTriggerName supports multiple event names separated by commas (",").
+             The command is executed only if the actual event name matches one of the listed trigger names.
+            
+             Example: "Click,MouseDoubleClick,PreviewKeyUp"
+            
+             If CommandParameter is explicitly set, it is passed as the command argument.  
+             Otherwise, the event argument (e.g., RoutedEventArgs, MouseButtonEventArgs) is used as the parameter.
+             </summary>
+             <Param name="d">The object on which the command and trigger properties are set.</Param>
+             <Param name="eventName">The actual name of the triggered event (e.g., "Click", "MouseDoubleClick").</Param>
+             <Param name="eventArgs">The event argument associated with the triggered event.</Param>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineTextBox" -->
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTextBox._previousFocusedElement">
+            <summary>
+            \brief 마지막으로 포커스를 가지고 있던 요소(Enter 복귀 대상).
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.#cctor">
+            <summary>
+            \brief Static ctor: DefaultStyleKey + ResourceDictionary merge.
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineTextBox.#ctor" -->
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.OnGotKeyboardFocus_StorePreviousFocus(System.Object,System.Windows.Input.KeyboardFocusChangedEventArgs)">
+            <summary>
+            \brief GotKeyboardFocus에서 이전 포커스(OldFocus)를 저장한다.
+            </summary>
+            <param name="sender">sender</param>
+            <param name="e">focus event args</param>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineTextBox.OnPreviewKeyDown(System.Windows.Input.KeyEventArgs)" -->
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.FindFirstFocusableChild(System.Windows.DependencyObject)">
+            <summary>
+            \brief 첫 focusable child를 DFS로 탐색한다.
+            </summary>
+            <param name="parent">탐색 시작 parent</param>
+            <returns>첫 focusable UIElement 또는 null</returns>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTextBox.CommandProperty">
+            <summary>
+            \property Command
+            \brief Attached ICommand.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTextBox.CommandParameterProperty">
+            <summary>
+            \property CommandParameter
+            \brief Attached command parameter.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTextBox.CommandTriggerNameProperty">
+            <summary>
+            \property CommandTriggerName
+            \brief Trigger event name list (comma-separated).
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.SetCommandTriggerName(System.Windows.DependencyObject,System.String)">
+            <summary>
+            \brief Set CommandTriggerName.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.GetCommandTriggerName(System.Windows.DependencyObject)">
+            <summary>
+            \brief Get CommandTriggerName.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.SetCommand(System.Windows.DependencyObject,System.Windows.Input.ICommand)">
+            <summary>
+            \brief Set Command.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.GetCommand(System.Windows.DependencyObject)">
+            <summary>
+            \brief Get Command.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.SetCommandParameter(System.Windows.DependencyObject,System.Object)">
+            <summary>
+            \brief Set CommandParameter.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.GetCommandParameter(System.Windows.DependencyObject)">
+            <summary>
+            \brief Get CommandParameter.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.OnCommandChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            \brief Command 변경 시 이벤트 훅 등록.
+            \note (중요) 중복 훅 방지는 별도 플래그로 막는 것을 권장.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.TryExecuteCommand(System.Windows.DependencyObject,System.String,System.Windows.RoutedEventArgs)">
+            <summary>
+            \brief TriggerName과 이벤트 이름이 매칭되면 Command 실행.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTextBox.HintProperty">
+            <summary>
+            \property Hint
+            \brief Placeholder 문자열.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTextBox.Hint">
+            <summary>
+            \brief Hint.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTextBox.ErrorProperty">
+            <summary>
+            \property Error
+            \brief 에러 문자열(템플릿 표시용).
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTextBox.Error">
+            <summary>
+            \brief Error.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner">
+            <summary>
+            \class VsTimePicker
+            \brief A custom WPF control for time input (Hour:Minute:Second) with up/down increment support.
+            
+            This control allows users to input time in the format of HH:mm:ss,  
+            and provides built-in support for incrementing or decrementing values  
+            using buttons or keyboard input (e.g., arrow keys).
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.PART_HourBox">
+            <summary>
+            Template part name for the hour input TextBox.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.PART_MinBox">
+            <summary>
+            Template part name for the minute input TextBox.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.PART_SecBox">
+            <summary>
+            Template part name for the second input TextBox.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.PART_UpButton">
+            <summary>
+            Template part name for the up button (increment).
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.PART_DownButton">
+            <summary>
+            Template part name for the down button (decrement).
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner._hourBox">
+            <summary>
+            Backing field for the hour TextBox part.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner._minBox">
+            <summary>
+            Backing field for the minute TextBox part.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner._secBox">
+            <summary>
+            Backing field for the second TextBox part.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner._upButton">
+            <summary>
+            Backing field for the up button part.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner._downButton">
+            <summary>
+            Backing field for the down button part.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.eFocusedBox">
+            <summary>
+            Represents which time component (Hour, Minute, Second) is currently focused by the user.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner._activeBox">
+            <summary>
+            Tracks the currently active time input field. Defaults to <c>Minute</c>.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Time">
+            <summary>
+            Gets or sets the current TimeSpan value.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.TimeProperty">
+            <summary>
+            Identifies the Time dependency property.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.OnTimeChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+             <summary>
+             \brief Handles changes to the <c>Time</c> dependency property.
+            
+             When the Time value is updated (e.g., by binding or code),  
+             this method synchronizes the hour, minute, and second text boxes  
+             to reflect the new TimeSpan value.
+             </summary>
+             <Param name="d">The dependency object where the property changed. Expected to be a DreamineTimeSpinner Instance.</Param>
+             <Param name="e">Details about the property change event.</Param>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.UpCommand">
+            <summary>
+            Up command used to increment time.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.DownCommand">
+            <summary>
+            Down command used to decrement time.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.#cctor">
+             <summary>
+             Static constructor for the <see cref="T:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner"/> class.
+            
+             - Overrides the default style key to apply custom control styling.
+             - Automatically merges <c>DreamineTimeSpinnerStyle.xaml</c> into the application resources
+               if it is not already present, allowing the control to be styled without modifying App.xaml.
+            
+             This ensures that the custom style is applied globally even if the user does not explicitly
+             register the style resource.
+             </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.#ctor">
+            <summary>
+            Initializes a new Instance of the DreamineTimeSpinner class.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.OnApplyTemplate">
+            <summary>
+            Called when the control template is applied. Binds parts and registers focus events.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.HourBox_LostFocus(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            Called when the hour box loses focus.
+            Updates the <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Time"/> property based on the current input values.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.MinBox_LostFocus(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            Called when the minute box loses focus.
+            Updates the <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Time"/> property based on the current input values.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.SecBox_LostFocus(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            Called when the second box loses focus.
+            Updates the <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Time"/> property based on the current input values.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.HourBox_PreviewKeyDown(System.Object,System.Windows.Input.KeyEventArgs)">
+            <summary>
+            Called when the Enter key is pressed in the hour box.
+            Applies the current text to the <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Time"/> value.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.MinBox_PreviewKeyDown(System.Object,System.Windows.Input.KeyEventArgs)">
+            <summary>
+            Called when the Enter key is pressed in the minute box.
+            Applies the current text to the <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Time"/> value.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.SecBox_PreviewKeyDown(System.Object,System.Windows.Input.KeyEventArgs)">
+            <summary>
+            Called when the Enter key is pressed in the second box.
+            Applies the current text to the <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Time"/> value.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.TryUpdateTimeFromBoxes">
+             <summary>
+             Parses the current values from the hour, minute, and second text boxes,
+             clamps them to valid ranges (00–23 for hours, 00–59 for minutes/seconds),
+             and updates the <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Time"/> property accordingly.
+            
+             If parsing fails, the value defaults to 0. After update,
+             the text boxes are refreshed to reflect the normalized time.
+             </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Parse(System.String)">
+            <summary>
+            Attempts to parse a string into an integer.
+            Returns 0 if the string is null, empty, or not a valid number.
+            </summary>
+            <Param name="s">The string to parse.</Param>
+            <returns>The parsed integer, or 0 if invalid.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Clamp(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Ensures a given integer value falls within a specified inclusive range.
+            </summary>
+            <Param name="value">The value to clamp.</Param>
+            <Param name="min">Minimum allowed value.</Param>
+            <Param name="max">Maximum allowed value.</Param>
+            <returns>The clamped value between min and max.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.OnUpExecuted(System.Object,System.Windows.Input.ExecutedRoutedEventArgs)">
+             <summary>
+             Increments the currently focused time component (hour, minute, or second).
+            
+             This method updates the <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Time"/> property by increasing the selected time segment
+             depending on which TextBox currently has focus:
+             - Hour: wraps from 23 → 0
+             - Minute: 59 → 0 and increments hour (wraps hour from 23 → 0 if needed)
+             - Second: 59 → 0 and increments minute (which may in turn increment hour)
+            
+             Ensures time remains within the 24-hour format (00:00:00 to 23:59:59).
+             </summary>
+             <Param name="sender">The source object that triggered the command.</Param>
+             <Param name="e">The event arguments containing command context.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.OnDownExecuted(System.Object,System.Windows.Input.ExecutedRoutedEventArgs)">
+            <summary>
+            Decrements the currently focused time component (hour, minute, or second).
+            
+            This method adjusts the <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.Time"/> property by decreasing one unit from the currently
+            focused part (hour, minute, or second). It also handles underflow:
+            - For hours: 0 → 23 (wrap-around)
+            - For minutes: 0 → 59 and hour decremented
+            - For seconds: 0 → 59 and minute decremented (hour may also decrement if minute was 0)
+            
+            The result is clamped within valid time ranges (00:00:00 to 23:59:59).
+            </summary>
+            <Param name="sender">The source of the command execution event.</Param>
+            <Param name="e">The command event arguments.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTimeSpinner.UpdateTextBoxes">
+            <summary>
+            Updates the values in the text boxes to reflect the Time property.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.Converters.NullToUnsetConverter">
+            <summary>
+            null이면 DependencyProperty.UnsetValue를 반환하여 WPF 상속(Inheritance) 체인이 동작하도록 합니다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox">
+            <summary>
+            Provides utility methods to display custom _message boxes with optional auto-click and delay functionality.
+            Supports both synchronous and asynchronous execution.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox.State">
+            <summary>
+            Internal State tracker to prevent duplicate _message boxes from showing simultaneously.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox.State.IsOpen">
+            <summary>Indicates whether a message box is currently open.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox.State.LastTitle">
+            <summary>Stores the last shown title to avoid duplicate prompts.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox.State.LastMessage">
+            <summary>Stores the last shown message.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox.State.LastIcon">
+            <summary>Stores the last used icon.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox.State.LastButtons">
+            <summary>Stores the last used button configuration.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox.State.IsSame(System.String,System.String,System.Windows.MessageBoxImage,System.Windows.MessageBoxButton)">
+            <summary>
+            Compares the provided parameters with the last _message box State.
+            </summary>
+            <Param name="title">The _title of the _message box.</Param>
+            <Param name="message">The _content of the _message.</Param>
+            <Param name="icon">The icon to display.</Param>
+            <Param name="buttons">The buttons to display.</Param>
+            <returns>True if the parameters match the last shown _message box and one is already open; otherwise, false.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox.GetActiveWindow">
+            <summary>
+            Retrieves the currently active WPF window to use as the owner of the _message box.
+            </summary>
+            <returns>The active <see cref="T:System.Windows.Window"/>, or null if none is active.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox.Show(System.String,System.String,System.Windows.MessageBoxButton,System.Windows.MessageBoxImage,System.Windows.MessageBoxResult,System.Int32,System.Int32)">
+            <summary>
+            Displays a custom _message box in a synchronous (blocking) way.
+            </summary>
+            <Param name="message">The text to display in the _message box.</Param>
+            <Param name="title">The caption of the _message box. Default is "Information".</Param>
+            <Param name="buttons">The buttons to include in the _message box. Default is <see cref="F:System.Windows.MessageBoxButton.OK"/>.</Param>
+            <Param name="icon">The icon to display in the _message box. Default is <see cref="F:System.Windows.MessageBoxImage.None"/>.</Param>
+            <Param name="autoClick">The button to automatically click after delay. Default is none.</Param>
+            <Param name="autoClickDelaySeconds">Time in seconds before <paramref name="autoClick"/> is triggered. 0 disables auto-click.</Param>
+            <Param name="enableDelaySeconds">Time in seconds before any button becomes enabled. 0 disables delay.</Param>
+            <returns>The result of the user's choice from the _message box.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox.ShowAsync(System.String,System.String,System.Windows.MessageBoxButton,System.Windows.MessageBoxImage,System.Action{System.Windows.MessageBoxResult},System.Windows.MessageBoxResult,System.Int32,System.Int32)">
+            <summary>
+            Displays a custom _message box asynchronously (non-blocking), with optional callback.
+            Duplicate _message boxes with identical _content are suppressed.
+            </summary>
+            <Param name="message">The text to display in the _message box.</Param>
+            <Param name="title">The caption of the _message box. Default is "Information".</Param>
+            <Param name="buttons">The buttons to include in the _message box. Default is <see cref="F:System.Windows.MessageBoxButton.OK"/>.</Param>
+            <Param name="icon">The icon to display in the _message box. Default is <see cref="F:System.Windows.MessageBoxImage.None"/>.</Param>
+            <Param name="callback">Optional callback to invoke after the user closes the _message box.</Param>
+            <Param name="autoClick">The button to automatically click after delay. Default is none.</Param>
+            <Param name="autoClickDelaySeconds">Time in seconds before <paramref name="autoClick"/> is triggered. 0 disables auto-click.</Param>
+            <Param name="enableDelaySeconds">Time in seconds before any button becomes enabled. 0 disables delay.</Param>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow">
+            <summary>
+            Custom _message box window for user interaction.
+            Supports various <see cref="T:System.Windows.MessageBoxButton"/> and <see cref="T:System.Windows.MessageBoxImage"/> configurations.
+            </summary>
+            <summary>
+            DreamineMessageBoxWindow
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.Result">
+            <summary>
+            Gets the result selected by the user.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.#ctor(System.String,System.String,System.Windows.MessageBoxImage,System.Windows.MessageBoxButton,System.Windows.MessageBoxResult,System.Int32,System.Int32)">
+            <summary>
+            Initializes a new Instance of the <see cref="T:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow"/> class.
+            </summary>
+            <Param name="title">The _title of the _message box window.</Param>
+            <Param name="message">The _message to display.</Param>
+            <Param name="icon">The icon to display (Error, Warning, Info, Question, etc.).</Param>
+            <Param name="buttons">The type of buttons to show (OK, OKCancel, YesNo, etc.).</Param>
+            <Param name="autoClickTarget">If set, automatically clicks the specified result after the given delay.</Param>
+            <Param name="autoClickDelaySeconds">Delay (in seconds) before auto-click occurs.</Param>
+            <Param name="enableDelaySeconds">If greater than 0, disables all buttons for the given seconds before re-enabling.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.DisableButtonsAndEnableLaterAsync(System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Disables all buttons temporarily and enables them again after the specified delay.
+            Also updates the button text with countdown seconds.
+            </summary>
+            <Param name="delaySeconds">Time in seconds to disable the buttons.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.StartAutoClickAsync(System.Windows.MessageBoxResult,System.Int32,System.Threading.CancellationToken)">
+            <summary>
+            Automatically triggers the target button click after a delay, showing a countdown in the button text.
+            </summary>
+            <Param name="target">The button result to trigger automatically.</Param>
+            <Param name="delaySeconds">Time in seconds before auto-click.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.GetTargetButton(System.Windows.MessageBoxResult)">
+            <summary>
+            Gets the actual button UI element corresponding to the specified result.
+            </summary>
+            <Param name="result">The result to map to a button.</Param>
+            <returns>The corresponding button control, or null if not found.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.GetEmoji(System.Windows.MessageBoxImage)">
+            <summary>
+            Returns an emoji representation for the specified icon type.
+            </summary>
+            <Param name="icon">The <see cref="T:System.Windows.MessageBoxImage"/> type.</Param>
+            <returns>An emoji string corresponding to the icon.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.SetupButtons(System.Windows.MessageBoxButton)">
+            <summary>
+            Configures the visibility of buttons based on the specified <see cref="T:System.Windows.MessageBoxButton"/> layout.
+            </summary>
+            <Param name="buttons">The button layout to display.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.BtnOk_Click(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            Handles OK button click.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.BtnCancel_Click(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            Handles Cancel button click.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.BtnYes_Click(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            Handles Yes button click.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.BtnNo_Click(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            Handles No button click.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.Navigation.DesignButtonDatas">
+            <summary>
+            Provides sample button data for design-time visualization of the navigation bar.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DesignButtonDatas.#ctor">
+            <summary>
+            Initializes a collection with predefined dummy buttons for design-time.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar">
+            <summary>
+            Custom navigation bar control with automatic logout, permission control,
+            dynamic buttons, and localization support.
+            </summary>
+            <summary>
+            DreamineNavigationBar
+            </summary>
+        </member>
+        <member name="E:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.AutoLogoutOccurred">
+            <summary>
+            Occurs when the system automatically logs out the current user due to inactivity.
+            </summary>
+            <remarks>
+            This event is triggered only if <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.AutoLogoutTimeout"/> is greater than 0
+            and the user has been idle for the specified duration.
+            </remarks>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.AutoLogoutTimeout">
+            <summary>
+            Gets or sets the auto-logout timeout in seconds.
+            </summary>
+            <value>
+            A value greater than 0 enables auto-logout after the specified number of seconds without user input.
+            A value of 0 disables the auto-logout feature entirely.
+            </value>
+            <example>
+            <code>
+            AutoLogoutTimeout = 300; // Logs out after 5 minutes of inactivity
+            </code>
+            </example>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.AutoLogoutTimeoutProperty">
+            <summary>
+            Identifies the <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.AutoLogoutTimeout"/> dependency property.
+            </summary>
+            <remarks>
+            Used to configure the inactivity timeout (in seconds) after which automatic logout is triggered.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.OnAutoLogoutTimeoutChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            Handles changes to the <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.AutoLogoutTimeout"/> property.
+            Starts or stops the auto logout timer based on the new value.
+            </summary>
+            <Param name="d">The dependency object (should be <see cref="T:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar"/>).</Param>
+            <Param name="e">The event data containing old and new values.</Param>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar._instances">
+            <summary>
+            Stores all active instances of <see cref="T:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar"/> for global input tracking.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar._isInputHooked">
+            <summary>
+            Tracks whether global input hook has already been registered.
+            Prevents multiple event subscriptions.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.EnsureGlobalInputHook">
+            <summary>
+            Registers a global input hook for mouse, keyboard, and touch input.
+            Used to detect user activity and reset the logout timer on any interaction.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.OnGlobalInputStatic(System.Object,System.Windows.Input.PreProcessInputEventArgs)">
+            <summary>
+            Static handler that listens for global user input events (mouse, keyboard, or touch).
+            For each active <see cref="T:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar"/> Instance, this resets the auto-logout timer
+            if the timeout is enabled.
+            </summary>
+            <Param name="sender">The input event sender (typically <see cref="T:System.Windows.Input.InputManager"/>).</Param>
+            <Param name="e">Contains information about the input event.</Param>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar._logoutTimer">
+            <summary>
+            Internal timer used to track inactivity and trigger auto-logout after a specified timeout.
+            Initialized only when <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.AutoLogoutTimeout"/> is greater than zero.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.ResetLogoutTimerIfNeeded">
+            <summary>
+            Resets or stops the logout timer depending on the current <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.AutoLogoutTimeout"/> value.
+            If the timeout is positive, the timer is (re)started; otherwise, it is stopped.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.InitializeOrResetLogoutTimer">
+            <summary>
+            Initializes or resets the logout timer based on user activity and login State.
+            </summary>
+            <remarks>
+            If <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.VsNavigationHelper.CurrentUser"/> is null or once-login _mode is disabled,
+            the timer is not started. Otherwise, the timer counts down from <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.AutoLogoutTimeout"/> seconds
+            and triggers logout via <see cref="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.OnAutoLogout"/> if no input is detected.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.StopLogoutTimer">
+            <summary>
+            Stops the logout timer if it is running.
+            </summary>
+            <remarks>
+            Typically called when <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.AutoLogoutTimeout"/> is set to zero
+            or when the user manually logs out.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.OnAutoLogout">
+            <summary>
+            Defines the actions to take when the user is automatically logged out due to inactivity.
+            </summary>
+            <remarks>
+            - Resets all button grades to 0  
+            - Clears the current user from <see cref="T:Dreamine.UI.Wpf.Controls.Navigation.VsNavigationHelper"/>  
+            - Triggers the <see cref="E:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.AutoLogoutOccurred"/> event  
+            - Displays a user notification _message  
+            </remarks>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.OnceLogin">
+            <summary>
+            Gets or sets whether to enable once-login _mode.
+            </summary>
+            <value>
+            If true, login will not be requested again after the first successful authentication,
+            even if permission is insufficient.  
+            If false, the login dialog will appear again every time permission is insufficient.
+            </value>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.OnceLoginProperty">
+            <summary>
+            Identifies the <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.OnceLogin"/> dependency property.
+            </summary>
+            <remarks>
+            When this property is set to true, the login dialog will only appear once per session,
+            even if permission requirements are not met later.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.OnOnceLoginChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            Handles changes to the <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.OnceLogin"/> property.
+            Updates the global <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.VsNavigationHelper.IsOnceLoginEnabled"/> flag accordingly.
+            </summary>
+            <Param name="d">The dependency object (should be <see cref="T:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar"/>).</Param>
+            <Param name="e">Event data containing the new value.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.#ctor">
+            <summary>
+            Initializes a new Instance of the <see cref="T:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar"/> control.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.Language">
+            <summary>
+            Identifies the <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.Language"/> dependency property,
+            which defines the language for button text and navigation UI.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.LanguageProperty">
+            <summary>
+            Gets or sets the current language of the navigation bar.
+            Used for localizing button _content and other UI elements.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.ButtonDatas">
+            <summary>
+            Gets or sets the list of navigation buttons to display in the bar.
+            </summary>
+            <remarks>
+            This property supports XAML binding and allows runtime updates to the button set.
+            Any change in the collection triggers layout recalculation via <see cref="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.ButtonDatas_CollectionChanged(System.Object,System.Collections.Specialized.NotifyCollectionChangedEventArgs)"/>.
+            </remarks>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.ButtonDatasProperty">
+            <summary>
+            Identifies the <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.ButtonDatas"/> dependency property.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.OnButtonDatasChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            Called when the <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.ButtonDatas"/> property is changed.
+            Unsubscribes from the old collection's <c>CollectionChanged</c> event
+            and subscribes to the new one. Triggers margin/layout recalculation.
+            </summary>
+            <Param name="d">The target <see cref="T:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar"/> Instance.</Param>
+            <Param name="e">Event data containing old and new values.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.ButtonDatas_CollectionChanged(System.Object,System.Collections.Specialized.NotifyCollectionChangedEventArgs)">
+            <summary>
+            Handles changes to the <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.ButtonDatas"/> collection (add/remove).
+            Triggers a layout update to apply margin or alignment rules.
+            </summary>
+            <Param name="sender">The source collection.</Param>
+            <Param name="e">The collection change event data.</Param>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.Position">
+            <summary>
+            Gets or sets the display position of the navigation bar (Top, Bottom, Left, or Right).
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.PositionProperty">
+            <summary>
+            Identifies the <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.Position"/> dependency property,
+            which determines the layout direction of the navigation bar.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.OnPositionChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
+            <summary>
+            Called when the <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.Position"/> property changes.
+            Triggers a margin/alignment update to match the new layout direction.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.UpdateMarginAndAlignment">
+            <summary>
+            Updates the margin and alignment of navigation buttons based on their visibility
+            and the current <see cref="P:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.Position"/> of the navigation bar.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.ApplyLastButtonMargin(System.Windows.Thickness,System.Windows.Thickness)">
+            <summary>
+            Applies <paramref name="defaultMargin"/> to all visible buttons,
+            except the last visible one which receives <paramref name="lastMargin"/>.
+            </summary>
+            <Param name="defaultMargin">Default margin for most buttons.</Param>
+            <Param name="lastMargin">Custom margin for the last visible button.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.NotifyButtonClicked(Dreamine.UI.Wpf.Controls.Navigation.ButtonData)">
+            <summary>
+            Notifies the system that a navigation button has been clicked.
+            Updates selection State, logs the click, and applies localization if needed.
+            </summary>
+            <Param name="clickedButton">The button that was clicked.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.FindVisualChildren``1(System.Windows.DependencyObject)">
+            <summary>
+            Recursively finds all visual children of a given type in the visual tree.
+            </summary>
+            <typeparam name="T">The type of child to find.</typeparam>
+            <Param name="depObj">The starting element in the visual tree.</Param>
+            <returns>An enumerable of matching visual children.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.DreamineButton_Click(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            Handles internal <see cref="T:Dreamine.UI.Wpf.Controls.DreamineButton"/> click events.
+            Checks for permission before proceeding.  
+            If the user does not have the required grade, login can be requested (not implemented here).
+            </summary>
+            <Param name="sender">The clicked button.</Param>
+            <Param name="e">Click event arguments.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.DreamineNavigationBar.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.Navigation.NavigationBarPosition">
+            <summary>
+            Defines the layout direction of the navigation bar.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.Navigation.ButtonData">
+            <summary>
+            Extended button data structure for dynamic navigation bar button creation.
+            Supports styling, command binding, and user-level access control.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.Navigation.VsNavigationHelper">
+            <summary>
+            Utility class for VsNavigation-related features such as login status management and styled button creation.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.VsNavigationHelper.Create(System.String,System.Windows.Input.ICommand,System.Int32,System.String,System.Boolean,System.Boolean,System.Windows.Visibility,Dreamine.UI.Wpf.Controls.IconPosition)">
+            <summary>
+            Creates a new <see cref="T:Dreamine.UI.Wpf.Controls.Navigation.ButtonData"/> Instance with predefined common styles applied.
+            </summary>
+            <Param name="content">The text _content displayed on the button.</Param>
+            <Param name="command">The command to execute when the button is clicked (optional).</Param>
+            <Param name="minGrade">The minimum required user grade to enable the button (used for permission filtering).</Param>
+            <Param name="imagePath">Optional image path to be displayed on the button.</Param>
+            <Param name="isSelected">Determines whether the button is pre-selected (highlighted).</Param>
+            <Param name="isFocusable">Specifies whether the button can receive focus.</Param>
+            <Param name="visibility">Defines the initial visibility of the button.</Param>
+            <Param name="imagePosition">Specifies the position of the image (Top/Left/Right/Bottom).</Param>
+            <returns>A styled <see cref="T:Dreamine.UI.Wpf.Controls.Navigation.ButtonData"/> object that can be used in UI components.</returns>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.Navigation.VsNavigationHelper.GetColor(System.String)">
+            <summary>
+            Converts a HEX color string to a <see cref="T:System.Windows.Media.SolidColorBrush"/>.
+            </summary>
+            <Param name="hex">A hex string representing the color (e.g., "#FF0000").</Param>
+            <returns>A <see cref="T:System.Windows.Media.SolidColorBrush"/> representing the specified color.</returns>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.ViewRegion.PlaceholderView">
+            <summary>
+            A fallback view that is displayed when a corresponding View or ViewModel cannot be found.
+            - Shows a centered error _message in red text.
+            - Mainly used for debugging or detecting missing UI elements.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.PlaceholderView.#ctor(System.String)">
+            <summary>
+            Initializes a new Instance of the <see cref="T:Dreamine.UI.Wpf.Controls.ViewRegion.PlaceholderView"/> class 
+            with the specified error _message.
+            </summary>
+            <Param name="message">The error _message to display to the user.</Param>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.ViewRegion.PopupWindowManager">
+            <summary>
+            Helper class for managing popup views as separate <see cref="T:System.Windows.Window"/> instances.
+            - Wraps a view and its corresponding ViewModel into a window.
+            - All popups are TopMost by default and are styled without borders or taskbar presence.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.ViewRegion.PopupWindowManager.Width">
+            <summary>고정 너비. null이면 미지정.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.ViewRegion.PopupWindowManager.Height">
+            <summary>고정 높이. null이면 미지정.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.ViewRegion.PopupWindowManager.Windows">
+            <summary>
+            Gets the currently registered popup windows.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.PopupWindowManager.CreatePopup(System.String,Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.LoadedViewInfo,System.Nullable{System.Double},System.Nullable{System.Double},System.Boolean)">
+            <summary>
+            Creates and registers a new popup window with the specified view and ViewModel.
+            </summary>
+            <Param name="name">The unique identifier for the popup window.</Param>
+            <Param name="loadedViewInfo">View/ViewModel info to display in the popup.</Param>
+            <Param name="popupWidth">Optional explicit width. Uses <see cref="P:Dreamine.UI.Wpf.Controls.ViewRegion.PopupWindowManager.Width"/> default if not provided.</Param>
+            <Param name="popupHeight">Optional explicit height. Uses <see cref="P:Dreamine.UI.Wpf.Controls.ViewRegion.PopupWindowManager.Height"/> default if not provided.</Param>
+            <Param name="centerOnScreen">If true, centers the popup on screen rather than on the owner window.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.PopupWindowManager.Clear">
+            <summary>
+            Closes all currently registered popups and clears the internal window list.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.PopupWindowManager.Show(System.String)">
+            <summary>
+            Shows the popup window registered with the given name.
+            </summary>
+            <Param name="name">The name of the popup window to display.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.PopupWindowManager.HideAllExcept(System.String)">
+            <summary>
+            Hides all popup windows except the one with the specified name.
+            </summary>
+            <Param name="name">The name of the popup window to remain visible.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.PopupWindowManager.CloseAll">
+            <summary>
+            Closes all popup windows and removes them from the internal dictionary.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader">
+            <summary>
+            @brief View 타입 이름으로 View를 만들고, 대응 ViewModel을 DI로 resolve하여 DataContext에 연결합니다.
+            @details
+            - UserControl/Page/Window/그 외 FrameworkElement 모두 지원
+            - Page는 Frame에 호스팅되며, Navigated/Loaded 타이밍에 맞춰 DataContext를 주입합니다.
+            - 반환: 임베드 가능한 <see cref="T:System.Windows.FrameworkElement"/>와 호환성을 위한 <see cref="T:System.Windows.Controls.UserControl"/> 래퍼 동시 제공
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.LoadedViewInfo">
+            <summary>
+            @brief 로드된 View 및 ViewModel 메타 정보.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.LoadedViewInfo.View">
+            <summary>
+            @brief 호환성을 위한 UserControl 래퍼. 임베드가 필요한 경우 이 컨트롤을 사용하세요.
+            @details 원 뷰가 UserControl이면 그대로, 아니면 내부에 래핑된 요소가 들어갑니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.LoadedViewInfo.FrameworkView">
+            <summary>
+            @brief 원본/최종 임베드 가능한 뷰 요소(프레임/컨텐츠호스트 포함).
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.LoadedViewInfo.ViewModelType">
+            <summary>
+            @brief Resolve된 ViewModel 타입(없으면 null).
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.LoadedViewInfo.IsPopup">
+            <summary>
+            @brief _Popup 네이밍 규칙에 의한 팝업 플래그.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.LoadedViewInfo.UniqueKey">
+            <summary>
+            @brief 싱글톤이 아닐 때 고유 키(멀티 인스턴스 구별용).
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.LoadViewWithViewModel(System.String,System.Boolean)" -->
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.StripViewSuffix(System.String)">
+            <summary>
+            \brief Resolves a ViewModel type with strict rules to avoid selecting View types as ViewModel.
+            \details
+             - Candidates ALWAYS end with "ViewModel".
+             - Candidates are filtered to types assignable to ViewModelBase (or at least not FrameworkElement).
+            \param actualTypeName Actual view type name without "_Popup".
+            \param viewType Resolved view type (can be null).
+            \return ViewModel type or null.
+            </summary>
+            <summary>
+            \brief Strips a trailing "View" suffix from a type name so that "PopupView" → "Popup"
+            instead of naively appending "ViewModel" and producing "PopupViewViewModel".
+            \details Most consumers name their View/ViewModel pairs as "{Name}View"/"{Name}ViewModel"
+            (e.g. CounterView/CounterViewModel), not "{Name}View" + "ViewModel" literal concatenation.
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.ResolveFrameworkElement(System.Type,System.String,System.Boolean)" -->
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.ApplyDataContext(System.Windows.FrameworkElement,System.Object)" -->
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.MergeResources(System.Windows.ResourceDictionary,System.Windows.ResourceDictionary)">
+            <summary>
+            @brief 리소스 병합(윈도우 → 호스트).
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.GetTypesSafe(System.Reflection.Assembly)">
+            <summary>
+            @brief 안전한 타입 열거(ReflectionTypeLoadException 보호).
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.SelectManySafe``1(System.Collections.Generic.IEnumerable{System.Reflection.Assembly},System.Func{System.Reflection.Assembly,System.Collections.Generic.IEnumerable{``0}})">
+            <summary>
+            @brief 안전한 SelectMany(동적 어셈블리 스킵).
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.EmbeddedHostControl">
+            <summary>
+            @brief FrameworkElement를 감싸 임베드 가능한 UserControl로 제공하는 래퍼.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.EmbeddedHostControl.#ctor(System.Windows.FrameworkElement)">
+            <summary>
+            @Param inner 임베드할 요소
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.ViewRegion.ViewModelKeyCache">
+            <summary>
+            Provides an index cache used to generate unique keys for non-singleton ViewModel instances.
+            - Maintains an incrementing index per ViewModel type name.
+            - Used only when <c>useSingletonView</c> is set to <c>false</c>.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.ViewRegion.ViewModelKeyCache.IndexMap">
+             <summary>
+             A dictionary mapping ViewModel type names to their current Instance index.
+             This is used to avoid duplicate registrations or Instance collisions in non-singleton scenarios.
+            
+             <para>Key: Fully qualified ViewModel type name (e.g., "MyApp.ViewModels.MyPageViewModel")</para>
+             <para>Value: Last used index for that type (incremented on each new Instance)</para>
+            
+             Example:
+             <code>
+             var typeName = "MyApp.ViewModels.MyPageViewModel";
+             var index = ViewModelKeyCache.IndexMap.GetOrIncrement(typeName);
+             var uniqueKey = $"{typeName}_{index:D2}";
+             </code>
+             </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewModelKeyCache.GetOrIncrement(System.String)">
+            <summary>
+            Increments and returns the index for the given type name, using <c>long</c> to prevent overflow.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewModelKeyCache.Reset">
+            <summary>
+            Resets the index map. Useful for testing or app re-initialization.
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher" -->
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher.#ctor(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Windows.Window},System.Collections.Generic.Dictionary{System.String,System.Windows.FrameworkElement},System.Boolean)">
+            <summary>
+            @brief Initializes a new Instance of <see cref="T:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher"/>.
+            </summary>
+            <Param name="popupWindows">Popup window dictionary (key=name, value=Window).</Param>
+            <Param name="views">Standard view dictionary (key=name, value=UserControl).</Param>
+            <Param name="useSingletonView">Whether singleton _mode is enabled.</Param>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher.IsPopupName(System.String)">
+            <summary>
+            @brief Returns whether the given name is registered as a popup.
+            </summary>
+            <Param name="viewName">Name to check.</Param>
+            <returns><c>true</c> if the key exists in popup windows; otherwise <c>false</c>.</returns>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher.Switch(System.String,System.Boolean)" -->
+        <member name="T:XamlGeneratedNamespace.GeneratedInternalTypeHelper">
+            <summary>
+            GeneratedInternalTypeHelper
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.CreateInstance(System.Type,System.Globalization.CultureInfo)">
+            <summary>
+            CreateInstance
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.GetPropertyValue(System.Reflection.PropertyInfo,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            GetPropertyValue
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.SetPropertyValue(System.Reflection.PropertyInfo,System.Object,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            SetPropertyValue
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.CreateDelegate(System.Type,System.Object,System.String)">
+            <summary>
+            CreateDelegate
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.AddEventHandler(System.Reflection.EventInfo,System.Object,System.Delegate)">
+            <summary>
+            AddEventHandler
+            </summary>
+        </member>
+    </members>
+</doc>

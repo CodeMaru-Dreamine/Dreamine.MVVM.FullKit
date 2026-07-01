@@ -1,0 +1,203 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.UI.Wpf.Equipment</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.UI.Wpf.Equipment.Popup.PopupAction">
+            <summary>\enum PopupAction \brief 팝업 닫힘 유발 동작 구분.</summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Equipment.Popup.PopupAction.None">
+            <summary>\brief 아무 동작 없음. </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Equipment.Popup.PopupAction.Ok">
+            <summary>\brief OK 버튼 클릭. </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Equipment.Popup.PopupAction.Cancel">
+            <summary>\brief Cancel 버튼 클릭. </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Equipment.Popup.PopupAction.SystemClose">
+            <summary>\brief 시스템 닫기(창 x / Alt+F4 등). </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow" -->
+        <member name="F:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow._opt">
+            <summary>\brief 생성 시 전달된 팝업 옵션. </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow._blinkSb">
+            <summary>\brief 배경 깜빡임에 사용되는 스토리보드. </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow._requestedResult">
+            <summary>\brief 사용자가 요청한 DialogResult(OK=true, Cancel=false, SystemClose=null). </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.PopupResult">
+            <summary>\brief Show()로 열렸을 때 결과를 전달하는 공개 프로퍼티. </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow._inClosing">
+            <summary>\brief Closing 재진입 방지 플래그. </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow._lastAction">
+            <summary>\brief 마지막으로 어떤 동작으로 닫기를 시도했는지 기록. </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow._hwndSrc">
+            <summary>\brief Win32 메시지 후킹을 위한 HwndSource. </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.#ctor(Dreamine.UI.Abstractions.Popup.BlinkPopupOptions)">
+            <summary>
+            \brief DreamineBlinkPopupWindow 생성자.
+            \Param opt 팝업 옵션.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.OnContentRendered(System.EventArgs)">
+            <summary>\brief 컨텐츠 렌더 완료 시점에 깜빡임 애니메이션을 시작합니다.</summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.OnClosing(System.ComponentModel.CancelEventArgs)" -->
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.OnSourceInitialized(System.EventArgs)">
+            <summary>\brief Win32 메시지 훅 등록.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.OnPreviewKeyDown(System.Windows.Input.KeyEventArgs)">
+            <summary>\brief Alt+F4 SystemKey 선제 차단.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.WndProcHook(System.IntPtr,System.Int32,System.IntPtr,System.IntPtr,System.Boolean@)">
+            <summary>\brief Win32 메시지 훅(Alt+F4/SC_CLOSE 차단).</summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.RequestCloseNextTick">
+            <summary>\brief 안전한 CloseAsync 트리거(다음 틱에서 CloseAsync 호출).</summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.OnClosed(System.EventArgs)">
+            <summary>\brief 창이 완전히 닫힐 때 깜빡임 애니메이션과 훅을 정리합니다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.StartBlink">
+            <summary>\brief 깜빡임(색상/불투명도) 애니메이션을 시작합니다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.StopBlink">
+            <summary>\brief 깜빡임 애니메이션과 Win32 훅을 정지/해제합니다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindow.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Equipment.Popup.DreamineBlinkPopupWindowViewModel">
+            <summary>BlinkPopupWindow용 ViewModel.</summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Equipment.Popup.DreaminePopupService">
+            <summary>\brief 깜빡임 팝업 서비스 구현.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreaminePopupService.ShowBlink(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreaminePopupService.ShowBlink(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions,System.Windows.Window@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreaminePopupService.CloseAll">
+            <inheritdoc/>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreaminePopupService.Close(System.Windows.Window)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreaminePopupService.CloseOwnedBy(System.Windows.Window)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreaminePopupService.GetActive">
+            <inheritdoc/>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreaminePopupService.TryGetOptions(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions@)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreaminePopupService.TryGetOwnerOptions(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions@)">
+            <inheritdoc/>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Equipment.Popup.DreaminePopupService.RegisterWindow(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions)" -->
+        <member name="M:Dreamine.UI.Wpf.Equipment.Popup.DreaminePopupService.ShowBlinkAsync(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineFullKeyboardLayout">
+            <summary>
+            Interaction logic for DreamineFullKeyboardLayout.xaml
+            </summary>
+            <summary>
+            DreamineFullKeyboardLayout
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineFullKeyboardLayout.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineNumericKeyboardLayout">
+            <summary>
+            Interaction logic for DreamineNumericKeyboardLayout.xaml
+            </summary>
+            <summary>
+            DreamineNumericKeyboardLayout
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineNumericKeyboardLayout.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboard._hookRunning">
+            <summary>RunAsync가 이미 호출되어 실행 중인지 여부</summary>
+        </member>
+        <member name="F:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboard._hookSubscribed">
+            <summary>이벤트 등록 여부(중복 구독 방지)</summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboard.KeyboardUserControl_Unloaded(System.Object,System.Windows.RoutedEventArgs)">
+            <summary>
+            @brief Visual 트리에서 떨어질 때(창 닫힘 포함) 안전 정리.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboard.Dispose(System.Boolean)">
+            <summary>
+            @brief Dispose 본체(표준 패턴).
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboard.Finalize">
+            <summary>
+            @brief 파이널라이저(보호용).
+            </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "F:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboardAssist.VkbIconVisibleProperty" -->
+        <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboardAssist.GetVkbIconVisible(System.Windows.DependencyObject)">
+            <summary> @brief VkbIconVisible getter </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboardAssist.SetVkbIconVisible(System.Windows.DependencyObject,System.Boolean)">
+            <summary> @brief VkbIconVisible setter </summary>
+        </member>
+        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboardAssist.OnVkbIconVisibleChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)" -->
+        <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboardAssist.Shutdown">
+            <summary>
+            앱 종료 시 SharpHook 스레드를 포함한 모든 리소스를 해제합니다.
+            Application.OnExit 또는 MainWindow.Closed 에서 호출하세요.
+            </summary>
+            <summary>
+            앱 종료 시 SharpHook 스레드를 포함한 모든 리소스를 해제합니다.
+            Application.OnExit 또는 MainWindow.Closed 에서 호출하세요.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboardUI">
+            <summary>
+            DreamineVirtualKeyboardUI
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboardUI.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboardWindow">
+            <summary>
+            Interaction logic for DreamineVirtualKeyboardWindow.xaml
+            </summary>
+            <summary>
+            DreamineVirtualKeyboardWindow
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboardWindow.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+    </members>
+</doc>

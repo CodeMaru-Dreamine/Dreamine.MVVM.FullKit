@@ -1,0 +1,327 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.Communication.RabbitMQ</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.Communication.RabbitMQ.Buses.RabbitMqMessageBus">
+            <summary>
+            RabbitMQ 기반 메시지 버스입니다.
+            </summary>
+            <remarks>
+            IMessageBus 계약을 RabbitMQ exchange / queue / routing key 기반으로 구현합니다.
+            MessageEnvelope는 JSON으로 직렬화되어 RabbitMQ 메시지 Body에 저장됩니다.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Buses.RabbitMqMessageBus.#ctor(Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions)">
+            <summary>
+            RabbitMqMessageBus 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+            <param name="options">RabbitMQ 메시지 버스 설정입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Buses.RabbitMqMessageBus.#ctor(Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions,Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqConnectionFactory)">
+            <summary>
+            RabbitMqMessageBus 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+            <param name="options">RabbitMQ 메시지 버스 설정입니다.</param>
+            <param name="connectionFactory">RabbitMQ 연결 팩토리입니다.</param>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Buses.RabbitMqMessageBus.State">
+            <summary>
+            메시지 버스의 현재 연결 상태를 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Buses.RabbitMqMessageBus.Kind">
+            <summary>
+            메시지 버스 종류를 가져옵니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Buses.RabbitMqMessageBus.ConnectAsync(System.Threading.CancellationToken)">
+            <summary>
+            RabbitMQ 서버에 연결합니다.
+            </summary>
+            <param name="cancellationToken">취소 토큰입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Buses.RabbitMqMessageBus.PublishAsync(Dreamine.Communication.Abstractions.Models.MessageEnvelope,System.Threading.CancellationToken)">
+            <summary>
+            RabbitMQ로 메시지를 발행합니다.
+            </summary>
+            <param name="message">발행할 메시지입니다.</param>
+            <param name="cancellationToken">취소 토큰입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Buses.RabbitMqMessageBus.SubscribeAsync(System.String,System.Func{Dreamine.Communication.Abstractions.Models.MessageEnvelope,System.Threading.CancellationToken,System.Threading.Tasks.Task},System.Threading.CancellationToken)">
+            <summary>
+            지정한 라우트의 RabbitMQ 메시지를 구독합니다.
+            </summary>
+            <param name="route">구독할 라우트입니다.</param>
+            <param name="handler">메시지 처리기입니다.</param>
+            <param name="cancellationToken">취소 토큰입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Buses.RabbitMqMessageBus.DisconnectAsync(System.Threading.CancellationToken)">
+            <summary>
+            RabbitMQ 연결을 해제합니다.
+            </summary>
+            <param name="cancellationToken">취소 토큰입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Buses.RabbitMqMessageBus.DisposeAsync">
+            <summary>
+            RabbitMQ 메시지 버스 리소스를 비동기로 해제합니다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Communication.RabbitMQ.Exceptions.RabbitMqCommunicationException">
+            <summary>
+            RabbitMQ 통신 계층에서 발생하는 예외입니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Exceptions.RabbitMqCommunicationException.#ctor">
+            <summary>
+            RabbitMqCommunicationException 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Exceptions.RabbitMqCommunicationException.#ctor(System.String)">
+            <summary>
+            지정한 오류 메시지를 사용하여 RabbitMqCommunicationException 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+            <param name="message">오류 메시지입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Exceptions.RabbitMqCommunicationException.#ctor(System.String,System.Exception)">
+            <summary>
+            지정한 오류 메시지와 내부 예외를 사용하여 RabbitMqCommunicationException 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+            <param name="message">오류 메시지입니다.</param>
+            <param name="innerException">내부 예외입니다.</param>
+        </member>
+        <member name="T:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqBasicProperties">
+            <summary>
+            RabbitMQ message property abstraction used to keep the bus testable without a broker.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqBasicProperties.Persistent">
+            <summary>
+            Gets or sets whether the broker should persist the message.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqBasicProperties.ContentType">
+            <summary>
+            Gets or sets the message content type.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqBasicProperties.Type">
+            <summary>
+            Gets or sets the logical message type.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel">
+            <summary>
+            Minimal RabbitMQ channel abstraction used by <c>RabbitMqMessageBus</c>.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.IsOpen">
+            <summary>
+            Gets a value indicating whether the channel is currently open.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.ExchangeDeclare(System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            Declares an exchange.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.QueueDeclare(System.String,System.Boolean,System.Boolean,System.Boolean)">
+            <summary>
+            Declares a queue.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.QueueBind(System.String,System.String,System.String)">
+            <summary>
+            Binds a queue to an exchange with a routing key.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.CreateBasicProperties">
+            <summary>
+            Creates message properties for a publish operation.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.BasicPublish(System.String,System.String,System.Boolean,Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqBasicProperties,System.ReadOnlyMemory{System.Byte})">
+            <summary>
+            Publishes a message to an exchange.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.BasicConsume(System.String,System.Boolean,System.Func{Dreamine.Communication.RabbitMQ.Infrastructure.RabbitMqDelivery,System.Threading.CancellationToken,System.Threading.Tasks.Task})">
+            <summary>
+            Starts consuming deliveries from a queue.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.BasicAck(System.UInt64,System.Boolean)">
+            <summary>
+            Acknowledges a delivery.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.BasicNack(System.UInt64,System.Boolean,System.Boolean)">
+            <summary>
+            Negatively acknowledges a delivery.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.BasicReject(System.UInt64,System.Boolean)">
+            <summary>
+            Rejects a delivery.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.BasicCancel(System.String)">
+            <summary>
+            Cancels a consumer.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqChannel.Close">
+            <summary>
+            Closes the channel.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqConnection">
+            <summary>
+            Minimal RabbitMQ connection abstraction used by <c>RabbitMqMessageBus</c>.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqConnection.IsOpen">
+            <summary>
+            Gets a value indicating whether the connection is currently open.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqConnection.CreateChannel">
+            <summary>
+            Creates a channel for broker operations.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqConnection.Close">
+            <summary>
+            Closes the connection.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqConnectionFactory">
+            <summary>
+            Creates RabbitMQ connections from Dreamine RabbitMQ options.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.IRabbitMqConnectionFactory.CreateConnection(Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions)">
+            <summary>
+            Creates a RabbitMQ connection from the supplied options.
+            </summary>
+            <param name="options">RabbitMQ connection and topology options.</param>
+            <returns>A RabbitMQ connection abstraction.</returns>
+        </member>
+        <member name="T:Dreamine.Communication.RabbitMQ.Infrastructure.RabbitMqClientConnectionFactory">
+            <summary>
+            RabbitMQ.Client-backed connection factory.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.RabbitMqClientConnectionFactory.CreateConnection(Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions)">
+            <summary>
+            Creates a RabbitMQ.Client-backed connection.
+            </summary>
+            <param name="options">RabbitMQ connection and topology options.</param>
+            <returns>A RabbitMQ connection abstraction.</returns>
+        </member>
+        <member name="T:Dreamine.Communication.RabbitMQ.Infrastructure.RabbitMqDelivery">
+            <summary>
+            Broker delivery data passed from the RabbitMQ channel adapter to the message bus.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.RabbitMQ.Infrastructure.RabbitMqDelivery.#ctor(System.UInt64,System.String,System.ReadOnlyMemory{System.Byte})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Communication.RabbitMQ.Infrastructure.RabbitMqDelivery"/> class.
+            </summary>
+            <param name="deliveryTag">Broker delivery tag.</param>
+            <param name="routingKey">Delivery routing key.</param>
+            <param name="body">Delivery body.</param>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Infrastructure.RabbitMqDelivery.DeliveryTag">
+            <summary>
+            Gets the broker delivery tag.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Infrastructure.RabbitMqDelivery.RoutingKey">
+            <summary>
+            Gets the delivery routing key.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Infrastructure.RabbitMqDelivery.Body">
+            <summary>
+            Gets the delivery body.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions">
+            <summary>
+            RabbitMQ 메시지 버스 설정입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.HostName">
+            <summary>
+            RabbitMQ Host 이름입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.Port">
+            <summary>
+            RabbitMQ Port입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.VirtualHost">
+            <summary>
+            RabbitMQ VirtualHost입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.UserName">
+            <summary>
+            RabbitMQ 사용자 이름입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.Password">
+            <summary>
+            RabbitMQ 비밀번호입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.ExchangeName">
+            <summary>
+            RabbitMQ Exchange 이름입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.QueueName">
+            <summary>
+            RabbitMQ Queue 이름입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.RoutingKey">
+            <summary>
+            RabbitMQ RoutingKey입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.ExchangeType">
+            <summary>
+            RabbitMQ Exchange 타입입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.Durable">
+            <summary>
+            Exchange와 Queue를 Durable로 선언할지 여부입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.Exclusive">
+            <summary>
+            Queue를 Exclusive로 선언할지 여부입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.AutoDelete">
+            <summary>
+            Exchange와 Queue를 AutoDelete로 선언할지 여부입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.PersistentMessages">
+            <summary>
+            발행 메시지를 Persistent로 설정할지 여부입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.RabbitMQ.Options.RabbitMqMessageBusOptions.RequeueOnHandlerError">
+            <summary>
+            처리 실패 시 메시지를 Queue에 다시 넣을지 여부입니다.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,486 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.Logging</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.Logging.Formatters.DreamineTextLogFormatter">
+            <summary>
+            Formats Dreamine log entries as plain text.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Logging.Formatters.DreamineTextLogFormatter.Format(Dreamine.Logging.Models.DreamineLogEntry)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.Logging.Interfaces.IDreamineLogFormatter">
+            <summary>
+            Defines a formatter that converts a Dreamine log entry to text.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogFormatter.Format(Dreamine.Logging.Models.DreamineLogEntry)">
+            <summary>
+            Formats the specified log entry.
+            </summary>
+            <param name="entry">The log entry to format.</param>
+            <returns>The formatted log text.</returns>
+        </member>
+        <member name="T:Dreamine.Logging.Interfaces.IDreamineLogger">
+            <summary>
+            Defines the main logging API used by Dreamine components.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogger.Trace(System.String)">
+            <summary>
+            Writes a trace log message.
+            </summary>
+            <param name="message">The log message.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogger.Debug(System.String)">
+            <summary>
+            Writes a debug log message.
+            </summary>
+            <param name="message">The log message.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogger.Info(System.String)">
+            <summary>
+            Writes an information log message.
+            </summary>
+            <param name="message">The log message.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogger.Warning(System.String)">
+            <summary>
+            Writes a warning log message.
+            </summary>
+            <param name="message">The log message.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogger.Error(System.String)">
+            <summary>
+            Writes an error log message.
+            </summary>
+            <param name="message">The log message.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogger.Error(System.Exception,System.String)">
+            <summary>
+            Writes an error log message with an exception.
+            </summary>
+            <param name="exception">The exception to log.</param>
+            <param name="message">The log message.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogger.Fatal(System.String)">
+            <summary>
+            Writes a fatal log message.
+            </summary>
+            <param name="message">The log message.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogger.Fatal(System.Exception,System.String)">
+            <summary>
+            Writes a fatal log message with an exception.
+            </summary>
+            <param name="exception">The exception to log.</param>
+            <param name="message">The log message.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogger.Write(Dreamine.Logging.Models.DreamineLogEntry)">
+            <summary>
+            Writes a log entry directly.
+            </summary>
+            <param name="entry">The log entry.</param>
+        </member>
+        <member name="T:Dreamine.Logging.Interfaces.IDreamineLogSink">
+            <summary>
+            Defines a log output target.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogSink.Write(Dreamine.Logging.Models.DreamineLogEntry)">
+            <summary>
+            Writes a log entry to the sink.
+            </summary>
+            <param name="entry">The log entry to write.</param>
+        </member>
+        <member name="T:Dreamine.Logging.Interfaces.IDreamineLogStore">
+            <summary>
+            Defines a readable log store used by UI or diagnostics.
+            </summary>
+        </member>
+        <member name="E:Dreamine.Logging.Interfaces.IDreamineLogStore.LogAdded">
+            <summary>
+            Occurs when a log entry is added.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogStore.GetEntries">
+            <summary>
+            Gets all stored log entries.
+            </summary>
+            <returns>The stored log entries.</returns>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogStore.Add(Dreamine.Logging.Models.DreamineLogEntry)">
+            <summary>
+            Adds a log entry.
+            </summary>
+            <param name="entry">The log entry to add.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Interfaces.IDreamineLogStore.Clear">
+            <summary>
+            Clears all stored log entries.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Logging.Models.DreamineLogEntry">
+            <summary>
+            Represents a single Dreamine log entry.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Models.DreamineLogEntry.Timestamp">
+            <summary>
+            Gets the time when the log entry was created.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Models.DreamineLogEntry.Level">
+            <summary>
+            Gets the severity level of the log entry.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Models.DreamineLogEntry.Category">
+            <summary>
+            Gets the log category.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Models.DreamineLogEntry.Message">
+            <summary>
+            Gets the log message.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Models.DreamineLogEntry.Exception">
+            <summary>
+            Gets the exception associated with the log entry.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Models.DreamineLogEntry.ThreadId">
+            <summary>
+            Gets the managed thread id where the log entry was created.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Models.DreamineLogEntry.TimestampText">
+            <summary>
+            Gets the formatted timestamp text.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Models.DreamineLogEntry.DisplayText">
+            <summary>
+            Gets the display text used by simple UI views.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Logging.Models.DreamineLogEntry.#ctor(System.DateTimeOffset,Dreamine.Logging.Models.DreamineLogLevel,System.String,System.String,System.Exception,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Logging.Models.DreamineLogEntry"/> class.
+            </summary>
+            <param name="timestamp">The time when the log entry was created.</param>
+            <param name="level">The severity level.</param>
+            <param name="category">The log category.</param>
+            <param name="message">The log message.</param>
+            <param name="exception">The exception associated with the log entry.</param>
+            <param name="threadId">The managed thread id.</param>
+        </member>
+        <member name="T:Dreamine.Logging.Models.DreamineLogLevel">
+            <summary>
+            Defines the severity level of a Dreamine log entry.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Logging.Models.DreamineLogLevel.Trace">
+            <summary>
+            Detailed diagnostic information.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Logging.Models.DreamineLogLevel.Debug">
+            <summary>
+            Debugging information.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Logging.Models.DreamineLogLevel.Info">
+            <summary>
+            General information.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Logging.Models.DreamineLogLevel.Warning">
+            <summary>
+            Warning information.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Logging.Models.DreamineLogLevel.Error">
+            <summary>
+            Error information.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Logging.Models.DreamineLogLevel.Fatal">
+            <summary>
+            Fatal error information.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Logging.Options.DreamineLoggingOptions">
+            <summary>
+            Provides configuration options for Dreamine logging registration.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Options.DreamineLoggingOptions.Category">
+            <summary>
+            Gets or sets the log category name.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Options.DreamineLoggingOptions.LogDirectory">
+            <summary>
+            Gets or sets the log directory path.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Options.DreamineLoggingOptions.StoreCapacity">
+            <summary>
+            Gets or sets the maximum number of log entries kept in memory.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Options.DreamineLoggingOptions.QueueCapacity">
+            <summary>
+            Gets or sets the async queue capacity.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Options.DreamineLoggingOptions.DrainBatchSize">
+            <summary>
+            Gets or sets the number of entries drained per batch.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Options.DreamineLoggingOptions.FlushEveryWriteCount">
+            <summary>
+            Gets or sets the number of writes before flushing the text file sink.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Logging.Options.DreamineLoggingOptions.ShutdownTimeout">
+            <summary>
+            Gets or sets the shutdown timeout used to drain pending log entries.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Logging.Registration.DreamineLoggingRegistration">
+            <summary>
+            Provides registration helpers for Dreamine logging services.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Logging.Registration.DreamineLoggingRegistration.Register(System.Action{Dreamine.Logging.Options.DreamineLoggingOptions})">
+            <summary>
+            Registers Dreamine core logging services.
+            </summary>
+            <param name="configure">The optional logging configuration action.</param>
+            <returns>An async-disposable handle that drains the registered sink on disposal.</returns>
+        </member>
+        <member name="M:Dreamine.Logging.Registration.DreamineLoggingRegistration.Register(Dreamine.Logging.Options.DreamineLoggingOptions)">
+            <summary>
+            Registers Dreamine core logging services.
+            </summary>
+            <param name="options">The logging options.</param>
+            <returns>An async-disposable handle that drains the registered sink on disposal.</returns>
+        </member>
+        <member name="T:Dreamine.Logging.Services.DreamineLogger">
+            <summary>
+            Provides the default Dreamine logger implementation.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.#ctor(Dreamine.Logging.Interfaces.IDreamineLogSink)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Logging.Services.DreamineLogger"/> class.
+            </summary>
+            <param name="sink">The log sink.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.#ctor(Dreamine.Logging.Interfaces.IDreamineLogSink,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Logging.Services.DreamineLogger"/> class.
+            </summary>
+            <param name="sink">The log sink.</param>
+            <param name="category">The log category.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.#ctor(Dreamine.Logging.Interfaces.IDreamineLogSink,Dreamine.Logging.Models.DreamineLogLevel,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Logging.Services.DreamineLogger"/> class
+            with a single sink, minimum level, and category.
+            </summary>
+            <param name="sink">The log sink.</param>
+            <param name="minimumLevel">The minimum log level.</param>
+            <param name="category">The log category.</param>
+            <remarks>
+            Convenience overload that wraps a single sink as
+            <c>IEnumerable&lt;IDreamineLogSink&gt;</c> internally so callers do not
+            need to construct a one-element array when using <see cref="T:Dreamine.Logging.Sinks.AsyncQueueSink"/>
+            or any other single-sink pipeline.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.#ctor(System.Collections.Generic.IEnumerable{Dreamine.Logging.Interfaces.IDreamineLogSink},Dreamine.Logging.Models.DreamineLogLevel,System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Logging.Services.DreamineLogger"/> class.
+            </summary>
+            <param name="sinks">The log sinks.</param>
+            <param name="minimumLevel">The minimum log level.</param>
+            <param name="category">The log category.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.Trace(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.Debug(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.Info(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.Warning(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.Error(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.Error(System.Exception,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.Fatal(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.Fatal(System.Exception,System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.DreamineLogger.Write(Dreamine.Logging.Models.DreamineLogEntry)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.Logging.Services.InMemoryLogStore">
+            <summary>
+            Stores Dreamine log entries in memory using a bounded ring buffer.
+            </summary>
+            <remarks>
+            Backed by a <see cref="T:System.Collections.Generic.Queue`1"/> so that capacity enforcement is
+            O(1) per insert (no <c>List.RemoveAt(0)</c> shifting cost). Thread-safe.
+            </remarks>
+        </member>
+        <member name="E:Dreamine.Logging.Services.InMemoryLogStore.LogAdded">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.InMemoryLogStore.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Logging.Services.InMemoryLogStore"/> class
+            with the default capacity of 1000 entries.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Logging.Services.InMemoryLogStore.#ctor(System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Logging.Services.InMemoryLogStore"/> class.
+            </summary>
+            <param name="capacity">The maximum number of log entries to keep.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Services.InMemoryLogStore.GetEntries">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.InMemoryLogStore.Add(Dreamine.Logging.Models.DreamineLogEntry)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.InMemoryLogStore.Clear">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Services.InMemoryLogStore.Write(Dreamine.Logging.Models.DreamineLogEntry)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.Logging.Sinks.AsyncQueueSink">
+            <summary>
+            Decorates a synchronous log sink with a bounded background queue.
+            </summary>
+            <remarks>
+            Producers (any thread calling <see cref="M:Dreamine.Logging.Sinks.AsyncQueueSink.Write(Dreamine.Logging.Models.DreamineLogEntry)"/>) only enqueue; a single
+            dedicated worker drains the queue and forwards entries to the inner sink.
+            Designed to keep logging non-blocking on caller threads and to bound
+            memory usage. When the queue is full the oldest pending entry is dropped
+            instead of blocking the caller, so logging cannot stall the application.
+            The number of dropped entries is observable via <see cref="P:Dreamine.Logging.Sinks.AsyncQueueSink.DroppedCount"/>.
+            </remarks>
+        </member>
+        <member name="P:Dreamine.Logging.Sinks.AsyncQueueSink.DroppedCount">
+            <summary>
+            Gets the number of entries that were dropped because the queue was full.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Logging.Sinks.AsyncQueueSink.#ctor(Dreamine.Logging.Interfaces.IDreamineLogSink,System.Int32,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Logging.Sinks.AsyncQueueSink"/> class.
+            </summary>
+            <param name="inner">The synchronous sink to forward entries to.</param>
+            <param name="capacity">The maximum number of pending entries. Default is 8192.</param>
+            <param name="drainBatchSize">
+            Maximum number of entries the worker drains per inner-sink dispatch loop.
+            Larger values reduce per-entry overhead. Default is 256.
+            </param>
+        </member>
+        <member name="M:Dreamine.Logging.Sinks.AsyncQueueSink.Write(Dreamine.Logging.Models.DreamineLogEntry)">
+            <inheritdoc />
+            <remarks>
+            Non-blocking. Safe to call from any thread including high-frequency
+            worker loops. If the queue is full the oldest entry is dropped.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.Logging.Sinks.AsyncQueueSink.ShutdownAsync(System.TimeSpan)">
+            <summary>
+            Stops accepting new entries and waits for pending entries to drain.
+            </summary>
+            <param name="timeout">Maximum time to wait for the worker to finish.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Sinks.AsyncQueueSink.DisposeAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Sinks.AsyncQueueSink.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.Logging.Sinks.CompositeLogSink">
+            <summary>
+            Writes log entries to multiple log sinks.
+            </summary>
+            <remarks>
+            Implements <see cref="T:System.IDisposable"/> so that disposing the composite
+            disposes any inner sinks that hold unmanaged resources (e.g. file
+            handles in <see cref="T:Dreamine.Logging.Sinks.TextFileLogSink"/>). This allows the outermost
+            owner (typically <see cref="T:Dreamine.Logging.Sinks.AsyncQueueSink"/>) to cleanly release
+            the entire chain through a single Dispose call.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.Logging.Sinks.CompositeLogSink.#ctor(System.Collections.Generic.IEnumerable{Dreamine.Logging.Interfaces.IDreamineLogSink})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Logging.Sinks.CompositeLogSink"/> class.
+            </summary>
+            <param name="sinks">The log sinks.</param>
+        </member>
+        <member name="M:Dreamine.Logging.Sinks.CompositeLogSink.Write(Dreamine.Logging.Models.DreamineLogEntry)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Sinks.CompositeLogSink.Dispose">
+            <summary>
+            Disposes any inner sinks that implement <see cref="T:System.IDisposable"/>.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Logging.Sinks.TextFileLogSink">
+            <summary>
+            Writes Dreamine log entries to daily text log files.
+            </summary>
+            <remarks>
+            Keeps the current daily log file open across writes instead of opening and
+            closing a file per entry. Flushes either every <c>flushEveryWriteCount</c>
+            entries or immediately when an entry has level <see cref="F:Dreamine.Logging.Models.DreamineLogLevel.Error"/>
+            or higher, so important diagnostics are persisted promptly. Date rollover
+            is detected automatically. Thread-safe; recommended placement is behind
+            <see cref="T:Dreamine.Logging.Sinks.AsyncQueueSink"/> so file I/O runs on a single background worker.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.Logging.Sinks.TextFileLogSink.#ctor(System.String,Dreamine.Logging.Interfaces.IDreamineLogFormatter,System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Logging.Sinks.TextFileLogSink"/> class.
+            </summary>
+            <param name="logDirectory">The log directory path.</param>
+            <param name="formatter">The log formatter.</param>
+            <param name="flushEveryWriteCount">
+            The number of writes between flush operations. Defaults to 20.
+            Entries with level <see cref="F:Dreamine.Logging.Models.DreamineLogLevel.Error"/> or higher
+            are always flushed immediately regardless of this value.
+            </param>
+        </member>
+        <member name="M:Dreamine.Logging.Sinks.TextFileLogSink.Write(Dreamine.Logging.Models.DreamineLogEntry)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Logging.Sinks.TextFileLogSink.Dispose">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

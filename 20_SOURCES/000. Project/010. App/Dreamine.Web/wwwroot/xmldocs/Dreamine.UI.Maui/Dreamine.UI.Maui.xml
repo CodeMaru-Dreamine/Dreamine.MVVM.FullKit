@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.UI.Maui</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.UI.Maui.DreamineCheckBox">
+            <summary>
+            WinUI 네이티브 CheckBox는 내부적으로 거대한 최소 너비를 가져서 라벨과의 간격을
+            WidthRequest로 줄일 수 없다. 그래서 직접 그린 체크박스로 대체했다(라벨 클릭도 토글됨).
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Maui.DreamineCheckLedCorner">
+            <summary>WPF DreamineCheckLed.Corner와 동일한 4방향 모서리 앵커.</summary>
+        </member>
+        <member name="T:Dreamine.UI.Maui.DreamineCheckLed">
+            <summary>
+            WPF/WinForms DreamineCheckLed와 동일한 개념의 MAUI용 LED 표시 컨트롤.
+            .NET MAUI에는 대응 컨트롤이 없어서 직접 만들었다.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Maui.DreamineCheckLed.CornerProperty">
+            <summary>
+            이 LED를 부모 컨테이너(예: 카드 박스)의 어느 모서리에 붙일지 지정한다.
+            WPF DreamineCheckLed.Corner처럼, LED를 다른 컨트롤 위에 상태 배지로 얹을 때 쓴다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Maui.DreamineExpander">
+            <summary>
+            WPF/WinForms DreamineExpander와 동일한 개념의 MAUI용 펼치기/접기 컨트롤.
+            .NET MAUI에는 대응 컨트롤이 없어서 직접 만들었다.
+            </summary>
+        </member>
+        <member name="F:Dreamine.UI.Maui.DreamineExpander.ExpanderContentProperty">
+            <summary>펼쳤을 때 보여줄 내부 콘텐츠. ContentView 고유의 Content와 별개다.</summary>
+        </member>
+        <member name="T:Dreamine.UI.Maui.DreamineVirtualKeyboard">
+            <summary>
+            WPF/WinForms 가상 키보드와 동일한 목적의 MAUI용 화면 키보드 데모.
+            실제 모바일/태블릿에서는 OS가 기본 키보드를 제공하므로 보통 필요 없지만,
+            다른 플랫폼들과 시각적으로 동일한 느낌을 보여주기 위한 데모 컴포넌트다
+            (Windows 데스크톱 모드처럼 OS 키보드가 안 뜨는 환경에서 유용).
+            표준 영문 QWERTY 배열(특수문자 포함)을 흉내낸다. 한글 조합은 지원하지 않는다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Maui.DreamineVirtualKeyboard.Attach(Microsoft.Maui.Controls.Entry)">
+            <summary>이 키보드가 입력을 보낼 대상 Entry를 연결한다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Maui.DreamineVirtualKeyboard.RefreshKeyLabels">
+            <summary>Shift/Caps 상태에 맞춰 글자·숫자·기호 키에 실제로 표시되는 텍스트를 전부 갱신한다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Maui.DreamineVirtualKeyboard.OnEnter">
+            <summary>Entry는 한 줄짜리라 줄바꿈 대신 입력 완료로 취급해 키보드를 닫는다.</summary>
+        </member>
+        <member name="T:Dreamine.UI.Maui.Popup.BlinkPopupOptions">
+            <summary>
+            WPF Dreamine.UI.Abstractions.Popup.BlinkPopupOptions / WinForms
+            Dreamine.UI.WinForms.Popup.BlinkPopupOptions에 대응하는 MAUI 전용 옵션.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Maui.Popup.BlinkPopupPage">
+            <summary>
+            DreamineBlinkPopup이 내부적으로 띄우는 모달 페이지.
+            WPF DreamineBlinkPopupWindow / WinForms BlinkPopupForm과 같은 역할이다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Maui.Popup.DreamineBlinkPopup">
+            <summary>
+            WPF IPopupService.ShowBlinkAsync / WinForms DreamineBlinkPopup과 동일한 역할을 하는
+            MAUI용 깜빡임 팝업 서비스.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Maui.Popup.DreamineDialogResult">
+            <summary>
+            WPF의 MessageBoxResult / WinForms의 DialogResult와 동일한 개념의 MAUI용 결과값.
+            플랫폼마다 이름이 다른 걸 통일해서 샘플 코드를 비교하기 쉽게 한다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Maui.Popup.DreamineMessageBox">
+            <summary>
+            WPF Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBox / WinForms
+            Dreamine.UI.WinForms.MessageBox.DreamineMessageBox와 동일한 역할을 하는 MAUI용 메시지박스.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Maui.Popup.DreamineMessageBox.ShowAsync(System.String,System.String,System.Int32)">
+            <summary>OK 버튼 하나만 있는 메시지박스를 표시한다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Maui.Popup.DreamineMessageBox.ShowOkCancelAsync(System.String,System.String)">
+            <summary>확인/취소 버튼이 있는 메시지박스를 표시한다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Maui.Popup.DreamineMessageBox.ShowYesNoAsync(System.String,System.String)">
+            <summary>예/아니오 버튼이 있는 메시지박스를 표시한다.</summary>
+        </member>
+        <member name="T:Dreamine.UI.Maui.Popup.DreamineMessageBoxPage">
+            <summary>
+            DreamineMessageBox가 내부적으로 띄우는 모달 페이지.
+            WPF DreamineMessageBoxWindow / WinForms DreamineMessageBoxForm과 같은 역할이다.
+            MAUI는 여러 개의 OS 창을 즉석에서 만들기 어려워서, 모달 페이지 + 반투명 배경으로
+            "팝업"을 흉내낸다.
+            </summary>
+        </member>
+    </members>
+</doc>

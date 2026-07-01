@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.UI.Blazor</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.UI.Blazor.BlinkPopupOptions">
+            <summary>
+            WPF Dreamine.UI.Abstractions.Popup.BlinkPopupOptions / WinForms·MAUI의
+            BlinkPopupOptions에 대응하는 Blazor 전용 옵션.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Blazor.DreamineCheckLedCorner">
+            <summary>WPF DreamineCheckLed.Corner / MAUI DreamineCheckLedCorner와 동일한 4방향 모서리 앵커.</summary>
+        </member>
+        <member name="T:Dreamine.UI.Blazor.DreamineDialogResult">
+            <summary>
+            WPF의 MessageBoxResult / WinForms의 DialogResult / MAUI의 DreamineDialogResult와
+            동일한 개념의 Blazor용 결과값. 플랫폼마다 이름이 다른 걸 통일해서 샘플 코드를
+            비교하기 쉽게 한다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.UI.Blazor.DreamineDialogService">
+             <summary>
+             WPF Dreamine.UI.Abstractions.Popup.IPopupService / WinForms DreamineMessageBox·
+             DreamineBlinkPopup / MAUI의 동명 클래스와 같은 역할을 하는 Blazor용 팝업 서비스.
+            
+             Blazor에는 별도의 OS 창이 없으므로, 이 서비스는 "현재 표시할 팝업 요청"을
+             상태로 들고 있다가 <see cref="E:Dreamine.UI.Blazor.DreamineDialogService.RequestChanged"/> 이벤트로 알리고, 페이지 어딘가에
+             한 번 배치된 <c>DreamineDialogHost</c> 컴포넌트가 그 상태를 구독해서 실제로
+             오버레이를 그린다(WinForms/MAUI의 모달 창/페이지 대신 컴포넌트 오버레이로 흉내).
+             DI 컨테이너에 Scoped로 등록해서 쓴다.
+             </summary>
+        </member>
+        <member name="M:Dreamine.UI.Blazor.DreamineDialogService.Complete(Dreamine.UI.Blazor.DreamineDialogResult)">
+            <summary>DreamineDialogHost가 버튼 클릭이나 자동닫힘 타이머에서 호출한다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Blazor.DreamineDialogService.TickAutoClick">
+            <summary>매초 호출해서 자동닫힘 카운트다운을 갱신한다.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Blazor.DreamineCheckLed.Corner">
+            <summary>
+            부모가 position:relative인 컨테이너일 때, 이 LED를 모서리에 배지처럼 붙이고 싶으면
+            지정한다(WPF DreamineCheckLed.Corner와 동일한 개념). 지정하지 않으면 일반 인라인 배치.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,116 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.UI.Abstractions</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions">
+            <summary>BlinkPopupWindow 표시에 필요한 모든 옵션.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.Title">
+            <summary>제목(상단 바 + 중앙 타이틀).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.Message">
+            <summary>메시지(컨텐츠가 없을 때 중앙 TextBlock에 표시).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.Content">
+            <summary>사용자 지정 콘텐츠(UserControl 등).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.OkText">
+            <summary>OK 버튼 텍스트(null 또는 빈 문자열이면 버튼 숨김).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.CancelText">
+            <summary>Cancel 버튼 텍스트(null 또는 빈 문자열이면 버튼 숨김).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.IsModal">
+            <summary>모달 여부.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.TopMost">
+            <summary>최상위(TopMost) 창 여부.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.Fullscreen">
+            <summary>전체 화면(모니터 크기) 사용 여부.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.FixedSize">
+            <summary>(옵션) 고정 크기. 지정 시 Width/Height 적용.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.UseBlink">
+            <summary>깜빡임 사용 여부.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.UseContentCard">
+            <summary>중앙 카드(제목/버튼 포함한 검은 박스) 사용 여부.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.Color1">
+            <summary>배경 1차 색상(깜빡임 From).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.Color2">
+            <summary>배경 2차 색상(깜빡임 To).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.ForegroundColor">
+            <summary>전경(타이틀/메시지/아이콘 등 글자 색).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.Opacity1">
+            <summary>불투명도 1(깜빡임 From).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.Opacity2">
+            <summary>불투명도 2(깜빡임 To).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.BlinkIntervalMs">
+            <summary>깜빡임 간격(ms). 왕복 하나에 2배 소요(From→To→From).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.BlinkRepeatCount">
+            <summary>깜빡임 반복 횟수(0 = 무한 반복).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.TitleFontSize">
+            <summary>상단/중앙 타이틀 폰트 크기.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.MessageFontSize">
+            <summary>메시지 폰트 크기.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.BlockAltF4">
+            <summary>Alt+F4(시스템 닫기)를 차단할지 여부(기본값: true).</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.RequireAuthOnOk">
+            <summary>OK 클릭 시 인증 요구 여부.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.RequireAuthOnCancel">
+            <summary>Cancel 클릭 시 인증 요구 여부.</summary>
+        </member>
+        <member name="P:Dreamine.UI.Abstractions.Popup.BlinkPopupOptions.AuthViewModel">
+            <summary>인증 창 연계 시 주입할 ViewModel(옵션, INotifyPropertyChanged 구현 객체).</summary>
+        </member>
+        <member name="T:Dreamine.UI.Abstractions.Popup.IPopupService">
+            <summary>깜빡임 팝업 표시 서비스 인터페이스.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Abstractions.Popup.IPopupService.ShowBlink(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions)">
+            <summary>깜빡임 팝업을 표시한다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Abstractions.Popup.IPopupService.ShowBlink(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions,System.Windows.Window@)">
+            <summary>깜빡임 팝업을 표시하고 생성된 Window 참조를 반환(out)한다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Abstractions.Popup.IPopupService.CloseAll">
+            <summary>열린 모든 BlinkPopup을 닫는다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Abstractions.Popup.IPopupService.Close(System.Windows.Window)">
+            <summary>지정한 팝업 한 개만 닫는다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Abstractions.Popup.IPopupService.CloseOwnedBy(System.Windows.Window)">
+            <summary>특정 Owner가 소유한 팝업들만 닫는다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Abstractions.Popup.IPopupService.GetActive">
+            <summary>현재 활성 BlinkPopup을 반환한다. 없으면 null.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Abstractions.Popup.IPopupService.TryGetOptions(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions@)">
+            <summary>특정 팝업(Window)에 실제 적용된 BlinkPopupOptions를 얻는다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Abstractions.Popup.IPopupService.TryGetOwnerOptions(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions@)">
+            <summary>자식 팝업(Window)의 Owner(부모) 창에 적용된 BlinkPopupOptions를 얻는다.</summary>
+        </member>
+        <member name="M:Dreamine.UI.Abstractions.Popup.IPopupService.ShowBlinkAsync(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions,System.Nullable{System.TimeSpan},System.Threading.CancellationToken)">
+            <summary>깜빡임 팝업을 비동기로 표시한다(모달 효과 지원).</summary>
+        </member>
+        <member name="M:Dreamine.UI.Abstractions.Popup.IPopupService.RegisterWindow(System.Windows.Window,Dreamine.UI.Abstractions.Popup.BlinkPopupOptions)">
+            <summary>외부에서 생성한 팝업 창을 PopupService 관리 대상에 등록한다.</summary>
+        </member>
+    </members>
+</doc>

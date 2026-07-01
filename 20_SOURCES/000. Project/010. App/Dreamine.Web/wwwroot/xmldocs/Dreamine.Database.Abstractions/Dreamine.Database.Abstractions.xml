@@ -1,0 +1,226 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.Database.Abstractions</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.Database.Abstractions.DatabaseConnectionOptions">
+            <summary>
+            Provides connection settings for a Dreamine database provider.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Database.Abstractions.DatabaseProviderKind">
+            <summary>
+            Identifies the database provider family.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Database.Abstractions.IDatabaseCommandExecutor">
+            <summary>
+            Exposes raw SQL command execution operations.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseCommandExecutor.ExecuteNonQuery(System.String,System.Object)">
+            <summary>
+            Executes a raw SQL command.
+            </summary>
+            <param name="sql">The SQL command text.</param>
+            <param name="parameters">The optional command parameters.</param>
+            <returns>The affected row count.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseCommandExecutor.ExecuteNonQueryAsync(System.String,System.Object,System.Threading.CancellationToken)">
+            <summary>
+            Executes a raw SQL command.
+            </summary>
+            <param name="sql">The SQL command text.</param>
+            <param name="parameters">The optional command parameters.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The affected row count.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseCommandExecutor.ExecuteScalar``1(System.String,System.Object)">
+            <summary>
+            Executes a raw SQL scalar command.
+            </summary>
+            <typeparam name="T">The scalar value type.</typeparam>
+            <param name="sql">The SQL command text.</param>
+            <param name="parameters">The optional command parameters.</param>
+            <returns>The scalar value.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseCommandExecutor.ExecuteScalarAsync``1(System.String,System.Object,System.Threading.CancellationToken)">
+            <summary>
+            Executes a raw SQL scalar command.
+            </summary>
+            <typeparam name="T">The scalar value type.</typeparam>
+            <param name="sql">The SQL command text.</param>
+            <param name="parameters">The optional command parameters.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The scalar value.</returns>
+        </member>
+        <member name="T:Dreamine.Database.Abstractions.IDatabaseConnection">
+            <summary>
+            Exposes database provider identity and connection configuration.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Database.Abstractions.IDatabaseConnection.Kind">
+            <summary>
+            Gets the database provider kind.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Database.Abstractions.IDatabaseConnection.ConnectionString">
+            <summary>
+            Gets the provider connection string.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseConnection.EnsureDatabaseExists">
+            <summary>
+            Ensures the target database can be opened or created by the provider.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseConnection.EnsureDatabaseExistsAsync(System.Threading.CancellationToken)">
+            <summary>
+            Ensures the target database can be opened or created by the provider.
+            </summary>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="T:Dreamine.Database.Abstractions.IDatabaseProvider">
+            <summary>
+            Defines the full database provider surface supported by Dreamine providers.
+            </summary>
+            <remarks>
+            New consumers should depend on the smallest role interface they need, such as
+            <see cref="T:Dreamine.Database.Abstractions.IDatabaseRepository"/>, <see cref="T:Dreamine.Database.Abstractions.IDatabaseSchemaProvider"/>,
+            <see cref="T:Dreamine.Database.Abstractions.IDatabaseQueryProvider"/>, or <see cref="T:Dreamine.Database.Abstractions.IDatabaseCommandExecutor"/>.
+            This interface remains as a compatibility facade for existing provider consumers.
+            </remarks>
+        </member>
+        <member name="T:Dreamine.Database.Abstractions.IDatabaseQueryProvider">
+            <summary>
+            Exposes raw SQL query operations.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseQueryProvider.Query``1(System.String,System.Object)">
+            <summary>
+            Executes a raw SQL query.
+            </summary>
+            <typeparam name="T">The row type.</typeparam>
+            <param name="sql">The SQL query text.</param>
+            <param name="parameters">The optional query parameters.</param>
+            <returns>The query rows.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseQueryProvider.QueryAsync``1(System.String,System.Object,System.Threading.CancellationToken)">
+            <summary>
+            Executes a raw SQL query.
+            </summary>
+            <typeparam name="T">The row type.</typeparam>
+            <param name="sql">The SQL query text.</param>
+            <param name="parameters">The optional query parameters.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The query rows.</returns>
+        </member>
+        <member name="T:Dreamine.Database.Abstractions.IDatabaseRepository">
+            <summary>
+            Exposes mapped entity data manipulation operations.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseRepository.Insert``1(``0)">
+            <summary>
+            Inserts an entity.
+            </summary>
+            <typeparam name="T">The entity type.</typeparam>
+            <param name="entity">The entity instance.</param>
+            <returns>True when at least one row was inserted.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseRepository.InsertAsync``1(``0,System.Threading.CancellationToken)">
+            <summary>
+            Inserts an entity.
+            </summary>
+            <typeparam name="T">The entity type.</typeparam>
+            <param name="entity">The entity instance.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>True when at least one row was inserted.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseRepository.Update``1(``0)">
+            <summary>
+            Updates an entity.
+            </summary>
+            <typeparam name="T">The entity type.</typeparam>
+            <param name="entity">The entity instance.</param>
+            <returns>True when at least one row was updated.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseRepository.UpdateAsync``1(``0,System.Threading.CancellationToken)">
+            <summary>
+            Updates an entity.
+            </summary>
+            <typeparam name="T">The entity type.</typeparam>
+            <param name="entity">The entity instance.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>True when at least one row was updated.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseRepository.Delete``1(``0)">
+            <summary>
+            Deletes an entity.
+            </summary>
+            <typeparam name="T">The entity type.</typeparam>
+            <param name="entity">The entity instance.</param>
+            <returns>True when at least one row was deleted.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseRepository.DeleteAsync``1(``0,System.Threading.CancellationToken)">
+            <summary>
+            Deletes an entity.
+            </summary>
+            <typeparam name="T">The entity type.</typeparam>
+            <param name="entity">The entity instance.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>True when at least one row was deleted.</returns>
+        </member>
+        <member name="T:Dreamine.Database.Abstractions.IDatabaseSchemaProvider">
+            <summary>
+            Exposes database schema and table-management operations.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseSchemaProvider.IsTableExists(System.String)">
+            <summary>
+            Determines whether a table exists.
+            </summary>
+            <param name="tableName">The table name.</param>
+            <returns>True when the table exists; otherwise false.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseSchemaProvider.IsTableExistsAsync(System.String,System.Threading.CancellationToken)">
+            <summary>
+            Determines whether a table exists.
+            </summary>
+            <param name="tableName">The table name.</param>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>True when the table exists; otherwise false.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseSchemaProvider.IsTableExists``1">
+            <summary>
+            Determines whether the mapped table for an entity type exists.
+            </summary>
+            <typeparam name="T">The entity type.</typeparam>
+            <returns>True when the table exists; otherwise false.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseSchemaProvider.IsTableExistsAsync``1(System.Threading.CancellationToken)">
+            <summary>
+            Determines whether the mapped table for an entity type exists.
+            </summary>
+            <typeparam name="T">The entity type.</typeparam>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>True when the table exists; otherwise false.</returns>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseSchemaProvider.CreateTable``1">
+            <summary>
+            Creates the mapped table for an entity type when it does not exist.
+            </summary>
+            <typeparam name="T">The entity type.</typeparam>
+        </member>
+        <member name="M:Dreamine.Database.Abstractions.IDatabaseSchemaProvider.CreateTableAsync``1(System.Threading.CancellationToken)">
+            <summary>
+            Creates the mapped table for an entity type when it does not exist.
+            </summary>
+            <typeparam name="T">The entity type.</typeparam>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+    </members>
+</doc>

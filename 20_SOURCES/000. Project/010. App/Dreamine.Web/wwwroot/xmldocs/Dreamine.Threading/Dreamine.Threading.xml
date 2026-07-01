@@ -1,0 +1,919 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.Threading</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.Threading.Allocators.AutoCoreAllocator">
+            <summary>
+            Allocates CPU cores for Dreamine worker threads using an automatic per-core capacity policy.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Allocators.AutoCoreAllocator.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Allocators.AutoCoreAllocator"/> class.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Allocators.AutoCoreAllocator.#ctor(System.Int32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Allocators.AutoCoreAllocator"/> class.
+            </summary>
+            <param name="logicalCoreCount">The logical CPU core count.</param>
+        </member>
+        <member name="M:Dreamine.Threading.Allocators.AutoCoreAllocator.Allocate(Dreamine.Threading.Models.DreamineThreadOptions)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Allocators.AutoCoreAllocator.Release(Dreamine.Threading.Models.DreamineThreadCoreAssignment)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.Threading.Interfaces.ICpuInfoProvider">
+            <summary>
+            Provides CPU topology information for threading services.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.ICpuInfoProvider.GetLogicalProcessorCount">
+            <summary>
+            Gets the logical processor count.
+            </summary>
+            <returns>The logical processor count.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.ICpuInfoProvider.IsValidCoreIndex(System.Int32)">
+            <summary>
+            Determines whether the specified CPU core index is valid.
+            </summary>
+            <param name="coreIndex">The CPU core index.</param>
+            <returns>True if the core index is valid; otherwise false.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Interfaces.ICpuUsageProvider">
+            <summary>
+            Defines a service that provides CPU usage information.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.ICpuUsageProvider.GetTotalCpuUsagePercent">
+            <summary>
+            Gets the total CPU usage percentage.
+            </summary>
+            <returns>The total CPU usage percentage.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Interfaces.IDreamineThread">
+            <summary>
+            Defines a Dreamine worker thread.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Interfaces.IDreamineThread.Name">
+            <summary>
+            Gets the worker thread name.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Interfaces.IDreamineThread.Options">
+            <summary>
+            Gets the worker thread options.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Interfaces.IDreamineThread.CoreAssignment">
+            <summary>
+            Gets the CPU core assignment.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Interfaces.IDreamineThread.Status">
+            <summary>
+            Gets the current worker thread status.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Interfaces.IDreamineThread.JobCount">
+            <summary>
+            Gets the number of jobs assigned to this worker thread.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThread.AddJob(Dreamine.Threading.Interfaces.IDreamineThreadJob)">
+            <summary>
+            Adds a job to this worker thread.
+            </summary>
+            <param name="job">The job to add.</param>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThread.Start">
+            <summary>
+            Starts the worker thread.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThread.Pause">
+            <summary>
+            Pauses the worker thread.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThread.Resume">
+            <summary>
+            Resumes the worker thread.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThread.Stop">
+            <summary>
+            Stops the worker thread.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThread.StopAsync">
+            <summary>
+            Stops the worker thread without blocking the caller thread during the join wait.
+            </summary>
+            <returns>The asynchronous stop operation.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThread.GetInfo">
+            <summary>
+            Gets a snapshot of the worker thread state.
+            </summary>
+            <returns>The thread state snapshot.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Interfaces.IDreamineThreadJob">
+            <summary>
+            Defines a job executed by a Dreamine worker thread.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Interfaces.IDreamineThreadJob.Name">
+            <summary>
+            Gets the job name.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Interfaces.IDreamineThreadJob.Options">
+            <summary>
+            Gets the job options.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Interfaces.IDreamineThreadJob.ExecuteCount">
+            <summary>
+            Gets the number of executions.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Interfaces.IDreamineThreadJob.LastExecutedAt">
+            <summary>
+            Gets the last executed time.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Interfaces.IDreamineThreadJob.LastException">
+            <summary>
+            Gets the last exception.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadJob.ShouldRun(System.DateTimeOffset)">
+            <summary>
+            Determines whether this job should run at the specified time.
+            </summary>
+            <param name="now">The current time.</param>
+            <returns>True if the job should run; otherwise false.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadJob.ExecuteAsync(System.Threading.CancellationToken)">
+            <summary>
+            Executes the job.
+            </summary>
+            <param name="cancellationToken">The cancellation token.</param>
+            <returns>The asynchronous operation.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Interfaces.IDreamineThreadManager">
+            <summary>
+            Defines a manager that creates and controls Dreamine worker threads and polling jobs.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.Register(Dreamine.Threading.Models.DreamineThreadOptions,System.Func{System.Threading.CancellationToken,System.Threading.Tasks.ValueTask})">
+            <summary>
+            Registers a worker thread or an overflow polling job according to the specified options.
+            </summary>
+            <param name="options">The thread options.</param>
+            <param name="action">The job action.</param>
+            <returns>The registered thread job.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.Start(System.String)">
+            <summary>
+            Starts the specified worker thread.
+            </summary>
+            <param name="threadName">The worker thread name.</param>
+            <returns><see langword="true"/> if the worker thread was found and started; otherwise, <see langword="false"/>.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.Stop(System.String)">
+            <summary>
+            Stops the specified worker thread.
+            </summary>
+            <param name="threadName">The worker thread name.</param>
+            <returns><see langword="true"/> if the worker thread was found and stopped; otherwise, <see langword="false"/>.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.StopAsync(System.String)">
+            <summary>
+            Stops the specified worker thread without blocking the caller thread during the join wait.
+            </summary>
+            <param name="threadName">The worker thread name.</param>
+            <returns>True if the worker thread was found and stopped; otherwise false.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.Pause(System.String)">
+            <summary>
+            Pauses the specified worker thread.
+            </summary>
+            <param name="threadName">The worker thread name.</param>
+            <returns><see langword="true"/> if the worker thread was found and paused; otherwise, <see langword="false"/>.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.Resume(System.String)">
+            <summary>
+            Resumes the specified worker thread.
+            </summary>
+            <param name="threadName">The worker thread name.</param>
+            <returns><see langword="true"/> if the worker thread was found and resumed; otherwise, <see langword="false"/>.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.StartAll">
+            <summary>
+            Starts all worker threads.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.StopAll">
+            <summary>
+            Stops all worker threads.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.StopAllAsync">
+            <summary>
+            Stops all worker threads without blocking the caller thread during join waits.
+            </summary>
+            <returns>The asynchronous stop operation.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.PauseAll">
+            <summary>
+            Pauses all worker threads.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.ResumeAll">
+            <summary>
+            Resumes all worker threads.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.TryGetThread(System.String,Dreamine.Threading.Interfaces.IDreamineThread@)">
+            <summary>
+            Tries to get the specified worker thread.
+            </summary>
+            <param name="threadName">The worker thread name.</param>
+            <param name="thread">The found worker thread.</param>
+            <returns><see langword="true"/> if the worker thread was found; otherwise, <see langword="false"/>.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.GetThreads">
+            <summary>
+            Gets the registered worker threads.
+            </summary>
+            <returns>The registered worker threads.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadManager.GetThreadInfos">
+            <summary>
+            Gets snapshots for all registered worker threads.
+            </summary>
+            <returns>The thread state snapshots.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Interfaces.IDreamineThreadScheduler">
+            <summary>
+            Defines a scheduler that assigns polling jobs to worker threads.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IDreamineThreadScheduler.SelectWorker(System.Collections.Generic.IReadOnlyList{Dreamine.Threading.Interfaces.IDreamineThread})">
+            <summary>
+            Selects a worker thread for an overflow polling job.
+            </summary>
+            <param name="threads">The available worker threads.</param>
+            <returns>The selected worker thread.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Interfaces.IThreadAffinityService">
+            <summary>
+            Defines a platform service that applies CPU affinity to the current thread.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IThreadAffinityService.ApplyToCurrentThread(System.Int32)">
+            <summary>
+            Applies CPU affinity to the current thread.
+            </summary>
+            <param name="coreIndex">The CPU core index.</param>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IThreadAffinityService.ClearCurrentThreadAffinity">
+            <summary>
+            Clears CPU affinity from the current thread when supported.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Threading.Interfaces.IThreadCoreAllocator">
+            <summary>
+            Defines a service that assigns worker threads to CPU cores.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IThreadCoreAllocator.Allocate(Dreamine.Threading.Models.DreamineThreadOptions)">
+            <summary>
+            Allocates a CPU core assignment for the specified thread options.
+            </summary>
+            <param name="options">The thread options.</param>
+            <returns>The CPU core assignment.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IThreadCoreAllocator.Release(Dreamine.Threading.Models.DreamineThreadCoreAssignment)">
+            <summary>
+            Releases a previously allocated CPU core assignment.
+            </summary>
+            <param name="assignment">The CPU core assignment to release.</param>
+        </member>
+        <member name="T:Dreamine.Threading.Interfaces.IThreadCyclePolicy">
+            <summary>
+            Defines a policy that determines the delay between worker thread cycles.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.IThreadCyclePolicy.GetDelayMs(Dreamine.Threading.Models.DreamineThreadOptions,Dreamine.Threading.Models.DreamineThreadCoreAssignment,Dreamine.Threading.Models.DreamineThreadCycleContext)">
+            <summary>
+            Gets the delay in milliseconds for the next worker cycle.
+            </summary>
+            <param name="options">The thread options.</param>
+            <param name="assignment">The CPU core assignment.</param>
+            <param name="context">The current thread cycle context.</param>
+            <returns>The delay in milliseconds.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Interfaces.ITimerResolutionService">
+            <summary>
+            Defines a platform service that controls timer resolution.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.ITimerResolutionService.Begin">
+            <summary>
+            Begins high precision timer resolution.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Interfaces.ITimerResolutionService.End">
+            <summary>
+            Ends high precision timer resolution.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Threading.Models.DreamineThreadCoreAssignment">
+            <summary>
+            Represents the CPU core assignment result for a Dreamine worker thread.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadCoreAssignment.CoreIndex">
+            <summary>
+            Gets the assigned CPU core index.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadCoreAssignment.UseAffinity">
+            <summary>
+            Gets a value indicating whether CPU affinity should be applied.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadCoreAssignment.IsOverflowPolling">
+            <summary>
+            Gets a value indicating whether this assignment represents an overflow polling job.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadCoreAssignment.IsDedicatedWorker">
+            <summary>
+            Gets a value indicating whether this assignment has a dedicated worker thread.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Models.DreamineThreadCoreAssignment.#ctor(System.Nullable{System.Int32},System.Boolean,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Models.DreamineThreadCoreAssignment"/> class.
+            </summary>
+            <param name="coreIndex">The assigned CPU core index.</param>
+            <param name="useAffinity">Whether CPU affinity should be applied.</param>
+            <param name="isOverflowPolling">Whether this assignment is for overflow polling.</param>
+        </member>
+        <member name="M:Dreamine.Threading.Models.DreamineThreadCoreAssignment.None">
+            <summary>
+            Creates an assignment without CPU affinity.
+            </summary>
+            <returns>The created assignment.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Models.DreamineThreadCoreAssignment.Dedicated(System.Int32,System.Boolean)">
+            <summary>
+            Creates a dedicated CPU core assignment.
+            </summary>
+            <param name="coreIndex">The assigned CPU core index.</param>
+            <param name="useAffinity">Whether CPU affinity should be applied.</param>
+            <returns>The created assignment.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Models.DreamineThreadCoreAssignment.Overflow">
+            <summary>
+            Creates an overflow polling assignment.
+            </summary>
+            <returns>The created assignment.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Models.DreamineThreadCoreMode">
+            <summary>
+            Defines how a Dreamine thread is assigned to CPU cores.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadCoreMode.None">
+            <summary>
+            No CPU affinity is applied.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadCoreMode.Auto">
+            <summary>
+            CPU core assignment is selected automatically.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadCoreMode.Manual">
+            <summary>
+            CPU core assignment is selected manually.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Threading.Models.DreamineThreadCycleContext">
+            <summary>
+            Represents runtime context information for a Dreamine thread cycle.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadCycleContext.ThreadName">
+            <summary>
+            Gets the worker thread name.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadCycleContext.CycleCount">
+            <summary>
+            Gets the current cycle count.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadCycleContext.JobCount">
+            <summary>
+            Gets the number of jobs assigned to the worker.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadCycleContext.CoreIndex">
+            <summary>
+            Gets the assigned CPU core index.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadCycleContext.IsOverflowPolling">
+            <summary>
+            Gets a value indicating whether this cycle is for overflow polling.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadCycleContext.Timestamp">
+            <summary>
+            Gets the current cycle timestamp.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Models.DreamineThreadCycleContext.#ctor(System.String,System.Int64,System.Int32,System.Nullable{System.Int32},System.Boolean,System.DateTimeOffset)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Models.DreamineThreadCycleContext"/> class.
+            </summary>
+            <param name="threadName">The worker thread name.</param>
+            <param name="cycleCount">The current cycle count.</param>
+            <param name="jobCount">The number of assigned jobs.</param>
+            <param name="coreIndex">The assigned CPU core index.</param>
+            <param name="isOverflowPolling">Whether this cycle is for overflow polling.</param>
+            <param name="timestamp">The current timestamp.</param>
+        </member>
+        <member name="T:Dreamine.Threading.Models.DreamineThreadInfo">
+            <summary>
+            Represents a snapshot of a Dreamine worker thread state.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadInfo.Name">
+            <summary>
+            Gets the worker thread name.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadInfo.Status">
+            <summary>
+            Gets the worker thread status.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadInfo.Priority">
+            <summary>
+            Gets the worker thread priority.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadInfo.IntervalMs">
+            <summary>
+            Gets the worker thread interval in milliseconds.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadInfo.CoreIndex">
+            <summary>
+            Gets the assigned CPU core index.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadInfo.UseAffinity">
+            <summary>
+            Gets a value indicating whether CPU affinity is enabled.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadInfo.JobCount">
+            <summary>
+            Gets the number of jobs assigned to the worker.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadInfo.CycleCount">
+            <summary>
+            Gets the number of completed cycles.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadInfo.StartedAt">
+            <summary>
+            Gets the last started time.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadInfo.StoppedAt">
+            <summary>
+            Gets the last stopped time.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadInfo.LastErrorMessage">
+            <summary>
+            Gets the last exception message.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Models.DreamineThreadInfo.#ctor(System.String,Dreamine.Threading.Models.DreamineThreadStatus,Dreamine.Threading.Models.DreamineThreadPriority,System.Int32,System.Nullable{System.Int32},System.Boolean,System.Int32,System.Int64,System.Nullable{System.DateTimeOffset},System.Nullable{System.DateTimeOffset},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Models.DreamineThreadInfo"/> class.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Threading.Models.DreamineThreadJobOptions">
+            <summary>
+            Represents options used to create a Dreamine thread job.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadJobOptions.Name">
+            <summary>
+            Gets or sets the job name.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadJobOptions.IntervalMs">
+            <summary>
+            Gets or sets the job execution interval in milliseconds.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadJobOptions.IsEnabled">
+            <summary>
+            Gets or sets a value indicating whether the job is enabled.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadJobOptions.IsOverflowPolling">
+            <summary>
+            Gets or sets a value indicating whether the job is an overflow polling job.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Models.DreamineThreadJobOptions.Normalize">
+            <summary>
+            Creates a normalized copy of the current options.
+            </summary>
+            <returns>The normalized options.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Models.DreamineThreadOptions">
+            <summary>
+            Represents options used to create a Dreamine worker thread.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.Name">
+            <summary>
+            Gets or sets the worker thread name.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.Priority">
+            <summary>
+            Gets or sets the worker thread priority.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.IntervalMs">
+            <summary>
+            Gets or sets the base cycle interval in milliseconds.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.CoreMode">
+            <summary>
+            Gets or sets the CPU core assignment mode.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.CoreIndex">
+            <summary>
+            Gets or sets the manually assigned CPU core index.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.AutoThreadsPerCore">
+            <summary>
+            Gets or sets the maximum number of dedicated worker threads per CPU core in auto mode.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.OverflowPollingIntervalMs">
+            <summary>
+            Gets or sets the polling interval used when a job is assigned to overflow polling.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.AutoStart">
+            <summary>
+            Gets or sets a value indicating whether the worker should start immediately after creation.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.UseHighPrecisionTimer">
+            <summary>
+            Gets or sets a value indicating whether high precision timer resolution is requested.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.UseAdaptiveCpuDelay">
+            <summary>
+            Gets or sets a value indicating whether adaptive CPU delay is enabled when the interval is zero.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.YieldWhenIntervalIsZero">
+            <summary>
+            Gets or sets a value indicating whether the worker should yield when the interval is zero.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Models.DreamineThreadOptions.StopTimeout">
+            <summary>
+            Gets or sets how long stop operations wait for the worker thread to exit.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Models.DreamineThreadOptions.Normalize">
+            <summary>
+            Creates a normalized copy of the current options.
+            </summary>
+            <returns>The normalized options.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Models.DreamineThreadPriority">
+            <summary>
+            Defines the priority level of a Dreamine thread.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadPriority.Low">
+            <summary>
+            Low priority for background or monitoring work.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadPriority.Normal">
+            <summary>
+            Normal priority for standard work.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadPriority.High">
+            <summary>
+            High priority for timing-sensitive work.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Threading.Models.DreamineThreadStatus">
+            <summary>
+            Defines the lifecycle status of a Dreamine thread.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadStatus.Created">
+            <summary>
+            The thread has been created but not started.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadStatus.Running">
+            <summary>
+            The thread is running.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadStatus.Paused">
+            <summary>
+            The thread is paused.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadStatus.Stopping">
+            <summary>
+            The thread is stopping.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadStatus.Stopped">
+            <summary>
+            The thread has stopped.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadStatus.Faulted">
+            <summary>
+            The thread has failed due to an exception.
+            </summary>
+        </member>
+        <member name="F:Dreamine.Threading.Models.DreamineThreadStatus.Disposed">
+            <summary>
+            The thread has been disposed.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Threading.Options.DreamineThreadingOptions">
+            <summary>
+            Provides configuration options for Dreamine threading registration.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Options.DreamineThreadingOptions.RegisterWindowsServices">
+            <summary>
+            Gets or sets whether Windows-specific threading services are registered.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Options.DreamineThreadingOptions.UseAdaptiveCpuPolicy">
+            <summary>
+            Gets or sets whether the adaptive CPU cycle policy is used.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Options.DreamineThreadingOptions.AllowOverride">
+            <summary>
+            Gets or sets whether an existing registration can be overwritten.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Threading.Policies.AdaptiveCpuCyclePolicy">
+            <summary>
+            Provides an adaptive cycle policy that increases delay based on process CPU usage.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Policies.AdaptiveCpuCyclePolicy.#ctor(Dreamine.Threading.Interfaces.ICpuUsageProvider)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Policies.AdaptiveCpuCyclePolicy"/> class.
+            </summary>
+            <param name="cpuUsageProvider">The CPU usage provider.</param>
+        </member>
+        <member name="M:Dreamine.Threading.Policies.AdaptiveCpuCyclePolicy.GetDelayMs(Dreamine.Threading.Models.DreamineThreadOptions,Dreamine.Threading.Models.DreamineThreadCoreAssignment,Dreamine.Threading.Models.DreamineThreadCycleContext)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.Threading.Policies.FixedIntervalCyclePolicy">
+            <summary>
+            Provides a fixed interval cycle policy for Dreamine worker threads.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Policies.FixedIntervalCyclePolicy.GetDelayMs(Dreamine.Threading.Models.DreamineThreadOptions,Dreamine.Threading.Models.DreamineThreadCoreAssignment,Dreamine.Threading.Models.DreamineThreadCycleContext)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.Threading.Policies.OverflowPollingPolicy">
+            <summary>
+            Provides a polling interval policy for overflow jobs.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Policies.OverflowPollingPolicy.GetDelayMs(Dreamine.Threading.Models.DreamineThreadOptions,Dreamine.Threading.Models.DreamineThreadCoreAssignment,Dreamine.Threading.Models.DreamineThreadCycleContext)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.Threading.Registration.DreamineThreadingRegistration">
+            <summary>
+            Provides registration helpers for Dreamine threading core services.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Registration.DreamineThreadingRegistration.Register(System.Action{Dreamine.Threading.Options.DreamineThreadingOptions})">
+            <summary>
+            Registers Dreamine threading core services.
+            </summary>
+            <param name="configure">The optional threading configuration action.</param>
+        </member>
+        <member name="M:Dreamine.Threading.Registration.DreamineThreadingRegistration.Register(Dreamine.Threading.Options.DreamineThreadingOptions,Dreamine.Threading.Interfaces.ICpuUsageProvider)">
+            <summary>
+            Registers Dreamine threading core services.
+            </summary>
+            <param name="options">The threading options.</param>
+            <param name="cpuUsageProvider">The optional CPU usage provider for adaptive cycle policy.</param>
+        </member>
+        <member name="T:Dreamine.Threading.Services.DreamineThread">
+            <summary>
+            Provides the default Dreamine worker thread implementation.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Services.DreamineThread.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.Threading.Services.DreamineThread.Options">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.Threading.Services.DreamineThread.CoreAssignment">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.Threading.Services.DreamineThread.Status">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.Threading.Services.DreamineThread.JobCount">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThread.#ctor(Dreamine.Threading.Models.DreamineThreadOptions,Dreamine.Threading.Models.DreamineThreadCoreAssignment,Dreamine.Threading.Interfaces.IThreadCyclePolicy,Dreamine.Threading.Interfaces.IThreadAffinityService,Dreamine.Threading.Interfaces.ITimerResolutionService,Dreamine.Logging.Interfaces.IDreamineLogger)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Services.DreamineThread"/> class.
+            </summary>
+            <param name="options">The worker thread options.</param>
+            <param name="coreAssignment">The CPU core assignment.</param>
+            <param name="cyclePolicy">The cycle policy.</param>
+            <param name="affinityService">The optional CPU affinity service.</param>
+            <param name="timerResolutionService">The optional timer resolution service.</param>
+            <param name="logger">The optional logger.</param>
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThread.AddJob(Dreamine.Threading.Interfaces.IDreamineThreadJob)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThread.Start">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThread.Pause">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThread.Resume">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThread.Stop">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThread.StopAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThread.GetInfo">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThread.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.Threading.Services.DreamineThreadJob">
+            <summary>
+            Provides the default Dreamine thread job implementation.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Threading.Services.DreamineThreadJob.Name">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.Threading.Services.DreamineThreadJob.Options">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.Threading.Services.DreamineThreadJob.ExecuteCount">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.Threading.Services.DreamineThreadJob.LastExecutedAt">
+            <inheritdoc />
+        </member>
+        <member name="P:Dreamine.Threading.Services.DreamineThreadJob.LastException">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadJob.#ctor(Dreamine.Threading.Models.DreamineThreadJobOptions,System.Func{System.Threading.CancellationToken,System.Threading.Tasks.ValueTask})">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Services.DreamineThreadJob"/> class.
+            </summary>
+            <param name="options">The job options.</param>
+            <param name="action">The job action.</param>
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadJob.ShouldRun(System.DateTimeOffset)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadJob.ExecuteAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.Threading.Services.DreamineThreadManager">
+            <summary>
+            Provides the default Dreamine thread manager implementation.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.#ctor(Dreamine.Threading.Interfaces.IThreadCoreAllocator,Dreamine.Threading.Interfaces.IThreadCyclePolicy,Dreamine.Threading.Interfaces.IDreamineThreadScheduler,Dreamine.Threading.Interfaces.IThreadAffinityService,Dreamine.Threading.Interfaces.ITimerResolutionService,Dreamine.Logging.Interfaces.IDreamineLogger)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Services.DreamineThreadManager"/> class.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.Register(Dreamine.Threading.Models.DreamineThreadOptions,System.Func{System.Threading.CancellationToken,System.Threading.Tasks.ValueTask})">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.StartAll">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.StopAll">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.StopAllAsync">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.Start(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.Stop(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.StopAsync(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.Pause(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.Resume(System.String)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.PauseAll">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.ResumeAll">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.TryGetThread(System.String,Dreamine.Threading.Interfaces.IDreamineThread@)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.GetThreads">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.GetThreadInfos">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.Dispose">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadManager.RegisterOverflowJob(Dreamine.Threading.Interfaces.IDreamineThreadJob)">
+            <summary>
+            Routes an overflow polling job to an existing worker, or creates a
+            fallback worker if none exists.
+            </summary>
+            <param name="job">The overflow polling job.</param>
+            <returns>
+            The worker to start outside the lock when a new fallback worker was
+            created; <c>null</c> when an existing worker absorbed the job.
+            </returns>
+            <remarks>
+            Must be called with <c>_syncRoot</c> held.
+            </remarks>
+        </member>
+        <member name="T:Dreamine.Threading.Services.DreamineThreadScheduler">
+            <summary>
+            Provides default scheduling for overflow polling jobs.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Services.DreamineThreadScheduler.SelectWorker(System.Collections.Generic.IReadOnlyList{Dreamine.Threading.Interfaces.IDreamineThread})">
+            <inheritdoc />
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.Database.Sqlite</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.Database.Sqlite.SqliteDatabaseProvider">
+            <summary>
+            Provides a SQLite database provider implementation.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Database.Sqlite.SqliteDatabaseProvider.#ctor(System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Database.Sqlite.SqliteDatabaseProvider"/> class.
+            </summary>
+            <param name="connectionString">The SQLite connection string.</param>
+        </member>
+    </members>
+</doc>

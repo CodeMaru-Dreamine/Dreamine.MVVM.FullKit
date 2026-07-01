@@ -1,0 +1,132 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.Threading.Windows</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.Threading.Windows.Native.Kernel32NativeMethods">
+            <summary>
+            Provides native kernel32.dll methods for Windows thread operations.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Native.Kernel32NativeMethods.GetCurrentThread">
+            <summary>
+            Gets a pseudo handle for the current thread.
+            </summary>
+            <returns>A pseudo handle for the current thread.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Native.Kernel32NativeMethods.SetThreadAffinityMask(System.IntPtr,System.UIntPtr)">
+            <summary>
+            Sets a processor affinity mask for the specified thread.
+            </summary>
+            <param name="threadHandle">The thread handle.</param>
+            <param name="threadAffinityMask">The processor affinity mask.</param>
+            <returns>The previous affinity mask, or zero if the call failed.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Windows.Native.WinMmNativeMethods">
+            <summary>
+            Provides native winmm.dll methods for timer resolution control.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Native.WinMmNativeMethods.timeBeginPeriod(System.UInt32)">
+            <summary>
+            Requests a minimum timer resolution.
+            </summary>
+            <param name="period">The requested timer resolution in milliseconds.</param>
+            <returns>Zero if successful; otherwise an error code.</returns>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Native.WinMmNativeMethods.timeEndPeriod(System.UInt32)">
+            <summary>
+            Clears a previously requested timer resolution.
+            </summary>
+            <param name="period">The timer resolution in milliseconds.</param>
+            <returns>Zero if successful; otherwise an error code.</returns>
+        </member>
+        <member name="T:Dreamine.Threading.Windows.Registration.DreamineThreadingWindowsRegistration">
+            <summary>
+            Provides registration APIs for Windows-specific Dreamine threading services.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Registration.DreamineThreadingWindowsRegistration.Register">
+            <summary>
+            Registers Windows-specific Dreamine threading services.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Threading.Windows.Services.WindowsCpuInfoProvider">
+            <summary>
+            Provides CPU information for Windows threading services.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsCpuInfoProvider.GetLogicalProcessorCount">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsCpuInfoProvider.IsValidCoreIndex(System.Int32)">
+            <inheritdoc />
+        </member>
+        <member name="T:Dreamine.Threading.Windows.Services.WindowsProcessCpuUsageProvider">
+            <summary>
+            Provides process CPU usage information on Windows.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsProcessCpuUsageProvider.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Windows.Services.WindowsProcessCpuUsageProvider"/> class.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsProcessCpuUsageProvider.GetTotalCpuUsagePercent">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsProcessCpuUsageProvider.Dispose">
+            <summary>
+            Releases the underlying <see cref="T:System.Diagnostics.Process"/> handle.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Threading.Windows.Services.WindowsThreadAffinityService">
+            <summary>
+            Applies CPU affinity to the current Windows thread.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsThreadAffinityService.ApplyToCurrentThread(System.Int32)">
+            <summary>
+            Applies CPU affinity to the current thread.
+            </summary>
+            <param name="coreIndex">The CPU core index.</param>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsThreadAffinityService.ClearCurrentThreadAffinity">
+            <summary>
+            Clears CPU affinity from the current thread when supported.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Threading.Windows.Services.WindowsTimerResolutionService">
+            <summary>
+            Controls Windows timer resolution for high precision thread cycles.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsTimerResolutionService.#ctor">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Windows.Services.WindowsTimerResolutionService"/> class.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsTimerResolutionService.#ctor(System.UInt32)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Threading.Windows.Services.WindowsTimerResolutionService"/> class.
+            </summary>
+            <param name="period">The timer resolution period in milliseconds.</param>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsTimerResolutionService.Begin">
+            <summary>
+            Begins high precision timer resolution.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsTimerResolutionService.End">
+            <summary>
+            Ends high precision timer resolution.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Threading.Windows.Services.WindowsTimerResolutionService.Dispose">
+            <summary>
+            Releases timer resolution requests.
+            </summary>
+        </member>
+    </members>
+</doc>

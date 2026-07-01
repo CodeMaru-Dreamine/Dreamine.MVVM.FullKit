@@ -1,0 +1,239 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.Communication.Wpf</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.Communication.Wpf.Commands.DelegateCommand">
+            <summary>
+            WPF 명령 실행을 위한 기본 DelegateCommand입니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.Commands.DelegateCommand.#ctor(System.Action{System.Object},System.Predicate{System.Object})">
+            <summary>
+            DelegateCommand 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+            <param name="execute">명령 실행 동작입니다.</param>
+            <param name="canExecute">명령 실행 가능 여부를 판단하는 조건입니다.</param>
+        </member>
+        <member name="E:Dreamine.Communication.Wpf.Commands.DelegateCommand.CanExecuteChanged">
+            <summary>
+            명령 실행 가능 여부가 변경될 때 발생합니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.Commands.DelegateCommand.CanExecute(System.Object)">
+            <summary>
+            명령 실행 가능 여부를 반환합니다.
+            </summary>
+            <param name="parameter">명령 파라미터입니다.</param>
+            <returns>실행 가능하면 true입니다.</returns>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.Commands.DelegateCommand.Execute(System.Object)">
+            <summary>
+            명령을 실행합니다.
+            </summary>
+            <param name="parameter">명령 파라미터입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.Commands.DelegateCommand.RaiseCanExecuteChanged">
+            <summary>
+            CanExecuteChanged 이벤트를 발생시킵니다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Communication.Wpf.Converters.ConnectionStateBrushConverter">
+            <summary>
+            ConnectionState를 상태 표시용 Brush로 변환합니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.Converters.ConnectionStateBrushConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            ConnectionState 값을 Brush로 변환합니다.
+            </summary>
+            <param name="value">변환할 값입니다.</param>
+            <param name="targetType">대상 타입입니다.</param>
+            <param name="parameter">변환 파라미터입니다.</param>
+            <param name="culture">문화권 정보입니다.</param>
+            <returns>상태 표시용 Brush입니다.</returns>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.Converters.ConnectionStateBrushConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            Brush를 ConnectionState로 역변환합니다.
+            </summary>
+            <param name="value">변환할 값입니다.</param>
+            <param name="targetType">대상 타입입니다.</param>
+            <param name="parameter">변환 파라미터입니다.</param>
+            <param name="culture">문화권 정보입니다.</param>
+            <returns>지원하지 않으므로 Binding.DoNothing을 반환합니다.</returns>
+        </member>
+        <member name="T:Dreamine.Communication.Wpf.Models.CommunicationChannelViewItem">
+            <summary>
+            통신 채널 상태 표시용 모델입니다.
+            </summary>
+        </member>
+        <member name="E:Dreamine.Communication.Wpf.Models.CommunicationChannelViewItem.PropertyChanged">
+            <summary>
+            속성 변경 시 발생합니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationChannelViewItem.Name">
+            <summary>
+            채널 이름입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationChannelViewItem.Kind">
+            <summary>
+            전송 방식입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationChannelViewItem.State">
+            <summary>
+            연결 상태입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationChannelViewItem.Description">
+            <summary>
+            채널 설명입니다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Communication.Wpf.Models.CommunicationMessageLogItem">
+            <summary>
+            통신 메시지 로그 표시용 모델입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationMessageLogItem.CreatedAt">
+            <summary>
+            로그 발생 시각입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationMessageLogItem.ChannelName">
+            <summary>
+            통신 채널 이름입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationMessageLogItem.Kind">
+            <summary>
+            전송 방식입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationMessageLogItem.Direction">
+            <summary>
+            메시지 방향입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationMessageLogItem.MessageName">
+            <summary>
+            메시지 이름입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationMessageLogItem.Route">
+            <summary>
+            메시지 라우트입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationMessageLogItem.PayloadLength">
+            <summary>
+            Payload 크기입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.Models.CommunicationMessageLogItem.PayloadPreview">
+            <summary>
+            표시용 Payload 문자열입니다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel">
+            <summary>
+            통신 상태와 메시지 로그를 표시하는 모니터 ViewModel입니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.#ctor">
+            <summary>
+            CommunicationMonitorViewModel 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+        </member>
+        <member name="E:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.PropertyChanged">
+            <summary>
+            속성 변경 시 발생합니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.Channels">
+            <summary>
+            통신 채널 목록입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.Logs">
+            <summary>
+            메시지 로그 목록입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.SelectedChannel">
+            <summary>
+            선택된 통신 채널입니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.ClearLogsCommand">
+            <summary>
+            로그 삭제 명령입니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.AddChannel(System.String,Dreamine.Communication.Abstractions.Enums.TransportKind,System.String)">
+            <summary>
+            통신 채널을 추가합니다.
+            </summary>
+            <param name="name">채널 이름입니다.</param>
+            <param name="kind">전송 방식입니다.</param>
+            <param name="description">채널 설명입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.UpdateChannelState(System.String,Dreamine.Communication.Abstractions.Enums.ConnectionState)">
+            <summary>
+            통신 채널 상태를 갱신합니다.
+            </summary>
+            <param name="name">채널 이름입니다.</param>
+            <param name="state">변경할 연결 상태입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.UpdateChannelDescription(System.String,System.String)">
+            <summary>
+            통신 채널 설명을 갱신합니다.
+            </summary>
+            <param name="name">채널 이름입니다.</param>
+            <param name="description">변경할 채널 설명입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.AddSendLog(System.String,Dreamine.Communication.Abstractions.Enums.TransportKind,Dreamine.Communication.Abstractions.Models.MessageEnvelope)">
+            <summary>
+            송신 메시지 로그를 추가합니다.
+            </summary>
+            <param name="channelName">채널 이름입니다.</param>
+            <param name="kind">전송 방식입니다.</param>
+            <param name="message">메시지입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.AddReceiveLog(System.String,Dreamine.Communication.Abstractions.Enums.TransportKind,Dreamine.Communication.Abstractions.Models.MessageEnvelope)">
+            <summary>
+            수신 메시지 로그를 추가합니다.
+            </summary>
+            <param name="channelName">채널 이름입니다.</param>
+            <param name="kind">전송 방식입니다.</param>
+            <param name="message">메시지입니다.</param>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.ViewModels.CommunicationMonitorViewModel.ClearLogs">
+            <summary>
+            메시지 로그를 모두 삭제합니다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Communication.Wpf.Views.CommunicationMonitorView">
+            <summary>
+            Dreamine Communication 상태와 메시지 로그를 표시하는 WPF UserControl입니다.
+            </summary>
+            <summary>
+            CommunicationMonitorView
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.Views.CommunicationMonitorView.#ctor">
+            <summary>
+            CommunicationMonitorView 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Communication.Wpf.Views.CommunicationMonitorView.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+    </members>
+</doc>
