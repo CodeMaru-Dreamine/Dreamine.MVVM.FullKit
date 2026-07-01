@@ -1,0 +1,353 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.MVVM.Interfaces</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.MVVM.Interfaces.DependencyInjection.IAssemblyTypeScanner">
+            <summary>
+            Scans assemblies and returns loadable concrete types.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IAssemblyTypeScanner.GetCandidateAssemblies(System.Reflection.Assembly)">
+            <summary>
+            Gets candidate assemblies for auto registration.
+            </summary>
+            <param name="rootAssembly">The root assembly to prioritize.</param>
+            <returns>The candidate assemblies.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IAssemblyTypeScanner.GetLoadableTypes(System.Reflection.Assembly)">
+            <summary>
+            Gets loadable types from the specified assembly.
+            </summary>
+            <param name="assembly">The assembly to scan.</param>
+            <returns>The loadable types.</returns>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.DependencyInjection.IAutoRegistrationFilter">
+            <summary>
+            Defines a rule that determines whether a type is eligible for automatic registration.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IAutoRegistrationFilter.IsTarget(System.Type)">
+            <summary>
+            Determines whether the specified type is eligible for automatic registration.
+            </summary>
+            <param name="type">The type to inspect.</param>
+            <returns>True if the type is eligible; otherwise false.</returns>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.DependencyInjection.IAutoRegistrationService">
+            <summary>
+            Provides automatic service registration features.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IAutoRegistrationService.RegisterAll(System.Reflection.Assembly,Dreamine.MVVM.Interfaces.DependencyInjection.IServiceRegistry)">
+            <summary>
+            Registers supported types from the specified root assembly.
+            </summary>
+            <param name="rootAssembly">The root assembly to scan first.</param>
+            <param name="registry">The service registry to populate.</param>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.DependencyInjection.IConstructorSelector">
+            <summary>
+            Selects a constructor for object activation.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IConstructorSelector.SelectConstructor(System.Type)">
+            <summary>
+            Selects the constructor to use for the specified implementation type.
+            </summary>
+            <param name="implementationType">The implementation type.</param>
+            <returns>The selected constructor.</returns>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.DependencyInjection.IObjectActivator">
+            <summary>
+            Creates object instances using constructor injection.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IObjectActivator.CreateInstance(System.Type,Dreamine.MVVM.Interfaces.DependencyInjection.IServiceResolver)">
+            <summary>
+            Creates an instance of the specified implementation type.
+            </summary>
+            <param name="implementationType">The implementation type.</param>
+            <param name="resolver">The resolver used to resolve constructor dependencies.</param>
+            <returns>The created object instance.</returns>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceContainer">
+            <summary>
+            Represents a service container that supports both registration and resolution.
+            </summary>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceRegistry">
+            <summary>
+            Provides service registration capabilities.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceRegistry.Register``1">
+            <summary>
+            Registers a concrete implementation type as itself with transient lifetime.
+            </summary>
+            <typeparam name="TImplementation">The concrete implementation type.</typeparam>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceRegistry.Register``2">
+            <summary>
+            Registers a service abstraction with a concrete implementation using transient lifetime.
+            </summary>
+            <typeparam name="TService">The service abstraction type.</typeparam>
+            <typeparam name="TImplementation">The concrete implementation type.</typeparam>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceRegistry.Register``1(System.Func{``0})">
+            <summary>
+            Registers a factory for the specified service type using transient lifetime.
+            </summary>
+            <typeparam name="TService">The service type.</typeparam>
+            <param name="factory">The factory used to create the service instance.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceRegistry.RegisterSingleton``1(``0)">
+            <summary>
+            Registers a singleton instance for the specified service type.
+            </summary>
+            <typeparam name="TService">The service type.</typeparam>
+            <param name="instance">The singleton instance.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceRegistry.RegisterSingleton``1">
+            <summary>
+            Registers a concrete implementation type as itself with singleton lifetime.
+            </summary>
+            <typeparam name="TImplementation">The concrete implementation type.</typeparam>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceRegistry.RegisterSingleton``2">
+            <summary>
+            Registers a service abstraction with a concrete implementation using singleton lifetime.
+            </summary>
+            <typeparam name="TService">The service abstraction type.</typeparam>
+            <typeparam name="TImplementation">The concrete implementation type.</typeparam>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceRegistry.IsRegistered(System.Type)">
+            <summary>
+            Determines whether the specified service type is registered.
+            </summary>
+            <param name="serviceType">The service type.</param>
+            <returns>True if the service type is registered; otherwise false.</returns>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceResolver">
+            <summary>
+            Provides service resolution capabilities.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceResolver.Resolve``1">
+            <summary>
+            Resolves an instance of the specified service type.
+            </summary>
+            <typeparam name="TService">The service type.</typeparam>
+            <returns>The resolved service instance.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceResolver.Resolve(System.Type)">
+            <summary>
+            Resolves an instance of the specified service type.
+            </summary>
+            <param name="serviceType">The service type.</param>
+            <returns>The resolved service instance.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.DependencyInjection.IServiceResolver.TryResolve``1(``0@)">
+            <summary>
+            Attempts to resolve an instance of the specified service type without throwing.
+            </summary>
+            <typeparam name="TService">The service type.</typeparam>
+            <param name="result">The resolved instance, or <c>null</c> if not registered.</param>
+            <returns><c>true</c> if resolved successfully; otherwise <c>false</c>.</returns>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.Events.IEventBase">
+            <summary>
+            Marks a type as an explicit Dreamine event contract.
+            </summary>
+            <remarks>
+            This marker is not intended to be a broad source-generation trigger by itself.
+            Generators and scanners should combine it with explicit Dreamine attributes,
+            naming rules, or namespace rules before treating a type as an automatic target.
+            </remarks>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.Locators.IViewModelResolver">
+             <summary>
+             📌 ViewModel 생성 전략을 위한 DI 추상 인터페이스입니다.
+            
+             Dreamine의 ViewModelLocator와 함께 사용되며,
+             DI 컨테이너 또는 수동 인스턴스화 전략을 연결하는 역할을 합니다.
+             </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Locators.IViewModelResolver.Resolve(System.Type)">
+            <summary>
+            지정된 ViewModel 타입을 생성하여 반환합니다.
+            </summary>
+            <param name="viewModelType">생성할 ViewModel의 Type 정보</param>
+            <returns>ViewModel 인스턴스 또는 null</returns>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.Navigation.INavigator">
+            <summary>
+            Provides instance-based navigation for an already created ViewModel.
+            </summary>
+            <remarks>
+            This is the smallest navigation contract and is usually implemented by region-based presenters.
+            Use <see cref="T:Dreamine.MVVM.Interfaces.Navigation.IViewManager"/> when a component also needs type-based ViewModel resolution.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Navigation.INavigator.Navigate(System.Object)">
+            <summary>
+            Navigates to the View that corresponds to the specified ViewModel instance.
+            </summary>
+            <param name="viewModel">The ViewModel instance to display.</param>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.Navigation.IViewManager">
+            <summary>
+            Provides View display operations based on ViewModel instances or ViewModel types.
+            </summary>
+            <remarks>
+            This is the application-level View display contract. It extends <see cref="T:Dreamine.MVVM.Interfaces.Navigation.INavigator"/>
+            so instance-based and type-based display operations stay in one navigation contract family.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Navigation.IViewManager.Show``1">
+            <summary>
+            Shows the View that corresponds to the specified ViewModel type.
+            </summary>
+            <typeparam name="TViewModel">The ViewModel type used to resolve the target View.</typeparam>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Navigation.IViewManager.Show(System.Type)">
+            <summary>
+            Shows the View that corresponds to the specified ViewModel type.
+            </summary>
+            <param name="viewModelType">The ViewModel type used to resolve the target View.</param>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.Windows.IDialogService">
+            <summary>
+            Provides dialog presentation services for ViewModels, decoupled from WPF MessageBox.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Windows.IDialogService.ShowMessage(System.String,System.String)">
+            <summary>
+            Displays an informational message dialog.
+            </summary>
+            <param name="message">The message to display.</param>
+            <param name="title">The dialog title.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Windows.IDialogService.ShowError(System.String,System.String)">
+            <summary>
+            Displays an error message dialog.
+            </summary>
+            <param name="message">The error message to display.</param>
+            <param name="title">The dialog title.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Windows.IDialogService.Confirm(System.String,System.String)">
+            <summary>
+            Displays a yes/no confirmation dialog.
+            </summary>
+            <param name="message">The question to display.</param>
+            <param name="title">The dialog title.</param>
+            <returns><c>true</c> if the user confirmed; otherwise <c>false</c>.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Windows.IDialogService.ShowMessageAsync(System.String,System.String)">
+            <summary>
+            Asynchronously displays an informational message dialog.
+            </summary>
+            <param name="message">The message to display.</param>
+            <param name="title">The dialog title.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Windows.IDialogService.ConfirmAsync(System.String,System.String)">
+            <summary>
+            Asynchronously displays a yes/no confirmation dialog.
+            </summary>
+            <param name="message">The question to display.</param>
+            <param name="title">The dialog title.</param>
+            <returns><c>true</c> if the user confirmed; otherwise <c>false</c>.</returns>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.Windows.IViewDisplayStrategy">
+            <summary>
+            Defines how a resolved view is displayed for a given view type.
+            Register custom implementations via <c>ViewManager.RegisterDisplayStrategy</c>
+            to support additional view types without modifying <c>ViewManager</c>.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Windows.IViewDisplayStrategy.CanHandle(System.Object)">
+            <summary>
+            Returns <c>true</c> when this strategy can handle the specified view instance.
+            </summary>
+            <param name="view">The resolved view object.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Windows.IViewDisplayStrategy.Display(System.Object,System.Object,System.Type,System.Boolean)">
+            <summary>
+            Displays the view with the given ViewModel.
+            </summary>
+            <param name="view">The resolved view object.</param>
+            <param name="viewModel">The resolved ViewModel object.</param>
+            <param name="viewModelType">The ViewModel type (used for key resolution).</param>
+            <param name="useRegionNavigator">
+            <c>true</c> when display should delegate to <c>INavigator</c> if available.
+            </param>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.Windows.IWindowStateChange">
+            <summary>
+            Describes a window open-state change without requiring consumers to depend on a concrete event args type.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Interfaces.Windows.IWindowStateChange.WindowKey">
+            <summary>
+            Gets the window key.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Interfaces.Windows.IWindowStateChange.IsOpen">
+            <summary>
+            Gets a value indicating whether the window is open.
+            </summary>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.Windows.IWindowStateService">
+            <summary>
+            Provides window open-state tracking.
+            </summary>
+        </member>
+        <member name="E:Dreamine.MVVM.Interfaces.Windows.IWindowStateService.StateChanged">
+            <summary>
+            Occurs when a window open-state changes.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Windows.IWindowStateService.IsOpen(System.String)">
+            <summary>
+            Determines whether the window with the specified key is open.
+            </summary>
+            <param name="windowKey">The window key.</param>
+            <returns>True if the window is open; otherwise false.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Windows.IWindowStateService.MarkOpened(System.String)">
+            <summary>
+            Marks the window with the specified key as opened.
+            </summary>
+            <param name="windowKey">The window key.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Windows.IWindowStateService.MarkClosed(System.String)">
+            <summary>
+            Marks the window with the specified key as closed.
+            </summary>
+            <param name="windowKey">The window key.</param>
+        </member>
+        <member name="T:Dreamine.MVVM.Interfaces.Windows.WindowStateChangedEventArgs">
+            <summary>
+            Provides data for a window open-state changed event.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Interfaces.Windows.WindowStateChangedEventArgs.#ctor(System.String,System.Boolean)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.MVVM.Interfaces.Windows.WindowStateChangedEventArgs"/> class.
+            </summary>
+            <param name="windowKey">The window key.</param>
+            <param name="isOpen">A value indicating whether the window is open.</param>
+        </member>
+        <member name="P:Dreamine.MVVM.Interfaces.Windows.WindowStateChangedEventArgs.WindowKey">
+            <summary>
+            Gets the window key.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Interfaces.Windows.WindowStateChangedEventArgs.IsOpen">
+            <summary>
+            Gets a value indicating whether the window is open.
+            </summary>
+        </member>
+    </members>
+</doc>

@@ -1,0 +1,235 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.Hybrid.Wpf</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.Hybrid.Wpf.Controls.HybridHostControl">
+            <summary>WPF에서 Blazor UI를 Embedded 형태로 호스팅하는 컨트롤입니다.</summary>
+            <summary>
+            HybridHostControl
+            </summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Controls.HybridHostControl.HostPage">
+            <summary>Blazor HostPage 경로입니다.</summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Controls.HybridHostControl.RootComponentType">
+            <summary>RootComponent 타입입니다.</summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Controls.HybridHostControl.RootSelector">
+            <summary>RootComponent가 마운트될 Selector입니다.</summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Controls.HybridHostControl.Services">
+            <summary>Blazor에 제공할 서비스 컨테이너입니다.</summary>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Controls.HybridHostControl.#ctor">
+            <summary>컨트롤을 생성합니다.</summary>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Controls.HybridHostControl.InitializeComponent">
+            <summary>
+            InitializeComponent
+            </summary>
+        </member>
+        <member name="T:Dreamine.Hybrid.Wpf.Converters.BooleanToVisibilityConverter">
+            <summary>Boolean을 Visibility로 변환하는 변환기</summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Converters.BooleanToVisibilityConverter.Instance">
+            <summary>싱글톤 인스턴스</summary>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Converters.BooleanToVisibilityConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Converters.BooleanToVisibilityConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
+            <inheritdoc/>
+        </member>
+        <member name="T:Dreamine.Hybrid.Wpf.DependencyInjection.ServiceCollectionExtensions">
+            <summary>
+            Provides service registration extension methods for Dreamine Hybrid WPF.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.DependencyInjection.ServiceCollectionExtensions.AddDreamineHybridWpf(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers the default services required to run Dreamine Hybrid WPF.
+            </summary>
+            <param name="services">The service collection.</param>
+            <returns>The same service collection instance for chaining.</returns>
+        </member>
+        <member name="T:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostedService`1">
+            <summary>
+            Hosts a Blazor Server application inside the WPF process.
+            </summary>
+            <typeparam name="TRootComponent">The root Razor component type.</typeparam>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostedService`1.#ctor(System.IServiceProvider,Dreamine.Hybrid.Interfaces.IHybridMessageBus,Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostedService`1"/> class.
+            </summary>
+            <param name="rootServiceProvider">The WPF root service provider.</param>
+            <param name="messageBus">The shared hybrid message bus.</param>
+            <param name="options">The Blazor Server host options.</param>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostedService`1.StartAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostedService`1.StopAsync(System.Threading.CancellationToken)">
+            <inheritdoc />
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostedService`1.RegisterSharedServices(Microsoft.Extensions.DependencyInjection.IServiceCollection)">
+            <summary>
+            Registers services shared from the WPF host service provider.
+            </summary>
+            <param name="services">The Blazor Server service collection.</param>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostedService`1.RegisterViewModels(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Reflection.Assembly)">
+            <summary>
+            Registers public ViewModel classes from the specified assembly.
+            </summary>
+            <param name="services">The service collection.</param>
+            <param name="assembly">The assembly to scan.</param>
+        </member>
+        <member name="T:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions">
+            <summary>
+            Represents options for hosting a Blazor Server endpoint inside a WPF process.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.Port">
+            <summary>
+            Gets or sets the port used by the embedded Blazor Server host.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.InstanceId">
+            <summary>
+            Gets the unique ID for the current in-process server instance.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.ListenAnyIp">
+            <summary>
+            Gets or sets a value indicating whether Kestrel should listen on every network interface.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.Host">
+            <summary>
+            Gets or sets the local host name used when <see cref="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.ListenAnyIp" /> is false.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.ContentRootPath">
+            <summary>
+            Gets or sets the content root path used by the embedded Blazor Server host.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.AutoRegisterViewModels">
+            <summary>
+            Gets or sets a value indicating whether public ViewModel classes should be automatically registered.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.SharedServiceTypes">
+            <summary>
+            Gets service types that should be shared from the WPF host service provider to the Blazor Server host.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.AllowDisposableSharedServices">
+            <summary>
+            Gets or sets a value indicating whether disposable shared service instances may be registered in the Blazor Server container.
+            </summary>
+            <remarks>
+            Keep this disabled unless the shared instance is safe for the Blazor Server host to dispose when it stops.
+            </remarks>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.ConfigureServices">
+            <summary>
+            Optional callback invoked before the Blazor Server host is built.
+            Use this to register Scoped or Transient services into the Blazor Server DI container.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.ConfigurePipeline">
+            <summary>
+            Optional callback invoked after the default pipeline (UseStaticFiles, UseRouting, UseAntiforgery)
+            is configured. Use this to add extra middleware, static file providers, etc.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.AddPhysicalStaticFiles(System.String,System.String)">
+            <summary>
+            Adds a physical directory as an additional static file provider at the given request path.
+            </summary>
+        </member>
+        <member name="T:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerServiceCollectionExtensions">
+            <summary>
+            Provides service registration extensions for Dreamine Blazor Server hosting.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerServiceCollectionExtensions.AddDreamineBlazorServer``1(Microsoft.Extensions.DependencyInjection.IServiceCollection,System.Action{Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions})">
+            <summary>
+            Registers a Blazor Server host that runs inside the WPF process.
+            </summary>
+            <typeparam name="TRootComponent">The root Razor component type.</typeparam>
+            <param name="services">The service collection.</param>
+            <param name="configure">The option configuration callback.</param>
+            <returns>The same service collection instance.</returns>
+        </member>
+        <member name="T:Dreamine.Hybrid.Wpf.Hosting.DreamineWpfHostExtensions">
+            <summary>
+            Provides extension methods for running WPF applications with a Generic Host.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Hosting.DreamineWpfHostExtensions.RunDreamineWpfApp``1(Microsoft.Extensions.Hosting.IHost)">
+            <summary>
+            Runs a WPF application using the specified Generic Host.
+            </summary>
+            <typeparam name="TApplication">The WPF application type.</typeparam>
+            <param name="host">The configured Generic Host.</param>
+        </member>
+        <member name="T:Dreamine.Hybrid.Wpf.Hosting.HybridWebViewHost">
+            <summary>
+            Provides the public WebView2 host helpers supported by Dreamine Hybrid WPF.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Hosting.HybridWebViewHost.CreateWebView">
+            <summary>
+            Creates a WebView2 instance configured for Dreamine Hybrid hosting.
+            </summary>
+            <returns>The configured WebView2 instance.</returns>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Hosting.HybridWebViewHost.ShowOfflineMessageAsync(Microsoft.Web.WebView2.Wpf.WebView2,System.String)">
+            <summary>
+            Displays an offline message in the specified WebView2 instance.
+            </summary>
+            <param name="webView">The WebView2 instance.</param>
+            <param name="url">The URL that could not be reached.</param>
+            <returns>A task that represents the asynchronous operation.</returns>
+        </member>
+        <member name="T:Dreamine.Hybrid.Wpf.Interfaces.IDreamineServiceProviderAware">
+            <summary>
+            Provides a contract for application classes that need access to the root service provider.
+            </summary>
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Interfaces.IDreamineServiceProviderAware.SetServiceProvider(System.IServiceProvider)">
+            <summary>
+            Sets the root service provider for the application.
+            </summary>
+            <param name="serviceProvider">The root service provider.</param>
+        </member>
+        <member name="T:Dreamine.Hybrid.Wpf.Internal.WebView2Initializer">
+            \class WebView2Initializer
+            WebView2 안전 초기화를 제공하는 정적 유틸 클래스
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Internal.WebView2Initializer.GetSafeUserDataFolder">
+            WebView2 캐시 경로를 반환(ASCII Only)
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Internal.WebView2Initializer.CreateConfiguredWebView2">
+            캐시 경로가 지정된 WebView2 인스턴스를 생성
+        </member>
+        <member name="M:Dreamine.Hybrid.Wpf.Internal.WebView2Initializer.ShowOfflineMessageAsync(Microsoft.Web.WebView2.Wpf.WebView2,System.String)">
+            서버 오프라인 안내 HTML을 로드
+        </member>
+        <member name="T:Dreamine.Hybrid.Wpf.Utility.DesignTimeGuard">
+            <summary>
+            Provides cached WPF design-time detection.
+            </summary>
+        </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Utility.DesignTimeGuard.IsInDesignMode">
+            <summary>
+            Gets a value indicating whether the current process is running in the WPF designer.
+            </summary>
+        </member>
+    </members>
+</doc>

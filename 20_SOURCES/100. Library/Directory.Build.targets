@@ -1,0 +1,44 @@
+<Project>
+  <!--
+    빌드 후 각 라이브러리의 XML doc + README + diagram.svg 를
+    Dreamine.Web/wwwroot/xmldocs/{AssemblyName}/ 에 자동 복사합니다.
+    테스트 프로젝트와 XML이 없는 프로젝트는 건너뜁니다.
+  -->
+  <Target Name="CopyDocsToWeb" AfterTargets="Build"
+          Condition="!$(MSBuildProjectName.EndsWith('.Tests')) AND Exists('$(OutputPath)$(AssemblyName).xml')">
+
+    <PropertyGroup>
+      <_WebXmlDocDest>$(MSBuildThisFileDirectory)..\000. Project\010. App\Dreamine.Web\wwwroot\xmldocs\$(AssemblyName)</_WebXmlDocDest>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(_WebXmlDocDest)" />
+
+    <!-- XML 문서 -->
+    <Copy SourceFiles="$(OutputPath)$(AssemblyName).xml"
+          DestinationFolder="$(_WebXmlDocDest)"
+          SkipUnchangedFiles="true" />
+
+    <!-- README 영문 -->
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\README.md"
+          DestinationFolder="$(_WebXmlDocDest)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(MSBuildProjectDirectory)\README.md')" />
+
+    <!-- README 한글 (대소문자 두 가지 관례 모두 처리) -->
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\README_KO.md"
+          DestinationFolder="$(_WebXmlDocDest)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(MSBuildProjectDirectory)\README_KO.md')" />
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\README_ko.md"
+          DestinationFolder="$(_WebXmlDocDest)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(MSBuildProjectDirectory)\README_ko.md')" />
+
+    <!-- 다이어그램 (있을 때만) -->
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\diagram.svg"
+          DestinationFolder="$(_WebXmlDocDest)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(MSBuildProjectDirectory)\diagram.svg')" />
+
+  </Target>
+</Project>

@@ -1,0 +1,130 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.MVVM.Locators</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.MVVM.Locators.ViewModelLocator">
+            <summary>
+            View 와 ViewModel 간의 타입 매핑 및 인스턴스 생성을 지원합니다.
+            플랫폼 종속 타입에 의존하지 않으며, 이름 및 네임스페이스 규칙 기반으로 동작합니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.Register(System.Type,System.Type)">
+            <summary>
+            View 와 ViewModel 타입 매핑을 수동 등록합니다.
+            </summary>
+            <param name="viewType">View 타입입니다.</param>
+            <param name="viewModelType">ViewModel 타입입니다.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.RegisterResolver(Dreamine.MVVM.Interfaces.Locators.IViewModelResolver)">
+            <summary>
+            외부 ViewModel Resolver 를 등록합니다.
+            </summary>
+            <param name="resolver">Resolver 구현체입니다.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.ClearResolver">
+            <summary>
+            Removes the configured ViewModel resolver.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.Clear">
+            <summary>
+            Clears registered mappings and type lookup caches, but keeps the configured resolver.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.Reset">
+            <summary>
+            Clears all locator state, including registered mappings, cached type lookups, and the configured resolver.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.Resolve(System.Type)">
+            <summary>
+            View 타입에 대응하는 ViewModel 인스턴스를 반환합니다.
+            </summary>
+            <param name="viewType">View 타입입니다.</param>
+            <returns>생성된 ViewModel 인스턴스입니다. 찾지 못한 경우 null 입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.ResolveView(System.Type)">
+            <summary>
+            ViewModel 타입에 대응하는 View 인스턴스를 생성합니다.
+            </summary>
+            <param name="viewModelType">ViewModel 타입입니다.</param>
+            <returns>생성된 View 인스턴스입니다. 찾지 못한 경우 null 입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.RegisterAll(System.Reflection.Assembly)">
+            <summary>
+            지정된 어셈블리에서 View 와 ViewModel 매핑을 자동 등록합니다.
+            </summary>
+            <param name="assembly">검색 대상 어셈블리입니다.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.FindViewModelType(System.Type,System.Type[])">
+            <summary>
+            View 타입에 대응하는 ViewModel 타입을 찾습니다.
+            </summary>
+            <param name="viewType">View 타입입니다.</param>
+            <param name="cachedTypes">미리 확보한 타입 목록입니다.</param>
+            <returns>대응되는 ViewModel 타입이며, 찾지 못한 경우 null 입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.GetAllLoadableTypes">
+            <summary>
+            현재 AppDomain에 로드된 모든 Assembly에서 로드 가능한 타입을 가져옵니다.
+            </summary>
+            <returns>로드 가능한 타입 목록입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.GetLoadableTypes(System.Reflection.Assembly)">
+            <summary>
+            지정한 Assembly에서 로드 가능한 타입만 가져옵니다.
+            </summary>
+            <param name="assembly">검색 대상 Assembly입니다.</param>
+            <returns>로드 가능한 타입 목록입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.FindViewType(System.Type)">
+            <summary>
+            ViewModel 타입에 대응하는 View 타입을 찾습니다.
+            </summary>
+            <param name="viewModelType">ViewModel 타입입니다.</param>
+            <returns>대응되는 View 타입이며, 찾지 못한 경우 null 입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewModelLocator.CreateInstance(System.Type)">
+            <summary>
+            지정한 타입의 인스턴스를 생성합니다.
+            </summary>
+            <param name="type">생성 대상 타입입니다.</param>
+            <returns>생성된 인스턴스입니다.</returns>
+        </member>
+        <member name="T:Dreamine.MVVM.Locators.ViewNamingConvention">
+            <summary>
+            Provides shared naming rules for resolving View and ViewModel type names.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewNamingConvention.IsLikelyViewType(System.Type)">
+            <summary>
+            Determines whether the specified type is likely to be a View type.
+            </summary>
+            <param name="type">The type to inspect.</param>
+            <returns>True if the type matches a known View naming pattern; otherwise false.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewNamingConvention.GetViewModelTypeNameCandidates(System.Type)">
+            <summary>
+            Creates full type name candidates for a ViewModel that corresponds to the specified View type.
+            </summary>
+            <param name="viewType">The View type.</param>
+            <returns>Candidate ViewModel full names ordered from most specific to least specific.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewNamingConvention.GetViewTypeNameCandidates(System.Type)">
+            <summary>
+            Creates full type name candidates for a View that corresponds to the specified ViewModel type.
+            </summary>
+            <param name="viewModelType">The ViewModel type.</param>
+            <returns>Candidate View full names ordered from most specific to least specific.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Locators.ViewNamingConvention.GetViewTypeNameCandidates(System.String)">
+            <summary>
+            Creates full type name candidates for a View from a ViewModel full type name.
+            </summary>
+            <param name="viewModelFullName">The full type name of the ViewModel.</param>
+            <returns>Candidate View full names ordered from most specific to least specific.</returns>
+        </member>
+    </members>
+</doc>

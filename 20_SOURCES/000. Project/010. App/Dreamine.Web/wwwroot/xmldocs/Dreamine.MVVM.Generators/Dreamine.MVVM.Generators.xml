@@ -1,0 +1,480 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Dreamine.MVVM.Generators</name>
+    </assembly>
+    <members>
+        <member name="T:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator">
+            <summary>
+            <c>DreamineModelAttribute</c>, <c>DreamineEventAttribute</c>,
+            <c>DreaminePropertyAttribute</c>가 적용된 필드를 기반으로
+            보조 프로퍼티 코드를 생성하는 증분 생성기입니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.Initialize(Microsoft.CodeAnalysis.IncrementalGeneratorInitializationContext)">
+            <summary>
+            증분 생성기 파이프라인을 초기화합니다.
+            </summary>
+            <param name="context">생성기 초기화 컨텍스트입니다.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.IsCandidateSyntax(Microsoft.CodeAnalysis.SyntaxNode)">
+            <summary>
+            후보가 될 수 있는 구문인지 확인합니다.
+            </summary>
+            <param name="node">검사할 구문 노드입니다.</param>
+            <returns>후보 구문이면 <see langword="true"/>이고, 아니면 <see langword="false"/>입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.TryCreateCandidate(Microsoft.CodeAnalysis.GeneratorSyntaxContext,Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AttributeSymbolSet)">
+            <summary>
+            구문/시맨틱 정보를 바탕으로 생성 대상 후보를 만듭니다.
+            </summary>
+            <param name="context">구문 분석 컨텍스트입니다.</param>
+            <param name="attributeSymbols">사용할 Attribute 심볼 집합입니다.</param>
+            <returns>유효한 후보이면 해당 모델을 반환하고, 아니면 <see langword="null"/>을 반환합니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.Emit(Microsoft.CodeAnalysis.SourceProductionContext,System.Collections.Immutable.ImmutableArray{Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AutoWiringCandidate})">
+            <summary>
+            수집된 후보를 기반으로 소스를 생성합니다.
+            </summary>
+            <param name="context">소스 출력 컨텍스트입니다.</param>
+            <param name="candidates">수집된 후보 목록입니다.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.GetCandidateKind(Microsoft.CodeAnalysis.IFieldSymbol,Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AttributeSymbolSet,Microsoft.CodeAnalysis.AttributeData@)">
+            <summary>
+            필드에 적용된 Attribute 종류를 판별합니다.
+            </summary>
+            <param name="fieldSymbol">검사할 필드 심볼입니다.</param>
+            <param name="attributeSymbols">비교할 Attribute 심볼 집합입니다.</param>
+            <param name="matchedAttribute">일치한 Attribute 데이터입니다.</param>
+            <returns>일치한 종류가 있으면 해당 <see cref="T:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.CandidateKind"/>를 반환하고, 아니면 <see langword="null"/>을 반환합니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.GetConfiguredPropertyName(Microsoft.CodeAnalysis.AttributeData)">
+            <summary>
+            Attribute에 지정된 명시적 프로퍼티 이름을 가져옵니다.
+            </summary>
+            <param name="attribute">검사할 Attribute 데이터입니다.</param>
+            <returns>설정된 이름이 있으면 반환하고, 없으면 <see langword="null"/>을 반환합니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.ResolveGeneratedPropertyName(System.String,System.String)">
+            <summary>
+            생성할 프로퍼티 이름을 결정합니다.
+            </summary>
+            <param name="fieldName">원본 필드 이름입니다.</param>
+            <param name="configuredPropertyName">명시적으로 지정된 프로퍼티 이름입니다.</param>
+            <returns>유효한 프로퍼티 이름이면 반환하고, 아니면 <see langword="null"/>을 반환합니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.HasConflictingMember(Microsoft.CodeAnalysis.INamedTypeSymbol,System.String)">
+            <summary>
+            이미 같은 이름의 멤버가 존재하는지 확인합니다.
+            </summary>
+            <param name="typeSymbol">검사 대상 타입입니다.</param>
+            <param name="memberName">확인할 멤버 이름입니다.</param>
+            <returns>같은 이름의 멤버가 있으면 <see langword="true"/>이고, 아니면 <see langword="false"/>입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.BuildFileName(Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AutoWiringCandidate)">
+            <summary>
+            생성 파일 이름을 만듭니다.
+            </summary>
+            <param name="candidate">대상 후보입니다.</param>
+            <returns>생성 파일 이름입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.BuildSource(Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AutoWiringCandidate)">
+            <summary>
+            생성 코드를 만듭니다.
+            </summary>
+            <param name="candidate">생성 대상 후보입니다.</param>
+            <returns>생성된 C# 소스 문자열입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AppendPropertyCode(System.Text.StringBuilder,Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.CandidateKind,Microsoft.CodeAnalysis.IFieldSymbol,System.String,System.String,System.String)">
+            <summary>
+            종류에 맞는 프로퍼티 코드를 생성합니다.
+            </summary>
+            <param name="builder">대상 문자열 빌더입니다.</param>
+            <param name="kind">생성 대상 종류입니다.</param>
+            <param name="fieldSymbol">원본 필드 심볼입니다.</param>
+            <param name="typeName">필드 타입 이름입니다.</param>
+            <param name="fieldName">필드 이름입니다.</param>
+            <param name="propertyName">생성할 프로퍼티 이름입니다.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AppendLazyAccessPropertyCode(System.Text.StringBuilder,Microsoft.CodeAnalysis.IFieldSymbol,System.String,System.String,System.String,System.String)">
+            <summary>
+            지연 초기화 기반 읽기 전용 프로퍼티 코드를 생성합니다.
+            </summary>
+            <param name="builder">대상 문자열 빌더입니다.</param>
+            <param name="fieldSymbol">원본 필드 심볼입니다.</param>
+            <param name="typeName">필드 타입 이름입니다.</param>
+            <param name="fieldName">필드 이름입니다.</param>
+            <param name="propertyName">프로퍼티 이름입니다.</param>
+            <param name="initializerExpression">초기화 식입니다.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.Sanitize(System.String)">
+            <summary>
+            파일 이름에 안전한 문자열로 변환합니다.
+            </summary>
+            <param name="name">원본 문자열입니다.</param>
+            <returns>정리된 문자열입니다.</returns>
+        </member>
+        <member name="T:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.CandidateKind">
+            <summary>
+            생성 대상 종류를 나타냅니다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AttributeSymbolSet">
+            <summary>
+            Attribute 심볼 집합을 나타냅니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AttributeSymbolSet.#ctor(Microsoft.CodeAnalysis.INamedTypeSymbol,Microsoft.CodeAnalysis.INamedTypeSymbol,Microsoft.CodeAnalysis.INamedTypeSymbol)">
+            <summary>
+            <see cref="T:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AttributeSymbolSet"/> 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+            <param name="modelAttribute">Model Attribute 심볼입니다.</param>
+            <param name="eventAttribute">Event Attribute 심볼입니다.</param>
+            <param name="propertyAttribute">Property Attribute 심볼입니다.</param>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AttributeSymbolSet.ModelAttribute">
+            <summary>
+            Model Attribute 심볼을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AttributeSymbolSet.EventAttribute">
+            <summary>
+            Event Attribute 심볼을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AttributeSymbolSet.PropertyAttribute">
+            <summary>
+            Property Attribute 심볼을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AttributeSymbolSet.IsIncomplete">
+            <summary>
+            필수 심볼이 모두 준비되었는지 여부를 가져옵니다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AutoWiringCandidate">
+            <summary>
+            자동 생성 대상 필드 메타데이터를 나타냅니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AutoWiringCandidate.#ctor(Microsoft.CodeAnalysis.IFieldSymbol,Microsoft.CodeAnalysis.INamedTypeSymbol,Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.CandidateKind,System.String)">
+            <summary>
+            <see cref="T:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AutoWiringCandidate"/> 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+            <param name="fieldSymbol">대상 필드 심볼입니다.</param>
+            <param name="containingType">필드를 포함하는 타입입니다.</param>
+            <param name="kind">후보 종류입니다.</param>
+            <param name="generatedPropertyName">생성할 프로퍼티 이름입니다.</param>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AutoWiringCandidate.FieldSymbol">
+            <summary>
+            대상 필드 심볼을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AutoWiringCandidate.ContainingType">
+            <summary>
+            필드를 포함하는 타입을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AutoWiringCandidate.Kind">
+            <summary>
+            후보 종류를 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineAutoWiringGenerator.AutoWiringCandidate.GeneratedPropertyName">
+            <summary>
+            생성할 프로퍼티 이름을 가져옵니다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator">
+            <summary>
+            <c>DreamineCommandAttribute</c>가 적용된 메서드를 기반으로
+            커맨드 프로퍼티와 forwarding 메서드 구현을 생성하는 증분 생성기입니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.Initialize(Microsoft.CodeAnalysis.IncrementalGeneratorInitializationContext)">
+            <summary>
+            증분 생성기 파이프라인을 초기화합니다.
+            </summary>
+            <param name="context">생성기 초기화 컨텍스트입니다.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.TryCreateCandidate(Microsoft.CodeAnalysis.GeneratorSyntaxContext,Microsoft.CodeAnalysis.INamedTypeSymbol)">
+            <summary>
+            구문/시맨틱 정보를 기반으로 생성 후보를 구성합니다.
+            </summary>
+            <param name="context">구문 분석 컨텍스트입니다.</param>
+            <param name="attributeSymbol"><c>DreamineCommandAttribute</c> 심볼입니다.</param>
+            <returns>유효한 후보이면 모델을 반환하고, 아니면 <see langword="null"/>을 반환합니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.Emit(Microsoft.CodeAnalysis.SourceProductionContext,System.Collections.Immutable.ImmutableArray{Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel})">
+            <summary>
+            수집된 후보를 진단하고 소스를 생성합니다.
+            </summary>
+            <param name="context">소스 출력 컨텍스트입니다.</param>
+            <param name="candidates">수집된 후보 목록입니다.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.ValidateCandidate(Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel)">
+            <summary>
+            후보의 유효성을 검증합니다.
+            </summary>
+            <param name="candidate">검사할 후보입니다.</param>
+            <returns>발견된 진단 목록입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.IsPartialMethod(Microsoft.CodeAnalysis.CSharp.Syntax.MethodDeclarationSyntax)">
+            <summary>
+            partial 메서드 여부를 확인합니다.
+            </summary>
+            <param name="methodSyntax">검사할 메서드 구문입니다.</param>
+            <returns>partial 메서드이면 <see langword="true"/>이고, 아니면 <see langword="false"/>입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.IsContainingTypePartial(Microsoft.CodeAnalysis.INamedTypeSymbol)">
+            <summary>
+            containing type이 partial인지 확인합니다.
+            </summary>
+            <param name="typeSymbol">검사할 타입 심볼입니다.</param>
+            <returns>partial 타입이면 <see langword="true"/>이고, 아니면 <see langword="false"/>입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.IsParameterlessVoidMethod(Microsoft.CodeAnalysis.IMethodSymbol)">
+            <summary>
+            메서드가 parameterless void 형식인지 확인합니다.
+            </summary>
+            <param name="methodSymbol">검사할 메서드 심볼입니다.</param>
+            <returns>조건을 만족하면 <see langword="true"/>이고, 아니면 <see langword="false"/>입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.HasConflictingMember(Microsoft.CodeAnalysis.INamedTypeSymbol,System.String)">
+            <summary>
+            같은 이름의 멤버가 이미 존재하는지 확인합니다.
+            </summary>
+            <param name="typeSymbol">검사할 타입입니다.</param>
+            <param name="memberName">검사할 멤버 이름입니다.</param>
+            <returns>같은 이름의 멤버가 있으면 <see langword="true"/>이고, 아니면 <see langword="false"/>입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.BuildCommandPropertyName(System.String,System.String)">
+            <summary>
+            생성할 커맨드 프로퍼티 이름을 결정합니다.
+            </summary>
+            <param name="methodName">원본 메서드 이름입니다.</param>
+            <param name="commandNameOverride">명시적으로 지정한 커맨드 이름입니다.</param>
+            <returns>생성할 커맨드 프로퍼티 이름입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.BuildFileName(Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel)">
+            <summary>
+            생성 파일 이름을 만듭니다.
+            </summary>
+            <param name="candidate">대상 후보입니다.</param>
+            <returns>생성 파일 이름입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.BuildSource(Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel)">
+            <summary>
+            생성 코드를 만듭니다.
+            </summary>
+            <param name="candidate">생성 대상 후보입니다.</param>
+            <returns>생성된 C# 소스 문자열입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.GetMethodSignatureWithoutAttributes(Microsoft.CodeAnalysis.CSharp.Syntax.MethodDeclarationSyntax)">
+            <summary>
+            원본 메서드에서 Attribute와 본문을 제거한 시그니처를 만듭니다.
+            </summary>
+            <param name="methodSyntax">원본 메서드 구문입니다.</param>
+            <returns>생성용 메서드 시그니처 문자열입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.GetConstructorStringArgument(Microsoft.CodeAnalysis.AttributeData,System.Int32)">
+            <summary>
+            생성자 문자열 인자를 가져옵니다.
+            </summary>
+            <param name="attribute">검사할 Attribute 데이터입니다.</param>
+            <param name="index">가져올 생성자 인덱스입니다.</param>
+            <returns>값이 있으면 문자열을 반환하고, 아니면 <see langword="null"/>을 반환합니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.GetNamedStringArgument(Microsoft.CodeAnalysis.AttributeData,System.String)">
+            <summary>
+            named argument 문자열 값을 가져옵니다.
+            </summary>
+            <param name="attribute">검사할 Attribute 데이터입니다.</param>
+            <param name="name">찾을 인자 이름입니다.</param>
+            <returns>값이 있으면 문자열을 반환하고, 아니면 <see langword="null"/>을 반환합니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.NormalizeInvocation(System.String)">
+            <summary>
+            TargetMethod 문자열을 호출 형태로 정규화합니다.
+            </summary>
+            <param name="targetMethod">원본 대상 메서드 문자열입니다.</param>
+            <returns>호출 형태로 정규화된 문자열입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.GetContainingTypeChain(Microsoft.CodeAnalysis.INamedTypeSymbol)">
+            <summary>
+            바깥 타입부터 안쪽 타입까지의 체인을 반환합니다.
+            </summary>
+            <param name="innerMostType">가장 안쪽 타입입니다.</param>
+            <returns>바깥쪽부터 정렬된 타입 체인입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.GetTypeDeclarationHeader(Microsoft.CodeAnalysis.INamedTypeSymbol)">
+            <summary>
+            partial 타입 선언 헤더를 생성합니다.
+            </summary>
+            <param name="typeSymbol">대상 타입 심볼입니다.</param>
+            <returns>생성용 타입 선언 헤더입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.Sanitize(System.String)">
+            <summary>
+            파일명에 안전한 형태로 문자열을 정리합니다.
+            </summary>
+            <param name="name">원본 문자열입니다.</param>
+            <returns>정리된 문자열입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.ToCamel(System.String)">
+            <summary>
+            PascalCase 문자열을 camelCase로 변환합니다.
+            </summary>
+            <param name="name">변환할 문자열입니다.</param>
+            <returns>camelCase 문자열입니다.</returns>
+        </member>
+        <member name="T:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel">
+            <summary>
+            생성 대상 메서드 메타데이터를 나타냅니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel.#ctor(Microsoft.CodeAnalysis.CSharp.Syntax.MethodDeclarationSyntax,Microsoft.CodeAnalysis.IMethodSymbol,System.String,System.String,System.String,System.String)">
+            <summary>
+            <see cref="T:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel"/> 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+            <param name="methodSyntax">원본 메서드 구문입니다.</param>
+            <param name="methodSymbol">원본 메서드 심볼입니다.</param>
+            <param name="targetMethod">대상 메서드 경로입니다.</param>
+            <param name="bindTo">반환값을 대입할 프로퍼티 이름입니다.</param>
+            <param name="commandPropertyName">생성할 커맨드 프로퍼티 이름입니다.</param>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel.MethodSyntax">
+            <summary>
+            원본 메서드 구문을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel.MethodSymbol">
+            <summary>
+            원본 메서드 심볼을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel.TargetMethod">
+            <summary>
+            대상 메서드 경로를 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel.BindTo">
+            <summary>
+            반환값을 대입할 프로퍼티 이름을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel.CommandPropertyName">
+            <summary>
+            생성할 커맨드 프로퍼티 이름을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.DreamineCommandSourceGenerator.CommandCandidateModel.CanExecuteMethod">
+            <summary>
+            CanExecute 판단 메서드 이름을 가져옵니다.
+            </summary>
+        </member>
+        <member name="T:Dreamine.MVVM.Generators.DreamineEntryGenerator">
+            <summary>
+            <c>DreamineEntryAttribute</c>가 적용된 WPF 엔트리 클래스를 분석하고
+            Dreamine 부트스트랩 코드를 생성하는 증분 생성기입니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineEntryGenerator.Initialize(Microsoft.CodeAnalysis.IncrementalGeneratorInitializationContext)">
+            <summary>
+            증분 생성기 파이프라인을 초기화합니다.
+            </summary>
+            <param name="context">생성기 초기화 컨텍스트입니다.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineEntryGenerator.IsCandidateSyntax(Microsoft.CodeAnalysis.SyntaxNode)">
+            <summary>
+            엔트리 후보가 될 수 있는 구문인지 확인합니다.
+            </summary>
+            <param name="node">검사할 구문 노드입니다.</param>
+            <returns>후보가 될 수 있으면 <see langword="true"/>이고, 아니면 <see langword="false"/>입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineEntryGenerator.TryCreateCandidate(Microsoft.CodeAnalysis.GeneratorSyntaxContext,Microsoft.CodeAnalysis.INamedTypeSymbol,Microsoft.CodeAnalysis.INamedTypeSymbol)">
+            <summary>
+            구문/시맨틱 정보를 기반으로 엔트리 후보 모델을 생성합니다.
+            </summary>
+            <param name="context">구문 분석 컨텍스트입니다.</param>
+            <param name="entryAttributeSymbol"><c>DreamineEntryAttribute</c> 심볼입니다.</param>
+            <param name="applicationSymbol">WPF <c>Application</c> 심볼입니다.</param>
+            <returns>
+            엔트리 후보이면 <see cref="T:Dreamine.MVVM.Generators.EntryCandidateModel"/>를 반환하고,
+            아니면 <see langword="null"/>을 반환합니다.
+            </returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineEntryGenerator.Emit(Microsoft.CodeAnalysis.SourceProductionContext,System.Collections.Immutable.ImmutableArray{Dreamine.MVVM.Generators.EntryCandidateModel})">
+            <summary>
+            수집된 엔트리 후보를 진단하고 소스를 생성합니다.
+            </summary>
+            <param name="context">소스 출력 컨텍스트입니다.</param>
+            <param name="candidates">수집된 엔트리 후보 목록입니다.</param>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineEntryGenerator.IsPartial(Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax)">
+            <summary>
+            클래스 선언이 partial인지 확인합니다.
+            </summary>
+            <param name="classDeclaration">검사할 클래스 선언입니다.</param>
+            <returns>partial이면 <see langword="true"/>이고, 아니면 <see langword="false"/>입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineEntryGenerator.InheritsFrom(Microsoft.CodeAnalysis.INamedTypeSymbol,Microsoft.CodeAnalysis.INamedTypeSymbol)">
+            <summary>
+            대상 클래스가 지정한 기반 타입을 상속하는지 확인합니다.
+            </summary>
+            <param name="symbol">검사할 클래스 심볼입니다.</param>
+            <param name="baseTypeSymbol">기준 기반 타입 심볼입니다.</param>
+            <returns>상속 관계가 있으면 <see langword="true"/>이고, 아니면 <see langword="false"/>입니다.</returns>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.DreamineEntryGenerator.BuildEntrySource(System.String,System.String)">
+            <summary>
+            엔트리 부트스트랩 소스 코드를 생성합니다.
+            </summary>
+            <param name="namespaceName">대상 네임스페이스입니다.</param>
+            <param name="className">대상 클래스 이름입니다.</param>
+            <returns>생성된 C# 소스 코드 문자열입니다.</returns>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.EntryCandidateModel.ClassSymbol">
+            <summary>
+            대상 클래스 심볼을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.EntryCandidateModel.ClassDeclaration">
+            <summary>
+            대상 클래스 선언 구문을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.EntryCandidateModel.Namespace">
+            <summary>
+            대상 네임스페이스를 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.EntryCandidateModel.ClassName">
+            <summary>
+            대상 클래스 이름을 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.EntryCandidateModel.IsPartial">
+            <summary>
+            partial 선언 여부를 가져옵니다.
+            </summary>
+        </member>
+        <member name="P:Dreamine.MVVM.Generators.EntryCandidateModel.IsApplicationDerived">
+            <summary>
+            Application 상속 여부를 가져옵니다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.MVVM.Generators.EntryCandidateModel.#ctor(Microsoft.CodeAnalysis.INamedTypeSymbol,Microsoft.CodeAnalysis.CSharp.Syntax.ClassDeclarationSyntax,System.String,System.String,System.Boolean,System.Boolean)">
+            <summary>
+            <see cref="T:Dreamine.MVVM.Generators.EntryCandidateModel"/> 클래스의 새 인스턴스를 초기화합니다.
+            </summary>
+            <param name="classSymbol">대상 클래스 심볼입니다.</param>
+            <param name="classDeclaration">대상 클래스 선언 구문입니다.</param>
+            <param name="namespace">대상 네임스페이스입니다.</param>
+            <param name="className">대상 클래스 이름입니다.</param>
+            <param name="isPartial">partial 선언 여부입니다.</param>
+            <param name="isApplicationDerived">Application 상속 여부입니다.</param>
+        </member>
+    </members>
+</doc>
