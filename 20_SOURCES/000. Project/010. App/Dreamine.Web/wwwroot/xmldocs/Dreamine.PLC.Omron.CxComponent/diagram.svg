@@ -1,0 +1,24 @@
+<svg viewBox="0 0 800 380" xmlns="http://www.w3.org/2000/svg">
+  <rect width="800" height="380" fill="#030913"/>
+  <text x="400" y="42" text-anchor="middle" font-size="19" font-weight="600" fill="#49b2ff" font-family="sans-serif">Dreamine.PLC.Omron.CxComponent</text>
+  <rect x="355" y="52" width="90" height="20" rx="10" fill="rgba(73,178,255,0.15)"/>
+  <text x="400" y="66" text-anchor="middle" font-size="11" fill="#49b2ff" font-family="sans-serif">PLC</text>
+  <text x="185" y="110" text-anchor="middle" font-size="13" fill="#8dcbff" font-family="sans-serif">제공 타입</text>
+  <text x="615" y="110" text-anchor="middle" font-size="13" fill="#8dcbff" font-family="sans-serif">의존성</text>
+  <line x1="30" y1="118" x2="340" y2="118" stroke="rgba(73,178,255,0.3)"/>
+  <line x1="460" y1="118" x2="770" y2="118" stroke="rgba(73,178,255,0.2)"/>
+  <line x1="400" y1="85" x2="400" y2="330" stroke="rgba(110,168,255,0.1)" stroke-dasharray="4,4"/>
+  <rect x='30' y='130' width='310' height='34' rx='6' fill='#0a1322' stroke='rgba(73,178,255,0.4)'/>
+  <text x='185' y='152' text-anchor='middle' font-size='12' fill='#f5f7fb' font-family='Consolas,monospace'>CxComponentDriver</text>
+  <rect x='30' y='172' width='310' height='34' rx='6' fill='#0a1322' stroke='rgba(73,178,255,0.4)'/>
+  <text x='185' y='194' text-anchor='middle' font-size='12' fill='#f5f7fb' font-family='Consolas,monospace'>OmronTag</text>
+  <rect x='30' y='214' width='310' height='34' rx='6' fill='#0a1322' stroke='rgba(73,178,255,0.4)'/>
+  <text x='185' y='236' text-anchor='middle' font-size='12' fill='#f5f7fb' font-family='Consolas,monospace'>CxFinsGateway</text>
+  <rect x='30' y='256' width='310' height='34' rx='6' fill='#0a1322' stroke='rgba(73,178,255,0.4)'/>
+  <text x='185' y='278' text-anchor='middle' font-size='12' fill='#f5f7fb' font-family='Consolas,monospace'>CxTagScanner</text>
+  <rect x='460' y='130' width='310' height='34' rx='6' fill='#0a1322' stroke='rgba(110,168,255,0.2)'/>
+  <text x='615' y='152' text-anchor='middle' font-size='12' fill='#a6b6cf' font-family='sans-serif'>Dreamine.PLC.Core</text>
+  <rect x='460' y='172' width='310' height='34' rx='6' fill='#0a1322' stroke='rgba(110,168,255,0.2)'/>
+  <text x='615' y='194' text-anchor='middle' font-size='12' fill='#a6b6cf' font-family='sans-serif'>CX-One COM</text>
+  <text x="400" y="362" text-anchor="middle" font-size="11" fill="#4a5a70" font-family="sans-serif">옴론 CX-One 기반 드라이버 · FINS Gateway 통합</text>
+</svg>
