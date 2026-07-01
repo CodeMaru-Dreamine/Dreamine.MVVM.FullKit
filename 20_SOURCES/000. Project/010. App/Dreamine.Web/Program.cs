@@ -36,6 +36,9 @@ public static class Program
             options.SharedServiceTypes.Add(typeof(DreamineOptions));
             options.ConfigureServices = services =>
             {
+                services.AddScoped<HomeViewModel>();
+                services.AddScoped<DocViewModel>();
+                services.AddScoped<AdminViewModel>();
                 services.AddAntiforgery(o => o.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax);
                 services.Configure<CircuitOptions>(o =>
                 {
