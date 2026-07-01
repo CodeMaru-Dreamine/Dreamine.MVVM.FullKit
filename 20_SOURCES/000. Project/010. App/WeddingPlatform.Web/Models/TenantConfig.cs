@@ -15,6 +15,13 @@ public sealed class TenantConfig
     public string Story { get; set; } = "";
     public string Story2 { get; set; } = "";
     public string HeroImageFileName { get; set; } = "";
+
+    // ── 히어로 문구 패널 위치 (PC/모바일 별도 지정, ThankYou 페이지에서 사용) ──
+    // Vertical: "top" | "middle" | "bottom" / Horizontal: "left" | "center" | "right"
+    public string HeroPanelVerticalDesktop { get; set; } = "top";
+    public string HeroPanelHorizontalDesktop { get; set; } = "center";
+    public string HeroPanelVerticalMobile { get; set; } = "top";
+    public string HeroPanelHorizontalMobile { get; set; } = "center";
     public string MapLinkKakao { get; set; } = "";
     public string MapLinkNaver { get; set; } = "";
     public string MapLinkAtlan { get; set; } = "";
@@ -31,9 +38,15 @@ public sealed class TenantConfig
 
     /// <summary>배경 음악 파일명</summary>
     public string MusicFileName { get; set; } = "";
+    /// <summary>배경 음악 버튼 위치 — "bottom"(기본) 또는 "top"</summary>
+    public string MusicButtonPosition { get; set; } = "bottom";
     [Obsolete("Use VideoFileNames")]
     public string VideoFileName { get; set; } = "";
     public List<string> VideoFileNames { get; set; } = new();
+    /// <summary>이 계정 전용 동영상 업로드 최대 용량(MB). null이면 전체 설정(GlobalSettings) 값을 따름. 0이면 무제한.</summary>
+    public int? MaxVideoSizeMb { get; set; } = null;
+    /// <summary>이 계정 전용 동영상 업로드 최대 개수. null이면 전체 설정(GlobalSettings) 값을 따름. 0이면 무제한.</summary>
+    public int? MaxVideoCount { get; set; } = null;
 
     // ── 링크 미리보기 (Open Graph) ──────────────────────
     public string OgTitle { get; set; } = "";

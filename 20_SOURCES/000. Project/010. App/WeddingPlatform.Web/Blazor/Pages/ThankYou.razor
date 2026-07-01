@@ -3,11 +3,22 @@
 @namespace WeddingPlatform.Blazor.Pages
 @rendermode InteractiveServer
 
+@using Microsoft.JSInterop
 @inject WeddingInvitationViewModel Vm
 @inject WeddingGuestbookViewModel VmGuest
+@inject IJSRuntime JS
 @implements IAsyncDisposable
 
 <PageTitle>@Vm.CoupleName 감사 인사</PageTitle>
+
+<HeadContent>
+    <meta property="og:title" content="@Vm.OgTitle" />
+    <meta property="og:description" content="@Vm.OgDescription" />
+    <meta property="og:image" content="@(string.IsNullOrWhiteSpace(Vm.OgImageUrl) ? "/img/og-platform.jpg" : Vm.OgImageUrl)" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:type" content="website" />
+</HeadContent>
 
 @if (!Vm.IsLoaded)
 {
@@ -19,7 +30,18 @@ else if (Vm.NotFound)
 }
 else
 {
-    <section class="w-hero w-hero--thankyou" role="banner">
+    @if (!string.IsNullOrWhiteSpace(Vm.MusicUrl))
+    {
+        <div class="w-music-bar @(Vm.MusicButtonPosition == "top" ? "w-music-bar--top" : "")">
+            <audio @ref="audioRef" src="@Vm.MusicUrl" loop preload="auto"></audio>
+            <button class="w-music-btn" @onclick="ToggleMusic" title="@(isMusicPlaying ? "음악 끄기" : "음악 켜기")">
+                @(isMusicPlaying ? "⏸" : "🎵")
+            </button>
+            <span class="w-music-label">@(isMusicPlaying ? "재생 중" : "음악 켜기")</span>
+        </div>
+    }
+
+    <section class="w-hero w-hero--thankyou w-hero--dh-@Vm.HeroPanelHorizontalDesktop w-hero--mh-@Vm.HeroPanelHorizontalMobile" role="banner">
         @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
         {
             <div class="w-hero__bg" style="background-image:url('@Vm.HeroImageUrl')"></div>
@@ -29,7 +51,7 @@ else
             <div class="w-hero__bg w-hero__bg--default"></div>
         }
         <div class="w-hero__overlay"></div>
-        <div class="w-hero__content">
+        <div class="w-hero__content w-hero__content--dv-@Vm.HeroPanelVerticalDesktop w-hero__content--mv-@Vm.HeroPanelVerticalMobile">
             <div class="w-hero__top w-panel">
                 <h1 class="w-hero__title">Thank You</h1>
                 <p class="w-hero__names">@Vm.CoupleName</p>
@@ -59,6 +81,41 @@ else
         }
     </section>
 
+    @if (Vm.VideoUrls.Count > 0)
+    {
+        <section class="w-video">
+            <h2 class="w-section-title">우리의 영상</h2>
+            <div class="w-video__grid">
+                @for (int i = 0; i < Vm.VideoUrls.Count; i++)
+                {
+                    var idx = i;
+                    <button class="w-video__item" @onclick="() => OpenVideoLightbox(idx)">
+                        <video src="@Vm.VideoUrls[idx]" preload="metadata" muted playsinline></video>
+                        <span class="w-video__play">▶</span>
+                    </button>
+                }
+            </div>
+        </section>
+
+        @if (videoLightboxOpen)
+        {
+            <div class="w-lightbox" role="dialog" tabindex="-1" @ref="vlbRef" @onkeydown="OnVideoKeyDown">
+                <button class="w-lb__close" @onclick="CloseVideoLightbox">✕</button>
+                @if (Vm.VideoUrls.Count > 1)
+                {
+                    <button class="w-lb__prev" @onclick="VideoPrev">‹</button>
+                }
+                <video class="w-lb__video" src="@Vm.VideoUrls[videoLightboxIdx]" controls autoplay playsinline></video>
+                @if (Vm.VideoUrls.Count > 1)
+                {
+                    <button class="w-lb__next" @onclick="VideoNext">›</button>
+                    <span class="w-lb__counter">@(videoLightboxIdx + 1) / @Vm.VideoUrls.Count</span>
+                }
+            </div>
+            <div class="w-lb__backdrop" @onclick="CloseVideoLightbox"></div>
+        }
+    }
+
     @if (Vm.Gallery.Count > 0)
     {
         <section class="w-gallery">
@@ -67,6 +124,7 @@ else
                 <button class="w-btn" @onclick="ToggleAutoPlay">
                     @(isAutoPlaying ? "⏸ 정지" : "▶ 자동재생")
                 </button>
+                <span class="w-gallery__count">최근 @(Vm.Gallery.Count)장 / 전체 @(Vm.AllPhotos.Count)장</span>
             </div>
             <div class="w-gallery__grid">
                 @for (int i = 0; i < Vm.Gallery.Count; i++)
@@ -85,9 +143,9 @@ else
                  @onkeydown="OnKeyDown" @onpointerdown="OnPointerDown" @onpointerup="OnPointerUp">
                 <button class="w-lb__close" @onclick="CloseLightbox">✕</button>
                 <button class="w-lb__prev" @onclick="Vm.LightboxPrev">‹</button>
-                <img class="w-lb__img" src="@Vm.Gallery[Vm.LightboxIdx].Url" alt="사진 @(Vm.LightboxIdx+1)" />
+                <img class="w-lb__img" src="@Vm.AllPhotos[Vm.LightboxIdx].Url" alt="사진 @(Vm.LightboxIdx+1)" />
                 <button class="w-lb__next" @onclick="Vm.LightboxNext">›</button>
-                <span class="w-lb__counter">@(Vm.LightboxIdx+1) / @Vm.Gallery.Count</span>
+                <span class="w-lb__counter">@(Vm.LightboxIdx+1) / @Vm.AllPhotos.Count</span>
             </div>
             <div class="w-lb__backdrop" @onclick="CloseLightbox"></div>
         }
@@ -131,14 +189,54 @@ else
     [Parameter] public string Slug { get; set; } = "";
 
     private ElementReference lbRef;
+    private ElementReference vlbRef;
+    private ElementReference audioRef;
+    private bool isMusicPlaying;
     private double? startX;
     private bool isAutoPlaying;
     private System.Threading.CancellationTokenSource? autoCts;
+
+    private bool videoLightboxOpen;
+    private int videoLightboxIdx;
+
+    private DotNetObjectReference<ThankYou>? _selfRef;
 
     protected override async Task OnParametersSetAsync()
     {
         await Vm.LoadAsync(Slug);
         await VmGuest.InitializeAsync(Slug);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JS.InvokeVoidAsync("weddingInterop.applyTheme", Vm.ThemeName);
+            if (!string.IsNullOrWhiteSpace(Vm.MusicUrl))
+            {
+                _selfRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("weddingInterop.initMusicSync", _selfRef);
+                await JS.InvokeVoidAsync("weddingInterop.initMusicAutoplay");
+            }
+        }
+    }
+
+    private async Task ToggleMusic()
+    {
+        // 실제 아이콘 상태는 audio 엘리먼트의 play/pause 이벤트(OnMusicStateChanged)가 동기화합니다.
+        try
+        {
+            await JS.InvokeVoidAsync(isMusicPlaying ? "weddingInterop.pauseMusic" : "weddingInterop.playMusic");
+        }
+        catch { }
+    }
+
+    /// <summary>배경 클릭으로 자동재생이 시작되거나, 버튼/브라우저 컨트롤로 정지·재생될 때 JS에서 호출됩니다.</summary>
+    [JSInvokable]
+    public void OnMusicStateChanged(bool playing)
+    {
+        isMusicPlaying = playing;
+        StateHasChanged();
     }
 
     private async Task OpenLightbox(int idx)
@@ -167,6 +265,29 @@ else
         var d = e.ClientX - startX.Value; startX = null;
         if (Math.Abs(d) < 30) return;
         if (d < 0) Vm.LightboxNext(); else Vm.LightboxPrev();
+    }
+
+    private async Task OpenVideoLightbox(int idx)
+    {
+        videoLightboxIdx = idx;
+        videoLightboxOpen = true;
+        await Task.Yield();
+        await vlbRef.FocusAsync();
+    }
+
+    private void CloseVideoLightbox() => videoLightboxOpen = false;
+
+    private void VideoNext() => videoLightboxIdx = (videoLightboxIdx + 1) % Vm.VideoUrls.Count;
+    private void VideoPrev() => videoLightboxIdx = (videoLightboxIdx - 1 + Vm.VideoUrls.Count) % Vm.VideoUrls.Count;
+
+    private void OnVideoKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "Escape": CloseVideoLightbox(); break;
+            case "ArrowRight": VideoNext(); break;
+            case "ArrowLeft": VideoPrev(); break;
+        }
     }
 
     private async Task ToggleAutoPlay()
@@ -202,5 +323,5 @@ else
     private async Task OnGuestbookAdd() { await VmGuest.AddEntryAsync(Slug); StateHasChanged(); }
     private async Task OnGuestbookReload() { await VmGuest.ReloadAsync(Slug); StateHasChanged(); }
 
-    public async ValueTask DisposeAsync() { await StopAutoPlay(); autoCts?.Dispose(); }
+    public async ValueTask DisposeAsync() { await StopAutoPlay(); autoCts?.Dispose(); _selfRef?.Dispose(); }
 }

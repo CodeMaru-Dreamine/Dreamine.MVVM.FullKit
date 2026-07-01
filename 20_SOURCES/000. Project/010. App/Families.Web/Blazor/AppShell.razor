@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="/css/family.css" />
+    <link rel="stylesheet" href="/css/family.css?v=20260701b" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -15,7 +15,22 @@
 </head>
 <body>
     <FamiliesApp.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
-    <script src="/_framework/blazor.web.js"></script>
+    <script src="/_framework/blazor.web.js" autostart="false"></script>
     <script src="/js/family-interop.js"></script>
+    <script>
+        Blazor.start({
+            circuit: {
+                reconnectionOptions: {
+                    maxRetries: 10,
+                    retryIntervalMilliseconds: (previousAttempts) =>
+                        Math.min(1000 * Math.pow(2, previousAttempts), 30000)
+                },
+                configureSignalR: function (builder) {
+                    builder.withUrl('/_blazor', { transport: 7 })
+                           .withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 15000, 30000, 30000, 30000, 30000]);
+                }
+            }
+        });
+    </script>
 </body>
 </html>

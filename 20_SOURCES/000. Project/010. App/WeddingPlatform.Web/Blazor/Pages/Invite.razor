@@ -54,7 +54,7 @@ else
 {
     @if (!string.IsNullOrWhiteSpace(Vm.MusicUrl))
     {
-        <div class="w-music-bar">
+        <div class="w-music-bar @(Vm.MusicButtonPosition == "top" ? "w-music-bar--top" : "")">
             <audio @ref="audioRef" src="@Vm.MusicUrl" loop preload="auto"></audio>
             <button class="w-music-btn" @onclick="ToggleMusic" title="@(isMusicPlaying ? "음악 끄기" : "음악 켜기")">
                 @(isMusicPlaying ? "⏸" : "🎵")
@@ -182,14 +182,35 @@ else
     {
         <section class="w-video">
             <h2 class="w-section-title">우리의 영상</h2>
-            @foreach (var url in Vm.VideoUrls)
-            {
-                <div class="w-video__wrap">
-                    <video src="@url" controls preload="metadata"
-                           class="w-video__player" playsinline></video>
-                </div>
-            }
+            <div class="w-video__grid">
+                @for (int i = 0; i < Vm.VideoUrls.Count; i++)
+                {
+                    var idx = i;
+                    <button class="w-video__item" @onclick="() => OpenVideoLightbox(idx)">
+                        <video src="@Vm.VideoUrls[idx]" preload="metadata" muted playsinline></video>
+                        <span class="w-video__play">▶</span>
+                    </button>
+                }
+            </div>
         </section>
+
+        @if (videoLightboxOpen)
+        {
+            <div class="w-lightbox" role="dialog" tabindex="-1" @ref="vlbRef" @onkeydown="OnVideoKeyDown">
+                <button class="w-lb__close" @onclick="CloseVideoLightbox">✕</button>
+                @if (Vm.VideoUrls.Count > 1)
+                {
+                    <button class="w-lb__prev" @onclick="VideoPrev">‹</button>
+                }
+                <video class="w-lb__video" src="@Vm.VideoUrls[videoLightboxIdx]" controls autoplay playsinline></video>
+                @if (Vm.VideoUrls.Count > 1)
+                {
+                    <button class="w-lb__next" @onclick="VideoNext">›</button>
+                    <span class="w-lb__counter">@(videoLightboxIdx + 1) / @Vm.VideoUrls.Count</span>
+                }
+            </div>
+            <div class="w-lb__backdrop" @onclick="CloseVideoLightbox"></div>
+        }
     }
 
     <!-- ══ 갤러리 ════════════════════════════════════════════════ -->
@@ -322,13 +343,17 @@ else
     [Parameter] public string Slug { get; set; } = "";
 
     private ElementReference lbRef;
+    private ElementReference vlbRef;
     private ElementReference audioRef;
     private bool isMusicPlaying;
     private string copyFeedback = "";
     private System.Threading.CancellationTokenSource? feedbackCts;
     private double? startX;
+    private bool videoLightboxOpen;
+    private int videoLightboxIdx;
     private bool isAutoPlaying;
     private System.Threading.CancellationTokenSource? autoCts;
+    private DotNetObjectReference<Invite>? _selfRef;
 
     protected override async Task OnParametersSetAsync()
     {
@@ -344,8 +369,9 @@ else
             await JS.InvokeVoidAsync("weddingInterop.applyTheme", Vm.ThemeName);
             if (!string.IsNullOrWhiteSpace(Vm.MusicUrl))
             {
+                _selfRef = DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync("weddingInterop.initMusicSync", _selfRef);
                 await JS.InvokeVoidAsync("weddingInterop.initMusicAutoplay");
-                isMusicPlaying = true;
             }
         }
 
@@ -374,6 +400,29 @@ else
             case "Escape": _ = CloseLightbox(); break;
             case "ArrowRight": Vm.LightboxNext(); break;
             case "ArrowLeft": Vm.LightboxPrev(); break;
+        }
+    }
+
+    private async Task OpenVideoLightbox(int idx)
+    {
+        videoLightboxIdx = idx;
+        videoLightboxOpen = true;
+        await Task.Yield();
+        await vlbRef.FocusAsync();
+    }
+
+    private void CloseVideoLightbox() => videoLightboxOpen = false;
+
+    private void VideoNext() => videoLightboxIdx = (videoLightboxIdx + 1) % Vm.VideoUrls.Count;
+    private void VideoPrev() => videoLightboxIdx = (videoLightboxIdx - 1 + Vm.VideoUrls.Count) % Vm.VideoUrls.Count;
+
+    private void OnVideoKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "Escape": CloseVideoLightbox(); break;
+            case "ArrowRight": VideoNext(); break;
+            case "ArrowLeft": VideoPrev(); break;
         }
     }
 
@@ -429,20 +478,20 @@ else
 
     private async Task ToggleMusic()
     {
+        // 실제 아이콘 상태는 audio 엘리먼트의 play/pause 이벤트(OnMusicStateChanged)가 동기화합니다.
         try
         {
-            if (isMusicPlaying)
-            {
-                await JS.InvokeVoidAsync("weddingInterop.pauseMusic");
-                isMusicPlaying = false;
-            }
-            else
-            {
-                await JS.InvokeVoidAsync("weddingInterop.playMusic");
-                isMusicPlaying = true;
-            }
+            await JS.InvokeVoidAsync(isMusicPlaying ? "weddingInterop.pauseMusic" : "weddingInterop.playMusic");
         }
         catch { }
+    }
+
+    /// <summary>배경 클릭으로 자동재생이 시작되거나, 버튼/브라우저 컨트롤로 정지·재생될 때 JS에서 호출됩니다.</summary>
+    [JSInvokable]
+    public void OnMusicStateChanged(bool playing)
+    {
+        isMusicPlaying = playing;
+        StateHasChanged();
     }
 
     private async Task CopyToClipboard(string text)
@@ -479,5 +528,6 @@ else
         await StopAutoPlay();
         autoCts?.Dispose();
         feedbackCts?.Dispose();
+        _selfRef?.Dispose();
     }
 }

@@ -1,0 +1,220 @@
+@page "/"
+@layout WeddingThankYou.Blazor.Layout.WeddingLayout
+@namespace WeddingThankYou.Blazor.Pages
+@rendermode InteractiveServer
+
+@inject WeddingThankYou.ViewModels.SuperAdminViewModel Vm
+@inject NavigationManager Nav
+
+<PageTitle>💌 무료 모바일 감사장 — Wedding Thank You</PageTitle>
+
+<HeadContent>
+    <meta name="description" content="사진·음악·방명록까지 — 5분이면 완성되는 무료 모바일 결혼식 감사장 서비스" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="@Nav.Uri" />
+    <meta property="og:title" content="💌 무료 모바일 감사장 — Wedding Thank You" />
+    <meta property="og:description" content="사진·음악·방명록까지 — 5분이면 완성되는 무료 모바일 결혼식 감사장 서비스" />
+    <meta property="og:image" content="@(Nav.BaseUri.TrimEnd('/') + "/img/og-thankyou.png")" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="💌 무료 모바일 감사장 — Wedding Thank You" />
+    <meta name="twitter:description" content="사진·음악·방명록까지 — 5분이면 완성되는 무료 모바일 결혼식 감사장 서비스" />
+    <meta name="twitter:image" content="@(Nav.BaseUri.TrimEnd('/') + "/img/og-thankyou.png")" />
+</HeadContent>
+
+<div class="wh-page">
+
+    <!-- ── 히어로 배너 ── -->
+    <section class="wh-hero">
+        <div class="wh-hero__inner">
+            <p class="wh-hero__badge">✨ 무료 모바일 감사장</p>
+            <h1 class="wh-hero__title">소중한 결혼식을<br />감사 인사로 전해요</h1>
+            <p class="wh-hero__sub">사진·음악·방명록 — 5분이면 완성</p>
+            <a href="#create" class="wh-btn wh-btn--primary">지금 무료로 만들기 →</a>
+        </div>
+    </section>
+
+    <!-- ── 서비스 안내 ── -->
+    <div class="wh-service-notice">
+        <span>⚡ 무료 서비스 특성상 일시적인 접속 지연이 발생할 수 있습니다.</span>
+    </div>
+
+    <!-- ── 기능 소개 ── -->
+    <section class="wh-features">
+        <div class="wh-feature">
+            <span class="wh-feature__icon">🖼</span>
+            <h3>사진 갤러리</h3>
+            <p>결혼식 스냅을 갤러리로 공유하고 슬라이드쇼로 감상</p>
+        </div>
+        <div class="wh-feature">
+            <span class="wh-feature__icon">🎵</span>
+            <h3>배경 음악</h3>
+            <p>좋아하는 음악을 배경으로 설정</p>
+        </div>
+        <div class="wh-feature">
+            <span class="wh-feature__icon">📖</span>
+            <h3>감사 방명록</h3>
+            <p>하객들의 축하 메시지를 온라인으로 받기</p>
+        </div>
+        <div class="wh-feature">
+            <span class="wh-feature__icon">🎨</span>
+            <h3>5가지 테마</h3>
+            <p>로즈골드·아이보리·포레스트·네이비·블러쉬</p>
+        </div>
+    </section>
+
+    <!-- ── 가입 폼 ── -->
+    <section class="wh-create" id="create">
+        <div class="wh-create__box">
+            <h2 class="wh-create__title">무료로 시작하기</h2>
+            <p class="wh-create__desc">아래 정보를 입력하면 바로 감사장이 생성됩니다.</p>
+
+            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            {
+                <p class="wh-status @(Vm.StatusMessage.StartsWith("✅") ? "wh-status--ok" : "wh-status--err")">
+                    @Vm.StatusMessage
+                </p>
+            }
+
+            <div class="wh-form">
+                <div class="wh-form__row">
+                    <label class="wh-label">
+                        URL 주소
+                        <span class="wh-label__hint">영문·숫자·하이픈만 (예: hong-gildong)</span>
+                    </label>
+                    <div class="wh-input-prefix">
+                        <span class="wh-prefix">@Nav.BaseUri</span>
+                        <input class="wh-input" @bind="Vm.NewSlug" placeholder="hong-gildong"
+                               @oninput="OnSlugInput" spellcheck="false" autocomplete="off" />
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(slugPreview))
+                    {
+                        <p class="wh-slug-preview">👉 @slugPreview</p>
+                    }
+                </div>
+
+                <div class="wh-form__row">
+                    <label class="wh-label">커플 이름</label>
+                    <input class="wh-input" @bind="Vm.NewCoupleName" placeholder="홍길동 ♥ 김영희" />
+                </div>
+
+                <div class="wh-form__row">
+                    <label class="wh-label">결혼식 날짜</label>
+                    <input class="wh-input" type="date" @bind="Vm.NewWeddingDate" />
+                </div>
+
+                <div class="wh-form__row">
+                    <label class="wh-label">
+                        어드민 비밀번호
+                        <span class="wh-label__hint">감사장 편집 시 사용</span>
+                    </label>
+                    <input class="wh-input" type="password" @bind="Vm.NewPassword"
+                           placeholder="8자 이상 권장" autocomplete="new-password" />
+                </div>
+
+                <button class="wh-btn wh-btn--primary wh-btn--full"
+                        @onclick="OnCreate" disabled="@isCreating">
+                    @(isCreating ? "생성 중..." : "✨ 감사장 만들기")
+                </button>
+            </div>
+
+            <p class="wh-create__notice">
+                생성 후 <code>/{슬러그}/admin</code> 에서 사진·음악 등을 설정할 수 있습니다.
+            </p>
+        </div>
+    </section>
+
+    <!-- ── 공개 감사장 목록 ── -->
+    @if (publicThankYous.Count > 0)
+    {
+        <section class="wh-invites">
+            <h2 class="wh-invites__title">💌 감사장 목록</h2>
+            <div class="wh-invites__grid">
+                @foreach (var t in publicThankYous)
+                {
+                    var imgFile = !string.IsNullOrWhiteSpace(t.OgImageFileName) ? t.OgImageFileName
+                                : !string.IsNullOrWhiteSpace(t.HeroImageFileName) ? t.HeroImageFileName
+                                : null;
+                    var imgUrl  = imgFile != null ? $"/wedding-data/{t.Slug}/{Uri.EscapeDataString(imgFile)}" : null;
+
+                    <a href="/@t.Slug/thankyou" class="wh-invite-card">
+                        <div class="wh-invite-card__thumb"
+                             style="@(imgUrl != null ? $"background-image:url('{imgUrl}')" : "")">
+                            @if (imgUrl == null)
+                            {
+                                <span class="wh-invite-card__no-img">💌</span>
+                            }
+                        </div>
+                        <div class="wh-invite-card__body">
+                            <div class="wh-invite-card__name">@t.CoupleName</div>
+                            <div class="wh-invite-card__date">@t.WeddingDate.ToString("yyyy년 MM월 dd일")</div>
+                            @if (!string.IsNullOrWhiteSpace(t.VenueName))
+                            {
+                                <div class="wh-invite-card__venue">📍 @t.VenueName</div>
+                            }
+                        </div>
+                    </a>
+                }
+            </div>
+        </section>
+    }
+
+    <!-- ── 하단 ── -->
+    <footer class="wh-footer">
+        <p>Wedding Thank You</p>
+        <a href="/admin" class="wh-admin-link">관리자</a>
+    </footer>
+</div>
+
+@code {
+    private bool isCreating;
+    private string slugPreview = "";
+    private List<WeddingThankYou.Models.TenantConfig> publicThankYous = [];
+
+    protected override void OnInitialized()
+    {
+        Vm.NewSlug = "";
+        Vm.NewCoupleName = "";
+        Vm.NewPassword = "";
+        Vm.NewWeddingDate = DateTime.Today;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Vm.LoadAsync();
+        publicThankYous = Vm.Tenants
+            .Where(t => t.ShowOnHome)
+            .OrderBy(t => t.PinOrder == 0 ? int.MaxValue : t.PinOrder)
+            .ThenByDescending(t => t.WeddingDate)
+            .ToList();
+    }
+
+    private void OnSlugInput(ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString() ?? "";
+        // 영문 소문자·숫자·하이픈만 허용
+        var clean = new string(raw.ToLowerInvariant()
+            .Select(c => char.IsLetterOrDigit(c) || c == '-' ? c : '-').ToArray())
+            .Trim('-');
+        Vm.NewSlug = clean;
+        slugPreview = string.IsNullOrWhiteSpace(clean) ? "" : $"{Nav.BaseUri}{clean}/thankyou";
+    }
+
+    private async Task OnCreate()
+    {
+        isCreating = true;
+        StateHasChanged();
+        try
+        {
+            var slug = Vm.NewSlug.Trim().ToLowerInvariant();
+            var ok = await Vm.CreateTenantAsync();
+            if (ok)
+            {
+                await Task.Delay(1200); // 성공 메시지 잠깐 표시
+                Nav.NavigateTo($"/{slug}/admin");
+            }
+        }
+        finally { isCreating = false; }
+    }
+}

@@ -395,6 +395,13 @@
                     <input class="fa-input" @bind="cfg.OgDescription" />
                 </div>
 
+                <div class="fa-form__row">
+                    <label class="fa-label">어드민 비밀번호 (변경 시 입력)</label>
+                    <input class="fa-input" type="password" @bind="cfg.PasswordHash"
+                           placeholder="새 비밀번호" autocomplete="new-password" />
+                    <span class="fa-label__hint">비워두지 말고 항상 값을 입력해야 합니다. 저장하면 즉시 적용됩니다.</span>
+                </div>
+
                 <button class="fa-btn fa-btn--primary" @onclick="OnSaveConfig">💾 설정 저장</button>
 
                 <hr class="fa-divider" />

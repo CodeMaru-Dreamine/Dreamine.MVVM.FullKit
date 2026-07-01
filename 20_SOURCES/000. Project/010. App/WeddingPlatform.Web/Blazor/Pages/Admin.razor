@@ -168,7 +168,7 @@
             }
             <InputFile class="w-file-input" OnChange="OnOgImageUpload" accept="image/*" />
             <p class="w-hint">권장 크기: 1200×630px (가로형). 카카오톡 미리보기는 링크 캐시가 있어 바로 반영 안 될 수 있습니다.</p>
-            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중...</span> }
+            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
 
             <button class="w-btn w-btn--primary" @onclick="OnSaveConfig">💾 설정 저장</button>
         </section>
@@ -206,7 +206,17 @@
                 <p class="w-hint">배경 음악이 없습니다. mp3·ogg·m4a 파일을 업로드하세요. (최대 30MB)</p>
             }
             <InputFile class="w-file-input" OnChange="OnMusicUpload" accept="audio/*" />
-            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중...</span> }
+            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
+
+            <label class="w-label" style="margin-top:.75rem">음악 버튼 위치</label>
+            <div class="w-note-toolbar">
+                <button class="@(Vm.Config!.MusicButtonPosition == "bottom" ? "active" : "")"
+                        @onclick='() => Vm.Config!.MusicButtonPosition = "bottom"'>화면 하단</button>
+                <button class="@(Vm.Config!.MusicButtonPosition == "top" ? "active" : "")"
+                        @onclick='() => Vm.Config!.MusicButtonPosition = "top"'>화면 상단</button>
+            </div>
+            <p class="w-hint">모바일에서 본문 내용과 겹친다면 위치를 바꿔보세요. 변경 후 설정 저장이 필요합니다.</p>
+            <button class="w-btn w-btn--primary" @onclick="OnSaveConfig">💾 설정 저장</button>
         </section>
 
         <!-- ── 약도 이미지 ── -->
@@ -224,7 +234,7 @@
                 <p class="w-hint">아직 약도 이미지가 없습니다. 업로드하면 청첩장 약도 탭에 표시됩니다.</p>
             }
             <InputFile class="w-file-input" OnChange="OnRoadMapUpload" accept="image/*" />
-            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중...</span> }
+            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
         </section>
 
         <!-- ── 히어로 이미지 ── -->
@@ -238,13 +248,61 @@
                 </div>
             }
             <InputFile class="w-file-input" OnChange="OnHeroUpload" accept="image/*" />
-            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중...</span> }
+            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
+        </section>
+
+        <!-- ── 히어로 문구 위치 ── -->
+        <section class="w-admin__section">
+            <h2>📍 히어로 문구 위치</h2>
+            <p class="w-hint">감사장 페이지의 문구 박스를 화면 어디에 둘지 PC·모바일 따로 정할 수 있습니다.</p>
+
+            <label class="w-label">PC 화면</label>
+            <div class="w-coord-row">
+                <div>
+                    <label class="w-label">세로</label>
+                    <select class="w-input" @bind="Vm.Config!.HeroPanelVerticalDesktop">
+                        <option value="top">위</option>
+                        <option value="middle">가운데</option>
+                        <option value="bottom">아래</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="w-label">가로</label>
+                    <select class="w-input" @bind="Vm.Config!.HeroPanelHorizontalDesktop">
+                        <option value="left">왼쪽</option>
+                        <option value="center">가운데</option>
+                        <option value="right">오른쪽</option>
+                    </select>
+                </div>
+            </div>
+
+            <label class="w-label" style="margin-top:.75rem">모바일 화면</label>
+            <div class="w-coord-row">
+                <div>
+                    <label class="w-label">세로</label>
+                    <select class="w-input" @bind="Vm.Config!.HeroPanelVerticalMobile">
+                        <option value="top">위</option>
+                        <option value="middle">가운데</option>
+                        <option value="bottom">아래</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="w-label">가로</label>
+                    <select class="w-input" @bind="Vm.Config!.HeroPanelHorizontalMobile">
+                        <option value="left">왼쪽</option>
+                        <option value="center">가운데</option>
+                        <option value="right">오른쪽</option>
+                    </select>
+                </div>
+            </div>
+            <p class="w-hint">변경 후 설정 저장을 눌러야 반영됩니다. (감사장 모드에서 적용)</p>
+            <button class="w-btn w-btn--primary" @onclick="OnSaveConfig">💾 설정 저장</button>
         </section>
 
         <!-- ── 동영상 ── -->
         <section class="w-admin__section">
             <h2>🎬 우리의 영상</h2>
-            <p class="w-hint">갤러리 위에 표시됩니다. mp4 / webm / mov 권장, 최대 200MB, 최대 6개.</p>
+            <p class="w-hint">갤러리 위에 표시됩니다. mp4 / webm / mov 권장, @Vm.MaxVideoSizeLabel, @(Vm.MaxVideoCount <= 0 ? "개수 무제한" : $"최대 {Vm.MaxVideoCount}개").</p>
 
             @if (Vm.Config!.VideoFileNames.Count > 0)
             {
@@ -264,14 +322,14 @@
                 </div>
             }
 
-            @if (Vm.Config.VideoFileNames.Count < 6)
+            @if (Vm.MaxVideoCount <= 0 || Vm.Config.VideoFileNames.Count < Vm.MaxVideoCount)
             {
                 <InputFile class="w-file-input" OnChange="OnVideoUpload" accept="video/*" />
-                @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (용량에 따라 시간이 걸릴 수 있습니다)</span> }
+                @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초 경과, 용량에 따라 시간이 걸릴 수 있습니다)</span> }
             }
             else
             {
-                <p class="w-hint" style="color:var(--w-primary)">최대 6개 업로드 완료. 삭제 후 추가 가능합니다.</p>
+                <p class="w-hint" style="color:var(--w-primary)">최대 @(Vm.MaxVideoCount)개 업로드 완료. 삭제 후 추가 가능합니다.</p>
             }
         </section>
 
@@ -285,7 +343,7 @@
             <p class="w-hint">1 ~ 10초 · 설정 저장 후 청첩장에 반영됩니다.</p>
 
             <InputFile class="w-file-input" OnChange="OnGalleryUpload" accept="image/*" multiple />
-            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중...</span> }
+            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
 
             <div class="w-admin__gallery">
                 @foreach (var p in Vm.Gallery)
@@ -389,6 +447,33 @@
         ["blush"]  = ("#d4a5a5", "#b07575", "블러쉬 핑크"),
     };
 
+    private int _uploadElapsedSec;
+    private System.Threading.CancellationTokenSource? _uploadTickCts;
+
+    /// <summary>업로드 중 1초마다 경과 시간을 갱신합니다. "업로드 중..."이 멈춘 건지 실제로 느린 건지 구분하기 위함.</summary>
+    private async Task RunUploadAsync(Func<Task> action)
+    {
+        _uploadElapsedSec = 0;
+        _uploadTickCts = new System.Threading.CancellationTokenSource();
+        var token = _uploadTickCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    await Task.Delay(1000, token);
+                    _uploadElapsedSec++;
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            catch (TaskCanceledException) { }
+        });
+
+        try { await action(); }
+        finally { _uploadTickCts.Cancel(); }
+    }
+
     protected override void OnInitialized() { }
 
     private async Task OnLogin()
@@ -416,7 +501,7 @@
 
     private async Task OnVideoUpload(InputFileChangeEventArgs e)
     {
-        await Vm.UploadVideoAsync(Slug, e.File);
+        await RunUploadAsync(() => Vm.UploadVideoAsync(Slug, e.File));
         StateHasChanged();
     }
 
@@ -428,7 +513,7 @@
 
     private async Task OnMusicUpload(InputFileChangeEventArgs e)
     {
-        await Vm.UploadMusicAsync(Slug, e.File);
+        await RunUploadAsync(() => Vm.UploadMusicAsync(Slug, e.File));
         StateHasChanged();
     }
 
@@ -444,13 +529,13 @@
 
     private async Task OnOgImageUpload(InputFileChangeEventArgs e)
     {
-        await Vm.UploadOgImageAsync(Slug, e.File);
+        await RunUploadAsync(() => Vm.UploadOgImageAsync(Slug, e.File));
         StateHasChanged();
     }
 
     private async Task OnRoadMapUpload(InputFileChangeEventArgs e)
     {
-        await Vm.UploadRoadMapAsync(Slug, e.File);
+        await RunUploadAsync(() => Vm.UploadRoadMapAsync(Slug, e.File));
         StateHasChanged();
     }
 
@@ -469,17 +554,20 @@
 
     private async Task OnHeroUpload(InputFileChangeEventArgs e)
     {
-        await Vm.UploadHeroAsync(Slug, e.File);
+        await RunUploadAsync(() => Vm.UploadHeroAsync(Slug, e.File));
         StateHasChanged();
     }
 
     private async Task OnGalleryUpload(InputFileChangeEventArgs e)
     {
-        foreach (var f in e.GetMultipleFiles(30))
+        await RunUploadAsync(async () =>
         {
-            await Vm.UploadGalleryAsync(Slug, f);
-            StateHasChanged();
-        }
+            foreach (var f in e.GetMultipleFiles(30))
+            {
+                await Vm.UploadGalleryAsync(Slug, f);
+                StateHasChanged();
+            }
+        });
     }
 
     private async Task OnDeletePhoto(string fileName)

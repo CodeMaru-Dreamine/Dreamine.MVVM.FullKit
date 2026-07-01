@@ -549,22 +549,104 @@ a { color: inherit; text-decoration: none; }
 
 /* ── 슈퍼 관리자 ── */
 .fa-superadmin-list { display: flex; flex-direction: column; gap: 10px; }
-.fa-superadmin-item {
+
+/* 카드 전체 */
+.fa-sa-card {
+    border: 1.5px solid var(--fa-border);
+    border-radius: 12px;
+    padding: 14px 16px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 10px;
-    border: 1px solid var(--fa-border);
-    border-radius: 8px;
-    padding: 12px 14px;
+    background: var(--fa-surface);
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    transition: box-shadow .15s;
 }
-.fa-superadmin-item__info { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.fa-superadmin-item__slug { font-family: monospace; font-weight: 700; }
-.fa-superadmin-item__name { font-size: 14px; }
-.fa-superadmin-item__date, .fa-superadmin-item__pub { font-size: 12px; color: var(--fa-text-muted); }
+.fa-sa-card:hover { box-shadow: 0 3px 10px rgba(0,0,0,.1); }
+
+/* 1행: 제목 + 버튼 */
+.fa-sa-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.fa-sa-card__title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    min-width: 0;
+}
+.fa-sa-card__slug { font-family: monospace; font-size: 13px; font-weight: 700; color: var(--fa-primary); }
+.fa-sa-card__name { font-size: 14px; font-weight: 500; }
+.fa-sa-card__date { font-size: 12px; color: var(--fa-text-muted); }
+.fa-sa-card__btns { display: flex; gap: 6px; flex-shrink: 0; }
+
+/* 2행: 공개·우선순위·용량 컨트롤 */
+.fa-sa-card__row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding-top: 10px;
+    border-top: 1px dashed var(--fa-border);
+    background: #fafafa;
+    margin: 0 -16px -14px;
+    padding: 10px 16px 12px;
+    border-radius: 0 0 11px 11px;
+}
+
+/* 공통 컨트롤 래퍼 */
+.fa-sa-ctrl {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* 레이블 텍스트 */
+.fa-sa-lbl { font-size: 12px; color: var(--fa-text-muted); }
+
+/* 공개/비공개 배지 */
+.fa-sa-public {
+    display: inline-block;
+    font-size: 11px; font-weight: 700;
+    color: #fff; background: #059669;
+    border-radius: 20px; padding: 2px 8px;
+}
+.fa-sa-private {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    color: #6b7280; background: #f3f4f6;
+    border-radius: 20px; padding: 2px 8px;
+}
+
+/* 우선순위 숫자 입력 */
+.fa-sa-num {
+    width: 48px;
+    padding: 3px 6px;
+    border: 1px solid var(--fa-border);
+    border-radius: 6px;
+    font-size: 12px;
+    text-align: center;
+    background: var(--fa-bg);
+}
+
+/* 용량 드롭다운 */
+.fa-sa-sel {
+    padding: 4px 6px;
+    border: 1px solid var(--fa-border);
+    border-radius: 6px;
+    font-size: 12px;
+    background: var(--fa-bg);
+    color: var(--fa-text);
+    cursor: pointer;
+}
+
 .fa-badge--green { color: #059669; font-weight: 600; }
-.fa-superadmin-item__actions { display: flex; gap: 6px; }
 
 /* ── 앨범 상세 ── */
 .fa-album-detail { margin-bottom: 24px; }
@@ -573,6 +655,62 @@ a { color: inherit; text-decoration: none; }
 
 /* ── 파일 목록 ── */
 .fa-file-list { font-size: 12px; color: var(--fa-text-muted); margin-top: 6px; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+
+/* ── 페이지네이션 ── */
+.fa-pager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 20px;
+    padding: 4px 0;
+}
+.fa-pager__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border: 1px solid var(--fa-border);
+    border-radius: 8px;
+    background: var(--fa-surface);
+    color: var(--fa-text);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+}
+.fa-pager__btn:hover:not(:disabled) {
+    border-color: var(--fa-primary);
+    color: var(--fa-primary);
+}
+.fa-pager__btn:disabled {
+    opacity: .35;
+    cursor: default;
+}
+.fa-pager__btn--active {
+    background: var(--fa-primary);
+    border-color: var(--fa-primary);
+    color: #fff;
+    font-weight: 700;
+}
+
+/* ── 슈퍼어드민 — 용량 제한 셀렉트 ── */
+.fa-superadmin-item__limits { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; font-size: 12px; color: var(--fa-text-muted); }
+.fa-superadmin-settings { border: 1px solid var(--fa-border); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; background: var(--fa-surface); }
+
+/* 전체 설정 — 이미지/동영상 2열 그리드 */
+.fa-gs-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 20px;
+    margin-top: 10px;
+}
+.fa-gs-field { display: flex; flex-direction: column; gap: 4px; }
+.fa-gs-field .fa-label { margin-bottom: 0; }
+@media (max-width: 500px) { .fa-gs-fields { grid-template-columns: 1fr; } }
+.fa-input--sm { max-width: 130px; padding: 4px 8px !important; font-size: 12px !important; }
 
 /* ── 푸터 ── */
 .fa-footer { text-align: center; padding: 30px 0 10px; font-size: 12px; color: var(--fa-text-muted); }

@@ -7,10 +7,15 @@ namespace WeddingPlatform.Services;
 public sealed class LocalPhotoService : IPhotoService
 {
     private readonly ITenantStore _tenants;
+    private readonly IGlobalSettingsStore _globalSettings;
     private const long MaxFileSizeBytes = 20 * 1024 * 1024;
     private static readonly string[] AllowedExts = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
 
-    public LocalPhotoService(ITenantStore tenants) => _tenants = tenants;
+    public LocalPhotoService(ITenantStore tenants, IGlobalSettingsStore globalSettings)
+    {
+        _tenants = tenants;
+        _globalSettings = globalSettings;
+    }
 
     public async Task<IReadOnlyList<PhotoInfo>> GetGalleryAsync(string slug, CancellationToken ct = default)
     {
@@ -174,20 +179,27 @@ public sealed class LocalPhotoService : IPhotoService
         var ext = Path.GetExtension(file.Name).ToLowerInvariant();
         if (ext is not (".mp4" or ".webm" or ".mov" or ".m4v"))
             throw new InvalidOperationException($"허용되지 않는 동영상 형식입니다: {ext}. mp4/webm/mov 권장");
-        if (file.Size > 200 * 1024 * 1024)
-            throw new InvalidOperationException("동영상 파일은 200MB 이하여야 합니다.");
 
         var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false) ?? new TenantConfig { Slug = slug };
-        if (config.VideoFileNames.Count >= 6)
-            throw new InvalidOperationException("동영상은 최대 6개까지 업로드할 수 있습니다.");
+        var settings = await _globalSettings.GetAsync(ct).ConfigureAwait(false);
+
+        var effectiveCount = config.MaxVideoCount ?? settings.MaxVideoCount;
+        if (effectiveCount > 0 && config.VideoFileNames.Count >= effectiveCount)
+            throw new InvalidOperationException($"동영상은 최대 {effectiveCount}개까지 업로드할 수 있습니다.");
+
+        var effectiveMb = config.MaxVideoSizeMb ?? settings.MaxVideoSizeMb;
+        var maxBytes = effectiveMb <= 0 ? long.MaxValue : effectiveMb * 1024L * 1024L;
+
+        if (file.Size > maxBytes)
+            throw new InvalidOperationException($"동영상 파일은 {effectiveMb}MB 이하여야 합니다.");
 
         var dir = _tenants.GetTenantDataPath(slug);
         Directory.CreateDirectory(dir);
 
-        var fileName = $"wedding-video-{DateTime.Now:yyyyMMdd_HHmmss}{ext}";
+        var fileName = $"video-{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid().ToString("N")[..8]}{ext}";
         var destPath = Path.Combine(dir, fileName);
         await using (var dest = File.Create(destPath))
-            await file.OpenReadStream(200 * 1024 * 1024, ct).CopyToAsync(dest, ct).ConfigureAwait(false);
+            await file.OpenReadStream(maxBytes, ct).CopyToAsync(dest, ct).ConfigureAwait(false);
 
         config.VideoFileNames.Add(fileName);
         await _tenants.SaveAsync(config, ct).ConfigureAwait(false);

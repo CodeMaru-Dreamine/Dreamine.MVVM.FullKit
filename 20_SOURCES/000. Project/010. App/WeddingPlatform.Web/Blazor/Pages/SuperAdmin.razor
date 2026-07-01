@@ -82,6 +82,32 @@
         </section>
 
         <section class="w-admin__section">
+            <h2>⚙ 전체 설정</h2>
+            <p class="w-hint">모든 청첩장 계정에 공통으로 적용되는 설정입니다.</p>
+
+            <label class="w-label">동영상 업로드 최대 용량</label>
+            <select class="w-input" @bind="Vm.MaxVideoSizeMb">
+                <option value="200">200MB</option>
+                <option value="500">500MB</option>
+                <option value="1024">1GB</option>
+                <option value="2048">2GB</option>
+                <option value="0">무제한</option>
+            </select>
+            <p class="w-hint">무제한으로 설정하면 디스크 용량을 직접 관리해야 합니다.</p>
+
+            <label class="w-label" style="margin-top:.75rem">동영상 업로드 최대 개수 (계정당)</label>
+            <select class="w-input" @bind="Vm.MaxVideoCount">
+                <option value="6">6개</option>
+                <option value="10">10개</option>
+                <option value="20">20개</option>
+                <option value="0">무제한</option>
+            </select>
+            <p class="w-hint">계정별로 별도 설정이 없으면 이 값이 기본으로 적용됩니다.</p>
+
+            <button class="w-btn w-btn--primary" @onclick="OnSaveGlobalSettings">💾 전체 설정 저장</button>
+        </section>
+
+        <section class="w-admin__section">
             <h2>📋 등록된 커플 (@Vm.Tenants.Count 쌍)</h2>
 
             @if (Vm.Tenants.Count == 0)
@@ -98,6 +124,8 @@
                         <span>모드</span>
                         <span>사진</span>
                         <span>메인 노출</span>
+                        <span>영상 용량</span>
+                        <span>영상 개수</span>
                         <span>링크</span>
                         <span></span>
                     </div>
@@ -133,6 +161,27 @@
                                                title="고정 순서 (1=최우선, 0=자동)" />
                                     </label>
                                 }
+                            </span>
+                            <span>
+                                <select class="w-input w-sa-video-limit" value="@(t.MaxVideoSizeMb?.ToString() ?? "")"
+                                        @onchange="e => OnVideoLimitChange(t, e)" title="이 계정의 동영상 업로드 용량 제한">
+                                    <option value="">기본값(전체 설정)</option>
+                                    <option value="200">200MB</option>
+                                    <option value="500">500MB</option>
+                                    <option value="1024">1GB</option>
+                                    <option value="2048">2GB</option>
+                                    <option value="0">무제한</option>
+                                </select>
+                            </span>
+                            <span>
+                                <select class="w-input w-sa-video-limit" value="@(t.MaxVideoCount?.ToString() ?? "")"
+                                        @onchange="e => OnVideoCountChange(t, e)" title="이 계정의 동영상 업로드 최대 개수">
+                                    <option value="">기본값(전체 설정)</option>
+                                    <option value="6">6개</option>
+                                    <option value="10">10개</option>
+                                    <option value="20">20개</option>
+                                    <option value="0">무제한</option>
+                                </select>
                             </span>
                             <span class="w-sa-links">
                                 <a href="/@t.Slug" target="_blank" class="w-btn w-btn--sm">청첩장</a>
@@ -209,6 +258,28 @@
     {
         _confirmSlug = null;
         await Vm.DeleteTenantAsync(slug);
+        StateHasChanged();
+    }
+
+    private async Task OnSaveGlobalSettings()
+    {
+        await Vm.SaveGlobalSettingsAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnVideoLimitChange(TenantConfig t, ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        int? maxMb = string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw);
+        await Vm.SetMaxVideoSizeAsync(t.Slug, maxMb);
+        StateHasChanged();
+    }
+
+    private async Task OnVideoCountChange(TenantConfig t, ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        int? maxCount = string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw);
+        await Vm.SetMaxVideoCountAsync(t.Slug, maxCount);
         StateHasChanged();
     }
 

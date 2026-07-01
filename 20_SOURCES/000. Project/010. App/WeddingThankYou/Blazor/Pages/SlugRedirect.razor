@@ -1,0 +1,17 @@
+@page "/{Slug}"
+@namespace WeddingThankYou.Blazor.Pages
+@inject NavigationManager Nav
+
+@*!
+  \file SlugRedirect.razor
+  \brief Invite 페이지가 없으므로 /{Slug} 진입 시 /{Slug}/thankyou 로 리다이렉트.
+*@
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+
+    protected override void OnInitialized()
+    {
+        Nav.NavigateTo($"/{Slug}/thankyou", replace: true);
+    }
+}

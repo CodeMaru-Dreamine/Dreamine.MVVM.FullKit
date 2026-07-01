@@ -7,11 +7,33 @@ public sealed class FamilyHomeViewModel
 {
     private readonly IFamilyTenantStore _tenants;
     private readonly FamilyOptions _opts;
+    private readonly IGlobalSettingsStore _globalSettings;
 
-    public FamilyHomeViewModel(IFamilyTenantStore tenants, FamilyOptions opts)
+    public FamilyHomeViewModel(IFamilyTenantStore tenants, FamilyOptions opts, IGlobalSettingsStore globalSettings)
     {
         _tenants = tenants;
         _opts = opts;
+        _globalSettings = globalSettings;
+    }
+
+    /// <summary>이미지(사진/커버) 업로드 최대 용량(MB). 0이면 무제한.</summary>
+    public int MaxImageSizeMb { get; set; } = 20;
+    /// <summary>동영상 업로드 최대 용량(MB). 0이면 무제한.</summary>
+    public int MaxVideoSizeMb { get; set; } = 500;
+
+    public async Task LoadGlobalSettingsAsync(CancellationToken ct = default)
+    {
+        var settings = await _globalSettings.GetAsync(ct).ConfigureAwait(false);
+        MaxImageSizeMb = settings.MaxImageSizeMb;
+        MaxVideoSizeMb = settings.MaxVideoSizeMb;
+    }
+
+    public async Task SaveGlobalSettingsAsync(CancellationToken ct = default)
+    {
+        await _globalSettings.SaveAsync(
+            new GlobalSettings { MaxImageSizeMb = MaxImageSizeMb, MaxVideoSizeMb = MaxVideoSizeMb }, ct)
+            .ConfigureAwait(false);
+        StatusMessage = "✅ 전체 설정이 저장되었습니다.";
     }
 
     public bool IsAuthenticated { get; private set; }
@@ -35,6 +57,7 @@ public sealed class FamilyHomeViewModel
     public async Task LoadAsync(CancellationToken ct = default)
     {
         Tenants = await _tenants.GetAllAsync(ct).ConfigureAwait(false);
+        await LoadGlobalSettingsAsync(ct).ConfigureAwait(false);
         IsLoaded = true;
         StatusMessage = "";
     }
@@ -100,5 +123,33 @@ public sealed class FamilyHomeViewModel
         {
             StatusMessage = $"삭제 오류: {ex.Message}";
         }
+    }
+
+    /// <summary>
+    /// \brief 계정(가족 앨범)별 이미지 업로드 용량 제한을 설정합니다.
+    /// </summary>
+    /// <param name="maxImageSizeMb">null이면 전체 설정값을 따름, 0이면 무제한, 그 외는 MB 단위 제한.</param>
+    public async Task SetMaxImageSizeAsync(string slug, int? maxImageSizeMb, CancellationToken ct = default)
+    {
+        var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+        if (config is null) return;
+        config.MaxImageSizeMb = maxImageSizeMb;
+        await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+        await LoadAsync(ct).ConfigureAwait(false);
+        StatusMessage = $"✅ '{slug}' 이미지 용량 제한 저장됨";
+    }
+
+    /// <summary>
+    /// \brief 계정(가족 앨범)별 동영상 업로드 용량 제한을 설정합니다.
+    /// </summary>
+    /// <param name="maxVideoSizeMb">null이면 전체 설정값을 따름, 0이면 무제한, 그 외는 MB 단위 제한.</param>
+    public async Task SetMaxVideoSizeAsync(string slug, int? maxVideoSizeMb, CancellationToken ct = default)
+    {
+        var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+        if (config is null) return;
+        config.MaxVideoSizeMb = maxVideoSizeMb;
+        await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+        await LoadAsync(ct).ConfigureAwait(false);
+        StatusMessage = $"✅ '{slug}' 동영상 용량 제한 저장됨";
     }
 }

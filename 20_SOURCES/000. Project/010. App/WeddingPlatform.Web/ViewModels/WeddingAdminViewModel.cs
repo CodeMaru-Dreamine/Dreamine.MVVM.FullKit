@@ -12,18 +12,25 @@ public sealed class WeddingAdminViewModel
     private readonly ITenantStore _tenants;
     private readonly IPhotoService _photos;
     private readonly WeddingOptions _opts;
+    private readonly IGlobalSettingsStore _globalSettings;
 
     private static readonly HttpClient _geocodeHttp = new()
     {
         DefaultRequestHeaders = { { "User-Agent", "CodemaruWeddingPlatform/1.0 (contact: admin@codemaru.co.kr)" } }
     };
 
-    public WeddingAdminViewModel(ITenantStore tenants, IPhotoService photos, WeddingOptions opts)
+    public WeddingAdminViewModel(ITenantStore tenants, IPhotoService photos, WeddingOptions opts, IGlobalSettingsStore globalSettings)
     {
         _tenants = tenants;
         _photos = photos;
         _opts = opts;
+        _globalSettings = globalSettings;
     }
+
+    /// <summary>동영상 업로드 최대 용량 안내 문구 (예: "최대 200MB" 또는 "무제한").</summary>
+    public string MaxVideoSizeLabel { get; private set; } = "최대 200MB";
+    /// <summary>동영상 업로드 최대 개수 (0이면 무제한).</summary>
+    public int MaxVideoCount { get; private set; } = 6;
 
     public TenantConfig? Config { get; private set; }
     public IReadOnlyList<PhotoInfo> Gallery { get; private set; } = [];
@@ -51,6 +58,14 @@ public sealed class WeddingAdminViewModel
         Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false)
                  ?? new TenantConfig { Slug = slug };
         Gallery = await _photos.GetGalleryAsync(slug, ct).ConfigureAwait(false);
+
+        var settings = await _globalSettings.GetAsync(ct).ConfigureAwait(false);
+
+        var effectiveMb = Config.MaxVideoSizeMb ?? settings.MaxVideoSizeMb;
+        MaxVideoSizeLabel = effectiveMb <= 0 ? "무제한" : $"최대 {effectiveMb}MB";
+
+        MaxVideoCount = Config.MaxVideoCount ?? settings.MaxVideoCount;
+
         IsLoaded = true;
     }
 

@@ -111,6 +111,13 @@ public sealed class WeddingInvitationViewModel
         }
     }
 
+    public string MusicButtonPosition => Config?.MusicButtonPosition ?? "bottom";
+
+    public string HeroPanelVerticalDesktop => Config?.HeroPanelVerticalDesktop ?? "top";
+    public string HeroPanelHorizontalDesktop => Config?.HeroPanelHorizontalDesktop ?? "center";
+    public string HeroPanelVerticalMobile => Config?.HeroPanelVerticalMobile ?? "top";
+    public string HeroPanelHorizontalMobile => Config?.HeroPanelHorizontalMobile ?? "center";
+
     public string SelectedTab { get; private set; } = "map";
     public void SetMap() => SelectedTab = "map";
     public void SetRoad() => SelectedTab = "road";

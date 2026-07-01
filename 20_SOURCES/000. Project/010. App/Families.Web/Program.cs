@@ -1,6 +1,7 @@
 using System.IO;
 using Dreamine.Hybrid.Wpf.DependencyInjection;
 using Dreamine.Hybrid.Wpf.Hosting;
+using Microsoft.AspNetCore.Components.Server;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -25,6 +26,7 @@ public static class Program
         builder.Services.AddSingleton<IFamilyTenantStore, JsonFamilyTenantStore>();
         builder.Services.AddSingleton<IPostStore, JsonPostStore>();
         builder.Services.AddSingleton<IAlbumStore, JsonAlbumStore>();
+        builder.Services.AddSingleton<IGlobalSettingsStore, JsonGlobalSettingsStore>();
         builder.Services.AddSingleton<IMediaService, LocalMediaService>();
         builder.Services.AddSingleton<IReactionStore, JsonReactionStore>();
 
@@ -39,9 +41,39 @@ public static class Program
             options.SharedServiceTypes.Add(typeof(IFamilyTenantStore));
             options.SharedServiceTypes.Add(typeof(IPostStore));
             options.SharedServiceTypes.Add(typeof(IAlbumStore));
+            options.SharedServiceTypes.Add(typeof(IGlobalSettingsStore));
             options.SharedServiceTypes.Add(typeof(IMediaService));
             options.SharedServiceTypes.Add(typeof(IReactionStore));
             options.AddPhysicalStaticFiles(familyOpts.ResolvedDataPath, "/family-data");
+
+            // InputFile(사진·동영상 업로드)은 SignalR 회선을 통해 청크 단위로 전송되는데,
+            // 기본 SignalR 메시지 크기 제한(32KB)과 짧은 타임아웃 때문에 큰 파일은 매우 느리거나
+            // 응답 없이 멈춘 것처럼 보입니다. 업로드 용량 검증은 LocalMediaService에서 별도로
+            // 하고 있으므로 전송 한도 자체는 풀어줍니다.
+            options.ConfigureServices = services =>
+            {
+                services.AddServerSideBlazor().AddHubOptions(o =>
+                {
+                    o.MaximumReceiveMessageSize = null;
+                    o.ClientTimeoutInterval = TimeSpan.FromMinutes(10);
+                    o.HandshakeTimeout = TimeSpan.FromMinutes(2);
+                    o.KeepAliveInterval = TimeSpan.FromSeconds(10);
+                });
+
+                services.AddAntiforgery(o =>
+                {
+                    o.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+                    o.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
+                });
+
+                services.Configure<CircuitOptions>(o =>
+                {
+                    o.DisconnectedCircuitMaxRetained = 100;
+                    o.DisconnectedCircuitRetentionPeriod = TimeSpan.FromMinutes(3);
+                    o.JSInteropDefaultCallTimeout = TimeSpan.FromMinutes(1);
+                    o.MaxBufferedUnacknowledgedRenderBatches = 10;
+                });
+            };
         });
 
         // OG 플랫폼 이미지 자동 생성 (없을 때만)

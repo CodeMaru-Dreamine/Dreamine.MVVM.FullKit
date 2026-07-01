@@ -1,0 +1,277 @@
+@page "/admin"
+@layout WeddingThankYou.Blazor.Layout.WeddingLayout
+@namespace WeddingThankYou.Blazor.Pages
+@rendermode InteractiveServer
+
+@using WeddingThankYou.Models
+@inject WeddingThankYou.ViewModels.SuperAdminViewModel Vm
+
+<PageTitle>Wedding Thank You 통합 어드민</PageTitle>
+
+<div class="w-admin">
+    <div class="w-sa-header">
+        <h1 class="w-admin__title">💌 Wedding Thank You 통합 어드민</h1>
+        <p class="w-sa-subtitle">등록된 커플 계정을 관리하고 새 감사장을 만듭니다.</p>
+    </div>
+
+    @if (!Vm.IsAuthenticated)
+    {
+        <div class="w-admin__login w-panel">
+            <h2>슈퍼 어드민 로그인</h2>
+            <p class="w-sa-hint">appsettings.json → Wedding:SuperAdminPassword</p>
+            <input class="w-input" type="password" placeholder="어드민 비밀번호"
+                   @bind="Vm.LoginPassword"
+                   @onkeydown="OnLoginKeyDown" />
+            <button class="w-btn w-btn--primary" @onclick="OnLogin">로그인</button>
+            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            {
+                <p class="w-status w-status--error">@Vm.StatusMessage</p>
+            }
+        </div>
+    }
+    else if (!Vm.IsLoaded)
+    {
+        <div class="w-loading"><div class="w-spinner"></div></div>
+    }
+    else
+    {
+        @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+        {
+            <p class="w-status @(Vm.StatusMessage.StartsWith("✅") ? "" : "w-status--error")">
+                @Vm.StatusMessage
+            </p>
+        }
+
+        <section class="w-admin__section w-sa-create">
+            <h2>➕ 새 감사장 만들기</h2>
+
+            <div class="w-sa-form">
+                <div class="w-sa-field">
+                    <label class="w-label">슬러그 (URL ID)</label>
+                    <input class="w-input" placeholder="예: gildong-sunja (영문·숫자·하이픈)"
+                           @bind="Vm.NewSlug" />
+                    @if (!string.IsNullOrWhiteSpace(Vm.NewSlug))
+                    {
+                        <span class="w-sa-preview">
+                            → /@Vm.NewSlug.Trim().ToLowerInvariant()/thankyou
+                        </span>
+                    }
+                </div>
+
+                <div class="w-sa-field">
+                    <label class="w-label">커플 이름</label>
+                    <input class="w-input" placeholder="예: 홍길동 ♥ 성춘향"
+                           @bind="Vm.NewCoupleName" />
+                </div>
+
+                <div class="w-sa-field">
+                    <label class="w-label">결혼 날짜</label>
+                    <input class="w-input" type="date" @bind="Vm.NewWeddingDate" />
+                </div>
+
+                <div class="w-sa-field">
+                    <label class="w-label">커플 어드민 비밀번호</label>
+                    <input class="w-input" type="password" placeholder="커플이 어드민 접속 시 사용"
+                           @bind="Vm.NewPassword" />
+                </div>
+
+                <button class="w-btn w-btn--primary w-sa-create-btn" @onclick="OnCreate">
+                    감사장 생성
+                </button>
+            </div>
+        </section>
+
+        <section class="w-admin__section">
+            <h2>⚙ 전체 설정</h2>
+            <p class="w-hint">모든 감사장 계정에 공통으로 적용되는 설정입니다.</p>
+
+            <label class="w-label">동영상 업로드 최대 용량</label>
+            <select class="w-input" @bind="Vm.MaxVideoSizeMb">
+                <option value="200">200MB</option>
+                <option value="500">500MB</option>
+                <option value="1024">1GB</option>
+                <option value="2048">2GB</option>
+                <option value="0">무제한</option>
+            </select>
+            <p class="w-hint">무제한으로 설정하면 디스크 용량을 직접 관리해야 합니다.</p>
+
+            <label class="w-label" style="margin-top:.75rem">동영상 업로드 최대 개수 (계정당)</label>
+            <select class="w-input" @bind="Vm.MaxVideoCount">
+                <option value="6">6개</option>
+                <option value="10">10개</option>
+                <option value="20">20개</option>
+                <option value="0">무제한</option>
+            </select>
+            <p class="w-hint">계정별로 별도 설정이 없으면 이 값이 기본으로 적용됩니다.</p>
+
+            <button class="w-btn w-btn--primary" @onclick="OnSaveGlobalSettings">💾 전체 설정 저장</button>
+        </section>
+
+        <section class="w-admin__section">
+            <h2>📋 등록된 커플 (@Vm.Tenants.Count 쌍)</h2>
+
+            @if (Vm.Tenants.Count == 0)
+            {
+                <p class="w-sa-empty">등록된 감사장이 없습니다. 위에서 새로 만들어보세요.</p>
+            }
+            else
+            {
+                <div class="w-sa-table">
+                    <div class="w-sa-table__head">
+                        <span>슬러그</span>
+                        <span>커플 이름</span>
+                        <span>결혼일</span>
+                        <span>사진</span>
+                        <span>메인 노출</span>
+                        <span>영상 용량</span>
+                        <span>영상 개수</span>
+                        <span>링크</span>
+                        <span></span>
+                    </div>
+                    @foreach (var t in Vm.Tenants)
+                    {
+                        <div class="w-sa-table__row">
+                            <span class="w-sa-slug">@t.Slug</span>
+                            <span>@t.CoupleName</span>
+                            <span>@t.WeddingDate.ToString("yyyy-MM-dd")</span>
+                            <span>@t.GalleryFileNames.Count 장</span>
+                            <span class="w-sa-display">
+                                <label class="w-sa-check">
+                                    <input type="checkbox" checked="@t.ShowOnHome"
+                                           @onchange="e => OnShowOnHomeChange(t, e)" />
+                                    노출
+                                </label>
+                                @if (t.ShowOnHome)
+                                {
+                                    <label class="w-sa-pin-label">
+                                        📌
+                                        <input type="number" class="w-sa-pin-input" min="0" max="99"
+                                               value="@t.PinOrder"
+                                               @onchange="e => OnPinOrderChange(t, e)"
+                                               title="고정 순서 (1=최우선, 0=자동)" />
+                                    </label>
+                                }
+                            </span>
+                            <span>
+                                <select class="w-input w-sa-video-limit" value="@(t.MaxVideoSizeMb?.ToString() ?? "")"
+                                        @onchange="e => OnVideoLimitChange(t, e)" title="이 계정의 동영상 업로드 용량 제한">
+                                    <option value="">기본값(전체 설정)</option>
+                                    <option value="200">200MB</option>
+                                    <option value="500">500MB</option>
+                                    <option value="1024">1GB</option>
+                                    <option value="2048">2GB</option>
+                                    <option value="0">무제한</option>
+                                </select>
+                            </span>
+                            <span>
+                                <select class="w-input w-sa-video-limit" value="@(t.MaxVideoCount?.ToString() ?? "")"
+                                        @onchange="e => OnVideoCountChange(t, e)" title="이 계정의 동영상 업로드 최대 개수">
+                                    <option value="">기본값(전체 설정)</option>
+                                    <option value="6">6개</option>
+                                    <option value="10">10개</option>
+                                    <option value="20">20개</option>
+                                    <option value="0">무제한</option>
+                                </select>
+                            </span>
+                            <span class="w-sa-links">
+                                <a href="/@t.Slug/thankyou" target="_blank" class="w-btn w-btn--sm">감사장</a>
+                                <a href="/@t.Slug/admin" target="_blank" class="w-btn w-btn--sm">어드민</a>
+                            </span>
+                            <span>
+                                @if (_confirmSlug == t.Slug)
+                                {
+                                    <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => OnDeleteConfirmed(t.Slug)">확인</button>
+                                    <button class="w-btn w-btn--sm" @onclick="() => _confirmSlug = null">취소</button>
+                                }
+                                else
+                                {
+                                    <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => _confirmSlug = t.Slug">삭제</button>
+                                }
+                            </span>
+                        </div>
+                    }
+                </div>
+            }
+        </section>
+
+        <div class="w-sa-refresh">
+            <button class="w-btn" @onclick="OnRefresh">🔄 새로고침</button>
+        </div>
+    }
+</div>
+
+@code {
+    private string? _confirmSlug;
+
+    protected override void OnInitialized() { }
+
+    private async Task OnLogin()
+    {
+        if (await Vm.LoginAsync())
+            await Vm.LoadAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnLoginKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await OnLogin();
+    }
+
+    private async Task OnCreate()
+    {
+        await Vm.CreateTenantAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnShowOnHomeChange(TenantConfig t, ChangeEventArgs e)
+    {
+        t.ShowOnHome = (bool)(e.Value ?? false);
+        await Vm.SetDisplayAsync(t.Slug, t.ShowOnHome, t.PinOrder);
+        StateHasChanged();
+    }
+
+    private async Task OnPinOrderChange(TenantConfig t, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var order))
+        {
+            t.PinOrder = Math.Max(0, order);
+            await Vm.SetDisplayAsync(t.Slug, t.ShowOnHome, t.PinOrder);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnDeleteConfirmed(string slug)
+    {
+        _confirmSlug = null;
+        await Vm.DeleteTenantAsync(slug);
+        StateHasChanged();
+    }
+
+    private async Task OnSaveGlobalSettings()
+    {
+        await Vm.SaveGlobalSettingsAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnVideoLimitChange(TenantConfig t, ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        int? maxMb = string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw);
+        await Vm.SetMaxVideoSizeAsync(t.Slug, maxMb);
+        StateHasChanged();
+    }
+
+    private async Task OnVideoCountChange(TenantConfig t, ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        int? maxCount = string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw);
+        await Vm.SetMaxVideoCountAsync(t.Slug, maxCount);
+        StateHasChanged();
+    }
+
+    private async Task OnRefresh()
+    {
+        await Vm.LoadAsync();
+        StateHasChanged();
+    }
+}

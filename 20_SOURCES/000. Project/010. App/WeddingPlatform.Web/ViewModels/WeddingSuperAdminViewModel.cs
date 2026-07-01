@@ -7,11 +7,33 @@ public sealed class WeddingSuperAdminViewModel
 {
     private readonly ITenantStore _tenants;
     private readonly WeddingOptions _opts;
+    private readonly IGlobalSettingsStore _globalSettings;
 
-    public WeddingSuperAdminViewModel(ITenantStore tenants, WeddingOptions opts)
+    public WeddingSuperAdminViewModel(ITenantStore tenants, WeddingOptions opts, IGlobalSettingsStore globalSettings)
     {
         _tenants = tenants;
         _opts = opts;
+        _globalSettings = globalSettings;
+    }
+
+    /// <summary>동영상 업로드 최대 용량(MB). 0이면 무제한.</summary>
+    public int MaxVideoSizeMb { get; set; } = 200;
+    /// <summary>계정당 동영상 업로드 최대 개수(기본값). 0이면 무제한.</summary>
+    public int MaxVideoCount { get; set; } = 6;
+
+    public async Task LoadGlobalSettingsAsync(CancellationToken ct = default)
+    {
+        var settings = await _globalSettings.GetAsync(ct).ConfigureAwait(false);
+        MaxVideoSizeMb = settings.MaxVideoSizeMb;
+        MaxVideoCount = settings.MaxVideoCount;
+    }
+
+    public async Task SaveGlobalSettingsAsync(CancellationToken ct = default)
+    {
+        await _globalSettings.SaveAsync(
+            new GlobalSettings { MaxVideoSizeMb = MaxVideoSizeMb, MaxVideoCount = MaxVideoCount }, ct)
+            .ConfigureAwait(false);
+        StatusMessage = "✅ 전체 설정이 저장되었습니다.";
     }
 
     public bool IsAuthenticated { get; private set; }
@@ -36,6 +58,7 @@ public sealed class WeddingSuperAdminViewModel
     public async Task LoadAsync(CancellationToken ct = default)
     {
         Tenants = await _tenants.GetAllAsync(ct).ConfigureAwait(false);
+        await LoadGlobalSettingsAsync(ct).ConfigureAwait(false);
         IsLoaded = true;
         StatusMessage = "";
     }
@@ -104,5 +127,33 @@ public sealed class WeddingSuperAdminViewModel
         {
             StatusMessage = $"삭제 오류: {ex.Message}";
         }
+    }
+
+    /// <summary>
+    /// \brief 계정(테넌트)별 동영상 업로드 용량 제한을 설정합니다.
+    /// </summary>
+    /// <param name="maxVideoSizeMb">null이면 전체 설정값을 따름, 0이면 무제한, 그 외는 MB 단위 제한.</param>
+    public async Task SetMaxVideoSizeAsync(string slug, int? maxVideoSizeMb, CancellationToken ct = default)
+    {
+        var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+        if (config is null) return;
+        config.MaxVideoSizeMb = maxVideoSizeMb;
+        await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+        await LoadAsync(ct).ConfigureAwait(false);
+        StatusMessage = $"✅ '{slug}' 동영상 용량 제한 저장됨";
+    }
+
+    /// <summary>
+    /// \brief 계정(테넌트)별 동영상 업로드 최대 개수를 설정합니다.
+    /// </summary>
+    /// <param name="maxVideoCount">null이면 전체 설정값을 따름, 0이면 무제한, 그 외는 개수 제한.</param>
+    public async Task SetMaxVideoCountAsync(string slug, int? maxVideoCount, CancellationToken ct = default)
+    {
+        var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+        if (config is null) return;
+        config.MaxVideoCount = maxVideoCount;
+        await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+        await LoadAsync(ct).ConfigureAwait(false);
+        StatusMessage = $"✅ '{slug}' 동영상 개수 제한 저장됨";
     }
 }

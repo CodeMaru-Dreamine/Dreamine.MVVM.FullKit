@@ -7,13 +7,28 @@ namespace FamiliesApp.Services;
 public sealed class LocalMediaService : IMediaService
 {
     private readonly IFamilyTenantStore _tenants;
-    private const long MaxImageBytes = 20 * 1024 * 1024;
-    private const long MaxVideoBytes = 500 * 1024 * 1024;
+    private readonly IGlobalSettingsStore _globalSettings;
 
     private static readonly string[] AllowedImageExts = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
     private static readonly string[] AllowedVideoExts = [".mp4", ".webm", ".mov", ".m4v"];
 
-    public LocalMediaService(IFamilyTenantStore tenants) => _tenants = tenants;
+    public LocalMediaService(IFamilyTenantStore tenants, IGlobalSettingsStore globalSettings)
+    {
+        _tenants = tenants;
+        _globalSettings = globalSettings;
+    }
+
+    private static long ToBytes(int mb) => mb <= 0 ? long.MaxValue : mb * 1024L * 1024L;
+
+    private async Task<(long ImageBytes, long VideoBytes)> GetLimitsAsync(string slug, CancellationToken ct)
+    {
+        var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+        var settings = await _globalSettings.GetAsync(ct).ConfigureAwait(false);
+
+        var imageMb = config?.MaxImageSizeMb ?? settings.MaxImageSizeMb;
+        var videoMb = config?.MaxVideoSizeMb ?? settings.MaxVideoSizeMb;
+        return (ToBytes(imageMb), ToBytes(videoMb));
+    }
 
     public async Task<string> UploadPostMediaAsync(string slug, string postId, IBrowserFile file, CancellationToken ct = default)
     {
@@ -24,9 +39,12 @@ public sealed class LocalMediaService : IMediaService
         if (!isVideo && !isImage)
             throw new InvalidOperationException($"허용되지 않는 파일 형식입니다: {ext}");
 
-        long limit = isVideo ? MaxVideoBytes : MaxImageBytes;
+        var (imageLimit, videoLimit) = await GetLimitsAsync(slug, ct).ConfigureAwait(false);
+        var limit = isVideo ? videoLimit : imageLimit;
         if (file.Size > limit)
-            throw new InvalidOperationException(isVideo ? "동영상은 500MB 이하여야 합니다." : "이미지는 20MB 이하여야 합니다.");
+            throw new InvalidOperationException(isVideo
+                ? $"동영상은 {FormatLimit(videoLimit)} 이하여야 합니다."
+                : $"이미지는 {FormatLimit(imageLimit)} 이하여야 합니다.");
 
         var mediaDir = Path.Combine(_tenants.GetTenantDataPath(slug), "media", postId);
         Directory.CreateDirectory(mediaDir);
@@ -45,15 +63,17 @@ public sealed class LocalMediaService : IMediaService
         var ext = Path.GetExtension(file.Name).ToLowerInvariant();
         if (!Array.Exists(AllowedImageExts, e => e == ext))
             throw new InvalidOperationException($"허용되지 않는 이미지 형식입니다: {ext}");
-        if (file.Size > MaxImageBytes)
-            throw new InvalidOperationException("커버 이미지는 20MB 이하여야 합니다.");
+
+        var (imageLimit, _) = await GetLimitsAsync(slug, ct).ConfigureAwait(false);
+        if (file.Size > imageLimit)
+            throw new InvalidOperationException($"커버 이미지는 {FormatLimit(imageLimit)} 이하여야 합니다.");
 
         var dir = _tenants.GetTenantDataPath(slug);
         Directory.CreateDirectory(dir);
 
         var fileName = $"cover{ext}";
         await using var dest = File.Create(Path.Combine(dir, fileName));
-        await file.OpenReadStream(MaxImageBytes, ct).CopyToAsync(dest, ct).ConfigureAwait(false);
+        await file.OpenReadStream(imageLimit, ct).CopyToAsync(dest, ct).ConfigureAwait(false);
 
         var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false) ?? new Models.FamilyConfig { Slug = slug };
         config.CoverImageFileName = fileName;
@@ -61,6 +81,9 @@ public sealed class LocalMediaService : IMediaService
 
         return fileName;
     }
+
+    private static string FormatLimit(long bytes) =>
+        bytes == long.MaxValue ? "무제한" : $"{bytes / (1024 * 1024)}MB";
 
     public Task DeletePostMediaAsync(string slug, string postId, string fileName, CancellationToken ct = default)
     {

@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <RootNamespace>WeddingThankYou</RootNamespace>
+    <AssemblyName>WeddingThankYou</AssemblyName>
+    <UseWPF>true</UseWPF>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateApplicationManifest>false</GenerateApplicationManifest>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <StartupObject>WeddingThankYou.Program</StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <!-- App_Data는 빌드/퍼블리시 출력에 복사하지 않습니다.
+         개발 시: appsettings.Development.json의 DataPath → 소스 폴더 직접 참조
+         서버  : DataPath="" → exe 위치 기준 App_Data\Wedding 자동 사용 -->
+    <Content Remove="App_Data\**\*.*" />
+    <None Remove="App_Data\**\*.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Markdig" />
+  </ItemGroup>
+
+</Project>

@@ -7,8 +7,19 @@
 **/appsettings.Production.json
 **/appsettings.Development.json
 
-# ── Wedding 테넌트 데이터 (사진·config·방명록) ──────
+# ── Wedding / Family 테넌트 데이터 (사진·config·방명록·CSV) ──────
 **/App_Data/Wedding/
+**/App_Data/Family/
+**/App_Data/Guestbook/
+**/App_Data/global-settings.json
+**/App_Data/*.csv
+
+# ── WeddingThankYou wwwroot 개인사진·음악 (runtime 데이터) ──────
+**/WeddingThankYou/wwwroot/img/Gallery/
+**/WeddingThankYou/wwwroot/img/heroImage*.jpg
+**/WeddingThankYou/wwwroot/img/og*.jpg
+**/WeddingThankYou/wwwroot/music/
+**/WeddingThankYou/wwwroot/img/wedding/
 
 # ── Wedding 배포 산출물 ──────────────────────────────
 **/publish-output/

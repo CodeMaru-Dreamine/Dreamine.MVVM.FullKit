@@ -51,10 +51,17 @@ body {
     overflow: hidden;
     font-family: 'Noto Serif KR', 'Georgia', serif;
 }
+.w-hero--thankyou {
+    min-height: 70svh;
+}
 .w-hero__bg {
     position: absolute; inset: 0;
     background-size: cover; background-position: center center;
     background-attachment: scroll;
+}
+/* 감사장 히어로는 인물이 위쪽에 오는 사진이 많아 상단 위주로 보이도록 조정 */
+.w-hero--thankyou .w-hero__bg {
+    background-position: center top;
 }
 .w-hero__bg--default {
     background: linear-gradient(135deg, #f5ede0 0%, #e8d5c0 50%, #d4b896 100%);
@@ -75,6 +82,27 @@ body {
     padding: 2rem 1.5rem;
     box-sizing: border-box;
     gap: 0;
+}
+.w-hero--thankyou .w-hero__content { min-height: 70svh; }
+
+/* ── 히어로 문구 패널 위치 (PC/모바일 별도 지정, 어드민에서 설정) ──
+   가로(좌/중/우)는 .w-hero의 justify-content로, 세로(상/중/하)는
+   .w-hero__content의 justify-content로 제어합니다. */
+@media (min-width: 769px) {
+    .w-hero--dh-left { justify-content: flex-start; }
+    .w-hero--dh-center { justify-content: center; }
+    .w-hero--dh-right { justify-content: flex-end; }
+    .w-hero__content.w-hero__content--dv-top { justify-content: flex-start; }
+    .w-hero__content.w-hero__content--dv-middle { justify-content: center; }
+    .w-hero__content.w-hero__content--dv-bottom { justify-content: flex-end; }
+}
+@media (max-width: 768px) {
+    .w-hero--mh-left { justify-content: flex-start; }
+    .w-hero--mh-center { justify-content: center; }
+    .w-hero--mh-right { justify-content: flex-end; }
+    .w-hero__content.w-hero__content--mv-top { justify-content: flex-start; }
+    .w-hero__content.w-hero__content--mv-middle { justify-content: center; }
+    .w-hero__content.w-hero__content--mv-bottom { justify-content: flex-end; }
 }
 .w-panel {
     background: var(--w-panel-bg);
@@ -303,15 +331,49 @@ body {
 .w-uploading { font-size: .85rem; color: var(--w-primary); }
 
 /* ── 동영상 (초대장 페이지) ── */
+/* 작은 썸네일 그리드로 표시하고, 클릭하면 라이트박스로 크게 재생 */
 .w-video { padding: 3rem 1.5rem; text-align: center; }
 .w-video__wrap { max-width: 720px; margin: 0 auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.12); }
 .w-video__player { width: 100%; display: block; background: #000; }
+.w-video__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: .5rem;
+    max-width: 720px; margin: 0 auto;
+}
+.w-video__item {
+    position: relative; aspect-ratio: 9 / 16; overflow: hidden;
+    border: none; padding: 0; cursor: pointer;
+    border-radius: 8px; background: #000;
+}
+.w-video__item video {
+    width: 100%; height: 100%; object-fit: cover;
+    pointer-events: none; /* 썸네일은 재생 컨트롤 없이 클릭만 */
+}
+.w-video__play {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 2.2rem;
+    background: rgba(0,0,0,.15);
+    transition: background .2s;
+}
+.w-video__item:hover .w-video__play { background: rgba(0,0,0,.3); }
+.w-lb__video { max-width: 90vw; max-height: 90svh; background: #000; border-radius: 4px; }
 
 /* ── 동영상 (어드민) ── */
 .w-admin__video-list { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; }
 .w-admin__video-item { border: 1px solid var(--w-border); border-radius: 8px; overflow: hidden; }
 .w-admin__video-player { width: 100%; max-height: 300px; display: block; background: #000; }
 .w-admin__video-meta { display: flex; align-items: center; justify-content: space-between; padding: .5rem .75rem; gap: .5rem; }
+.w-admin__video-meta .w-hint {
+    flex: 1 1 auto; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.w-admin__video-meta .w-btn { flex-shrink: 0; }
+@media (max-width: 480px) {
+    .w-admin__video-meta { flex-wrap: wrap; }
+    .w-admin__video-meta .w-hint { flex-basis: 100%; white-space: normal; word-break: break-all; }
+}
 .w-maplink-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .4rem; }
 .w-coord-row { display: grid; grid-template-columns: 1fr 1fr; gap: .75rem; }
 .w-btn--danger { background: #e53e3e; color: #fff; border-color: #e53e3e; }
@@ -373,15 +435,16 @@ body {
 .w-sa-preview { font-size: .8rem; color: var(--w-primary); margin-top: .2rem; }
 .w-sa-create-btn { grid-column: 1 / -1; }
 
-/* 테이블 */
-.w-sa-table { margin-top: 1rem; border: 1px solid var(--w-border); border-radius: var(--w-radius); overflow: hidden; }
+/* 테이블 — 좁은 화면에서는 가로 스크롤 (내용이 잘리지 않도록) */
+.w-sa-table { margin-top: 1rem; border: 1px solid var(--w-border); border-radius: var(--w-radius); overflow-x: auto; }
 .w-sa-table__head,
 .w-sa-table__row {
     display: grid;
-    grid-template-columns: 130px 1fr 100px 70px 50px 1fr 70px;
+    grid-template-columns: 130px 130px 100px 90px 70px 150px 120px 110px 150px 70px;
     align-items: center;
     gap: .75rem;
     padding: .65rem 1rem;
+    min-width: 1220px;
 }
 .w-sa-table__head {
     background: var(--w-primary);
@@ -427,8 +490,11 @@ body.w-theme-blush {
 }
 
 /* ── 배경음 바 ──────────────────────────────────────── */
+/* 기본은 화면 하단 고정. 어드민에서 "상단 고정"으로 바꾸면 .w-music-bar--top 클래스가 추가됨 */
 .w-music-bar {
-    position: fixed; bottom: 1.2rem; right: 1.2rem; z-index: 900;
+    position: fixed;
+    bottom: calc(1.2rem + env(safe-area-inset-bottom, 0px));
+    right: 1.2rem; z-index: 900;
     display: flex; align-items: center; gap: .5rem;
     background: var(--w-panel-bg);
     border: 1px solid var(--w-border);
@@ -436,6 +502,10 @@ body.w-theme-blush {
     padding: .4rem .9rem .4rem .5rem;
     box-shadow: var(--w-shadow);
     backdrop-filter: blur(8px);
+}
+.w-music-bar--top {
+    top: calc(1.2rem + env(safe-area-inset-top, 0px));
+    bottom: auto;
 }
 .w-music-btn {
     background: var(--w-primary); border: none; cursor: pointer;

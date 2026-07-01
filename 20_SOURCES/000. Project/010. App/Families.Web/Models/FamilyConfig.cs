@@ -24,4 +24,9 @@ public sealed class FamilyConfig
 
     /// <summary>타임라인 / 앨범 페이지당 포스트 수 (5~100)</summary>
     public int PageSize { get; set; } = 20;
+
+    /// <summary>이 계정 전용 이미지 업로드 최대 용량(MB). null이면 전체 설정(GlobalSettings) 값을 따름. 0이면 무제한.</summary>
+    public int? MaxImageSizeMb { get; set; } = null;
+    /// <summary>이 계정 전용 동영상 업로드 최대 용량(MB). null이면 전체 설정(GlobalSettings) 값을 따름. 0이면 무제한.</summary>
+    public int? MaxVideoSizeMb { get; set; } = null;
 }

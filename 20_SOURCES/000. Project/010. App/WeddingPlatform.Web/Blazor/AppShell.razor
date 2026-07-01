@@ -7,17 +7,44 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="/css/wedding.css" />
+    <link rel="stylesheet" href="/css/wedding.css?v=20260701" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <!-- Leaflet 지도 CSS — 로컬 파일(CDN 미의존) -->
+    <link rel="stylesheet" href="/lib/leaflet/leaflet.min.css" />
     <HeadOutlet />
 </head>
 <body>
     <WeddingPlatform.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
-    <script src="/_framework/blazor.web.js"></script>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!--
+      blazor.web.js autostart="false" + 수동 Blazor.start():
+      삼성 인터넷 등 일부 브라우저가 WebSocket을 차단할 때 LongPolling으로 자동 폴백하고,
+      회선 연결 실패 시 최대 10회 재시도하도록 설정합니다.
+    -->
+    <script src="/_framework/blazor.web.js" autostart="false"></script>
+    <!-- Leaflet JS — 로컬 파일이라 빠름, CDN과 달리 지연/차단 없음 -->
+    <script src="/lib/leaflet/leaflet.min.js"></script>
     <script src="/js/wedding-interop.js"></script>
+    <script>
+        Blazor.start({
+            circuit: {
+                reconnectionOptions: {
+                    maxRetries: 10,
+                    retryIntervalMilliseconds: (previousAttempts) => {
+                        // 1초 → 2초 → 4초 ... 최대 30초 간격으로 재시도
+                        return Math.min(1000 * Math.pow(2, previousAttempts), 30000);
+                    }
+                },
+                configureSignalR: function (builder) {
+                    // WebSocket → ServerSentEvents → LongPolling 순으로 폴백
+                    builder.withUrl('/_blazor', {
+                        transport: 7 // HttpTransportType.WebSockets | SSE | LongPolling
+                    }).withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 15000, 30000, 30000, 30000, 30000]);
+                }
+            }
+        });
+    </script>
 </body>
 </html>

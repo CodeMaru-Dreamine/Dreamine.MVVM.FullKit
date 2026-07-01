@@ -3,6 +3,7 @@
 @namespace FamiliesApp.Blazor.Pages
 @rendermode InteractiveServer
 
+@using FamiliesApp.Models
 @inject FamilyHomeViewModel Vm
 @inject NavigationManager Nav
 
@@ -41,24 +42,106 @@
             </p>
         }
 
+        <div class="fa-superadmin-settings">
+            <h2>⚙ 전체 설정</h2>
+            <p class="fa-label__hint">모든 가족 앨범 계정에 공통으로 적용되는 업로드 용량 기본값입니다.</p>
+
+            <div class="fa-gs-fields">
+                <div class="fa-gs-field">
+                    <label class="fa-label">이미지(사진/커버) 최대 용량</label>
+                    <select class="fa-input" @bind="Vm.MaxImageSizeMb">
+                        <option value="10">10MB</option>
+                        <option value="20">20MB</option>
+                        <option value="50">50MB</option>
+                        <option value="0">무제한</option>
+                    </select>
+                </div>
+                <div class="fa-gs-field">
+                    <label class="fa-label">동영상 최대 용량</label>
+                    <select class="fa-input" @bind="Vm.MaxVideoSizeMb">
+                        <option value="200">200MB</option>
+                        <option value="500">500MB</option>
+                        <option value="1024">1GB</option>
+                        <option value="2048">2GB</option>
+                        <option value="0">무제한</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="fa-btn fa-btn--primary" style="margin-top:12px" @onclick="OnSaveGlobalSettings">💾 전체 설정 저장</button>
+        </div>
+
         <div class="fa-superadmin-list">
             <h2>앨범 목록 (@(Vm.Tenants.Count)개)</h2>
             @foreach (var t in Vm.Tenants.OrderByDescending(x => x.CreatedAt))
             {
-                <div class="fa-superadmin-item">
-                    <div class="fa-superadmin-item__info">
-                        <span class="fa-superadmin-item__slug">@t.Slug</span>
-                        <span class="fa-superadmin-item__name">@t.FamilyName</span>
-                        <span class="fa-superadmin-item__date">생성: @t.CreatedAt.ToString("yy.MM.dd")</span>
-                        <span class="fa-superadmin-item__pub @(t.ShowOnHome ? "fa-badge--green" : "")">
-                            @(t.ShowOnHome ? "공개" : "비공개")
-                        </span>
+                <div class="fa-sa-card">
+                    <!-- 1행: 슬러그 + 이름 + 날짜 + 버튼 -->
+                    <div class="fa-sa-card__top">
+                        <div class="fa-sa-card__title">
+                            <code class="fa-sa-card__slug">@t.Slug</code>
+                            <span class="fa-sa-card__name">@t.FamilyName</span>
+                            <span class="fa-sa-card__date">@t.CreatedAt.ToString("yy.MM.dd")</span>
+                        </div>
+                        <div class="fa-sa-card__btns">
+                            <a href="/@t.Slug" target="_blank" class="fa-btn fa-btn--sm fa-btn--ghost">보기</a>
+                            <a href="/@t.Slug/admin" target="_blank" class="fa-btn fa-btn--sm fa-btn--ghost">어드민</a>
+                            <button class="fa-btn fa-btn--sm fa-btn--danger"
+                                    @onclick="() => OnDelete(t.Slug)">삭제</button>
+                        </div>
                     </div>
-                    <div class="fa-superadmin-item__actions">
-                        <a href="/@t.Slug" class="fa-btn fa-btn--sm fa-btn--ghost">보기</a>
-                        <a href="/@t.Slug/admin" class="fa-btn fa-btn--sm fa-btn--ghost">어드민</a>
-                        <button class="fa-btn fa-btn--sm fa-btn--danger"
-                                @onclick="() => OnDelete(t.Slug)">삭제</button>
+
+                    <!-- 2행: 공개여부 + 우선순위 + 이미지 용량 + 동영상 용량 -->
+                    <div class="fa-sa-card__row">
+                        <!-- 공개 체크박스 -->
+                        <label class="fa-sa-ctrl">
+                            <input type="checkbox" checked="@t.ShowOnHome"
+                                   @onchange="e => OnShowOnHomeChange(t, e)" />
+                            <span class="@(t.ShowOnHome ? "fa-sa-public" : "fa-sa-private")">
+                                @(t.ShowOnHome ? "공개" : "비공개")
+                            </span>
+                        </label>
+
+                        <!-- 우선순위 (공개일 때만) -->
+                        @if (t.ShowOnHome)
+                        {
+                            <label class="fa-sa-ctrl">
+                                <span class="fa-sa-lbl">우선순위</span>
+                                <input type="number" class="fa-sa-num" min="0" max="99"
+                                       value="@t.PinOrder"
+                                       @onchange="e => OnPinOrderChange(t, e)"
+                                       title="1=최우선, 0=자동 정렬" />
+                            </label>
+                        }
+
+                        <!-- 이미지 용량 -->
+                        <label class="fa-sa-ctrl">
+                            <span class="fa-sa-lbl">이미지</span>
+                            <select class="fa-sa-sel"
+                                    value="@(t.MaxImageSizeMb?.ToString() ?? "")"
+                                    @onchange="e => OnImageLimitChange(t, e)">
+                                <option value="">기본값</option>
+                                <option value="10">10MB</option>
+                                <option value="20">20MB</option>
+                                <option value="50">50MB</option>
+                                <option value="0">무제한</option>
+                            </select>
+                        </label>
+
+                        <!-- 동영상 용량 -->
+                        <label class="fa-sa-ctrl">
+                            <span class="fa-sa-lbl">동영상</span>
+                            <select class="fa-sa-sel"
+                                    value="@(t.MaxVideoSizeMb?.ToString() ?? "")"
+                                    @onchange="e => OnVideoLimitChange(t, e)">
+                                <option value="">기본값</option>
+                                <option value="200">200MB</option>
+                                <option value="500">500MB</option>
+                                <option value="1024">1GB</option>
+                                <option value="2048">2GB</option>
+                                <option value="0">무제한</option>
+                            </select>
+                        </label>
                     </div>
                 </div>
             }
@@ -90,5 +173,41 @@
     private async Task OnDelete(string slug)
     {
         await Vm.DeleteTenantAsync(slug);
+    }
+
+    private async Task OnSaveGlobalSettings()
+    {
+        await Vm.SaveGlobalSettingsAsync();
+    }
+
+    private async Task OnShowOnHomeChange(FamilyConfig t, ChangeEventArgs e)
+    {
+        t.ShowOnHome = (bool)(e.Value ?? false);
+        await Vm.SetDisplayAsync(t.Slug, t.ShowOnHome, t.PinOrder);
+        StateHasChanged();
+    }
+
+    private async Task OnPinOrderChange(FamilyConfig t, ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var order))
+        {
+            t.PinOrder = Math.Max(0, order);
+            await Vm.SetDisplayAsync(t.Slug, t.ShowOnHome, t.PinOrder);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnImageLimitChange(FamilyConfig t, ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        int? maxMb = string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw);
+        await Vm.SetMaxImageSizeAsync(t.Slug, maxMb);
+    }
+
+    private async Task OnVideoLimitChange(FamilyConfig t, ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        int? maxMb = string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw);
+        await Vm.SetMaxVideoSizeAsync(t.Slug, maxMb);
     }
 }
