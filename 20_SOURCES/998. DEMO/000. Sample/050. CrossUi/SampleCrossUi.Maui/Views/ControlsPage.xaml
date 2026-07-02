@@ -102,6 +102,7 @@
                 <VerticalStackLayout x:Name="TabTextBox" Spacing="12" IsVisible="False">
                     <Label Text="Text Input" FontAttributes="Bold" FontSize="16" />
                     <Entry x:Name="MainEntry" Placeholder="Type something (가상 키보드 데모)" Text="{Binding TextInput}" />
+                    <dc:DreamineVirtualKeyboard x:Name="VirtualKeyboard" />
                     <Button Text="Clear Text" Command="{Binding ClearTextCommand}" />
 
                     <Entry Placeholder="Password" IsPassword="True" Text="{Binding Password}" />
@@ -109,8 +110,6 @@
 
                     <Label Text="Read-Only" FontAttributes="Bold" />
                     <Entry Text="수정할 수 없는 텍스트입니다." IsReadOnly="True" />
-
-                    <dc:DreamineVirtualKeyboard x:Name="VirtualKeyboard" />
                 </VerticalStackLayout>
 
                 <!-- ⑤ ComboBox -->

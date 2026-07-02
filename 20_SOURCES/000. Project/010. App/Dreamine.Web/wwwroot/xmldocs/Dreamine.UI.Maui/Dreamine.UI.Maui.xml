@@ -41,18 +41,12 @@
         </member>
         <member name="T:Dreamine.UI.Maui.DreamineVirtualKeyboard">
             <summary>
-            WPF/WinForms 가상 키보드와 동일한 목적의 MAUI용 화면 키보드 데모.
-            실제 모바일/태블릿에서는 OS가 기본 키보드를 제공하므로 보통 필요 없지만,
-            다른 플랫폼들과 시각적으로 동일한 느낌을 보여주기 위한 데모 컴포넌트다
-            (Windows 데스크톱 모드처럼 OS 키보드가 안 뜨는 환경에서 유용).
-            표준 영문 QWERTY 배열(특수문자 포함)을 흉내낸다. 한글 조합은 지원하지 않는다.
+            WPF/WinForms 가상 키보드와 같은 5행 QWERTY 레이아웃의 MAUI 화면 키보드.
+            브라우저/모바일 OS IME 제어가 아니라, 연결된 Entry에 직접 텍스트를 편집한다.
             </summary>
         </member>
         <member name="M:Dreamine.UI.Maui.DreamineVirtualKeyboard.Attach(Microsoft.Maui.Controls.Entry)">
             <summary>이 키보드가 입력을 보낼 대상 Entry를 연결한다.</summary>
-        </member>
-        <member name="M:Dreamine.UI.Maui.DreamineVirtualKeyboard.RefreshKeyLabels">
-            <summary>Shift/Caps 상태에 맞춰 글자·숫자·기호 키에 실제로 표시되는 텍스트를 전부 갱신한다.</summary>
         </member>
         <member name="M:Dreamine.UI.Maui.DreamineVirtualKeyboard.OnEnter">
             <summary>Entry는 한 줄짜리라 줄바꿈 대신 입력 완료로 취급해 키보드를 닫는다.</summary>

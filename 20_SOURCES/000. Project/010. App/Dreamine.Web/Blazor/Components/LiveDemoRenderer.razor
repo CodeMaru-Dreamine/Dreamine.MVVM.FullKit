@@ -69,7 +69,7 @@
         break;
 
     case "textbox":
-        <div class="dw-demo__controls dw-demo__controls--col">
+        <div class="dw-demo__controls dw-demo__controls--col dw-demo--wide-textbox">
             <div class="dw-demo__row">
                 <DreamineTextBox @bind-Value="Ctl.TextInput"
                                  Hint="@(Ko ? "여기에 입력 (가상 키보드)..." : "Type here (virtual keyboard)...")"
@@ -77,16 +77,21 @@
                 <DreamineButton Size="DreamineButtonSize.Small" OnClick="Ctl.ClearText">Clear</DreamineButton>
             </div>
             <p class="dw-demo__hint">@(Ko ? "값" : "Value"): <b>@Ctl.TextInput</b></p>
+
+            @* Keep the virtual keyboard directly under its target text box. *@
+            @if (_showKeyboard)
+            {
+                <DreamineVirtualKeyboard IsVisible="_showKeyboard"
+                                         Value="@Ctl.TextInput"
+                                         ValueChanged="v => Ctl.TextInput = v"
+                                         OnEnter="() => _showKeyboard = false" />
+            }
+
             <div class="dw-demo__row">
                 <DreamineTextBox @bind-Value="Ctl.Password" IsPassword="true" Hint="@(Ko ? "비밀번호..." : "Password...")" />
                 <DreamineButton Size="DreamineButtonSize.Small" OnClick="Ctl.ClearPassword">Clear</DreamineButton>
             </div>
             <p class="dw-demo__hint">@(Ko ? "길이" : "Length"): <b>@Ctl.Password.Length</b></p>
-
-            <DreamineVirtualKeyboard IsVisible="_showKeyboard"
-                                     Value="@Ctl.TextInput"
-                                     ValueChanged="v => Ctl.TextInput = v"
-                                     OnEnter="() => _showKeyboard = false" />
         </div>
         break;
 

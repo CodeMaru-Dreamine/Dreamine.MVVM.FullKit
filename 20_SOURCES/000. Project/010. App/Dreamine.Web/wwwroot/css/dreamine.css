@@ -606,6 +606,11 @@ html, body {
 
 /* Live 스테이지 */
 .dw-demo__stage { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+
+/* textbox 데모: 가상 키보드가 편하게 들어가도록 컨트롤 컨테이너를 넓힘.
+   가상 키보드 자체는 940px까지 늘어나며, 좁아지면 미디어쿼리로 알아서 축소. */
+.dw-demo--wide-textbox { width: 100%; align-items: stretch; }
+.dw-demo--wide-textbox .dreamine-vk { align-self: center; width: 100%; max-width: 940px; }
 .dw-demo__controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; }
 .dw-demo__count { font-size: 13px; color: var(--sub); font-family: "Consolas", monospace; }
 .dw-demo__hint { font-size: 13px; color: var(--sub); margin: 4px 0 0; line-height: 1.7; }

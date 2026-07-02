@@ -46,6 +46,13 @@
         <member name="M:Dreamine.UI.Blazor.DreamineDialogService.TickAutoClick">
             <summary>매초 호출해서 자동닫힘 카운트다운을 갱신한다.</summary>
         </member>
+        <member name="T:Dreamine.UI.Blazor.HangulComposer">
+            <summary>
+            가상 키보드에서 자모(초/중/종성)를 눌렀을 때, 표준 한글 완성형으로 조합해준다.
+            Dreamine.UI.Wpf.Equipment의 HangulComposer를 Blazor로 옮긴 것으로, 로직은 동일하다.
+            브라우저 환경이라 OS IME에 의존할 수 없기 때문에 컴포넌트가 직접 조합을 처리한다.
+            </summary>
+        </member>
         <member name="P:Dreamine.UI.Blazor.DreamineCheckLed.Corner">
             <summary>
             부모가 position:relative인 컨테이너일 때, 이 LED를 모서리에 배지처럼 붙이고 싶으면

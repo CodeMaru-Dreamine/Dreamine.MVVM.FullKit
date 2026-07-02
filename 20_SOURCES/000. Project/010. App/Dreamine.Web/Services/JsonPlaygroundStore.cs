@@ -376,15 +376,18 @@ btnPulse.Click += (_, _) => vm.TogglePulseCommand.Execute(null);",
 <DreamineButton Size=""DreamineButtonSize.Small"" OnClick=""Vm.ClearText"">Clear</DreamineButton>
 <p>Value: @Vm.TextInput</p>
 
+@* 가상 키보드는 대상 텍스트박스 바로 아래에 표시 — 시선이 튀지 않게. *@
+@if (_showKeyboard)
+{
+    <DreamineVirtualKeyboard IsVisible=""_showKeyboard""
+                             Value=""@Vm.TextInput""
+                             ValueChanged=""v => Vm.TextInput = v""
+                             OnEnter=""() => _showKeyboard = false"" />
+}
+
 <DreamineTextBox @bind-Value=""Vm.Password"" IsPassword=""true"" Hint=""Password..."" />
 <DreamineButton Size=""DreamineButtonSize.Small"" OnClick=""Vm.ClearPassword"">Clear</DreamineButton>
 <p>Length: @Vm.Password.Length</p>
-
-@* 데스크톱 브라우저는 화면 키보드가 안 뜨므로 데모용 가상 키보드를 제공 *@
-<DreamineVirtualKeyboard IsVisible=""_showKeyboard""
-                         Value=""@Vm.TextInput""
-                         ValueChanged=""v => Vm.TextInput = v""
-                         OnEnter=""() => _showKeyboard = false"" />
 
 @code { private bool _showKeyboard; }",
             VmCode = @"[DreamineProperty] private string _textInput = string.Empty;
