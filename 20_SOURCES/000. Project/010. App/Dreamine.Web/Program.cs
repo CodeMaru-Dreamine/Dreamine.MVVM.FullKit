@@ -26,6 +26,9 @@ public static class Program
 
         builder.Services.AddDreamineHybridWpf();
         builder.Services.AddSingleton<ILibraryStore, JsonLibraryStore>();
+        builder.Services.AddSingleton<IPlaygroundStore, JsonPlaygroundStore>();
+        builder.Services.AddSingleton<SiteSettingsService>();
+        builder.Services.AddSingleton<AdminAuthService>();
         builder.Services.AddSingleton<MainWindow>();
 
         builder.Services.AddDreamineBlazorServer<AppShell>(options =>
@@ -33,10 +36,18 @@ public static class Program
             options.Port = port;
             options.ListenAnyIp = listenAny;
             options.SharedServiceTypes.Add(typeof(ILibraryStore));
+            options.SharedServiceTypes.Add(typeof(IPlaygroundStore));
             options.SharedServiceTypes.Add(typeof(DreamineOptions));
+            options.SharedServiceTypes.Add(typeof(SiteSettingsService));
+            options.SharedServiceTypes.Add(typeof(AdminAuthService));
             options.ConfigureServices = services =>
             {
                 services.AddScoped<XmlDocAutoLinker>();
+                services.AddScoped<LibraryCatalogSyncService>();
+                services.AddScoped<VersionSyncService>();
+                services.AddScoped<UserPreferencesService>();
+                services.AddScoped<PlaygroundMediaService>();
+                services.AddScoped<Dreamine.UI.Blazor.DreamineDialogService>();
                 services.AddScoped<HomeViewModel>();
                 services.AddScoped<DocViewModel>();
                 services.AddScoped<AdminViewModel>();

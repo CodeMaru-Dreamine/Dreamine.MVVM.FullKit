@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "dreamine-web",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "20_SOURCES/000. Project/010. App/Dreamine.Web/Dreamine.Web.csproj"],
+      "port": 4090
+    },
+    {
+      "name": "sample-crossui-blazor",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Blazor/SampleCrossUi.Blazor.csproj", "--urls", "http://localhost:5199"],
+      "port": 5199
+    }
+  ]
+}

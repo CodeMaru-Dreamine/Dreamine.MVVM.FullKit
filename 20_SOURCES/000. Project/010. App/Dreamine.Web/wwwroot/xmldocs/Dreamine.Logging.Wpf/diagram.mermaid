@@ -1,0 +1,29 @@
+﻿classDiagram
+    class WpfLogSink {
+        -ObservableCollection~LogEntry~ _entries
+        +Entries ObservableCollection~LogEntry~
+        +MaxEntries int
+        +Write(LogEntry) void
+        +Flush() Task
+    }
+    class LogViewerControl {
+        +ObservableCollection~LogEntry~ Entries
+        +LogLevel MinLevel
+        +string Filter
+        +bool AutoScroll
+        +Export() void
+        +Clear() void
+    }
+    class LogLevelConverter {
+        +Convert(object, Type, object, CultureInfo) object
+    }
+    class LogEntryTemplateSelector {
+        +SelectTemplate(object, DependencyObject) DataTemplate
+    }
+    class ILogSink {
+        <<interface>>
+    }
+    ILogSink <|.. WpfLogSink
+    LogViewerControl --> WpfLogSink
+    LogViewerControl --> LogLevelConverter
+    LogViewerControl --> LogEntryTemplateSelector

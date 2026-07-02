@@ -22,9 +22,12 @@ public class DocViewModel : ViewModelBase
     /// <summary>마크다운 → HTML 변환 결과. null이면 README 없음.</summary>
     public string? ReadmeHtml { get; private set; }
 
+    /// <summary>Mermaid 다이어그램 원본 텍스트. null이면 다이어그램 없음.</summary>
+    public string? MermaidDiagram { get; private set; }
+
     public bool HasDiagram { get; private set; }
 
-    /// <summary>wwwroot 기준 상대 URL (img src로 사용)</summary>
+    /// <summary>wwwroot 기준 상대 URL (SVG fallback용)</summary>
     public string DiagramUrl { get; private set; } = string.Empty;
 
     public IEnumerable<DocMember> Types =>
@@ -46,6 +49,7 @@ public class DocViewModel : ViewModelBase
         Library = await _store.GetAsync(libraryId);
         Members = [];
         ReadmeHtml = null;
+        MermaidDiagram = null;
         HasDiagram = false;
 
         if (Library is null) return;
@@ -62,12 +66,22 @@ public class DocViewModel : ViewModelBase
         // README
         LoadReadme(docDir);
 
-        // 다이어그램
-        var svgPath = Path.Combine(docDir, "diagram.svg");
-        if (File.Exists(svgPath))
+        // Mermaid 다이어그램 (우선)
+        var mermaidPath = Path.Combine(docDir, "diagram.mermaid");
+        if (File.Exists(mermaidPath))
         {
+            MermaidDiagram = File.ReadAllText(mermaidPath).Trim();
             HasDiagram = true;
-            DiagramUrl = $"/xmldocs/{Library.Name}/diagram.svg";
+        }
+        else
+        {
+            // SVG fallback
+            var svgPath = Path.Combine(docDir, "diagram.svg");
+            if (File.Exists(svgPath))
+            {
+                HasDiagram = true;
+                DiagramUrl = $"/xmldocs/{Library.Name}/diagram.svg";
+            }
         }
     }
 
@@ -83,14 +97,12 @@ public class DocViewModel : ViewModelBase
 
         if (IsKorean)
         {
-            // 대소문자 두 가지 관례 처리
             var ko1 = Path.Combine(docDir, "README_KO.md");
             var ko2 = Path.Combine(docDir, "README_ko.md");
             if (File.Exists(ko1)) mdPath = ko1;
             else if (File.Exists(ko2)) mdPath = ko2;
         }
 
-        // 한글 없거나 영문 모드
         if (mdPath is null)
         {
             var en = Path.Combine(docDir, "README.md");

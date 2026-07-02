@@ -1,0 +1,20 @@
+<svg viewBox="0 0 300 360" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
+  <!-- Phone frame -->
+  <rect x="30" y="16" width="240" height="328" rx="34" fill="#111"/>
+  <rect x="42" y="28" width="216" height="304" rx="20" fill="#fff"/>
+  <!-- Notch -->
+  <rect x="120" y="30" width="60" height="16" rx="8" fill="#111"/>
+  <!-- App bar -->
+  <rect x="42" y="52" width="216" height="40" fill="#512BD4"/>
+  <text x="150" y="78" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">Image</text>
+  <!-- Image placeholder -->
+  <rect x="85" y="110" width="130" height="130" rx="12" fill="#ddeeff" stroke="#b0c4de"/>
+  <circle cx="150" cy="165" r="40" fill="#4a90d9"/>
+  <circle cx="150" cy="165" r="22" fill="#fff"/>
+  <!-- Click count -->
+  <text x="150" y="268" font-size="16" font-weight="bold" fill="#333" text-anchor="middle">이미지 클릭 3</text>
+  <!-- Hint -->
+  <text x="150" y="290" font-size="10" fill="#888" text-anchor="middle">TapGestureRecognizer 바인딩</text>
+  <!-- Home indicator -->
+  <rect x="120" y="316" width="60" height="4" rx="2" fill="#ccc"/>
+</svg>

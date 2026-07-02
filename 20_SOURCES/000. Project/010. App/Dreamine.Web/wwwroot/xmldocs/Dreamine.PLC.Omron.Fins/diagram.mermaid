@@ -1,0 +1,37 @@
+﻿classDiagram
+    class FinsClient {
+        -UdpClient _udp
+        +string PlcIp
+        +int PlcPort
+        +byte NetworkNo
+        +byte NodeNo
+        +byte UnitNo
+        +ConnectAsync() Task
+        +ReadBitAsync(string) Task~bool~
+        +ReadWordAsync(string) Task~short~
+        +WriteWordAsync(string, short) Task
+        +ReadWordsAsync(string, int) Task~short[]~
+        +WriteWordsAsync(string, short[]) Task
+    }
+    class FinsFrame {
+        +BuildReadCommand(FinsAddress, int) byte[]
+        +BuildWriteCommand(FinsAddress, short[]) byte[]
+        +ParseResponse(byte[]) FinsResponse
+        +CalculateHeader(byte, byte, byte) byte[]
+    }
+    class FinsAddressParser {
+        +Parse(string) FinsAddress
+        -ParseAreaCode(string) byte
+    }
+    class FinsAddress {
+        +byte AreaCode
+        +ushort Word
+        +byte Bit
+    }
+    class PlcClientBase {
+        <<abstract>>
+    }
+    PlcClientBase <|-- FinsClient
+    FinsClient --> FinsFrame
+    FinsClient --> FinsAddressParser
+    FinsAddressParser --> FinsAddress

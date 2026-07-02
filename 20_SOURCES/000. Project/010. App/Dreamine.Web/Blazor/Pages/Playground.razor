@@ -1,0 +1,107 @@
+@page "/playground"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@using Dreamine.UI.Blazor
+@inject IPlaygroundStore Store
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>@(Ko ? "체험" : "Playground") — Dreamine</PageTitle>
+
+<div class="dw-page dw-guide">
+    <aside class="dw-guide-rail @(_railOpen ? "is-open" : "is-collapsed")">
+        <button class="dw-guide-rail__toggle" @onclick="ToggleRail"
+                title="@(Ko ? "목차 " + (_railOpen ? "접기" : "펼치기") : (_railOpen ? "Collapse" : "Contents"))"
+                aria-label="@(Ko ? "목차" : "Contents")">
+            @(_railOpen ? "✕" : "☰")
+        </button>
+        <nav class="dw-guide-rail__panel">
+            <span class="dw-guide-rail__head">@(Ko ? "데모 목록" : "Demos")</span>
+            @foreach (var demo in VisibleDemos)
+            {
+                <a href="/playground#@demo.Id" class="dw-guide-rail__link" @onclick="@(() => GoTo(demo.Id))" @onclick:preventDefault>
+                    @(Ko || string.IsNullOrWhiteSpace(demo.TitleEn) ? (demo.NavLabel ?? demo.Title) : demo.TitleEn)
+                </a>
+            }
+        </nav>
+    </aside>
+
+    <div class="dw-page__head">
+        <h1 class="dw-page__title">@(Ko ? "체험" : "Playground")</h1>
+        <p class="dw-page__copy">
+            @(Ko
+                ? "Dreamine MVVM을 브라우저에서 직접 눌러보고, WPF/WinForms/MAUI는 실제 실행 이미지나 동영상으로 확인합니다."
+                : "Try Dreamine MVVM in the browser; review WPF/WinForms/MAUI through real screenshots or videos.")
+        </p>
+    </div>
+
+    @if (_demos.Count == 0)
+    {
+        <div class="dw-doc-empty">
+            <p>@(Ko ? "등록된 체험 데모가 없습니다." : "No playground demos have been registered.")</p>
+        </div>
+    }
+    else
+    {
+        @foreach (var demo in VisibleDemos)
+        {
+            <section class="dw-section" id="@demo.Id">
+                <div class="dw-section__head">
+                    <h2 class="dw-section__title">@(Ko || string.IsNullOrWhiteSpace(demo.TitleEn) ? demo.Title : demo.TitleEn)</h2>
+                    <p class="dw-section__copy">@(Ko || string.IsNullOrWhiteSpace(demo.DescriptionEn) ? demo.Description : demo.DescriptionEn)</p>
+                </div>
+
+                <DemoBlock WpfCode="@demo.WpfCode"
+                           WinFormsCode="@demo.WinFormsCode"
+                           MauiCode="@demo.MauiCode"
+                           VmCode="@demo.VmCode"
+                           BlazorCode="@demo.BlazorCode"
+                           DemoName="@demo.Title"
+                           WpfShot="@demo.WpfShot"
+                           WinFormsShot="@demo.WinFormsShot"
+                           MauiShot="@demo.MauiShot">
+                    <Live>
+                        <LiveDemoRenderer DemoId="@demo.Id" />
+                    </Live>
+                </DemoBlock>
+            </section>
+        }
+    }
+
+    @* 팝업 데모용 오버레이 호스트 — 페이지에 한 번만 배치 *@
+    <DreamineDialogHost />
+</div>
+
+@code {
+    [CascadingParameter] public UserPreferencesService Lang { get; set; } = default!;
+
+    private bool Ko => Lang?.IsKorean ?? true;
+    private bool _railOpen;
+    private List<PlaygroundDemo> _demos = [];
+
+    private IEnumerable<PlaygroundDemo> VisibleDemos =>
+        _demos.Where(x => x.IsVisible)
+              .OrderBy(x => x.SortOrder)
+              .ThenBy(x => x.Title, StringComparer.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Lang is not null) Lang.Changed += OnLangChanged;
+        _demos = await Store.GetAllAsync();
+    }
+
+    private void ToggleRail() => _railOpen = !_railOpen;
+
+    private async Task GoTo(string id)
+    {
+        _railOpen = false;
+        await JS.InvokeVoidAsync("dwScrollToId", id);
+    }
+
+    private void OnLangChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        if (Lang is not null) Lang.Changed -= OnLangChanged;
+    }
+}

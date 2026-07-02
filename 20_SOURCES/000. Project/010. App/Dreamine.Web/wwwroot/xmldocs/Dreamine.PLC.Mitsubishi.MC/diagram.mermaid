@@ -1,0 +1,34 @@
+﻿classDiagram
+    class McProtocolClient {
+        -TcpClient _tcp
+        +SubHeader int
+        +NetworkNo byte
+        +PcNo byte
+        +UnitIo ushort
+        +UnitStation byte
+        +ReadBitAsync(string) Task~bool~
+        +ReadWordAsync(string) Task~short~
+        +ReadDWordAsync(string) Task~int~
+        +WriteBitAsync(string, bool) Task
+        +WriteWordAsync(string, short) Task
+        +WriteDWordAsync(string, int) Task
+        +ReadBitsAsync(string, int) Task~bool[]~
+        +ReadWordsAsync(string, int) Task~short[]~
+    }
+    class McAddressParser {
+        +Parse(string) PlcAddress
+        -ParseMitsubishiDevice(string) string
+        -GetDeviceCode(string) byte
+    }
+    class McFrame {
+        +Build3E(McCommand) byte[]
+        +Build4E(McCommand) byte[]
+        +Parse3E(byte[]) McResponse
+        +Parse4E(byte[]) McResponse
+    }
+    class PlcClientBase {
+        <<abstract>>
+    }
+    PlcClientBase <|-- McProtocolClient
+    McProtocolClient --> McFrame
+    McProtocolClient --> McAddressParser

@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 380" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <radialGradient id="glowWpf" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffe08a" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#ffe08a" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="winShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#000" flood-opacity="0.22"/>
+    </filter>
+  </defs>
+
+  <!-- 창 -->
+  <g filter="url(#winShadow)">
+    <rect x="24" y="20" width="472" height="340" rx="10" fill="#ffffff" stroke="#e2e2e2"/>
+  </g>
+  <!-- 타이틀바 -->
+  <path d="M24 30a10 10 0 0 1 10-10h452a10 10 0 0 1 10 10v22H24z" fill="#f3f3f3"/>
+  <circle cx="46" cy="41" r="7" fill="#0067c0"/>
+  <path d="M42.5 41 L46 44 L50 37.5" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="62" y="45" font-size="13" fill="#1b1b1b" font-weight="600">전구 데모 — WPF</text>
+  <text x="430" y="46" font-size="15" fill="#5a5a5a" letter-spacing="6">⎯ ▢ ✕</text>
+  <line x1="24" y1="52" x2="496" y2="52" stroke="#ececec"/>
+
+  <!-- 본문: 전구 ON -->
+  <circle cx="260" cy="150" r="72" fill="url(#glowWpf)"/>
+  <circle cx="260" cy="142" r="38" fill="#ffd54a" stroke="#eab000" stroke-width="2"/>
+  <path d="M247 148c4-9 8-9 13 0s9 9 13 0" fill="none" stroke="#8a5a00" stroke-width="2.4" stroke-linecap="round"/>
+  <rect x="249" y="180" width="22" height="5" rx="2" fill="#b8b8b8"/>
+  <rect x="251" y="187" width="18" height="5" rx="2" fill="#b8b8b8"/>
+  <rect x="253" y="194" width="14" height="5" rx="2" fill="#b8b8b8"/>
+  <text x="260" y="224" font-size="13" font-weight="700" fill="#c98a00" text-anchor="middle" letter-spacing="2">ON</text>
+
+  <!-- 컨트롤 -->
+  <g transform="translate(150,250)">
+    <!-- 토글 버튼 -->
+    <rect x="0" y="0" width="90" height="38" rx="6" fill="#0067c0"/>
+    <text x="45" y="24" font-size="14" fill="#fff" text-anchor="middle" font-weight="600">토글</text>
+    <!-- 체크박스 -->
+    <rect x="112" y="8" width="20" height="20" rx="4" fill="#0067c0"/>
+    <path d="M116 18 L121 23 L128 12" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="140" y="23" font-size="14" fill="#1b1b1b">전원</text>
+    <!-- 카운트 -->
+    <text x="200" y="23" font-size="13" fill="#6a6a6a">토글 3회</text>
+  </g>
+</svg>

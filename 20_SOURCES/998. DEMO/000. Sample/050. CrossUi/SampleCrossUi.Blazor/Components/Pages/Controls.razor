@@ -14,67 +14,66 @@
     }
 </div>
 
+<div class="controls-stage">
 @if (_activeTab == "Button")
 {
     <h5>Button</h5>
-    <button class="btn btn-primary" @onclick="() => ViewModel.ClickMeCommand.Execute(null)">
+    <DreamineButton Variant="DreamineButtonVariant.Primary" OnClick="() => ViewModel.ClickMeCommand.Execute(null)">
         Click Me (@ViewModel.ClickCount)
-    </button>
+    </DreamineButton>
 
     <h6 class="mt-3">Color Variants</h6>
-    <button class="btn btn-primary" @onclick='() => SetButtonStatus("Primary")'>Primary</button>
-    <button class="btn btn-success ms-2" @onclick='() => SetButtonStatus("Success")'>Success</button>
-    <button class="btn btn-warning ms-2" @onclick='() => SetButtonStatus("Warning")'>Warning</button>
-    <button class="btn btn-danger ms-2" @onclick='() => SetButtonStatus("Danger")'>Danger</button>
+    <div class="controls-row">
+        <DreamineButton Variant="DreamineButtonVariant.Primary" OnClick='() => SetButtonStatus("Primary")'>Primary</DreamineButton>
+        <DreamineButton Variant="DreamineButtonVariant.Success" OnClick='() => SetButtonStatus("Success")'>Success</DreamineButton>
+        <DreamineButton Variant="DreamineButtonVariant.Warning" OnClick='() => SetButtonStatus("Warning")'>Warning</DreamineButton>
+        <DreamineButton Variant="DreamineButtonVariant.Danger" OnClick='() => SetButtonStatus("Danger")'>Danger</DreamineButton>
+    </div>
 
     <h6 class="mt-3">Size Variants</h6>
-    <button class="btn btn-dark btn-sm" @onclick='() => SetButtonStatus("Small")'>Small</button>
-    <button class="btn btn-dark ms-2" @onclick='() => SetButtonStatus("Normal")'>Normal</button>
-    <button class="btn btn-dark btn-lg ms-2" @onclick='() => SetButtonStatus("Large")'>Large</button>
+    <div class="controls-row">
+        <DreamineButton Size="DreamineButtonSize.Small" OnClick='() => SetButtonStatus("Small")'>Small</DreamineButton>
+        <DreamineButton Size="DreamineButtonSize.Normal" OnClick='() => SetButtonStatus("Normal")'>Normal</DreamineButton>
+        <DreamineButton Size="DreamineButtonSize.Large" OnClick='() => SetButtonStatus("Large")'>Large</DreamineButton>
+    </div>
 
     <h6 class="mt-3">Disabled</h6>
-    <button class="btn btn-dark" disabled>Disabled Button</button>
+    <DreamineButton Disabled="true">Disabled Button</DreamineButton>
 
-    <p class="mt-3 fst-italic text-primary">@_buttonTabStatus</p>
+    <p class="mt-3 fst-italic">@_buttonTabStatus</p>
 }
 else if (_activeTab == "CheckBox / Radio")
 {
     <h5>Check Boxes</h5>
-    <div class="form-check form-check-inline">
-        <input class="form-check-input" type="checkbox" @bind="ViewModel.Check1" />
-        <label class="form-check-label">Option 1</label>
-    </div>
-    <div class="form-check form-check-inline">
-        <input class="form-check-input" type="checkbox" @bind="ViewModel.Check2" />
-        <label class="form-check-label">Option 2</label>
-    </div>
-    <div class="form-check form-check-inline">
-        <input class="form-check-input" type="checkbox" @bind="ViewModel.Check3" />
-        <label class="form-check-label">Option 3</label>
+    <div class="controls-row">
+        <DreamineCheckBox @bind-Checked="ViewModel.Check1">Option 1</DreamineCheckBox>
+        <DreamineCheckBox @bind-Checked="ViewModel.Check2">Option 2</DreamineCheckBox>
+        <DreamineCheckBox @bind-Checked="ViewModel.Check3">Option 3</DreamineCheckBox>
     </div>
 
     <h5 class="mt-3">Radio Buttons</h5>
-    <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="radioDemo"
-               checked='@(ViewModel.SelectedRadio == "Option A")'
-               @onchange='() => ViewModel.SelectRadioCommand.Execute("Option A")' />
-        <label class="form-check-label">Option A</label>
+    <div class="controls-row">
+        <DreamineRadioButton Name="radioDemo" Value="Option A"
+                             SelectedValue="@ViewModel.SelectedRadio"
+                             SelectedValueChanged="v => ViewModel.SelectRadioCommand.Execute(v)">Option A</DreamineRadioButton>
+        <DreamineRadioButton Name="radioDemo" Value="Option B"
+                             SelectedValue="@ViewModel.SelectedRadio"
+                             SelectedValueChanged="v => ViewModel.SelectRadioCommand.Execute(v)">Option B</DreamineRadioButton>
+        <DreamineRadioButton Name="radioDemo" Value="Option C"
+                             SelectedValue="@ViewModel.SelectedRadio"
+                             SelectedValueChanged="v => ViewModel.SelectRadioCommand.Execute(v)">Option C</DreamineRadioButton>
     </div>
-    <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="radioDemo"
-               checked='@(ViewModel.SelectedRadio == "Option B")'
-               @onchange='() => ViewModel.SelectRadioCommand.Execute("Option B")' />
-        <label class="form-check-label">Option B</label>
-    </div>
-    <p>Selected: @ViewModel.SelectedRadio</p>
+    <p class="mt-2">Selected: @ViewModel.SelectedRadio</p>
 }
 else if (_activeTab == "CheckLed")
 {
     <h5>CheckLed</h5>
-    <button class="btn btn-outline-dark" @onclick="() => ViewModel.ToggleLedCommand.Execute(null)">Toggle LED</button>
-    <button class="btn btn-outline-dark ms-2" @onclick="() => ViewModel.TogglePulseCommand.Execute(null)">Toggle Pulse</button>
-    <DreamineCheckLed IsOn="ViewModel.LedIsOn" IsPulse="ViewModel.LedIsPulse" />
-    <span class="ms-2">LED: @ViewModel.LedIsOn / Pulse: @ViewModel.LedIsPulse</span>
+    <div class="controls-row">
+        <DreamineButton OnClick="() => ViewModel.ToggleLedCommand.Execute(null)">Toggle LED</DreamineButton>
+        <DreamineButton OnClick="() => ViewModel.TogglePulseCommand.Execute(null)">Toggle Pulse</DreamineButton>
+        <DreamineCheckLed IsOn="ViewModel.LedIsOn" IsPulse="ViewModel.LedIsPulse" />
+        <span>LED: @ViewModel.LedIsOn / Pulse: @ViewModel.LedIsPulse</span>
+    </div>
 
     <h6 class="mt-3">Corner Position 변형</h6>
     <div class="d-flex gap-3">
@@ -96,15 +95,20 @@ else if (_activeTab == "CheckLed")
 else if (_activeTab == "TextBox")
 {
     <h5>Text Input</h5>
-    <input class="form-control" style="max-width:300px;" @bind="ViewModel.TextInput" @bind:event="oninput"
-           @onfocus="() => _showKeyboard = true" placeholder="Type something (가상 키보드 데모)" />
-    <button class="btn btn-secondary mt-2" @onclick="() => ViewModel.ClearTextCommand.Execute(null)">Clear Text</button>
+    <div class="controls-row">
+        <DreamineTextBox @bind-Value="ViewModel.TextInput"
+                         Hint="Type something (가상 키보드 데모)"
+                         OnFocus="() => _showKeyboard = true" />
+        <DreamineButton OnClick="() => ViewModel.ClearTextCommand.Execute(null)">Clear Text</DreamineButton>
+    </div>
 
-    <input type="password" class="form-control mt-2" style="max-width:300px;" @bind="ViewModel.Password" @bind:event="oninput" placeholder="Password" />
-    <button class="btn btn-secondary mt-2" @onclick="() => ViewModel.ClearPasswordCommand.Execute(null)">Clear Password</button>
+    <div class="controls-row mt-2">
+        <DreamineTextBox @bind-Value="ViewModel.Password" IsPassword="true" Hint="Password" />
+        <DreamineButton OnClick="() => ViewModel.ClearPasswordCommand.Execute(null)">Clear Password</DreamineButton>
+    </div>
 
     <h6 class="mt-3">Read-Only</h6>
-    <input class="form-control" style="max-width:300px;" value="수정할 수 없는 텍스트입니다." readonly />
+    <DreamineTextBox Value="수정할 수 없는 텍스트입니다." ReadOnly="true" />
 
     <div class="mt-3">
         <DreamineVirtualKeyboard IsVisible="_showKeyboard"
@@ -116,49 +120,32 @@ else if (_activeTab == "TextBox")
 else if (_activeTab == "ComboBox")
 {
     <h5>Fruit Picker</h5>
-    <select class="form-select" style="max-width:200px;" @bind="ViewModel.SelectedFruit">
-        @foreach (var fruit in ViewModel.FruitItems)
-        {
-            <option value="@fruit">@fruit</option>
-        }
-    </select>
+    <DreamineComboBox Items="ViewModel.FruitItems" @bind-SelectedItem="ViewModel.SelectedFruit" />
 
     <h6 class="mt-3">Disabled</h6>
-    <select class="form-select" style="max-width:200px;" disabled>
-        <option>@ViewModel.FruitItems.First()</option>
-    </select>
+    <DreamineComboBox Items="ViewModel.FruitItems" SelectedItem="@ViewModel.FruitItems.First()" Disabled="true" />
 }
 else if (_activeTab == "DataGrid / ListBox")
 {
     <h5>DataGrid</h5>
-    <table class="table table-bordered table-hover" style="max-width:600px;">
-        <thead style="background-color:#0D1B3E; color:white;">
-            <tr><th>No</th><th>Name</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var row in ViewModel.GridRows)
-            {
-                <tr class="@(row == _selectedGridRow ? "table-primary" : "")" @onclick="() => _selectedGridRow = row">
-                    <td>@row.No</td><td>@row.Name</td><td>@row.Status</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-    <p class="fst-italic text-primary">@(_selectedGridRow is null ? "(선택된 행 없음)" : $"선택된 행: No.{_selectedGridRow.No} {_selectedGridRow.Name} ({_selectedGridRow.Status})")</p>
+    <DreamineDataGrid TItem="ControlsDemoRow" Items="ViewModel.GridRows" @bind-SelectedItem="_selectedGridRow">
+        <HeaderContent>
+            <th>No</th><th>Name</th><th>Status</th>
+        </HeaderContent>
+        <RowContent>
+            <td>@context.No</td><td>@context.Name</td><td>@context.Status</td>
+        </RowContent>
+    </DreamineDataGrid>
+    <p class="fst-italic mt-2">@(_selectedGridRow is null ? "(선택된 행 없음)" : $"선택된 행: No.{_selectedGridRow.No} {_selectedGridRow.Name} ({_selectedGridRow.Status})")</p>
 
     <h6 class="mt-3">ListBox (더블클릭으로 활성화)</h6>
-    <ul class="list-group" style="max-width:300px;">
-        @foreach (var fruit in ViewModel.FruitItems)
-        {
-            <li class="list-group-item @(fruit == _selectedFruitItem ? "active" : "")"
-                @onclick="() => _selectedFruitItem = fruit"
-                @ondblclick="() => ViewModel.ListBoxActivatedCommand.Execute(fruit)">@fruit</li>
-        }
-    </ul>
-    <p class="fst-italic text-primary">활성화 결과: @ViewModel.StatusMessage</p>
+    <DreamineListBox Items="ViewModel.FruitItems"
+                     @bind-SelectedItem="_selectedFruitItem"
+                     OnActivate="f => ViewModel.ListBoxActivatedCommand.Execute(f)" />
+    <p class="fst-italic mt-2">활성화 결과: @ViewModel.StatusMessage</p>
 
     <h6 class="mt-3">AutoScroll 로그</h6>
-    <button class="btn btn-secondary" @onclick="() => ViewModel.ClickMeCommand.Execute(null)">Click Me</button>
+    <DreamineButton OnClick="() => ViewModel.ClickMeCommand.Execute(null)">Click Me</DreamineButton>
     <div class="dreamine-log-list mt-2" @ref="_logListRef">
         @foreach (var entry in ViewModel.ActivityLog)
         {
@@ -174,12 +161,12 @@ else if (_activeTab == "Misc")
     </DreamineExpander>
 
     <h6 class="mt-3">Numeric Range</h6>
-    <input type="range" class="form-range" style="max-width:300px;" min="0" max="100"
-           value="@ViewModel.NumericInput" @oninput="OnNumericInputChanged" />
+    <DreamineNumericSlider @bind-Value="ViewModel.NumericInput" Min="0" Max="100" />
     <p>Value: @ViewModel.NumericInput.ToString("F0")</p>
 
     <p class="mt-3 fst-italic">Status: @ViewModel.StatusMessage</p>
 }
+</div>
 
 @code {
     private static readonly string[] _tabs =
@@ -216,12 +203,6 @@ else if (_activeTab == "Misc")
 
     private void SetButtonStatus(string name)
         => _buttonTabStatus = $"[{DateTime.Now:HH:mm:ss}] '{name}' 버튼이 클릭되었습니다.";
-
-    private void OnNumericInputChanged(ChangeEventArgs e)
-    {
-        if (double.TryParse(e.Value?.ToString(), out var value))
-            ViewModel.NumericInput = value;
-    }
 
     public void Dispose()
         => ViewModel.PropertyChanged -= OnPropertyChanged;

@@ -1,0 +1,15 @@
+﻿graph TD
+    subgraph Abstractions
+        IHybridHost["IHybridHost\n하이브리드 호스트 인터페이스"]
+        IHybridShell["IHybridShell\n셸 컴포넌트 인터페이스"]
+        IBlazorBridge["IBlazorBridge\nBlazor ↔ Native 통신"]
+        DreamineOptions["DreamineOptions\n포트 / 경로 설정"]
+    end
+    subgraph Extensions
+        HybridServiceExtensions["HybridServiceExtensions\nAddDreamineHybrid()"]
+        HybridHostExtensions["HybridHostExtensions\nRunDreamineApp()"]
+    end
+    IHybridHost --> IHybridShell
+    IHybridHost --> IBlazorBridge
+    HybridServiceExtensions --> IHybridHost
+    HybridHostExtensions --> IHybridHost

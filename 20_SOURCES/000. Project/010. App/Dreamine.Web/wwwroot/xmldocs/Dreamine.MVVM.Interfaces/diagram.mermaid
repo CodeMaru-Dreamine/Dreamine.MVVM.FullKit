@@ -1,0 +1,42 @@
+﻿classDiagram
+    class IViewModel {
+        <<interface>>
+        +Initialize() void
+        +Cleanup() void
+    }
+    class INavigationService {
+        <<interface>>
+        +NavigateTo~T~() void
+        +GoBack() void
+        +CanGoBack bool
+    }
+    class IDialogService {
+        <<interface>>
+        +ShowAsync~T~() Task
+        +ConfirmAsync(string) Task~bool~
+        +AlertAsync(string) Task
+    }
+    class IRelayCommand {
+        <<interface>>
+        +Execute(object) void
+        +CanExecute(object) bool
+        +RaiseCanExecuteChanged() void
+    }
+    class IAsyncRelayCommand {
+        <<interface>>
+        +ExecuteAsync() Task
+        +IsRunning bool
+    }
+    class IServiceRegistry {
+        <<interface>>
+        +Register~T~() void
+        +RegisterSingleton~T~() void
+        +Resolve~T~() T
+    }
+    class IBusyIndicator {
+        <<interface>>
+        +IsBusy bool
+        +StatusMessage string
+    }
+    IRelayCommand <|-- IAsyncRelayCommand
+    IViewModel --> IBusyIndicator

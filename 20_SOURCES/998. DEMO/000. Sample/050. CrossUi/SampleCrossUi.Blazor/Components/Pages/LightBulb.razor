@@ -1,0 +1,45 @@
+@page "/lightbulb"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject LightBulbViewModel ViewModel
+
+<h3>Light Bulb</h3>
+<p class="text-muted">A button command and a checkbox binding drive the same shared state.</p>
+
+<div class="lightbulb-stage">
+    <DreamineLightBulb IsOn="@ViewModel.IsOn" Diameter="120" />
+    <div class="fw-bold font-monospace text-primary">@ViewModel.StatusText</div>
+
+    <div class="d-flex align-items-center justify-content-center gap-3 flex-wrap">
+        <button class="btn btn-primary" @onclick="Toggle">Toggle</button>
+        <label class="form-check d-inline-flex align-items-center gap-2 m-0">
+            <input class="form-check-input" type="checkbox" checked="@ViewModel.IsOn" @onchange="OnPowerChanged" />
+            <span>Power</span>
+        </label>
+        <code>Toggled @ViewModel.ToggleCount x</code>
+    </div>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ViewModel.PropertyChanged += OnPropertyChanged;
+    }
+
+    private void Toggle() => ViewModel.ToggleCommand.Execute(null);
+
+    private void OnPowerChanged(ChangeEventArgs args)
+    {
+        var isChecked = args.Value is bool value && value;
+        if (ViewModel.IsOn != isChecked)
+            ViewModel.ToggleCommand.Execute(null);
+    }
+
+    private void OnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        ViewModel.PropertyChanged -= OnPropertyChanged;
+    }
+}

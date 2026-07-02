@@ -1,0 +1,28 @@
+﻿classDiagram
+    class ServiceCollectionExtensions {
+        <<static>>
+        +AddDreamine(IServiceCollection) IServiceCollection
+        +AddDreamineViewModels(IServiceCollection, Assembly) IServiceCollection
+        +AddDreamineServices(IServiceCollection, Assembly) IServiceCollection
+        +AddDreamineNavigation(IServiceCollection) IServiceCollection
+    }
+    class ObservableExtensions {
+        <<static>>
+        +ToRelayCommand(Action) IRelayCommand
+        +ToAsyncCommand(Func~Task~) IAsyncRelayCommand
+        +BindTo~T~(IObservable, Action~T~) IDisposable
+    }
+    class StringExtensions {
+        <<static>>
+        +IsNullOrEmpty(string) bool
+        +Truncate(string, int) string
+        +ToKebabCase(string) string
+        +ToCamelCase(string) string
+    }
+    class CollectionExtensions {
+        <<static>>
+        +AddRange~T~(IList~T~, IEnumerable~T~) void
+        +RemoveWhere~T~(IList~T~, Predicate~T~) int
+        +Synchronize~T~(IList~T~, IEnumerable~T~) void
+    }
+    ServiceCollectionExtensions --> ObservableExtensions

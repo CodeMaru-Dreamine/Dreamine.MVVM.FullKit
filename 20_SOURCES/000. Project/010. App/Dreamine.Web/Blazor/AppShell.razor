@@ -1,5 +1,7 @@
 @namespace DreamineWeb.Blazor
 @using Microsoft.AspNetCore.Components.Web
+@using DreamineWeb.Services
+@inject SiteSettingsService SiteSettings
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -7,15 +9,32 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <title>Dreamine</title>
-    <meta name="description" content="Modular Architecture for Real Applications" />
-    <meta property="og:title" content="Dreamine" />
-    <meta property="og:description" content="Modular Architecture for Real Applications" />
-    <meta property="og:url" content="https://dreamine.kr/" />
-    <meta property="og:image" content="https://dreamine.kr/img/og.png" />
-    <meta property="og:type" content="website" />
-    <link rel="icon" href="/img/icon.ico" />
-    <link rel="stylesheet" href="/css/dreamine.css?v=20260701" />
+    <title>@SiteSettings.Current.Title</title>
+    <meta name="description" content="@SiteSettings.Current.Description" />
+
+    @{
+        var og     = SiteSettings.Current;
+        var ogTitle = string.IsNullOrEmpty(og.OgTitle) ? og.Title : og.OgTitle;
+        var ogDesc  = string.IsNullOrEmpty(og.OgDescription) ? og.Description : og.OgDescription;
+        var ogImg   = og.OgImageUrl.StartsWith("http") ? og.OgImageUrl : og.OgUrl.TrimEnd('/') + og.OgImageUrl;
+    }
+    <meta property="og:type"        content="website" />
+    <meta property="og:site_name"   content="@og.OgSiteName" />
+    <meta property="og:url"         content="@og.OgUrl" />
+    <meta property="og:title"       content="@ogTitle" />
+    <meta property="og:description" content="@ogDesc" />
+    <meta property="og:image"       content="@ogImg" />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card"        content="@og.TwitterCard" />
+    <meta name="twitter:title"       content="@ogTitle" />
+    <meta name="twitter:description" content="@ogDesc" />
+    <meta name="twitter:image"       content="@ogImg" />
+
+    <link rel="icon" href="@(string.IsNullOrEmpty(og.IconUrl) ? "/img/icon.ico" : og.IconUrl)" />
+    <link rel="stylesheet" href="/css/dreamine.css?v=20260702" />
+    @* Blazor scoped CSS 번들 — Dreamine.UI.Blazor 컴포넌트(.razor.css)를 이 안에서 @import 로 로드 *@
+    <link rel="stylesheet" href="Dreamine.Web.styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap" rel="stylesheet" />
@@ -23,6 +42,39 @@
 </head>
 <body>
     <DreamineWeb.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: false,
+            theme: 'base',
+            themeVariables: {
+                darkMode: true,
+                background: '#030913',
+                primaryColor: '#07111f',
+                primaryTextColor: '#e8eaf0',
+                primaryBorderColor: 'rgba(73,178,255,0.35)',
+                lineColor: '#49b2ff',
+                secondaryColor: '#0a1829',
+                tertiaryColor: '#0d1f36',
+                edgeLabelBackground: '#07111f',
+                clusterBkg: '#07111f',
+                titleColor: '#49b2ff',
+                attributeBackgroundColorEven: '#07111f',
+                attributeBackgroundColorOdd: '#0a1829',
+                classText: '#e8eaf0',
+                nodeBorder: 'rgba(73,178,255,0.35)',
+                nodeTextColor: '#e8eaf0',
+                mainBkg: '#07111f'
+            }
+        });
+        window.renderMermaid = function () {
+            mermaid.run({ querySelector: '.mermaid:not([data-processed])' });
+        };
+        window.dwScrollToId = function (id) {
+            var el = document.getElementById(id);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+    </script>
     <script src="/_framework/blazor.web.js" autostart="false"></script>
     <script>
         Blazor.start({

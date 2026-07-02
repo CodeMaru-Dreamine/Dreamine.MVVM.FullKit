@@ -14,6 +14,7 @@ public sealed class MainForm : Form
     private Panel _navPanel = null!;
     private FlowLayoutPanel _navFlow = null!;
     private DreamineButton _btnCounter = null!;
+    private DreamineButton _btnLightBulb = null!;
     private DreamineButton _btnControls = null!;
     private DreamineButton _btnPopup = null!;
 
@@ -21,20 +22,23 @@ public sealed class MainForm : Form
     private DreamineButton[] _navButtons = null!;
     private UserControl? _currentPage;
     private CounterPage _counterPage = null!;
+    private LightBulbPage _lightBulbPage = null!;
     private ControlsPage _controlsPage = null!;
     private PopupPage _popupPage = null!;
 
     /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>
-    public MainForm() : this(new CounterViewModel(new CounterEvent(new SampleCrossUi.Shared.Services.CounterService()))) { }
+    public MainForm() : this(
+        new CounterViewModel(new CounterEvent(new SampleCrossUi.Shared.Services.CounterService())),
+        new LightBulbViewModel(new LightBulbEvent(new LightBulbModel()))) { }
 
-    public MainForm(CounterViewModel counterVm)
+    public MainForm(CounterViewModel counterVm, LightBulbViewModel lightBulbVm)
     {
         InitializeComponent();
 
         Resize += (_, _) => CenterNavFlow();
         Load += (_, _) => CenterNavFlow();
 
-        _navButtons = [_btnCounter, _btnControls, _btnPopup];
+        _navButtons = [_btnCounter, _btnLightBulb, _btnControls, _btnPopup];
         for (int i = 0; i < _navButtons.Length; i++)
         {
             var idx = i;
@@ -44,9 +48,10 @@ public sealed class MainForm : Form
         if (LicenseManager.UsageMode == LicenseUsageMode.Designtime)
             return;
 
-        _counterPage  = new CounterPage(counterVm);
-        _controlsPage = new ControlsPage(new ControlsViewModel(new ControlsEvent()));
-        _popupPage    = new PopupPage();
+        _counterPage   = new CounterPage(counterVm);
+        _lightBulbPage = new LightBulbPage(lightBulbVm);
+        _controlsPage  = new ControlsPage(new ControlsViewModel(new ControlsEvent()));
+        _popupPage     = new PopupPage();
 
         Navigate(0);
     }
@@ -61,8 +66,9 @@ public sealed class MainForm : Form
         _currentPage = index switch
         {
             0 => _counterPage,
-            1 => _controlsPage,
-            2 => _popupPage,
+            1 => _lightBulbPage,
+            2 => _controlsPage,
+            3 => _popupPage,
             _ => _counterPage,
         };
 
@@ -78,6 +84,7 @@ public sealed class MainForm : Form
     private void InitializeComponent()
     {
         _btnCounter  = new DreamineButton();
+        _btnLightBulb = new DreamineButton();
         _btnControls = new DreamineButton();
         _btnPopup    = new DreamineButton();
         _navFlow     = new FlowLayoutPanel();
@@ -93,6 +100,14 @@ public sealed class MainForm : Form
         _btnCounter.CornerRadius = 6;
         _btnCounter.Margin       = new Padding(4);
         _btnCounter.Name         = "_btnCounter";
+
+        // _btnLightBulb
+        _btnLightBulb.Content      = "Light Bulb";
+        _btnLightBulb.Width        = 140;
+        _btnLightBulb.Height       = 40;
+        _btnLightBulb.CornerRadius = 6;
+        _btnLightBulb.Margin       = new Padding(4);
+        _btnLightBulb.Name         = "_btnLightBulb";
 
         // _btnControls
         _btnControls.Content      = "Controls";
@@ -117,6 +132,7 @@ public sealed class MainForm : Form
         _navFlow.Anchor          = AnchorStyles.None;
         _navFlow.AutoSize        = true;
         _navFlow.Controls.Add(_btnCounter);
+        _navFlow.Controls.Add(_btnLightBulb);
         _navFlow.Controls.Add(_btnControls);
         _navFlow.Controls.Add(_btnPopup);
 
@@ -158,6 +174,7 @@ public sealed class MainForm : Form
         if (disposing)
         {
             _counterPage?.Dispose();
+            _lightBulbPage?.Dispose();
             _controlsPage?.Dispose();
             _popupPage?.Dispose();
         }

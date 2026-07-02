@@ -1,0 +1,47 @@
+﻿classDiagram
+    class DreamineComponentBase {
+        <<abstract>>
+        +bool IsLoading
+        +string? ErrorMessage
+        +bool HasError
+        #InvokeAsync~T~(Func~Task~T~~) Task~T~
+        #HandleErrorAsync(Func~Task~) Task
+    }
+    class DreamineLayout {
+        <<abstract>>
+        +string Title
+        +bool ShowSidebar
+        +bool ShowHeader
+    }
+    class DreamineNavMenu {
+        +IEnumerable~NavItem~ Items
+        +string ActiveUrl
+        +bool IsCollapsed
+    }
+    class DreamineDataTable~T~ {
+        +IEnumerable~T~ Items
+        +int PageSize
+        +int CurrentPage
+        +bool IsLoading
+        +EventCallback~T~ OnRowClick
+    }
+    class DreamineModal {
+        +bool IsVisible
+        +string Title
+        +RenderFragment Content
+        +EventCallback OnClose
+        +Show() void
+        +Hide() void
+    }
+    class DreamineToast {
+        +ToastLevel Level
+        +string Message
+        +int DurationMs
+        +Show(string, ToastLevel) void
+    }
+    ComponentBase <|-- DreamineComponentBase
+    LayoutComponentBase <|-- DreamineLayout
+    DreamineComponentBase <|-- DreamineNavMenu
+    DreamineComponentBase <|-- DreamineDataTable~T~
+    DreamineComponentBase <|-- DreamineModal
+    DreamineComponentBase <|-- DreamineToast

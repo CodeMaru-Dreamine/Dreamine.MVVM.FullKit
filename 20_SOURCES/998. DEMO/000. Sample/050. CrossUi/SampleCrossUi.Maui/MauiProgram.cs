@@ -22,10 +22,14 @@ public static class MauiProgram
         builder.Services.AddSingleton<ICounterService, CounterService>();
         builder.Services.AddSingleton<CounterEvent>();
         builder.Services.AddSingleton<CounterViewModel>();
+        builder.Services.AddSingleton<LightBulbModel>();
+        builder.Services.AddSingleton<LightBulbEvent>();
+        builder.Services.AddSingleton<LightBulbViewModel>();
         builder.Services.AddSingleton<ControlsEvent>();
         builder.Services.AddSingleton<ControlsViewModel>();
 
         builder.Services.AddSingleton<CounterPage>();
+        builder.Services.AddSingleton<LightBulbPage>();
         builder.Services.AddSingleton<ControlsPage>();
         builder.Services.AddSingleton<PopupPage>();
         builder.Services.AddSingleton<MainPage>();

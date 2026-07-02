@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 300" font-family="Segoe UI, Arial, sans-serif">
+  <defs><filter id="s" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000" flood-opacity="0.18"/></filter></defs>
+  <g filter="url(#s)"><rect x="24" y="20" width="472" height="260" rx="4" fill="#f0f0f0" stroke="#999"/></g>
+  <rect x="24" y="20" width="472" height="30" rx="4" fill="#fff" stroke="#bbb" stroke-width="0.5"/>
+  <text x="40" y="41" font-size="12" fill="#333" font-weight="600">TextBox Demo</text>
+  <text x="450" y="41" font-size="13" fill="#666" letter-spacing="4">— □ ✕</text>
+
+  <!-- Text input -->
+  <rect x="60" y="75" width="310" height="28" rx="2" fill="#fff" stroke="#888"/>
+  <text x="68" y="94" font-size="13" fill="#333">Hello World</text>
+  <!-- Clear button -->
+  <rect x="380" y="77" width="40" height="24" rx="2" fill="#e1e1e1" stroke="#aaa"/>
+  <text x="400" y="94" font-size="11" fill="#333" text-anchor="middle">Clear</text>
+
+  <!-- Password input -->
+  <rect x="60" y="118" width="310" height="28" rx="2" fill="#fff" stroke="#888"/>
+  <text x="68" y="138" font-size="15" fill="#333" letter-spacing="3">●●●●●●</text>
+  <!-- Clear button -->
+  <rect x="380" y="120" width="40" height="24" rx="2" fill="#e1e1e1" stroke="#aaa"/>
+  <text x="400" y="137" font-size="11" fill="#333" text-anchor="middle">Clear</text>
+
+  <text x="60" y="180" font-size="12" fill="#555">값: <tspan font-weight="700">Hello World</tspan></text>
+  <text x="60" y="200" font-size="12" fill="#555">길이: <tspan font-weight="700">6</tspan> 자</text>
+</svg>

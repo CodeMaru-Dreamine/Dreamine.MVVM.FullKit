@@ -1,0 +1,27 @@
+﻿classDiagram
+    class MySqlConnectionFactory {
+        -string _connectionString
+        +Create() IDbConnection
+        +CreateAsync() Task~IDbConnection~
+    }
+    class MySqlRepository~T~ {
+        +GetAsync(int) Task~T~
+        +GetAllAsync() Task~IEnumerable~T~~
+        +AddAsync(T) Task
+        +UpdateAsync(T) Task
+        +DeleteAsync(int) Task
+    }
+    class MySqlUnitOfWork {
+        +BeginTransaction() Task
+        +CommitAsync() Task
+        +RollbackAsync() Task
+    }
+    class MySqlServiceExtensions {
+        <<static>>
+        +AddMySql(IServiceCollection, string) IServiceCollection
+    }
+    class RepositoryBase~T~ {
+        <<abstract>>
+    }
+    RepositoryBase~T~ <|-- MySqlRepository~T~
+    MySqlRepository~T~ --> MySqlConnectionFactory

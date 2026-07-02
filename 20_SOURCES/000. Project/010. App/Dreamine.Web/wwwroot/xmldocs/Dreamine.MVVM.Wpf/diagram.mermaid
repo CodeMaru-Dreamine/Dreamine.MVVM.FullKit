@@ -1,0 +1,35 @@
+﻿classDiagram
+    class RelayCommand {
+        -Action~object~ _execute
+        -Predicate~object~ _canExecute
+        +Execute(object) void
+        +CanExecute(object) bool
+        +RaiseCanExecuteChanged() void
+    }
+    class AsyncRelayCommand {
+        -Func~Task~ _execute
+        +IsRunning bool
+        +IsCancellationRequested bool
+        +ExecuteAsync() Task
+        +Cancel() void
+    }
+    class WpfNavigationService {
+        -Frame _frame
+        +NavigateTo~T~() void
+        +GoBack() void
+        +CanGoBack bool
+    }
+    class WpfDialogService {
+        +ShowAsync~T~() Task
+        +ConfirmAsync(string) Task~bool~
+        +AlertAsync(string) Task
+    }
+    class IRelayCommand {
+        <<interface>>
+    }
+    class IAsyncRelayCommand {
+        <<interface>>
+    }
+    IRelayCommand <|.. RelayCommand
+    IAsyncRelayCommand <|.. AsyncRelayCommand
+    RelayCommand <|-- AsyncRelayCommand

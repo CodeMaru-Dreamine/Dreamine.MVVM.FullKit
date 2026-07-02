@@ -1,0 +1,31 @@
+﻿classDiagram
+    class IConnectionClient {
+        <<interface>>
+        +IsConnected bool
+        +ConnectAsync() Task
+        +DisconnectAsync() Task
+        +Connected event
+        +Disconnected event
+    }
+    class IMessageClient~TMsg~ {
+        <<interface>>
+        +SendAsync(TMsg) Task
+        +MessageReceived event
+    }
+    class IRequestReplyClient~TReq, TResp~ {
+        <<interface>>
+        +RequestAsync(TReq) Task~TResp~
+        +TimeoutMs int
+    }
+    class IMessageBroker {
+        <<interface>>
+        +PublishAsync(string, object) Task
+        +SubscribeAsync(string, Action~object~) Task~IDisposable~
+    }
+    class ConnectionEventArgs {
+        +string RemoteEndpoint
+        +DateTime Timestamp
+        +Exception? Error
+    }
+    IConnectionClient <|-- IMessageClient~TMsg~
+    IMessageClient~TMsg~ <|-- IRequestReplyClient~TReq, TResp~

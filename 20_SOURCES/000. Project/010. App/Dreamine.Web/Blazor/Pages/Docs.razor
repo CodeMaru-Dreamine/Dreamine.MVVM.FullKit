@@ -2,29 +2,31 @@
 @namespace DreamineWeb.Blazor.Pages
 @rendermode InteractiveServer
 @inject DocViewModel Vm
+@inject IJSRuntime JS
+@implements IDisposable
 
 <PageTitle>@(Vm.Library?.Name ?? "문서") — Dreamine</PageTitle>
 
 <div class="dw-page">
     @if (Vm.Library is null)
     {
-        <p class="dw-empty">라이브러리를 찾을 수 없습니다.</p>
+        <p class="dw-empty">@(Ko ? "라이브러리를 찾을 수 없습니다." : "Library not found.")</p>
     }
     else
     {
         <!-- 헤더 -->
         <div class="dw-doc-header">
-            <a href="/libraries" class="dw-back">← 목록</a>
+            <a href="/libraries" class="dw-back">← @(Ko ? "목록" : "Back")</a>
             <div>
                 <div class="dw-doc-header__top">
                     <h1 class="dw-doc-header__name">@Vm.Library.Name</h1>
                     <span class="dw-badge dw-badge--@Vm.Library.Status">@Vm.Library.Status</span>
                     @if (!string.IsNullOrEmpty(Vm.Library.Version))
                     {
-                        <span class="dw-doc-header__ver">v@Vm.Library.Version</span>
+                        <span class="dw-doc-header__ver">v@(Vm.Library.Version)</span>
                     }
                 </div>
-                <p class="dw-doc-header__desc">@Vm.Library.Description</p>
+                <p class="dw-doc-header__desc">@(Ko || string.IsNullOrEmpty(Vm.Library.DescriptionEn) ? Vm.Library.Description : Vm.Library.DescriptionEn)</p>
                 <div class="dw-doc-header__links">
                     @if (!string.IsNullOrEmpty(Vm.Library.NuGetId))
                     {
@@ -44,10 +46,24 @@
                         }
                     </div>
                 }
+                <div class="dw-doc-meta">
+                    @if (!string.IsNullOrWhiteSpace(Vm.Library.TargetFramework))
+                    {
+                        <span><strong>TFM</strong> @Vm.Library.TargetFramework</span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Vm.Library.NuGetId))
+                    {
+                        <span><strong>Package</strong> @Vm.Library.NuGetId</span>
+                    }
+                    @if (Vm.Library.Dependencies.Length > 0)
+                    {
+                        <span><strong>@(Ko ? "참조" : "Depends")</strong> @string.Join(", ", Vm.Library.Dependencies)</span>
+                    }
+                </div>
             </div>
         </div>
 
-        <!-- 언어 토글 탭 -->
+        <!-- 언어 토글 탭 (README 언어) -->
         <div class="dw-lang-tabs">
             <button class="dw-lang-tab @(Vm.IsKorean ? "dw-lang-tab--active" : "")"
                     @onclick="() => SetLang(true)">한국어</button>
@@ -63,11 +79,20 @@
             </div>
         }
 
-        <!-- 다이어그램 -->
-        @if (Vm.HasDiagram)
+        <!-- Mermaid 다이어그램 -->
+        @if (Vm.MermaidDiagram is not null)
         {
             <div class="dw-diagram">
-                <h2 class="dw-doc-section__title">@(Vm.IsKorean ? "구조 다이어그램" : "Architecture Diagram")</h2>
+                <h2 class="dw-doc-section__title">@(Ko ? "구조 다이어그램" : "Architecture Diagram")</h2>
+                <div class="dw-diagram__mermaid">
+                    <pre class="mermaid" @key="@($"mermaid-{LibraryId}")">@Vm.MermaidDiagram</pre>
+                </div>
+            </div>
+        }
+        else if (Vm.HasDiagram)
+        {
+            <div class="dw-diagram">
+                <h2 class="dw-doc-section__title">@(Ko ? "구조 다이어그램" : "Architecture Diagram")</h2>
                 <img src="@Vm.DiagramUrl" alt="diagram" class="dw-diagram__img" />
             </div>
         }
@@ -76,12 +101,12 @@
         @if (Vm.Members.Any())
         {
             <div class="dw-doc-section">
-                <h2 class="dw-doc-section__title">API @(Vm.IsKorean ? "문서" : "Reference")</h2>
+                <h2 class="dw-doc-section__title">API @(Ko ? "문서" : "Reference")</h2>
 
                 @if (Vm.Types.Any())
                 {
                     <div class="dw-doc-subsection">
-                        <h3 class="dw-doc-subsection__title">@(Vm.IsKorean ? "타입" : "Types")</h3>
+                        <h3 class="dw-doc-subsection__title">@(Ko ? "타입" : "Types")</h3>
                         <div class="dw-doc-members">
                             @foreach (var t in Vm.Types)
                             {
@@ -130,7 +155,7 @@
                                     }
                                     @if (!string.IsNullOrEmpty(m.Returns))
                                     {
-                                        <p class="dw-doc-returns"><strong>@(Vm.IsKorean ? "반환" : "Returns"):</strong> @m.Returns</p>
+                                        <p class="dw-doc-returns"><strong>@(Ko ? "반환" : "Returns"):</strong> @m.Returns</p>
                                     }
                                 </div>
                             }
@@ -142,8 +167,8 @@
         else if (Vm.ReadmeHtml is null)
         {
             <div class="dw-doc-empty">
-                <p>@(Vm.IsKorean ? "아직 문서가 없습니다." : "No documentation available yet.")</p>
-                <p class="dw-sub">@(Vm.IsKorean
+                <p>@(Ko ? "아직 문서가 없습니다." : "No documentation available yet.")</p>
+                <p class="dw-sub">@(Ko
                     ? "라이브러리를 빌드하면 XML 문서와 README가 자동으로 반영됩니다."
                     : "Build the library to auto-populate XML docs and README.")</p>
             </div>
@@ -153,12 +178,44 @@
 
 @code {
     [Parameter] public string LibraryId { get; set; } = string.Empty;
+    [CascadingParameter] public UserPreferencesService Lang { get; set; } = default!;
 
-    protected override async Task OnParametersSetAsync() => await Vm.LoadAsync(LibraryId);
+    // UI 라벨 언어는 전역 설정 사용
+    private bool Ko => Lang.IsKorean;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Lang.Changed += OnLangChanged;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // 전역 언어 설정을 README 언어의 초기값으로 동기화
+        Vm.IsKorean = Lang.IsKorean;
+        await Vm.LoadAsync(LibraryId);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Vm.MermaidDiagram is not null)
+            await JS.InvokeVoidAsync("renderMermaid");
+    }
+
+    private void OnLangChanged()
+    {
+        // 전역 언어 변경 시 README도 함께 전환
+        Vm.IsKorean = Lang.IsKorean;
+        Vm.RefreshReadme();
+        InvokeAsync(StateHasChanged);
+    }
 
     private void SetLang(bool isKorean)
     {
         Vm.IsKorean = isKorean;
         Vm.RefreshReadme();
+        // 로컬 탭 조작도 전역 설정에 반영
+        Lang.Set(isKorean ? "ko" : "en");
     }
+
+    public void Dispose() => Lang.Changed -= OnLangChanged;
 }

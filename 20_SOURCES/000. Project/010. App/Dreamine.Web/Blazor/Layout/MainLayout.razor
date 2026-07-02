@@ -1,15 +1,39 @@
 @namespace DreamineWeb.Blazor.Layout
 @inherits LayoutComponentBase
+@inject UserPreferencesService Prefs
+@inject SiteSettingsService SiteSettings
+@implements IDisposable
 
+<CascadingValue Value="Prefs">
 <div class="dw-shell">
     <header class="dw-topbar">
         <a href="/" class="dw-brand">
-            <span class="dw-brand__mark"></span>
-            <span class="dw-brand__name">Dreamine</span>
+            @if (!string.IsNullOrWhiteSpace(SiteSettings.Current.IconUrl))
+            {
+                <img src="@SiteSettings.Current.IconUrl" class="dw-brand__img" alt="icon" />
+            }
+            else
+            {
+                <span class="dw-brand__mark"></span>
+            }
+            <span class="dw-brand__name">@SiteSettings.Current.Title</span>
         </a>
         <nav class="dw-nav">
-            <NavLink href="/" Match="NavLinkMatch.All" class="dw-nav__link">홈</NavLink>
-            <NavLink href="/libraries" class="dw-nav__link">라이브러리</NavLink>
+            <NavLink href="/" Match="NavLinkMatch.All" class="dw-nav__link">
+                @(Prefs.IsKorean ? "홈" : "Home")
+            </NavLink>
+            <NavLink href="/libraries" class="dw-nav__link">
+                @(Prefs.IsKorean ? "라이브러리" : "Libraries")
+            </NavLink>
+            <NavLink href="/guide" class="dw-nav__link">
+                @(Prefs.IsKorean ? "사용법" : "Guide")
+            </NavLink>
+            <NavLink href="/playground" class="dw-nav__link">
+                @(Prefs.IsKorean ? "체험" : "Playground")
+            </NavLink>
+            <button class="dw-lang-btn" @onclick="Prefs.Toggle" title="언어 전환">
+                @(Prefs.IsKorean ? "EN" : "한")
+            </button>
         </nav>
     </header>
 
@@ -18,7 +42,19 @@
     </main>
 
     <footer class="dw-footer">
-        <span>© 2026 Dreamine. All rights reserved.</span>
-        <a href="https://github.com/CodeMaru-Dreamine" target="_blank" rel="noopener">GitHub</a>
+        <span>© 2026 @SiteSettings.Current.Title. All rights reserved.</span>
+        <a href="@SiteSettings.Current.GitHubUrl" target="_blank" rel="noopener">GitHub</a>
     </footer>
 </div>
+</CascadingValue>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Prefs.Changed += OnPrefChanged;
+    }
+
+    private void OnPrefChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Prefs.Changed -= OnPrefChanged;
+}

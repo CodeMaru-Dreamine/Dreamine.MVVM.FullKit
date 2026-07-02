@@ -13,6 +13,9 @@ builder.Services.AddRazorComponents()
 builder.Services.AddScoped<ICounterService, CounterService>();
 builder.Services.AddScoped<CounterEvent>();
 builder.Services.AddScoped<CounterViewModel>();
+builder.Services.AddScoped<LightBulbModel>();
+builder.Services.AddScoped<LightBulbEvent>();
+builder.Services.AddScoped<LightBulbViewModel>();
 builder.Services.AddScoped<ControlsEvent>();
 builder.Services.AddScoped<ControlsViewModel>();
 builder.Services.AddScoped<DreamineDialogService>();

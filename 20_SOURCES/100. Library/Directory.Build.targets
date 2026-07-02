@@ -1,6 +1,6 @@
 <Project>
   <!--
-    빌드 후 각 라이브러리의 XML doc + README + diagram.svg 를
+    빌드 후 각 라이브러리의 XML doc + README + diagram.mermaid 를
     Dreamine.Web/wwwroot/xmldocs/{AssemblyName}/ 에 자동 복사합니다.
     테스트 프로젝트와 XML이 없는 프로젝트는 건너뜁니다.
   -->
@@ -34,7 +34,13 @@
           SkipUnchangedFiles="true"
           Condition="Exists('$(MSBuildProjectDirectory)\README_ko.md')" />
 
-    <!-- 다이어그램 (있을 때만) -->
+    <!-- Mermaid 다이어그램 (있을 때만) -->
+    <Copy SourceFiles="$(MSBuildProjectDirectory)\diagram.mermaid"
+          DestinationFolder="$(_WebXmlDocDest)"
+          SkipUnchangedFiles="true"
+          Condition="Exists('$(MSBuildProjectDirectory)\diagram.mermaid')" />
+
+    <!-- SVG 다이어그램 fallback (있을 때만) -->
     <Copy SourceFiles="$(MSBuildProjectDirectory)\diagram.svg"
           DestinationFolder="$(_WebXmlDocDest)"
           SkipUnchangedFiles="true"

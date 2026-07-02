@@ -14,8 +14,12 @@ internal static class Program
         DMContainer.Register<ICounterService, CounterService>();
         DMContainer.Register<CounterEvent>();
         DMContainer.Register<CounterViewModel>();
+        DMContainer.Register<LightBulbModel>();
+        DMContainer.Register<LightBulbEvent>();
+        DMContainer.Register<LightBulbViewModel>();
 
         var counterVm = DMContainer.Resolve<CounterViewModel>();
-        Application.Run(new MainForm(counterVm));
+        var lightBulbVm = DMContainer.Resolve<LightBulbViewModel>();
+        Application.Run(new MainForm(counterVm, lightBulbVm));
     }
 }

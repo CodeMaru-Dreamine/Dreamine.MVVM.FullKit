@@ -1,0 +1,35 @@
+﻿classDiagram
+    class INotifyPropertyChanged {
+        <<interface>>
+        +PropertyChanged event
+    }
+    class IViewModel {
+        <<interface>>
+        +Initialize() void
+        +Cleanup() void
+    }
+    class ObservableBase {
+        <<abstract>>
+        #SetProperty~T~(ref T, T, string) bool
+        #OnPropertyChanged(string) void
+        +PropertyChanged event
+    }
+    class ViewModelBase {
+        <<abstract>>
+        +bool IsBusy
+        +string StatusMessage
+        +string Title
+        +Initialize() void
+        +Cleanup() void
+        #RunBusyAsync~T~(Func~Task~T~~) Task~T~
+    }
+    class EditableViewModelBase {
+        <<abstract>>
+        +bool HasChanges
+        +Save() void
+        +Discard() void
+    }
+    INotifyPropertyChanged <|.. ObservableBase
+    IViewModel <|.. ViewModelBase
+    ObservableBase <|-- ViewModelBase
+    ViewModelBase <|-- EditableViewModelBase

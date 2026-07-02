@@ -34,6 +34,11 @@
         <member name="F:Dreamine.UI.Maui.DreamineExpander.ExpanderContentProperty">
             <summary>펼쳤을 때 보여줄 내부 콘텐츠. ContentView 고유의 Content와 별개다.</summary>
         </member>
+        <member name="T:Dreamine.UI.Maui.DreamineLightBulb">
+            <summary>
+            Light bulb indicator control with a shared API across WPF, WinForms, Blazor, and MAUI.
+            </summary>
+        </member>
         <member name="T:Dreamine.UI.Maui.DreamineVirtualKeyboard">
             <summary>
             WPF/WinForms 가상 키보드와 동일한 목적의 MAUI용 화면 키보드 데모.

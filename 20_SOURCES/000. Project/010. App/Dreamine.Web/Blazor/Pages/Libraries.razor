@@ -2,18 +2,30 @@
 @namespace DreamineWeb.Blazor.Pages
 @rendermode InteractiveServer
 @inject HomeViewModel Vm
+@implements IDisposable
 
-<PageTitle>라이브러리 목록 — Dreamine</PageTitle>
+<PageTitle>@(Lang?.IsKorean == true ? "라이브러리 목록" : "Libraries") — Dreamine</PageTitle>
 
 <div class="dw-page">
     <div class="dw-page__head">
-        <h1 class="dw-page__title">라이브러리</h1>
-        <p class="dw-page__copy">Dreamine 라이브러리 목록입니다. 각 라이브러리 클릭 시 API 문서를 확인할 수 있습니다.</p>
+        <h1 class="dw-page__title">@(Ko ? "라이브러리" : "Libraries")</h1>
+        <p class="dw-page__copy">
+            @(Ko
+                ? "Dreamine 라이브러리 목록입니다. 각 라이브러리 클릭 시 API 문서를 확인할 수 있습니다."
+                : "Browse all Dreamine libraries. Click a library to view its API documentation.")
+        </p>
     </div>
 
     <div class="dw-search">
-        <input class="dw-input" type="search" placeholder="이름·설명·태그 검색..."
+        <input class="dw-input" type="search"
+               placeholder="@(Ko ? "이름·설명·태그 검색..." : "Search by name, description or tag...")"
                @bind="SearchText" @bind:event="oninput" />
+    </div>
+
+    <div class="dw-catalog-summary">
+        <span>@(Ko ? "공개 라이브러리" : "Visible libraries") <strong>@VisibleCount</strong></span>
+        <span>@(Ko ? "카테고리" : "Categories") <strong>@CategoryCount</strong></span>
+        <span>@(Ko ? "XML 문서 연결" : "XML docs linked") <strong>@XmlLinkedCount</strong></span>
     </div>
 
     @foreach (var group in FilteredGroups)
@@ -24,10 +36,10 @@
                 @foreach (var lib in group)
                 {
                     <a href="/docs/@lib.Id" class="dw-lib-row">
-                        <span class="dw-lib-row__name">@lib.Name</span>
+                        <span class="dw-lib-row__name" title="@lib.Name">@lib.Name</span>
                         <span class="dw-badge dw-badge--@lib.Status">@lib.Status</span>
-                        <span class="dw-lib-row__desc">@lib.Description</span>
-                        <span class="dw-lib-row__ver">v@lib.Version</span>
+                        <span class="dw-lib-row__desc">@(Ko || string.IsNullOrEmpty(lib.DescriptionEn) ? lib.Description : lib.DescriptionEn)</span>
+                        <span class="dw-lib-row__ver">@(string.IsNullOrWhiteSpace(lib.TargetFramework) ? $"v{lib.Version}" : lib.TargetFramework)</span>
                     </a>
                 }
             </div>
@@ -36,6 +48,8 @@
 </div>
 
 @code {
+    [CascadingParameter] public UserPreferencesService Lang { get; set; } = default!;
+    private bool Ko => Lang?.IsKorean ?? true;
     private string SearchText { get; set; } = string.Empty;
 
     private IEnumerable<IGrouping<string, LibraryInfo>> FilteredGroups =>
@@ -44,14 +58,30 @@
           .OrderBy(x => x.SortOrder)
           .GroupBy(x => x.Category);
 
+    private int VisibleCount => Vm.Libraries.Count(x => x.IsVisible);
+    private int CategoryCount => Vm.Libraries.Where(x => x.IsVisible).Select(x => x.Category).Distinct().Count();
+    private int XmlLinkedCount => Vm.Libraries.Count(x => x.IsVisible && !string.IsNullOrWhiteSpace(x.XmlDocPath));
+
     private bool Matches(LibraryInfo lib)
     {
         if (string.IsNullOrWhiteSpace(SearchText)) return true;
         var q = SearchText.Trim();
         return lib.Name.Contains(q, StringComparison.OrdinalIgnoreCase)
             || lib.Description.Contains(q, StringComparison.OrdinalIgnoreCase)
-            || lib.Tags.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase));
+            || (lib.DescriptionEn?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+            || (lib.TargetFramework?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+            || lib.Category.Contains(q, StringComparison.OrdinalIgnoreCase)
+            || lib.Tags.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase))
+            || lib.Dependencies.Any(t => t.Contains(q, StringComparison.OrdinalIgnoreCase));
     }
 
-    protected override async Task OnInitializedAsync() => await Vm.LoadAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        await Vm.LoadAsync();
+        if (Lang is not null) Lang.Changed += OnLangChanged;
+    }
+
+    private void OnLangChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() { if (Lang is not null) Lang.Changed -= OnLangChanged; }
 }

@@ -1234,6 +1234,11 @@
             \brief Executes ICommand if eventName is included in trigger list.
             </summary>
         </member>
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineLightBulb">
+            <summary>
+            Light bulb indicator control with a shared API across WPF, WinForms, Blazor, and MAUI.
+            </summary>
+        </member>
         <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineListBox" -->
         <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineListBox.#cctor" -->
         <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineListBox.#ctor" -->

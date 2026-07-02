@@ -20,6 +20,9 @@ public partial class App : Application
         DMContainer.Register<ICounterService, CounterService>();
         DMContainer.Register<CounterEvent>();
         DMContainer.Register<CounterViewModel>();
+        DMContainer.Register<LightBulbModel>();
+        DMContainer.Register<LightBulbEvent>();
+        DMContainer.Register<LightBulbViewModel>();
         DMContainer.RegisterSingleton<IPopupService, DreaminePopupService>();
         DMContainer.Register<ControlsEvent>();
         DMContainer.Register<ControlsViewModel>();

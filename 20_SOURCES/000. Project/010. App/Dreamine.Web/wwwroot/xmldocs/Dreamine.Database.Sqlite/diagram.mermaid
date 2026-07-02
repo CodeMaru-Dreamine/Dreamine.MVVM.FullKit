@@ -1,0 +1,29 @@
+﻿classDiagram
+    class SqliteConnectionFactory {
+        -string _dbPath
+        +Create() IDbConnection
+        +CreateAsync() Task~IDbConnection~
+        +EnsureCreated() void
+    }
+    class SqliteRepository~T~ {
+        +GetAsync(int) Task~T~
+        +GetAllAsync() Task~IEnumerable~T~~
+        +AddAsync(T) Task
+        +UpdateAsync(T) Task
+        +DeleteAsync(int) Task
+    }
+    class SqliteMigrator {
+        +RunMigrationsAsync() Task
+        +GetCurrentVersion() Task~int~
+        -ApplyMigration(int) Task
+    }
+    class SqliteServiceExtensions {
+        <<static>>
+        +AddSqlite(IServiceCollection, string) IServiceCollection
+    }
+    class RepositoryBase~T~ {
+        <<abstract>>
+    }
+    RepositoryBase~T~ <|-- SqliteRepository~T~
+    SqliteRepository~T~ --> SqliteConnectionFactory
+    SqliteMigrator --> SqliteConnectionFactory

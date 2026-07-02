@@ -1,0 +1,25 @@
+﻿classDiagram
+    class IViewModelLocator {
+        <<interface>>
+        +Locate~T~() T
+        +Locate(Type) object
+    }
+    class ViewModelLocator {
+        -IServiceProvider _provider
+        +Locate~T~() T
+        +Locate(Type) object
+    }
+    class ViewModelLocatorBase {
+        <<abstract>>
+        +Locate~T~() T
+        #ResolveViewModel~T~() T
+    }
+    class AutoViewModelLocator {
+        -Dictionary~Type,Type~ _map
+        +Register~TView, TViewModel~() void
+        +Locate(Type) object
+    }
+    IViewModelLocator <|.. ViewModelLocator
+    IViewModelLocator <|.. AutoViewModelLocator
+    ViewModelLocatorBase <|-- ViewModelLocator
+    ViewModelLocatorBase <|-- AutoViewModelLocator

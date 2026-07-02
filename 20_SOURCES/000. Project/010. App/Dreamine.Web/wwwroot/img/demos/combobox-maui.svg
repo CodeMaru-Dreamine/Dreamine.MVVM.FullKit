@@ -1,0 +1,24 @@
+<svg viewBox="0 0 300 360" xmlns="http://www.w3.org/2000/svg">
+  <!-- Phone bezel -->
+  <rect x="30" y="10" width="240" height="340" rx="34" fill="#1a1a1a"/>
+  <rect x="42" y="28" width="216" height="304" rx="4" fill="#fff"/>
+  <!-- Notch -->
+  <rect x="110" y="10" width="80" height="18" rx="9" fill="#1a1a1a"/>
+  <!-- App bar -->
+  <rect x="42" y="28" width="216" height="40" rx="4" fill="#512BD4"/>
+  <text x="150" y="54" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="14" fill="#fff" font-weight="600">Picker Demo</text>
+  <!-- Picker -->
+  <rect x="60" y="90" width="180" height="36" rx="8" fill="#f5f5f5" stroke="#512BD4" stroke-width="1.5"/>
+  <text x="72" y="113" font-family="Segoe UI,sans-serif" font-size="13" fill="#111">Cherry</text>
+  <text x="222" y="113" font-family="Segoe UI,sans-serif" font-size="12" fill="#888">&#x25BC;</text>
+  <!-- Dropdown list -->
+  <rect x="60" y="130" width="180" height="90" rx="8" fill="#fff" stroke="#ddd" stroke-width="1"/>
+  <text x="72" y="152" font-family="Segoe UI,sans-serif" font-size="13" fill="#333">Apple</text>
+  <text x="72" y="176" font-family="Segoe UI,sans-serif" font-size="13" fill="#333">Banana</text>
+  <rect x="62" y="186" width="176" height="26" rx="6" fill="#512BD4" opacity="0.9"/>
+  <text x="72" y="204" font-family="Segoe UI,sans-serif" font-size="13" fill="#fff">Cherry</text>
+  <!-- Status -->
+  <text x="60" y="250" font-family="Segoe UI,sans-serif" font-size="11" fill="#555">선택된 항목: Cherry</text>
+  <!-- Home indicator -->
+  <rect x="120" y="318" width="60" height="4" rx="2" fill="#ccc"/>
+</svg>

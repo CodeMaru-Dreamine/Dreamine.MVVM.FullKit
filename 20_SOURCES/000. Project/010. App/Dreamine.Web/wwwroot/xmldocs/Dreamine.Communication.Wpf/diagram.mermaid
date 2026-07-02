@@ -1,0 +1,31 @@
+﻿classDiagram
+    class ConnectionStatusIndicator {
+        +bool IsConnected
+        +string StatusText
+        +IRelayCommand ConnectCommand
+        +IRelayCommand DisconnectCommand
+    }
+    class MessageLogView {
+        +ObservableCollection~string~ Messages
+        +bool AutoScroll
+        +int MaxMessages
+        +Clear() void
+    }
+    class NetworkMonitorViewModel {
+        +IConnectionClient Client
+        +bool IsConnected
+        +double BytesSentPerSec
+        +double BytesReceivedPerSec
+        +DateTime LastActivity
+        +StartMonitoring() void
+    }
+    class SerialPortSelectorView {
+        +IEnumerable~string~ AvailablePorts
+        +string SelectedPort
+        +int SelectedBaudRate
+        +IRelayCommand RefreshCommand
+    }
+    UserControl <|-- ConnectionStatusIndicator
+    UserControl <|-- MessageLogView
+    UserControl <|-- SerialPortSelectorView
+    NetworkMonitorViewModel --> ConnectionStatusIndicator

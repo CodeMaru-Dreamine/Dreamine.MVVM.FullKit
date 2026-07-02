@@ -1,0 +1,40 @@
+﻿classDiagram
+    class RepositoryBase~T~ {
+        <<abstract>>
+        #IDbConnectionFactory _factory
+        +GetAsync(int) Task~T~
+        +GetAllAsync() Task~IEnumerable~T~~
+        +FindAsync(Expression) Task~IEnumerable~T~~
+        +AddAsync(T) Task
+        +UpdateAsync(T) Task
+        +DeleteAsync(int) Task
+    }
+    class UnitOfWork {
+        -IDbConnection _conn
+        -IDbTransaction _tx
+        +BeginTransaction() Task
+        +CommitAsync() Task
+        +RollbackAsync() Task
+        +SaveChangesAsync() Task~int~
+    }
+    class EntityBase {
+        <<abstract>>
+        +int Id
+        +DateTime CreatedAt
+        +DateTime? UpdatedAt
+    }
+    class DbConnectionFactory {
+        -string _connectionString
+        +Create() IDbConnection
+        +CreateAsync() Task~IDbConnection~
+    }
+    class IRepository~T~ {
+        <<interface>>
+    }
+    class IUnitOfWork {
+        <<interface>>
+    }
+    IRepository~T~ <|.. RepositoryBase~T~
+    IUnitOfWork <|.. UnitOfWork
+    RepositoryBase~T~ --> EntityBase
+    RepositoryBase~T~ --> DbConnectionFactory

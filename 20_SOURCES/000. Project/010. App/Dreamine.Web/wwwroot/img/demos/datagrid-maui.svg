@@ -1,0 +1,47 @@
+<svg viewBox="0 0 300 420" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
+  <!-- Phone frame -->
+  <rect x="30" y="16" width="240" height="388" rx="34" fill="#111"/>
+  <rect x="42" y="28" width="216" height="364" rx="20" fill="#fff"/>
+  <!-- Notch -->
+  <rect x="120" y="30" width="60" height="16" rx="8" fill="#111"/>
+  <!-- App bar -->
+  <rect x="42" y="52" width="216" height="40" fill="#512BD4"/>
+  <text x="150" y="78" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">CollectionView</text>
+  <!-- Grid header -->
+  <rect x="52" y="102" width="196" height="24" fill="#e8e8e8" rx="4"/>
+  <text x="68" y="118" font-size="10" font-weight="bold" fill="#333">No</text>
+  <text x="110" y="118" font-size="10" font-weight="bold" fill="#333">Name</text>
+  <text x="195" y="118" font-size="10" font-weight="bold" fill="#333">Status</text>
+  <!-- Row 1 -->
+  <rect x="52" y="126" width="196" height="28" fill="#fff"/>
+  <text x="68" y="144" font-size="10" fill="#333">1</text>
+  <text x="110" y="144" font-size="10" fill="#333">Device A</text>
+  <circle cx="192" cy="140" r="4" fill="#2ecc40"/>
+  <text x="200" y="144" font-size="10" fill="#333">Running</text>
+  <line x1="52" y1="154" x2="248" y2="154" stroke="#eee"/>
+  <!-- Row 2 (selected) -->
+  <rect x="52" y="154" width="196" height="28" fill="#cce5ff"/>
+  <text x="68" y="172" font-size="10" fill="#333">2</text>
+  <text x="110" y="172" font-size="10" fill="#333">Device B</text>
+  <text x="195" y="172" font-size="10" fill="#888">Stopped</text>
+  <line x1="52" y1="182" x2="248" y2="182" stroke="#eee"/>
+  <!-- Row 3 -->
+  <rect x="52" y="182" width="196" height="28" fill="#fff"/>
+  <text x="68" y="200" font-size="10" fill="#333">3</text>
+  <text x="110" y="200" font-size="10" fill="#333">Device C</text>
+  <circle cx="192" cy="196" r="4" fill="#2ecc40"/>
+  <text x="200" y="200" font-size="10" fill="#333">Running</text>
+  <line x1="52" y1="210" x2="248" y2="210" stroke="#eee"/>
+  <!-- Row 4 -->
+  <rect x="52" y="210" width="196" height="28" fill="#fff"/>
+  <text x="68" y="228" font-size="10" fill="#333">4</text>
+  <text x="110" y="228" font-size="10" fill="#333">Device D</text>
+  <circle cx="192" cy="224" r="4" fill="#e74c3c"/>
+  <text x="200" y="228" font-size="10" fill="#c0392b">Error</text>
+  <!-- Border -->
+  <rect x="52" y="102" width="196" height="136" rx="4" fill="none" stroke="#ddd"/>
+  <!-- Selection text -->
+  <text x="52" y="262" font-size="11" fill="#512BD4">선택: Device B</text>
+  <!-- Home indicator -->
+  <rect x="120" y="374" width="60" height="4" rx="2" fill="#ccc"/>
+</svg>

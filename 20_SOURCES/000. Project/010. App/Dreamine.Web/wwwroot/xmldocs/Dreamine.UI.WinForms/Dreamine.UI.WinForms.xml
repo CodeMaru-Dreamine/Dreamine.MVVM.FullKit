@@ -55,6 +55,11 @@
         <member name="T:Dreamine.UI.WinForms.Controls.DreamineLabel">
             <summary>Dreamine 커스텀 Label. 다크 테마 기본값.</summary>
         </member>
+        <member name="T:Dreamine.UI.WinForms.Controls.DreamineLightBulb">
+            <summary>
+            Light bulb indicator control with a shared API across WPF, WinForms, Blazor, and MAUI.
+            </summary>
+        </member>
         <member name="T:Dreamine.UI.WinForms.Controls.DreamineListBox">
             <summary>
             Dreamine 커스텀 ListBox. 다크 테마 + 포커스 테두리.

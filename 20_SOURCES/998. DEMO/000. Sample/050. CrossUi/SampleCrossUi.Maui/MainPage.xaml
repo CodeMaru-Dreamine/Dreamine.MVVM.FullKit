@@ -8,6 +8,7 @@
 
         <HorizontalStackLayout Grid.Row="0" Spacing="8" Padding="12" BackgroundColor="#0d1b3e">
             <Button x:Name="BtnCounter"  Text="Counter"  Clicked="OnNavCounterClicked"  TextColor="White" />
+            <Button x:Name="BtnLightBulb" Text="Light Bulb" Clicked="OnNavLightBulbClicked" TextColor="White" />
             <Button x:Name="BtnControls" Text="Controls" Clicked="OnNavControlsClicked" TextColor="White" />
             <Button x:Name="BtnPopup"    Text="Popup"    Clicked="OnNavPopupClicked"    TextColor="White" />
         </HorizontalStackLayout>

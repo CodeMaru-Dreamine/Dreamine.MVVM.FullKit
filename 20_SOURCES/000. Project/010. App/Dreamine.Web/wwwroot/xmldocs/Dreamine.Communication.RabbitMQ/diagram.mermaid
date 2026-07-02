@@ -1,0 +1,35 @@
+﻿classDiagram
+    class RabbitMqBroker {
+        -IConnection _connection
+        -IModel _channel
+        +PublishAsync(string, object) Task
+        +SubscribeAsync(string, Action~object~) Task~IDisposable~
+        +DeclareQueue(string) void
+        +DeclareExchange(string, ExchangeType) void
+    }
+    class RabbitMqOptions {
+        +string Host
+        +int Port
+        +string VirtualHost
+        +string Username
+        +string Password
+        +bool AutoReconnect
+    }
+    class RabbitMqConsumer~T~ {
+        +string QueueName
+        +MessageReceived event
+        +StartConsuming() void
+        +StopConsuming() void
+    }
+    class RabbitMqPublisher~T~ {
+        +string ExchangeName
+        +string RoutingKey
+        +PublishAsync(T) Task
+    }
+    class IMessageBroker {
+        <<interface>>
+    }
+    IMessageBroker <|.. RabbitMqBroker
+    RabbitMqBroker --> RabbitMqOptions
+    RabbitMqBroker --> RabbitMqConsumer~T~
+    RabbitMqBroker --> RabbitMqPublisher~T~

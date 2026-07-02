@@ -1,0 +1,34 @@
+﻿classDiagram
+    class FastechEthernetChannel {
+        -TcpClient _tcp
+        +string Host
+        +int Port
+        +int StationId
+        +IsOpen bool
+        +OpenAsync() Task
+        +CloseAsync() Task
+        +ReadAsync(int) Task~byte[]~
+        +WriteAsync(byte[]) Task
+    }
+    class FastechProtocol {
+        +BuildReadRequest(int, int) byte[]
+        +BuildWriteRequest(int, byte[]) byte[]
+        +ParseReadResponse(byte[]) byte[]
+        +Validate(byte[]) bool
+        +CalculateChecksum(byte[]) byte
+    }
+    class FastechEzioClient {
+        -FastechEthernetChannel _channel
+        -FastechProtocol _protocol
+        +ReadDi(int, int) Task~bool[]~
+        +ReadDo(int, int) Task~bool[]~
+        +WriteDo(int, bool[]) Task
+        +ReadAi(int) Task~double~
+        +WriteAo(int, double) Task
+    }
+    class IDeviceChannel {
+        <<interface>>
+    }
+    IDeviceChannel <|.. FastechEthernetChannel
+    FastechEzioClient --> FastechEthernetChannel
+    FastechEzioClient --> FastechProtocol

@@ -1,0 +1,26 @@
+﻿graph TD
+    subgraph Resources["ResourceDictionary 계층"]
+        Base["Base.xaml\n기본 색상 / 폰트 / 크기"]
+        Light["Light.xaml\n라이트 테마"]
+        Dark["Dark.xaml\n다크 테마"]
+        Colors["Colors.xaml\n브랜드 색상 팔레트"]
+        Typography["Typography.xaml\n텍스트 스타일"]
+        Controls["Controls.xaml\n컨트롤 기본 스타일"]
+        Animations["Animations.xaml\n전환 효과"]
+    end
+    subgraph API["테마 API"]
+        DreamineTheme["DreamineTheme\n정적 테마 관리자"]
+        ThemeManager["ThemeManager\n런타임 전환"]
+        ThemeColor["ThemeColor\n색상 리소스 키"]
+    end
+    Base --> Light
+    Base --> Dark
+    Colors --> Base
+    Typography --> Base
+    Controls --> Light
+    Controls --> Dark
+    Animations --> Controls
+    DreamineTheme --> ThemeManager
+    ThemeManager --> Light
+    ThemeManager --> Dark
+    ThemeColor --> Colors

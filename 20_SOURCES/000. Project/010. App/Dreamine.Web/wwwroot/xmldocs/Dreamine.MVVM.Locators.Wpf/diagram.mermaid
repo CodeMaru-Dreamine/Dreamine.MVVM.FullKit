@@ -1,0 +1,25 @@
+﻿classDiagram
+    class WpfViewModelLocator {
+        -IServiceProvider _provider
+        +Locate~T~() T
+        +Locate(Type) object
+        +SetProvider(IServiceProvider) void
+    }
+    class ViewModelLocatorSource {
+        <<static>>
+        +Design bool
+        +SetServiceProvider(IServiceProvider) void
+        +Get~T~() T
+    }
+    class WpfAutoWireExtension {
+        <<static>>
+        +GetAutoWireViewModel(DependencyObject) bool
+        +SetAutoWireViewModel(DependencyObject, bool) void
+        -OnAutoWireViewModelChanged(DependencyObject, DependencyPropertyChangedEventArgs) void
+    }
+    class IViewModelLocator {
+        <<interface>>
+    }
+    IViewModelLocator <|.. WpfViewModelLocator
+    WpfViewModelLocator <-- ViewModelLocatorSource
+    WpfAutoWireExtension --> WpfViewModelLocator

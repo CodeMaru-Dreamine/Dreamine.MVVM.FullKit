@@ -1,0 +1,20 @@
+<svg viewBox="0 0 520 260" xmlns="http://www.w3.org/2000/svg">
+  <rect x="20" y="16" width="480" height="230" rx="2" fill="#f0f0f0" stroke="#adadad" stroke-width="1"/>
+  <rect x="22" y="18" width="476" height="28" fill="#fff" stroke="#bbb" stroke-width="0.5"/>
+  <text x="36" y="37" font-family="Segoe UI,sans-serif" font-size="12" fill="#333">Expander Demo</text>
+  <g transform="translate(448,24)">
+    <rect x="0" y="0" width="14" height="14" rx="1" fill="#e1e1e1" stroke="#adadad" stroke-width="0.5"/><line x1="3" y1="7" x2="11" y2="7" stroke="#333" stroke-width="1"/>
+    <rect x="16" y="0" width="14" height="14" rx="1" fill="#e1e1e1" stroke="#adadad" stroke-width="0.5"/><rect x="19" y="3" width="8" height="8" fill="none" stroke="#333" stroke-width="1"/>
+    <rect x="32" y="0" width="14" height="14" rx="1" fill="#e1e1e1" stroke="#adadad" stroke-width="0.5"/><line x1="36" y1="3" x2="42" y2="11" stroke="#333" stroke-width="1"/><line x1="42" y1="3" x2="36" y2="11" stroke="#333" stroke-width="1"/>
+  </g>
+  <!-- Expander header -->
+  <rect x="50" y="64" width="420" height="30" rx="1" fill="#e1e1e1" stroke="#adadad" stroke-width="1"/>
+  <text x="80" y="84" font-family="Segoe UI,sans-serif" font-size="12" fill="#333" font-weight="600">&#x25BE;  펼치기 / 접기</text>
+  <!-- Expanded content -->
+  <rect x="50" y="94" width="420" height="76" fill="#fff" stroke="#adadad" stroke-width="1"/>
+  <text x="68" y="124" font-family="Segoe UI,sans-serif" font-size="12" fill="#444">내부에는 어떤 콘텐츠도 배치할 수 있습니다.</text>
+  <rect x="68" y="136" width="150" height="22" rx="1" fill="#e1e1e1" stroke="#adadad" stroke-width="0.5"/>
+  <text x="78" y="152" font-family="Segoe UI,sans-serif" font-size="11" fill="#333">추가 콘텐츠 영역</text>
+  <!-- Status -->
+  <text x="50" y="204" font-family="Segoe UI,sans-serif" font-size="12" fill="#555">IsExpanded = True</text>
+</svg>

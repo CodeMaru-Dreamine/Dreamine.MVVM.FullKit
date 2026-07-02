@@ -1,0 +1,27 @@
+﻿classDiagram
+    class DMContainer {
+        <<static>>
+        +Services IServiceProvider
+        +Initialize(IServiceProvider) void
+        +GetService~T~() T
+        +IsRegistered~T~() bool
+    }
+    class ServiceRegistry {
+        -IServiceCollection _services
+        +Register~T~() IServiceRegistry
+        +RegisterSingleton~T~() IServiceRegistry
+        +RegisterTransient~T~() IServiceRegistry
+        +Build() IServiceProvider
+    }
+    class DreamineAutoRegistrar {
+        +ScanAndRegister(Assembly) void
+        +ScanAndRegister(Assembly, IServiceRegistry) void
+        -FindViewModels(Assembly) IEnumerable
+        -FindServices(Assembly) IEnumerable
+    }
+    class IServiceRegistry {
+        <<interface>>
+    }
+    IServiceRegistry <|.. ServiceRegistry
+    DreamineAutoRegistrar --> IServiceRegistry
+    DMContainer --> IServiceRegistry

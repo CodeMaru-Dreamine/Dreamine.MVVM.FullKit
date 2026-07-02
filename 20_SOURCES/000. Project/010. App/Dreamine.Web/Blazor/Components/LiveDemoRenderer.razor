@@ -1,0 +1,271 @@
+@namespace DreamineWeb.Blazor.Components
+@using Dreamine.UI.Blazor
+@using DreamineWeb.Services
+@using DreamineWeb.ViewModels.Demos
+@inject DreamineDialogService Dialog
+@implements IDisposable
+
+@switch (DemoId)
+{
+    case "bulb":
+        <div class="dw-demo__stage">
+            <DreamineLightBulb IsOn="@Bulb.IsOn" Diameter="120" />
+            <span class="dw-bulb__status">@Bulb.StatusText</span>
+            <div class="dw-demo__controls">
+                <DreamineButton Variant="DreamineButtonVariant.Primary" OnClick="Bulb.Toggle">@(Ko ? "토글" : "Toggle")</DreamineButton>
+                <DreamineCheckBox @bind-Checked="Bulb.IsOn">@(Ko ? "전원" : "Power")</DreamineCheckBox>
+                <span class="dw-demo__count">@(Ko ? "토글" : "Toggled") @Bulb.ToggleCount@(Ko ? "회" : "x")</span>
+            </div>
+        </div>
+        break;
+
+    case "button":
+        <div class="dw-demo__controls">
+            <DreamineButton Variant="DreamineButtonVariant.Primary" OnClick="Ctl.ClickMe">Primary</DreamineButton>
+            <DreamineButton OnClick="Ctl.ClickMe">Secondary</DreamineButton>
+            <DreamineButton Variant="DreamineButtonVariant.Danger" OnClick="Ctl.ClickMe">Danger</DreamineButton>
+            <span class="dw-demo__count">@(Ko ? "클릭" : "Clicks") @Ctl.ClickCount</span>
+        </div>
+        @if (Ctl.ActivityLog.Count > 0)
+        {
+            <ul class="dw-demo__log">
+                @foreach (var line in Ctl.ActivityLog)
+                {
+                    <li>@line</li>
+                }
+            </ul>
+        }
+        break;
+
+    case "checkbox":
+        <div class="dw-demo__controls dw-demo__controls--col">
+            <DreamineCheckBox @bind-Checked="Ctl.Check1">Check 1 (@(Ko ? "기본 체크" : "default on"))</DreamineCheckBox>
+            <DreamineCheckBox @bind-Checked="Ctl.Check2">Check 2</DreamineCheckBox>
+            <DreamineCheckBox @bind-Checked="Ctl.Check3" Disabled="true">Check 3 (disabled)</DreamineCheckBox>
+        </div>
+        <p class="dw-demo__hint">Check1 = <b>@Ctl.Check1</b> · Check2 = <b>@Ctl.Check2</b></p>
+        break;
+
+    case "radio":
+        <div class="dw-demo__controls">
+            @foreach (var opt in new[] { "Option A", "Option B", "Option C" })
+            {
+                <DreamineRadioButton Name="dwradio" Value="@opt"
+                                     SelectedValue="@Ctl.SelectedRadio"
+                                     SelectedValueChanged="Ctl.SelectRadio">@opt</DreamineRadioButton>
+            }
+        </div>
+        <p class="dw-demo__hint">@(Ko ? "선택" : "Selected"): <b>@Ctl.SelectedRadio</b></p>
+        break;
+
+    case "checkled":
+        <div class="dw-demo__controls">
+            <DreamineCheckLed IsOn="Ctl.LedIsOn" IsPulse="Ctl.LedIsPulse" Diameter="34" />
+            <DreamineButton OnClick="Ctl.ToggleLed">ON / OFF</DreamineButton>
+            <DreamineButton Variant="@(Ctl.LedIsPulse ? DreamineButtonVariant.Primary : DreamineButtonVariant.Default)"
+                            OnClick="Ctl.TogglePulse">Pulse</DreamineButton>
+        </div>
+        <p class="dw-demo__hint">IsOn = <b>@Ctl.LedIsOn</b> · IsPulse = <b>@Ctl.LedIsPulse</b></p>
+        break;
+
+    case "textbox":
+        <div class="dw-demo__controls dw-demo__controls--col">
+            <div class="dw-demo__row">
+                <DreamineTextBox @bind-Value="Ctl.TextInput"
+                                 Hint="@(Ko ? "여기에 입력 (가상 키보드)..." : "Type here (virtual keyboard)...")"
+                                 OnFocus="() => _showKeyboard = true" />
+                <DreamineButton Size="DreamineButtonSize.Small" OnClick="Ctl.ClearText">Clear</DreamineButton>
+            </div>
+            <p class="dw-demo__hint">@(Ko ? "값" : "Value"): <b>@Ctl.TextInput</b></p>
+            <div class="dw-demo__row">
+                <DreamineTextBox @bind-Value="Ctl.Password" IsPassword="true" Hint="@(Ko ? "비밀번호..." : "Password...")" />
+                <DreamineButton Size="DreamineButtonSize.Small" OnClick="Ctl.ClearPassword">Clear</DreamineButton>
+            </div>
+            <p class="dw-demo__hint">@(Ko ? "길이" : "Length"): <b>@Ctl.Password.Length</b></p>
+
+            <DreamineVirtualKeyboard IsVisible="_showKeyboard"
+                                     Value="@Ctl.TextInput"
+                                     ValueChanged="v => Ctl.TextInput = v"
+                                     OnEnter="() => _showKeyboard = false" />
+        </div>
+        break;
+
+    case "combobox":
+        <div class="dw-demo__controls">
+            <DreamineComboBox Items="Ctl.FruitItems" @bind-SelectedItem="Ctl.SelectedFruit" />
+            <span class="dw-demo__count">@(Ko ? "선택" : "Selected"): @Ctl.SelectedFruit</span>
+        </div>
+        break;
+
+    case "expander":
+        <DreamineExpander Header="@(Ko ? "펼치기 / 접기" : "Expand / Collapse")" @bind-IsExpanded="Ctl.IsExpanded">
+            @(Ko ? "내부에는 어떤 콘텐츠도 배치할 수 있습니다. IsExpanded = " : "Any content can go here. IsExpanded = ")<b>@Ctl.IsExpanded</b>
+        </DreamineExpander>
+        break;
+
+    case "numeric":
+        <div class="dw-demo__controls">
+            <DreamineNumericSlider @bind-Value="Ctl.NumericInput" Min="0" Max="100" />
+            <span class="dw-demo__count">@(Ko ? "값" : "Value"): @Ctl.NumericInput</span>
+        </div>
+        break;
+
+    case "listbox":
+        <DreamineListBox Items="Ctl.FruitItems"
+                         @bind-SelectedItem="Ctl.SelectedFruit"
+                         OnActivate="Ctl.ActivateListItem" />
+        <p class="dw-demo__hint">@(Ko ? "선택" : "Selected"): <b>@Ctl.SelectedFruit</b> · @Ctl.ListActivated</p>
+        break;
+
+    case "counter":
+        <span class="dw-counter-value">@Ctl.Count</span>
+        <div class="dw-demo__controls">
+            <DreamineButton Variant="DreamineButtonVariant.Primary" OnClick="Ctl.Increment">Increment</DreamineButton>
+            <DreamineButton OnClick="Ctl.ResetCounter">Reset</DreamineButton>
+        </div>
+        @if (Ctl.CounterLogs.Count > 0)
+        {
+            <ul class="dw-demo__log">
+                @foreach (var line in Ctl.CounterLogs)
+                {
+                    <li>@line</li>
+                }
+            </ul>
+        }
+        break;
+
+    case "datagrid":
+        <DreamineDataGrid TItem="GridRow" Items="Ctl.GridRows" @bind-SelectedItem="Ctl.SelectedRow">
+            <HeaderContent>
+                <th>No</th><th>Name</th><th>Status</th>
+            </HeaderContent>
+            <RowContent>
+                <td>@context.No</td>
+                <td>@context.Name</td>
+                <td>
+                    <span class="dw-status-dot @(context.Status == "Running" ? "is-running" : context.Status == "Error" ? "is-error" : "")"></span>
+                    @context.Status
+                </td>
+            </RowContent>
+        </DreamineDataGrid>
+        <p class="dw-demo__hint">@(Ko ? "선택" : "Selected"): <b>@(Ctl.SelectedRow?.Name ?? "—")</b></p>
+        break;
+
+    case "timespinner":
+        <div class="dw-timespinner">
+            <div class="dw-timespinner__col">
+                <button class="dw-timespinner__btn" @onclick="@(() => Ctl.Hours++)">▲</button>
+                <input class="dw-timespinner__val" readonly value="@Ctl.Hours.ToString("D2")" />
+                <button class="dw-timespinner__btn" @onclick="@(() => Ctl.Hours--)">▼</button>
+            </div>
+            <span class="dw-timespinner__sep">:</span>
+            <div class="dw-timespinner__col">
+                <button class="dw-timespinner__btn" @onclick="@(() => Ctl.Minutes++)">▲</button>
+                <input class="dw-timespinner__val" readonly value="@Ctl.Minutes.ToString("D2")" />
+                <button class="dw-timespinner__btn" @onclick="@(() => Ctl.Minutes--)">▼</button>
+            </div>
+            <span class="dw-timespinner__sep">:</span>
+            <div class="dw-timespinner__col">
+                <button class="dw-timespinner__btn" @onclick="@(() => Ctl.Seconds++)">▲</button>
+                <input class="dw-timespinner__val" readonly value="@Ctl.Seconds.ToString("D2")" />
+                <button class="dw-timespinner__btn" @onclick="@(() => Ctl.Seconds--)">▼</button>
+            </div>
+        </div>
+        <p class="dw-demo__hint">@(Ko ? "시각" : "Time"): <b>@Ctl.TimeDisplay</b></p>
+        break;
+
+    case "image":
+        <div class="dw-image-demo" @onclick="Ctl.ClickImage">
+            <svg viewBox="0 0 100 100" width="80" height="80" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="50" fill="#1E90FF" />
+                <circle cx="50" cy="50" r="22" fill="#fff" />
+            </svg>
+        </div>
+        <span class="dw-demo__count">@(Ko ? "이미지 클릭" : "Image clicks") @Ctl.ImageClickCount</span>
+        break;
+
+    case "popup":
+        <div class="dw-demo__controls">
+            <DreamineButton OnClick="ShowMessageBox">DreamineMessageBox (5s)</DreamineButton>
+            <DreamineButton Variant="DreamineButtonVariant.Primary" OnClick="ShowBlinkOk">BlinkPopup — @(Ko ? "완료 알림" : "Done")</DreamineButton>
+            <DreamineButton Variant="DreamineButtonVariant.Danger" OnClick="ShowBlinkAlarm">BlinkPopup — @(Ko ? "설비 ALARM (점멸)" : "ALARM (blink)")</DreamineButton>
+        </div>
+        <p class="dw-demo__hint">@_popupResult</p>
+        break;
+
+    default:
+        <p class="dw-demo__hint">@(Ko ? "이 데모는 Live 렌더러가 아직 연결되지 않았습니다." : "No Live renderer is mapped for this demo yet.")</p>
+        break;
+}
+
+@code {
+    [Parameter] public string DemoId { get; set; } = string.Empty;
+    [CascadingParameter] public UserPreferencesService? Lang { get; set; }
+
+    private bool Ko => Lang?.IsKorean ?? true;
+    private readonly LightBulbViewModel Bulb = new();
+    private readonly ControlsShowcaseViewModel Ctl = new();
+    private string _popupResult = "Last result: —";
+    private bool _showKeyboard;
+
+    protected override void OnInitialized()
+    {
+        Bulb.PropertyChanged += OnVmChanged;
+        Ctl.PropertyChanged += OnVmChanged;
+        if (Lang is not null) Lang.Changed += OnLangChanged;
+    }
+
+    private void OnLangChanged() => InvokeAsync(StateHasChanged);
+    private void OnVmChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => InvokeAsync(StateHasChanged);
+
+    // ── Popup 데모 (SampleCrossUi.Blazor의 Popup 페이지와 동일) ─────────
+    private async Task ShowMessageBox()
+    {
+        var result = await Dialog.ShowMessageBoxAsync(
+            Ko ? "DreamineMessageBox 데모입니다.\n버튼을 클릭하거나 기다리면 자동으로 닫힙니다."
+               : "DreamineMessageBox demo.\nClick a button or wait for auto-close.",
+            "MessageBox Demo",
+            autoClickDelaySeconds: 5);
+        _popupResult = $"Last result: MessageBox → {result}";
+    }
+
+    private async Task ShowBlinkOk()
+    {
+        var result = await Dialog.ShowBlinkAsync(new BlinkPopupOptions
+        {
+            Title = Ko ? "작업 완료" : "Done",
+            Message = Ko ? "작업이 성공적으로 완료되었습니다." : "The operation completed successfully.",
+            UseBlink = false,
+            Color1 = "#0D1B3E",
+            Color2 = "#0D1B3E",
+            ForegroundColor = "#FFFFFF",
+            OkText = Ko ? "확인" : "OK"
+        });
+        _popupResult = $"Last result: BlinkPopup(OK) → {result}";
+    }
+
+    private async Task ShowBlinkAlarm()
+    {
+        var result = await Dialog.ShowBlinkAsync(new BlinkPopupOptions
+        {
+            Title = "⚠ ALARM",
+            Message = Ko ? "설비 이상이 감지되었습니다.\n운영자 확인이 필요합니다."
+                        : "Equipment fault detected.\nOperator confirmation required.",
+            UseBlink = true,
+            BlinkIntervalMs = 400,
+            Color1 = "#B41E1E",
+            Color2 = "#500A0A",
+            ForegroundColor = "#FFD700",
+            OkText = Ko ? "확인" : "OK",
+            CancelText = Ko ? "취소" : "Cancel"
+        });
+        _popupResult = $"Last result: BlinkPopup(Alarm) → {result}";
+    }
+
+    public void Dispose()
+    {
+        Bulb.PropertyChanged -= OnVmChanged;
+        Ctl.PropertyChanged -= OnVmChanged;
+        if (Lang is not null) Lang.Changed -= OnLangChanged;
+    }
+}

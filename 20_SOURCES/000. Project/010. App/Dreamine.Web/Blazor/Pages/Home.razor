@@ -2,6 +2,7 @@
 @namespace DreamineWeb.Blazor.Pages
 @rendermode InteractiveServer
 @inject HomeViewModel Vm
+@implements IDisposable
 
 <PageTitle>Dreamine — Modular Architecture for Real Applications</PageTitle>
 
@@ -12,19 +13,29 @@
     </div>
     <h1 class="dw-hero__title">Dreamine</h1>
     <p class="dw-hero__lead">
-        C# WPF MVVM 기반의 모듈형 애플리케이션 아키텍처.<br />
-        낮은 결합도, 높은 응집도, 테스트 가능한 구조.
+        @if (Lang.IsKorean)
+        {
+            <text>C# WPF MVVM 기반의 모듈형 애플리케이션 아키텍처.<br />낮은 결합도, 높은 응집도, 테스트 가능한 구조.</text>
+        }
+        else
+        {
+            <text>Modular application architecture based on C# WPF MVVM.<br />Low coupling, high cohesion, testable by design.</text>
+        }
     </p>
     <div class="dw-hero__actions">
         <a class="dw-btn dw-btn--primary" href="@Vm.GitHubOrgUrl" target="_blank" rel="noopener">GitHub Organization</a>
-        <a class="dw-btn dw-btn--ghost" href="/libraries">라이브러리 목록</a>
+        <a class="dw-btn dw-btn--ghost" href="/libraries">@(Lang.IsKorean ? "라이브러리 목록" : "Library List")</a>
     </div>
 </section>
 
 <section class="dw-section">
     <div class="dw-section__head">
-        <h2 class="dw-section__title">라이브러리</h2>
-        <p class="dw-section__copy">플랫폼별로 분리된 모듈형 구조 — 필요한 것만 참조합니다.</p>
+        <h2 class="dw-section__title">@(Lang.IsKorean ? "라이브러리" : "Libraries")</h2>
+        <p class="dw-section__copy">
+            @(Lang.IsKorean
+                ? "플랫폼별로 분리된 모듈형 구조 — 필요한 것만 참조합니다."
+                : "Modular structure separated by platform — reference only what you need.")
+        </p>
     </div>
 
     @foreach (var group in Vm.GroupedLibraries)
@@ -39,8 +50,8 @@
                             <span class="dw-lib-card__name">@lib.Name</span>
                             <span class="dw-badge dw-badge--@lib.Status">@lib.Status</span>
                         </div>
-                        <p class="dw-lib-card__desc">@lib.Description</p>
-                        <span class="dw-lib-card__ver">v@lib.Version</span>
+                        <p class="dw-lib-card__desc">@(Lang.IsKorean || string.IsNullOrEmpty(lib.DescriptionEn) ? lib.Description : lib.DescriptionEn)</p>
+                        <span class="dw-lib-card__ver">v@(lib.Version)</span>
                     </a>
                 }
             </div>
@@ -49,8 +60,15 @@
 </section>
 
 @code {
+    [CascadingParameter] public UserPreferencesService Lang { get; set; } = default!;
+
     protected override async Task OnInitializedAsync()
     {
         await Vm.LoadAsync();
+        Lang.Changed += OnLangChanged;
     }
+
+    private void OnLangChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Lang.Changed -= OnLangChanged;
 }

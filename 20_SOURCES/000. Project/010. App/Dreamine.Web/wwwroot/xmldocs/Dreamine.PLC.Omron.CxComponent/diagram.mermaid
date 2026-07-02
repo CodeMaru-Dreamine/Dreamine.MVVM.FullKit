@@ -1,0 +1,24 @@
+﻿classDiagram
+    class CxComponentClient {
+        -IIOCTL _ioctl
+        +UnitNumber int
+        +IsConnected bool
+        +ConnectAsync() Task
+        +DisconnectAsync() Task
+        +ReadBitAsync(string) Task~bool~
+        +ReadWordAsync(string) Task~short~
+        +WriteBitAsync(string, bool) Task
+        +WriteWordAsync(string, short) Task
+    }
+    class CxComponentOptions {
+        +int UnitNumber
+        +string ComPort
+        +int BaudRate
+        +int NetworkNumber
+        +int NodeNumber
+    }
+    class PlcClientBase {
+        <<abstract>>
+    }
+    PlcClientBase <|-- CxComponentClient
+    CxComponentClient --> CxComponentOptions

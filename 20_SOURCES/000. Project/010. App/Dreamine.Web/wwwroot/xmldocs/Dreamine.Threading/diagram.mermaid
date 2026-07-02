@@ -1,0 +1,36 @@
+﻿classDiagram
+    class IDispatcher {
+        <<interface>>
+        +InvokeAsync(Action) Task
+        +InvokeAsync~T~(Func~T~) Task~T~
+        +CheckAccess() bool
+        +BeginInvoke(Action) void
+    }
+    class DreamineTaskFactory {
+        <<static>>
+        +StartBackground(Action) Task
+        +StartBackground~T~(Func~T~) Task~T~
+        +CreatePeriodic(Action, int) IPeriodicTask
+        +Debounce(Action, int) Action
+        +Throttle(Action, int) Action
+    }
+    class IPeriodicTask {
+        <<interface>>
+        +Start() void
+        +Stop() void
+        +IsRunning bool
+        +IntervalMs int
+    }
+    class PeriodicTask {
+        -Action _action
+        -CancellationTokenSource _cts
+        +Start() void
+        +Stop() void
+        +IsRunning bool
+    }
+    class AsyncLock {
+        +AcquireAsync() Task~IDisposable~
+    }
+    IPeriodicTask <|.. PeriodicTask
+    DreamineTaskFactory --> PeriodicTask
+    DreamineTaskFactory --> AsyncLock

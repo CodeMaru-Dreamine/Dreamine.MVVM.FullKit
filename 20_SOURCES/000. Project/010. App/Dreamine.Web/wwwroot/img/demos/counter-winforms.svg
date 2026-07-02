@@ -1,0 +1,24 @@
+<svg viewBox="0 0 520 340" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
+  <!-- Window -->
+  <rect x="20" y="20" width="480" height="300" rx="4" fill="#f0f0f0" stroke="#999"/>
+  <!-- Title bar -->
+  <rect x="20" y="20" width="480" height="30" rx="4" fill="#fff" stroke="#999"/>
+  <rect x="20" y="46" width="480" height="4" fill="#f0f0f0"/>
+  <text x="36" y="40" font-size="12" fill="#333">Counter Demo</text>
+  <text x="458" y="40" font-size="11" fill="#888">⎯</text>
+  <text x="474" y="40" font-size="11" fill="#888">▢</text>
+  <text x="490" y="40" font-size="11" fill="#888">✕</text>
+  <line x1="20" y1="50" x2="500" y2="50" stroke="#bbb"/>
+  <!-- Count display -->
+  <text x="260" y="108" font-size="48" font-weight="bold" fill="#222" text-anchor="middle">Count: 7</text>
+  <!-- Buttons (flat classic) -->
+  <rect x="140" y="128" width="120" height="32" rx="2" fill="#e1e1e1" stroke="#adadad"/>
+  <text x="200" y="149" font-size="13" fill="#333" text-anchor="middle">Increment</text>
+  <rect x="275" y="128" width="100" height="32" rx="2" fill="#e1e1e1" stroke="#adadad"/>
+  <text x="325" y="149" font-size="13" fill="#333" text-anchor="middle">Reset</text>
+  <!-- Log list -->
+  <rect x="40" y="178" width="440" height="120" rx="2" fill="#fff" stroke="#999"/>
+  <text x="50" y="198" font-size="11" fill="#333">[14:32:10] Incremented → 7</text>
+  <text x="50" y="216" font-size="11" fill="#333">[14:32:09] Incremented → 6</text>
+  <text x="50" y="234" font-size="11" fill="#333">[14:32:05] Counter reset.</text>
+</svg>

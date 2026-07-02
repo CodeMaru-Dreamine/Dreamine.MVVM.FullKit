@@ -1,0 +1,20 @@
+<svg viewBox="0 0 300 360" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
+  <!-- Phone frame -->
+  <rect x="30" y="16" width="240" height="328" rx="34" fill="#111"/>
+  <rect x="42" y="28" width="216" height="304" rx="20" fill="#fff"/>
+  <!-- Notch -->
+  <rect x="120" y="30" width="60" height="16" rx="8" fill="#111"/>
+  <!-- App bar -->
+  <rect x="42" y="52" width="216" height="40" fill="#512BD4"/>
+  <text x="150" y="78" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">TimePicker</text>
+  <!-- Picker area -->
+  <rect x="70" y="120" width="160" height="60" rx="12" fill="#f5f3ff" stroke="#512BD4"/>
+  <text x="150" y="160" font-size="32" font-weight="bold" fill="#333" text-anchor="middle">09 : 30</text>
+  <!-- Labels -->
+  <text x="120" y="200" font-size="10" fill="#888" text-anchor="middle">Hours</text>
+  <text x="180" y="200" font-size="10" fill="#888" text-anchor="middle">Minutes</text>
+  <!-- Selection text -->
+  <text x="60" y="240" font-size="12" fill="#512BD4">선택 시각: 09:30</text>
+  <!-- Home indicator -->
+  <rect x="120" y="316" width="60" height="4" rx="2" fill="#ccc"/>
+</svg>

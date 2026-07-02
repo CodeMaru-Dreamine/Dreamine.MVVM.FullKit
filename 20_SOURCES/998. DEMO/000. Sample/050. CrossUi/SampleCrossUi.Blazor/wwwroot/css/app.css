@@ -1,3 +1,34 @@
+/* Dreamine 다크 스테이지 — 다크 테마 컴포넌트가 제대로 보이도록 감싸는 패널
+   (Dreamine.Web의 데모 본문과 동일한 느낌) */
+.controls-stage {
+    background: radial-gradient(circle at 15% 10%, rgba(73, 178, 255, .08), transparent 40%),
+                linear-gradient(180deg, #07111f, #0a1524);
+    border: 1px solid rgba(110, 168, 255, .16);
+    border-radius: 16px;
+    padding: 24px 26px;
+    color: #f5f7fb;
+}
+
+.controls-stage h5,
+.controls-stage h6 {
+    color: #8dcbff;
+}
+
+.controls-stage p {
+    color: #a6b6cf;
+}
+
+.controls-stage code {
+    color: #8dcbff;
+}
+
+.controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
 .dreamine-tabs {
     display: flex;
     flex-wrap: wrap;
@@ -35,4 +66,61 @@
     padding: 8px;
     font-family: monospace;
     font-size: 0.85rem;
+}
+/* Light Bulb sample */
+.lightbulb-stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+}
+
+.lightbulb {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .4rem;
+}
+
+.lightbulb svg {
+    transition: filter .2s ease;
+}
+
+.lightbulb-glass {
+    fill: rgba(100, 116, 139, .2);
+    stroke: #64748b;
+    stroke-width: 4;
+}
+
+.lightbulb-filament {
+    stroke: #64748b;
+}
+
+.lightbulb-base {
+    fill: #64748b;
+}
+
+.lightbulb-status {
+    color: #64748b;
+    font-family: Consolas, monospace;
+    font-weight: 700;
+    letter-spacing: .08em;
+}
+
+.lightbulb.is-on svg {
+    filter: drop-shadow(0 0 18px rgba(255, 214, 102, .75));
+}
+
+.lightbulb.is-on .lightbulb-glass {
+    fill: #ffd666;
+    stroke: #ffc400;
+}
+
+.lightbulb.is-on .lightbulb-filament {
+    stroke: #7a4b00;
+}
+
+.lightbulb.is-on .lightbulb-status {
+    color: #b7791f;
 }

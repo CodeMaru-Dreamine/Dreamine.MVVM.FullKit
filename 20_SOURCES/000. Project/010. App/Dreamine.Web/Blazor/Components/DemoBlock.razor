@@ -1,0 +1,139 @@
+@namespace DreamineWeb.Blazor.Components
+@using DreamineWeb.Services
+
+@* 재사용 데모 위젯: Live(Blazor) + WPF(XAML) + WinForms(C#) + MAUI(XAML) *@
+<div class="dw-demo">
+    <div class="dw-demo__tabs">
+        <button class="dw-demo__tab @(_tab == 0 ? "is-active" : "")" @onclick="() => _tab = 0">
+            <span class="dw-demo__dot"></span> Live (Blazor)
+        </button>
+        <button class="dw-demo__tab @(_tab == 1 ? "is-active" : "")" @onclick="() => _tab = 1">WPF</button>
+        @if (!string.IsNullOrEmpty(WinFormsCode))
+        {
+            <button class="dw-demo__tab @(_tab == 2 ? "is-active" : "")" @onclick="() => _tab = 2">WinForms</button>
+        }
+        @if (!string.IsNullOrEmpty(MauiCode))
+        {
+            <button class="dw-demo__tab @(_tab == 3 ? "is-active" : "")" @onclick="() => _tab = 3">MAUI</button>
+        }
+    </div>
+    <div class="dw-demo__body">
+        @if (_tab == 0)
+        {
+            <div class="dw-demo__stage">
+                @Live
+            </div>
+
+            if (!string.IsNullOrEmpty(BlazorCode))
+            {
+                <details class="dw-demo__src">
+                    <summary>@(Ko ? "이 Live 데모의 실제 코드 보기" : "Show the code behind this Live demo")</summary>
+                    <pre class="dw-code"><code>@BlazorCode</code></pre>
+                    @if (!string.IsNullOrEmpty(VmCode))
+                    {
+                        <pre class="dw-code"><code>@VmCode</code></pre>
+                    }
+                </details>
+            }
+        }
+        else
+        {
+            <div class="dw-demo__note">
+                @(Ko
+                    ? "웹에서는 실행할 수 없는 UI입니다. 아래는 실제 실행 화면 예시와, 동일 ViewModel에 이 플랫폼의 View 코드를 적용한 실제 코드입니다."
+                    : "This UI cannot run in a web page. Below is a representative running screen plus the same ViewModel with this platform's actual view code.")
+            </div>
+
+            if (!string.IsNullOrEmpty(MediaUrl))
+            {
+                <figure class="dw-demo__shot">
+                    @if (IsVideo(MediaUrl))
+                    {
+                        <video src="@MediaUrl" controls preload="metadata"></video>
+                    }
+                    else
+                    {
+                        <img src="@MediaUrl" alt="@($"{TabName} {DemoName} 실행 화면")" loading="lazy" />
+                    }
+                    <figcaption>@(Ko ? $"{TabName} 실행 화면" : $"{TabName} running screen")</figcaption>
+                </figure>
+            }
+
+            if (_tab == 1)
+            {
+                if (!string.IsNullOrEmpty(VmCode))
+                {
+                    <details class="dw-demo__src" open>
+                        <summary>ViewModel (@(Ko ? "공통" : "shared"))</summary>
+                        <pre class="dw-code"><code>@VmCode</code></pre>
+                    </details>
+                }
+                <pre class="dw-code"><code>@WpfCode</code></pre>
+            }
+            else if (_tab == 2)
+            {
+                <pre class="dw-code"><code>@WinFormsCode</code></pre>
+            }
+            else if (_tab == 3)
+            {
+                <pre class="dw-code"><code>@MauiCode</code></pre>
+            }
+
+            <p class="dw-demo__hint">
+                @(Ko
+                    ? "ViewModel은 그대로, 바인딩 문법만 플랫폼에 맞게 바뀝니다."
+                    : "The ViewModel stays identical; only the platform's binding syntax changes.")
+            </p>
+        }
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public UserPreferencesService? Lang { get; set; }
+    private bool Ko => Lang?.IsKorean ?? true;
+
+    [Parameter] public RenderFragment? Live { get; set; }
+
+    [Parameter] public string WpfCode { get; set; } = string.Empty;
+    [Parameter] public string WinFormsCode { get; set; } = string.Empty;
+    [Parameter] public string MauiCode { get; set; } = string.Empty;
+
+    [Parameter] public string? VmCode { get; set; }
+    [Parameter] public string? BlazorCode { get; set; }
+
+    [Parameter] public string? WpfShot { get; set; }
+    [Parameter] public string? WinFormsShot { get; set; }
+    [Parameter] public string? MauiShot { get; set; }
+
+    [Parameter] public string DemoName { get; set; } = "demo";
+
+    [Parameter] public string? Note { get; set; }
+
+    private int _tab;
+
+    private string? MediaUrl => _tab switch
+    {
+        1 => WpfShot,
+        2 => WinFormsShot,
+        3 => MauiShot,
+        _ => null
+    };
+
+    private string TabName => _tab switch
+    {
+        1 => "WPF",
+        2 => "WinForms",
+        3 => "MAUI",
+        _ => "Blazor"
+    };
+
+    private static bool IsVideo(string? url)
+    {
+        if (string.IsNullOrWhiteSpace(url)) return false;
+        var clean = url.Split('?', '#')[0];
+        return clean.EndsWith(".mp4", StringComparison.OrdinalIgnoreCase)
+            || clean.EndsWith(".webm", StringComparison.OrdinalIgnoreCase)
+            || clean.EndsWith(".mov", StringComparison.OrdinalIgnoreCase)
+            || clean.EndsWith(".m4v", StringComparison.OrdinalIgnoreCase);
+    }
+}

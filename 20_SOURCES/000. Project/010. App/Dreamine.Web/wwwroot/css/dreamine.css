@@ -14,8 +14,12 @@
     --radius-lg: 20px;
     --radius-md: 14px;
     --max: 1180px;
+    --topbar-h: 62px;
 }
 * { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+/* 앵커 이동 시 고정 탑바에 가리지 않도록 오프셋 */
+:target, .dw-section[id] { scroll-margin-top: calc(var(--topbar-h) + 20px); }
 html, body {
     margin: 0; min-height: 100%;
     font-family: "Inter", "Segoe UI", Arial, sans-serif;
@@ -31,10 +35,13 @@ html, body {
 /* ── Topbar ── */
 .dw-topbar {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 40px; border-bottom: 1px solid var(--line);
-    background: rgba(3,9,19,0.8); backdrop-filter: blur(12px);
-    position: sticky; top: 0; z-index: 100;
+    gap: 8px; min-height: var(--topbar-h);
+    padding: 10px 40px; border-bottom: 1px solid var(--line);
+    background: rgba(3,9,19,0.85); backdrop-filter: blur(12px);
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
 }
+/* fixed 탑바 높이만큼 본문을 아래로 내림 */
+.dw-shell { padding-top: var(--topbar-h); }
 .dw-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); font-weight: 800; font-size: 17px; }
 .dw-brand__mark {
     width: 32px; height: 32px; border-radius: 10px;
@@ -55,6 +62,13 @@ html, body {
 }
 .dw-nav__link:hover, .dw-nav__link.active { background: rgba(255,255,255,.06); color: var(--text); }
 .dw-nav__link--admin { color: var(--accent-2); }
+.dw-lang-btn {
+    padding: 6px 12px; border-radius: 8px; border: 1px solid var(--line);
+    background: transparent; color: var(--sub); font-size: 12px; font-weight: 700;
+    letter-spacing: .04em; cursor: pointer; transition: background .15s, color .15s, border-color .15s;
+}
+.dw-lang-btn:hover { background: rgba(255,255,255,.07); color: var(--text); border-color: var(--line-strong); }
+.dw-brand__img { width: 28px; height: 28px; border-radius: 8px; object-fit: cover; }
 
 /* ── Content ── */
 .dw-content { flex: 1; width: min(var(--max), calc(100% - 48px)); margin: 0 auto; padding: 36px 0 60px; }
@@ -62,6 +76,7 @@ html, body {
 /* ── Footer ── */
 .dw-footer {
     display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 8px;
     padding: 18px 40px; border-top: 1px solid var(--line);
     color: var(--sub); font-size: 13px;
 }
@@ -92,8 +107,9 @@ html, body {
     box-shadow: 0 0 0 5px rgba(74,222,128,.12);
 }
 .dw-hero__title {
-    font-size: clamp(56px, 8vw, 100px); line-height: .94;
+    font-size: clamp(40px, 8vw, 100px); line-height: .94;
     letter-spacing: -.05em; margin: 0 0 16px;
+    overflow-wrap: anywhere;
 }
 .dw-hero__lead {
     font-size: clamp(18px, 2vw, 24px); color: #d9e3f1;
@@ -147,27 +163,33 @@ html, body {
 }
 .dw-lib-card:hover { border-color: var(--line-strong); transform: translateY(-2px); }
 .dw-lib-card__top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.dw-lib-card__name { font-size: 14px; font-weight: 700; font-family: "Consolas", monospace; }
+.dw-lib-card__name {
+    font-size: 13px; font-weight: 700; font-family: "Consolas", monospace;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%;
+}
 .dw-lib-card__desc { font-size: 13px; color: var(--sub); line-height: 1.7; margin: 0; flex: 1; }
 .dw-lib-card__ver { font-size: 12px; color: var(--sub); opacity: .7; }
 
 /* ── Library Table (Libraries page) ── */
 .dw-lib-table { display: flex; flex-direction: column; gap: 2px; }
 .dw-lib-row {
-    display: grid; grid-template-columns: 220px 70px 1fr 60px;
+    display: grid; grid-template-columns: minmax(180px, 260px) 70px 1fr 70px;
     align-items: center; gap: 12px; padding: 12px 16px;
     border-radius: var(--radius-md); border: 1px solid transparent;
     text-decoration: none; color: var(--text);
     transition: background .12s, border-color .12s;
 }
 .dw-lib-row:hover { background: rgba(255,255,255,.04); border-color: var(--line); }
-.dw-lib-row__name { font-size: 13px; font-weight: 700; font-family: "Consolas", monospace; }
-.dw-lib-row__desc { font-size: 13px; color: var(--sub); }
-.dw-lib-row__ver { font-size: 12px; color: var(--sub); text-align: right; }
+.dw-lib-row__name {
+    font-size: 13px; font-weight: 700; font-family: "Consolas", monospace;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.dw-lib-row__desc { font-size: 13px; color: var(--sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dw-lib-row__ver { font-size: 12px; color: var(--sub); text-align: right; white-space: nowrap; }
 
 /* Admin row overrides */
 .dw-lib-row--admin {
-    grid-template-columns: 40px 200px 70px 70px 1fr 80px auto;
+    grid-template-columns: 40px minmax(160px, 240px) 70px 70px 1fr 70px auto;
     cursor: default;
 }
 .dw-lib-row--admin:hover { background: rgba(255,255,255,.03); }
@@ -205,6 +227,17 @@ html, body {
 
 /* ── Search ── */
 .dw-search { margin-bottom: 24px; }
+.dw-catalog-summary {
+    display: flex; flex-wrap: wrap; gap: 10px;
+    margin: -8px 0 24px;
+    color: var(--sub); font-size: 13px;
+}
+.dw-catalog-summary span {
+    display: inline-flex; gap: 6px; align-items: center;
+    padding: 7px 11px; border: 1px solid var(--line);
+    border-radius: 999px; background: rgba(255,255,255,.025);
+}
+.dw-catalog-summary strong { color: var(--accent-2); }
 .dw-input {
     width: 100%; padding: 12px 16px; border-radius: var(--radius-md);
     background: rgba(255,255,255,.04); border: 1px solid var(--line);
@@ -212,15 +245,38 @@ html, body {
     transition: border-color .15s;
 }
 .dw-input:focus { border-color: var(--line-strong); }
+.dw-input option {
+    background: #0f1a2b;
+    color: var(--text);
+}
+.dw-input option:checked {
+    background: #2f82d7;
+    color: #fff;
+}
+.dw-input option:hover {
+    background: #1d3d63;
+    color: #fff;
+}
 .dw-textarea { resize: vertical; min-height: 80px; font-family: inherit; }
 
 /* ── Doc page ── */
 .dw-doc-header { margin-bottom: 32px; }
 .dw-doc-header__top { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
-.dw-doc-header__name { font-size: 28px; font-weight: 800; margin: 0; font-family: "Consolas", monospace; }
+.dw-doc-header__name { font-size: 28px; font-weight: 800; margin: 0; font-family: "Consolas", monospace; overflow-wrap: anywhere; }
 .dw-doc-header__ver { font-size: 13px; color: var(--sub); }
 .dw-doc-header__desc { color: var(--sub); font-size: 15px; line-height: 1.75; margin: 0 0 12px; }
 .dw-doc-header__links { display: flex; gap: 8px; }
+.dw-doc-meta {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-top: 12px; color: var(--sub); font-size: 12px;
+}
+.dw-doc-meta span {
+    display: inline-flex; gap: 6px; align-items: center;
+    padding: 6px 10px; border: 1px solid var(--line);
+    border-radius: 999px; background: rgba(255,255,255,.025);
+    max-width: 100%; overflow-wrap: anywhere;
+}
+.dw-doc-meta strong { color: var(--accent-2); }
 .dw-back { color: var(--accent-2); text-decoration: none; font-size: 14px; display: block; margin-bottom: 16px; }
 .dw-doc-section { margin-bottom: 32px; }
 .dw-doc-section__title {
@@ -234,7 +290,7 @@ html, body {
 }
 .dw-doc-member:hover { border-color: var(--line); }
 .dw-doc-member__top { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-.dw-doc-member__name { font-family: "Consolas", monospace; font-size: 14px; font-weight: 700; }
+.dw-doc-member__name { font-family: "Consolas", monospace; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
 .dw-doc-member__summary { color: var(--sub); font-size: 13px; line-height: 1.7; margin: 0; }
 .dw-doc-kind {
     padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 700;
@@ -257,8 +313,12 @@ html, body {
 .dw-status { padding: 12px 18px; border-radius: var(--radius-md); font-size: 14px; margin-bottom: 16px; }
 .dw-status--ok  { background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.2); color: #4ade80; }
 .dw-status--err { background: rgba(220,38,38,.08); border: 1px solid rgba(220,38,38,.2); color: #fca5a5; }
-.dw-admin-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.dw-admin-toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+.dw-admin-toolbar--section { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); }
 .dw-admin__count { color: var(--sub); font-size: 14px; }
+.dw-hint { font-size: 12px; color: var(--sub); opacity: .7; margin-top: 4px; display: block; }
+.dw-site-icon-preview { display: flex; align-items: center; gap: 12px; padding: 12px; background: rgba(255,255,255,.03); border-radius: 10px; border: 1px solid var(--line); margin-top: 6px; }
+.dw-site-icon-preview img { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; }
 .dw-lib-list { display: flex; flex-direction: column; gap: 4px; }
 
 /* ── Edit Form ── */
@@ -274,10 +334,26 @@ html, body {
 .dw-label--full { grid-column: 1 / -1; }
 .dw-label--check { flex-direction: row; align-items: center; gap: 10px; font-size: 14px; color: var(--text); cursor: pointer; }
 .dw-edit-actions { display: flex; gap: 10px; }
+.dw-form-section-title {
+    margin: 26px 0 14px;
+    color: var(--accent-2);
+    font-size: 15px;
+    letter-spacing: .02em;
+}
+.dw-code-edit {
+    min-height: 150px;
+    font-family: "Cascadia Code", "Consolas", monospace;
+    font-size: 12px;
+    line-height: 1.6;
+}
+.dw-demo-row--admin {
+    grid-template-columns: 40px minmax(120px, 180px) 70px 1fr 110px auto;
+    cursor: default;
+}
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
-    .dw-topbar { padding: 12px 20px; }
+    .dw-topbar { padding: 8px 16px; }
     .dw-content { width: calc(100% - 32px); padding: 24px 0 40px; }
     .dw-hero { padding: 36px 24px; }
     .dw-lib-row { grid-template-columns: 1fr 60px; }
@@ -285,7 +361,28 @@ html, body {
     .dw-lib-row--admin { grid-template-columns: 1fr auto; }
     .dw-form-grid { grid-template-columns: 1fr; }
     .dw-lib-row--admin > *:not(.dw-lib-row__name):not(.dw-lib-row__actions) { display: none; }
+    .dw-footer { padding: 16px 20px; }
 }
+
+@media (max-width: 560px) {
+    :root { --topbar-h: 54px; }
+    .dw-brand__name { display: none; }          /* 아이콘만 남겨 공간 확보 */
+    .dw-brand { gap: 8px; }
+    .dw-nav { gap: 2px; }
+    .dw-nav__link { padding: 7px 10px; font-size: 13px; }
+    .dw-lang-btn { padding: 5px 9px; }
+    .dw-hero { padding: 28px 18px; border-radius: var(--radius-lg); }
+    .dw-hero__lead br { display: none; }        /* 좁은 화면에선 자연 줄바꿈 */
+    .dw-hero__actions .dw-btn { flex: 1 1 auto; }
+    .dw-section { padding: 20px 16px; border-radius: var(--radius-lg); }
+    .dw-content { width: calc(100% - 24px); }
+    .dw-doc-header__name { font-size: 22px; }
+    .dw-readme pre { padding: 12px 14px; }
+    .dw-footer { flex-direction: column; align-items: flex-start; }
+}
+
+/* 좁은 화면에서 README 표 가로 스크롤 */
+.dw-readme table { display: block; overflow-x: auto; max-width: 100%; }
 
 /* ── 언어 탭 ────────────────────────────────────────────────── */
 .dw-lang-tabs {
@@ -322,6 +419,7 @@ html, body {
     color: var(--accent-2);
     margin: 1.4em 0 .5em;
     font-weight: 600;
+    overflow-wrap: anywhere;
 }
 .dw-readme h1 { font-size: 1.6rem; border-bottom: 1px solid var(--line); padding-bottom: .4em; }
 .dw-readme h2 { font-size: 1.25rem; }
@@ -388,6 +486,262 @@ html, body {
     border-radius: var(--radius-md);
     background: rgba(255,255,255,.03);
     padding: 16px;
+}
+.dw-diagram__mermaid {
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    background: rgba(7,17,31,.6);
+    padding: 24px 16px;
+    overflow-x: auto;
+}
+.dw-diagram__mermaid pre.mermaid {
+    margin: 0;
+    font-size: 0;
+}
+.dw-diagram__mermaid svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* ── 사용법(Guide) 페이지 ────────────────────────────────────── */
+/* 사이드 목차 레일 (핀으로 접었다 폈다) */
+.dw-guide-rail {
+    position: fixed;
+    top: calc(var(--topbar-h) + 18px);
+    right: 0;
+    z-index: 80;
+    display: flex;
+    align-items: flex-start;
+    transition: transform .28s cubic-bezier(.4, 0, .2, 1);
+}
+.dw-guide-rail.is-collapsed { transform: translateX(210px); }
+.dw-guide-rail.is-open { transform: translateX(0); }
+
+.dw-guide-rail__toggle {
+    flex: 0 0 auto;
+    width: 40px; height: 46px;
+    border: 1px solid var(--line); border-right: none;
+    border-radius: 12px 0 0 12px;
+    background: rgba(10, 19, 34, .92); backdrop-filter: blur(10px);
+    color: var(--accent-2); font-size: 16px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: -6px 6px 20px rgba(0, 0, 0, .28);
+    transition: background .15s, color .15s;
+}
+.dw-guide-rail__toggle:hover { background: rgba(73, 178, 255, .14); color: var(--text); }
+
+.dw-guide-rail__panel {
+    width: 210px;
+    max-height: calc(100vh - var(--topbar-h) - 40px);
+    overflow-y: auto;
+    padding: 12px 12px 16px;
+    background: rgba(7, 17, 31, .95); backdrop-filter: blur(14px);
+    border: 1px solid var(--line); border-radius: 0 0 0 14px;
+    box-shadow: -14px 16px 42px rgba(0, 0, 0, .42);
+    display: flex; flex-direction: column; gap: 2px;
+}
+.dw-guide-rail__head {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--sub); padding: 4px 10px 8px;
+}
+.dw-guide-rail__link {
+    padding: 8px 10px; border-radius: 8px;
+    color: var(--sub); text-decoration: none;
+    font-size: 13px; line-height: 1.4;
+    border-left: 2px solid transparent;
+    transition: background .12s, color .12s, border-color .12s;
+}
+.dw-guide-rail__link:hover {
+    background: rgba(255, 255, 255, .05); color: var(--text);
+    border-left-color: var(--accent);
+}
+
+.dw-code {
+    background: rgba(0,0,0,.4);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    overflow-x: auto;
+    padding: 16px 20px;
+    margin: 14px 0;
+    font-size: .85rem;
+    line-height: 1.65;
+    color: #d9e3f1;
+    font-family: "Cascadia Code", "Consolas", monospace;
+}
+.dw-guide-path {
+    display: inline-block; margin-top: 6px;
+    padding: 4px 12px; border-radius: 999px;
+    font-size: 12px; font-family: "Consolas", monospace;
+    background: rgba(73,178,255,.06); color: var(--sub);
+    border: 1px solid var(--line);
+}
+@media (max-width: 560px) {
+    .dw-code { padding: 12px 14px; font-size: .78rem; }
+}
+
+/* ── 체험(Playground) 데모 위젯 ──────────────────────────────── */
+.dw-demo {
+    border: 1px solid var(--line); border-radius: var(--radius-lg);
+    overflow: hidden; background: rgba(255,255,255,.02);
+}
+.dw-demo__tabs {
+    display: flex; flex-wrap: wrap; gap: 2px;
+    padding: 6px 6px 0; border-bottom: 1px solid var(--line);
+    background: rgba(3,9,19,.5);
+}
+.dw-demo__tab {
+    background: none; border: none; cursor: pointer;
+    color: var(--sub); font-size: 13px; font-weight: 600;
+    padding: 10px 16px; border-radius: 10px 10px 0 0;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    display: inline-flex; align-items: center; gap: 7px;
+    transition: color .15s, background .15s, border-color .15s;
+}
+.dw-demo__tab:hover { color: var(--text); background: rgba(255,255,255,.04); }
+.dw-demo__tab.is-active { color: var(--accent); border-bottom-color: var(--accent); }
+.dw-demo__dot { width: 8px; height: 8px; border-radius: 50%; background: #4ade80; box-shadow: 0 0 0 4px rgba(74,222,128,.14); }
+.dw-demo__body { padding: 24px; }
+
+/* Live 스테이지 */
+.dw-demo__stage { display: flex; flex-direction: column; align-items: center; gap: 18px; text-align: center; }
+.dw-demo__controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 16px; }
+.dw-demo__count { font-size: 13px; color: var(--sub); font-family: "Consolas", monospace; }
+.dw-demo__hint { font-size: 13px; color: var(--sub); margin: 4px 0 0; line-height: 1.7; }
+.dw-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: var(--text); user-select: none; }
+.dw-check input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+
+/* 전구 */
+.dw-bulb { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.dw-bulb__glass { fill: rgba(148,163,184,.16); stroke: rgba(148,163,184,.5); stroke-width: 1.5; transition: fill .25s, stroke .25s; }
+.dw-bulb__filament { stroke: rgba(148,163,184,.5); transition: stroke .25s; }
+.dw-bulb__base { fill: rgba(148,163,184,.55); }
+.dw-bulb svg { transition: filter .3s; }
+.dw-bulb__status {
+    font-size: 13px; font-weight: 700; letter-spacing: .1em;
+    color: var(--sub); font-family: "Consolas", monospace;
+}
+.dw-bulb.is-on .dw-bulb__glass { fill: rgba(255,214,102,.9); stroke: rgba(255,196,0,.9); }
+.dw-bulb.is-on .dw-bulb__filament { stroke: #7a4b00; }
+.dw-bulb.is-on svg { filter: drop-shadow(0 0 18px rgba(255,204,64,.75)); }
+.dw-bulb.is-on .dw-bulb__status { color: #ffd666; }
+
+/* 비-웹 UI 탭 안내 */
+.dw-demo__note {
+    padding: 12px 16px; margin-bottom: 14px; border-radius: var(--radius-md);
+    background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.2);
+    color: #fcd77a; font-size: 13px; line-height: 1.7;
+}
+.dw-demo__src { margin-top: 20px; }
+.dw-demo__src summary { cursor: pointer; color: var(--accent-2); font-size: 13px; padding: 6px 0; }
+
+/* 비-웹 UI 실행 화면(mockup) */
+.dw-demo__shot { margin: 0 0 16px; text-align: center; }
+.dw-demo__shot img,
+.dw-demo__shot video {
+    max-width: 100%; width: 460px; height: auto;
+    border: 1px solid var(--line); border-radius: var(--radius-md);
+    background: rgba(255,255,255,.03); padding: 10px;
+}
+.dw-demo__shot video { display: block; margin: 0 auto; padding: 0; }
+.dw-demo__shot figcaption {
+    margin-top: 8px; font-size: 12px; color: var(--sub); opacity: .8;
+}
+
+/* Live 컨트롤 공통 */
+.dw-demo__controls--col { flex-direction: column; align-items: flex-start; gap: 10px; }
+.dw-demo__row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dw-demo__log {
+    list-style: none; margin: 14px 0 0; padding: 10px 14px; width: 100%;
+    background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: var(--radius-md);
+    font-family: "Consolas", monospace; font-size: 12px; color: var(--sub);
+    display: flex; flex-direction: column; gap: 3px; text-align: left; max-height: 180px; overflow-y: auto;
+}
+.dw-check--disabled { opacity: .5; cursor: not-allowed; }
+
+/* Radio */
+.dw-radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: var(--text); }
+.dw-radio input { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; }
+
+/* Select / number input */
+.dw-select { width: auto; min-width: 180px; cursor: pointer; }
+.dw-input--num { width: 84px; }
+
+/* Range slider */
+.dw-range { accent-color: var(--accent); width: 200px; max-width: 60vw; cursor: pointer; }
+
+/* LED (DreamineCheckLed 재현) */
+.dw-led {
+    width: 34px; height: 34px; border-radius: 50%; display: inline-block;
+    background: radial-gradient(circle at 35% 30%, #6b7b93, #3a4759 70%);
+    border: 1px solid rgba(255,255,255,.12);
+    transition: background .2s, box-shadow .2s;
+}
+.dw-led.is-on {
+    background: radial-gradient(circle at 35% 30%, #7cf6a0, #1fb257 70%);
+    box-shadow: 0 0 14px rgba(74,222,128,.7);
+}
+.dw-led.is-on.is-pulse { animation: dw-led-pulse 1s ease-in-out infinite; }
+@keyframes dw-led-pulse {
+    0%, 100% { box-shadow: 0 0 6px rgba(74,222,128,.5); opacity: .75; }
+    50%      { box-shadow: 0 0 20px rgba(74,222,128,.95); opacity: 1; }
+}
+
+/* Expander */
+.dw-expander { width: 100%; border: 1px solid var(--line); border-radius: var(--radius-md); overflow: hidden; text-align: left; }
+.dw-expander__head {
+    width: 100%; text-align: left; background: rgba(255,255,255,.04); border: none;
+    color: var(--text); font-size: 14px; font-weight: 600; padding: 12px 16px; cursor: pointer;
+    display: flex; align-items: center; gap: 10px;
+}
+.dw-expander__head:hover { background: rgba(255,255,255,.07); }
+.dw-expander__chevron { transition: transform .2s; color: var(--accent-2); }
+.dw-expander.is-open .dw-expander__chevron { transform: rotate(90deg); }
+.dw-expander__body { padding: 14px 16px; color: var(--sub); font-size: 14px; line-height: 1.7; border-top: 1px solid var(--line); }
+
+/* ListBox */
+.dw-listbox {
+    list-style: none; margin: 0; padding: 6px; width: 100%; max-width: 320px;
+    border: 1px solid var(--line); border-radius: var(--radius-md); background: rgba(0,0,0,.25);
+    display: flex; flex-direction: column; gap: 2px;
+}
+.dw-listbox__item { padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; color: var(--text); user-select: none; transition: background .12s; }
+.dw-listbox__item:hover { background: rgba(255,255,255,.05); }
+.dw-listbox__item.is-selected { background: rgba(73,178,255,.16); color: var(--accent-2); }
+
+/* Counter value */
+.dw-counter-value { display: block; font-size: 56px; font-weight: 800; color: var(--accent); line-height: 1.1; margin-bottom: 12px; }
+
+/* DataGrid */
+.dw-datagrid-wrap { overflow-x: auto; width: 100%; }
+.dw-datagrid { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dw-datagrid th { text-align: left; padding: 10px 14px; background: rgba(0,0,0,.35); color: var(--accent); font-weight: 600; border-bottom: 1px solid var(--line-strong); }
+.dw-datagrid td { padding: 9px 14px; border-bottom: 1px solid var(--line); }
+.dw-datagrid tr { cursor: pointer; transition: background .12s; }
+.dw-datagrid tbody tr:hover { background: rgba(255,255,255,.04); }
+.dw-datagrid tr.is-selected { background: rgba(73,178,255,.14); }
+.dw-datagrid tr.is-error td:last-child { color: #ff6b6b; }
+.dw-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; background: #666; vertical-align: middle; }
+.dw-status-dot.is-running { background: #4caf50; box-shadow: 0 0 6px rgba(76,175,80,.6); }
+.dw-status-dot.is-error { background: #ff5252; box-shadow: 0 0 6px rgba(255,82,82,.6); }
+
+/* TimeSpinner */
+.dw-timespinner { display: inline-flex; align-items: center; gap: 2px; }
+.dw-timespinner__col { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.dw-timespinner__btn { width: 40px; height: 26px; background: rgba(255,255,255,.06); border: 1px solid var(--line); border-radius: 6px; color: var(--text); cursor: pointer; font-size: 12px; transition: background .12s; }
+.dw-timespinner__btn:hover { background: rgba(73,178,255,.15); }
+.dw-timespinner__val { width: 48px; height: 36px; text-align: center; font-size: 20px; font-weight: 700; color: var(--accent); background: rgba(0,0,0,.3); border: 1px solid var(--line); border-radius: 8px; -moz-appearance: textfield; }
+.dw-timespinner__val::-webkit-inner-spin-button { -webkit-appearance: none; }
+.dw-timespinner__sep { font-size: 22px; font-weight: 700; color: var(--sub); margin: 0 4px; padding-top: 2px; }
+
+/* DreamineImage */
+.dw-image-demo { display: inline-flex; border-radius: 14px; overflow: hidden; cursor: pointer; transition: box-shadow .2s, transform .15s; border: 2px solid var(--line); }
+.dw-image-demo:hover { box-shadow: 0 0 16px rgba(73,178,255,.35); transform: scale(1.06); }
+
+@media (max-width: 560px) {
+    .dw-demo__body { padding: 16px; }
+    .dw-demo__tab { padding: 9px 12px; font-size: 12px; }
 }
 
 /* ── API 문서 서브섹션 ───────────────────────────────────────── */

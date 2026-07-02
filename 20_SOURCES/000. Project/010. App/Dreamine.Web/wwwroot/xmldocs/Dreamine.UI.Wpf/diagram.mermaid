@@ -1,0 +1,38 @@
+﻿classDiagram
+    class DreamineUserControl {
+        <<abstract>>
+        +bool IsLoading
+        +bool HasError
+        +string ErrorMessage
+        +Refresh() void
+    }
+    class DreamineWindow {
+        <<abstract>>
+        +bool IsFullScreen
+        +bool ShowTitleBar
+        +Minimize() void
+        +Maximize() void
+        +CloseWindow() void
+    }
+    class DreamineDialog {
+        <<abstract>>
+        +ShowAsync() Task
+        +Close(bool) void
+        +bool Result
+    }
+    class DreaminePanel {
+        +string Title
+        +bool IsCollapsed
+        +object Content
+        +Toggle() void
+    }
+    class DreamineLoadingOverlay {
+        +bool IsVisible
+        +string Message
+        +double Progress
+    }
+    UserControl <|-- DreamineUserControl
+    Window <|-- DreamineWindow
+    Window <|-- DreamineDialog
+    ContentControl <|-- DreaminePanel
+    UserControl <|-- DreamineLoadingOverlay

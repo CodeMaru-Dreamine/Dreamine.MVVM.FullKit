@@ -1,0 +1,43 @@
+﻿classDiagram
+    class PlcConnectionPanel {
+        +IPlcClient Client
+        +bool IsConnected
+        +string StatusText
+        +IRelayCommand ConnectCommand
+        +IRelayCommand DisconnectCommand
+    }
+    class PlcAddressMonitorView {
+        +IPlcClient Client
+        +ObservableCollection~MonitorRow~ Rows
+        +bool IsRunning
+        +int RefreshMs
+        +AddAddress(string, PlcDataType) void
+        +RemoveAddress(string) void
+        +StartMonitoring() void
+        +StopMonitoring() void
+    }
+    class PlcSignalLamp {
+        +string Address
+        +IPlcClient Client
+        +bool Value
+        +Color OnColor
+        +Color OffColor
+    }
+    class PlcValueDisplay {
+        +string Address
+        +IPlcClient Client
+        +object Value
+        +string Format
+        +string Unit
+    }
+    class MonitorRow {
+        +string Address
+        +PlcDataType DataType
+        +object Value
+        +DateTime LastRead
+    }
+    UserControl <|-- PlcConnectionPanel
+    UserControl <|-- PlcAddressMonitorView
+    UserControl <|-- PlcSignalLamp
+    UserControl <|-- PlcValueDisplay
+    PlcAddressMonitorView o-- MonitorRow

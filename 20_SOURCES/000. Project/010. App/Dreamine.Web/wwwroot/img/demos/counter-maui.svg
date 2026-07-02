@@ -1,0 +1,24 @@
+<svg viewBox="0 0 300 420" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, sans-serif">
+  <!-- Phone frame -->
+  <rect x="30" y="16" width="240" height="388" rx="34" fill="#111"/>
+  <rect x="42" y="28" width="216" height="364" rx="20" fill="#fff"/>
+  <!-- Notch -->
+  <rect x="120" y="30" width="60" height="16" rx="8" fill="#111"/>
+  <!-- App bar -->
+  <rect x="42" y="52" width="216" height="40" fill="#512BD4"/>
+  <text x="150" y="78" font-size="14" font-weight="bold" fill="#fff" text-anchor="middle">Counter</text>
+  <!-- Count display -->
+  <text x="150" y="145" font-size="36" font-weight="bold" fill="#222" text-anchor="middle">Count: 7</text>
+  <!-- Buttons -->
+  <rect x="65" y="165" width="100" height="36" rx="18" fill="#512BD4"/>
+  <text x="115" y="188" font-size="13" fill="#fff" text-anchor="middle">Increment</text>
+  <rect x="175" y="165" width="70" height="36" rx="18" fill="#e0e0e0"/>
+  <text x="210" y="188" font-size="13" fill="#333" text-anchor="middle">Reset</text>
+  <!-- Log list -->
+  <rect x="52" y="218" width="196" height="120" rx="8" fill="#f8f8f8" stroke="#e0e0e0"/>
+  <text x="60" y="238" font-size="10" fill="#666">[14:32:10] Incremented → 7</text>
+  <text x="60" y="254" font-size="10" fill="#666">[14:32:09] Incremented → 6</text>
+  <text x="60" y="270" font-size="10" fill="#666">[14:32:05] Counter reset.</text>
+  <!-- Home indicator -->
+  <rect x="120" y="374" width="60" height="4" rx="2" fill="#ccc"/>
+</svg>

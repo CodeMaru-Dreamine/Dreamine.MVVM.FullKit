@@ -1,0 +1,257 @@
+@page "/guide"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>@(Ko ? "사용법" : "How to Use") — Dreamine</PageTitle>
+
+<div class="dw-page dw-guide">
+    <!-- 사이드 목차 (핀으로 접었다 폈다) -->
+    <aside class="dw-guide-rail @(_railOpen ? "is-open" : "is-collapsed")">
+        <button class="dw-guide-rail__toggle" @onclick="ToggleRail"
+                title="@(Ko ? "목차 " + (_railOpen ? "접기" : "펼치기") : (_railOpen ? "Collapse" : "Contents"))"
+                aria-label="@(Ko ? "목차" : "Contents")">
+            @(_railOpen ? "✕" : "☰")
+        </button>
+        <nav class="dw-guide-rail__panel">
+            <span class="dw-guide-rail__head">@(Ko ? "목차" : "On this page")</span>
+            <a href="/guide#start" class="dw-guide-rail__link" @onclick="@(() => GoTo("start"))" @onclick:preventDefault>@(Ko ? "시작하기" : "Getting Started")</a>
+            <a href="/guide#core" class="dw-guide-rail__link" @onclick="@(() => GoTo("core"))" @onclick:preventDefault>SampleCore</a>
+            <a href="/guide#smart" class="dw-guide-rail__link" @onclick="@(() => GoTo("smart"))" @onclick:preventDefault>SampleSmart</a>
+            <a href="/guide#enterprise" class="dw-guide-rail__link" @onclick="@(() => GoTo("enterprise"))" @onclick:preventDefault>SampleEnterprise</a>
+            <a href="/guide#hybrid" class="dw-guide-rail__link" @onclick="@(() => GoTo("hybrid"))" @onclick:preventDefault>Sample01 · Hybrid</a>
+            <a href="/guide#crossui" class="dw-guide-rail__link" @onclick="@(() => GoTo("crossui"))" @onclick:preventDefault>SampleCrossUi</a>
+        </nav>
+    </aside>
+
+    <div class="dw-page__head">
+        <h1 class="dw-page__title">@(Ko ? "사용법" : "How to Use")</h1>
+        <p class="dw-page__copy">
+            @(Ko
+                ? "실제 샘플 프로젝트 기반으로 Dreamine 사용법을 소개합니다. 모든 샘플은 저장소의 998. DEMO/000. Sample 폴더에 있으며, 그대로 빌드해서 실행할 수 있습니다."
+                : "Learn Dreamine through real sample projects. All samples live in the 998. DEMO/000. Sample folder of the repository and build & run as-is.")
+        </p>
+    </div>
+
+    <!-- 시작하기 -->
+    <section class="dw-section" id="start">
+        <div class="dw-section__head">
+            <h2 class="dw-section__title">@(Ko ? "시작하기" : "Getting Started")</h2>
+            <p class="dw-section__copy">
+                @(Ko
+                    ? "WPF 프로젝트에 Dreamine.MVVM.FullKit 패키지를 추가하고 App 클래스에 [DreamineEntry] 하나만 붙이면 됩니다. DI 컨테이너 초기화, ViewModel 자동 등록, View/ViewModel 매핑, ViewManager 등록까지 Source Generator가 전부 만들어 줍니다."
+                    : "Add the Dreamine.MVVM.FullKit package to your WPF project and put a single [DreamineEntry] on your App class. The source generator emits everything else — DI container setup, automatic ViewModel registration, View/ViewModel mapping, and ViewManager registration.")
+            </p>
+        </div>
+        <pre class="dw-code"><code>@SnippetEntry</code></pre>
+    </section>
+
+    <!-- SampleCore -->
+    <section class="dw-section" id="core">
+        <div class="dw-section__head">
+            <h2 class="dw-section__title">SampleCore — @(Ko ? "WPF MVVM 기본" : "WPF MVVM Basics")</h2>
+            <p class="dw-section__copy">
+                @(Ko
+                    ? "Dreamine의 기본 구조는 Model(상태) / Event(로직) / ViewModel(바인딩)의 3분할입니다. ViewModel은 [DreamineModel]·[DreamineEvent] 필드 선언만으로 자동 주입되고, [DreamineCommand]가 ICommand 프로퍼티를 생성합니다."
+                    : "Dreamine splits a screen into three parts: Model (state), Event (logic), and ViewModel (binding). Fields marked [DreamineModel] and [DreamineEvent] are injected automatically, and [DreamineCommand] generates ICommand properties.")
+            </p>
+        </div>
+        <pre class="dw-code"><code>@SnippetCoreVm</code></pre>
+        <p class="dw-section__copy">
+            @(Ko
+                ? "화면 이동·창 제어 같은 실제 로직은 Event 클래스에 둡니다. IViewManager를 생성자에서 주입받아 다른 View를 띄웁니다."
+                : "Actual logic such as navigation and window control lives in the Event class. Inject IViewManager via the constructor to show other views.")
+        </p>
+        <pre class="dw-code"><code>@SnippetCoreEvent</code></pre>
+        <span class="dw-guide-path">998. DEMO/000. Sample/010. Wpfs/SampleCore</span>
+    </section>
+
+    <!-- SampleSmart -->
+    <section class="dw-section" id="smart">
+        <div class="dw-section__head">
+            <h2 class="dw-section__title">SampleSmart — @(Ko ? "스마트 패턴 + 스레딩" : "Smart Pattern + Threading")</h2>
+            <p class="dw-section__copy">
+                @(Ko
+                    ? "커맨드 본문까지 생성기에 맡기는 축약 패턴입니다. [DreamineCommand(\"Event.Ok\")] + partial 메서드 선언만 하면 포워딩 코드가 자동 생성됩니다. View 옆에 MainWindow.xaml.ViewModel.cs처럼 파일을 붙여 두는 코로케이션 구조와, IDreamineThreadManager를 이용한 백그라운드 잡 등록도 이 샘플에서 볼 수 있습니다."
+                    : "A condensed pattern that delegates even the command body to the generator: declare a partial method with [DreamineCommand(\"Event.Ok\")] and the forwarding code is generated. This sample also shows the colocation layout (MainWindow.xaml.ViewModel.cs next to the view) and background job registration with IDreamineThreadManager.")
+            </p>
+        </div>
+        <pre class="dw-code"><code>@SnippetSmart</code></pre>
+        <span class="dw-guide-path">998. DEMO/000. Sample/010. Wpfs/SampleSmart</span>
+    </section>
+
+    <!-- SampleEnterprise -->
+    <section class="dw-section" id="enterprise">
+        <div class="dw-section__head">
+            <h2 class="dw-section__title">SampleEnterprise — @(Ko ? "모듈 분리 아키텍처" : "Modular Architecture")</h2>
+            <p class="dw-section__copy">
+                @(Ko
+                    ? "규모가 커지면 레이어를 프로젝트 단위로 분리합니다. Models / Events / ViewModels / Views / Styles / Resources를 각각 독립 프로젝트로 나눠도 [DreamineEntry] 부트스트랩은 동일하게 동작합니다. 팀 단위 분업과 참조 방향 강제가 필요할 때 이 구조를 사용하세요."
+                    : "As the app grows, split layers into separate projects: Models / Events / ViewModels / Views / Styles / Resources. The [DreamineEntry] bootstrap works unchanged. Use this layout when you need team-level ownership and enforced reference direction.")
+            </p>
+        </div>
+        <pre class="dw-code"><code>@SnippetEnterprise</code></pre>
+        <span class="dw-guide-path">998. DEMO/000. Sample/010. Wpfs/Enterprise/SampleEnterprise</span>
+    </section>
+
+    <!-- Sample01 Hybrid -->
+    <section class="dw-section" id="hybrid">
+        <div class="dw-section__head">
+            <h2 class="dw-section__title">Sample01 — @(Ko ? "WPF + Blazor 하이브리드" : "WPF + Blazor Hybrid")</h2>
+            <p class="dw-section__copy">
+                @(Ko
+                    ? "WPF 앱 안에서 Blazor Server를 함께 띄우는 구조입니다(이 사이트도 같은 방식으로 동작합니다). AddDreamineHybridWpf()와 AddDreamineBlazorServer<AppShell>()를 등록하면 WPF 창과 웹 UI가 하나의 프로세스에서 실행되고, IHybridStateStore로 상태를 공유하며 IHybridMessageBus로 양방향 메시지를 주고받습니다."
+                    : "Runs a Blazor Server inside a WPF app — this very site works the same way. Register AddDreamineHybridWpf() and AddDreamineBlazorServer<AppShell>() to run the WPF window and the web UI in one process, share state via IHybridStateStore, and exchange messages via IHybridMessageBus.")
+            </p>
+        </div>
+        <pre class="dw-code"><code>@SnippetHybrid</code></pre>
+        <p class="dw-section__copy">
+            @(Ko
+                ? "Blazor 쪽 ViewModel은 요청만 발행하고, 실행과 상태 소유는 WPF 쉘이 담당합니다."
+                : "The Blazor-side ViewModel only publishes requests; execution and state ownership stay in the WPF shell.")
+        </p>
+        <pre class="dw-code"><code>@SnippetHybridVm</code></pre>
+        <span class="dw-guide-path">998. DEMO/000. Sample/040. Hybrids/Sample01</span>
+    </section>
+
+    <!-- SampleCrossUi -->
+    <section class="dw-section" id="crossui">
+        <div class="dw-section__head">
+            <h2 class="dw-section__title">SampleCrossUi — @(Ko ? "하나의 ViewModel, 4개의 UI" : "One ViewModel, Four UIs")</h2>
+            <p class="dw-section__copy">
+                @(Ko
+                    ? "UI에 의존하지 않는 ViewModel을 Shared 프로젝트에 한 번 작성하면 WPF · WinForms · Blazor · .NET MAUI에서 수정 없이 그대로 재사용됩니다. 로직은 Event 클래스에 있고 ViewModel은 [DreamineCommand] 포워딩과 읽기 전용 상태만 노출합니다."
+                    : "Write a UI-independent ViewModel once in a Shared project and reuse it unmodified across WPF, WinForms, Blazor, and .NET MAUI. Logic lives in the Event class; the ViewModel exposes only [DreamineCommand] forwarders and read-only state.")
+            </p>
+        </div>
+        <pre class="dw-code"><code>@SnippetCrossUi</code></pre>
+        <span class="dw-guide-path">998. DEMO/000. Sample/050. CrossUi</span>
+    </section>
+</div>
+
+@code {
+    [CascadingParameter] public UserPreferencesService Lang { get; set; } = default!;
+    private bool Ko => Lang?.IsKorean ?? true;
+
+    private bool _railOpen;
+    private void ToggleRail() => _railOpen = !_railOpen;
+
+    // 링크 클릭 시: 목차 접고, 고정 탑바에 안 가리게 부드럽게 스크롤
+    // (base href="/" 때문에 #프래그먼트 앵커가 루트로 튕기므로 JS로 직접 이동)
+    private async Task GoTo(string id)
+    {
+        _railOpen = false;
+        await JS.InvokeVoidAsync("dwScrollToId", id);
+    }
+
+    protected override void OnInitialized()
+    {
+        if (Lang is not null) Lang.Changed += OnLangChanged;
+    }
+
+    private void OnLangChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() { if (Lang is not null) Lang.Changed -= OnLangChanged; }
+
+    private const string SnippetEntry = @"using Dreamine.MVVM.Attributes;
+using System.Windows;
+
+namespace MyApp
+{
+    [DreamineEntry]   // 이 한 줄로 부트스트랩 완료 (bootstrap done with this single line)
+    public partial class App : Application
+    {
+    }
+}";
+
+    private const string SnippetCoreVm = @"public partial class MainWindowViewModel : ViewModelBase
+{
+    [DreamineModel] private MainWindowModel _model;   // 상태 (state)
+    [DreamineEvent] private MainWindowEvent _event;   // 로직 (logic)
+
+    public string Title   => Model.Title;
+    public string Message => Model.Message;
+
+    [DreamineCommand] private void Ok()      => Event.Ok();      // → OkCommand
+    [DreamineCommand] private void Cancel()  => Event.Cancel();  // → CancelCommand
+    [DreamineCommand] private void SubPage() => Event.SubPage();
+}";
+
+    private const string SnippetCoreEvent = @"public class MainWindowEvent
+{
+    private readonly IViewManager _viewManager;
+    public MainWindowEvent(IViewManager viewManager) => _viewManager = viewManager;
+
+    public void Ok()      => MessageBox.Show(""확인 클릭됨!"");
+    public void SubPage() => _viewManager.Show<PageSubViewModel>();  // 화면 이동
+}";
+
+    private const string SnippetSmart = @"public partial class MainWindowViewModel : ViewModelBase
+{
+    [DreamineModel] private MainWindowModel _model;
+    [DreamineEvent] private MainWindowEvent _event;
+
+    // 본문 없는 partial 선언 → Event.Ok()로 포워딩하는 코드가 자동 생성
+    [DreamineCommand(""Event.Ok"")]      private partial void Ok();
+    [DreamineCommand(""Event.SubPage"")] private partial void SubPage();
+
+    public MainWindowViewModel(IDreamineLogger logger, IDreamineThreadManager threads)
+    {
+        threads.Register(
+            new DreamineThreadOptions { Name = ""MonitoringJob"", IntervalMs = 10, AutoStart = true },
+            async token => { /* 주기 실행 작업 (periodic work) */ });
+    }
+}";
+
+    private const string SnippetEnterprise = @"SampleEnterprise/               ← 진입점 ([DreamineEntry] App)
+SampleEnterprise.Models/        ← 상태
+SampleEnterprise.Events/        ← 로직
+SampleEnterprise.ViewModels/    ← 바인딩
+SampleEnterprise.Views/         ← XAML 화면
+SampleEnterprise.Styles/        ← 공용 스타일
+SampleEnterprise.Resources/     ← 리소스(문자열·이미지)";
+
+    private const string SnippetHybrid = @"[STAThread]
+public static void Main()
+{
+    var builder = Host.CreateApplicationBuilder();
+
+    builder.Services.AddDreamineHybridWpf();
+    builder.Services.AddSingleton<MainWindow>();
+
+    // WPF ↔ Blazor 공유 상태
+    builder.Services.AddSingleton<IHybridStateStore<CounterState>>(
+        new HybridStateStore<CounterState>(new CounterState(0, ""-"", null)));
+
+    builder.Services.AddDreamineBlazorServer<AppShell>(options =>
+    {
+        options.Port = 5000;
+        options.SharedServiceTypes.Add(typeof(IHybridStateStore<CounterState>));
+    });
+
+    builder.Build().RunDreamineWpfApp<App>();
+}";
+
+    private const string SnippetHybridVm = @"public sealed class IndexViewModel
+{
+    private readonly IHybridMessageBus _bus;
+    public IndexViewModel(IHybridMessageBus bus) => _bus = bus;
+
+    // Blazor는 요청만 발행 — 실행은 WPF 쉘이 담당
+    public Task OpenProjectAsync() =>
+        _bus.PublishAsync(new DashboardActionRequestedMessage(DashboardAction.OpenProject));
+}";
+
+    private const string SnippetCrossUi = @"// Shared 프로젝트에 한 번만 작성 — WPF·WinForms·Blazor·MAUI에서 그대로 사용
+public partial class CounterViewModel : ViewModelBase
+{
+    [DreamineEvent] private CounterEvent _event;
+
+    public int Count => Event.Count;
+    public ObservableCollection<CounterLogItem> Logs => Event.Logs;
+
+    [DreamineCommand(""Event.Increment"")] private partial void Increment();
+    [DreamineCommand(""Event.Reset"")]     private partial void Reset();
+}";
+}

@@ -1,0 +1,28 @@
+﻿classDiagram
+    class OracleConnectionFactory {
+        -string _connectionString
+        +Create() IDbConnection
+        +CreateAsync() Task~IDbConnection~
+    }
+    class OracleRepository~T~ {
+        +GetAsync(int) Task~T~
+        +GetAllAsync() Task~IEnumerable~T~~
+        +AddAsync(T) Task
+        +UpdateAsync(T) Task
+        +DeleteAsync(int) Task
+        -BuildOracleSql(T) string
+    }
+    class OracleUnitOfWork {
+        +BeginTransaction() Task
+        +CommitAsync() Task
+        +RollbackAsync() Task
+    }
+    class OracleServiceExtensions {
+        <<static>>
+        +AddOracle(IServiceCollection, string) IServiceCollection
+    }
+    class RepositoryBase~T~ {
+        <<abstract>>
+    }
+    RepositoryBase~T~ <|-- OracleRepository~T~
+    OracleRepository~T~ --> OracleConnectionFactory

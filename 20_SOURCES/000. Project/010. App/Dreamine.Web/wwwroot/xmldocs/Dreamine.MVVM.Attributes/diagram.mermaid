@@ -1,0 +1,29 @@
+﻿classDiagram
+    class RegisterViewModelAttribute {
+        +Type ViewType
+        +ServiceLifetime Lifetime
+        +RegisterViewModelAttribute(Type)
+    }
+    class RegisterServiceAttribute {
+        +Type InterfaceType
+        +ServiceLifetime Lifetime
+        +RegisterServiceAttribute(Type)
+    }
+    class SingletonAttribute {
+        +SingletonAttribute()
+    }
+    class TransientAttribute {
+        +TransientAttribute()
+    }
+    class ScopedAttribute {
+        +ScopedAttribute()
+    }
+    class AutoWireViewModelAttribute {
+        +AutoWireViewModelAttribute()
+    }
+    RegisterViewModelAttribute --|> Attribute
+    RegisterServiceAttribute --|> Attribute
+    SingletonAttribute --|> RegisterServiceAttribute
+    TransientAttribute --|> RegisterServiceAttribute
+    ScopedAttribute --|> RegisterServiceAttribute
+    AutoWireViewModelAttribute --|> Attribute

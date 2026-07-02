@@ -1,0 +1,31 @@
+<svg viewBox="0 0 520 260" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <rect x="20" y="16" width="480" height="230" rx="10" fill="#fff" filter="url(#shadow)"/>
+  <path d="M20 26a10 10 0 0 1 10-10h460a10 10 0 0 1 10 10v22H20z" fill="#f3f3f3"/>
+  <text x="36" y="38" font-family="Segoe UI,sans-serif" font-size="12" fill="#333">NumericRange Demo</text>
+  <g transform="translate(460,26)">
+    <rect x="0" y="0" width="16" height="14" rx="1" fill="none"/><line x1="3" y1="7" x2="13" y2="7" stroke="#888" stroke-width="1.2"/>
+    <rect x="20" y="0" width="16" height="14" rx="1" fill="none"/><rect x="23" y="3" width="10" height="8" rx="1" fill="none" stroke="#888" stroke-width="1.2"/>
+    <rect x="40" y="0" width="16" height="14" rx="1" fill="none"/><line x1="44" y1="3" x2="52" y2="11" stroke="#888" stroke-width="1.2"/><line x1="52" y1="3" x2="44" y2="11" stroke="#888" stroke-width="1.2"/>
+  </g>
+  <!-- Label -->
+  <text x="60" y="78" font-family="Segoe UI,sans-serif" font-size="12" fill="#555">NumericRangeBehavior  0 ~ 100</text>
+  <!-- TextBox -->
+  <rect x="60" y="88" width="120" height="30" rx="4" fill="#fff" stroke="#0067c0" stroke-width="1.5"/>
+  <text x="110" y="108" text-anchor="middle" font-family="Segoe UI,sans-serif" font-size="16" fill="#111" font-weight="500">50</text>
+  <!-- Slider track -->
+  <rect x="60" y="140" width="300" height="4" rx="2" fill="#ddd"/>
+  <!-- Slider fill -->
+  <rect x="60" y="140" width="150" height="4" rx="2" fill="#0067c0"/>
+  <!-- Slider thumb -->
+  <circle cx="210" cy="142" r="8" fill="#fff" stroke="#0067c0" stroke-width="2"/>
+  <!-- Min/Max labels -->
+  <text x="60" y="168" font-family="Segoe UI,sans-serif" font-size="10" fill="#999">0</text>
+  <text x="352" y="168" font-family="Segoe UI,sans-serif" font-size="10" fill="#999" text-anchor="end">100</text>
+  <!-- Status -->
+  <text x="60" y="206" font-family="Segoe UI,sans-serif" font-size="12" fill="#555">값: 50</text>
+</svg>

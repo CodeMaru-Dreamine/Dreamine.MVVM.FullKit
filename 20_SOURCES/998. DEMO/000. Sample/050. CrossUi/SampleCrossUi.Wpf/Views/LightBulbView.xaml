@@ -1,0 +1,63 @@
+<UserControl
+    x:Class="SampleCrossUi.Wpf.Views.LightBulbView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ctrl="clr-namespace:Dreamine.UI.Wpf.Controls;assembly=Dreamine.UI.Wpf.Controls"
+    Background="#FF1A1A2E"
+    Foreground="White">
+
+    <StackPanel
+        VerticalAlignment="Center"
+        HorizontalAlignment="Center"
+        Width="420">
+
+        <ctrl:DreamineLabel
+            Content="Light Bulb"
+            FontSize="22"
+            FontWeight="Bold"
+            Foreground="White"
+            HorizontalAlignment="Center"
+            Margin="0,0,0,8" />
+
+        <TextBlock
+            Text="Button command and checkbox binding share one ViewModel."
+            Foreground="#FFB7C6DD"
+            TextAlignment="Center"
+            TextWrapping="Wrap"
+            Margin="0,0,0,24" />
+
+        <ctrl:DreamineLightBulb
+            IsOn="{Binding IsOn}"
+            Diameter="96"
+            HorizontalAlignment="Center"
+            Margin="0,0,0,18" />
+
+        <ctrl:DreamineLabel
+            Content="{Binding StatusText}"
+            FontSize="14"
+            FontWeight="Bold"
+            Foreground="#FF8DCBFF"
+            HorizontalAlignment="Center"
+            Margin="0,0,0,18" />
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,12">
+            <ctrl:DreamineButton
+                Content="Toggle"
+                Foreground="White"
+                Command="{Binding ToggleCommand}"
+                Width="110"
+                Height="40"
+                Margin="0,0,14,0" />
+            <CheckBox
+                Content="Power"
+                IsChecked="{Binding IsOn, Mode=TwoWay}"
+                Foreground="White"
+                VerticalAlignment="Center"
+                Margin="0,0,14,0" />
+            <TextBlock
+                Text="{Binding ToggleCount, StringFormat=Toggled {0}x}"
+                Foreground="#FFD9E3F1"
+                VerticalAlignment="Center" />
+        </StackPanel>
+    </StackPanel>
+</UserControl>

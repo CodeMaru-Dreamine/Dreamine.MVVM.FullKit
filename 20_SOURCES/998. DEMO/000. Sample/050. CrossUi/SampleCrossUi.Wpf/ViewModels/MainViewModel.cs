@@ -15,12 +15,13 @@ public class MainViewModel : ViewModelBase
 
     private string? _currentPageName;
 
-    public MainViewModel(CounterViewModel counterVm, ControlsViewModel controlsVm, PopupViewModel popupVm)
+    public MainViewModel(CounterViewModel counterVm, LightBulbViewModel lightBulbVm, ControlsViewModel controlsVm, PopupViewModel popupVm)
     {
         // 탭 이름과 전환할 ViewModel을 한 곳에 모아 데이터 기반으로 NavButtons를 생성한다.
         var pages = new (string Content, object ViewModel)[]
         {
             ("Counter", counterVm),
+            ("Light Bulb", lightBulbVm),
             ("Controls", controlsVm),
             ("Popup", popupVm),
         };

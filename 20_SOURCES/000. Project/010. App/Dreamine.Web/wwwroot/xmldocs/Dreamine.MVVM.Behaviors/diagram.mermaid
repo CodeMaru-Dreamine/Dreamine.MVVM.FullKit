@@ -1,0 +1,37 @@
+﻿classDiagram
+    class IBehavior {
+        <<interface>>
+        +Attach(object) void
+        +Detach() void
+        +IsAttached bool
+    }
+    class IBehavior~T~ {
+        <<interface>>
+        +AssociatedObject T
+        +Attach(T) void
+    }
+    class BehaviorBase {
+        <<abstract>>
+        +IsAttached bool
+        +Attach(object) void
+        +Detach() void
+        #OnAttached() void
+        #OnDetaching() void
+    }
+    class BehaviorBase~T~ {
+        <<abstract>>
+        +AssociatedObject T
+        #OnAttached() void
+        #OnDetaching() void
+    }
+    class BehaviorCollection {
+        +Add(IBehavior) void
+        +Remove(IBehavior) void
+        +AttachAll(object) void
+        +DetachAll() void
+    }
+    IBehavior <|-- IBehavior~T~
+    IBehavior <|.. BehaviorBase
+    IBehavior~T~ <|.. BehaviorBase~T~
+    BehaviorBase <|-- BehaviorBase~T~
+    BehaviorCollection o-- IBehavior

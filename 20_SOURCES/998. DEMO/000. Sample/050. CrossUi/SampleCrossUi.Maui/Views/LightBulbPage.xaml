@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:dc="clr-namespace:Dreamine.UI.Maui;assembly=Dreamine.UI.Maui"
+             x:Class="SampleCrossUi.Maui.Views.LightBulbPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20" Spacing="16" HorizontalOptions="Center">
+
+            <Label Text="Light Bulb"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+
+            <Label Text="A button command and a checkbox binding drive the same shared state."
+                   FontSize="14"
+                   HorizontalTextAlignment="Center"
+                   TextColor="#667085"
+                   WidthRequest="360" />
+
+            <dc:DreamineLightBulb x:Name="Bulb"
+                                  Diameter="112"
+                                  HorizontalOptions="Center" />
+
+            <Label x:Name="StatusLabel"
+                   FontAttributes="Bold"
+                   FontFamily="Consolas"
+                   HorizontalOptions="Center" />
+
+            <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                <Button Text="Toggle"
+                        Clicked="OnToggleClicked"
+                        BackgroundColor="#0d6efd"
+                        TextColor="White" />
+                <HorizontalStackLayout Spacing="6" VerticalOptions="Center">
+                    <CheckBox x:Name="PowerCheckBox"
+                              CheckedChanged="OnPowerChanged" />
+                    <Label Text="Power" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+                <Label x:Name="CountLabel" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentView>

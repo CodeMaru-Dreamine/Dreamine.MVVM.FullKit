@@ -3,6 +3,7 @@
 @rendermode InteractiveServer
 @inject AdminViewModel Vm
 @inject NavigationManager Nav
+@inject PlaygroundMediaService Media
 
 <PageTitle>관리자 — Dreamine</PageTitle>
 
@@ -68,7 +69,11 @@
                 </label>
                 <label class="dw-label">버전<input class="dw-input" @bind="Vm.Editing.Version" placeholder="1.0.0" /></label>
                 <label class="dw-label">정렬 순서<input class="dw-input" type="number" @bind="Vm.Editing.SortOrder" /></label>
-                <label class="dw-label dw-label--full">설명<textarea class="dw-input dw-textarea" @bind="Vm.Editing.Description" rows="3" /></label>
+                <label class="dw-label dw-label--full">설명 (한국어)<textarea class="dw-input dw-textarea" @bind="Vm.Editing.Description" rows="2" /></label>
+                <label class="dw-label dw-label--full">설명 (English)
+                    <textarea class="dw-input dw-textarea" @bind="Vm.Editing.DescriptionEn" rows="2"
+                              placeholder="English description (optional — falls back to Korean if empty)" />
+                </label>
                 <label class="dw-label">NuGet ID<input class="dw-input" @bind="Vm.Editing.NuGetId" placeholder="Dreamine.MVVM.Core" /></label>
                 <label class="dw-label">GitHub URL<input class="dw-input" @bind="Vm.Editing.RepoUrl" placeholder="https://github.com/..." /></label>
                 <label class="dw-label dw-label--full">
@@ -95,11 +100,191 @@
             </div>
         </div>
     }
+    else if (Vm.IsSiteEditing)
+    {
+        <!-- 사이트 설정 폼 -->
+        <div class="dw-edit-form">
+            <h2>사이트 설정</h2>
+            <div class="dw-form-grid">
+                <label class="dw-label">사이트 제목
+                    <input class="dw-input" @bind="Vm.SiteEdit.Title" placeholder="Dreamine" />
+                </label>
+                <label class="dw-label">GitHub URL
+                    <input class="dw-input" @bind="Vm.SiteEdit.GitHubUrl" placeholder="https://github.com/..." />
+                </label>
+                <label class="dw-label dw-label--full">사이트 설명
+                    <input class="dw-input" @bind="Vm.SiteEdit.Description" placeholder="Modular Architecture for Real Applications" />
+                </label>
+                <label class="dw-label dw-label--full">
+                    아이콘 URL
+                    <input class="dw-input" @bind="Vm.SiteEdit.IconUrl"
+                           placeholder="/img/icon.ico 또는 https://..." />
+                    <span class="dw-hint">브랜드 영역에 표시되는 아이콘입니다. 비워두면 기본 도형이 사용됩니다.</span>
+                </label>
+                @if (!string.IsNullOrWhiteSpace(Vm.SiteEdit.IconUrl))
+                {
+                    <div class="dw-label dw-label--full">
+                        미리보기
+                        <div class="dw-site-icon-preview">
+                            <img src="@Vm.SiteEdit.IconUrl" alt="icon preview" />
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <h3 class="dw-form-section-title">Open Graph / SNS 공유</h3>
+            <div class="dw-form-grid">
+                <label class="dw-label">OG 제목
+                    <input class="dw-input" @bind="Vm.SiteEdit.OgTitle"
+                           placeholder="비워두면 사이트 제목 사용" />
+                </label>
+                <label class="dw-label">사이트 이름
+                    <input class="dw-input" @bind="Vm.SiteEdit.OgSiteName"
+                           placeholder="Dreamine" />
+                </label>
+                <label class="dw-label dw-label--full">OG 설명
+                    <input class="dw-input" @bind="Vm.SiteEdit.OgDescription"
+                           placeholder="비워두면 사이트 설명 사용" />
+                </label>
+                <label class="dw-label dw-label--full">사이트 URL
+                    <input class="dw-input" @bind="Vm.SiteEdit.OgUrl"
+                           placeholder="https://dreamine.kr/" />
+                </label>
+                <label class="dw-label dw-label--full">
+                    OG 이미지 URL
+                    <input class="dw-input" @bind="Vm.SiteEdit.OgImageUrl"
+                           placeholder="/img/og-dreamine.svg" />
+                    <span class="dw-hint">권장 크기: 1200×630px. 기본 이미지: /img/og-dreamine.png</span>
+                </label>
+                <label class="dw-label">Twitter Card
+                    <select class="dw-input" @bind="Vm.SiteEdit.TwitterCard">
+                        <option value="summary_large_image">summary_large_image (권장)</option>
+                        <option value="summary">summary</option>
+                    </select>
+                </label>
+                @if (!string.IsNullOrWhiteSpace(Vm.SiteEdit.OgImageUrl))
+                {
+                    <div class="dw-label dw-label--full">
+                        OG 이미지 미리보기
+                        <div class="dw-og-preview">
+                            <img src="@Vm.SiteEdit.OgImageUrl" alt="OG image preview" />
+                            <div class="dw-og-preview__meta">
+                                <div class="dw-og-preview__site">@(Vm.SiteEdit.OgSiteName)</div>
+                                <div class="dw-og-preview__title">@(string.IsNullOrEmpty(Vm.SiteEdit.OgTitle) ? Vm.SiteEdit.Title : Vm.SiteEdit.OgTitle)</div>
+                                <div class="dw-og-preview__desc">@(string.IsNullOrEmpty(Vm.SiteEdit.OgDescription) ? Vm.SiteEdit.Description : Vm.SiteEdit.OgDescription)</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="dw-edit-actions">
+                <button class="dw-btn dw-btn--primary" @onclick="OnSaveSiteSettings">💾 저장</button>
+                <button class="dw-btn dw-btn--ghost" @onclick="Vm.CancelSiteEdit">취소</button>
+            </div>
+
+            <h3 class="dw-form-section-title">비밀번호 변경</h3>
+            <div class="dw-form-grid">
+                <label class="dw-label dw-label--full">현재 비밀번호
+                    <input class="dw-input" type="password" @bind="Vm.PwCurrent" placeholder="현재 비밀번호" />
+                </label>
+                <label class="dw-label">새 비밀번호
+                    <input class="dw-input" type="password" @bind="Vm.PwNew" placeholder="6자 이상" />
+                </label>
+                <label class="dw-label">새 비밀번호 확인
+                    <input class="dw-input" type="password" @bind="Vm.PwConfirm" placeholder="동일하게 입력" />
+                </label>
+            </div>
+            <div class="dw-edit-actions">
+                <button class="dw-btn dw-btn--ghost" @onclick="OnChangePassword">🔐 비밀번호 변경</button>
+            </div>
+        </div>
+    }
+    else if (Vm.IsDemoEditing)
+    {
+        <div class="dw-edit-form">
+            <h2>@(string.IsNullOrEmpty(Vm.EditingDemo!.Title) ? "새 체험 데모" : Vm.EditingDemo.Title)</h2>
+
+            <div class="dw-form-grid">
+                <label class="dw-label">ID / Live 렌더 키
+                    <input class="dw-input" @bind="Vm.EditingDemo.Id" placeholder="button, checkbox, custom-demo" />
+                    <span class="dw-hint">기존 Live 렌더러는 bulb, button, checkbox, radio, checkled, textbox, combobox, expander, numeric, listbox, counter, datagrid, timespinner, image 키와 연결됩니다.</span>
+                </label>
+                <label class="dw-label">정렬 순서
+                    <input class="dw-input" type="number" @bind="Vm.EditingDemo.SortOrder" />
+                </label>
+                <label class="dw-label">목차 라벨
+                    <input class="dw-input" @bind="Vm.EditingDemo.NavLabel" placeholder="Button" />
+                </label>
+                <label class="dw-label dw-label--check">
+                    <input type="checkbox" @bind="Vm.EditingDemo.IsVisible" />
+                    공개 (체험 페이지에 표시)
+                </label>
+
+                <label class="dw-label dw-label--full">제목 (한국어)
+                    <input class="dw-input" @bind="Vm.EditingDemo.Title" placeholder="Button — DreamineButton" />
+                </label>
+                <label class="dw-label dw-label--full">제목 (English)
+                    <input class="dw-input" @bind="Vm.EditingDemo.TitleEn" placeholder="Button — DreamineButton" />
+                </label>
+                <label class="dw-label dw-label--full">설명 (한국어)
+                    <textarea class="dw-input dw-textarea" @bind="Vm.EditingDemo.Description" rows="3" />
+                </label>
+                <label class="dw-label dw-label--full">설명 (English)
+                    <textarea class="dw-input dw-textarea" @bind="Vm.EditingDemo.DescriptionEn" rows="3" />
+                </label>
+            </div>
+
+            <h3 class="dw-form-section-title">플랫폼 미디어</h3>
+            <div class="dw-form-grid">
+                <label class="dw-label dw-label--full">WPF 이미지/동영상 URL
+                    <input class="dw-input" @bind="Vm.EditingDemo.WpfShot" placeholder="/img/demos/button-wpf.png 또는 /media/demos/button-wpf.mp4" />
+                    <InputFile OnChange='@((InputFileChangeEventArgs e) => OnDemoMediaUpload(e, "wpf"))' accept="image/*,video/*" />
+                </label>
+                <label class="dw-label dw-label--full">WinForms 이미지/동영상 URL
+                    <input class="dw-input" @bind="Vm.EditingDemo.WinFormsShot" placeholder="/img/demos/button-winforms.png 또는 /media/demos/button-winforms.mp4" />
+                    <InputFile OnChange='@((InputFileChangeEventArgs e) => OnDemoMediaUpload(e, "winforms"))' accept="image/*,video/*" />
+                </label>
+                <label class="dw-label dw-label--full">MAUI 이미지/동영상 URL
+                    <input class="dw-input" @bind="Vm.EditingDemo.MauiShot" placeholder="/img/demos/button-maui.png 또는 /media/demos/button-maui.mp4" />
+                    <InputFile OnChange='@((InputFileChangeEventArgs e) => OnDemoMediaUpload(e, "maui"))' accept="image/*,video/*" />
+                </label>
+            </div>
+
+            <h3 class="dw-form-section-title">코드 스니펫</h3>
+            <div class="dw-form-grid">
+                <label class="dw-label dw-label--full">Blazor Live 코드
+                    <textarea class="dw-input dw-textarea dw-code-edit" @bind="Vm.EditingDemo.BlazorCode" rows="8" />
+                </label>
+                <label class="dw-label dw-label--full">공통 ViewModel 코드
+                    <textarea class="dw-input dw-textarea dw-code-edit" @bind="Vm.EditingDemo.VmCode" rows="8" />
+                </label>
+                <label class="dw-label dw-label--full">WPF 코드
+                    <textarea class="dw-input dw-textarea dw-code-edit" @bind="Vm.EditingDemo.WpfCode" rows="8" />
+                </label>
+                <label class="dw-label dw-label--full">WinForms 코드
+                    <textarea class="dw-input dw-textarea dw-code-edit" @bind="Vm.EditingDemo.WinFormsCode" rows="8" />
+                </label>
+                <label class="dw-label dw-label--full">MAUI 코드
+                    <textarea class="dw-input dw-textarea dw-code-edit" @bind="Vm.EditingDemo.MauiCode" rows="8" />
+                </label>
+            </div>
+
+            <div class="dw-edit-actions">
+                <button class="dw-btn dw-btn--primary" @onclick="OnSaveDemo">💾 저장</button>
+                <button class="dw-btn dw-btn--ghost" @onclick="Vm.CancelDemoEdit">취소</button>
+            </div>
+        </div>
+    }
     else
     {
+        <!-- 툴바 -->
         <div class="dw-admin-toolbar">
             <span class="dw-admin__count">라이브러리 @(Vm.Libraries.Count)개</span>
-            <div style="display:flex;gap:8px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="Vm.StartSiteEdit">🎨 사이트 설정</button>
+                <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="OnSyncCatalog">📦 프로젝트 동기화</button>
+                <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="OnSyncVersions">🔢 버전 동기화</button>
                 <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="OnAutoLink">🔍 XML 자동 연결</button>
                 <button class="dw-btn dw-btn--primary dw-btn--sm" @onclick="Vm.StartNew">+ 추가</button>
             </div>
@@ -110,19 +295,44 @@
             {
                 <div class="dw-lib-row dw-lib-row--admin">
                     <span class="dw-lib-row__order">@lib.SortOrder</span>
-                    <span class="dw-lib-row__name">@lib.Name</span>
+                    <span class="dw-lib-row__name" title="@lib.Name">@lib.Name</span>
                     <span class="dw-badge dw-badge--@lib.Status">@lib.Status</span>
                     <span class="dw-badge @(lib.IsVisible ? "dw-badge--visible" : "dw-badge--hidden")">
                         @(lib.IsVisible ? "공개" : "비공개")
                     </span>
                     <span class="dw-lib-row__desc">@lib.Description</span>
-                    <span class="dw-lib-row__xml @(string.IsNullOrEmpty(lib.XmlDocPath) ? "dw-lib-row__xml--none" : "")">
-                        @(string.IsNullOrEmpty(lib.XmlDocPath) ? "XML 미설정" : "XML 설정됨")
-                    </span>
+                    <span class="dw-lib-row__ver">v@(lib.Version)</span>
                     <div class="dw-lib-row__actions">
                         <a href="/docs/@lib.Id" target="_blank" class="dw-btn dw-btn--sm dw-btn--ghost">문서</a>
                         <button class="dw-btn dw-btn--sm" @onclick="() => Vm.StartEdit(lib)">편집</button>
                         <button class="dw-btn dw-btn--sm dw-btn--danger" @onclick="() => OnDelete(lib.Id)">삭제</button>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="dw-admin-toolbar dw-admin-toolbar--section">
+            <span class="dw-admin__count">체험 데모 @(Vm.Demos.Count)개</span>
+            <button class="dw-btn dw-btn--primary dw-btn--sm" @onclick="Vm.StartNewDemo">+ 데모 추가</button>
+        </div>
+
+        <div class="dw-lib-list">
+            @foreach (var demo in Vm.Demos.OrderBy(x => x.SortOrder))
+            {
+                <div class="dw-lib-row dw-demo-row--admin">
+                    <span class="dw-lib-row__order">@demo.SortOrder</span>
+                    <span class="dw-lib-row__name" title="@demo.Id">@demo.Id</span>
+                    <span class="dw-badge @(demo.IsVisible ? "dw-badge--visible" : "dw-badge--hidden")">
+                        @(demo.IsVisible ? "공개" : "비공개")
+                    </span>
+                    <span class="dw-lib-row__desc">@demo.Title</span>
+                    <span class="dw-lib-row__xml @(HasAnyMedia(demo) ? "" : "dw-lib-row__xml--none")">
+                        @(HasAnyMedia(demo) ? "미디어 설정됨" : "미디어 없음")
+                    </span>
+                    <div class="dw-lib-row__actions">
+                        <a href="/playground#@demo.Id" target="_blank" class="dw-btn dw-btn--sm dw-btn--ghost">보기</a>
+                        <button class="dw-btn dw-btn--sm" @onclick="() => Vm.StartEditDemo(demo)">편집</button>
+                        <button class="dw-btn dw-btn--sm dw-btn--danger" @onclick="() => OnDeleteDemo(demo.Id)">삭제</button>
                     </div>
                 </div>
             }
@@ -165,5 +375,75 @@
     {
         await Vm.AutoLinkXmlAsync();
         StateHasChanged();
+    }
+
+    private async Task OnSyncVersions()
+    {
+        await Vm.SyncVersionsAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnSyncCatalog()
+    {
+        await Vm.SyncCatalogAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnSaveSiteSettings()
+    {
+        await Vm.SaveSiteSettingsAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnChangePassword()
+    {
+        var err = await Vm.ChangePasswordAsync();
+        Vm.StatusMessage = err is null ? "✅ 비밀번호가 변경됐습니다." : $"❌ {err}";
+        StateHasChanged();
+    }
+
+    private async Task OnSaveDemo()
+    {
+        await Vm.SaveDemoEditAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnDeleteDemo(string id)
+    {
+        await Vm.DeleteDemoAsync(id);
+        StateHasChanged();
+    }
+
+    private static bool HasAnyMedia(PlaygroundDemo demo) =>
+        !string.IsNullOrWhiteSpace(demo.WpfShot)
+        || !string.IsNullOrWhiteSpace(demo.WinFormsShot)
+        || !string.IsNullOrWhiteSpace(demo.MauiShot);
+
+    private async Task OnDemoMediaUpload(InputFileChangeEventArgs e, string platform)
+    {
+        if (Vm.EditingDemo is null) return;
+
+        try
+        {
+            var url = await Media.SaveAsync(e.File, Vm.EditingDemo.Id, platform);
+            switch (platform)
+            {
+                case "wpf":
+                    Vm.EditingDemo.WpfShot = url;
+                    break;
+                case "winforms":
+                    Vm.EditingDemo.WinFormsShot = url;
+                    break;
+                case "maui":
+                    Vm.EditingDemo.MauiShot = url;
+                    break;
+            }
+
+            Vm.StatusMessage = $"✅ {platform} 미디어가 업로드됐습니다. 저장 버튼을 눌러 반영하세요.";
+        }
+        catch (Exception ex)
+        {
+            Vm.StatusMessage = $"❌ 업로드 실패: {ex.Message}";
+        }
     }
 }
