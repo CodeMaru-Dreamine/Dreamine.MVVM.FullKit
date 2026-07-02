@@ -143,6 +143,19 @@
         <member name="F:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboard._hookSubscribed">
             <summary>이벤트 등록 여부(중복 구독 방지)</summary>
         </member>
+        <member name="P:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboard.IsPressedCapsLock">
+            <summary>
+            CapsLock은 로컬 토글이 아니라 OS 실제 상태를 단일 소스로 읽는다.
+            → 물리 키보드로 CapsLock을 눌러도 그대로 반영되고, 가상/물리가 서로 안 싸운다.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboard.SimulateCharKey(Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.Key)">
+            <summary>
+            문자 키를 입력한다. Shift 토글/CapsLock 상태에 따라 물리 Shift를 한 글자만
+            감싸서 대문자/기호를 만든다. 상태는 클릭 핸들러가 직접 관리하므로 전역 훅이
+            꺼져 있어도(디버거 실행 등) 동작한다.
+            </summary>
+        </member>
         <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboard.KeyboardUserControl_Unloaded(System.Object,System.Windows.RoutedEventArgs)">
             <summary>
             @brief Visual 트리에서 떨어질 때(창 닫힘 포함) 안전 정리.
@@ -197,6 +210,36 @@
         <member name="M:Dreamine.UI.Wpf.Equipment.DreamineVirtualKeyboard.DreamineVirtualKeyboardWindow.InitializeComponent">
             <summary>
             InitializeComponent
+            </summary>
+        </member>
+        <member name="T:XamlGeneratedNamespace.GeneratedInternalTypeHelper">
+            <summary>
+            GeneratedInternalTypeHelper
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.CreateInstance(System.Type,System.Globalization.CultureInfo)">
+            <summary>
+            CreateInstance
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.GetPropertyValue(System.Reflection.PropertyInfo,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            GetPropertyValue
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.SetPropertyValue(System.Reflection.PropertyInfo,System.Object,System.Object,System.Globalization.CultureInfo)">
+            <summary>
+            SetPropertyValue
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.CreateDelegate(System.Type,System.Object,System.String)">
+            <summary>
+            CreateDelegate
+            </summary>
+        </member>
+        <member name="M:XamlGeneratedNamespace.GeneratedInternalTypeHelper.AddEventHandler(System.Reflection.EventInfo,System.Object,System.Delegate)">
+            <summary>
+            AddEventHandler
             </summary>
         </member>
     </members>

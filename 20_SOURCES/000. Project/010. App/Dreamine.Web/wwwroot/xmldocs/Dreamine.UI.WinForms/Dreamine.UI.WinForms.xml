@@ -199,8 +199,7 @@
         </member>
         <member name="T:Dreamine.UI.WinForms.VirtualKeyboard.DreamineVirtualKeyboardForm">
             <summary>
-            DreamineVirtualKeyboardAssist가 띄우는 화면 키보드 팝업.
-            영문 QWERTY + 숫자 레이아웃을 지원한다(한글 조합 입력은 지원하지 않는다).
+            DreamineVirtualKeyboardAssist가 띄우는 WinForms 화면 키보드.
             </summary>
         </member>
         <member name="T:Dreamine.UI.WinForms.VirtualKeyboard.VkLayout">
