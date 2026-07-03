@@ -1,10 +1,46 @@
 # Dreamine.MVVM.FullKit
 
+[![CI](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit/actions/workflows/ci.yml/badge.svg)](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit/actions/workflows/ci.yml)
+
 WPF MVVM 애플리케이션을 위한 Dreamine 통합 패키지 문서입니다.
 
 > Dreamine.MVVM.FullKit은 WPF 애플리케이션에 필요한 Dreamine MVVM 계열 모듈들을 한 번에 이해할 수 있도록 정리한 통합 문서입니다. DI, ViewModel 인프라, 소스 제너레이터, Locator, WPF 런타임 연결, Behavior, Extension, 그리고 선택적 Hybrid 호스팅까지 포함합니다.
 
 [➡️ English Version](./README.md)
+
+---
+
+## 저장소 빠른 시작
+
+이 저장소는 개별 Dreamine 라이브러리를 Git 서브모듈로 관리합니다. 처음 받을 때는 recursive clone을 권장합니다.
+
+```powershell
+git clone --recursive https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit.git
+cd Dreamine.MVVM.FullKit
+```
+
+이미 일반 clone을 했다면 다음 명령으로 서브모듈을 내려받을 수 있습니다.
+
+```powershell
+git submodule update --init --recursive
+```
+
+처음 확인할 때는 아래 테스트부터 실행하면 됩니다.
+
+```powershell
+dotnet restore "20_SOURCES/200. Tests/Dreamine.FullKit.Tests/Dreamine.FullKit.Tests.csproj"
+dotnet test "20_SOURCES/200. Tests/Dreamine.FullKit.Tests/Dreamine.FullKit.Tests.csproj" --no-restore
+dotnet test "20_SOURCES/200. Tests/Dreamine.FullKit.Wpf.Tests/Dreamine.FullKit.Wpf.Tests.csproj" --no-restore
+```
+
+대표 샘플 빌드:
+
+```powershell
+dotnet build "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/SampleCore/SampleCore.csproj" --configuration Release
+dotnet build "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Wpf/SampleCrossUi.Wpf.csproj" --configuration Release
+```
+
+CI는 Windows 환경에서 Core 테스트, WPF 테스트, WinForms 테스트, 대표 샘플 빌드를 확인합니다.
 
 ---
 
