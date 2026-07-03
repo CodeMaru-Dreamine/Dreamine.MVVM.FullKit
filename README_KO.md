@@ -2,9 +2,12 @@
 
 [![CI](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit/actions/workflows/ci.yml/badge.svg)](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit/actions/workflows/ci.yml)
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
-![.NET](https://img.shields.io/badge/.NET-8%20%7C%209-512BD4.svg)
-![Platform](https://img.shields.io/badge/platform-Windows-0078D4.svg)
-![Visual Studio](https://img.shields.io/badge/Visual%20Studio-2022-5C2D91.svg)
+![.NET](https://img.shields.io/badge/.NET-8%20%7C%209-512BD4.svg?logo=dotnet&logoColor=white)
+![WPF](https://img.shields.io/badge/WPF-0078D4.svg?logo=windows&logoColor=white)
+![WinForms](https://img.shields.io/badge/WinForms-6E6E6E.svg?logo=windows&logoColor=white)
+![Blazor](https://img.shields.io/badge/Blazor-512BD4.svg?logo=blazor&logoColor=white)
+![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-F7522F.svg?logo=dotnet&logoColor=white)
+![Visual Studio](https://img.shields.io/badge/Visual%20Studio-2022-5C2D91.svg?logo=visualstudio&logoColor=white)
 [![NuGet](https://img.shields.io/nuget/v/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
 
