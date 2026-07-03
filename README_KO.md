@@ -1,6 +1,10 @@
 # Dreamine.MVVM.FullKit
 
 [![CI](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit/actions/workflows/ci.yml/badge.svg)](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit/actions/workflows/ci.yml)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+![.NET](https://img.shields.io/badge/.NET-8%20%7C%209-512BD4.svg)
+![Platform](https://img.shields.io/badge/platform-Windows-0078D4.svg)
+![Visual Studio](https://img.shields.io/badge/Visual%20Studio-2022-5C2D91.svg)
 
 WPF MVVM 애플리케이션을 위한 Dreamine 통합 패키지 문서입니다.
 
