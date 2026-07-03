@@ -21,7 +21,42 @@ jobs:
         run: git config --global core.longpaths true
 
       - name: Checkout submodules
-        run: git submodule update --init --recursive
+        shell: pwsh
+        run: |
+          $modules = @()
+          $current = @{}
+
+          foreach ($line in Get-Content ".gitmodules") {
+            if ($line -match '^\[submodule "(.+)"\]') {
+              if ($current.Path -and $current.Url) {
+                $modules += [pscustomobject]$current
+              }
+              $current = @{}
+            }
+            elseif ($line -match '^\s*path = (.+)$') {
+              $current.Path = $Matches[1].Trim()
+            }
+            elseif ($line -match '^\s*url = (.+)$') {
+              $current.Url = $Matches[1].Trim()
+            }
+          }
+
+          if ($current.Path -and $current.Url) {
+            $modules += [pscustomobject]$current
+          }
+
+          foreach ($module in $modules) {
+            $treeLine = git ls-tree HEAD -- "$($module.Path)"
+            if ($treeLine -notmatch '^160000\s+commit\s+([0-9a-f]+)\s+') {
+              throw "Could not find gitlink SHA for $($module.Path)"
+            }
+
+            $sha = $Matches[1]
+            Write-Host "Checking out $($module.Path) at $sha"
+            New-Item -ItemType Directory -Force -Path (Split-Path $module.Path) | Out-Null
+            git clone --no-checkout "$($module.Url)" "$($module.Path)"
+            git -C "$($module.Path)" checkout "$sha"
+          }
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
