@@ -4,7 +4,16 @@
         <name>Dreamine.UI.Wpf</name>
     </assembly>
     <members>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Behaviors.AutoScrollListBoxBehavior" -->
+        <member name="T:Dreamine.UI.Wpf.Behaviors.AutoScrollListBoxBehavior">
+            <summary>
+            \file AutoScrollListBoxBehavior.cs
+            \brief Attached behavior that keeps a ListBox scrolled to the latest item.
+            Details:
+             - When enabled, it listens to ItemsSource changes and automatically scrolls to the last item.
+             - Works with ObservableCollection via INotifyCollectionChanged.
+             - This behavior is UI-only and does not require code-behind usage.
+            </summary>
+        </member>
         <member name="F:Dreamine.UI.Wpf.Behaviors.AutoScrollListBoxBehavior.IsEnabledProperty">
             <summary>
             \brief Attached property to enable/disable auto-scroll.
@@ -24,7 +33,13 @@
             <param name="element">Target dependency object</param>
             <returns>True if enabled</returns>
         </member>
-        <!-- Badly formed XML comment ignored for member "F:Dreamine.UI.Wpf.Behaviors.AutoScrollListBoxBehavior.SubscriptionProperty" -->
+        <member name="F:Dreamine.UI.Wpf.Behaviors.AutoScrollListBoxBehavior.SubscriptionProperty">
+            <summary>
+            \brief Attached property for holding the subscription handler reference.
+            Details:
+             - Used to properly detach events when behavior is disabled.
+            </summary>
+        </member>
         <member name="M:Dreamine.UI.Wpf.Behaviors.AutoScrollListBoxBehavior.OnIsEnabledChanged(System.Windows.DependencyObject,System.Windows.DependencyPropertyChangedEventArgs)">
             <summary>
             \brief Called when IsEnabled changes.
@@ -239,8 +254,38 @@
             Always thrown because reverse conversion is not supported.
             </exception>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Converters.BoolToVisibilityConverter" -->
-        <!-- Badly formed XML comment ignored for member "P:Dreamine.UI.Wpf.Converters.BoolToVisibilityConverter.Inverse" -->
+        <member name="T:Dreamine.UI.Wpf.Converters.BoolToVisibilityConverter">
+             <summary>
+             \brief Converts between <see cref="T:System.Boolean"/> and <see cref="T:System.Windows.Visibility"/> with optional inversion and Hidden support.
+             Details:
+             This converter is designed to be compatible with common "BoolToVisibilityConverter" variants used in projects.
+             It supports:
+             - Inverse conversion (true->Collapsed/Hidden, false->Visible)
+             - Hidden instead of Collapsed when false
+             - ConvertBack (Visibility -> bool)
+            
+             Usage patterns:
+             1) Property-based options:
+                <code>
+                &lt;converters:BoolToVisibilityConverter Inverse="True" UseHidden="True"/&gt;
+                </code>
+             2) Parameter-based options:
+                <code>
+                Visibility="{Binding IsOn, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse}"
+                Visibility="{Binding IsOn, Converter={StaticResource BoolToVis}, ConverterParameter=Hidden}"
+                Visibility="{Binding IsOn, Converter={StaticResource BoolToVis}, ConverterParameter=Inverse,Hidden}"
+                </code>
+             </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Converters.BoolToVisibilityConverter.Inverse">
+            <summary>
+            \brief When true, inverts the meaning of the boolean value.
+            Details:
+            If <see cref="P:Dreamine.UI.Wpf.Converters.BoolToVisibilityConverter.Inverse"/> is true:
+            - true  -> falseVisibility (Collapsed/Hidden)
+            - false -> Visible
+            </summary>
+        </member>
         <member name="P:Dreamine.UI.Wpf.Converters.BoolToVisibilityConverter.UseHidden">
             <summary>
             \brief When true, returns <see cref="F:System.Windows.Visibility.Hidden"/> instead of <see cref="F:System.Windows.Visibility.Collapsed"/> for false.
@@ -259,7 +304,7 @@
         <member name="M:Dreamine.UI.Wpf.Converters.BoolToVisibilityConverter.ConvertBack(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
             <summary>
             \brief Converts <see cref="T:System.Windows.Visibility"/> back to a boolean value.
-            \details
+            Details:
             Visible -> true, otherwise false. Applies <see cref="P:Dreamine.UI.Wpf.Converters.BoolToVisibilityConverter.Inverse"/> and optional parameter override.
             \param value The value from the target (expected: <see cref="T:System.Windows.Visibility"/>).
             \param targetType The target type (expected: bool).
@@ -268,11 +313,20 @@
             \return Boolean representation of the visibility state.
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Converters.BoolToVisibilityConverter.ToBoolSafe(System.Object)" -->
+        <member name="M:Dreamine.UI.Wpf.Converters.BoolToVisibilityConverter.ToBoolSafe(System.Object)">
+            <summary>
+            \brief Safely converts various input types to bool.
+            Details:
+            Supports: bool, bool?, string ("true"/"false"), numeric (0/1), null -> false.
+            This implementation avoids nullable pattern matching issues (CS8116).
+            <param name="value">Input value.</param>
+            <returns>Normalized boolean value.</returns>
+            </summary>
+        </member>
         <member name="M:Dreamine.UI.Wpf.Converters.BoolToVisibilityConverter.ApplyOptionsFromParameter(System.Object,System.Boolean@,System.Boolean@)">
             <summary>
             \brief Applies converter options from the ConverterParameter.
-            \details
+            Details:
             Supported parameter forms:
             - string: "Inverse", "Hidden", "UseHidden", "Inverse,Hidden"
             - bool: treated as Inverse override
@@ -282,7 +336,12 @@
             \param useHidden UseHidden option (by ref).
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Converters.DateTimeToTimeSpanConverter" -->
+        <member name="T:Dreamine.UI.Wpf.Converters.DateTimeToTimeSpanConverter">
+            <summary>
+            DateTime to/from TimeSpan converter.
+            DatePicker와 TimeSpinner를 동시에 ExpiredDate에 바인딩하기 위해 사용.
+            </summary>
+        </member>
         <member name="M:Dreamine.UI.Wpf.Converters.DateTimeToTimeSpanConverter.Convert(System.Object,System.Type,System.Object,System.Globalization.CultureInfo)">
             <summary> DateTime → TimeSpan 변환 </summary>
         </member>
@@ -553,7 +612,16 @@
             <returns>This method does not return.</returns>
             <exception cref="T:System.NotSupportedException">Always thrown.</exception>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Converters.StringToDoubleConverter" -->
+        <member name="T:Dreamine.UI.Wpf.Converters.StringToDoubleConverter">
+            <summary>
+            @brief A simple converter that transforms a <c>string</c> to a <c>double</c> and vice versa.
+            @details
+            - <b>Convert:</b> string → double<br/>
+            - <b>ConvertBack:</b> double → string (supports custom formatting)<br/>
+            - By default, parsing uses <see cref="P:System.Globalization.CultureInfo.InvariantCulture"/>. 
+              Set <see cref="P:Dreamine.UI.Wpf.Converters.StringToDoubleConverter.UseInvariantCulture"/> to false to use the binding's provided culture.
+            </summary>
+        </member>
         <member name="P:Dreamine.UI.Wpf.Converters.StringToDoubleConverter.Fallback">
             <summary>
             The value to return when parsing fails.

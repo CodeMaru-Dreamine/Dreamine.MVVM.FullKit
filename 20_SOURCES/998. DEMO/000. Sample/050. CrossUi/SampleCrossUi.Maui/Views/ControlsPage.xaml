@@ -2,7 +2,9 @@
 <ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:dc="clr-namespace:Dreamine.UI.Maui;assembly=Dreamine.UI.Maui"
-             x:Class="SampleCrossUi.Maui.Views.ControlsPage">
+             xmlns:shared="clr-namespace:SampleCrossUi.Shared.ViewModels;assembly=SampleCrossUi.Shared"
+             x:Class="SampleCrossUi.Maui.Views.ControlsPage"
+             x:DataType="shared:ControlsViewModel">
 
     <Grid RowDefinitions="Auto,*">
 
@@ -134,7 +136,7 @@
                             <CollectionView x:Name="GridCollectionView" ItemsSource="{Binding GridRows}" HeightRequest="160"
                                             SelectionMode="Single" SelectionChanged="OnGridSelectionChanged">
                                 <CollectionView.ItemTemplate>
-                                    <DataTemplate>
+                                    <DataTemplate x:DataType="shared:ControlsDemoRow">
                                         <Grid ColumnDefinitions="60,*,100" Padding="8,6">
                                             <Label Grid.Column="0" Text="{Binding No}" />
                                             <Label Grid.Column="1" Text="{Binding Name}" />
@@ -163,7 +165,7 @@
                         <CollectionView ItemsSource="{Binding FruitItems}" HeightRequest="140"
                                          SelectionMode="Single">
                             <CollectionView.ItemTemplate>
-                                <DataTemplate>
+                                <DataTemplate x:DataType="x:String">
                                     <Label Text="{Binding .}" Padding="10,6">
                                         <Label.GestureRecognizers>
                                             <TapGestureRecognizer NumberOfTapsRequired="2" Tapped="OnFruitItemDoubleTapped" />

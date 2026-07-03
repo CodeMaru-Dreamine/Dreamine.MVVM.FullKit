@@ -523,7 +523,21 @@
         <member name="P:Dreamine.UI.Wpf.Controls.DreamineCheckLed.StrokeThickness">
             <summary>외곽선 두께</summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineCheckLedAttach" -->
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineCheckLedAttach">
+            <summary>
+            @brief 임의 요소 위에 <see cref="T:Dreamine.UI.Wpf.Controls.DreamineCheckLed"/>를 Adorner로 얹어주는 Attached 래퍼
+            @details 붙여 쓰기 예:
+            @code{.xml}
+            &lt;VsControls:DreamineButton
+              VsControls:DreamineCheckLedAttach.IsEnabled="True"
+              VsControls:DreamineCheckLedAttach.IsOn="{Binding PusherExtendLed}"
+              VsControls:DreamineCheckLedAttach.IsPulse="True"
+              VsControls:DreamineCheckLedAttach.Corner="TopRight"
+              VsControls:DreamineCheckLedAttach.Diameter="20"
+              VsControls:DreamineCheckLedAttach.Margin="6"/>
+            @endcode
+            </summary>
+        </member>
         <member name="F:Dreamine.UI.Wpf.Controls.DreamineCheckLedAttach.IsPulseProperty">
             <summary>@brief Pulse 애니메이션 사용 여부</summary>
         </member>
@@ -677,8 +691,36 @@
                - 없으면 DreamineComboBoxCommandContext(eventName, sender, eventArgs, combo)
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineTabHost" -->
-        <!-- Badly formed XML comment ignored for member "P:Dreamine.UI.Wpf.Controls.DreamineTabHost.Items" -->
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineTabHost">
+            <summary>
+            \class DreamineTabHost
+            \brief Content control that dynamically loads and switches views by string keys.
+            Details:
+             - IMPORTANT: XAML children are mapped to <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.Items"/> (NOT Content) via <see cref="T:System.Windows.Markup.ContentPropertyAttribute"/>.
+             - This enables:
+                 <DreamineTabHost>
+                     &lt;DreamineTabHostItem Content="A"/&gt;
+                     &lt;DreamineTabHostItem Content="B"/&gt;
+                 </DreamineTabHost>
+             - Views can be declared by:
+               1) XAML children (<see cref="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.Items"/>)
+               2) <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.ContentList"/> / <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.ContentTypeList"/> DPs
+             - Popup identification:
+               - Names ending with "_Popup" are treated as popups.
+             - When <see cref="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.UseSingletonView"/> is true, views are registered to RegionManager and reused.
+             - Design-time:
+               - No DI / RegionManager / PopupService usage.
+               - Views created by Activator and can auto-wire design VM.
+            </summary>
+        </member>
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.Items">
+            <summary>
+            \brief XAML child items collection.
+            Details:
+             - XAML children &lt;DreamineTabHostItem .../&gt; are added here automatically.
+             - This is NOT a DependencyProperty intentionally (to keep parsing simple and stable).
+            </summary>
+        </member>
         <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost._currentView">
             <summary>
             \brief Last active root view instance (non-popup).
@@ -759,7 +801,13 @@
             \brief DP backing field for ContentList.
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "P:Dreamine.UI.Wpf.Controls.DreamineTabHost.ContentList" -->
+        <member name="P:Dreamine.UI.Wpf.Controls.DreamineTabHost.ContentList">
+            <summary>
+            \brief Logical list of view names or type names.
+            Details:
+             - Can contain short type names or fully qualified type names.
+            </summary>
+        </member>
         <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHost.ContentTypeListProperty">
             <summary>
             \brief DP backing field for ContentTypeList.
@@ -956,7 +1004,17 @@
             \brief Resolves a ViewModel type from a View type using common naming conventions.
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineTabHostItem" -->
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineTabHostItem">
+            <summary>
+            \class DreamineTabHostItem
+            \brief Logical item used inside DreamineTabHost to declare a view/popup entry.
+            Details:
+             - Content: default raw type/name string.
+             - Key: optional logical key override (if empty, derived from Type/Content).
+             - Type: optional concrete type name override (if empty, Content is used).
+             - Popup: if true, forces "*_Popup" semantics.
+            </summary>
+        </member>
         <member name="F:Dreamine.UI.Wpf.Controls.DreamineTabHostItem.PopupProperty">
             <summary>
             \brief DP backing field for Popup.
@@ -1170,8 +1228,23 @@
             @brief 마우스 업: 드래그가 아니면 ClickCommand 실행.
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineLabel" -->
-        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineLabel.#cctor" -->
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineLabel">
+            <summary>
+            \class DreamineLabel
+            \brief Custom Label control used in VsLibrary.
+            Details:
+            - Auto merges style resource dictionary.
+            - Supports attached command execution via trigger names (comma-separated).
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineLabel.#cctor">
+            <summary>
+            \brief Static constructor.
+            Details:
+            - Overrides default style key.
+            - Automatically merges DreamineLabelStyle.xaml into application resources.
+            </summary>
+        </member>
         <member name="F:Dreamine.UI.Wpf.Controls.DreamineLabel.CommandProperty">
             <summary>
             \brief Attached ICommand to execute when trigger event fires.
@@ -1239,9 +1312,40 @@
             Light bulb indicator control with a shared API across WPF, WinForms, Blazor, and MAUI.
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineListBox" -->
-        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineListBox.#cctor" -->
-        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineListBox.#ctor" -->
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineListBox">
+             <summary>
+             \class DreamineListBox  
+             \brief Extended ListBox class that supports command execution on item selection.
+            
+             This class inherits from the standard ListBox and internally uses attached properties  
+             to execute an <c>ICommand</c> via <c>PreviewMouseUp</c> and <c>PreviewKeyDown</c> events.
+            
+             Command binding can be applied in XAML as follows:
+             \code{.xaml}
+             &lt;ListBox local:DreamineListBox.Command="{Binding ItemClickCommand}"
+                      local:DreamineListBox.CommandParameter="{Binding SelectedItem}" />
+             \endcode
+             </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.#cctor">
+            <summary>
+            \brief Static constructor (type initializer).
+            Details:
+            - Override DefaultStyleKey metadata ONCE per type.
+            - Merge DreamineListBoxStyle.xaml into Application resources (only once).
+            Note:
+            - Do NOT call OverrideMetadata in instance constructor.
+              It can crash when controls are created multiple times.
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.#ctor">
+            <summary>
+            \brief Default constructor.
+            Details:
+            - Keep it minimal.
+            - Style is handled by static constructor.
+            </summary>
+        </member>
         <member name="M:Dreamine.UI.Wpf.Controls.DreamineListBox.TryMergeStyleOnce">
             <summary>
             \brief DreamineListBoxStyle.xaml을 Application Resource에 1회만 병합한다.
@@ -1343,7 +1447,16 @@
              <Param name="eventName">The actual name of the event that occurred (e.g., "Click", "PreviewMouseUp").</Param>
              <Param name="eventArgs">The arguments for the event that triggered the command.</Param>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreaminePasswordBox" -->
+        <member name="T:Dreamine.UI.Wpf.Controls.DreaminePasswordBox">
+            <summary>
+            \class DreaminePasswordBox
+            \brief Hint/Error 표시 + Password DP 바인딩을 제공하는 커스텀 패스워드 입력 컨트롤
+            \details
+            - 내부 템플릿에 PART_PasswordBox(PasswordBox)가 존재해야 함
+            - PasswordProperty를 VM에 TwoWay로 바인딩 가능
+            - 재진입 가드로 StackOverflow 방지
+            </summary>
+        </member>
         <member name="F:Dreamine.UI.Wpf.Controls.DreaminePasswordBox.HintProperty">
             <summary> \brief 비어있을 때 표시할 힌트 텍스트 </summary>
         </member>
@@ -1624,7 +1737,16 @@
              <Param name="eventName">The actual name of the triggered event (e.g., "Click", "MouseDoubleClick").</Param>
              <Param name="eventArgs">The event argument associated with the triggered event.</Param>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.DreamineTextBox" -->
+        <member name="T:Dreamine.UI.Wpf.Controls.DreamineTextBox">
+            <summary>
+            \class DreamineTextBox
+            \brief Custom TextBox control tailored for VsLibrary.
+            Details:
+            - Style 자동 Merge
+            - Attached Command (PreviewMouseUp/MouseDoubleClick/PreviewKeyUp/TouchUp/Click/TextChanged)
+            - Enter 입력 시 이전 포커스 대상으로 복귀(Enter Focus UX)
+            </summary>
+        </member>
         <member name="F:Dreamine.UI.Wpf.Controls.DreamineTextBox._previousFocusedElement">
             <summary>
             \brief 마지막으로 포커스를 가지고 있던 요소(Enter 복귀 대상).
@@ -1635,7 +1757,14 @@
             \brief Static ctor: DefaultStyleKey + ResourceDictionary merge.
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineTextBox.#ctor" -->
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.#ctor">
+            <summary>
+            \brief ctor: 이전 포커스 저장을 "자기 자신" 이벤트에서 수행.
+            Details:
+            - Window 전역 이벤트에 매달면 누수/중복/예외 케이스가 많음
+            - GotKeyboardFocus의 OldFocus가 "진짜 이전 포커스"로 들어오는 편이라 안정적
+            </summary>
+        </member>
         <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.OnGotKeyboardFocus_StorePreviousFocus(System.Object,System.Windows.Input.KeyboardFocusChangedEventArgs)">
             <summary>
             \brief GotKeyboardFocus에서 이전 포커스(OldFocus)를 저장한다.
@@ -1643,7 +1772,15 @@
             <param name="sender">sender</param>
             <param name="e">focus event args</param>
         </member>
-        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.DreamineTextBox.OnPreviewKeyDown(System.Windows.Input.KeyEventArgs)" -->
+        <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.OnPreviewKeyDown(System.Windows.Input.KeyEventArgs)">
+            <summary>
+            \brief Enter 입력 시 이전 포커스 대상으로 복귀.
+            Details:
+            - Dispatcher로 "키 입력 처리 이후"에 포커스 이동해야 안정적
+            - Keyboard.ClearFocus()는 포커스를 날려버리므로 사용 금지
+            </summary>
+            <param name="e">key event args</param>
+        </member>
         <member name="M:Dreamine.UI.Wpf.Controls.DreamineTextBox.FindFirstFocusableChild(System.Windows.DependencyObject)">
             <summary>
             \brief 첫 focusable child를 DFS로 탐색한다.
@@ -2059,6 +2196,7 @@
             Also updates the button text with countdown seconds.
             </summary>
             <Param name="delaySeconds">Time in seconds to disable the buttons.</Param>
+            <Param name="ct">Cancellation token used when the window closes.</Param>
         </member>
         <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.StartAutoClickAsync(System.Windows.MessageBoxResult,System.Int32,System.Threading.CancellationToken)">
             <summary>
@@ -2066,6 +2204,7 @@
             </summary>
             <Param name="target">The button result to trigger automatically.</Param>
             <Param name="delaySeconds">Time in seconds before auto-click.</Param>
+            <Param name="ct">Cancellation token used when the window closes.</Param>
         </member>
         <member name="M:Dreamine.UI.Wpf.Controls.MessageBox.DreamineMessageBoxWindow.GetTargetButton(System.Windows.MessageBoxResult)">
             <summary>
@@ -2514,11 +2653,30 @@
             @brief 싱글톤이 아닐 때 고유 키(멀티 인스턴스 구별용).
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.LoadViewWithViewModel(System.String,System.Boolean)" -->
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.LoadViewWithViewModel(System.String,System.Boolean)">
+            <summary>
+            @brief View 타입명을 기반으로 View를 생성하고 ViewModel을 바인딩합니다.
+            @details
+             - FIX:
+               - View 생성은 반드시 <see cref="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.ResolveFrameworkElement(System.Type,System.String,System.Boolean)"/> 를 통해 수행합니다.
+                 (Page를 UserControl/ContentControl에 직접 넣으면 WPF 규칙 위반으로 예외 발생)
+               - ViewModel이 없어도 View는 생성하여 화면이 표시되도록 합니다.
+               - Page는 Frame으로 감싸서 반환되므로, 어디에 embed 하더라도 안정적으로 동작합니다.
+            @Param typeName View의 풀네임(끝이 "_Popup"이면 팝업 플래그 처리)
+            @Param useSingletonView ViewModel을 싱글톤으로 resolve할지 여부
+            @returns 뷰 인스턴스/뷰모델 메타 정보
+            </summary>
+            <summary>
+            \brief Loads a view and wires its ViewModel by naming conventions.
+            \param typeName View type name (short or full). Can end with "_Popup".
+            \param useSingletonView True to reuse singleton View/ViewModel.
+            \return LoadedViewInfo.
+            </summary>
+        </member>
         <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.StripViewSuffix(System.String)">
             <summary>
             \brief Resolves a ViewModel type with strict rules to avoid selecting View types as ViewModel.
-            \details
+            Details:
              - Candidates ALWAYS end with "ViewModel".
              - Candidates are filtered to types assignable to ViewModelBase (or at least not FrameworkElement).
             \param actualTypeName Actual view type name without "_Popup".
@@ -2532,8 +2690,37 @@
             (e.g. CounterView/CounterViewModel), not "{Name}View" + "ViewModel" literal concatenation.
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.ResolveFrameworkElement(System.Type,System.String,System.Boolean)" -->
-        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.ApplyDataContext(System.Windows.FrameworkElement,System.Object)" -->
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.ResolveFrameworkElement(System.Type,System.String,System.Boolean)">
+            <summary>
+            @brief 주어진 타입으로부터 임베드 가능한 FrameworkElement를 만듭니다.
+            @details
+            - UserControl → 그대로
+            - Page → Frame에 호스팅(Navigation UI 숨김, History 독립)
+            - Window → Content 떼서 ContentControl로 래핑
+            - FrameworkElement → 그대로
+            - null/실패 → 간단한 안내 UserControl 반환
+            - <paramref name="resetDataContext"/> 가 true일 때만 DataContext를 초기화합니다.
+            <Param name="viewType">생성할 View 타입.</Param>
+            <Param name="typeName">디버깅용 타입 이름.</Param>
+            <Param name="resetDataContext">
+             - true  : Region/ViewLoader가 ViewModel을 책임질 때, 기존 DataContext를 모두 제거합니다.<br/>
+             - false : 기존 DataContext(부모 상속, AutoWireDesignViewModel 등)를 유지합니다.
+            </Param>
+            <returns>임베드 가능한 <see cref="T:System.Windows.FrameworkElement"/> 인스턴스.</returns>
+            </summary>
+        </member>
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.ApplyDataContext(System.Windows.FrameworkElement,System.Object)">
+            <summary>
+            @brief 프레임/호스트 내부 실제 컨텐츠에 ViewModel(DataContext)을 적용합니다.
+            @details
+              - 이 메서드는 ViewModel 타입이 정상적으로 resolve 된 경우에만 호출됩니다.
+              - 기존 DataContext 유무와 관계없이 지정된 ViewModel로 덮어씁니다.
+              - Frame은 Navigation 컨테이너 특성상 즉시 Content가 없을 수 있으므로
+                Navigated/Loaded 타이밍을 모두 커버합니다.
+            <Param name="root">DataContext를 주입할 루트 요소.</Param>
+            <Param name="vm">ViewModel 인스턴스.</Param>
+            </summary>
+        </member>
         <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewLoader.MergeResources(System.Windows.ResourceDictionary,System.Windows.ResourceDictionary)">
             <summary>
             @brief 리소스 병합(윈도우 → 호스트).
@@ -2592,7 +2779,15 @@
             Resets the index map. Useful for testing or app re-initialization.
             </summary>
         </member>
-        <!-- Badly formed XML comment ignored for member "T:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher" -->
+        <member name="T:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher">
+            <summary>
+            @brief Helper responsible for switching between singleton views and popups.
+            @details
+            - Operates only in singleton _mode (<c>_useSingleton == true</c>).
+            - Can activate a popup window or toggle visibility among registered singleton views.
+            - <see cref="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher.IsPopupName(System.String)"/> allows O(1) check if a name is registered as a popup.
+            </summary>
+        </member>
         <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher.#ctor(System.Collections.Generic.IReadOnlyDictionary{System.String,System.Windows.Window},System.Collections.Generic.Dictionary{System.String,System.Windows.FrameworkElement},System.Boolean)">
             <summary>
             @brief Initializes a new Instance of <see cref="T:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher"/>.
@@ -2608,7 +2803,20 @@
             <Param name="viewName">Name to check.</Param>
             <returns><c>true</c> if the key exists in popup windows; otherwise <c>false</c>.</returns>
         </member>
-        <!-- Badly formed XML comment ignored for member "M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher.Switch(System.String,System.Boolean)" -->
+        <member name="M:Dreamine.UI.Wpf.Controls.ViewRegion.ViewSwitcher.Switch(System.String,System.Boolean)">
+            <summary>
+            @brief Switches to a view or popup by its registered name.
+            @details
+            - No-op if not in singleton _mode.
+            - If <paramref name="viewName"/> is a popup, shows and activates it.
+            - Otherwise, optionally hides all popups (depending on <paramref name="popupChange"/>) and toggles view visibility.
+            <Param name="viewName">Target name (view or popup).</Param>
+            <Param name="popupChange">
+            When <c>false</c>, hide all visible popups before showing the view.
+            When <c>true</c>, keep existing popups as-is (do not force-hide).
+            </Param>
+            </summary>
+        </member>
         <member name="T:XamlGeneratedNamespace.GeneratedInternalTypeHelper">
             <summary>
             GeneratedInternalTypeHelper

@@ -116,7 +116,7 @@ public partial class ControlsViewModel : ViewModelBase, IActivatable, IVisibilit
         new() { "Apple", "Banana", "Cherry", "Grape", "Mango", "Melon" };
 
     [DreamineProperty]
-    private string? _selectedFruit = "Cherry";
+    private string _selectedFruit = "Cherry";
 
     // ── Expander (순수 UI 상태) ─────────────────────────────
     [DreamineProperty]
@@ -158,7 +158,7 @@ public partial class ControlsViewModel : ViewModelBase, IActivatable, IVisibilit
 
     /// <summary>NullableToBoolConverter / NullToVisibilityConverter 데모용(처음엔 null).</summary>
     [DreamineProperty]
-    private object? _demoNullable;
+    private object _demoNullable = null!;
 
     /// <summary>BoolPickNameConverter(MultiBinding) 데모용 두 이름.</summary>
     public string DemoWireName => "Wire-001";

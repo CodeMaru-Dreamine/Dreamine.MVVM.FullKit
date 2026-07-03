@@ -88,7 +88,7 @@ public class DreamineButtonTests
     // Simple test ICommand
     private sealed class RelayTestCommand(Action<object?> execute) : ICommand
     {
-        public event EventHandler? CanExecuteChanged;
+        event EventHandler? ICommand.CanExecuteChanged { add { } remove { } }
         public bool CanExecute(object? p) => true;
         public void Execute(object? p) => execute(p);
     }

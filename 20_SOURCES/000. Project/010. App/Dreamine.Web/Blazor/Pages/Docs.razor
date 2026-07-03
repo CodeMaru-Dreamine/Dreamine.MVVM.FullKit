@@ -183,9 +183,10 @@
     // UI 라벨 언어는 전역 설정 사용
     private bool Ko => Lang.IsKorean;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         Lang.Changed += OnLangChanged;
+        return Task.CompletedTask;
     }
 
     protected override async Task OnParametersSetAsync()

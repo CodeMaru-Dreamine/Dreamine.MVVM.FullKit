@@ -95,9 +95,9 @@ public sealed class ControlsPage : UserControl
     private Label           _lblExpCard  = null!;
     private DreamineExpander _expander   = null!;
     private Label           _lblExpInner = null!;
-    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1;
-    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
-    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
+    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1 = null!;
+    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn2 = null!;
+    private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3 = null!;
     private readonly ControlsViewModel _vm;
 
     /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>

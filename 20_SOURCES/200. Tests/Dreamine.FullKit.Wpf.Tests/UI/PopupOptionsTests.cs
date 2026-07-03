@@ -62,7 +62,7 @@ public sealed class PopupOptionsTests
         var defaultTpl = new System.Windows.DataTemplate();
         conv.DefaultTemplate = defaultTpl;
 
-        var result = conv.Convert(null, typeof(System.Windows.DataTemplate), null!, System.Globalization.CultureInfo.InvariantCulture);
+        var result = conv.Convert(null!, typeof(System.Windows.DataTemplate), null!, System.Globalization.CultureInfo.InvariantCulture);
 
         Assert.Same(defaultTpl, result);
     }

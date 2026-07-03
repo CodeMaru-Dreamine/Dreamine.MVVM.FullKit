@@ -2,7 +2,6 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Drawing.Text;
-using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
 namespace ShopPlatform.Services;
@@ -19,7 +18,7 @@ public static class OgImageGenerator
     /// <summary>기본 플랫폼 OG 이미지 생성 (shop-og-default.png).</summary>
     public static void EnsureDefault(string wwwrootPath)
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return; // Linux는 건너뜀
+        if (!OperatingSystem.IsWindowsVersionAtLeast(6, 1)) return; // Linux는 건너뜀
         var dir  = Path.Combine(wwwrootPath, "img");
         var path = Path.Combine(dir, "shop-og-default.png");
         Directory.CreateDirectory(dir);
@@ -78,7 +77,7 @@ public static class OgImageGenerator
     /// <summary>샵별 OG 이미지 생성 (og-{slug}.png) — 샵 이름/설명 포함.</summary>
     public static string EnsureShopOg(string wwwrootPath, string slug, string shopName, string description, string baseUrl)
     {
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        if (!OperatingSystem.IsWindowsVersionAtLeast(6, 1))
             return "/img/shop-og-default.png"; // Linux fallback
         var dir      = Path.Combine(wwwrootPath, "img", "og");
         var fileName = $"og-{slug}.png";
@@ -134,6 +133,7 @@ public static class OgImageGenerator
         return $"/img/og/{fileName}";
     }
 
+    [SupportedOSPlatform("windows6.1")]
     private static void DrawRoundRect(Graphics g, Brush brush, Rectangle rect, int radius)
     {
         using var path = new GraphicsPath();

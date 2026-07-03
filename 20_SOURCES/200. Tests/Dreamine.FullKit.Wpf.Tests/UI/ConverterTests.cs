@@ -12,7 +12,7 @@ public sealed class ConverterTests
     public void NullToVisibility_NullReturnsCollapsed()
     {
         var conv = new NullToVisibilityConverter();
-        Assert.Equal(Visibility.Collapsed, conv.Convert(null, typeof(Visibility), null!, CultureInfo.InvariantCulture));
+        Assert.Equal(Visibility.Collapsed, conv.Convert(null!, typeof(Visibility), null!, CultureInfo.InvariantCulture));
     }
 
     [Fact]

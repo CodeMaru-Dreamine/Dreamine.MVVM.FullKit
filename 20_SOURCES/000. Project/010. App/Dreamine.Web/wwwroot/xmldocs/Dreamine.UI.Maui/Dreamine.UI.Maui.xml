@@ -41,15 +41,15 @@
         </member>
         <member name="T:Dreamine.UI.Maui.DreamineVirtualKeyboard">
             <summary>
-            WPF/WinForms 가상 키보드와 같은 5행 QWERTY 레이아웃의 MAUI 화면 키보드.
-            브라우저/모바일 OS IME 제어가 아니라, 연결된 Entry에 직접 텍스트를 편집한다.
+            MAUI on-screen keyboard with the same five-row QWERTY layout as WPF/WinForms.
+            It edits the attached Entry directly instead of controlling the OS IME.
             </summary>
         </member>
         <member name="M:Dreamine.UI.Maui.DreamineVirtualKeyboard.Attach(Microsoft.Maui.Controls.Entry)">
-            <summary>이 키보드가 입력을 보낼 대상 Entry를 연결한다.</summary>
+            <summary>Attaches the Entry that receives virtual keyboard input.</summary>
         </member>
         <member name="M:Dreamine.UI.Maui.DreamineVirtualKeyboard.OnEnter">
-            <summary>Entry는 한 줄짜리라 줄바꿈 대신 입력 완료로 취급해 키보드를 닫는다.</summary>
+            <summary>Entry is single-line, so Enter completes input instead of inserting a newline.</summary>
         </member>
         <member name="T:Dreamine.UI.Maui.Popup.BlinkPopupOptions">
             <summary>

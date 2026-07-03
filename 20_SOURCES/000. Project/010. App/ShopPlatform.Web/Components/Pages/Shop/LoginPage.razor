@@ -63,7 +63,7 @@
             Nav.NavigateTo(ReturnUrl ?? $"/{Slug}");
     }
 
-    private async Task Login()
+    private void Login()
     {
         _error = string.Empty;
         if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
@@ -84,9 +84,10 @@
         Nav.NavigateTo(ReturnUrl ?? $"/{Slug}");
     }
 
-    private async Task OnKey(KeyboardEventArgs e)
+    private Task OnKey(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter") await Login();
+        if (e.Key == "Enter") Login();
+        return Task.CompletedTask;
     }
 
     // 간단한 BCrypt 대체 (실제로는 BCrypt.Net-Next 패키지 사용 권장)
