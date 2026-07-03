@@ -8,6 +8,8 @@ All-in-One package set for building WPF MVVM applications with the Dreamine arch
 
 [➡️ 한국어 문서 보기](./README_KO.md)
 
+![Dreamine FullKit preview](./docs/assets/dreamine-fullkit-preview.png)
+
 ---
 
 ## Repository Quick Start
@@ -41,6 +43,8 @@ dotnet build "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Wpf/Sa
 ```
 
 The CI workflow runs on Windows and checks the core tests, WPF tests, WinForms tests, and representative samples.
+
+For contribution and submodule workflow details, see [CONTRIBUTING.md](./CONTRIBUTING.md) and [docs/submodules.md](./docs/submodules.md).
 
 ---
 

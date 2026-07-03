@@ -8,6 +8,8 @@ WPF MVVM 애플리케이션을 위한 Dreamine 통합 패키지 문서입니다.
 
 [➡️ English Version](./README.md)
 
+![Dreamine FullKit preview](./docs/assets/dreamine-fullkit-preview.png)
+
 ---
 
 ## 저장소 빠른 시작
@@ -41,6 +43,8 @@ dotnet build "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Wpf/Sa
 ```
 
 CI는 Windows 환경에서 Core 테스트, WPF 테스트, WinForms 테스트, 대표 샘플 빌드를 확인합니다.
+
+기여 및 서브모듈 작업 흐름은 [CONTRIBUTING.md](./CONTRIBUTING.md)와 [docs/submodules.md](./docs/submodules.md)를 참고하세요.
 
 ---
 

@@ -15,7 +15,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          submodules: recursive
+          submodules: false
+
+      - name: Enable Git long paths
+        run: git config --global core.longpaths true
+
+      - name: Checkout submodules
+        run: git submodule update --init --recursive --depth 1
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
