@@ -10,6 +10,7 @@
 ![Visual Studio](https://img.shields.io/badge/Visual%20Studio-2022-5C2D91.svg?logo=visualstudio&logoColor=white)
 [![NuGet](https://img.shields.io/nuget/v/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
+[![Book](https://img.shields.io/badge/%F0%9F%93%96%20Book-Practical%20MVVM%20Architecture-000000.svg)](https://bookk.co.kr/bookStore/69c0f1b41461ec1ae849a0f6)
 
 All-in-One package set for building WPF MVVM applications with the Dreamine architecture.
 

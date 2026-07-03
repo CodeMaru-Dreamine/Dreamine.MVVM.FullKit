@@ -10,6 +10,7 @@
 ![Visual Studio](https://img.shields.io/badge/Visual%20Studio-2022-5C2D91.svg?logo=visualstudio&logoColor=white)
 [![NuGet](https://img.shields.io/nuget/v/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
+[![Book](https://img.shields.io/badge/%F0%9F%93%96%20Book-%EB%AC%B4%EB%84%88%EC%A7%80%EC%A7%80%20%EC%95%8A%EB%8A%94%20%EA%B5%AC%EC%A1%B0%EB%A5%BC%20%EB%A7%8C%EB%93%9C%EB%8A%94%20%EB%B2%95-000000.svg)](https://bookk.co.kr/bookStore/69c0f1b41461ec1ae849a0f6)
 
 WPF MVVM 애플리케이션을 위한 Dreamine 통합 패키지 문서입니다.
 
