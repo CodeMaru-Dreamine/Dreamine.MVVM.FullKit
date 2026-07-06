@@ -145,3 +145,6 @@
 [submodule "20_SOURCES/100. Library/UI.Blazor"]
 	path = 20_SOURCES/100. Library/UI.Blazor
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.UI.Blazor
+[submodule "20_SOURCES/100. Library/Identity"]
+	path = 20_SOURCES/100. Library/Identity
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Identity
