@@ -15,7 +15,11 @@ public sealed class WeddingOptions
         get
         {
             if (string.IsNullOrWhiteSpace(DataPath))
-                return Path.Combine(AppContext.BaseDirectory, "App_Data", "Wedding");
+            {
+                var outputDataPath = Path.Combine(AppContext.BaseDirectory, "App_Data", "Wedding");
+                var sourceDataPath = TryFindSourceDataPath();
+                return sourceDataPath ?? outputDataPath;
+            }
 
             return Path.IsPathRooted(DataPath)
                 ? DataPath
@@ -28,5 +32,22 @@ public sealed class WeddingOptions
         var opts = new WeddingOptions();
         configuration.GetSection("Wedding").Bind(opts);
         return opts;
+    }
+
+    private static string? TryFindSourceDataPath()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            var candidate = Path.Combine(dir.FullName, "App_Data", "Wedding");
+            if (Directory.Exists(candidate) && File.Exists(Path.Combine(dir.FullName, "WeddingPlatform.Web.csproj")))
+            {
+                return candidate;
+            }
+
+            dir = dir.Parent;
+        }
+
+        return null;
     }
 }

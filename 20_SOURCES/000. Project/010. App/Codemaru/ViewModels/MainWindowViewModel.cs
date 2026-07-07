@@ -43,9 +43,7 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IDisposable
         Brand = state.Profile.Brand;
         OwnerName = state.Profile.Name;
         LandingUrl = state.Profile.LandingUrl;
-        CurrentUser = string.IsNullOrWhiteSpace(_session.CurrentUser.Email)
-            ? "Guest"
-            : _session.CurrentUser.Email;
+        CurrentUser = "Guest";
         HistoryCount = state.History.Count;
         StatusMessage = $"{state.Profile.Name} / {state.Profile.Role}";
         Logs.Add($"[{DateTime.Now:HH:mm:ss}] {state.Profile.LandingSlug} updated, history {HistoryCount}");

@@ -1,13 +1,27 @@
 using Codemaru.Models;
+using Microsoft.Extensions.Options;
 using System.IO;
 
 namespace Codemaru.Services;
 
 public sealed record LandingPagePublishResult(string FilePath, string PublicPath, string PublicUrl);
 
+public sealed class LandingPagePublishOptions
+{
+    public string WebRootPath { get; set; } = string.Empty;
+}
+
 public sealed class LandingPagePublisher
 {
-    private static readonly char[] InvalidSegmentChars = Path.GetInvalidFileNameChars();
+    private readonly string _webRootPath;
+
+    public LandingPagePublisher(IOptions<LandingPagePublishOptions> options)
+    {
+        var configuredPath = options.Value.WebRootPath;
+        _webRootPath = string.IsNullOrWhiteSpace(configuredPath)
+            ? Path.Combine(AppContext.BaseDirectory, "wwwroot")
+            : Path.GetFullPath(configuredPath);
+    }
 
     public Task<LandingPagePublishResult> PublishIndexAsync(
         CardProfile profile,
@@ -27,8 +41,7 @@ public sealed class LandingPagePublisher
             throw new InvalidOperationException("랜딩 슬러그를 입력해 주세요.");
         }
 
-        var webRoot = Path.Combine(AppContext.BaseDirectory, "wwwroot");
-        var targetDirectory = webRoot;
+        var targetDirectory = _webRootPath;
         foreach (var segment in slugSegments)
         {
             targetDirectory = Path.Combine(targetDirectory, segment);
@@ -56,24 +69,10 @@ public sealed class LandingPagePublisher
 
     private static string[] NormalizeSlug(string slug)
     {
-        return slug
-            .Replace("\\", "/", StringComparison.Ordinal)
-            .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(static segment => segment is not "." and not "..")
-            .Select(NormalizeSegment)
+        return CardLandingPath.Split(slug)
+            .Select(CardLandingPath.Slugify)
             .Where(static segment => !string.IsNullOrWhiteSpace(segment))
             .ToArray();
-    }
-
-    private static string NormalizeSegment(string segment)
-    {
-        var sanitized = new string(segment
-            .Trim()
-            .Replace(' ', '-')
-            .Select(static c => InvalidSegmentChars.Contains(c) ? '-' : c)
-            .ToArray());
-
-        return sanitized.Trim('.', '-');
     }
 
     private static string BuildPublicUrl(CardProfile profile, string[] slugSegments)

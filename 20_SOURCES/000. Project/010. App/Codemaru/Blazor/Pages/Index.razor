@@ -1,11 +1,14 @@
 @page "/cardhybrid"
 @namespace Codemaru.Blazor.Pages
 @implements IDisposable
+@using System.Text.Json
+@using Codemaru.Models
 @inject CardHybridCircuitSession Session
 @inject ImageBackgroundRemover BackgroundRemover
 @inject LandingPageExporter Exporter
 @inject LandingPagePublisher Publisher
 @inject CardProfileImporter Importer
+@inject IJSRuntime JS
 
 <PageTitle>CardHybrid — 무료 명함 QR · vCard · 랜딩 페이지 | CodeMaru</PageTitle>
 <HeadContent>
@@ -27,6 +30,56 @@
 </HeadContent>
 
 <main class="card-hybrid-shell">
+    @if (showMigrationPrompt)
+    {
+        <div class="migration-prompt" role="dialog" aria-labelledby="migrationPromptTitle">
+            <div class="migration-prompt-body">
+                <h3 id="migrationPromptTitle">로그인 전에 편집하시던 명함이 있어요</h3>
+                <p>이 명함을 <strong>@Session.CurrentUser.DisplayName</strong> 계정에 저장할까요?</p>
+                <p class="migration-prompt-warning">
+                    ⚠️ 계정에 이미 저장된 명함이 있으면 <strong>덮어쓰기</strong> 됩니다.
+                </p>
+                <div class="migration-prompt-actions">
+                    <button type="button" class="primary-button" @onclick="AcceptGuestMigrationAsync">계정에 저장</button>
+                    <button type="button" class="ghost-button" @onclick="RejectGuestMigrationAsync">폐기</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (showSaveOptionsPrompt)
+    {
+        <div class="save-options-prompt" role="dialog" aria-labelledby="saveOptionsTitle">
+            <div class="save-options-body">
+                <h3 id="saveOptionsTitle">명함 저장 옵션</h3>
+                <p>
+                    이력 저장과 함께 공개 랜딩 페이지를 만들 수 있습니다.
+                    vCard에 공개할 항목도 여기서 정하세요.
+                </p>
+
+                <label class="check-row">
+                    <input type="checkbox" @bind="publishLandingOnSave" />
+                    공개용 index.html 생성
+                </label>
+                <label class="check-row">
+                    <input type="checkbox" @bind="includePhoneInVCard" />
+                    vCard에 전화번호 포함
+                </label>
+                <label class="check-row">
+                    <input type="checkbox" @bind="includeAddressInVCard" />
+                    vCard에 주소 포함
+                </label>
+
+                <p class="save-options-url">@LandingUrl</p>
+
+                <div class="save-options-actions">
+                    <button type="button" class="primary-button" @onclick="SaveHistoryWithOptionsAsync">저장</button>
+                    <button type="button" class="ghost-button" @onclick="CancelSaveOptions">취소</button>
+                </div>
+            </div>
+        </div>
+    }
+
     <section class="workspace-band">
         <div class="workspace-title">
             <div>
@@ -35,7 +88,7 @@
             </div>
             <div class="toolbar">
                 <button type="button" class="ghost-button" title="현재 입력값으로 QR 다시 생성" @onclick="ApplyProfile">QR 갱신</button>
-                <button type="button" class="primary-button" title="현재 명함을 이력에 저장" @onclick="SaveHistory">@HistorySaveButtonText</button>
+                <button type="button" class="primary-button" title="현재 명함을 이력에 저장" @onclick="OpenSaveOptionsPrompt">@HistorySaveButtonText</button>
             </div>
         </div>
 
@@ -215,12 +268,9 @@
                     <input @bind="address" @bind:event="oninput" />
                 </label>
                 <label>
-                    랜딩 기본 주소
-                    <input @bind="website" @bind:event="oninput" />
-                </label>
-                <label>
-                    랜딩 슬러그
-                    <input @bind="slug" @bind:event="oninput" />
+                    영문 주소 이름
+                    <input @bind="landingHandle" @bind:event="oninput" placeholder="minsu" />
+                    <span class="field-hint">@LandingUrl</span>
                 </label>
 
                 <div class="size-grid">
@@ -355,7 +405,7 @@
                             <p class="eyebrow">Landing page</p>
                             <h2>@name</h2>
                             <p>@role at @backBrand</p>
-                            <a href="@LandingBaseUrl" target="_blank">@LandingBaseUrl</a>
+                            <a href="@LandingUrl" target="_blank">@LandingUrl</a>
                         </div>
                         <dl>
                             <dt>Email</dt>
@@ -418,7 +468,7 @@
                                 <p class="eyebrow">@backBrand</p>
                                 <h2>@name</h2>
                                 <p>@role</p>
-                                <a href="@LandingBaseUrl" target="_blank">@LandingBaseUrl</a>
+                                <a href="@LandingUrl" target="_blank">@LandingUrl</a>
                             </section>
 
                             <section class="landing-contact-grid">
@@ -461,16 +511,15 @@
 
                 <div class="signin-box">
                     <span>@CurrentUserLabel</span>
-                    <input type="email" placeholder="email@example.com" @bind="loginEmail" @bind:event="oninput" />
-                    <input type="password" placeholder="비밀번호" @bind="loginPassword" @bind:event="oninput" />
-                    @if (!string.IsNullOrWhiteSpace(signinMessage))
-                    {
-                        <p class="@SignInMessageClass">@signinMessage</p>
-                    }
-                    <div class="signin-actions">
-                        <button type="button" class="history-action-button" @onclick="SignIn">간편로그인</button>
-                        <button type="button" class="history-action-button" @onclick="SignOut">게스트</button>
-                    </div>
+                    <AuthorizeView>
+                        <NotAuthorized>
+                            <p class="signin-hint">
+                                로그인하면 명함이 계정에 저장됩니다.
+                                <br />
+                                우측 상단 <strong>로그인</strong> 버튼으로 로그인하거나 새 계정을 만드세요.
+                            </p>
+                        </NotAuthorized>
+                    </AuthorizeView>
                 </div>
 
                 <label class="import-box">
@@ -531,8 +580,8 @@
     private string email = string.Empty;
     private string phone = string.Empty;
     private string address = string.Empty;
-    private string website = string.Empty;
-    private string slug = string.Empty;
+    private string website = "https://codemaru.co.kr";
+    private string landingHandle = string.Empty;
     private string accentColor = "#5d7f57";
     private string shortBio = string.Empty;
     private string landingDescription = string.Empty;
@@ -559,12 +608,10 @@
     private string landingTheme = "light";
     private bool includePhoneInVCard;
     private bool includeAddressInVCard;
+    private bool publishLandingOnSave = true;
+    private bool showSaveOptionsPrompt;
     private string activePreviewTab = "card";
     private string lastSavedText = "아직 저장 전";
-    private string loginEmail = string.Empty;
-    private string loginPassword = string.Empty;
-    private string signinMessage = string.Empty;
-    private bool signinMessageIsError;
     private string landingPublishMessage = string.Empty;
     private bool landingPublishMessageIsError;
     private Guid? editingHistoryId;
@@ -581,15 +628,14 @@
     }
 
     private string LandingThemeClass => $"theme-{landingTheme}";
-    private string LandingBaseUrl => string.IsNullOrWhiteSpace(website) ? State.QrPayload : website.Trim();
-    private string LandingHtml => Exporter.BuildHtml(CreateProfile(), LandingBaseUrl);
+    private string LandingUrl => CreateProfile().LandingUrl;
+    private string LandingHtml => Exporter.BuildHtml(CreateProfile(), LandingUrl);
     private string LandingHtmlDataUrl => $"data:text/html;charset=utf-8,{Uri.EscapeDataString(LandingHtml)}";
     private string VCardDataUrl => $"data:text/vcard;charset=utf-8,{Uri.EscapeDataString(Exporter.BuildVCard(CreateProfile()))}";
     private string WindowsVCardDataUrl => $"data:text/x-vcard;charset=us-ascii,{Uri.EscapeDataString(Exporter.BuildWindowsVCard(CreateProfile()))}";
     private string CardFrontSvgDataUrl => $"data:image/svg+xml;charset=utf-8,{Uri.EscapeDataString(Exporter.BuildCardSideSvg(CreateProfile(), State.QrSvg, true))}";
     private string CardBackSvgDataUrl => $"data:image/svg+xml;charset=utf-8,{Uri.EscapeDataString(Exporter.BuildCardSideSvg(CreateProfile(), State.QrSvg, false))}";
     private string HistorySaveButtonText => editingHistoryId.HasValue ? "수정 저장" : "이력 저장";
-    private string SignInMessageClass => signinMessageIsError ? "signin-message error" : "signin-message";
     private string LandingPublishMessageClass => landingPublishMessageIsError
         ? "publish-message error"
         : "publish-message";
@@ -599,67 +645,99 @@
         ? "게스트 사용 중"
         : $"{Session.CurrentUser.DisplayName} 사용 중";
 
-    protected override void OnInitialized()
+    private const string GuestStorageKey = "codemaru:cardhybrid:guest";
+    private static readonly JsonSerializerOptions GuestJsonOptions = new(JsonSerializerDefaults.Web);
+
+    private bool showMigrationPrompt;
+    private CardHybridSnapshot? pendingGuestSnapshot;
+    private bool guestStorageChecked;
+
+    protected override async Task OnInitializedAsync()
     {
         Session.StateChanged += OnStateChanged;
-        loginEmail = Session.CurrentUser.Email;
+        await Session.EnsureInitializedAsync();
         CopyFromProfile(State.Profile);
     }
 
-    private async Task SignIn()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        editingHistoryId = null;
-        signinMessage = string.Empty;
+        // JS interop 은 pre-render 이후에만 안전. localStorage 접근을 여기서 처리.
+        if (!firstRender || guestStorageChecked)
+        {
+            return;
+        }
+        guestStorageChecked = true;
 
         try
         {
-            var result = await Session.SignInAsync(loginEmail, loginPassword);
-            if (result is CardHybridSignInResult.Success or CardHybridSignInResult.Created)
-            {
-                loginEmail = Session.CurrentUser.Email;
-                loginPassword = string.Empty;
-                CopyFromProfile(Session.State.Profile);
-                signinMessageIsError = false;
-                signinMessage = result == CardHybridSignInResult.Created
-                    ? $"{Session.CurrentUser.DisplayName} 계정 생성됨"
-                    : $"{Session.CurrentUser.DisplayName} 로그인됨";
-                lastSavedText = result == CardHybridSignInResult.Created
-                    ? $"{Session.CurrentUser.DisplayName} 계정 생성"
-                    : $"{Session.CurrentUser.DisplayName} 로그인";
-                StateHasChanged();
-                return;
-            }
+            var pendingJson = await JS.InvokeAsync<string?>("localStorage.getItem", GuestStorageKey);
 
-            signinMessageIsError = true;
-            signinMessage = result switch
+            if (!Session.CurrentUser.IsGuest && !string.IsNullOrWhiteSpace(pendingJson))
             {
-                CardHybridSignInResult.MissingEmail => "이메일을 입력해 주세요.",
-                CardHybridSignInResult.MissingPassword => "비밀번호를 입력해 주세요.",
-                CardHybridSignInResult.InvalidPassword => "비밀번호가 맞지 않습니다.",
-                _ => "로그인에 실패했습니다."
-            };
-            lastSavedText = signinMessage;
+                var snapshot = JsonSerializer.Deserialize<CardHybridSnapshot>(pendingJson, GuestJsonOptions);
+                if (snapshot?.Profile is not null)
+                {
+                    pendingGuestSnapshot = snapshot;
+                    showMigrationPrompt = true;
+                    StateHasChanged();
+                }
+            }
+            else if (Session.CurrentUser.IsGuest && !string.IsNullOrWhiteSpace(pendingJson))
+            {
+                // Guest 상태 복구 (같은 브라우저에서 새로고침한 경우)
+                var snapshot = JsonSerializer.Deserialize<CardHybridSnapshot>(pendingJson, GuestJsonOptions);
+                if (snapshot?.Profile is not null)
+                {
+                    Session.ImportSnapshot(snapshot);
+                }
+            }
         }
         catch (Exception ex)
         {
-            signinMessageIsError = true;
-            signinMessage = "로그인 처리 중 오류가 났습니다.";
-            lastSavedText = signinMessage;
-            Console.Error.WriteLine(ex);
+            Console.Error.WriteLine($"[CardHybrid] guest snapshot restore failed: {ex.Message}");
         }
     }
 
-    private async Task SignOut()
+    private async Task AcceptGuestMigrationAsync()
     {
-        editingHistoryId = null;
-        await Session.SignOutAsync();
-        loginEmail = string.Empty;
-        loginPassword = string.Empty;
-        signinMessageIsError = false;
-        signinMessage = "게스트로 전환됨";
-        CopyFromProfile(Session.State.Profile);
-        lastSavedText = "게스트 전환";
-        StateHasChanged();
+        if (pendingGuestSnapshot is null)
+        {
+            showMigrationPrompt = false;
+            return;
+        }
+
+        await Session.ReplaceUserSnapshotAsync(pendingGuestSnapshot);
+        await JS.InvokeVoidAsync("localStorage.removeItem", GuestStorageKey);
+
+        pendingGuestSnapshot = null;
+        showMigrationPrompt = false;
+        CopyFromProfile(State.Profile);
+    }
+
+    private async Task RejectGuestMigrationAsync()
+    {
+        pendingGuestSnapshot = null;
+        showMigrationPrompt = false;
+        await JS.InvokeVoidAsync("localStorage.removeItem", GuestStorageKey);
+    }
+
+    private async Task PersistGuestSnapshotAsync()
+    {
+        if (!Session.CurrentUser.IsGuest)
+        {
+            return;
+        }
+
+        try
+        {
+            var snapshot = Session.CaptureCurrentSnapshot();
+            var json = JsonSerializer.Serialize(snapshot, GuestJsonOptions);
+            await JS.InvokeVoidAsync("localStorage.setItem", GuestStorageKey, json);
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"[CardHybrid] guest snapshot persist failed: {ex.Message}");
+        }
     }
 
     private void ApplyProfile()
@@ -667,7 +745,30 @@
         Session.UpdateProfile(CreateProfile());
     }
 
-    private void SaveHistory()
+    private void OpenSaveOptionsPrompt()
+    {
+        showSaveOptionsPrompt = true;
+    }
+
+    private void CancelSaveOptions()
+    {
+        showSaveOptionsPrompt = false;
+    }
+
+    private async Task SaveHistoryWithOptionsAsync()
+    {
+        showSaveOptionsPrompt = false;
+
+        var profile = SaveHistoryCore();
+        if (profile is null || !publishLandingOnSave)
+        {
+            return;
+        }
+
+        await PublishLandingAsync(profile);
+    }
+
+    private CardProfile? SaveHistoryCore()
     {
         try
         {
@@ -679,7 +780,7 @@
                 {
                     lastSavedText = $"{updatedEntry.CreatedAt:HH:mm:ss} 수정 저장";
                     editingHistoryId = null;
-                    return;
+                    return updatedEntry.Profile;
                 }
 
                 editingHistoryId = null;
@@ -688,24 +789,32 @@
             Session.UpdateProfile(profile);
             var entry = Session.SaveCurrent();
             lastSavedText = $"{entry.CreatedAt:HH:mm:ss} 저장";
+            return entry.Profile;
         }
         catch (Exception ex)
         {
             editingHistoryId = null;
             lastSavedText = "저장 중 오류";
             Console.Error.WriteLine(ex);
+            return null;
         }
     }
 
     private async Task SaveLandingHtmlToServerAsync()
     {
+        var profile = CreateProfile();
+        Session.UpdateProfile(profile);
+        await PublishLandingAsync(profile);
+    }
+
+    private async Task PublishLandingAsync(CardProfile profile)
+    {
+        activePreviewTab = "landing";
         landingPublishMessage = string.Empty;
 
         try
         {
-            var profile = CreateProfile();
-            Session.UpdateProfile(profile);
-            var result = await Publisher.PublishIndexAsync(profile, Exporter.BuildHtml(profile, LandingBaseUrl));
+            var result = await Publisher.PublishIndexAsync(profile, Exporter.BuildHtml(profile, profile.LandingUrl));
             landingPublishMessageIsError = false;
             landingPublishMessage = $"서버 저장 완료: {result.PublicUrl}";
             lastSavedText = "랜딩 HTML 서버 저장";
@@ -848,6 +957,14 @@
 
     private CardProfile CreateProfile()
     {
+        var handle = CardLandingPath.Slugify(landingHandle);
+        if (string.IsNullOrWhiteSpace(handle))
+        {
+            handle = "me";
+        }
+
+        var landingSlug = CardLandingPath.NormalizeForTenant($"card/{handle}", Session.CurrentUser);
+
         return new CardProfile(
             Brand: brand,
             Tagline: tagline,
@@ -859,8 +976,8 @@
             Email: email,
             Phone: phone,
             Address: address,
-            Website: website,
-            LandingSlug: slug,
+            Website: string.IsNullOrWhiteSpace(website) ? "https://codemaru.co.kr" : website.Trim(),
+            LandingSlug: landingSlug,
             AccentColor: accentColor,
             ShortBio: shortBio,
             LandingDescription: landingDescription,
@@ -899,8 +1016,8 @@
         email = profile.Email;
         phone = profile.Phone;
         address = profile.Address;
-        website = profile.Website;
-        slug = profile.LandingSlug;
+        website = string.IsNullOrWhiteSpace(profile.Website) ? "https://codemaru.co.kr" : profile.Website;
+        landingHandle = ExtractLandingHandle(profile.LandingSlug);
         accentColor = profile.AccentColor;
         shortBio = profile.ShortBio;
         landingDescription = profile.LandingDescription;
@@ -973,7 +1090,24 @@
     private void OnStateChanged(object? sender, CardHybridState state)
     {
         CopyFromProfile(state.Profile);
+
+        if (guestStorageChecked && Session.HasGuestChanges)
+        {
+            _ = PersistGuestSnapshotAsync();
+        }
+
         _ = InvokeAsync(StateHasChanged);
+    }
+
+    private static string ExtractLandingHandle(string landingSlug)
+    {
+        var segments = CardLandingPath.Split(landingSlug);
+        if (segments.Length == 0)
+        {
+            return string.Empty;
+        }
+
+        return segments[^1];
     }
 
     private string TabClass(string tab)

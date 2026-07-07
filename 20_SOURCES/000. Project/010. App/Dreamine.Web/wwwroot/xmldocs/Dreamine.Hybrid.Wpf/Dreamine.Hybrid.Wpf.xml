@@ -147,6 +147,12 @@
             is configured. Use this to add extra middleware, static file providers, etc.
             </summary>
         </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.ConfigurePipelineAfterRouting">
+            <summary>
+            Optional callback invoked immediately after <c>UseRouting</c> and before <c>UseAntiforgery</c>.
+            Use this to plug in endpoint-routing-dependent middleware such as <c>UseAuthorization</c>.
+            </summary>
+        </member>
         <member name="M:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.AddPhysicalStaticFiles(System.String,System.String)">
             <summary>
             Adds a physical directory as an additional static file provider at the given request path.

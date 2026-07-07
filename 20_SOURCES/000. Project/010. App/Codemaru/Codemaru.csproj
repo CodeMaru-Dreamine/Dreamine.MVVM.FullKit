@@ -10,6 +10,7 @@
     <GenerateApplicationManifest>false</GenerateApplicationManifest>
     <GenerateProgramFile>false</GenerateProgramFile>
     <StartupObject>Codemaru.Program</StartupObject>
+    <UserSecretsId>codemaru-oauth-2ba4e1b2</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,6 +25,7 @@
   <ItemGroup>
     <PackageReference Include="QRCoder" />
     <PackageReference Include="System.Text.Encoding.CodePages" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" />
   </ItemGroup>
 
   <ItemGroup>
@@ -36,6 +38,10 @@
     <ProjectReference Include="..\..\..\100. Library\Locators.Wpf\Dreamine.MVVM.Locators.Wpf.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Locators\Dreamine.MVVM.Locators.csproj" />
     <ProjectReference Include="..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Database.Abstractions\Dreamine.Database.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Database.Core\Dreamine.Database.Core.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Database.Sqlite\Dreamine.Database.Sqlite.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Identity\Dreamine.Identity.csproj" />
   </ItemGroup>
 
   <ItemGroup>

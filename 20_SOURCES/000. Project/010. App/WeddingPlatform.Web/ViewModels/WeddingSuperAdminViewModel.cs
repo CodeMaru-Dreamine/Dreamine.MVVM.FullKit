@@ -8,12 +8,18 @@ public sealed class WeddingSuperAdminViewModel
     private readonly ITenantStore _tenants;
     private readonly WeddingOptions _opts;
     private readonly IGlobalSettingsStore _globalSettings;
+    private readonly WeddingUserContext _userContext;
 
-    public WeddingSuperAdminViewModel(ITenantStore tenants, WeddingOptions opts, IGlobalSettingsStore globalSettings)
+    public WeddingSuperAdminViewModel(
+        ITenantStore tenants,
+        WeddingOptions opts,
+        IGlobalSettingsStore globalSettings,
+        WeddingUserContext userContext)
     {
         _tenants = tenants;
         _opts = opts;
         _globalSettings = globalSettings;
+        _userContext = userContext;
     }
 
     /// <summary>동영상 업로드 최대 용량(MB). 0이면 무제한.</summary>
@@ -82,6 +88,7 @@ public sealed class WeddingSuperAdminViewModel
         if (await _tenants.ExistsAsync(slug, ct).ConfigureAwait(false))
         { StatusMessage = $"이미 존재하는 슬러그입니다: {slug}"; return false; }
 
+        var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
         var config = new TenantConfig
         {
             Slug = slug,
@@ -91,6 +98,15 @@ public sealed class WeddingSuperAdminViewModel
             Mode = WeddingSiteMode.Invite,
             IsPublished = true
         };
+
+        if (user.IsAuthenticated)
+        {
+            config.OwnerUserId = user.Id;
+            config.OwnerProvider = user.Provider;
+            config.OwnerEmail = user.Email;
+            config.OwnerDisplayName = user.DisplayName;
+            config.OwnerLinkedAt = DateTime.Now;
+        }
 
         await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
         await LoadAsync(ct).ConfigureAwait(false);

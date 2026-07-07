@@ -96,6 +96,43 @@
     color: var(--cm-strong);
 }
 
+.cm-user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .35rem .6rem;
+    font-weight: 650;
+    color: var(--cm-strong);
+    background: rgba(255, 255, 255, .06);
+    border-radius: .5rem;
+}
+
+.cm-auth-link {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .35rem .7rem;
+    font-weight: 650;
+    border-radius: .5rem;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, .16);
+    color: var(--cm-text);
+}
+
+.cm-auth-link:hover {
+    background: rgba(255, 255, 255, .1);
+}
+
+.cm-auth-google {
+    color: #ea4335;
+    border-color: rgba(234, 67, 53, .5);
+}
+
+.cm-auth-naver {
+    color: #03c75a;
+    border-color: rgba(3, 199, 90, .5);
+}
+
 .cm-nav-burger {
     display: none;
     flex-shrink: 0;

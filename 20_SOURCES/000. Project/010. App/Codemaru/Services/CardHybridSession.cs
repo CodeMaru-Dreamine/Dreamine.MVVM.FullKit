@@ -1,345 +1,55 @@
+using System.Diagnostics;
 using Codemaru.Models;
 using Codemaru.States;
-using System.Diagnostics;
-using System.Security.Cryptography;
 
 namespace Codemaru.Services;
 
 /// <summary>
-/// \brief Coordinates CardHybrid state, QR generation, history, and persistence.
+/// \brief WPF 프로세스 전역에서 공유하는 CardHybrid 상태 뷰입니다.
 /// </summary>
 /// <remarks>
-/// Register as singleton in the DI container and call <see cref="InitializeAsync"/>
-/// from the application startup path (e.g. App.OnStartup) before the UI loads.
-/// The constructor is intentionally free of blocking I/O to avoid deadlocks on
-/// the WPF UI thread when the DI container resolves this service.
+/// 실제 사용자별 편집 상태는 <see cref="CardHybridCircuitSession"/> (Blazor Circuit 별)
+/// 가 관리합니다. 이 싱글턴은 WPF 메인 창의 상태 요약 표시용 뷰이며 인증을 처리하지 않습니다.
 /// </remarks>
 public sealed class CardHybridSession
 {
     private readonly object _sync = new();
-    private readonly SemaphoreSlim _saveLock = new(1, 1);
-    private readonly List<CardHistoryEntry> _history = new();
     private readonly IQrSvgGenerator _qr;
-    private readonly ICardProfileStore _store;
 
     private CardHybridState? _state;
-    private CardHybridUser? _currentUser;
 
-    /// <summary>
-    /// \brief Initializes a new instance of the <see cref="CardHybridSession" /> class.
-    /// </summary>
-    /// <param name="qr">The QR SVG generator.</param>
-    /// <param name="store">The persistent profile store.</param>
-    public CardHybridSession(IQrSvgGenerator qr, ICardProfileStore store)
+    public CardHybridSession(IQrSvgGenerator qr, ICardProfileStore _)
     {
         _qr = qr ?? throw new ArgumentNullException(nameof(qr));
-        _store = store ?? throw new ArgumentNullException(nameof(store));
     }
 
-    /// <summary>
-    /// \brief Gets the current CardHybrid state.
-    /// </summary>
-    public CardHybridState State => _state ?? CardHybridState.CreateDefault(_qr.CreateSvg(CardProfile.Default.LandingUrl));
+    public CardHybridState State =>
+        _state ?? CardHybridState.CreateDefault(_qr.CreateSvg(CardProfile.Default.LandingUrl));
 
     /// <summary>
-    /// \brief Gets the currently signed-in user, or <see cref="CardHybridUser.Guest"/>.
+    /// \brief WPF 표시용 참조 사용자입니다. 현재는 항상 <see cref="CardHybridUser.Guest"/>.
     /// </summary>
-    public CardHybridUser CurrentUser => _currentUser ?? CardHybridUser.Guest;
+    public CardHybridUser CurrentUser => CardHybridUser.Guest;
 
-    /// <summary>
-    /// \brief Occurs when the CardHybrid state has changed.
-    /// </summary>
     public event EventHandler<CardHybridState>? StateChanged;
 
     /// <summary>
-    /// \brief Loads the last saved user and profile from the store.
-    /// Must be called once from the application startup path before the UI is shown.
+    /// \brief 시작 시 기본 상태를 준비합니다. App.OnStartup 에서 1회 호출합니다.
     /// </summary>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    public async Task InitializeAsync(CancellationToken cancellationToken = default)
+    public Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         lock (_sync)
         {
             if (_state is not null)
             {
-                return;
+                return Task.CompletedTask;
             }
-        }
 
-        var lastUser = await _store.LoadLastUserAsync().ConfigureAwait(false);
-        var resolvedUser = lastUser is not null && !string.IsNullOrWhiteSpace(lastUser.PasswordHash)
-            ? lastUser
-            : CardHybridUser.Guest;
-
-        var snapshot = await _store.LoadAsync(resolvedUser.Id).ConfigureAwait(false);
-
-        lock (_sync)
-        {
-            _currentUser = resolvedUser;
-            LoadSnapshot(snapshot);
-        }
-    }
-
-    public async Task<CardHybridSignInResult> SignInAsync(string email, string password, CancellationToken cancellationToken = default)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-        {
-            return CardHybridSignInResult.MissingEmail;
-        }
-
-        if (string.IsNullOrWhiteSpace(password))
-        {
-            return CardHybridSignInResult.MissingPassword;
-        }
-
-        var normalizedEmail = email.Trim().ToLowerInvariant();
-        var userId = CreateUserId(normalizedEmail);
-        var storedUser = await _store.LoadUserAsync(userId, cancellationToken).ConfigureAwait(false);
-
-        if (storedUser is not null && !VerifyPassword(password, storedUser.PasswordHash))
-        {
-            return CardHybridSignInResult.InvalidPassword;
-        }
-
-        var result = storedUser is null ? CardHybridSignInResult.Created : CardHybridSignInResult.Success;
-        var user = new CardHybridUser(
-            Id: userId,
-            Email: normalizedEmail,
-            DisplayName: CreateDisplayName(normalizedEmail),
-            PasswordHash: storedUser?.PasswordHash ?? HashPassword(password),
-            SignedInAt: DateTime.Now);
-
-        _currentUser = user;
-        await _store.SaveUserAsync(user, cancellationToken).ConfigureAwait(false);
-        await _store.SaveLastUserAsync(user, cancellationToken).ConfigureAwait(false);
-        var snapshot = await _store.LoadAsync(user.Id, cancellationToken).ConfigureAwait(false);
-
-        lock (_sync)
-        {
-            LoadSnapshot(snapshot);
+            _state = CardHybridState.CreateDefault(_qr.CreateSvg(CardProfile.Default.LandingUrl));
         }
 
         NotifyStateChanged();
-        return result;
-    }
-
-    public async Task SignOutAsync(CancellationToken cancellationToken = default)
-    {
-        _currentUser = CardHybridUser.Guest;
-        await _store.SaveLastUserAsync(CurrentUser, cancellationToken).ConfigureAwait(false);
-        var snapshot = await _store.LoadAsync(CurrentUser.Id, cancellationToken).ConfigureAwait(false);
-
-        lock (_sync)
-        {
-            LoadSnapshot(snapshot);
-        }
-
-        NotifyStateChanged();
-    }
-
-    /// <summary>
-    /// \brief Updates the current profile and persists it.
-    /// </summary>
-    /// <param name="profile">The updated profile.</param>
-    public void UpdateProfile(CardProfile profile)
-    {
-        var payload = profile.LandingUrl;
-
-        lock (_sync)
-        {
-            _state = State with
-            {
-                Profile = profile,
-                QrPayload = payload,
-                QrSvg = _qr.CreateSvg(payload),
-                LastUpdated = DateTime.Now
-            };
-        }
-
-        PersistCurrent();
-        NotifyStateChanged();
-    }
-
-    /// <summary>
-    /// \brief Saves the current profile to the in-memory and persistent history.
-    /// </summary>
-    /// <returns>The saved history entry.</returns>
-    public CardHistoryEntry SaveCurrent()
-    {
-        CardHistoryEntry entry;
-
-        lock (_sync)
-        {
-            entry = new CardHistoryEntry(
-                Id: Guid.NewGuid(),
-                Profile: State.Profile,
-                LandingUrl: State.Profile.LandingUrl,
-                QrPayload: State.QrPayload,
-                CreatedAt: DateTime.Now);
-
-            _history.Insert(0, entry);
-            _state = State with
-            {
-                History = _history.ToArray(),
-                LastUpdated = DateTime.Now
-            };
-        }
-
-        PersistCurrent();
-        NotifyStateChanged();
-        return entry;
-    }
-
-    /// <summary>
-    /// \brief Updates a saved profile history entry with the supplied profile.
-    /// </summary>
-    /// <param name="id">The history entry ID to update.</param>
-    /// <param name="profile">The replacement profile.</param>
-    /// <returns>The updated history entry, or <c>null</c> when the entry does not exist.</returns>
-    public CardHistoryEntry? UpdateHistory(Guid id, CardProfile profile)
-    {
-        CardHistoryEntry? entry;
-
-        lock (_sync)
-        {
-            var index = _history.FindIndex(e => e.Id == id);
-            if (index < 0)
-            {
-                return null;
-            }
-
-            var payload = profile.LandingUrl;
-            entry = _history[index] with
-            {
-                Profile = profile,
-                LandingUrl = payload,
-                QrPayload = payload,
-                CreatedAt = DateTime.Now
-            };
-
-            _history[index] = entry;
-            _state = State with
-            {
-                Profile = profile,
-                QrPayload = payload,
-                QrSvg = _qr.CreateSvg(payload),
-                History = _history.ToArray(),
-                LastUpdated = DateTime.Now
-            };
-        }
-
-        PersistCurrent();
-        NotifyStateChanged();
-        return entry;
-    }
-
-    /// <summary>
-    /// \brief Loads a saved history entry as the current profile.
-    /// </summary>
-    /// <param name="entry">The history entry to load.</param>
-    public void LoadHistory(CardHistoryEntry entry)
-    {
-        UpdateProfile(entry.Profile);
-    }
-
-    /// <summary>
-    /// \brief Clears the saved profile history.
-    /// </summary>
-    public void ClearHistory()
-    {
-        lock (_sync)
-        {
-            _history.Clear();
-            _state = State with
-            {
-                History = Array.Empty<CardHistoryEntry>(),
-                LastUpdated = DateTime.Now
-            };
-        }
-
-        PersistCurrent();
-        NotifyStateChanged();
-    }
-
-    /// <summary>
-    /// \brief Removes a saved profile history entry.
-    /// </summary>
-    /// <param name="id">The history entry ID to remove.</param>
-    /// <returns><c>true</c> when an entry was removed.</returns>
-    public bool RemoveHistory(Guid id)
-    {
-        bool removed;
-
-        lock (_sync)
-        {
-            var index = _history.FindIndex(e => e.Id == id);
-            if (index < 0)
-            {
-                return false;
-            }
-
-            _history.RemoveAt(index);
-            _state = State with
-            {
-                History = _history.ToArray(),
-                LastUpdated = DateTime.Now
-            };
-
-            removed = true;
-        }
-
-        if (removed)
-        {
-            PersistCurrent();
-            NotifyStateChanged();
-        }
-
-        return removed;
-    }
-
-    private void PersistCurrent()
-    {
-        CardHybridState state;
-        CardHistoryEntry[] historySnapshot;
-        string userId;
-
-        lock (_sync)
-        {
-            state = State;
-            historySnapshot = _history.ToArray();
-            userId = CurrentUser.Id;
-        }
-
-        var snapshot = new CardHybridSnapshot(userId, state.Profile, historySnapshot, DateTime.Now);
-
-        _ = Task.Run(async () =>
-        {
-            await _saveLock.WaitAsync().ConfigureAwait(false);
-            try
-            {
-                await _store.SaveAsync(userId, snapshot).ConfigureAwait(false);
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine($"CardHybrid profile save failed: {ex}");
-            }
-            finally
-            {
-                _saveLock.Release();
-            }
-        });
-    }
-
-    private void LoadSnapshot(CardHybridSnapshot? snapshot)
-    {
-        _history.Clear();
-        if (snapshot?.History is not null)
-        {
-            _history.AddRange(snapshot.History);
-        }
-
-        var profile = snapshot?.Profile ?? CardProfile.Default;
-        _state = CardHybridState.Create(profile, _qr.CreateSvg(profile.LandingUrl), _history.ToArray());
+        return Task.CompletedTask;
     }
 
     private void NotifyStateChanged()
@@ -360,59 +70,6 @@ public sealed class CardHybridSession
             {
                 Debug.WriteLine($"CardHybrid state handler failed: {ex}");
             }
-        }
-    }
-
-    private static string CreateUserId(string email)
-    {
-        return new string(email
-            .Select(static c => char.IsLetterOrDigit(c) || c is '-' or '_' ? c : '_')
-            .ToArray());
-    }
-
-    private static string CreateDisplayName(string email)
-    {
-        var at = email.IndexOf('@', StringComparison.Ordinal);
-        return at > 0 ? email[..at] : email;
-    }
-
-    private static string HashPassword(string password)
-    {
-        var salt = RandomNumberGenerator.GetBytes(16);
-        var hash = Rfc2898DeriveBytes.Pbkdf2(
-            password,
-            salt,
-            120_000,
-            HashAlgorithmName.SHA256,
-            32);
-
-        return $"{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
-    }
-
-    private static bool VerifyPassword(string password, string storedHash)
-    {
-        var parts = storedHash.Split('.', 2);
-        if (parts.Length != 2)
-        {
-            return false;
-        }
-
-        try
-        {
-            var salt = Convert.FromBase64String(parts[0]);
-            var expected = Convert.FromBase64String(parts[1]);
-            var actual = Rfc2898DeriveBytes.Pbkdf2(
-                password,
-                salt,
-                120_000,
-                HashAlgorithmName.SHA256,
-                expected.Length);
-
-            return CryptographicOperations.FixedTimeEquals(actual, expected);
-        }
-        catch
-        {
-            return false;
         }
     }
 }

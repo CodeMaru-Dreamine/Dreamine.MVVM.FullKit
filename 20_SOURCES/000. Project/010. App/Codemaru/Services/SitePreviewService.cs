@@ -16,6 +16,7 @@ public sealed class SitePreviewService : BackgroundService
     [
         ("dreamine",   "https://dreamine.kr/"),
         ("wedding",    "https://wedding.codemaru.co.kr"),
+        ("thankyou",   "https://thankyou.codemaru.co.kr/"),
         ("families",   "https://families.codemaru.co.kr"),
         ("portfolio",  "https://portfolio.codemaru.co.kr/"),
         ("cctv",       "https://cctvviewer.codemaru.co.kr"),

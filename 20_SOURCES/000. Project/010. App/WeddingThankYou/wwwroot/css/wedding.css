@@ -617,6 +617,72 @@ body.w-theme-blush {
     min-height: 100vh;
 }
 
+.wh-topnav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: .7rem clamp(1rem, 4vw, 2rem);
+    background: rgba(253, 246, 238, .92);
+    border-bottom: 1px solid #eadccb;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.wh-topnav a {
+    color: #6b4e2a;
+    text-decoration: none;
+}
+.wh-topnav__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .55rem;
+    flex: 0 0 auto;
+    font-weight: 800;
+    color: #3a2e28;
+}
+.wh-topnav__mark {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: inset 0 0 0 1px rgba(200, 168, 130, .35);
+}
+.wh-topnav__links {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    min-width: 0;
+    margin-left: auto;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.wh-topnav__links::-webkit-scrollbar { display: none; }
+.wh-topnav__links a,
+.wh-topnav__auth {
+    flex: 0 0 auto;
+    padding: .48rem .72rem;
+    border-radius: 999px;
+    font-size: .9rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.wh-topnav__links a:hover,
+.wh-topnav__links a.active,
+.wh-topnav__auth {
+    background: #fff;
+    box-shadow: inset 0 0 0 1px #e4d6c5;
+}
+.wh-topnav__auth {
+    color: #7a5d3a;
+}
+.wh-topnav__auth--pending {
+    width: 4rem;
+    min-height: 2rem;
+    visibility: hidden;
+}
+
 /* ── 히어로 ── */
 .wh-hero {
     background: linear-gradient(135deg, #fdf6ee 0%, #f5e8d8 50%, #eedcc8 100%);
@@ -640,6 +706,9 @@ body.w-theme-blush {
 .wh-hero__sub {
     font-size: 1rem; color: #7a6a5e; margin: 0 0 2rem;
 }
+.wh-hero__actions {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem;
+}
 
 /* ── 버튼 ── */
 .wh-btn {
@@ -651,6 +720,7 @@ body.w-theme-blush {
 }
 .wh-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,.12); }
 .wh-btn--primary { background: #c8a882; color: #fff; }
+.wh-btn--secondary { background: #fff; color: #7a5d3a; border: 1px solid #e4d6c5; }
 .wh-btn--full { width: 100%; margin-top: .5rem; font-size: 1.05rem; border-radius: 10px; }
 
 /* ── 기능 소개 ── */
@@ -700,6 +770,18 @@ body.w-theme-blush {
     background: #f4f0eb; padding: .1rem .4rem;
     border-radius: 4px; font-size: .78rem;
 }
+.wh-account {
+    display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+    background: #f9f4ed; border: 1px solid #eadfce;
+    border-radius: 12px; padding: .75rem .9rem; margin-bottom: 1.25rem;
+    font-size: .85rem; color: #7a6a5e;
+}
+.wh-account strong { color: #3a2e28; margin-right: auto; }
+.wh-account--guest { align-items: flex-start; }
+.wh-account__link {
+    color: #a17443; font-weight: 700; text-decoration: none; white-space: nowrap;
+}
+.wh-account__link:hover { text-decoration: underline; }
 
 .wh-form { display: flex; flex-direction: column; gap: 1.1rem; }
 .wh-form__row { display: flex; flex-direction: column; gap: .3rem; }
@@ -744,6 +826,7 @@ body.w-theme-blush {
 
 /* ── 공개 청첩장 목록 ── */
 .wh-invites { padding: 3rem 1.5rem; max-width: 800px; margin: 0 auto; }
+.wh-invites--mine { padding-top: 2rem; }
 .wh-invites__title { font-family: 'Noto Serif KR', serif; font-size: 1.4rem; color: #6b4e2a; text-align: center; margin-bottom: 1.5rem; }
 .wh-invites__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.2rem; }
 .wh-invite-card {
@@ -764,6 +847,19 @@ body.w-theme-blush {
 .wh-invite-card__name { font-family: 'Noto Serif KR', serif; font-size: 1rem; color: #4a3020; font-weight: 600; margin-bottom: .25rem; }
 .wh-invite-card__date { font-size: .8rem; color: #b08060; margin-bottom: .15rem; }
 .wh-invite-card__venue { font-size: .75rem; color: #aaa; }
+.wh-invite-card--manage { border-color: #d7c4ac; }
+.wh-manage-link {
+    display: inline-block; margin-top: .75rem;
+    font-size: .82rem; color: #a17443; font-weight: 700;
+}
+.wh-empty {
+    max-width: 560px; margin: 0 auto; text-align: center;
+    color: #8a7a6e; font-size: .9rem; line-height: 1.7;
+}
+.wh-empty code {
+    background: #f4f0eb; padding: .1rem .4rem;
+    border-radius: 4px; font-size: .82rem;
+}
 
 /* ── 어드민 토글 ── */
 .w-toggle { display: flex; align-items: center; gap: .7rem; cursor: pointer; user-select: none; margin: .3rem 0 .8rem; }
@@ -798,8 +894,24 @@ body.w-theme-blush {
 .wh-admin-link:hover { color: #ccc; }
 
 @media (max-width: 480px) {
+    .wh-topnav {
+        align-items: flex-start;
+        gap: .6rem;
+        padding: .65rem .8rem;
+    }
+    .wh-topnav__brand span:last-child { display: none; }
+    .wh-topnav__links {
+        flex: 1 1 auto;
+        margin-left: 0;
+    }
+    .wh-topnav__links a,
+    .wh-topnav__auth {
+        padding: .42rem .58rem;
+        font-size: .82rem;
+    }
     .wh-hero { padding: 3.5rem 1rem 2.5rem; }
     .wh-create__box { padding: 1.8rem 1.2rem; }
+    .wh-account { flex-direction: column; align-items: flex-start; }
     .wh-prefix { display: none; }
     .wh-input-prefix .wh-input { border-radius: 8px; }
 }

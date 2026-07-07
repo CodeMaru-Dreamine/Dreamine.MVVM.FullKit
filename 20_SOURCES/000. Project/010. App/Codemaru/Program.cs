@@ -1,3 +1,4 @@
+using System.IO;
 using Codemaru.Blazor;
 using Codemaru.Blazor.Pages;
 using Codemaru.Models;
@@ -8,6 +9,8 @@ using Codemaru.ViewModels;
 using Codemaru.Views;
 using Dreamine.Hybrid.Wpf.DependencyInjection;
 using Dreamine.Hybrid.Wpf.Hosting;
+using Dreamine.Identity;
+using Dreamine.Identity.Options;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,10 +24,23 @@ public static class Program
     public static void Main()
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+
+        // Razor/WPF SDK 조합에서는 [assembly: UserSecretsId] 가 자동으로 심어지지 않는
+        // 경우가 있어 assembly 기반 오버로드가 조용히 실패한다. csproj의 UserSecretsId
+        // 값과 동일한 문자열을 명시적으로 지정해 반드시 로드되도록 한다.
+        builder.Configuration.AddUserSecrets("codemaru-oauth-2ba4e1b2");
+
         int serverPort = GetInt(builder.Configuration, "CodemaruServer:Port", 5040);
         bool listenAnyIp = GetBool(builder.Configuration, "CodemaruServer:ListenAnyIp", true);
 
+        AuthOptions authOptions = builder.Configuration
+            .GetSection(AuthOptions.SectionName)
+            .Get<AuthOptions>() ?? new AuthOptions();
+
+        string usersDbPath = Path.Combine(AppContext.BaseDirectory, "App_Data", "codemaru.db");
+
         builder.Services.AddDreamineHybridWpf();
+        builder.Services.AddDreamineIdentityWpfHost();
 
         builder.Services.AddSingleton<IQrSvgGenerator, FreeQrSvgGenerator>();
         builder.Services.AddSingleton<ImageBackgroundRemover>();
@@ -49,6 +65,8 @@ public static class Program
             builder.Configuration.GetSection("MailSettings"));
         builder.Services.Configure<FfmpegOptions>(
             builder.Configuration.GetSection("Ffmpeg"));
+        builder.Services.Configure<LandingPagePublishOptions>(
+            builder.Configuration.GetSection("CardHybrid:Publish"));
         builder.Services.Configure<List<StreamConfig>>(
             builder.Configuration.GetSection("Streams"));
         builder.Services.AddHostedService<SitePreviewService>();
@@ -78,6 +96,8 @@ public static class Program
             options.SharedServiceTypes.Add(typeof(CardProfileImporter));
             options.ConfigurePipeline = app => app.Use(next =>
                 ctx => OgTagMiddleware(ctx, next));
+
+            options.AddDreamineIdentity(authOptions, usersDbPath);
         });
 
 
@@ -88,8 +108,8 @@ public static class Program
     private static readonly Dictionary<string, (string Title, string Desc, string Image, string Url)> OgMeta = new()
     {
         ["/"] = (
-            "CodeMaru — 명함 · 청첩장 · 가족 플랫폼 · CCTV",
-            "CodeMaru는 일상을 더 스마트하게 만드는 서비스를 만듭니다. 명함 관리 · 디지털 청첩장 · 가족 플랫폼 · 실시간 CCTV까지, 모두 여기에 있습니다.",
+            "CodeMaru — 명함 · 청첩장 · 감사장 · 가족 플랫폼 · CCTV",
+            "CodeMaru는 일상을 더 스마트하게 만드는 서비스를 만듭니다. 명함 관리 · 디지털 청첩장 · 모바일 감사장 · 가족 플랫폼 · 실시간 CCTV까지, 모두 여기에 있습니다.",
             "https://codemaru.co.kr/img/codemaru_og.png",
             "https://codemaru.co.kr/"),
         ["/cardhybrid"] = (
@@ -99,7 +119,7 @@ public static class Program
             "https://codemaru.co.kr/cardhybrid"),
         ["/guide"] = (
             "이용 설명서 | CodeMaru",
-            "CardHybrid 명함, Wedding 청첩장, Families 가족 앨범, CCTV Viewer, Shop Store, Portfolio, Dreamine 프레임워크의 상세 이용 가이드를 제공합니다.",
+            "CardHybrid 명함, Wedding 청첩장, ThankYou 감사장, Families 가족 앨범, CCTV Viewer, Shop Store, Portfolio, Dreamine 프레임워크의 상세 이용 가이드를 제공합니다.",
             "https://codemaru.co.kr/img/codemaru_og.png",
             "https://codemaru.co.kr/guide"),
         ["/guide/cardhybrid"] = (
@@ -112,6 +132,11 @@ public static class Program
             "5분이면 완성되는 디지털 청첩장. 지도·갤러리·방명록·배경음악·계좌 안내까지 설정하는 방법을 단계별로 안내합니다.",
             "https://codemaru.co.kr/img/codemaru_og.png",
             "https://codemaru.co.kr/guide/wedding"),
+        ["/guide/thankyou"] = (
+            "ThankYou 이용 설명서 — 모바일 감사장 만들기 | CodeMaru",
+            "결혼식 이후 하객에게 전하는 감사 인사 페이지. 사진, 인사말, 계좌 안내, 공유 링크를 정리하는 방법을 안내합니다.",
+            "https://codemaru.co.kr/img/codemaru_og.png",
+            "https://codemaru.co.kr/guide/thankyou"),
         ["/guide/families"] = (
             "Families 이용 설명서 — 가족 앨범 플랫폼 | CodeMaru",
             "가족끼리만 공유하는 비공개 앨범·타임라인. 포스트 작성, 앨범 폴더, 이모지 반응, 댓글 기능 사용법을 안내합니다.",

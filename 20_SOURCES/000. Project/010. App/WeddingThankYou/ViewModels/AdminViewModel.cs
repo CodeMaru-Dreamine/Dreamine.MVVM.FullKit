@@ -18,18 +18,25 @@ namespace WeddingThankYou.ViewModels
 		private readonly IPhotoService _photos;
 		private readonly WeddingOptions _opts;
 		private readonly IGlobalSettingsStore _globalSettings;
+		private readonly ThankYouUserContext _userContext;
 
 		private static readonly HttpClient _geocodeHttp = new()
 		{
 			DefaultRequestHeaders = { { "User-Agent", "WeddingThankYou/1.0 (contact: admin@codemaru.co.kr)" } }
 		};
 
-		public AdminViewModel(ITenantStore tenants, IPhotoService photos, WeddingOptions opts, IGlobalSettingsStore globalSettings)
+		public AdminViewModel(
+			ITenantStore tenants,
+			IPhotoService photos,
+			WeddingOptions opts,
+			IGlobalSettingsStore globalSettings,
+			ThankYouUserContext userContext)
 		{
 			_tenants = tenants;
 			_photos = photos;
 			_opts = opts;
 			_globalSettings = globalSettings;
+			_userContext = userContext;
 		}
 
 		/// <summary>동영상 업로드 최대 용량 안내 문구 (예: "최대 200MB" 또는 "무제한").</summary>
@@ -41,20 +48,83 @@ namespace WeddingThankYou.ViewModels
 		public IReadOnlyList<PhotoInfo> Gallery { get; private set; } = [];
 		public bool IsLoaded { get; private set; }
 		public bool IsAuthenticated { get; private set; }
+		public bool IsSignedIn { get; private set; }
+		public bool IsLinkedToCurrentUser { get; private set; }
 		public string StatusMessage { get; private set; } = "";
+		public string CurrentUserLabel { get; private set; } = "";
 		public bool IsUploading { get; private set; }
 		public bool IsGeocoding { get; private set; }
 		public string GeocodeStatus { get; private set; } = "";
 
 		public string LoginPassword { get; set; } = "";
 
+		public async Task InitializeAsync(string slug, CancellationToken ct = default)
+		{
+			StatusMessage = "";
+			await RefreshCurrentUserAsync().ConfigureAwait(false);
+
+			var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+			if (config is null)
+			{
+				return;
+			}
+
+			var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+			IsLinkedToCurrentUser =
+				user.IsAuthenticated &&
+				string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal);
+
+			if (IsLinkedToCurrentUser)
+			{
+				IsAuthenticated = true;
+				await LoadAsync(slug, ct).ConfigureAwait(false);
+			}
+		}
+
 		public async Task<bool> LoginAsync(string slug, CancellationToken ct = default)
 		{
 			var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
 			if (config is null) { StatusMessage = "존재하지 않는 슬러그입니다."; return false; }
 
+			var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+			await RefreshCurrentUserAsync().ConfigureAwait(false);
+
+			if (user.IsAuthenticated &&
+				string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal))
+			{
+				IsAuthenticated = true;
+				IsLinkedToCurrentUser = true;
+				StatusMessage = "";
+				return true;
+			}
+
 			IsAuthenticated = config.PasswordHash == LoginPassword;
-			StatusMessage = IsAuthenticated ? "" : "비밀번호가 틀렸습니다.";
+			if (!IsAuthenticated)
+			{
+				StatusMessage = "비밀번호가 틀렸습니다.";
+				return false;
+			}
+
+			if (user.IsAuthenticated && string.IsNullOrWhiteSpace(config.OwnerUserId))
+			{
+				config.OwnerUserId = user.Id;
+				config.OwnerProvider = user.Provider;
+				config.OwnerEmail = user.Email;
+				config.OwnerDisplayName = user.DisplayName;
+				config.OwnerLinkedAt = DateTime.Now;
+				await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+				IsLinkedToCurrentUser = true;
+				StatusMessage = "CodeMaru/Dreamine 계정에 연결되었습니다. 다음부터는 공용 로그인으로 관리할 수 있습니다.";
+			}
+			else if (!user.IsAuthenticated && string.IsNullOrWhiteSpace(config.OwnerUserId))
+			{
+				StatusMessage = "로그인은 성공했습니다. 공용 계정에 연결하려면 먼저 CodeMaru/Dreamine 로그인을 해주세요.";
+			}
+			else
+			{
+				StatusMessage = "";
+			}
+
 			return IsAuthenticated;
 		}
 
@@ -72,6 +142,17 @@ namespace WeddingThankYou.ViewModels
 			MaxVideoCount = Config.MaxVideoCount ?? settings.MaxVideoCount;
 
 			IsLoaded = true;
+		}
+
+		private async Task RefreshCurrentUserAsync()
+		{
+			var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+			IsSignedIn = user.IsAuthenticated;
+			CurrentUserLabel = user.IsAuthenticated
+				? string.IsNullOrWhiteSpace(user.DisplayName)
+					? user.Provider
+					: $"{user.DisplayName} ({user.Provider})"
+				: "";
 		}
 
 		public async Task SaveConfigAsync(CancellationToken ct = default)

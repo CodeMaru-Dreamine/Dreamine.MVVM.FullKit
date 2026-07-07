@@ -4,21 +4,35 @@
 
 <header class="cm-topbar">
     <a class="cm-brand" href="/">
-        <img class="cm-brand-logo" src="/img/Codemaru_Bloom.jpg" alt="Codemaru" />
+        <img class="cm-brand-logo" src="/img/Codemaru_Bloom_Light.jpg" alt="Codemaru" />
         <span class="cm-brand-text">CodeMaru</span>
     </a>
 
     <div class="cm-right">
         <nav id="cmMenu" class="cm-nav cm-nav-menu @(isOpen ? "open" : null)">
             <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="active">Home</NavLink>
-            <NavLink href="/cardhybrid" ActiveClass="active">CardHybrid</NavLink>
             <a href="https://dreamine.kr/" target="_blank" rel="noopener">Dreamine</a>
-            <a href="https://wedding.codemaru.co.kr" target="_blank" rel="noopener">Wedding</a>
+            <NavLink href="/cardhybrid" ActiveClass="active">CardHybrid</NavLink>
+            <a href="https://wedding.codemaru.co.kr">Wedding</a>
+            <a href="https://thankyou.codemaru.co.kr/">ThankYou</a>
             <a href="https://families.codemaru.co.kr" target="_blank" rel="noopener">Families</a>
             <a href="https://portfolio.codemaru.co.kr/" target="_blank" rel="noopener">Portfolio</a>
             <a href="https://cctvviewer.codemaru.co.kr" target="_blank" rel="noopener">CCTV</a>
             <a href="https://shop.codemaru.co.kr/" target="_blank" rel="noopener">ShopStore</a>
             <NavLink href="/contact" Match="NavLinkMatch.All" ActiveClass="active">Contact</NavLink>
+
+            <AuthorizeView>
+                <Authorized>
+                    <a class="cm-user-badge" href="/account?returnUrl=@ReturnUrl" title="내 계정">
+                        <i class="fa-solid fa-user"></i>
+                        @DisplayNameOf(context)
+                    </a>
+                    <a class="cm-auth-link" href="/signout?returnUrl=@ReturnUrl">로그아웃</a>
+                </Authorized>
+                <NotAuthorized>
+                    <a class="cm-auth-link" href="/login?returnUrl=@ReturnUrl">로그인</a>
+                </NotAuthorized>
+            </AuthorizeView>
         </nav>
 
         <button class="cm-nav-burger"
@@ -34,6 +48,14 @@
 
 @code {
     private bool isOpen;
+
+    private string ReturnUrl => Uri.EscapeDataString(new Uri(Navigation.Uri).PathAndQuery);
+
+    private static string DisplayNameOf(AuthenticationState context)
+    {
+        var name = context.User.Identity?.Name;
+        return string.IsNullOrWhiteSpace(name) ? "로그인됨" : name;
+    }
 
     private void ToggleMenu()
     {

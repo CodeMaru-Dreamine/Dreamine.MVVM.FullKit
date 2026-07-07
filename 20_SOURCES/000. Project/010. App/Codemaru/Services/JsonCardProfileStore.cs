@@ -1,112 +1,76 @@
 using Codemaru.Models;
-using System.Text.Json;
 using System.IO;
+using System.Text.Json;
 
 namespace Codemaru.Services;
 
 /// <summary>
-/// \brief Stores CardHybrid profile data as a JSON file under the user's application data folder.
+/// \brief CardHybrid 스냅샷을 프로젝트의 <c>App_Data/Cards/{userId}/snapshot.json</c> 에 저장합니다.
 /// </summary>
+/// <remarks>
+/// Guest 사용자의 데이터는 파일로 저장하지 않습니다 (서킷 메모리만 사용).
+/// </remarks>
 public sealed class JsonCardProfileStore : ICardProfileStore
 {
+    private const string SnapshotFileName = "snapshot.json";
+
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web)
     {
         WriteIndented = true
     };
 
-    private readonly string _directory;
-    private readonly string _lastUserPath;
+    private readonly string _rootDirectory;
 
-    /// <summary>
-    /// \brief Initializes a new instance of the <see cref="JsonCardProfileStore" /> class.
-    /// </summary>
     public JsonCardProfileStore()
     {
-        _directory = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            "Dreamine",
-            "CardHybrid");
-
-        Directory.CreateDirectory(_directory);
-        _lastUserPath = Path.Combine(_directory, "last-user.json");
-    }
-
-    /// <inheritdoc />
-    public async Task<CardHybridUser?> LoadLastUserAsync(CancellationToken cancellationToken = default)
-    {
-        if (!File.Exists(_lastUserPath))
-        {
-            return null;
-        }
-
-        await using var stream = File.OpenRead(_lastUserPath);
-        return await JsonSerializer.DeserializeAsync<CardHybridUser>(stream, SerializerOptions, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task SaveLastUserAsync(CardHybridUser user, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(user);
-        await SaveJsonAsync(_lastUserPath, user, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task<CardHybridUser?> LoadUserAsync(string userId, CancellationToken cancellationToken = default)
-    {
-        var filePath = GetUserPath(userId);
-        if (!File.Exists(filePath))
-        {
-            return null;
-        }
-
-        await using var stream = File.OpenRead(filePath);
-        return await JsonSerializer.DeserializeAsync<CardHybridUser>(stream, SerializerOptions, cancellationToken);
-    }
-
-    /// <inheritdoc />
-    public async Task SaveUserAsync(CardHybridUser user, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(user);
-        await SaveJsonAsync(GetUserPath(user.Id), user, cancellationToken);
+        _rootDirectory = Path.Combine(AppContext.BaseDirectory, "App_Data", "Cards");
+        Directory.CreateDirectory(_rootDirectory);
     }
 
     /// <inheritdoc />
     public async Task<CardHybridSnapshot?> LoadAsync(string userId, CancellationToken cancellationToken = default)
     {
-        var filePath = GetSnapshotPath(userId);
-        if (!File.Exists(filePath))
-        {
-            filePath = userId.Equals(CardHybridUser.Guest.Id, StringComparison.OrdinalIgnoreCase)
-                ? Path.Combine(_directory, "cardhybrid-profile.json")
-                : filePath;
-
-            if (!File.Exists(filePath))
-            {
-                return null;
-            }
-        }
-
-        await using var stream = File.OpenRead(filePath);
-        var snapshot = await JsonSerializer.DeserializeAsync<CardHybridSnapshot>(stream, SerializerOptions, cancellationToken);
-        if (snapshot is null)
+        if (IsGuest(userId))
         {
             return null;
         }
 
-        if (userId.Equals(CardHybridUser.Guest.Id, StringComparison.OrdinalIgnoreCase) &&
-            string.IsNullOrWhiteSpace(snapshot.UserId))
+        var filePath = GetSnapshotPath(userId);
+        if (!File.Exists(filePath))
         {
-            return snapshot;
+            return null;
         }
 
-        return snapshot.UserId == userId ? snapshot : null;
+        await using var stream = File.OpenRead(filePath);
+        var snapshot = await JsonSerializer.DeserializeAsync<CardHybridSnapshot>(
+            stream, SerializerOptions, cancellationToken).ConfigureAwait(false);
+
+        return snapshot?.UserId == userId ? snapshot : snapshot;
     }
 
     /// <inheritdoc />
     public async Task SaveAsync(string userId, CardHybridSnapshot snapshot, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
-        await SaveJsonAsync(GetSnapshotPath(userId), snapshot, cancellationToken);
+
+        if (IsGuest(userId))
+        {
+            return;
+        }
+
+        var filePath = GetSnapshotPath(userId);
+        var directory = Path.GetDirectoryName(filePath)!;
+        Directory.CreateDirectory(directory);
+
+        var tempPath = filePath + ".tmp";
+        await using (var stream = File.Create(tempPath))
+        {
+            await JsonSerializer.SerializeAsync(stream, snapshot, SerializerOptions, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
+        File.Copy(tempPath, filePath, overwrite: true);
+        File.Delete(tempPath);
     }
 
     /// <inheritdoc />
@@ -118,14 +82,23 @@ public sealed class JsonCardProfileStore : ICardProfileStore
         }
 
         var normalizedSlug = slug.Trim().Trim('/').ToLowerInvariant();
-        var files = Directory.GetFiles(_directory, "cardhybrid-profile-*.json");
 
-        foreach (var filePath in files)
+        foreach (var userDirectory in Directory.EnumerateDirectories(_rootDirectory))
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var filePath = Path.Combine(userDirectory, SnapshotFileName);
+            if (!File.Exists(filePath))
+            {
+                continue;
+            }
+
             try
             {
                 await using var stream = File.OpenRead(filePath);
-                var snapshot = await JsonSerializer.DeserializeAsync<CardHybridSnapshot>(stream, SerializerOptions, cancellationToken);
+                var snapshot = await JsonSerializer.DeserializeAsync<CardHybridSnapshot>(
+                    stream, SerializerOptions, cancellationToken).ConfigureAwait(false);
+
                 if (snapshot?.Profile is null)
                 {
                     continue;
@@ -146,27 +119,31 @@ public sealed class JsonCardProfileStore : ICardProfileStore
         return null;
     }
 
-    private async Task SaveJsonAsync<T>(string filePath, T value, CancellationToken cancellationToken)
+    /// <inheritdoc />
+    public Task DeleteAsync(string userId, CancellationToken cancellationToken = default)
     {
-        var tempPath = $"{filePath}.tmp";
-        await using (var stream = File.Create(tempPath))
+        if (IsGuest(userId))
         {
-            await JsonSerializer.SerializeAsync(stream, value, SerializerOptions, cancellationToken);
+            return Task.CompletedTask;
         }
 
-        File.Copy(tempPath, filePath, overwrite: true);
-        File.Delete(tempPath);
+        var filePath = GetSnapshotPath(userId);
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+
+        return Task.CompletedTask;
     }
 
     private string GetSnapshotPath(string userId)
     {
-        return Path.Combine(_directory, $"cardhybrid-profile-{SanitizeUserId(userId)}.json");
+        return Path.Combine(_rootDirectory, SanitizeUserId(userId), SnapshotFileName);
     }
 
-    private string GetUserPath(string userId)
-    {
-        return Path.Combine(_directory, $"cardhybrid-user-{SanitizeUserId(userId)}.json");
-    }
+    private static bool IsGuest(string userId) =>
+        string.IsNullOrWhiteSpace(userId) ||
+        string.Equals(userId, CardHybridUser.Guest.Id, StringComparison.OrdinalIgnoreCase);
 
     private static string SanitizeUserId(string userId)
     {

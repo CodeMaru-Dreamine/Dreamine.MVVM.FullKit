@@ -4,6 +4,7 @@
 @rendermode InteractiveServer
 
 @inject WeddingSuperAdminViewModel Vm
+@inject WeddingUserContext UserContext
 @inject NavigationManager Nav
 
 <PageTitle>💒 무료 모바일 청첩장 — Codemaru Wedding</PageTitle>
@@ -24,6 +25,37 @@
 </HeadContent>
 
 <div class="wh-page">
+    <header class="wh-topnav">
+        <a class="wh-topnav__brand" href="https://codemaru.co.kr">
+            <img class="wh-topnav__mark" src="/img/Codemaru%20Bloom%20Light.jpg" alt="" />
+            <span>CodeMaru</span>
+        </a>
+        <nav class="wh-topnav__links" aria-label="CodeMaru 서비스">
+            <a href="https://codemaru.co.kr">Home</a>
+            <a href="https://dreamine.kr/" target="_blank" rel="noopener">Dreamine</a>
+            <a href="https://codemaru.co.kr/cardhybrid">CardHybrid</a>
+            <a href="https://wedding.codemaru.co.kr" class="active" aria-current="page">Wedding</a>
+            <a href="https://thankyou.codemaru.co.kr/">ThankYou</a>
+            <a href="https://families.codemaru.co.kr">Families</a>
+            <a href="https://portfolio.codemaru.co.kr/">Portfolio</a>
+            <a href="https://cctvviewer.codemaru.co.kr">CCTV</a>
+            <a href="https://shop.codemaru.co.kr/">ShopStore</a>
+            <a href="https://codemaru.co.kr/contact">Contact</a>
+        </nav>
+        @if (!hasLoadedCurrentUser)
+        {
+            <span class="wh-topnav__auth wh-topnav__auth--pending" aria-hidden="true"></span>
+        }
+        else if (currentUser.IsAuthenticated)
+        {
+            <a class="wh-topnav__auth" href="/_identity/account">@NavUserLabel</a>
+            <a class="wh-topnav__auth" href="/_identity/signout?returnUrl=/">로그아웃</a>
+        }
+        else
+        {
+            <a class="wh-topnav__auth" href="@LoginUrl">로그인</a>
+        }
+    </header>
 
     <!-- ── 히어로 배너 ── -->
     <section class="wh-hero">
@@ -31,7 +63,18 @@
             <p class="wh-hero__badge">✨ 무료 모바일 청첩장</p>
             <h1 class="wh-hero__title">우리의 특별한 날을<br />모바일 청첩장으로</h1>
             <p class="wh-hero__sub">사진·음악·지도·방명록 — 5분이면 완성</p>
-            <a href="#create" class="wh-btn wh-btn--primary">지금 무료로 만들기 →</a>
+            <div class="wh-hero__actions">
+                <a href="#create" class="wh-btn wh-btn--primary">지금 무료로 만들기 →</a>
+                <a href="https://codemaru.co.kr" class="wh-btn wh-btn--secondary">CodeMaru 홈</a>
+                @if (currentUser.IsAuthenticated)
+                {
+                    <a href="#my-invites" class="wh-btn wh-btn--secondary">내 청첩장 관리</a>
+                }
+                else if (hasLoadedCurrentUser)
+                {
+                    <a href="@LoginUrl" class="wh-btn wh-btn--secondary">로그인</a>
+                }
+            </div>
         </div>
     </section>
 
@@ -79,6 +122,22 @@
     <!-- ── 가입 폼 ── -->
     <section class="wh-create" id="create">
         <div class="wh-create__box">
+            @if (currentUser.IsAuthenticated)
+            {
+                <div class="wh-account">
+                    <span>공용 로그인</span>
+                    <strong>@CurrentUserLabel</strong>
+                    <a href="/_identity/account" class="wh-account__link">내 계정</a>
+                    <a href="/_identity/signout?returnUrl=/" class="wh-account__link">로그아웃</a>
+                </div>
+            }
+            else if (hasLoadedCurrentUser)
+            {
+                <div class="wh-account wh-account--guest">
+                    <span>로그인하면 생성한 청첩장이 내 계정에 바로 연결됩니다.</span>
+                    <a href="@LoginUrl" class="wh-account__link">공용 로그인</a>
+                </div>
+            }
             <h2 class="wh-create__title">무료로 시작하기</h2>
             <p class="wh-create__desc">아래 정보를 입력하면 바로 청첩장이 생성됩니다.</p>
 
@@ -137,6 +196,33 @@
         </div>
     </section>
 
+    @if (currentUser.IsAuthenticated)
+    {
+        <section class="wh-invites wh-invites--mine" id="my-invites">
+            <h2 class="wh-invites__title">내 청첩장</h2>
+            @if (myInvites.Count == 0)
+            {
+                <p class="wh-empty">아직 이 계정에 연결된 청첩장이 없습니다. 기존 청첩장이 있다면 <code>/{슬러그}/admin</code>에서 기존 비밀번호를 한 번 입력해 연결하세요.</p>
+            }
+            else
+            {
+                <div class="wh-invites__grid">
+                    @foreach (var t in myInvites)
+                    {
+                        <a href="/@t.Slug/admin" class="wh-invite-card wh-invite-card--manage">
+                            <div class="wh-invite-card__body">
+                                <div class="wh-invite-card__name">@t.CoupleName</div>
+                                <div class="wh-invite-card__date">@t.WeddingDate.ToString("yyyy년 MM월 dd일")</div>
+                                <div class="wh-invite-card__venue">/@t.Slug/admin</div>
+                                <span class="wh-manage-link">관리 열기 →</span>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+    }
+
     <!-- ── 공개 청첩장 목록 ── -->
     @if (publicInvites.Count > 0)
     {
@@ -183,6 +269,15 @@
     private bool isCreating;
     private string slugPreview = "";
     private List<WeddingPlatform.Models.TenantConfig> publicInvites = [];
+    private List<WeddingPlatform.Models.TenantConfig> myInvites = [];
+    private WeddingCurrentUser currentUser = WeddingCurrentUser.Anonymous;
+    private bool hasLoadedCurrentUser;
+
+    private string LoginUrl => $"/_identity/login?returnUrl={Uri.EscapeDataString(Nav.ToBaseRelativePath(Nav.Uri) is { Length: > 0 } path ? "/" + path : "/")}";
+    private string NavUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? "내 계정" : currentUser.DisplayName;
+    private string CurrentUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName)
+        ? currentUser.Provider
+        : $"{currentUser.DisplayName} ({currentUser.Provider})";
 
     protected override void OnInitialized()
     {
@@ -194,12 +289,20 @@
 
     protected override async Task OnInitializedAsync()
     {
+        currentUser = await UserContext.GetCurrentAsync();
+        hasLoadedCurrentUser = true;
         await Vm.LoadAsync();
         publicInvites = Vm.Tenants
             .Where(t => t.ShowOnHome)
             .OrderBy(t => t.PinOrder == 0 ? int.MaxValue : t.PinOrder)
             .ThenByDescending(t => t.WeddingDate)
             .ToList();
+        myInvites = currentUser.IsAuthenticated
+            ? Vm.Tenants
+                .Where(t => string.Equals(t.OwnerUserId, currentUser.Id, StringComparison.Ordinal))
+                .OrderByDescending(t => t.CreatedAt)
+                .ToList()
+            : [];
     }
 
     private void OnSlugInput(ChangeEventArgs e)

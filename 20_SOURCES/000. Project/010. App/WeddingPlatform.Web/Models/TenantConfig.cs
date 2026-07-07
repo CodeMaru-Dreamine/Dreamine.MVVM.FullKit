@@ -56,6 +56,11 @@ public sealed class TenantConfig
 
     public WeddingSiteMode Mode { get; set; } = WeddingSiteMode.Invite;
     public string PasswordHash { get; set; } = "";
+    public string OwnerUserId { get; set; } = "";
+    public string OwnerProvider { get; set; } = "";
+    public string OwnerEmail { get; set; } = "";
+    public string OwnerDisplayName { get; set; } = "";
+    public DateTime? OwnerLinkedAt { get; set; }
     public string ThankYouUrl { get; set; } = "";
     public bool IsPublished { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.Now;

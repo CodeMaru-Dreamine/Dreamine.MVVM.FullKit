@@ -1,74 +1,166 @@
+using System.Diagnostics;
+using System.Security.Claims;
 using Codemaru.Models;
 using Codemaru.States;
-using System.Diagnostics;
-using System.Security.Cryptography;
+using Dreamine.Identity;
+using Microsoft.AspNetCore.Components.Authorization;
 
 namespace Codemaru.Services;
 
 /// <summary>
-/// 웹 방문자 1회 접속(Blazor Circuit) 단위로 격리되는 CardHybrid 세션.
-/// Singleton인 CardHybridSession과 달리 회로마다 독립된 상태를 가지므로
-/// 다른 방문자의 로그인·이력이 노출되지 않습니다.
+/// \brief 웹 방문자 1회 접속(Blazor Circuit) 단위로 격리되는 CardHybrid 세션입니다.
 /// </summary>
+/// <remarks>
+/// 인증 자체는 상위 Dreamine.Identity 계층이 처리하고,
+/// 이 세션은 <see cref="ApplyUserAsync"/> 로 결과를 반영합니다.
+/// Guest 상태에서 편집한 내역은 <see cref="HasGuestChanges"/> 로 추적하며
+/// 로그인 시 <see cref="PromoteGuestChangesAsync"/> 로 사용자 소유로 이관할 수 있습니다.
+/// </remarks>
 public sealed class CardHybridCircuitSession : IDisposable
 {
     private readonly SemaphoreSlim _saveLock = new(1, 1);
     private readonly List<CardHistoryEntry> _history = new();
     private readonly IQrSvgGenerator _qr;
     private readonly ICardProfileStore _store;
+    private readonly AuthenticationStateProvider? _authProvider;
 
     private CardHybridState _state;
     private CardHybridUser _currentUser = CardHybridUser.Guest;
+    private bool _hasGuestChanges;
+    private bool _initialized;
 
-    public CardHybridCircuitSession(IQrSvgGenerator qr, ICardProfileStore store)
+    public CardHybridCircuitSession(
+        IQrSvgGenerator qr,
+        ICardProfileStore store,
+        AuthenticationStateProvider? authProvider = null)
     {
         _qr = qr ?? throw new ArgumentNullException(nameof(qr));
         _store = store ?? throw new ArgumentNullException(nameof(store));
+        _authProvider = authProvider;
         _state = CardHybridState.CreateDefault(_qr.CreateSvg(CardProfile.Default.LandingUrl));
     }
 
     public CardHybridState State => _state;
     public CardHybridUser CurrentUser => _currentUser;
 
+    /// <summary>
+    /// \brief Guest 상태에서 이번 서킷 안에 편집이 있었는지 여부입니다.
+    /// </summary>
+    public bool HasGuestChanges => _hasGuestChanges && _currentUser.IsGuest;
+
     public event EventHandler<CardHybridState>? StateChanged;
 
-    public async Task<CardHybridSignInResult> SignInAsync(string email, string password, CancellationToken cancellationToken = default)
+    /// <summary>
+    /// \brief 서킷 첫 사용 시 인증 상태를 읽어 사용자를 반영합니다.
+    /// </summary>
+    /// <remarks>
+    /// Blazor Server 의 쿠키 기반 인증은 서킷 생성 시점에 확정되므로
+    /// 그 이후엔 다시 조회할 필요가 없습니다. 페이지 <c>OnInitializedAsync</c> 에서 호출합니다.
+    /// </remarks>
+    public async Task EnsureInitializedAsync(CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(email))
-            return CardHybridSignInResult.MissingEmail;
-        if (string.IsNullOrWhiteSpace(password))
-            return CardHybridSignInResult.MissingPassword;
+        if (_initialized)
+        {
+            return;
+        }
+        _initialized = true;
 
-        var normalizedEmail = email.Trim().ToLowerInvariant();
-        var userId = CreateUserId(normalizedEmail);
-        var storedUser = await _store.LoadUserAsync(userId, cancellationToken).ConfigureAwait(false);
+        if (_authProvider is null)
+        {
+            return;
+        }
 
-        if (storedUser is not null && !VerifyPassword(password, storedUser.PasswordHash))
-            return CardHybridSignInResult.InvalidPassword;
-
-        var result = storedUser is null ? CardHybridSignInResult.Created : CardHybridSignInResult.Success;
-        var user = new CardHybridUser(
-            Id: userId,
-            Email: normalizedEmail,
-            DisplayName: CreateDisplayName(normalizedEmail),
-            PasswordHash: storedUser?.PasswordHash ?? HashPassword(password),
-            SignedInAt: DateTime.Now);
-
-        _currentUser = user;
-        await _store.SaveUserAsync(user, cancellationToken).ConfigureAwait(false);
-        await _store.SaveLastUserAsync(user, cancellationToken).ConfigureAwait(false);
-
-        var snapshot = await _store.LoadAsync(user.Id, cancellationToken).ConfigureAwait(false);
-        LoadSnapshot(snapshot);
-        NotifyStateChanged();
-        return result;
+        var authState = await _authProvider.GetAuthenticationStateAsync().ConfigureAwait(false);
+        var user = MapPrincipalToUser(authState.User);
+        await ApplyUserAsync(user, cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task SignOutAsync(CancellationToken cancellationToken = default)
+    private static CardHybridUser MapPrincipalToUser(ClaimsPrincipal principal)
     {
-        _currentUser = CardHybridUser.Guest;
-        var snapshot = await _store.LoadAsync(CardHybridUser.Guest.Id, cancellationToken).ConfigureAwait(false);
+        if (principal?.Identity?.IsAuthenticated != true)
+        {
+            return CardHybridUser.Guest;
+        }
+
+        var userIdClaim = principal.FindFirstValue(DreamineIdentityExtensions.UserIdClaimType);
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            return CardHybridUser.Guest;
+        }
+
+        var email = principal.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+        var name = principal.FindFirstValue(ClaimTypes.Name)
+                   ?? principal.FindFirstValue(ClaimTypes.GivenName)
+                   ?? string.Empty;
+
+        return new CardHybridUser(
+            Id: $"oauth-{userIdClaim}",
+            Email: email,
+            DisplayName: string.IsNullOrWhiteSpace(name) ? email : name,
+            SignedInAt: DateTime.UtcNow);
+    }
+
+    /// <summary>
+    /// \brief 인증 결과로 얻은 사용자를 세션에 반영하고 저장된 스냅샷을 로드합니다.
+    /// </summary>
+    /// <param name="user">세션에 반영할 사용자 (<see cref="CardHybridUser.Guest"/> 가능).</param>
+    /// <param name="cancellationToken">취소 토큰.</param>
+    public async Task ApplyUserAsync(CardHybridUser user, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(user);
+
+        _currentUser = user;
+        var snapshot = await _store.LoadAsync(user.Id, cancellationToken).ConfigureAwait(false);
         LoadSnapshot(snapshot);
+        _hasGuestChanges = false;
+        NotifyStateChanged();
+    }
+
+    /// <summary>
+    /// \brief 외부(예: 브라우저 localStorage) 에서 복구한 스냅샷을 현재 사용자의 저장 스냅샷으로 대체합니다.
+    /// </summary>
+    /// <remarks>
+    /// Guest 상태에서 편집한 내용을 로그인 후 사용자 계정으로 이관할 때 사용합니다.
+    /// 사용자가 이미 저장한 스냅샷이 있으면 그 스냅샷은 이 호출로 덮어써집니다.
+    /// </remarks>
+    public async Task ReplaceUserSnapshotAsync(CardHybridSnapshot snapshot, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        if (_currentUser.IsGuest)
+        {
+            throw new InvalidOperationException("Cannot replace snapshot for guest user.");
+        }
+
+        var withUserId = snapshot with { UserId = _currentUser.Id };
+        LoadSnapshot(withUserId);
+        _hasGuestChanges = false;
+
+        await _store.SaveAsync(_currentUser.Id, withUserId, cancellationToken).ConfigureAwait(false);
+        NotifyStateChanged();
+    }
+
+    /// <summary>
+    /// \brief 현재 편집 상태를 <see cref="CardHybridSnapshot"/> 으로 캡처합니다.
+    /// </summary>
+    public CardHybridSnapshot CaptureCurrentSnapshot() =>
+        new(_currentUser.Id, _state.Profile, _history.ToArray(), DateTime.Now);
+
+    /// <summary>
+    /// \brief 외부 스냅샷을 세션 메모리에 로드합니다 (저장하지 않음).
+    /// </summary>
+    /// <remarks>
+    /// 브라우저 localStorage 에서 Guest 상태를 복구할 때 사용합니다.
+    /// Guest 세션이면 <see cref="HasGuestChanges"/> 를 참으로 설정합니다.
+    /// </remarks>
+    public void ImportSnapshot(CardHybridSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        LoadSnapshot(snapshot);
+        if (_currentUser.IsGuest)
+        {
+            _hasGuestChanges = true;
+        }
         NotifyStateChanged();
     }
 
@@ -82,6 +174,7 @@ public sealed class CardHybridCircuitSession : IDisposable
             QrSvg = _qr.CreateSvg(payload),
             LastUpdated = DateTime.Now
         };
+        MarkDirty();
         PersistCurrent();
         NotifyStateChanged();
     }
@@ -97,6 +190,7 @@ public sealed class CardHybridCircuitSession : IDisposable
 
         _history.Insert(0, entry);
         _state = _state with { History = _history.ToArray(), LastUpdated = DateTime.Now };
+        MarkDirty();
         PersistCurrent();
         NotifyStateChanged();
         return entry;
@@ -125,6 +219,7 @@ public sealed class CardHybridCircuitSession : IDisposable
             History = _history.ToArray(),
             LastUpdated = DateTime.Now
         };
+        MarkDirty();
         PersistCurrent();
         NotifyStateChanged();
         return entry;
@@ -136,6 +231,7 @@ public sealed class CardHybridCircuitSession : IDisposable
     {
         _history.Clear();
         _state = _state with { History = Array.Empty<CardHistoryEntry>(), LastUpdated = DateTime.Now };
+        MarkDirty();
         PersistCurrent();
         NotifyStateChanged();
     }
@@ -148,6 +244,7 @@ public sealed class CardHybridCircuitSession : IDisposable
 
         _history.RemoveAt(index);
         _state = _state with { History = _history.ToArray() };
+        MarkDirty();
         PersistCurrent();
         NotifyStateChanged();
         return true;
@@ -163,12 +260,23 @@ public sealed class CardHybridCircuitSession : IDisposable
         _state = CardHybridState.Create(profile, _qr.CreateSvg(profile.LandingUrl), _history.ToArray());
     }
 
+    private void MarkDirty()
+    {
+        if (_currentUser.IsGuest)
+        {
+            _hasGuestChanges = true;
+        }
+    }
+
     private void PersistCurrent()
     {
-        if (_currentUser == CardHybridUser.Guest)
+        if (_currentUser.IsGuest)
+        {
             return;
+        }
 
-        var snapshot = new CardHybridSnapshot(_currentUser.Id, _state.Profile, _history.ToArray(), DateTime.Now);
+        var snapshot = new CardHybridSnapshot(
+            _currentUser.Id, _state.Profile, _history.ToArray(), DateTime.Now);
         var userId = _currentUser.Id;
 
         _ = Task.Run(async () =>
@@ -200,37 +308,6 @@ public sealed class CardHybridCircuitSession : IDisposable
             try { ((EventHandler<CardHybridState>)handler).Invoke(this, _state); }
             catch (Exception ex) { Debug.WriteLine($"CardHybridCircuitSession handler failed: {ex}"); }
         }
-    }
-
-    private static string CreateUserId(string email) =>
-        new string(email.Select(static c => char.IsLetterOrDigit(c) || c is '-' or '_' ? c : '_').ToArray());
-
-    private static string CreateDisplayName(string email)
-    {
-        var at = email.IndexOf('@', StringComparison.Ordinal);
-        return at > 0 ? email[..at] : email;
-    }
-
-    private static string HashPassword(string password)
-    {
-        var salt = RandomNumberGenerator.GetBytes(16);
-        var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, 120_000, HashAlgorithmName.SHA256, 32);
-        return $"{Convert.ToBase64String(salt)}.{Convert.ToBase64String(hash)}";
-    }
-
-    private static bool VerifyPassword(string password, string storedHash)
-    {
-        var parts = storedHash.Split('.', 2);
-        if (parts.Length != 2)
-            return false;
-        try
-        {
-            var salt = Convert.FromBase64String(parts[0]);
-            var expected = Convert.FromBase64String(parts[1]);
-            var actual = Rfc2898DeriveBytes.Pbkdf2(password, salt, 120_000, HashAlgorithmName.SHA256, expected.Length);
-            return CryptographicOperations.FixedTimeEquals(actual, expected);
-        }
-        catch { return false; }
     }
 
     public void Dispose() => _saveLock.Dispose();

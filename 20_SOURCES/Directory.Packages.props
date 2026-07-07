@@ -37,5 +37,9 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.20" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.20" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.20" />
+    <!-- Codemaru OAuth -->
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.20" />
+    <PackageVersion Include="AspNet.Security.OAuth.Naver" Version="8.0.0" />
+    <PackageVersion Include="AspNet.Security.OAuth.KakaoTalk" Version="8.0.0" />
   </ItemGroup>
 </Project>

@@ -8,7 +8,7 @@
     <h1>Welcome to CodeMaru</h1>
     <p class="lead">
         CodeMaru는 일상을 더 스마트하게 만드는 서비스를 만듭니다.<br />
-        명함 관리 · 디지털 청첩장 · 가족 플랫폼 · 실시간 CCTV까지, 모두 여기에 있습니다.
+        명함 관리 · 디지털 청첩장 · 모바일 감사장 · 가족 플랫폼 · 실시간 CCTV까지, 모두 여기에 있습니다.
     </p>
 </section>
 
@@ -51,7 +51,7 @@
         </div>
     </a>
 
-    <button class="cm-card" type="button" @onclick='() => OpenModal("https://wedding.codemaru.co.kr")'>
+    <a class="cm-card" href="https://wedding.codemaru.co.kr">
         <div class="cm-card-preview">
             <div class="cm-browser-frame">
                 <div class="cm-browser-bar">
@@ -68,7 +68,26 @@
         <div class="cm-card-footer">
             <span class="cm-btn">청첩장 만들기</span>
         </div>
-    </button>
+    </a>
+
+    <a class="cm-card" href="https://thankyou.codemaru.co.kr/">
+        <div class="cm-card-preview">
+            <div class="cm-browser-frame">
+                <div class="cm-browser-bar">
+                    <span class="cm-dot r"></span><span class="cm-dot y"></span><span class="cm-dot g"></span>
+                    <span class="cm-browser-url">thankyou.codemaru.co.kr</span>
+                </div>
+                <img class="cm-frame-img" src="@PreviewSrc("thankyou", "img/Wedding_1200x630.jpg")" alt="ThankYou" />
+            </div>
+        </div>
+        <div class="cm-card-body">
+            <h5>ThankYou</h5>
+            <p>결혼식이 끝난 뒤에도 마음은 이어집니다. 감사 인사와 사진, 계좌 안내, 소중한 메시지를 한 페이지에 담아 하객에게 전하세요.</p>
+        </div>
+        <div class="cm-card-footer">
+            <span class="cm-btn">감사장 만들기</span>
+        </div>
+    </a>
 
     <button class="cm-card" type="button" @onclick='() => OpenModal("https://families.codemaru.co.kr")'>
         <div class="cm-card-preview">
@@ -186,8 +205,24 @@
                 관리하세요. 완전 무료입니다.
             </p>
             <div class="cm-about-actions">
-                <button class="cm-btn-outline" type="button" @onclick='() => OpenModal("https://wedding.codemaru.co.kr")'>청첩장 만들기</button>
+                <a class="cm-btn-outline" href="https://wedding.codemaru.co.kr">청첩장 만들기</a>
                 <a class="cm-btn-guide" href="/guide/wedding">이용 설명서</a>
+            </div>
+        </div>
+
+        <div class="cm-about-card">
+            <div class="cm-about-icon">💌</div>
+            <h3>ThankYou — 모바일 감사장</h3>
+            <p>
+                결혼식 이후 하객에게 전하는 감사 인사를 모바일 페이지로 정리합니다.
+                신랑·신부의 인사말, 사진, 연락처, 계좌 안내, 공유 링크를 한곳에 담아
+                문자나 메신저로 간편하게 전달할 수 있습니다. 인쇄물 없이도 정중한 감사 메시지를
+                남길 수 있고, Wedding 청첩장과 함께 사용하면 초대부터 감사 인사까지 자연스럽게
+                이어지는 흐름을 만들 수 있습니다.
+            </p>
+            <div class="cm-about-actions">
+                <a class="cm-btn-outline" href="https://thankyou.codemaru.co.kr/">감사장 만들기</a>
+                <a class="cm-btn-guide" href="/guide/thankyou">이용 설명서</a>
             </div>
         </div>
 

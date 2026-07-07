@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using Dreamine.Hybrid.Wpf.DependencyInjection;
 using Dreamine.Hybrid.Wpf.Hosting;
+using Dreamine.Identity;
+using Dreamine.Identity.Options;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,10 +24,18 @@ public static class Program
     public static void Main()
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        builder.Configuration.AddUserSecrets("codemaru-oauth-2ba4e1b2");
+
         int serverPort = GetInt(builder.Configuration, "WeddingServer:Port", 4088);
         bool listenAnyIp = GetBool(builder.Configuration, "WeddingServer:ListenAnyIp", true);
+        AuthOptions authOptions =
+            builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
+        string usersDbPath = ResolvePath(
+            builder.Configuration[$"{AuthOptions.SectionName}:UsersDbPath"],
+            Path.Combine(AppContext.BaseDirectory, "App_Data", "codemaru.db"));
 
         builder.Services.AddDreamineHybridWpf();
+        builder.Services.AddDreamineIdentityWpfHost();
 
         // ── Wedding 서비스 ─────────────────────────────────────────
         var weddingOpts = WeddingOptions.From(builder.Configuration);
@@ -78,7 +88,11 @@ public static class Program
                     o.JSInteropDefaultCallTimeout = TimeSpan.FromMinutes(1);
                     o.MaxBufferedUnacknowledgedRenderBatches = 10;
                 });
+
+                services.AddScoped<ThankYouUserContext>();
             };
+
+            options.AddDreamineIdentity(authOptions, usersDbPath);
         });
 
         builder.Build().RunDreamineWpfApp<App>();
@@ -89,4 +103,16 @@ public static class Program
 
     private static bool GetBool(IConfiguration cfg, string key, bool fallback) =>
         bool.TryParse(cfg[key], out bool v) ? v : fallback;
+
+    private static string ResolvePath(string? configuredPath, string fallback)
+    {
+        if (string.IsNullOrWhiteSpace(configuredPath))
+        {
+            return fallback;
+        }
+
+        return Path.IsPathRooted(configuredPath)
+            ? configuredPath
+            : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
+    }
 }

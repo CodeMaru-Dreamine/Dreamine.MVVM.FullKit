@@ -841,3 +841,57 @@ dd {
         justify-content: flex-end;
     }
 }
+
+/* Guest → OAuth migration prompt */
+.migration-prompt {
+    position: sticky;
+    top: 0;
+    z-index: 900;
+    padding: 1rem;
+    background: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+}
+
+.migration-prompt-body {
+    max-width: 640px;
+    width: 100%;
+    padding: 1.25rem 1.5rem;
+    background: #1a1f28;
+    border: 1px solid rgba(255, 255, 255, .15);
+    border-radius: .75rem;
+    color: #e6e6e6;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .4);
+}
+
+.migration-prompt-body h3 {
+    margin: 0 0 .5rem;
+    font-size: 1.05rem;
+    color: #ffffff;
+}
+
+.migration-prompt-body p {
+    margin: .35rem 0;
+    font-size: .95rem;
+    line-height: 1.5;
+}
+
+.migration-prompt-warning {
+    color: #f5b942;
+    font-size: .85rem !important;
+}
+
+.migration-prompt-actions {
+    margin-top: .85rem;
+    display: flex;
+    gap: .5rem;
+    justify-content: flex-end;
+}
+
+.signin-hint {
+    margin: .5rem 0 0;
+    font-size: .85rem;
+    color: #aaa;
+    line-height: 1.5;
+}

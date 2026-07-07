@@ -52,6 +52,66 @@
     flex-wrap: wrap;
 }
 
+.migration-prompt,
+.save-options-prompt {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(18, 26, 20, .48);
+}
+
+.migration-prompt-body,
+.save-options-body {
+    width: min(440px, 100%);
+    display: grid;
+    gap: 14px;
+    padding: 22px;
+    border: 1px solid #cbd8c7;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 22px 80px rgba(0, 0, 0, .22);
+}
+
+.migration-prompt-body h3,
+.save-options-body h3 {
+    margin: 0;
+    color: #172119;
+}
+
+.migration-prompt-body p,
+.save-options-body p {
+    margin: 0;
+    color: #4f5b52;
+    line-height: 1.5;
+}
+
+.migration-prompt-warning {
+    padding: 10px 12px;
+    border: 1px solid #e5c1a0;
+    border-radius: 6px;
+    background: #fff8ef;
+}
+
+.migration-prompt-actions,
+.save-options-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.save-options-url {
+    padding: 10px 12px;
+    border: 1px solid #d7dfd4;
+    border-radius: 6px;
+    background: #f7faf6;
+    font-size: .84rem;
+    overflow-wrap: anywhere;
+}
+
 .primary-button,
 .ghost-button,
 .icon-button,
@@ -197,6 +257,15 @@ input[type="color"] {
 
 .field-main textarea {
     min-height: 72px;
+}
+
+.field-hint {
+    display: block;
+    margin-top: 6px;
+    color: #607064;
+    font-size: .82rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
 }
 
 .accent-row {

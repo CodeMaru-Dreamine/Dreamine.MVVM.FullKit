@@ -15,11 +15,21 @@
     {
         <div class="w-admin__login w-panel">
             <h2>관리자 로그인</h2>
+            @if (Vm.IsSignedIn)
+            {
+                <p class="w-hint">현재 공용 로그인: <strong>@Vm.CurrentUserLabel</strong></p>
+                <p class="w-hint">기존 관리자 비밀번호를 한 번 입력하면 이 감사장이 현재 계정에 연결됩니다.</p>
+            }
+            else
+            {
+                <p class="w-hint">CodeMaru/Dreamine 계정으로 먼저 로그인하면, 기존 비밀번호 확인 후 이 감사장을 계정에 연결할 수 있습니다.</p>
+                <a class="w-btn" href="@LoginUrl">공용 로그인</a>
+            }
             <input class="w-input" type="password" placeholder="비밀번호" @bind="Vm.LoginPassword" />
             <button class="w-btn w-btn--primary" @onclick="OnLogin">로그인</button>
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
-                <p class="w-status w-status--error">@Vm.StatusMessage</p>
+                <p class="w-status">@Vm.StatusMessage</p>
             }
         </div>
     }
@@ -32,6 +42,10 @@
         @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
         {
             <p class="w-status">@Vm.StatusMessage</p>
+        }
+        @if (Vm.IsSignedIn)
+        {
+            <p class="w-status">공용 로그인: @Vm.CurrentUserLabel</p>
         }
 
         <!-- ── 기본 정보 ── -->
@@ -416,6 +430,8 @@
 @code {
     [Parameter] public string Slug { get; set; } = "";
 
+    private string LoginUrl => $"/_identity/login?returnUrl=/{Uri.EscapeDataString(Slug)}/admin";
+
     private static readonly HashSet<string> _defaultLabels =
         ["신랑", "신부", "신랑 아버지", "신랑 어머니", "신부 아버지", "신부 어머니"];
 
@@ -455,7 +471,10 @@
         finally { _uploadTickCts.Cancel(); }
     }
 
-    protected override void OnInitialized() { }
+    protected override async Task OnInitializedAsync()
+    {
+        await Vm.InitializeAsync(Slug);
+    }
 
     private async Task OnLogin()
     {
