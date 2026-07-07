@@ -8,8 +8,13 @@
 ![Blazor](https://img.shields.io/badge/Blazor-512BD4.svg?logo=blazor&logoColor=white)
 ![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-F7522F.svg?logo=dotnet&logoColor=white)
 ![Visual Studio](https://img.shields.io/badge/Visual%20Studio-2022-5C2D91.svg?logo=visualstudio&logoColor=white)
+
 [![NuGet](https://img.shields.io/nuget/v/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
+[![Docs](https://img.shields.io/badge/Docs-dreamine.kr-1f6feb.svg)](https://dreamine.kr/libraries)
+[![API Reference](https://img.shields.io/badge/API-Reference-7952B3.svg)](https://dreamine.kr/libraries)
+[![Live Demo](https://img.shields.io/badge/Live-Demo-00B894.svg)](https://dreamine.kr/playground)
+[![Architecture](https://img.shields.io/badge/Architecture-Documented-2563EB.svg)](https://dreamine.kr/libraries)
 [![Book](https://img.shields.io/badge/%F0%9F%93%96%20Book-Practical%20MVVM%20Architecture-000000.svg)](https://bookk.co.kr/bookStore/69c0f1b41461ec1ae849a0f6)
 
 All-in-One package set for building WPF MVVM applications with the Dreamine architecture.
