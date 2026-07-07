@@ -1,4 +1,5 @@
-using Microsoft.AspNetCore.DataProtection;
+using Dreamine.Identity;
+using Dreamine.Identity.Options;
 using Microsoft.EntityFrameworkCore;
 using ShopPlatform.Data;
 using ShopPlatform.Middleware;
@@ -7,17 +8,23 @@ using ShopPlatform.Payments;
 using ShopPlatform.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddUserSecrets("codemaru-oauth-2ba4e1b2");
 
 // ── 옵션 ─────────────────────────────────────────────────────────────
 var shopOpts = ShopOptions.From(builder.Configuration);
 builder.Services.AddSingleton(shopOpts);
 
-// ── DataProtection (결제 시크릿 키 암호화용) ──────────────────────────
-var keysPath = Path.Combine(shopOpts.ResolvedDataPath, ".keys");
-Directory.CreateDirectory(keysPath);
-builder.Services.AddDataProtection()
-    .PersistKeysToFileSystem(new DirectoryInfo(keysPath))
-    .SetApplicationName("ShopPlatform");
+// ── Dreamine.Identity (CodeMaru 공용 쿠키 로그인) ─────────────────────
+AuthOptions authOptions =
+    builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
+string usersDbPath = ResolvePath(
+    builder.Configuration[$"{AuthOptions.SectionName}:UsersDbPath"],
+    Path.Combine(AppContext.BaseDirectory, "App_Data", "codemaru.db"));
+builder.Services.AddDreamineIdentityWeb(authOptions, usersDbPath);
+
+// DataProtection은 Dreamine.Identity가 CodeMaru 공용 경로에 이미 등록.
+// 결제 시크릿 키(PaymentKeyProtector)는 동일 KeyRing을 "ShopPlatform.PaymentKeys"
+// 목적 문자열로 격리해서 그대로 사용한다.
 
 // ── 멀티테넌트 서비스 ─────────────────────────────────────────────────
 builder.Services.AddSingleton<IShopTenantStore, JsonShopTenantStore>();
@@ -31,6 +38,9 @@ builder.Services.AddHttpClient();
 // ── 장바구니 + 고객 세션 (Scoped = Blazor 회로 수명) ──────────────────
 builder.Services.AddScoped<CartService>();
 builder.Services.AddScoped<ShopCustomerSession>();
+builder.Services.AddScoped<ShopUserContext>();
+builder.Services.AddSingleton<ShopCustomerProfileStore>();
+builder.Services.AddScoped<ShopCustomerLoginSync>();
 
 // ── Blazor Server ─────────────────────────────────────────────────────
 builder.Services.AddRazorComponents()
@@ -48,6 +58,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+// 리버스 프록시 뒤에서 X-Forwarded-* 헤더 인식 (쿠키 SameSite/Secure 판정용)
+app.UseForwardedHeaders();
 app.UseResponseCompression();
 app.UseStaticFiles();
 
@@ -60,6 +72,9 @@ app.UseStaticFiles(new StaticFileOptions
 
 // 테넌트 미들웨어: 경로에서 slug 추출 → TenantContext 주입
 app.UseMiddleware<TenantMiddleware>();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseAntiforgery();
 
@@ -134,4 +149,17 @@ static void DeductStock(TenantDbContext db, IEnumerable<OrderLine> lines)
         if (product == null || product.IsUnlimitedStock) continue;
         product.Stock = Math.Max(0, product.Stock - line.Quantity);
     }
+}
+
+// appsettings 경로가 상대 경로면 실행 파일 기준으로 절대 경로로 확장
+static string ResolvePath(string? configuredPath, string fallback)
+{
+    if (string.IsNullOrWhiteSpace(configuredPath))
+    {
+        return fallback;
+    }
+
+    return Path.IsPathRooted(configuredPath)
+        ? configuredPath
+        : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
 }

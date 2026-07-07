@@ -27,7 +27,7 @@
             {
                 <a class="primary link-button" href="/@AuthState.CurrentUser.PublicSlug/live">내 라이브</a>
             }
-            <button class="secondary" @onclick="SignOutAsync">로그아웃</button>
+            <a class="secondary link-button" href="/logout">로그아웃</a>
         </div>
     </div>
 
@@ -35,6 +35,38 @@
     {
         <div class="cam-alert @(_isError ? "cam-alert-error" : "cam-alert-ok")">@_message</div>
     }
+
+    <section class="event-card">
+        <h3>에이전트 연결 계정</h3>
+        <p class="muted" style="margin-bottom:1rem;">
+            PC에 설치한 Dreamine VMS 에이전트에서 아래 이메일과 여기서 설정한 비밀번호로 로그인합니다.
+        </p>
+        <div class="agent-login-box">
+            <div>
+                <span>에이전트 이메일</span>
+                <strong>@(AuthState.CurrentUser?.Email ?? "-")</strong>
+            </div>
+            <div>
+                <span>비밀번호 상태</span>
+                <strong>@(_hasAgentPassword ? "설정됨" : "미설정")</strong>
+            </div>
+        </div>
+        <div class="cam-form">
+            <div class="cam-form-row agent-password-row">
+                <label>
+                    새 에이전트 비밀번호
+                    <input type="password" @bind="_agentPassword" @bind:event="oninput" placeholder="8자 이상" />
+                </label>
+                <label>
+                    비밀번호 확인
+                    <input type="password" @bind="_agentPasswordConfirm" @bind:event="oninput" placeholder="한 번 더 입력" />
+                </label>
+                <button class="primary" @onclick="SaveAgentPasswordAsync" disabled="@_agentPasswordBusy">
+                    @(_agentPasswordBusy ? "저장 중..." : "비밀번호 저장")
+                </button>
+            </div>
+        </div>
+    </section>
 
     <!-- 카카오 / SNS 공유 미리보기 설정 -->
     <section class="event-card">
@@ -186,6 +218,12 @@
     private bool _ogBusy;
     private string _uploadError = "";
 
+    // 에이전트 연결 비밀번호
+    private string _agentPassword = "";
+    private string _agentPasswordConfirm = "";
+    private bool _agentPasswordBusy;
+    private bool _hasAgentPassword;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -205,6 +243,7 @@
         _ogTitle = AuthState.CurrentUser?.OgTitle ?? "";
         _ogDescription = AuthState.CurrentUser?.OgDescription ?? "";
         _ogImage = AuthState.CurrentUser?.OgImage ?? "";
+        _hasAgentPassword = !string.IsNullOrWhiteSpace(AuthState.CurrentUser?.PasswordHash);
         StateHasChanged();
     }
 
@@ -255,6 +294,35 @@
         finally { _ogBusy = false; }
     }
 
+    private async Task SaveAgentPasswordAsync()
+    {
+        if (AuthState.CurrentUser is null) return;
+
+        _agentPasswordBusy = true;
+        try
+        {
+            var (ok, error, user) = await UserService.SetAgentPasswordAsync(
+                AuthState.CurrentUser.Id,
+                _agentPassword,
+                _agentPasswordConfirm);
+
+            if (!ok)
+            {
+                ShowMessage(error, error: true);
+                return;
+            }
+
+            _agentPassword = "";
+            _agentPasswordConfirm = "";
+            _hasAgentPassword = !string.IsNullOrWhiteSpace(user?.PasswordHash);
+            ShowMessage("에이전트 연결 비밀번호를 저장했습니다.");
+        }
+        finally
+        {
+            _agentPasswordBusy = false;
+        }
+    }
+
     private async Task DeleteCameraAsync(CameraDevice cam)
     {
         var confirmed = await JS.InvokeAsync<bool>("confirm", $"'{cam.Name}' 카메라를 삭제하시겠습니까?");
@@ -270,12 +338,6 @@
         _cameras = Repository.GetAll()
             .Where(c => c.TenantId == tenantId)
             .ToList();
-    }
-
-    private async Task SignOutAsync()
-    {
-        await AuthState.SignOutAsync(JS);
-        Nav.NavigateTo("/");
     }
 
     private void ShowMessage(string msg, bool error = false)

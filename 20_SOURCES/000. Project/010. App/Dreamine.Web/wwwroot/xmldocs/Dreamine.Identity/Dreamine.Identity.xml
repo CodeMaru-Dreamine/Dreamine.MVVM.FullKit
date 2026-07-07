@@ -50,6 +50,21 @@
             - Authorization middleware 및 파이프라인 순서 자동 배선.
             </remarks>
         </member>
+        <member name="M:Dreamine.Identity.DreamineIdentityExtensions.AddDreamineIdentityWeb(Microsoft.Extensions.DependencyInjection.IServiceCollection,Dreamine.Identity.Options.AuthOptions,System.String)">
+            <summary>
+            \brief 일반 ASP.NET Core 웹앱에 Dreamine Identity 공유 쿠키 인증을 등록합니다.
+            </summary>
+            <remarks>
+            WPF 호스트가 아닌 순수 웹앱에서 CodeMaru 중앙 로그인 쿠키를 읽어야 할 때 사용합니다.
+            로그인/계정 화면은 중앙 포털 링크를 사용하고, 이 앱은 같은 쿠키와 DataProtection 키로
+            인증 상태만 공유합니다.
+            </remarks>
+        </member>
+        <member name="M:Dreamine.Identity.DreamineIdentityExtensions.MapDreamineIdentityEndpoints(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder)">
+            <summary>
+            \brief Dreamine Identity의 로컬 로그인/계정 엔드포인트를 현재 웹앱에도 매핑합니다.
+            </summary>
+        </member>
         <member name="M:Dreamine.Identity.DreamineIdentityExtensions.OnCreatingTicketAsync(Microsoft.AspNetCore.Authentication.OAuth.OAuthCreatingTicketContext,System.String)">
             <summary>
             \brief 로그인 성공 콜백에서 사용자 레코드를 Upsert 하고 내부 Id 클레임을 추가합니다.

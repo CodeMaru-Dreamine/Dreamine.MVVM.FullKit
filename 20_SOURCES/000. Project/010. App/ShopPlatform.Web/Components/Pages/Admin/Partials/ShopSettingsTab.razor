@@ -21,6 +21,11 @@
                 <input class="form-check-input" type="checkbox" @bind="_isActive" />
                 <label class="form-check-label">쇼핑몰 운영 활성화</label>
             </div>
+            <div class="form-check form-switch mb-3">
+                <input class="form-check-input" type="checkbox" @bind="_showPlatformHomeLink" />
+                <label class="form-check-label">쇼핑몰 화면에 ShopStore 홈 버튼 표시</label>
+                <div class="form-text">고객이 현재 쇼핑몰에서 https://shop.codemaru.co.kr/ 메인으로 이동할 수 있는 버튼입니다.</div>
+            </div>
         </div>
     </div>
 
@@ -190,15 +195,69 @@
         </div>
     </div>
 
-    <!-- 보안 -->
+    <!-- 관리자 -->
     <div class="card mb-4">
-        <div class="card-header fw-semibold">보안</div>
+        <div class="card-header fw-semibold">관리자</div>
         <div class="card-body">
-            <div class="mb-3">
-                <label class="form-label">어드민 비밀번호 변경</label>
-                <input class="form-control" type="password" @bind="_newPassword"
-                       placeholder="변경하지 않으려면 비워두세요" />
-            </div>
+            <p class="text-muted small mb-2">
+                쇼핑몰 관리는 CodeMaru 공용 로그인에 연결된 관리자 계정으로 진행합니다.
+            </p>
+            @if (Config.AdminUsers.Count == 0)
+            {
+                <div class="alert alert-warning py-2 mb-0">아직 연결된 관리자 계정이 없습니다.</div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>이름</th>
+                                <th>이메일</th>
+                                <th>권한</th>
+                                @if (CanManageAdmins)
+                                {
+                                    <th style="width:180px">관리</th>
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var admin in Config.AdminUsers)
+                            {
+                                <tr>
+                                    <td>@admin.DisplayName</td>
+                                    <td>@admin.Email</td>
+                                    <td>
+                                        @if (CanManageAdmins && !IsCurrentUser(admin))
+                                        {
+                                            <select class="form-select form-select-sm" style="max-width:120px"
+                                                    value="@NormalizeRole(admin.Role)"
+                                                    @onchange="e => ChangeAdminRole(admin, e.Value?.ToString() ?? AdminRole)">
+                                                <option value="Owner">Owner</option>
+                                                <option value="Admin">Admin</option>
+                                            </select>
+                                        }
+                                        else
+                                        {
+                                            @EffectiveRole(admin)
+                                        }
+                                    </td>
+                                    @if (CanManageAdmins)
+                                    {
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                    disabled="@(!CanRemoveAdmin(admin))"
+                                                    @onclick="() => RemoveAdmin(admin)">
+                                                삭제
+                                            </button>
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     </div>
 
@@ -216,7 +275,10 @@
 
 @code {
     [Parameter] public ShopConfig Config { get; set; } = default!;
+    [Parameter] public string CurrentUserId { get; set; } = string.Empty;
     [Parameter] public EventCallback<ShopConfig> OnSave { get; set; }
+
+    private const string AdminRole = "Admin";
 
     private string _name        = string.Empty;
     private string _description = string.Empty;
@@ -225,8 +287,8 @@
     private string? _bannerImagePath;
     private string? _logoPath;
     private int    _featuredCount = 4;
-    private string _newPassword = string.Empty;
     private bool   _isActive;
+    private bool   _showPlatformHomeLink;
     private string _msg = string.Empty;
     private string _err = string.Empty;
 
@@ -261,6 +323,7 @@
         _logoPath         = Config.LogoPath;
         _featuredCount    = Config.FeaturedCount > 0 ? Config.FeaturedCount : 4;
         _isActive         = Config.IsActive;
+        _showPlatformHomeLink = Config.ShowPlatformHomeLink;
         _ogTitle          = Config.OgTitle;
         _ogDescription    = Config.OgDescription;
         _ogImagePath      = Config.OgImagePath;
@@ -317,6 +380,7 @@
         Config.LogoPath        = _logoPath;
         Config.FeaturedCount   = _featuredCount;
         Config.IsActive        = _isActive;
+        Config.ShowPlatformHomeLink = _showPlatformHomeLink;
         Config.OgTitle         = _ogTitle;
         Config.OgDescription   = _ogDescription;
         Config.OgImagePath     = _ogImagePath;
@@ -334,14 +398,79 @@
         Config.Business.TaxType        = _bizTaxType;
         Config.Business.CopyrightText  = _bizCopyright;
 
-        if (!string.IsNullOrWhiteSpace(_newPassword))
-        {
-            Config.AdminPasswordHash = _newPassword;
-            _newPassword = string.Empty;
-        }
         await OnSave.InvokeAsync(Config);
         _msg = "저장되었습니다.";
         await Task.Delay(2000);
         _msg = string.Empty;
+    }
+
+    private bool CanManageAdmins =>
+        Config.AdminUsers.Any(admin =>
+            string.Equals(admin.UserId, CurrentUserId, StringComparison.Ordinal)
+            && string.Equals(EffectiveRole(admin), "Owner", StringComparison.OrdinalIgnoreCase));
+
+    private static string NormalizeRole(string? role) =>
+        string.Equals(role, "Owner", StringComparison.OrdinalIgnoreCase) ? "Owner" : "Admin";
+
+    private string EffectiveRole(ShopAdminUser admin)
+    {
+        if (!string.IsNullOrWhiteSpace(Config.OwnerUserId)
+            && string.Equals(Config.OwnerUserId, admin.UserId, StringComparison.Ordinal))
+        {
+            return "Owner";
+        }
+
+        if (!Config.AdminUsers.Any(IsExplicitOwner)
+            && string.IsNullOrWhiteSpace(Config.OwnerUserId)
+            && Config.AdminUsers.Count > 0
+            && string.Equals(Config.AdminUsers[0].UserId, admin.UserId, StringComparison.Ordinal))
+        {
+            return "Owner";
+        }
+
+        return NormalizeRole(admin.Role);
+    }
+
+    private static bool IsExplicitOwner(ShopAdminUser admin) =>
+        string.Equals(NormalizeRole(admin.Role), "Owner", StringComparison.OrdinalIgnoreCase);
+
+    private bool IsCurrentUser(ShopAdminUser admin) =>
+        string.Equals(admin.UserId, CurrentUserId, StringComparison.Ordinal);
+
+    private int OwnerCount =>
+        Config.AdminUsers.Count(admin => string.Equals(EffectiveRole(admin), "Owner", StringComparison.OrdinalIgnoreCase));
+
+    private bool CanRemoveAdmin(ShopAdminUser admin)
+    {
+        if (IsCurrentUser(admin)) return false;
+        return !string.Equals(EffectiveRole(admin), "Owner", StringComparison.OrdinalIgnoreCase)
+            || OwnerCount > 1;
+    }
+
+    private void ChangeAdminRole(ShopAdminUser admin, string role)
+    {
+        var nextRole = NormalizeRole(role);
+        if (string.Equals(EffectiveRole(admin), "Owner", StringComparison.OrdinalIgnoreCase)
+            && nextRole == "Admin"
+            && OwnerCount <= 1)
+        {
+            _err = "마지막 Owner 권한은 Admin으로 변경할 수 없습니다.";
+            return;
+        }
+
+        admin.Role = nextRole;
+        _err = string.Empty;
+    }
+
+    private void RemoveAdmin(ShopAdminUser admin)
+    {
+        if (!CanRemoveAdmin(admin))
+        {
+            _err = "자기 자신 또는 마지막 Owner는 삭제할 수 없습니다.";
+            return;
+        }
+
+        Config.AdminUsers.Remove(admin);
+        _err = string.Empty;
     }
 }

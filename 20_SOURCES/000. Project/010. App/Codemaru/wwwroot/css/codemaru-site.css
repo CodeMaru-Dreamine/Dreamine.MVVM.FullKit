@@ -15,12 +15,24 @@
     box-sizing: border-box;
 }
 
-.cm-body {
+html, body {
+    margin: 0;
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--cm-bg);
+}
+
+.cm-body {
+    flex: 1 0 auto;
     padding: 88px 24px 32px;
     background: var(--cm-bg);
     color: var(--cm-text);
     font-family: system-ui, "Noto Sans KR", "Segoe UI", "Malgun Gothic", sans-serif;
+}
+
+.cm-footer {
+    flex-shrink: 0;
 }
 
 .cm-body h1,
@@ -181,8 +193,8 @@
 }
 
 .cm-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 280px));
+    display: flex;
+    flex-wrap: wrap;
     justify-content: center;
     align-items: stretch;
     gap: 1rem;
@@ -192,14 +204,14 @@
 .cm-card {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    height: 100%;
+    flex: 0 1 260px;
+    max-width: 280px;
+    height: auto;
     padding: 1rem;
     border: 1px solid var(--cm-border);
     border-radius: 14px;
     background: linear-gradient(180deg, var(--cm-panel), var(--cm-panel-2));
     color: var(--cm-text);
-    cursor: pointer;
     font: inherit;
     text-align: left;
     text-decoration: none;
@@ -231,14 +243,12 @@
     margin-bottom: .75rem;
 }
 
-/* 2구역: 제목 + 설명 — 고정 높이로 버튼 위치를 통일 */
 .cm-card-body {
-    height: 8rem;
-    overflow: hidden;
-    flex-shrink: 0;
+    min-height: 10rem;
     padding: .1rem 0 .5rem;
 }
 
+.cm-card h2,
 .cm-card h5 {
     margin: .25rem 0 .35rem;
     color: var(--cm-strong);
@@ -253,68 +263,42 @@
     line-height: 1.5;
 }
 
-/* 3구역: 버튼 */
 .cm-card-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
     flex-shrink: 0;
     margin-top: auto;
 }
 
-.cm-btn {
-    display: inline-block;
+.cm-btn,
+.cm-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     padding: .5rem .75rem;
     border-radius: .6rem;
-    background: var(--cm-brand);
-    color: #081026;
+    min-height: 2.45rem;
     font-weight: 800;
     text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.cm-btn {
+    background: var(--cm-brand);
+    color: #081026;
+}
+
+.cm-btn-secondary {
+    background: rgba(148, 163, 184, .12);
+    color: #cbd5e1;
+    border: 1px solid rgba(148, 163, 184, .22);
 }
 
 .cm-card:hover .cm-btn {
     background: var(--cm-brand-strong);
-}
-
-.cm-modal {
-    position: fixed;
-    inset: 0;
-    z-index: 3000;
-    display: grid;
-    place-items: center;
-    padding: 24px;
-    background: rgba(0, 0, 0, .75);
-}
-
-.cm-modal-content {
-    position: relative;
-    width: min(1200px, 94vw);
-    height: min(720px, 84vh);
-    padding: 1rem;
-    border-radius: 12px;
-    background: #111827;
-    border: 1px solid var(--cm-border);
-}
-
-.cm-modal-content iframe {
-    width: 100%;
-    height: 100%;
-    border: 0;
-    border-radius: 8px;
-    background: #fff;
-}
-
-.cm-modal-close {
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    z-index: 1;
-    width: 36px;
-    height: 36px;
-    border: 0;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, .16);
-    color: #fff;
-    cursor: pointer;
-    font-size: 24px;
 }
 
 .cm-footer {
@@ -361,7 +345,7 @@
 .floating-contact {
     position: fixed;
     right: 28px;
-    bottom: 28px;
+    bottom: 120px;
     z-index: 1000;
     display: inline-flex;
     align-items: center;
@@ -699,108 +683,6 @@
     padding-left: 1.25rem;
 }
 
-/* ── 서비스 소개 섹션 ── */
-.cm-about {
-    margin-top: 3rem;
-    padding: 2rem 0;
-    border-top: 1px solid var(--cm-border);
-}
-
-.cm-about-title {
-    text-align: center;
-    font-size: clamp(1.4rem, 3vw, 1.9rem);
-    font-weight: 900;
-    margin-bottom: .5rem;
-}
-
-.cm-about-lead {
-    text-align: center;
-    color: var(--cm-muted);
-    font-size: 1rem;
-    max-width: 640px;
-    margin: 0 auto 2rem;
-    line-height: 1.7;
-}
-
-.cm-about-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.25rem;
-}
-
-.cm-about-card {
-    padding: 1.5rem;
-    border: 1px solid var(--cm-border);
-    border-radius: 14px;
-    background: var(--cm-panel);
-}
-
-.cm-about-icon {
-    font-size: 1.75rem;
-    margin-bottom: .5rem;
-}
-
-.cm-about-card h3 {
-    font-size: 1.05rem;
-    font-weight: 800;
-    color: var(--cm-strong);
-    margin: 0 0 .6rem;
-}
-
-.cm-about-card p {
-    color: #cbd5e1;
-    font-size: .9rem;
-    line-height: 1.75;
-    margin: 0 0 1rem;
-}
-
-.cm-about-actions {
-    display: flex;
-    gap: .5rem;
-    flex-wrap: wrap;
-    margin-top: auto;
-}
-
-.cm-btn-outline,
-.cm-btn-guide {
-    display: inline-flex;
-    align-items: center;
-    padding: .35rem .85rem;
-    border-radius: 8px;
-    font-size: .8rem;
-    font-weight: 600;
-    text-decoration: none;
-    cursor: pointer;
-    border: none;
-    transition: background .15s, color .15s;
-}
-
-.cm-btn-outline {
-    background: transparent;
-    border: 1px solid var(--cm-accent, #5d7f57);
-    color: var(--cm-accent, #5d7f57);
-}
-
-.cm-btn-outline:hover {
-    background: var(--cm-accent, #5d7f57);
-    color: #fff;
-}
-
-.cm-btn-guide {
-    background: rgba(148, 163, 184, .12);
-    color: #94a3b8;
-}
-
-.cm-btn-guide:hover {
-    background: rgba(148, 163, 184, .22);
-    color: #e2e8f0;
-}
-
-.cm-about-card {
-    display: flex;
-    flex-direction: column;
-}
-
 /* ── 가이드 페이지 ── */
 .guide-page {
     display: grid;
@@ -951,8 +833,7 @@
     }
 }
 
-/* ── 운영자 소개 섹션 ── */
-.cm-intro {
+.cm-maker {
     margin-top: 2.5rem;
     padding: 2rem 2rem 2.5rem;
     border-radius: 16px;
@@ -961,13 +842,13 @@
     text-align: center;
 }
 
-.cm-intro h2 {
+.cm-maker h2 {
     font-size: 1.35rem;
     font-weight: 800;
     margin: 0 0 .75rem;
 }
 
-.cm-intro p {
+.cm-maker p {
     color: #cbd5e1;
     font-size: .95rem;
     line-height: 1.8;
@@ -975,7 +856,7 @@
     margin: 0 auto .75rem;
 }
 
-.cm-intro-links {
+.cm-maker-links {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
@@ -983,7 +864,7 @@
     margin-top: 1.25rem;
 }
 
-.cm-intro-links a {
+.cm-maker-links a {
     display: inline-block;
     padding: .45rem 1.1rem;
     border-radius: .6rem;
@@ -995,7 +876,54 @@
     transition: background .15s;
 }
 
-.cm-intro-links a:hover {
+.cm-maker-links a:hover {
     background: rgba(96, 165, 250, .25);
+    text-decoration: none;
+}
+
+.cm-not-found {
+    width: min(680px, calc(100% - 2rem));
+    margin: 6rem auto;
+    padding: 2.5rem;
+    border: 1px solid rgba(148, 163, 184, .2);
+    border-radius: 8px;
+    background: rgba(15, 23, 42, .72);
+    color: #e5edf8;
+    text-align: center;
+}
+
+.cm-not-found-code {
+    margin: 0;
+    color: #60a5fa;
+    font-size: 3rem;
+    font-weight: 800;
+}
+
+.cm-not-found h1 {
+    margin: .5rem 0 .75rem;
+    font-size: 1.7rem;
+}
+
+.cm-not-found p {
+    color: #a7b4c9;
+}
+
+.cm-not-found-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .75rem;
+    margin-top: 1.5rem;
+}
+
+.cm-not-found-actions a {
+    display: inline-flex;
+    min-width: 8rem;
+    justify-content: center;
+    padding: .75rem 1rem;
+    border-radius: 8px;
+    background: #60a5fa;
+    color: #06111f;
+    font-weight: 800;
     text-decoration: none;
 }

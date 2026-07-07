@@ -1,6 +1,7 @@
 @page "/{Slug}/admin"
 @inject TenantContext Tenant
 @inject IShopTenantStore TenantStore
+@inject ShopUserContext UserContext
 @inject NavigationManager Nav
 
 <PageTitle>어드민 — @(Tenant.Config?.ShopName ?? "쇼핑몰")</PageTitle>
@@ -11,19 +12,28 @@
         <h2>존재하지 않는 쇼핑몰입니다.</h2>
     </div>
 }
+else if (!currentUser.IsAuthenticated)
+{
+    <div class="container py-5" style="max-width:460px">
+        <h2>@Tenant.Config!.ShopName 어드민</h2>
+        <p class="text-muted">CodeMaru 계정으로 로그인하면 쇼핑몰을 관리할 수 있습니다.</p>
+        <a class="btn btn-primary w-100" href="@LoginUrl">CodeMaru 계정으로 로그인</a>
+    </div>
+}
 else if (!_authenticated)
 {
     <div class="container py-5" style="max-width:400px">
         <h2>@Tenant.Config!.ShopName 어드민</h2>
+        <p class="text-muted">현재 계정: <strong>@CurrentUserLabel</strong></p>
         <div class="mb-3">
-            <label class="form-label">비밀번호</label>
+            <label class="form-label">기존 어드민 비밀번호</label>
             <input type="password" class="form-control" @bind="_password" @bind:event="oninput" @onkeypress="OnKeyPress" />
         </div>
         @if (!string.IsNullOrEmpty(_loginError))
         {
             <div class="alert alert-danger">@_loginError</div>
         }
-        <button class="btn btn-primary w-100" @onclick="Login">로그인</button>
+        <button class="btn btn-primary w-100" @onclick="LinkLegacyAdmin">현재 계정에 연결</button>
     </div>
 }
 else
@@ -71,7 +81,9 @@ else
         }
         else if (_tab == "shop" && _config != null)
         {
-            <ShopPlatform.Components.Pages.Admin.Partials.ShopSettingsTab Config="_config" OnSave="SaveConfig" />
+            <ShopPlatform.Components.Pages.Admin.Partials.ShopSettingsTab Config="_config"
+                                                                          CurrentUserId="@currentUser.Id"
+                                                                          OnSave="SaveConfig" />
         }
     </div>
 }
@@ -80,6 +92,7 @@ else
     [Parameter] public string Slug { get; set; } = string.Empty;
 
     private ShopConfig? _config;
+    private ShopCurrentUser currentUser = ShopCurrentUser.Anonymous;
     private bool _authenticated;
     private string _password = string.Empty;
     private string _loginError = string.Empty;
@@ -94,13 +107,30 @@ else
             if (cfg != null) Tenant.Config = cfg;
         }
         _config = Tenant.Config;
+        currentUser = await UserContext.GetCurrentAsync();
+        _authenticated = _config != null && IsAdminUser(_config, currentUser);
     }
 
-    private void Login()
+    private async Task LinkLegacyAdmin()
     {
         if (_config == null) return;
         if (_password == _config.AdminPasswordHash || BCryptVerify(_password, _config.AdminPasswordHash))
         {
+            if (string.IsNullOrWhiteSpace(_config.OwnerUserId))
+            {
+                _config.OwnerUserId = currentUser.Id;
+                _config.OwnerProvider = currentUser.Provider;
+                _config.OwnerEmail = currentUser.Email;
+                _config.OwnerDisplayName = currentUser.DisplayName;
+                _config.OwnerLinkedAt = DateTime.UtcNow;
+                EnsureAdminUser(_config, currentUser, "Owner");
+            }
+            else
+            {
+                EnsureAdminUser(_config, currentUser, "Admin");
+            }
+
+            await TenantStore.SaveAsync(_config);
             _authenticated = true;
             _loginError = string.Empty;
         }
@@ -110,11 +140,15 @@ else
         }
     }
 
-    private void Logout() => _authenticated = false;
+    private void Logout()
+    {
+        _authenticated = false;
+        Nav.NavigateTo($"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.BaseUri)}", forceLoad: true);
+    }
 
     private void OnKeyPress(KeyboardEventArgs e)
     {
-        if (e.Key == "Enter") Login();
+        if (e.Key == "Enter") _ = LinkLegacyAdmin();
     }
 
     private async Task SaveConfig(ShopConfig cfg)
@@ -127,5 +161,38 @@ else
     {
         // BCrypt.Net-Next 미사용 시 단순 비교 (개발 편의)
         return plain == hash;
+    }
+
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string CurrentUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? currentUser.Email : currentUser.DisplayName;
+
+    private static bool IsAdminUser(ShopConfig config, ShopCurrentUser user)
+    {
+        if (!user.IsAuthenticated) return false;
+        if (string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal)) return true;
+        return config.AdminUsers.Any(x => string.Equals(x.UserId, user.Id, StringComparison.Ordinal));
+    }
+
+    private static void EnsureAdminUser(ShopConfig config, ShopCurrentUser user, string role)
+    {
+        var existing = config.AdminUsers.FirstOrDefault(x => string.Equals(x.UserId, user.Id, StringComparison.Ordinal));
+        if (existing == null)
+        {
+            config.AdminUsers.Add(new ShopAdminUser
+            {
+                UserId = user.Id,
+                Provider = user.Provider,
+                Email = user.Email,
+                DisplayName = user.DisplayName,
+                Role = role,
+                AddedAt = DateTime.UtcNow
+            });
+            return;
+        }
+
+        existing.Provider = user.Provider;
+        existing.Email = user.Email;
+        existing.DisplayName = user.DisplayName;
+        existing.Role = role;
     }
 }

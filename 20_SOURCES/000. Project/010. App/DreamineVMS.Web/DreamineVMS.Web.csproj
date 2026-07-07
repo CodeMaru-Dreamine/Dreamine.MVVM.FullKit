@@ -12,6 +12,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\100. Library\Identity\Dreamine.Identity.csproj" SetTargetFramework="TargetFramework=net8.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Content Update="wwwroot\images\cctvviewer-og.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Text.Encodings.Web;
 using Codemaru.Blazor;
 using Codemaru.Blazor.Pages;
 using Codemaru.Models;
@@ -108,8 +109,8 @@ public static class Program
     private static readonly Dictionary<string, (string Title, string Desc, string Image, string Url)> OgMeta = new()
     {
         ["/"] = (
-            "CodeMaru — 명함 · 청첩장 · 감사장 · 가족 플랫폼 · CCTV",
-            "CodeMaru는 일상을 더 스마트하게 만드는 서비스를 만듭니다. 명함 관리 · 디지털 청첩장 · 모바일 감사장 · 가족 플랫폼 · 실시간 CCTV까지, 모두 여기에 있습니다.",
+            "CodeMaru - 명함 QR · 청첩장 · 감사장 · 가족 앨범 · CCTV · 쇼핑몰",
+            "명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 쇼핑몰까지 CodeMaru 계정 하나로 사용하는 디지털 서비스 플랫폼입니다.",
             "https://codemaru.co.kr/img/codemaru_og.png",
             "https://codemaru.co.kr/"),
         ["/cardhybrid"] = (
@@ -208,6 +209,12 @@ public static class Program
         var normalizedPath = path == "/" ? "/" : path.TrimEnd('/');
         if (!OgMeta.TryGetValue(normalizedPath, out var og))
         {
+            if (ShouldReturnBotNotFound(normalizedPath))
+            {
+                await WriteBotNotFoundAsync(context, normalizedPath);
+                return;
+            }
+
             await next(context);
             return;
         }
@@ -233,6 +240,45 @@ public static class Program
               <meta name="twitter:image" content="{og.Image}" />
             </head>
             <body></body>
+            </html>
+            """);
+    }
+
+    private static bool ShouldReturnBotNotFound(string path)
+    {
+        if (string.IsNullOrWhiteSpace(path) || path == "/")
+        {
+            return false;
+        }
+
+        if (Path.HasExtension(path))
+        {
+            return false;
+        }
+
+        return !path.StartsWith("/card/", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static async Task WriteBotNotFoundAsync(HttpContext context, string path)
+    {
+        string encodedPath = HtmlEncoder.Default.Encode(path);
+
+        context.Response.StatusCode = StatusCodes.Status404NotFound;
+        context.Response.ContentType = "text/html; charset=utf-8";
+        await context.Response.WriteAsync($"""
+            <!DOCTYPE html>
+            <html lang="ko">
+            <head>
+              <meta charset="utf-8" />
+              <title>페이지를 찾을 수 없습니다 | CodeMaru</title>
+              <meta name="robots" content="noindex, follow" />
+              <link rel="canonical" href="https://codemaru.co.kr/404" />
+            </head>
+            <body>
+              <h1>페이지를 찾을 수 없습니다</h1>
+              <p>{encodedPath} 경로는 CodeMaru에서 제공하지 않는 페이지입니다.</p>
+              <p><a href="https://codemaru.co.kr/">CodeMaru 홈</a></p>
+            </body>
             </html>
             """);
     }

@@ -1,6 +1,105 @@
 @inherits LayoutComponentBase
+@implements IDisposable
 @inject TenantContext Tenant
+@inject ShopUserContext UserContext
+@inject NavigationManager Nav
+
+@if (IsPlatformPage)
+{
+    <header class="sp-topnav">
+        <a class="sp-topnav__brand" href="https://codemaru.co.kr/">
+            <img class="sp-topnav__mark" src="/img/Codemaru%20Bloom%20Light.jpg" alt="" />
+            <span>CodeMaru</span>
+        </a>
+        <nav id="spTopnavMenu" class="sp-topnav__links @(isNavOpen ? "open" : null)" aria-label="CodeMaru 서비스">
+            <a href="https://codemaru.co.kr/">Home</a>
+            <a href="https://dreamine.kr/" target="_blank" rel="noopener">Dreamine</a>
+            <a href="https://codemaru.co.kr/cardhybrid">CardHybrid</a>
+            <a href="https://wedding.codemaru.co.kr">Wedding</a>
+            <a href="https://thankyou.codemaru.co.kr/">ThankYou</a>
+            <a href="https://families.codemaru.co.kr">Families</a>
+            <a href="https://portfolio.codemaru.co.kr/">Portfolio</a>
+            <a href="https://cctvviewer.codemaru.co.kr">CCTV</a>
+            <a href="https://shop.codemaru.co.kr/" class="active" aria-current="page">ShopStore</a>
+            <a href="https://codemaru.co.kr/contact">Contact</a>
+            @if (currentUser.IsAuthenticated)
+            {
+                <a class="sp-topnav__auth" href="@AccountUrl">@NavUserLabel</a>
+                <a class="sp-topnav__auth" href="@SignoutUrl">로그아웃</a>
+            }
+            else
+            {
+                <a class="sp-topnav__auth" href="@LoginUrl">로그인</a>
+            }
+        </nav>
+        <button class="sp-topnav__burger"
+                type="button"
+                @onclick="ToggleNav"
+                aria-label="메뉴 열기/닫기"
+                aria-expanded="@isNavOpen"
+                aria-controls="spTopnavMenu">
+            <span></span><span></span><span></span>
+        </button>
+    </header>
+}
 
 <div class="shop-layout @(Tenant.IsResolved ? "tenant-active" : "")">
     @Body
 </div>
+
+@code {
+    private static readonly HashSet<string> PlatformPages =
+        new(StringComparer.OrdinalIgnoreCase) { "", "apply", "admin" };
+
+    private ShopCurrentUser currentUser = ShopCurrentUser.Anonymous;
+    private bool isNavOpen;
+
+    private bool IsPlatformPage
+    {
+        get
+        {
+            var path = new Uri(Nav.Uri).AbsolutePath.Trim('/');
+            var firstSegment = path.Split('/', 2)[0];
+            return PlatformPages.Contains(firstSegment);
+        }
+    }
+
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string AccountUrl => $"https://codemaru.co.kr/_identity/account?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string SignoutUrl => $"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.BaseUri)}";
+    private string NavUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? "내 계정" : currentUser.DisplayName;
+
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (!IsPlatformPage)
+        {
+            return;
+        }
+
+        currentUser = await UserContext.GetCurrentAsync();
+    }
+
+    private void ToggleNav()
+    {
+        isNavOpen = !isNavOpen;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (isNavOpen)
+        {
+            isNavOpen = false;
+        }
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+}

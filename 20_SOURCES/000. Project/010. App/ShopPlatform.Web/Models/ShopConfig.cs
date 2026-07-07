@@ -39,11 +39,25 @@ public sealed class ShopConfig
     /// <summary>운영 여부.</summary>
     public bool IsActive { get; set; } = true;
 
+    /// <summary>샵 화면에서 ShopStore 홈으로 이동하는 버튼 표시 여부.</summary>
+    public bool ShowPlatformHomeLink { get; set; } = true;
+
     /// <summary>생성 시각 (UTC).</summary>
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>어드민 비밀번호 해시 (BCrypt).</summary>
     public string AdminPasswordHash { get; set; } = string.Empty;
+
+    /// <summary>CodeMaru 공용 로그인 기준 대표 관리자 ID.</summary>
+    public string OwnerUserId { get; set; } = string.Empty;
+
+    public string OwnerProvider { get; set; } = string.Empty;
+    public string OwnerEmail { get; set; } = string.Empty;
+    public string OwnerDisplayName { get; set; } = string.Empty;
+    public DateTime? OwnerLinkedAt { get; set; }
+
+    /// <summary>추가 운영 관리자 목록.</summary>
+    public List<ShopAdminUser> AdminUsers { get; set; } = new();
 
     /// <summary>사업자 정보 (푸터 표시용).</summary>
     public ShopBusinessInfo Business { get; set; } = new();
@@ -67,6 +81,16 @@ public sealed class ShopBusinessInfo
     public string Phone            { get; set; } = string.Empty; // 전화
     public string TaxType          { get; set; } = string.Empty; // 간이과세자 등 세금 유형 문구
     public string CopyrightText    { get; set; } = string.Empty; // © 문구
+}
+
+public sealed class ShopAdminUser
+{
+    public string UserId { get; set; } = string.Empty;
+    public string Provider { get; set; } = string.Empty;
+    public string Email { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public string Role { get; set; } = "Admin";
+    public DateTime AddedAt { get; set; } = DateTime.UtcNow;
 }
 
 /// <summary>환불·교환·배송 정책 텍스트 (HTML 허용). 상품 상세 페이지 하단 아코디언에 표시.</summary>

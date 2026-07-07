@@ -3,6 +3,7 @@
 @inject IShopTenantStore TenantStore
 @inject TenantDbContextFactory DbFactory
 @inject ShopCustomerSession Session
+@inject ShopCustomerLoginSync CustomerLogin
 @inject NavigationManager Nav
 
 <PageTitle>로그인 — @(Tenant.Config?.ShopName ?? "")</PageTitle>
@@ -15,6 +16,8 @@
 
     <div class="card shadow-sm">
         <div class="card-body p-4">
+            <a class="btn btn-primary w-100 mb-3" href="@CommonLoginUrl">CodeMaru 계정으로 계속하기</a>
+            <div class="text-center text-muted small mb-3">또는 기존 쇼핑몰 회원 로그인</div>
             <div class="mb-3">
                 <label class="form-label">이메일</label>
                 <input class="form-control" type="email" @bind="_email" @bind:event="oninput" />
@@ -33,8 +36,7 @@
             </button>
             <hr />
             <p class="text-center mb-0 small">
-                아직 회원이 아니신가요?
-                <a href="/@Slug/register">회원가입</a>
+                배송지·연락처는 결제 단계에서 추가로 입력할 수 있습니다.
             </p>
         </div>
     </div>
@@ -59,9 +61,13 @@
             var cfg = await TenantStore.GetAsync(Slug);
             if (cfg != null) Tenant.Config = cfg;
         }
+        await CustomerLogin.SyncAsync(Slug);
         if (Session.IsLoggedIn)
             Nav.NavigateTo(ReturnUrl ?? $"/{Slug}");
     }
+
+    private string CommonLoginUrl =>
+        $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.ToAbsoluteUri(ReturnUrl ?? $"/{Slug}").ToString())}";
 
     private void Login()
     {

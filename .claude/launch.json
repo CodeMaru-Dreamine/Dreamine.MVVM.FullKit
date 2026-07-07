@@ -12,6 +12,21 @@
       "runtimeExecutable": "dotnet",
       "runtimeArgs": ["run", "--project", "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Blazor/SampleCrossUi.Blazor.csproj", "--urls", "http://localhost:5199"],
       "port": 5199
+    },
+    {
+      "name": "shop-platform-web",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "20_SOURCES/000. Project/010. App/ShopPlatform.Web/ShopPlatform.Web.csproj", "--no-build"],
+      "port": 5205,
+      "autoPort": false
+    },
+    {
+      "name": "codemaru",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "20_SOURCES/000. Project/010. App/Codemaru/Codemaru.csproj"],
+      "port": 3080,
+      "autoPort": false,
+      "env": { "CodemaruServer__Port": "3080" }
     }
   ]
 }

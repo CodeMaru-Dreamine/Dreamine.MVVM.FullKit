@@ -19,7 +19,7 @@
         </p>
         <div class="sp-hero-cta">
             <a href="/apply" class="btn btn-primary btn-lg sp-cta-btn">쇼핑몰 개설 신청하기 →</a>
-            <span class="sp-cta-note">이미 운영 중이신가요? <a href="/admin" class="sp-cta-link">어드민 로그인 →</a></span>
+            <span class="sp-cta-note">이미 운영 중이신가요? <a href="/my-shops" class="sp-cta-link">내 쇼핑몰 관리 →</a></span>
         </div>
     </div>
     <div class="sp-hero-visual">
@@ -111,7 +111,7 @@
             <div class="sp-step">
                 <div class="sp-step-num">1</div>
                 <h4>개설 신청</h4>
-                <p>원하는 URL, 쇼핑몰 이름, 비밀번호를 입력하면 수 시간 내에 개설됩니다.</p>
+                <p>CodeMaru 계정으로 로그인하고 원하는 URL과 쇼핑몰 이름을 입력하면 바로 개설됩니다.</p>
             </div>
             <div class="sp-step-arrow">→</div>
             <div class="sp-step">
@@ -166,7 +166,6 @@
 
 @code {
     private List<ShopPlatform.Models.ShopConfig>? _shops;
-
     protected override async Task OnInitializedAsync()
     {
         var all = await TenantStore.GetAllAsync();

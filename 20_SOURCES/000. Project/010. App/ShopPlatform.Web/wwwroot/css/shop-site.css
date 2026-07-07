@@ -36,6 +36,93 @@ body {
 
 a { color: var(--sp-primary); }
 
+/* ── CodeMaru 공용 상단 네비 ─────────────────────────────── */
+.sp-topnav {
+    position: sticky; top: 0; z-index: 120;
+    display: flex; align-items: center; gap: 1rem;
+    padding: .7rem clamp(1rem, 4vw, 2rem);
+    background: rgba(255, 255, 255, .96);
+    border-bottom: 1px solid var(--sp-border);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.sp-topnav a { color: var(--sp-dark); text-decoration: none; }
+.sp-topnav__brand {
+    display: inline-flex; align-items: center; gap: .55rem;
+    flex: 0 0 auto; font-weight: 800;
+}
+.sp-topnav__mark {
+    width: 2rem; height: 2rem; border-radius: 8px;
+    object-fit: cover; box-shadow: inset 0 0 0 1px rgba(148,163,184,.25);
+}
+.sp-topnav__links {
+    display: flex; align-items: center; gap: .35rem;
+    min-width: 0; margin-left: auto;
+}
+.sp-topnav__links a,
+.sp-topnav__auth {
+    flex: 0 0 auto; padding: .48rem .72rem;
+    border-radius: 8px; font-size: .9rem; font-weight: 700;
+    white-space: nowrap;
+}
+.sp-topnav__links a:hover,
+.sp-topnav__links a.active,
+.sp-topnav__auth {
+    background: rgba(37, 99, 235, .1);
+    box-shadow: inset 0 0 0 1px rgba(37, 99, 235, .3);
+}
+.sp-topnav__auth { color: var(--sp-primary-d); }
+.sp-topnav__burger {
+    display: none;
+    flex-shrink: 0;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 28px; height: 20px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+.sp-topnav__burger span {
+    display: block;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--sp-dark);
+}
+
+@media (max-width: 1200px) {
+    .sp-topnav {
+        align-items: center; justify-content: space-between;
+        gap: .6rem; padding: .65rem .8rem;
+    }
+    .sp-topnav__burger { display: flex; }
+    .sp-topnav__links {
+        display: none;
+        position: absolute;
+        top: calc(100% + .45rem);
+        left: .75rem;
+        right: .75rem;
+        z-index: 140;
+        flex-direction: column;
+        align-items: stretch;
+        gap: .35rem;
+        min-width: 0;
+        margin-left: 0;
+        padding: .8rem;
+        overflow-x: visible;
+        border: 1px solid var(--sp-border);
+        border-radius: 14px;
+        background: rgba(255, 255, 255, .98);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, .12);
+    }
+    .sp-topnav__links.open { display: flex; }
+    .sp-topnav__links a,
+    .sp-topnav__auth {
+        display: flex; justify-content: center;
+        padding: .55rem .58rem; font-size: .88rem;
+    }
+}
+
 /* ── Hero ──────────────────────────────────────────────── */
 .sp-hero-wrapper {
     background: linear-gradient(135deg, #eff6ff 0%, #ffffff 60%, #fefce8 100%);

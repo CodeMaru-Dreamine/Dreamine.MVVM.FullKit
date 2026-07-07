@@ -1,0 +1,29 @@
+@page "/logout"
+@namespace DreamineVMS.Web.Blazor.Pages
+@using DreamineVMS.Web.Services.Auth
+@inject VmsAuthState AuthState
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<PageTitle>로그아웃 — Dreamine VMS</PageTitle>
+
+<div class="page-shell auth-shell">
+    <div class="auth-card">
+        <h1>로그아웃</h1>
+        <p class="muted">로그인 상태를 정리하고 있습니다.</p>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        await AuthState.SignOutAsync(JS);
+        var returnUrl = Uri.EscapeDataString(Nav.BaseUri);
+        Nav.NavigateTo($"https://codemaru.co.kr/_identity/signout?returnUrl={returnUrl}", forceLoad: true);
+    }
+}

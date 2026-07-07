@@ -1,0 +1,106 @@
+@page "/my-shops"
+@inject IShopTenantStore TenantStore
+@inject ShopUserContext UserContext
+@inject NavigationManager Nav
+
+<PageTitle>내 쇼핑몰 관리 — ShopStore</PageTitle>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h1 class="h3 fw-bold mb-1">내 쇼핑몰 관리</h1>
+            <p class="text-muted mb-0">CodeMaru 공통 로그인에 연결된 쇼핑몰을 관리합니다.</p>
+        </div>
+        <a class="btn btn-outline-secondary" href="/">ShopStore 홈</a>
+    </div>
+
+    @if (!currentUser.IsAuthenticated)
+    {
+        <div class="card shadow-sm" style="max-width:480px">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold">로그인이 필요합니다</h2>
+                <p class="text-muted">관리 중인 쇼핑몰을 확인하려면 CodeMaru 계정으로 로그인해 주세요.</p>
+                <a class="btn btn-primary w-100" href="@LoginUrl">CodeMaru 계정으로 로그인</a>
+            </div>
+        </div>
+    }
+    else if (_loading)
+    {
+        <p class="text-muted">쇼핑몰을 확인하는 중...</p>
+    }
+    else if (_shops.Count == 0)
+    {
+        <div class="card shadow-sm" style="max-width:520px">
+            <div class="card-body p-4">
+                <h2 class="h5 fw-bold">연결된 쇼핑몰이 없습니다</h2>
+                <p class="text-muted">아직 이 계정으로 관리 중인 쇼핑몰이 없습니다. 새 쇼핑몰을 개설하거나 기존 어드민 비밀번호로 연결해 주세요.</p>
+                <div class="d-flex gap-2 flex-wrap">
+                    <a class="btn btn-primary" href="/apply">쇼핑몰 개설</a>
+                    <a class="btn btn-outline-secondary" href="/">ShopStore 홈</a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row g-3">
+            @foreach (var shop in _shops)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm">
+                        @if (!string.IsNullOrWhiteSpace(shop.LogoPath))
+                        {
+                            <img src="@shop.LogoPath" class="card-img-top" alt="@shop.ShopName" style="height:160px;object-fit:cover" />
+                        }
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <h2 class="h5 fw-bold mb-0">@shop.ShopName</h2>
+                                <span class="badge @(shop.IsActive ? "bg-success" : "bg-secondary")">
+                                    @(shop.IsActive ? "운영중" : "비활성")
+                                </span>
+                            </div>
+                            <p class="text-muted small mb-2">@(!string.IsNullOrWhiteSpace(shop.Description) ? shop.Description : "설명이 없습니다.")</p>
+                            <p class="small mb-3"><code>/@shop.Slug</code></p>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="/@shop.Slug/admin" class="btn btn-primary btn-sm">관리 열기</a>
+                                <a href="/@shop.Slug" class="btn btn-outline-secondary btn-sm">쇼핑몰 보기</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private ShopCurrentUser currentUser = ShopCurrentUser.Anonymous;
+    private List<ShopConfig> _shops = new();
+    private bool _loading = true;
+
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await UserContext.GetCurrentAsync();
+        if (!currentUser.IsAuthenticated)
+        {
+            _loading = false;
+            return;
+        }
+
+        var all = await TenantStore.GetAllAsync();
+        _shops = all
+            .Where(shop => IsAdminUser(shop, currentUser))
+            .OrderBy(shop => shop.ShopName)
+            .ToList();
+        _loading = false;
+    }
+
+    private static bool IsAdminUser(ShopConfig config, ShopCurrentUser user)
+    {
+        if (!user.IsAuthenticated) return false;
+        if (string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal)) return true;
+        return config.AdminUsers.Any(admin => string.Equals(admin.UserId, user.Id, StringComparison.Ordinal));
+    }
+}

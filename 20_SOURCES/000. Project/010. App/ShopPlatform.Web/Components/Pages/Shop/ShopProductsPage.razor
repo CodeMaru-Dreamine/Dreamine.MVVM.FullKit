@@ -4,6 +4,8 @@
 @inject TenantDbContextFactory DbFactory
 @inject CartService Cart
 @inject ShopCustomerSession CustomerSession
+@inject ShopCustomerLoginSync CustomerLogin
+@inject NavigationManager Nav
 
 <PageTitle>전체 상품 — @(Tenant.Config?.ShopName ?? "쇼핑몰")</PageTitle>
 
@@ -28,12 +30,16 @@ else
             <nav class="ss-nav">
                 <a href="/@Slug">홈</a>
                 <a href="/@Slug/products" class="active">전체 상품</a>
+                @if (cfg.ShowPlatformHomeLink)
+                {
+                    <a href="/">ShopStore 홈</a>
+                }
             </nav>
             <div class="ss-header-right">
                 @if (CustomerSession.IsLoggedIn)
                 {
                     <span class="ss-user-name">👤 @CustomerSession.User!.Name</span>
-                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => CustomerSession.Logout()">로그아웃</button>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="LogoutCustomer">로그아웃</button>
                 }
                 else
                 {
@@ -145,6 +151,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await CustomerLogin.SyncAsync(Slug);
         if (!Tenant.IsResolved)
         {
             var cfg = await TenantStore.GetAsync(Slug);
@@ -195,5 +202,11 @@ else
     {
         Cart.Add(p);
         StateHasChanged();
+    }
+
+    private void LogoutCustomer()
+    {
+        CustomerSession.Logout();
+        Nav.NavigateTo($"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.ToAbsoluteUri($"/{Slug}").ToString())}", forceLoad: true);
     }
 }

@@ -12,10 +12,11 @@
     <meta property="og:description" content="카메라 주인은 앱 하나 설치, 보는 사람은 링크만으로 실시간 시청" />
     <meta property="og:url" content="https://cctvviewer.codemaru.co.kr/" />
     <base href="/" />
-    <link rel="stylesheet" href="/css/app.css?v=20260615-4" />
+    <link rel="stylesheet" href="/css/app.css?v=20260707-1" />
     <HeadOutlet />
 </head>
 <body>
+    <TopNav @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     <Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js"></script>
     <script src="/js/hls-interop.js?v=20260615-3"></script>

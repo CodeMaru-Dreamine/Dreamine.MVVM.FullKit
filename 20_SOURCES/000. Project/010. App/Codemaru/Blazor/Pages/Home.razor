@@ -1,19 +1,28 @@
 @page "/"
 @namespace Codemaru.Blazor.Pages
 
-<PageTitle>코드마루</PageTitle>
+<PageTitle>CodeMaru - 명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV, 쇼핑몰</PageTitle>
+<HeadContent>
+    <meta name="description" content="CodeMaru는 명함 QR과 vCard 랜딩 페이지, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 직영 쇼핑몰, 개발자 포트폴리오를 제공하는 실용적인 디지털 서비스 플랫폼입니다." />
+    <meta property="og:title" content="CodeMaru - 명함 QR · 청첩장 · 감사장 · 가족 앨범 · CCTV · 쇼핑몰" />
+    <meta property="og:description" content="명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 쇼핑몰까지 CodeMaru 계정 하나로 사용하는 디지털 서비스 플랫폼입니다." />
+    <meta property="og:url" content="https://codemaru.co.kr/" />
+    <meta property="og:image" content="https://codemaru.co.kr/img/codemaru_og.png" />
+    <meta name="twitter:title" content="CodeMaru - 명함 QR · 청첩장 · 감사장 · 가족 앨범 · CCTV" />
+    <meta name="twitter:description" content="명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 쇼핑몰까지 제공하는 CodeMaru 서비스 플랫폼입니다." />
+</HeadContent>
 
 <section class="cm-hero">
     <img class="cm-hero-logo" src="img/Codemaru_Core.jpg" alt="CodeMaru 로고" />
-    <h1>Welcome to CodeMaru</h1>
+    <h1>CodeMaru</h1>
     <p class="lead">
-        CodeMaru는 일상을 더 스마트하게 만드는 서비스를 만듭니다.<br />
-        명함 관리 · 디지털 청첩장 · 모바일 감사장 · 가족 플랫폼 · 실시간 CCTV까지, 모두 여기에 있습니다.
+        명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 직영 쇼핑몰까지<br />
+        개인과 소규모 사업자가 바로 쓸 수 있는 실용적인 디지털 도구를 직접 만들고 운영합니다.
     </p>
 </section>
 
-<section class="cm-cards">
-    <a class="cm-card" href="https://dreamine.kr/" target="_blank" rel="noopener">
+<section class="cm-cards" aria-label="CodeMaru 서비스">
+    <article class="cm-card">
         <div class="cm-card-preview">
             <div class="cm-browser-frame">
                 <div class="cm-browser-bar">
@@ -24,15 +33,16 @@
             </div>
         </div>
         <div class="cm-card-body">
-            <h5>Dreamine</h5>
-            <p>코드가 설계가 되는 순간. WPF · Blazor를 하나로 묶는 오픈소스 MVVM 프레임워크로, 복잡한 앱을 단순하고 우아하게 만드세요.</p>
+            <h2>Dreamine</h2>
+            <p>WPF와 Blazor를 한 코드 흐름으로 묶는 오픈소스 MVVM 프레임워크입니다. ViewModel, Command, 변경 알림 코드를 줄이고 데스크톱과 웹 UI를 함께 설계할 수 있습니다.</p>
         </div>
         <div class="cm-card-footer">
-            <span class="cm-btn">사이트 보기</span>
+            <a class="cm-btn" href="https://dreamine.kr/" target="_blank" rel="noopener">사이트 보기</a>
+            <a class="cm-btn-secondary" href="/guide/dreamine">이용 설명서</a>
         </div>
-    </a>
+    </article>
 
-    <a class="cm-card" href="/cardhybrid">
+    <article class="cm-card">
         <div class="cm-card-preview">
             <div class="cm-browser-frame">
                 <div class="cm-browser-bar">
@@ -43,15 +53,16 @@
             </div>
         </div>
         <div class="cm-card-body">
-            <h5>CardHybrid</h5>
-            <p>명함을 건네는 순간이 달라집니다. QR 스캔 하나로 내 소개 페이지 · 연락처 저장 · PDF 명함까지 — 지갑 속 종이 명함은 이제 그만.</p>
+            <h2>CardHybrid</h2>
+            <p>QR 코드 하나로 모바일 소개 페이지와 vCard 연락처 저장을 연결합니다. 명함 앞뒤 디자인, SVG/HTML 출력, AI 배경 제거, 버전 저장까지 한 화면에서 관리합니다.</p>
         </div>
         <div class="cm-card-footer">
-            <span class="cm-btn">명함 만들기</span>
+            <a class="cm-btn" href="/cardhybrid">명함 만들기</a>
+            <a class="cm-btn-secondary" href="/guide/cardhybrid">이용 설명서</a>
         </div>
-    </a>
+    </article>
 
-    <a class="cm-card" href="https://wedding.codemaru.co.kr">
+    <article class="cm-card">
         <div class="cm-card-preview">
             <div class="cm-browser-frame">
                 <div class="cm-browser-bar">
@@ -62,15 +73,16 @@
             </div>
         </div>
         <div class="cm-card-body">
-            <h5>Wedding</h5>
-            <p>소중한 날, 더 많은 사람에게. 사진·지도·방명록이 담긴 나만의 청첩장을 5분 만에 완성하고 링크 하나로 전달하세요. 완전 무료.</p>
+            <h2>Wedding</h2>
+            <p>사진, 지도, 방명록, 배경음악, 계좌 안내가 담긴 모바일 청첩장을 빠르게 만듭니다. CodeMaru 공통 로그인으로 만들고 관리하며 링크 하나로 하객에게 전달합니다.</p>
         </div>
         <div class="cm-card-footer">
-            <span class="cm-btn">청첩장 만들기</span>
+            <a class="cm-btn" href="https://wedding.codemaru.co.kr">청첩장 만들기</a>
+            <a class="cm-btn-secondary" href="/guide/wedding">이용 설명서</a>
         </div>
-    </a>
+    </article>
 
-    <a class="cm-card" href="https://thankyou.codemaru.co.kr/">
+    <article class="cm-card">
         <div class="cm-card-preview">
             <div class="cm-browser-frame">
                 <div class="cm-browser-bar">
@@ -81,15 +93,16 @@
             </div>
         </div>
         <div class="cm-card-body">
-            <h5>ThankYou</h5>
-            <p>결혼식이 끝난 뒤에도 마음은 이어집니다. 감사 인사와 사진, 계좌 안내, 소중한 메시지를 한 페이지에 담아 하객에게 전하세요.</p>
+            <h2>ThankYou</h2>
+            <p>결혼식 이후 하객에게 전할 감사 인사, 사진, 계좌 안내, 연락처를 모바일 페이지로 정리합니다. Wedding과 같은 흐름으로 초대 이후의 마음까지 이어줍니다.</p>
         </div>
         <div class="cm-card-footer">
-            <span class="cm-btn">감사장 만들기</span>
+            <a class="cm-btn" href="https://thankyou.codemaru.co.kr/">감사장 만들기</a>
+            <a class="cm-btn-secondary" href="/guide/thankyou">이용 설명서</a>
         </div>
-    </a>
+    </article>
 
-    <button class="cm-card" type="button" @onclick='() => OpenModal("https://families.codemaru.co.kr")'>
+    <article class="cm-card">
         <div class="cm-card-preview">
             <div class="cm-browser-frame">
                 <div class="cm-browser-bar">
@@ -100,15 +113,16 @@
             </div>
         </div>
         <div class="cm-card-body">
-            <h5>Families</h5>
-            <p>가족끼리만 공유하는 우리만의 공간. 일정·앨범·메모·연락처를 한곳에서 — 멀리 있어도 매일 가까운 가족 플랫폼.</p>
+            <h2>Families</h2>
+            <p>가족끼리만 공유하는 비공개 앨범과 타임라인입니다. 사진, 동영상, 이야기, 댓글, 반응을 한곳에 모아 가족 기록을 검색 엔진 노출 없이 보관합니다.</p>
         </div>
         <div class="cm-card-footer">
-            <span class="cm-btn">바로가기</span>
+            <a class="cm-btn" href="https://families.codemaru.co.kr">바로가기</a>
+            <a class="cm-btn-secondary" href="/guide/families">이용 설명서</a>
         </div>
-    </button>
+    </article>
 
-    <button class="cm-card" type="button" @onclick='() => OpenModal("https://portfolio.codemaru.co.kr/")'>
+    <article class="cm-card">
         <div class="cm-card-preview">
             <div class="cm-browser-frame">
                 <div class="cm-browser-bar">
@@ -119,15 +133,16 @@
             </div>
         </div>
         <div class="cm-card-body">
-            <h5>Portfolio</h5>
-            <p>말보다 코드가 증명합니다. .NET · Blazor로 직접 만든 개발자 포트폴리오 — 프로젝트, 기술 스택, 경력을 한눈에 확인하세요.</p>
+            <h2>Portfolio</h2>
+            <p>.NET, Blazor, WPF, 서비스 운영 경험을 프로젝트 단위로 정리한 개발자 포트폴리오입니다. 기술 스택, 이력, GitHub, 라이브 링크를 한눈에 확인할 수 있습니다.</p>
         </div>
         <div class="cm-card-footer">
-            <span class="cm-btn">포트폴리오 보기</span>
+            <a class="cm-btn" href="https://portfolio.codemaru.co.kr/">포트폴리오 보기</a>
+            <a class="cm-btn-secondary" href="/guide/portfolio">이용 설명서</a>
         </div>
-    </button>
+    </article>
 
-    <button class="cm-card" type="button" @onclick='() => OpenModal("https://cctvviewer.codemaru.co.kr")'>
+    <article class="cm-card">
         <div class="cm-card-preview">
             <div class="cm-browser-frame">
                 <div class="cm-browser-bar">
@@ -138,15 +153,16 @@
             </div>
         </div>
         <div class="cm-card-body">
-            <h5>CCTV Viewer</h5>
-            <p>지금 이 순간, 집에 무슨 일이? 카메라가 연결된 PC에 에이전트를 설치하면 어디서든 브라우저로 실시간 영상을 확인할 수 있습니다.</p>
+            <h2>CCTV Viewer</h2>
+            <p>카메라가 연결된 Windows PC에 에이전트를 설치하면 RTSP 영상을 HLS로 변환해 브라우저에서 확인할 수 있습니다. 공개 라이브 링크와 다중 카메라 관리를 지원합니다.</p>
         </div>
         <div class="cm-card-footer">
-            <span class="cm-btn">뷰어 열기</span>
+            <a class="cm-btn" href="https://cctvviewer.codemaru.co.kr">뷰어 열기</a>
+            <a class="cm-btn-secondary" href="/guide/cctv">이용 설명서</a>
         </div>
-    </button>
+    </article>
 
-    <button class="cm-card" type="button" @onclick='() => OpenModal("https://shop.codemaru.co.kr/")'>
+    <article class="cm-card">
         <div class="cm-card-preview">
             <div class="cm-browser-frame">
                 <div class="cm-browser-bar">
@@ -157,208 +173,34 @@
             </div>
         </div>
         <div class="cm-card-body">
-            <h5>Shop Store</h5>
-            <p>직접 키우고, 직접 만들고, 직접 팝니다. 농산물부터 소프트웨어까지 — 중간 마진 없이 코드마루가 직영하는 믿을 수 있는 쇼핑몰.</p>
+            <h2>Shop Store</h2>
+            <p>농산물, 소프트웨어, 소규모 개발 용역을 직접 판매하는 CodeMaru 직영 쇼핑몰입니다. 장바구니, 주문 관리, 배송/환불 정책, 공통 로그인 기반 구매 흐름을 제공합니다.</p>
         </div>
         <div class="cm-card-footer">
-            <span class="cm-btn">쇼핑하기</span>
+            <a class="cm-btn" href="https://shop.codemaru.co.kr/">쇼핑하기</a>
+            <a class="cm-btn-secondary" href="/guide/shop">이용 설명서</a>
         </div>
-    </button>
+    </article>
 </section>
 
-<!-- 서비스 상세 소개 섹션 -->
-<section class="cm-about">
-    <h2 class="cm-about-title">CodeMaru 서비스 소개</h2>
-    <p class="cm-about-lead">
-        CodeMaru는 개인과 소규모 사업자를 위한 실용적인 디지털 도구를 직접 설계하고 운영합니다.
-        화려한 마케팅보다 실제로 도움이 되는 기능을 우선합니다.
-    </p>
-
-    <div class="cm-about-grid">
-
-        <div class="cm-about-card">
-            <div class="cm-about-icon">💼</div>
-            <h3>CardHybrid — 디지털 명함</h3>
-            <p>
-                명함을 건네는 방식이 달라집니다. QR 코드를 스캔하면 앱 설치 없이 모바일 랜딩 페이지가
-                열리고, 버튼 하나로 스마트폰 연락처(vCard)에 저장됩니다. 앞·뒤 명함 레이아웃을
-                실시간으로 편집하고 SVG·HTML로 인쇄 출력까지 가능합니다. 폰트 크기·색상·브랜드명을
-                세밀하게 조정하고, AI 배경 제거로 로고도 깔끔하게 붙일 수 있습니다.
-                로그인하면 명함 버전 이력을 저장하고 여러 명함을 전환해 사용할 수 있습니다.
-                프리랜서·영업직·1인 창업자에게 특히 유용합니다.
-            </p>
-            <div class="cm-about-actions">
-                <a class="cm-btn-outline" href="/cardhybrid">명함 만들기</a>
-                <a class="cm-btn-guide" href="/guide/cardhybrid">이용 설명서</a>
-            </div>
-        </div>
-
-        <div class="cm-about-card">
-            <div class="cm-about-icon">💍</div>
-            <h3>Wedding — 디지털 청첩장</h3>
-            <p>
-                인쇄 비용 없이 5분이면 나만의 청첩장 페이지가 완성됩니다. 식장 위치는
-                지도(OpenStreetMap)와 카카오맵·네이버지도 바로가기로 안내하고, 자동차·대중교통
-                경로도 함께 제공합니다. 커플 사진을 업로드하면 라이트박스 갤러리와 자동 슬라이드쇼로
-                표시되며, 배경음악 재생, 스토리 섹션, 계좌번호 복사·카카오페이 연동까지 갖춰져 있습니다.
-                방명록으로 하객 축하 메시지를 모으고, 어드민 페이지에서 방문자 수와 메시지를
-                관리하세요. 완전 무료입니다.
-            </p>
-            <div class="cm-about-actions">
-                <a class="cm-btn-outline" href="https://wedding.codemaru.co.kr">청첩장 만들기</a>
-                <a class="cm-btn-guide" href="/guide/wedding">이용 설명서</a>
-            </div>
-        </div>
-
-        <div class="cm-about-card">
-            <div class="cm-about-icon">💌</div>
-            <h3>ThankYou — 모바일 감사장</h3>
-            <p>
-                결혼식 이후 하객에게 전하는 감사 인사를 모바일 페이지로 정리합니다.
-                신랑·신부의 인사말, 사진, 연락처, 계좌 안내, 공유 링크를 한곳에 담아
-                문자나 메신저로 간편하게 전달할 수 있습니다. 인쇄물 없이도 정중한 감사 메시지를
-                남길 수 있고, Wedding 청첩장과 함께 사용하면 초대부터 감사 인사까지 자연스럽게
-                이어지는 흐름을 만들 수 있습니다.
-            </p>
-            <div class="cm-about-actions">
-                <a class="cm-btn-outline" href="https://thankyou.codemaru.co.kr/">감사장 만들기</a>
-                <a class="cm-btn-guide" href="/guide/thankyou">이용 설명서</a>
-            </div>
-        </div>
-
-        <div class="cm-about-card">
-            <div class="cm-about-icon">👨‍👩‍👧‍👦</div>
-            <h3>Families — 가족 앨범 플랫폼</h3>
-            <p>
-                가족끼리만 볼 수 있는 비공개 앨범·타임라인 서비스입니다. 사진과 글이 담긴 포스트를
-                올리면 이모지 반응과 댓글로 반응을 나눌 수 있습니다. 앨범 폴더로 여행·생일·일상을
-                구분해 보관하고, 포스트를 상단 고정(📌)하거나 Markdown으로 풍부하게 꾸밀 수 있습니다.
-                사진·동영상·YouTube 링크를 함께 올릴 수 있으며, 미디어를 글 위·아래 어디에 배치할지도
-                직접 설정합니다. 검색 엔진에 노출되지 않는 완전 폐쇄형으로 운영됩니다.
-            </p>
-            <div class="cm-about-actions">
-                <button class="cm-btn-outline" type="button" @onclick='() => OpenModal("https://families.codemaru.co.kr")'>바로가기</button>
-                <a class="cm-btn-guide" href="/guide/families">이용 설명서</a>
-            </div>
-        </div>
-
-        <div class="cm-about-card">
-            <div class="cm-about-icon">📹</div>
-            <h3>CCTV Viewer — 실시간 카메라</h3>
-            <p>
-                카메라가 연결된 Windows PC에 DreamineVMS 에이전트를 설치하면 준비가 끝납니다.
-                DVR 장비나 복잡한 포트 포워딩 없이, 어디서든 브라우저로 실시간 HLS 영상을
-                바로 확인할 수 있습니다. RTSP 카메라와 직접 HLS URL 스트림을 모두 지원하며,
-                여러 대의 카메라를 등록해 순서를 정해 한 화면에서 관리합니다.
-                공개 라이브 링크를 발급하면 계정 없이도 특정 카메라 영상을 공유할 수 있습니다.
-                집·농장·사무실 어디든 인터넷이 닿으면 현장을 바로 봅니다.
-            </p>
-            <div class="cm-about-actions">
-                <button class="cm-btn-outline" type="button" @onclick='() => OpenModal("https://cctvviewer.codemaru.co.kr")'>뷰어 열기</button>
-                <a class="cm-btn-guide" href="/guide/cctv">이용 설명서</a>
-            </div>
-        </div>
-
-        <div class="cm-about-card">
-            <div class="cm-about-icon">🛒</div>
-            <h3>Shop Store — 직영 쇼핑몰</h3>
-            <p>
-                CodeMaru가 직접 운영하는 소규모 직영 쇼핑몰입니다. 농산물·소프트웨어 라이선스·개발
-                용역까지 중간 유통 없이 생산자에서 바로 전달합니다. 상품 검색·정렬·카테고리 필터,
-                장바구니 수량 조정, 회원 주문 관리까지 e커머스 전 과정이 구현되어 있습니다.
-                상품 설명은 이미지 갤러리와 HTML 에디터로 풍부하게 작성할 수 있으며,
-                환불·배송·교환 정책 페이지도 제공합니다.
-                소량 주문과 개인 맞춤 요청을 환영합니다.
-            </p>
-            <div class="cm-about-actions">
-                <button class="cm-btn-outline" type="button" @onclick='() => OpenModal("https://shop.codemaru.co.kr/")'>쇼핑하기</button>
-                <a class="cm-btn-guide" href="/guide/shop">이용 설명서</a>
-            </div>
-        </div>
-
-        <div class="cm-about-card">
-            <div class="cm-about-icon">🗂️</div>
-            <h3>Portfolio — 개발자 포트폴리오</h3>
-            <p>
-                장민수 개발자의 프로젝트·경력·기술 스택을 한눈에 볼 수 있는 포트폴리오 사이트입니다.
-                프로젝트마다 다중 이미지 갤러리, 동영상(로컬·YouTube), GitHub·Live·Docs 링크를
-                첨부할 수 있습니다. 개인·업무·공개 카테고리로 구분하며, 법적 보호가 필요한 결과물은
-                이미지를 4단계 블러로 처리해 비공개 항목으로 분리합니다.
-                제목·태그·카테고리 검색·필터도 지원하며, 이력서 섹션(기술 스택·경력·학력)이
-                포트폴리오와 함께 제공됩니다.
-            </p>
-            <div class="cm-about-actions">
-                <button class="cm-btn-outline" type="button" @onclick='() => OpenModal("https://portfolio.codemaru.co.kr/")'>포트폴리오 보기</button>
-                <a class="cm-btn-guide" href="/guide/portfolio">이용 설명서</a>
-            </div>
-        </div>
-
-        <div class="cm-about-card">
-            <div class="cm-about-icon">⚙️</div>
-            <h3>Dreamine — MVVM 프레임워크</h3>
-            <p>
-                CodeMaru 모든 서비스의 뼈대가 되는 오픈소스 MVVM 프레임워크입니다.
-                WPF와 Blazor를 단일 코드베이스로 통합하고, 소스 생성기가 ViewModel·Command·
-                INotifyPropertyChanged 코드를 자동으로 만들어 반복 작업을 없앱니다.
-                DI 기반 ViewModel 로케이터로 두 플랫폼에서 동일하게 주입하고,
-                Dreamine.Hybrid.Wpf로 WPF 앱 안에 Blazor UI를 내장할 수 있습니다.
-                NuGet 패키지로 바로 설치하고 GitHub에서 소스 전체를 확인하세요.
-            </p>
-            <div class="cm-about-actions">
-                <a class="cm-btn-outline" href="https://dreamine.kr/" target="_blank" rel="noopener">사이트 보기</a>
-                <a class="cm-btn-guide" href="/guide/dreamine">이용 설명서</a>
-            </div>
-        </div>
-
-    </div>
-</section>
-
-<section class="cm-intro">
+<section class="cm-maker">
     <h2>CodeMaru를 만드는 사람</h2>
     <p>
-        CodeMaru는 장민수 개발자 1인이 설계·개발·운영하는 인디 플랫폼입니다.
-        거대 팀이 만드는 서비스와 다르게, 사용자의 불편을 직접 경험하고 빠르게 반영합니다.
-        문의하신 내용은 대부분 24시간 이내에 답변드립니다.
+        CodeMaru는 장민수 개발자 1인이 설계, 개발, 운영하는 인디 플랫폼입니다.
+        실제로 필요한 기능을 직접 만들고, 문의와 개선 요청을 빠르게 반영하는 것을 중요하게 생각합니다.
     </p>
-    <p>
-        현재 제공 중인 모든 서비스는 무료이며, Google AdSense 광고를 통해 운영비를 충당합니다.
-        광고 수익은 서버 비용과 도메인 유지에 사용됩니다.
-    </p>
-    <div class="cm-intro-links">
+    <div class="cm-maker-links">
         <a href="/contact">문의하기</a>
         <a href="https://github.com/CodeMaru-Dreamine" target="_blank" rel="noopener">GitHub</a>
-        <a href="/cardhybrid">CardHybrid 무료 체험</a>
     </div>
 </section>
 
-@if (!string.IsNullOrWhiteSpace(modalUrl))
-{
-    <div class="cm-modal open" role="dialog" aria-modal="true">
-        <div class="cm-modal-content">
-            <button class="cm-modal-close" type="button" @onclick="CloseModal" aria-label="닫기">&times;</button>
-            <iframe title="CodeMaru linked service" src="@modalUrl"></iframe>
-        </div>
-    </div>
-}
-
 @code {
-    private string? modalUrl;
-
     private static string PreviewSrc(string key, string fallback)
     {
         var path = Path.Combine(AppContext.BaseDirectory, "wwwroot", "img", "previews", $"{key}.jpg");
         return File.Exists(path)
             ? $"img/previews/{key}.jpg?v={File.GetLastWriteTime(path).Ticks}"
             : fallback;
-    }
-
-    private void OpenModal(string url)
-    {
-        modalUrl = url;
-    }
-
-    private void CloseModal()
-    {
-        modalUrl = null;
     }
 }

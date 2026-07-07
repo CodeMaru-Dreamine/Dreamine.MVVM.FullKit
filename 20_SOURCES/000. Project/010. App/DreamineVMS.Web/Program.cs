@@ -1,11 +1,21 @@
+using Dreamine.Identity;
+using Dreamine.Identity.Options;
 using DreamineVMS.Web.Blazor;
 using DreamineVMS.Web.Services.Agent;
 using DreamineVMS.Web.Services.Auth;
 using DreamineVMS.Web.Services.Cameras;
 using DreamineVMS.Web.Services.Hls;
 using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Configuration.AddUserSecrets("codemaru-oauth-2ba4e1b2");
+
+AuthOptions authOptions =
+    builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
+string usersDbPath = ResolvePath(
+    builder.Configuration[$"{AuthOptions.SectionName}:UsersDbPath"],
+    Path.Combine(AppContext.BaseDirectory, "App_Data", "codemaru.db"));
 
 builder.Services
     .AddRazorComponents()
@@ -13,6 +23,7 @@ builder.Services
 
 builder.Services.Configure<CircuitOptions>(o => o.DetailedErrors = true);
 builder.Services.AddHttpClient();
+builder.Services.AddDreamineIdentityWeb(authOptions, usersDbPath);
 
 builder.Services.AddSingleton<VmsDatabase>();
 builder.Services.AddSingleton<VmsUserService>();
@@ -26,8 +37,11 @@ var app = builder.Build();
 
 var provider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
 provider.Mappings[".exe"] = "application/octet-stream";
+app.UseForwardedHeaders();
 app.UseStaticFiles(new StaticFileOptions { ContentTypeProvider = provider });
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseAntiforgery();
 
 // 크롤러 봇에게 OG 태그가 포함된 정적 HTML을 반환합니다.
@@ -278,6 +292,18 @@ app.MapRazorComponents<AppShell>()
    .AddInteractiveServerRenderMode();
 
 app.Run();
+
+static string ResolvePath(string? configuredPath, string fallback)
+{
+    if (string.IsNullOrWhiteSpace(configuredPath))
+    {
+        return fallback;
+    }
+
+    return Path.IsPathRooted(configuredPath)
+        ? configuredPath
+        : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
+}
 
 record AgentLoginRequest(string Email, string Password);
 record AgentCameraDto(string Id, string Name, string Host, string RtspUrl, bool AutoReconnect, bool IsPublic);

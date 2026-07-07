@@ -1,13 +1,26 @@
 @namespace Codemaru.Blazor
 @using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.Components.Web
 
 <Router AppAssembly="@typeof(Routes).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
     </Found>
     <NotFound>
-        <main class="app-shell">
-            <p>페이지를 찾을 수 없습니다.</p>
-        </main>
+        <PageTitle>페이지를 찾을 수 없습니다 | CodeMaru</PageTitle>
+        <HeadContent>
+            <meta name="robots" content="noindex, follow" />
+        </HeadContent>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <main class="cm-not-found">
+                <p class="cm-not-found-code">404</p>
+                <h1>페이지를 찾을 수 없습니다</h1>
+                <p>주소가 바뀌었거나 더 이상 제공하지 않는 페이지입니다.</p>
+                <div class="cm-not-found-actions">
+                    <a href="/">CodeMaru 홈</a>
+                    <a href="/guide">이용 설명서</a>
+                </div>
+            </main>
+        </LayoutView>
     </NotFound>
 </Router>

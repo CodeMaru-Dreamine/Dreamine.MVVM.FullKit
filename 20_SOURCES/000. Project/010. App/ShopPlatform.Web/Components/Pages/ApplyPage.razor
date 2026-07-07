@@ -2,6 +2,8 @@
 @inject ShopOptions ShopOpts
 @inject IShopTenantStore TenantStore
 @inject TenantDbContextFactory DbFactory
+@inject ShopUserContext UserContext
+@inject NavigationManager Nav
 
 <PageTitle>쇼핑몰 개설 신청 — ShopPlatform</PageTitle>
 
@@ -15,7 +17,7 @@
                 <div class="sp-apply-done-icon">🎉</div>
                 <h2>쇼핑몰이 개설되었습니다!</h2>
                 <p class="text-muted">
-                    지금 바로 어드민에 로그인해서 상품을 등록할 수 있습니다.
+                    현재 CodeMaru 계정으로 바로 상품을 등록할 수 있습니다.
                 </p>
                 <div class="sp-apply-url-preview">
                     <span class="text-muted small">쇼핑몰 주소</span>
@@ -35,9 +37,19 @@
         }
         else
         {
+            @if (!currentUser.IsAuthenticated)
+            {
+                <div class="sp-apply-header">
+                    <h1>쇼핑몰 개설 신청</h1>
+                    <p class="text-muted">CodeMaru 계정으로 로그인하면 쇼핑몰을 만들 수 있습니다.</p>
+                </div>
+                <a class="btn btn-primary btn-lg w-100 mt-3" href="@LoginUrl">CodeMaru 계정으로 로그인</a>
+            }
+            else
+            {
             <div class="sp-apply-header">
                 <h1>쇼핑몰 개설 신청</h1>
-                <p class="text-muted">아래 정보를 입력하시면 관리자가 확인 후 쇼핑몰을 개설해 드립니다.</p>
+                <p class="text-muted"><strong>@CurrentUserLabel</strong> 계정으로 쇼핑몰을 개설합니다.</p>
             </div>
 
             <!-- 안내 박스 -->
@@ -75,17 +87,9 @@
                 </div>
 
                 <div class="sp-form-group">
-                    <label>어드민 비밀번호 <span class="text-danger">*</span></label>
-                    <InputText @bind-Value="_form.AdminPassword" type="password" class="form-control"
-                               placeholder="본인만 아는 비밀번호 (8자 이상)" />
-                    <div class="form-text">이 비밀번호로 쇼핑몰 어드민에 로그인합니다. 잘 기억해두세요.</div>
-                    <ValidationMessage For="() => _form.AdminPassword" />
-                </div>
-
-                <div class="sp-form-group">
-                    <label>연락처 이메일 <span class="text-danger">*</span></label>
+                    <label>연락처 이메일 <span class="text-muted">(선택)</span></label>
                     <InputText @bind-Value="_form.Email" type="email" class="form-control"
-                               placeholder="example@email.com" />
+                               placeholder="@currentUser.Email" />
                     <div class="form-text">개설 완료 안내 및 중요 공지를 발송합니다.</div>
                     <ValidationMessage For="() => _form.Email" />
                 </div>
@@ -124,16 +128,16 @@
 
             <div class="sp-apply-footer-note">
                 이미 쇼핑몰을 운영 중이신가요?
-                <a href="#" @onclick="GoToAdmin" @onclick:preventDefault>어드민 로그인 →</a>
+                <a href="/my-shops">내 쇼핑몰 관리 →</a>
             </div>
+            }
         }
     </div>
 </div>
 
 @code {
-    [Inject] private NavigationManager Nav { get; set; } = default!;
-
     private ApplyForm _form = new();
+    private ShopCurrentUser currentUser = ShopCurrentUser.Anonymous;
     private bool _submitted;
     private bool _isSubmitting;
     private bool _agreedTerms;
@@ -142,6 +146,17 @@
     private string _email = string.Empty;
     private string _slug  = string.Empty;
     private string _errorMsg = string.Empty;
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string CurrentUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? currentUser.Email : currentUser.DisplayName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await UserContext.GetCurrentAsync();
+        if (!string.IsNullOrWhiteSpace(currentUser.Email))
+        {
+            _form.Email = currentUser.Email;
+        }
+    }
 
     private async Task OnSlugInput(ChangeEventArgs e)
     {
@@ -177,7 +192,7 @@
         if (!string.IsNullOrEmpty(_slugError)) { _errorMsg = "주소를 확인해주세요."; return; }
         if (!_slugOk) { _errorMsg = "주소를 먼저 확인해주세요."; return; }
         if (string.IsNullOrWhiteSpace(_form.Slug)) { _errorMsg = "쇼핑몰 주소를 입력해주세요."; return; }
-        if (_form.AdminPassword.Length < 8) { _errorMsg = "비밀번호는 8자 이상이어야 합니다."; return; }
+        if (!currentUser.IsAuthenticated) { _errorMsg = "CodeMaru 로그인이 필요합니다."; return; }
 
         _isSubmitting = true;
 
@@ -193,12 +208,29 @@
                 Slug              = _form.Slug,
                 ShopName          = _form.ShopName,
                 Description       = _form.Description,
-                AdminPasswordHash = _form.AdminPassword,   // 평문 저장 (기존 방식 동일)
+                AdminPasswordHash = string.Empty,
+                OwnerUserId       = currentUser.Id,
+                OwnerProvider     = currentUser.Provider,
+                OwnerEmail        = currentUser.Email,
+                OwnerDisplayName  = currentUser.DisplayName,
+                OwnerLinkedAt     = DateTime.UtcNow,
+                AdminUsers =
+                [
+                    new ShopAdminUser
+                    {
+                        UserId = currentUser.Id,
+                        Provider = currentUser.Provider,
+                        Email = currentUser.Email,
+                        DisplayName = currentUser.DisplayName,
+                        Role = "Owner",
+                        AddedAt = DateTime.UtcNow
+                    }
+                ],
                 IsActive          = true,
                 CreatedAt         = DateTime.UtcNow,
                 Business          = new ShopPlatform.Models.ShopBusinessInfo
                 {
-                    Email = _form.Email
+                    Email = string.IsNullOrWhiteSpace(_form.Email) ? currentUser.Email : _form.Email
                 }
             };
 
@@ -222,12 +254,6 @@
         }
     }
 
-    private void GoToAdmin()
-    {
-        // 슬러그를 모르므로 루트 admin으로 이동 (SuperAdmin)
-        Nav.NavigateTo("/admin");
-    }
-
     public class ApplyForm
     {
         [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "쇼핑몰 이름을 입력해주세요.")]
@@ -235,10 +261,6 @@
 
         public string Slug { get; set; } = string.Empty;
 
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "비밀번호를 입력해주세요.")]
-        public string AdminPassword { get; set; } = string.Empty;
-
-        [System.ComponentModel.DataAnnotations.Required(ErrorMessage = "이메일을 입력해주세요.")]
         [System.ComponentModel.DataAnnotations.EmailAddress(ErrorMessage = "올바른 이메일 형식이 아닙니다.")]
         public string Email { get; set; } = string.Empty;
 

@@ -4,6 +4,7 @@
 @inject TenantDbContextFactory DbFactory
 @inject CartService Cart
 @inject ShopCustomerSession CustomerSession
+@inject ShopCustomerLoginSync CustomerLogin
 @inject NavigationManager Nav
 @using System.Text.Json
 @using ShopPlatform.Services
@@ -30,12 +31,16 @@ else
             <nav class="ss-nav">
                 <a href="/@Slug">홈</a>
                 <a href="/@Slug/products" class="active">전체 상품</a>
+                @if (cfg.ShowPlatformHomeLink)
+                {
+                    <a href="/">ShopStore 홈</a>
+                }
             </nav>
             <div class="ss-header-right">
                 @if (CustomerSession.IsLoggedIn)
                 {
                     <span class="ss-user-name">👤 @CustomerSession.User!.Name</span>
-                    <button class="btn btn-sm btn-outline-secondary" @onclick="() => CustomerSession.Logout()">로그아웃</button>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="LogoutCustomer">로그아웃</button>
                 }
                 else
                 {
@@ -276,6 +281,7 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
+        await CustomerLogin.SyncAsync(Slug);
         if (_loadedSlug != Slug)
         {
             _loadedSlug = Slug;
@@ -307,6 +313,12 @@ else
 
     private void TogglePolicy(int idx)
         => _openPolicy = (_openPolicy == idx) ? 0 : idx;
+
+    private void LogoutCustomer()
+    {
+        CustomerSession.Logout();
+        Nav.NavigateTo($"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.ToAbsoluteUri($"/{Slug}").ToString())}", forceLoad: true);
+    }
 
     private static List<string> ParseDetailImages(string json)
     {

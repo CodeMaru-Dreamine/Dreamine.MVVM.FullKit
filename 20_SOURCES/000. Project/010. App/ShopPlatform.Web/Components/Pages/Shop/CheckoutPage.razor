@@ -3,6 +3,7 @@
 @inject IShopTenantStore TenantStore
 @inject CartService Cart
 @inject ShopCustomerSession CustomerSession
+@inject ShopCustomerLoginSync CustomerLogin
 @inject TenantDbContextFactory DbFactory
 @inject PaymentKeyProtector KeyProtector
 @inject NavigationManager Nav
@@ -192,6 +193,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        await CustomerLogin.SyncAsync(Slug);
         if (!Tenant.IsResolved)
         {
             var cfg = await TenantStore.GetAsync(Slug);
@@ -222,6 +224,7 @@ else
     private async Task PayOrSubmit()
     {
         if (!Validate()) return;
+        await CustomerLogin.SaveProfileAsync(Slug, _name, _phone, _address, _email);
         if (!_widgetReady)
             await OpenTossWidget();
         else
@@ -300,6 +303,7 @@ else
     private async Task PlaceDemoOrder()
     {
         if (!Validate()) return;
+        await CustomerLogin.SaveProfileAsync(Slug, _name, _phone, _address, _email);
         _processing = true;
         using var db = DbFactory.Create(Slug);
         var orderNo = GenerateOrderId();

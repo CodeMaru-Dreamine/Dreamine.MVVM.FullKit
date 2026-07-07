@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
+using System.Security.Claims;
 using System.Text;
+using Dreamine.Identity;
 using DreamineVMS.Web.Models;
 using Microsoft.Data.Sqlite;
 
@@ -64,10 +66,118 @@ public sealed class VmsUserService
         var user = await FindByEmailAsync(email);
         if (user is null) return (false, "이메일 또는 비밀번호가 올바르지 않습니다.", null);
 
+        if (string.IsNullOrWhiteSpace(user.PasswordHash) || string.IsNullOrWhiteSpace(user.PasswordSalt))
+            return (false, "에이전트 연결 비밀번호가 아직 설정되지 않았습니다.", null);
+
         if (HashPassword(password, user.PasswordSalt) != user.PasswordHash)
             return (false, "이메일 또는 비밀번호가 올바르지 않습니다.", null);
 
         return (true, "", user);
+    }
+
+    public async Task<VmsUser?> EnsureExternalUserAsync(ClaimsPrincipal principal)
+    {
+        if (principal.Identity?.IsAuthenticated != true)
+        {
+            return null;
+        }
+
+        var identityId = principal.FindFirstValue(DreamineIdentityExtensions.UserIdClaimType);
+        if (string.IsNullOrWhiteSpace(identityId))
+        {
+            return null;
+        }
+
+        var userId = $"oauth-{identityId}";
+        var userById = await FindByIdAsync(userId);
+        if (userById is not null)
+        {
+            return userById;
+        }
+
+        var provider = principal.FindFirstValue(DreamineIdentityExtensions.ProviderClaimType) ?? "OAuth";
+        var email = NormalizeEmail(principal.FindFirstValue(ClaimTypes.Email));
+        var displayName = principal.FindFirstValue(ClaimTypes.Name) ?? email;
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            displayName = $"{provider} 사용자";
+        }
+
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            var userByEmail = await FindByEmailAsync(email);
+            if (userByEmail is not null)
+            {
+                return userByEmail;
+            }
+        }
+        else
+        {
+            email = BuildPseudoEmail(provider, identityId);
+        }
+
+        var user = new VmsUser
+        {
+            Id = userId,
+            Email = email,
+            DisplayName = displayName.Trim(),
+            PublicSlug = await UniqueSlugAsync(displayName),
+            PasswordHash = "",
+            PasswordSalt = "",
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        using var conn = _db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = """
+            INSERT INTO users (id, email, display_name, public_slug, password_hash, password_salt, created_at)
+            VALUES ($id, $email, $dn, $slug, $hash, $salt, $ca)
+            """;
+        cmd.Parameters.AddWithValue("$id", user.Id);
+        cmd.Parameters.AddWithValue("$email", user.Email);
+        cmd.Parameters.AddWithValue("$dn", user.DisplayName);
+        cmd.Parameters.AddWithValue("$slug", user.PublicSlug);
+        cmd.Parameters.AddWithValue("$hash", user.PasswordHash);
+        cmd.Parameters.AddWithValue("$salt", user.PasswordSalt);
+        cmd.Parameters.AddWithValue("$ca", user.CreatedAt.ToString("O"));
+        await cmd.ExecuteNonQueryAsync();
+
+        return user;
+    }
+
+    public async Task<(bool Ok, string Error, VmsUser? User)> SetAgentPasswordAsync(
+        string userId,
+        string password,
+        string confirmPassword)
+    {
+        if (string.IsNullOrWhiteSpace(password) || password.Length < 8)
+        {
+            return (false, "에이전트 연결 비밀번호는 8자 이상이어야 합니다.", null);
+        }
+
+        if (!string.Equals(password, confirmPassword, StringComparison.Ordinal))
+        {
+            return (false, "비밀번호 확인이 일치하지 않습니다.", null);
+        }
+
+        var user = await FindByIdAsync(userId);
+        if (user is null)
+        {
+            return (false, "사용자를 찾을 수 없습니다.", null);
+        }
+
+        var salt = GenerateSalt();
+        var hash = HashPassword(password, salt);
+
+        using var conn = _db.Open();
+        using var cmd = conn.CreateCommand();
+        cmd.CommandText = "UPDATE users SET password_hash = $hash, password_salt = $salt WHERE id = $id";
+        cmd.Parameters.AddWithValue("$hash", hash);
+        cmd.Parameters.AddWithValue("$salt", salt);
+        cmd.Parameters.AddWithValue("$id", userId);
+        await cmd.ExecuteNonQueryAsync();
+
+        return (true, "", await FindByIdAsync(userId));
     }
 
     public async Task<VmsUser?> FindByIdAsync(string id)
@@ -187,6 +297,16 @@ public sealed class VmsUserService
         }
         var s = sb.ToString().Trim('-');
         return string.IsNullOrWhiteSpace(s) ? "user" : s;
+    }
+
+    private static string NormalizeEmail(string? email) =>
+        string.IsNullOrWhiteSpace(email) ? "" : email.Trim().ToLowerInvariant();
+
+    private static string BuildPseudoEmail(string provider, string identityId)
+    {
+        var safeProvider = SlugFrom(provider);
+        var safeId = SlugFrom(identityId);
+        return $"{safeProvider}-{safeId}@agent.codemaru.local";
     }
 
     private static string GenerateSalt() =>
