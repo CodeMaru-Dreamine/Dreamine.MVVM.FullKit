@@ -11,12 +11,10 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
-[![Docs](https://img.shields.io/badge/Docs-dreamine.kr-1f6feb.svg)](https://dreamine.kr/libraries)
-[![API Reference](https://img.shields.io/badge/API-Reference-7952B3.svg)](https://dreamine.kr/libraries)
-[![Live Demo](https://img.shields.io/badge/Live-Demo-00B894.svg)](https://dreamine.kr/playground)
-[![Architecture](https://img.shields.io/badge/Architecture-Documented-2563EB.svg)](https://dreamine.kr/libraries)
-[![Book](https://img.shields.io/badge/%F0%9F%93%96%20Book-Practical%20MVVM%20Architecture-000000.svg)](https://bookk.co.kr/bookStore/69c0f1b41461ec1ae849a0f6)
-
+[![문서](https://img.shields.io/badge/%F0%9F%93%96%20%EB%AC%B8%EC%84%9C-dreamine.kr-49B2FF.svg)](https://dreamine.kr/libraries)
+[![사용법](https://img.shields.io/badge/%F0%9F%93%98%20%EC%82%AC%EC%9A%A9%EB%B2%95-dreamine.kr-49B2FF.svg)](https://dreamine.kr/guide)
+[![체험공간](https://img.shields.io/badge/%F0%9F%8E%AE%20%EC%B2%B4%ED%97%98%EA%B3%B5%EA%B0%84-dreamine.kr-49B2FF.svg)](https://dreamine.kr/playground)
+[![Book](https://img.shields.io/badge/%F0%9F%93%96%20Book-%EB%AC%B4%EB%84%88%EC%A7%80%EC%A7%80%20%EC%95%8A%EB%8A%94%20%EA%B5%AC%EC%A1%B0%EB%A5%BC%20%EB%A7%8C%EB%93%9C%EB%8A%94%20%EB%B2%95-000000.svg)](https://bookk.co.kr/bookStore/69c0f1b41461ec1ae849a0f6)
 
 WPF MVVM 애플리케이션을 위한 Dreamine 통합 패키지 문서입니다.
 
@@ -25,6 +23,12 @@ WPF MVVM 애플리케이션을 위한 Dreamine 통합 패키지 문서입니다.
 [➡️ English Version](./README.md)
 
 ![Dreamine FullKit preview](./docs/assets/dreamine-fullkit-preview.png)
+
+## 아키텍처 한눈에 보기
+
+![Dreamine FullKit 아키텍처](./docs/assets/fullkit-architecture.svg)
+
+FullKit 메타 패키지는 **49개 라이브러리**를 **9개 아키텍처 카테고리**로 묶어 제공합니다 — MVVM 기반부터 UI, 하이브리드 호스팅, 인증, 데이터 접근, 통신, I/O, PLC 드라이버까지. 각 카테고리마다 진입점 패키지를 골라 쓸 수도 있고, FullKit 번들 하나로 전체를 한 번에 참조할 수도 있습니다.
 
 ---
 

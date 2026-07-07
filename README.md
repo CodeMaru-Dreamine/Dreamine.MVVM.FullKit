@@ -11,10 +11,9 @@
 
 [![NuGet](https://img.shields.io/nuget/v/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit)
-[![Docs](https://img.shields.io/badge/Docs-dreamine.kr-1f6feb.svg)](https://dreamine.kr/libraries)
-[![API Reference](https://img.shields.io/badge/API-Reference-7952B3.svg)](https://dreamine.kr/libraries)
-[![Live Demo](https://img.shields.io/badge/Live-Demo-00B894.svg)](https://dreamine.kr/playground)
-[![Architecture](https://img.shields.io/badge/Architecture-Documented-2563EB.svg)](https://dreamine.kr/libraries)
+[![Docs](https://img.shields.io/badge/%F0%9F%93%96%20Docs-dreamine.kr-49B2FF.svg)](https://dreamine.kr/libraries)
+[![Guide](https://img.shields.io/badge/%F0%9F%93%98%20Guide-dreamine.kr-49B2FF.svg)](https://dreamine.kr/guide)
+[![Playground](https://img.shields.io/badge/%F0%9F%8E%AE%20Playground-dreamine.kr-49B2FF.svg)](https://dreamine.kr/playground)
 [![Book](https://img.shields.io/badge/%F0%9F%93%96%20Book-Practical%20MVVM%20Architecture-000000.svg)](https://bookk.co.kr/bookStore/69c0f1b41461ec1ae849a0f6)
 
 All-in-One package set for building WPF MVVM applications with the Dreamine architecture.
@@ -24,6 +23,12 @@ All-in-One package set for building WPF MVVM applications with the Dreamine arch
 [➡️ 한국어 문서 보기](./README_KO.md)
 
 ![Dreamine FullKit preview](./docs/assets/dreamine-fullkit-preview.png)
+
+## Architecture at a Glance
+
+![Dreamine FullKit architecture](./docs/assets/fullkit-architecture.svg)
+
+The FullKit meta-package bundles **49 libraries** across **9 architectural categories** — from MVVM foundation to UI, hosting, identity, data access, communication, I/O, and PLC drivers. Every category has an entry-point package you can add à la carte, or grab everything through the FullKit bundle.
 
 ---
 
