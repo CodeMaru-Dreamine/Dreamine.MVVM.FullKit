@@ -113,6 +113,15 @@ This kit brings together:
 - **Dreamine.Hybrid / Dreamine.Hybrid.Wpf**  
   Optional hybrid hosting stack for sharing messages/state and embedding Blazor UI inside WPF.
 
+- **Dreamine.UI.\***  
+  Cross-UI dark-theme component libraries — `UI.Abstractions`, `UI.Wpf` (+ `.Controls` / `.Themes` / `.Equipment`), `UI.WinForms`, `UI.Blazor`, `UI.Maui` — all sharing an API parity contract.
+
+- **Dreamine.Identity**  
+  Shared OAuth login (Google, Naver, Kakao) plus local email/password login, with shared cookie and DataProtection keys so subdomain services can share a single sign-on session.
+
+- **Dreamine.Database.\***  
+  `Database.Abstractions` / `.Core` interfaces with Dapper-based drivers for Sqlite, MySql, SqlServer, and Oracle, including schema migration helpers.
+
 - **Dreamine.Communication.\***  
   Communication abstractions and TCP/UDP, serial, RabbitMQ, WPF, and FullKit composition packages.
 
@@ -122,8 +131,11 @@ This kit brings together:
 - **Dreamine.Threading / Dreamine.Threading.Windows / Dreamine.Threading.Wpf**  
   Threading and dispatcher helper packages.
 
+- **Dreamine.IO.\***  
+  Common I/O device abstractions and driver implementations (e.g. Fastech EtherNet/IP motion controller).
+
 - **Dreamine.PLC.\***  
-  PLC abstractions, simulator/runtime support, Mitsubishi MC/MX Component, Omron FINS/CX-Compolet, and WPF monitor packages.
+  PLC abstractions and drivers — Mitsubishi MELSEC MC (3E/4E) and MX Component, Omron CX-One and native FINS (UDP/TCP), plus WPF monitoring controls.
 
 ---
 
@@ -144,25 +156,34 @@ Dreamine.MVVM.FullKit exists to provide a unified starting point with these goal
 
 ## Architecture Summary
 
+The full 49-library layout is rendered in the [architecture SVG](./docs/assets/fullkit-architecture.svg) at the top. The Mermaid graph below is a category-level view of how the layers depend on each other.
+
 ```mermaid
-graph LR
-    Core[Dreamine.MVVM.Core] --> Interfaces[Dreamine.MVVM.Interfaces]
-    Core --> ViewModels[Dreamine.MVVM.ViewModels]
-    Core --> Locators[Dreamine.MVVM.Locators]
-    Locators --> LocatorsWpf[Dreamine.MVVM.Locators.Wpf]
-    Core --> Wpf[Dreamine.MVVM.Wpf]
-    Core --> Extensions[Dreamine.MVVM.Extensions]
-    Core --> BehaviorsCore[Dreamine.MVVM.Behaviors.Core]
-    BehaviorsCore --> BehaviorsWpf[Dreamine.MVVM.Behaviors.Wpf]
-    BehaviorsWpf --> Behaviors[Dreamine.MVVM.Behaviors]
-    Core --> Attributes[Dreamine.MVVM.Attributes]
-    Attributes --> Generators[Dreamine.MVVM.Generators]
-    Core --> Hybrid[Dreamine.Hybrid]
-    Hybrid --> HybridWpf[Dreamine.Hybrid.Wpf]
-    Core --> Communication[Dreamine.Communication.*]
-    Core --> Logging[Dreamine.Logging.*]
-    Core --> Threading[Dreamine.Threading.*]
-    Core --> PLC[Dreamine.PLC.*]
+graph TB
+    subgraph Foundation
+        MVVM[MVVM Core · 12 pkgs<br/>Core · ViewModels · Interfaces<br/>Attributes · Generators<br/>Locators · Behaviors · Extensions · Wpf]
+        Infra[Infrastructure · 5 pkgs<br/>Logging · Logging.Wpf<br/>Threading + .Windows/.Wpf]
+        Identity[Identity · 1 pkg<br/>OAuth + local login<br/>shared cookie session]
+    end
+    subgraph Hosting
+        Hybrid[Hybrid · 2 pkgs<br/>Hybrid · Hybrid.Wpf<br/>WPF + embedded Blazor]
+        UI[UI · 8 pkgs<br/>Abstractions · Wpf/.Controls/.Themes/.Equipment<br/>WinForms · Blazor · Maui]
+    end
+    subgraph DataDevices [Data · Devices · Communication]
+        Database[Database · 6 pkgs<br/>Abstractions · Core<br/>Sqlite · MySql · SqlServer · Oracle]
+        Comm[Communication · 7 pkgs<br/>Abstractions · Core · Sockets · Serial<br/>RabbitMQ · Wpf · FullKit]
+        IO[IO · 2 pkgs<br/>Abstractions<br/>Fastech.Ethernet]
+        PLC[PLC · 7 pkgs<br/>Abstractions · Core · Wpf<br/>Mitsubishi MC/MxComponent<br/>Omron CxComponent/Fins]
+    end
+
+    UI --> MVVM
+    Hybrid --> MVVM
+    Identity --> Database
+    Identity --> Infra
+    Comm --> Infra
+    PLC --> IO
+    UI -.optional.-> Identity
+    Hybrid -.optional.-> UI
 ```
 
 ---
@@ -377,28 +398,43 @@ Dreamine.MVVM.FullKit/
 ├─ README.md
 ├─ README_KO.md
 ├─ LICENSE
+├─ CONTRIBUTING.md
+├─ docs/
+│  ├─ assets/                         # fullkit-architecture.svg, preview.png, …
+│  └─ submodules.md
 └─ 20_SOURCES/
-   ├─ 100. Library/
-   │  ├─ Core/
-   │  ├─ Interfaces/
-   │  ├─ ViewModels/
-   │  ├─ Attributes/
-   │  ├─ Generators/
-   │  ├─ Locators/
-   │  ├─ Locators.Wpf/
-   │  ├─ Wpf/
-   │  ├─ Behaviors.Core/
-   │  ├─ Behaviors.Wpf/
-   │  ├─ Behaviors/
-   │  ├─ Extensions/
-   │  ├─ Hybrid/
-   │  ├─ Hybrid.Wpf/
-   │  ├─ Communication.*
-   │  ├─ Logging.*
-   │  ├─ Threading.*
-   │  └─ PLC.*
+   ├─ DreamineWorkSpace.sln
+   ├─ Directory.Build.props / .Packages.props
+   ├─ 000. Project/
+   │  └─ 010. App/                    # Reference apps built on the FullKit
+   │     ├─ Dreamine.Web/             # dreamine.kr — library catalog + docs + playground
+   │     ├─ Codemaru/                 # codemaru.co.kr — services portal
+   │     ├─ ShopPlatform.Web/         # shop.codemaru.co.kr — multi-tenant shop
+   │     ├─ Portfolio.Web/            # portfolio.codemaru.co.kr — portfolio site
+   │     ├─ Families.Web/             # families.codemaru.co.kr — family album
+   │     ├─ WeddingPlatform.Web/      # wedding.codemaru.co.kr — mobile invitation
+   │     ├─ WeddingThankYou/          # thankyou.codemaru.co.kr — post-wedding
+   │     ├─ Families.AutoWriter/
+   │     └─ DreamineVMS / DreamineVMS.Web
+   ├─ 100. Library/                    # 49 libraries (each a git submodule)
+   │  ├─ Core / Interfaces / ViewModels / Attributes / Generators
+   │  ├─ Locators / Locators.Wpf / Wpf / Extensions
+   │  ├─ Behaviors / Behaviors.Core / Behaviors.Wpf
+   │  ├─ Hybrid / Hybrid.Wpf
+   │  ├─ UI.Abstractions / UI.Wpf (+ .Controls/.Themes/.Equipment)
+   │  ├─ UI.WinForms / UI.Blazor / UI.Maui
+   │  ├─ Identity
+   │  ├─ Logging / Logging.Wpf
+   │  ├─ Threading / Threading.Windows / Threading.Wpf
+   │  ├─ Database.Abstractions / .Core / .Sqlite / .MySql / .SqlServer / .Oracle
+   │  ├─ Communication.Abstractions / .Core / .Sockets / .Serial / .RabbitMQ / .Wpf / .FullKit
+   │  ├─ IO.Abstractions / IO.Fastech.Ethernet
+   │  └─ PLC.Abstractions / .Core / .Wpf
+   │     · Mitsubishi.MC / .MxComponent
+   │     · Omron.CxComponent / .Fins
+   ├─ 200. Tests/                      # FullKit-level test projects
    └─ 998. DEMO/
-      └─ 000. Sample/
+      └─ 000. Sample/                  # WPF / WinForms / Blazor / MAUI samples
 ```
 
 ---
