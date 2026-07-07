@@ -10,6 +10,7 @@ public class PortfolioHomeViewModel
     private readonly IPortfolioTenantStore _tenants;
     private readonly IProjectStore _projects;
     private readonly PortfolioOptions _opts;
+    private readonly PortfolioUserContext _userContext;
 
     public List<PortfolioConfig> Tenants { get; private set; } = [];
     public Dictionary<string, int> ProjectCounts { get; private set; } = [];
@@ -22,11 +23,16 @@ public class PortfolioHomeViewModel
     public string NewOwnerName { get; set; } = "";
     public string NewPassword { get; set; } = "";
 
-    public PortfolioHomeViewModel(IPortfolioTenantStore tenants, IProjectStore projects, PortfolioOptions opts)
+    public PortfolioHomeViewModel(
+        IPortfolioTenantStore tenants,
+        IProjectStore projects,
+        PortfolioOptions opts,
+        PortfolioUserContext userContext)
     {
         _tenants = tenants;
         _projects = projects;
         _opts = opts;
+        _userContext = userContext;
     }
 
     public async Task LoadAsync()
@@ -52,6 +58,7 @@ public class PortfolioHomeViewModel
         var existing = await _tenants.GetAsync(slug);
         if (existing != null) { StatusMessage = "❌ 이미 사용 중인 주소입니다."; return false; }
 
+        var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
         var cfg = new PortfolioConfig
         {
             Slug = slug,
@@ -63,6 +70,25 @@ public class PortfolioHomeViewModel
             ShowOnHome = true,
             CreatedAt = DateTime.Now,
         };
+
+        if (user.IsAuthenticated)
+        {
+            cfg.OwnerUserId = user.Id;
+            cfg.OwnerProvider = user.Provider;
+            cfg.OwnerEmail = user.Email;
+            cfg.OwnerDisplayName = user.DisplayName;
+            cfg.OwnerLinkedAt = DateTime.Now;
+            cfg.AdminUsers.Add(new PortfolioAdminUser
+            {
+                UserId = user.Id,
+                Provider = user.Provider,
+                Email = user.Email,
+                DisplayName = user.DisplayName,
+                Role = "Owner",
+                AddedAt = DateTime.Now
+            });
+        }
+
         await _tenants.SaveAsync(cfg);
         StatusMessage = $"✅ '{slug}' 포트폴리오가 생성되었습니다!";
         return true;

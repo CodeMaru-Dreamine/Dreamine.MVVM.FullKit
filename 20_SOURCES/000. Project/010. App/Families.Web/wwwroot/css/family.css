@@ -102,6 +102,24 @@ a { color: inherit; text-decoration: none; }
     min-height: 2rem;
     visibility: hidden;
 }
+.fa-topnav__burger {
+    display: none;
+    flex-shrink: 0;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 28px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+.fa-topnav__burger span {
+    display: block;
+    height: 3px;
+    border-radius: 999px;
+    background: #7c4a03;
+}
 
 /* ── 상단 Nav ── */
 .fa-nav {
@@ -898,12 +916,39 @@ a { color: inherit; text-decoration: none; }
 /* ── 반응형 ── */
 @media (max-width: 600px) {
     .fa-topnav {
+        align-items: center;
+        justify-content: space-between;
         gap: .55rem;
         padding-inline: .75rem;
     }
-    .fa-topnav__brand span:last-child { display: none; }
+    .fa-topnav__brand span:last-child { display: inline; }
+    .fa-topnav__burger { display: flex; }
+    .fa-topnav__links {
+        display: none;
+        position: absolute;
+        top: calc(100% + .45rem);
+        left: .75rem;
+        right: .75rem;
+        z-index: 140;
+        flex-direction: column;
+        align-items: stretch;
+        gap: .35rem;
+        min-width: 0;
+        margin-left: 0;
+        padding: .8rem;
+        overflow-x: visible;
+        border: 1px solid #fed7aa;
+        border-radius: 14px;
+        background: rgba(255, 250, 240, .98);
+        box-shadow: 0 12px 32px rgba(124, 74, 3, .18);
+    }
+    .fa-topnav__links.open {
+        display: flex;
+    }
     .fa-topnav__links a,
     .fa-topnav__auth {
+        display: flex;
+        justify-content: center;
         padding: .42rem .58rem;
         font-size: .8rem;
     }

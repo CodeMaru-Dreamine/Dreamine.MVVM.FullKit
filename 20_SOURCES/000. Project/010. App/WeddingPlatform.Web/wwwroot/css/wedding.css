@@ -695,6 +695,24 @@ body.w-theme-blush {
     min-height: 2rem;
     visibility: hidden;
 }
+.wh-topnav__burger {
+    display: none;
+    flex-shrink: 0;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 28px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+.wh-topnav__burger span {
+    display: block;
+    height: 3px;
+    border-radius: 999px;
+    background: #6b4e2a;
+}
 
 /* ── 히어로 ── */
 .wh-hero {
@@ -908,17 +926,39 @@ body.w-theme-blush {
 
 @media (max-width: 480px) {
     .wh-topnav {
-        align-items: flex-start;
+        align-items: center;
+        justify-content: space-between;
         gap: .6rem;
         padding: .65rem .8rem;
     }
-    .wh-topnav__brand span:last-child { display: none; }
+    .wh-topnav__brand span:last-child { display: inline; }
+    .wh-topnav__burger { display: flex; }
     .wh-topnav__links {
-        flex: 1 1 auto;
+        display: none;
+        position: absolute;
+        top: calc(100% + .45rem);
+        left: .75rem;
+        right: .75rem;
+        z-index: 40;
+        flex-direction: column;
+        align-items: stretch;
+        gap: .35rem;
+        min-width: 0;
         margin-left: 0;
+        padding: .8rem;
+        overflow-x: visible;
+        border: 1px solid #eadccb;
+        border-radius: 14px;
+        background: rgba(253, 246, 238, .98);
+        box-shadow: 0 12px 32px rgba(58, 46, 40, .18);
+    }
+    .wh-topnav__links.open {
+        display: flex;
     }
     .wh-topnav__links a,
     .wh-topnav__auth {
+        display: flex;
+        justify-content: center;
         padding: .42rem .58rem;
         font-size: .82rem;
     }

@@ -2,6 +2,7 @@
 @layout WeddingPlatform.Blazor.Layout.WeddingLayout
 @namespace WeddingPlatform.Blazor.Pages
 @rendermode InteractiveServer
+@implements IDisposable
 
 @inject WeddingSuperAdminViewModel Vm
 @inject WeddingUserContext UserContext
@@ -30,7 +31,7 @@
             <img class="wh-topnav__mark" src="/img/Codemaru%20Bloom%20Light.jpg" alt="" />
             <span>CodeMaru</span>
         </a>
-        <nav class="wh-topnav__links" aria-label="CodeMaru 서비스">
+        <nav id="whTopnavMenu" class="wh-topnav__links @(isNavOpen ? "open" : null)" aria-label="CodeMaru 서비스">
             <a href="https://codemaru.co.kr">Home</a>
             <a href="https://dreamine.kr/" target="_blank" rel="noopener">Dreamine</a>
             <a href="https://codemaru.co.kr/cardhybrid">CardHybrid</a>
@@ -41,20 +42,28 @@
             <a href="https://cctvviewer.codemaru.co.kr">CCTV</a>
             <a href="https://shop.codemaru.co.kr/">ShopStore</a>
             <a href="https://codemaru.co.kr/contact">Contact</a>
+            @if (!hasLoadedCurrentUser)
+            {
+                <span class="wh-topnav__auth wh-topnav__auth--pending" aria-hidden="true"></span>
+            }
+            else if (currentUser.IsAuthenticated)
+            {
+                <a class="wh-topnav__auth" href="@AccountUrl">@NavUserLabel</a>
+                <a class="wh-topnav__auth" href="@SignoutUrl">로그아웃</a>
+            }
+            else
+            {
+                <a class="wh-topnav__auth" href="@LoginUrl">로그인</a>
+            }
         </nav>
-        @if (!hasLoadedCurrentUser)
-        {
-            <span class="wh-topnav__auth wh-topnav__auth--pending" aria-hidden="true"></span>
-        }
-        else if (currentUser.IsAuthenticated)
-        {
-            <a class="wh-topnav__auth" href="@AccountUrl">@NavUserLabel</a>
-            <a class="wh-topnav__auth" href="@SignoutUrl">로그아웃</a>
-        }
-        else
-        {
-            <a class="wh-topnav__auth" href="@LoginUrl">로그인</a>
-        }
+        <button class="wh-topnav__burger"
+                type="button"
+                @onclick="ToggleNav"
+                aria-label="메뉴 열기/닫기"
+                aria-expanded="@isNavOpen"
+                aria-controls="whTopnavMenu">
+            <span></span><span></span><span></span>
+        </button>
     </header>
 
     <!-- ── 히어로 배너 ── -->
@@ -272,6 +281,7 @@
     private List<WeddingPlatform.Models.TenantConfig> myInvites = [];
     private WeddingCurrentUser currentUser = WeddingCurrentUser.Anonymous;
     private bool hasLoadedCurrentUser;
+    private bool isNavOpen;
 
     private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
     private string AccountUrl => $"https://codemaru.co.kr/_identity/account?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
@@ -283,6 +293,7 @@
 
     protected override void OnInitialized()
     {
+        Nav.LocationChanged += OnLocationChanged;
         Vm.NewSlug = "";
         Vm.NewCoupleName = "";
         Vm.NewPassword = "";
@@ -338,4 +349,25 @@
     private bool IsMyInvite(WeddingPlatform.Models.TenantConfig config) =>
         string.Equals(config.OwnerUserId, currentUser.Id, StringComparison.Ordinal)
         || (config.AdminUsers?.Any(x => string.Equals(x.UserId, currentUser.Id, StringComparison.Ordinal)) == true);
+
+    private void ToggleNav()
+    {
+        isNavOpen = !isNavOpen;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (!isNavOpen)
+        {
+            return;
+        }
+
+        isNavOpen = false;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+    }
 }

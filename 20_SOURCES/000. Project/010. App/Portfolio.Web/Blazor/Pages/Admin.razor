@@ -19,7 +19,16 @@
                 <a href="/@Slug" class="pf-login-box__home">포트폴리오 보기 →</a>
             </div>
             <h1 class="pf-login-box__title">🧑‍💻 @Slug</h1>
-            <p class="pf-login-box__desc">어드민 비밀번호를 입력하세요</p>
+            @if (Vm.IsSignedIn)
+            {
+                <p class="pf-login-box__desc">현재 공용 로그인: <strong>@Vm.CurrentUserLabel</strong></p>
+                <p class="pf-login-box__desc">기존 관리자 비밀번호를 한 번 입력하면 이 계정이 포트폴리오 관리자로 추가됩니다.</p>
+            }
+            else
+            {
+                <p class="pf-login-box__desc">CodeMaru/Dreamine 계정으로 먼저 로그인하면, 기존 비밀번호 확인 후 이 포트폴리오를 계정에 연결할 수 있습니다.</p>
+                <a class="pf-btn pf-btn--ghost pf-btn--full" href="@LoginUrl">공용 로그인</a>
+            }
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
                 <p class="pf-status pf-status--err">@Vm.StatusMessage</p>
@@ -48,6 +57,10 @@
             <p class="pf-status @(Vm.StatusMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">
                 @Vm.StatusMessage
             </p>
+        }
+        @if (Vm.IsSignedIn)
+        {
+            <p class="pf-status pf-status--ok">공용 로그인: @Vm.CurrentUserLabel · @(Vm.IsOwner ? "대표 관리자" : "관리자")</p>
         }
 
         <div class="pf-tabs">
@@ -454,6 +467,41 @@
             var cfg = Vm.Config;
             <div class="pf-tab-body pf-settings">
                 <div class="pf-form__row">
+                    <h3 style="margin-bottom:.8rem">관리자 계정</h3>
+                    <p class="pf-muted">공용 로그인 상태에서 기존 관리자 비밀번호를 입력하면 여러 계정이 같은 포트폴리오를 관리할 수 있습니다.</p>
+                    @if (Vm.EffectiveAdminUsers.Count == 0)
+                    {
+                        <p class="pf-muted">아직 공용 로그인에 연결된 관리자 계정이 없습니다.</p>
+                    }
+                    else
+                    {
+                        <div class="pf-admin-users">
+                            @foreach (var admin in Vm.EffectiveAdminUsers)
+                            {
+                                var isOwner = string.Equals(admin.Role, "Owner", StringComparison.OrdinalIgnoreCase);
+                                <div class="pf-admin-users__item">
+                                    <div>
+                                        <strong>@(isOwner ? "대표 관리자" : "관리자")</strong>
+                                        <span>@(string.IsNullOrWhiteSpace(admin.DisplayName) ? admin.Provider : admin.DisplayName)</span>
+                                        @if (!string.IsNullOrWhiteSpace(admin.Email))
+                                        {
+                                            <small>@admin.Email</small>
+                                        }
+                                        <small>@admin.Provider · @admin.AddedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                                    </div>
+                                    @if (Vm.IsOwner && !isOwner)
+                                    {
+                                        <button class="pf-btn pf-btn--danger pf-btn--sm" @onclick="() => OnRemoveAdmin(admin.UserId)">삭제</button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <hr class="pf-divider" />
+
+                <div class="pf-form__row">
                     <label class="pf-label">이름</label>
                     <input class="pf-input" @bind="cfg.OwnerName" />
                 </div>
@@ -586,9 +634,11 @@
     private string imageUrlInput = "";
     private string videoUrlInput = "";
 
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+
     protected override async Task OnParametersSetAsync()
     {
-        if (!Vm.IsLoaded) await Vm.LoadAsync(Slug);
+        if (!Vm.IsLoaded) await Vm.InitializeAsync(Slug);
     }
 
     private void OnPasswordInput(ChangeEventArgs e) => Vm.LoginPassword = e.Value?.ToString() ?? string.Empty;
@@ -686,6 +736,12 @@
     private async Task OnSaveResume() => await Vm.SaveResumeAsync(Slug);
 
     private async Task OnSaveConfig() => await Vm.SaveConfigAsync();
+
+    private async Task OnRemoveAdmin(string userId)
+    {
+        await Vm.RemoveAdminAsync(userId);
+        StateHasChanged();
+    }
 
     private async Task OnChangePassword()
     {

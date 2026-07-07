@@ -4,6 +4,7 @@
 @rendermode InteractiveServer
 
 @inject PortfolioHomeViewModel Vm
+@inject PortfolioUserContext UserContext
 @inject NavigationManager Nav
 
 <PageTitle>🧑‍💻 무료 포트폴리오 — Codemaru Portfolio</PageTitle>
@@ -22,22 +23,24 @@
 
 <div class="pf-page">
 
-    <!-- ── 네비바 ── -->
-    <nav class="pf-nav">
-        <a href="/" class="pf-nav__brand">🧑‍💻 Codemaru Portfolio</a>
-        <div class="pf-nav__links">
-            <a href="/guide" class="pf-nav__link">사용법</a>
-            <a href="#create" class="pf-nav__link pf-nav__link--cta">시작하기 →</a>
-        </div>
-    </nav>
-
     <!-- ── 히어로 ── -->
     <section class="pf-hero">
         <div class="pf-hero__inner">
             <p class="pf-hero__badge">✨ 무료 개발자 포트폴리오</p>
             <h1 class="pf-hero__title">나만의 포트폴리오를<br /><span class="pf-hero__accent">5분 만에</span> 완성하세요</h1>
             <p class="pf-hero__sub">프로젝트 · 이력서 · 기술스택 · 연락처 — 전부 한 곳에</p>
-            <a href="#create" class="pf-btn pf-btn--primary">지금 무료로 만들기 →</a>
+            <div class="pf-hero__actions">
+                <a href="#create" class="pf-btn pf-btn--primary">지금 무료로 만들기 →</a>
+                <a href="/guide" class="pf-btn pf-btn--ghost">사용법</a>
+                @if (currentUser.IsAuthenticated)
+                {
+                    <a href="#my-portfolios" class="pf-btn pf-btn--ghost">내 포트폴리오 관리</a>
+                }
+                else if (hasLoadedCurrentUser)
+                {
+                    <a href="@LoginUrl" class="pf-btn pf-btn--ghost">로그인</a>
+                }
+            </div>
         </div>
     </section>
 
@@ -85,6 +88,23 @@
     <!-- ── 가입 폼 ── -->
     <section class="pf-create" id="create">
         <div class="pf-create__box">
+            @if (currentUser.IsAuthenticated)
+            {
+                <div class="pf-account">
+                    <span>공용 로그인</span>
+                    <strong>@CurrentUserLabel</strong>
+                    <a href="@AccountUrl" class="pf-account__link">내 계정</a>
+                    <a href="@SignoutUrl" class="pf-account__link">로그아웃</a>
+                </div>
+            }
+            else if (hasLoadedCurrentUser)
+            {
+                <div class="pf-account pf-account--guest">
+                    <span>로그인하면 생성한 포트폴리오가 내 계정에 바로 연결됩니다.</span>
+                    <a href="@LoginUrl" class="pf-account__link">공용 로그인</a>
+                </div>
+            }
+
             <h2 class="pf-create__title">무료로 시작하기</h2>
             <p class="pf-create__desc">아래 정보를 입력하면 바로 포트폴리오가 생성됩니다.</p>
 
@@ -138,6 +158,33 @@
         </div>
     </section>
 
+    @if (currentUser.IsAuthenticated)
+    {
+        <section class="pf-list pf-list--mine" id="my-portfolios">
+            <h2 class="pf-list__title">내 포트폴리오</h2>
+            @if (myPortfolios.Count == 0)
+            {
+                <p class="pf-empty">아직 이 계정에 연결된 포트폴리오가 없습니다. 기존 포트폴리오가 있다면 <code>/{슬러그}/admin</code>에서 기존 비밀번호를 한 번 입력해 연결하세요.</p>
+            }
+            else
+            {
+                <div class="pf-list__grid">
+                    @foreach (var t in myPortfolios)
+                    {
+                        <a href="/@t.Slug/admin" class="pf-card pf-card--manage">
+                            <div class="pf-card__body">
+                                <div class="pf-card__name">@t.OwnerName</div>
+                                <div class="pf-card__title">@t.Title</div>
+                                <div class="pf-card__bio">/@t.Slug/admin</div>
+                                <span class="pf-manage-link">관리 열기 →</span>
+                            </div>
+                        </a>
+                    }
+                </div>
+            }
+        </section>
+    }
+
     <!-- ── 공개 포트폴리오 목록 ── -->
     @if (publicList.Count > 0)
     {
@@ -182,6 +229,16 @@
     private bool isCreating;
     private string slugPreview = "";
     private List<PortfolioConfig> publicList = [];
+    private List<PortfolioConfig> myPortfolios = [];
+    private PortfolioCurrentUser currentUser = PortfolioCurrentUser.Anonymous;
+    private bool hasLoadedCurrentUser;
+
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string AccountUrl => $"https://codemaru.co.kr/_identity/account?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string SignoutUrl => $"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string CurrentUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName)
+        ? currentUser.Provider
+        : $"{currentUser.DisplayName} ({currentUser.Provider})";
 
     protected override void OnInitialized()
     {
@@ -192,12 +249,20 @@
 
     protected override async Task OnInitializedAsync()
     {
+        currentUser = await UserContext.GetCurrentAsync();
+        hasLoadedCurrentUser = true;
         await Vm.LoadAsync();
         publicList = Vm.Tenants
             .Where(t => t.ShowOnHome)
             .OrderBy(t => t.PinOrder == 0 ? int.MaxValue : t.PinOrder)
             .ThenByDescending(t => t.CreatedAt)
             .ToList();
+        myPortfolios = currentUser.IsAuthenticated
+            ? Vm.Tenants
+                .Where(IsMyPortfolio)
+                .OrderByDescending(t => t.CreatedAt)
+                .ToList()
+            : [];
     }
 
     private void OnSlugInput(ChangeEventArgs e)
@@ -226,4 +291,8 @@
         }
         finally { isCreating = false; }
     }
+
+    private bool IsMyPortfolio(PortfolioConfig config) =>
+        string.Equals(config.OwnerUserId, currentUser.Id, StringComparison.Ordinal)
+        || (config.AdminUsers?.Any(x => string.Equals(x.UserId, currentUser.Id, StringComparison.Ordinal)) == true);
 }

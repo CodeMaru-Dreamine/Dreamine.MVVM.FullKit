@@ -35,6 +35,66 @@ body { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; background: #0f172a
 a { color: inherit; text-decoration: none; }
 input, select, textarea { font-family: inherit; }
 
+/* ── CodeMaru 공통 Nav ───────────────────── */
+.pf-topnav {
+    position: sticky; top: 0; z-index: 120;
+    display: flex; align-items: center; gap: 1rem;
+    padding: .7rem clamp(1rem, 4vw, 2rem);
+    background: rgba(15,23,42,.94);
+    border-bottom: 1px solid #1e293b;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+.pf-topnav a { color: #e2e8f0; text-decoration: none; }
+.pf-topnav__brand {
+    display: inline-flex; align-items: center; gap: .55rem;
+    flex: 0 0 auto; font-weight: 800;
+}
+.pf-topnav__mark {
+    width: 2rem; height: 2rem; border-radius: 8px;
+    object-fit: cover; box-shadow: inset 0 0 0 1px rgba(148,163,184,.25);
+}
+.pf-topnav__links {
+    display: flex; align-items: center; gap: .35rem;
+    min-width: 0; margin-left: auto;
+    overflow-x: auto; scrollbar-width: none;
+}
+.pf-topnav__links::-webkit-scrollbar { display: none; }
+.pf-topnav__links a,
+.pf-topnav__auth {
+    flex: 0 0 auto; padding: .48rem .72rem;
+    border-radius: 8px; font-size: .9rem; font-weight: 700;
+    white-space: nowrap;
+}
+.pf-topnav__links a:hover,
+.pf-topnav__links a.active,
+.pf-topnav__auth {
+    background: rgba(99,102,241,.16);
+    box-shadow: inset 0 0 0 1px rgba(99,102,241,.35);
+}
+.pf-topnav__auth { color: #c7d2fe; }
+.pf-topnav__auth--pending {
+    width: 4rem; min-height: 2rem; visibility: hidden;
+}
+.pf-topnav__burger {
+    display: none;
+    flex-shrink: 0;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 28px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+}
+.pf-topnav__burger span {
+    display: block;
+    height: 3px;
+    border-radius: 999px;
+    background: #e2e8f0;
+}
+
 /* ── 네비바 ─────────────────────────────────── */
 .pf-nav {
     position: sticky; top: 0; z-index: 100;
@@ -69,6 +129,7 @@ input, select, textarea { font-family: inherit; }
 .pf-hero__title { font-size: clamp(2rem,5vw,3.2rem); font-weight: 800; line-height: 1.2; margin-bottom: 1rem; color: #f1f5f9; }
 .pf-hero__accent { background: linear-gradient(90deg,#6366f1,#a78bfa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
 .pf-hero__sub { font-size: 1.1rem; color: #94a3b8; margin-bottom: 2rem; }
+.pf-hero__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; }
 
 /* ── 서비스 안내 배너 ───────────────────────── */
 .pf-service-notice {
@@ -98,6 +159,18 @@ input, select, textarea { font-family: inherit; }
 .pf-create__desc { color: #94a3b8; margin-bottom: 1.5rem; }
 .pf-create__notice { margin-top: 1.2rem; font-size: .82rem; color: #64748b; text-align: center; }
 .pf-create__notice code { background: #334155; padding: .1rem .4rem; border-radius: 4px; }
+.pf-account {
+    display: flex; align-items: center; justify-content: space-between; gap: .75rem;
+    background: #0f172a; border: 1px solid #334155;
+    border-radius: 12px; padding: .75rem .9rem; margin-bottom: 1.25rem;
+    font-size: .85rem; color: #94a3b8;
+}
+.pf-account strong { color: #f1f5f9; margin-right: auto; }
+.pf-account--guest { align-items: flex-start; }
+.pf-account__link {
+    color: #a5b4fc; font-weight: 700; white-space: nowrap;
+}
+.pf-account__link:hover { text-decoration: underline; }
 
 /* ── 폼 공통 ─────────────────────────────────  */
 .pf-form { display: flex; flex-direction: column; gap: 1rem; }
@@ -145,9 +218,11 @@ input, select, textarea { font-family: inherit; }
 .pf-status { padding: .7rem 1rem; border-radius: 8px; font-size: .9rem; margin-bottom: 1rem; }
 .pf-status--ok { background: rgba(34,197,94,.15); color: #86efac; border: 1px solid rgba(34,197,94,.3); }
 .pf-status--err { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
+.pf-muted { color: #94a3b8; font-size: .86rem; line-height: 1.6; }
 
 /* ── 홈 포트폴리오 목록 ──────────────────────  */
 .pf-list { padding: 3rem 2rem; max-width: 1100px; margin: 0 auto; }
+.pf-list--mine { padding-top: 2rem; }
 .pf-list__title { font-size: 1.4rem; font-weight: 800; margin-bottom: 1.5rem; }
 .pf-list__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.2rem; }
 .pf-card { display: flex; flex-direction: column; background: #1e293b; border: 1px solid #334155; border-radius: var(--pf-radius); overflow: hidden; transition: transform .2s, box-shadow .2s; }
@@ -158,6 +233,11 @@ input, select, textarea { font-family: inherit; }
 .pf-card__name { font-size: 1.1rem; font-weight: 700; }
 .pf-card__title { font-size: .85rem; color: #6366f1; margin-top: .2rem; }
 .pf-card__bio { font-size: .82rem; color: #94a3b8; margin-top: .4rem; }
+.pf-card--manage { border-color: rgba(99,102,241,.55); }
+.pf-manage-link {
+    display: inline-block; margin-top: .75rem;
+    font-size: .82rem; color: #a5b4fc; font-weight: 700;
+}
 
 /* ── 프로필 히어로 ───────────────────────────  */
 .pf-profile-hero {
@@ -265,6 +345,19 @@ input, select, textarea { font-family: inherit; }
 .pf-login-box__home:hover { color: #a5b4fc; }
 .pf-login-box__title { font-size: 1.4rem; font-weight: 800; text-align: center; }
 .pf-login-box__desc { color: #94a3b8; text-align: center; font-size: .9rem; }
+.pf-login-box__desc strong { color: #f1f5f9; }
+
+.pf-admin-users { display: flex; flex-direction: column; gap: .65rem; }
+.pf-admin-users__item {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; padding: .85rem 1rem;
+    border: 1px solid #334155; border-radius: 8px;
+    background: #0f172a;
+}
+.pf-admin-users__item > div { min-width: 0; display: flex; flex-direction: column; gap: .2rem; }
+.pf-admin-users__item span,
+.pf-admin-users__item small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pf-admin-users__item small { color: #64748b; font-size: .76rem; }
 
 /* ── 탭 ──────────────────────────────────────  */
 .pf-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 1.5rem; border-bottom: 1px solid #334155; padding-bottom: 0; }
@@ -438,12 +531,52 @@ input, select, textarea { font-family: inherit; }
 
 /* ── 기타 ────────────────────────────────────  */
 .pf-empty { color: #64748b; padding: 2rem 0; text-align: center; }
+.pf-loading {
+    min-height: 70vh;
+    display: grid;
+    place-items: center;
+    background: #0f172a;
+}
+.pf-loading__mark {
+    width: 34px;
+    height: 34px;
+    border: 3px solid rgba(148, 163, 184, .22);
+    border-top-color: #a5b4fc;
+    border-radius: 50%;
+    animation: pf-spin .8s linear infinite;
+}
+@keyframes pf-spin { to { transform: rotate(360deg); } }
 .pf-not-found { text-align: center; padding: 6rem 2rem; }
 .pf-not-found h1 { font-size: 5rem; font-weight: 900; color: #334155; }
 .pf-not-found p { color: #94a3b8; margin: 1rem 0 2rem; }
 
 /* ── 반응형 ──────────────────────────────────  */
 @media (max-width: 600px) {
+    .pf-topnav { align-items: center; justify-content: space-between; gap: .6rem; padding: .65rem .8rem; }
+    .pf-topnav__brand span:last-child { display: inline; }
+    .pf-topnav__burger { display: flex; }
+    .pf-topnav__links {
+        display: none;
+        position: absolute;
+        top: calc(100% + .45rem);
+        left: .75rem;
+        right: .75rem;
+        z-index: 140;
+        flex-direction: column;
+        align-items: stretch;
+        gap: .35rem;
+        min-width: 0;
+        margin-left: 0;
+        padding: .8rem;
+        overflow-x: visible;
+        border: 1px solid #334155;
+        border-radius: 14px;
+        background: rgba(15, 23, 42, .98);
+        box-shadow: 0 12px 32px rgba(0, 0, 0, .4);
+    }
+    .pf-topnav__links.open { display: flex; }
+    .pf-topnav__links a,
+    .pf-topnav__auth { display: flex; justify-content: center; padding: .42rem .58rem; font-size: .82rem; }
     .pf-nav { padding: 0 .8rem; height: auto; min-height: 56px; flex-wrap: wrap; gap: .3rem; padding-top: .4rem; padding-bottom: .4rem; }
     .pf-nav__brand { font-size: .95rem; min-width: 0; }
     .pf-nav__brand-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; display: inline-block; vertical-align: middle; }

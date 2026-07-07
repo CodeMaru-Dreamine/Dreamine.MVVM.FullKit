@@ -25,7 +25,13 @@
 
 <div class="pf-page pf-portfolio theme-@(Vm.Config?.ThemeName ?? "dark")">
 
-    @if (Vm.Config == null)
+    @if (!Vm.HasLoaded)
+    {
+        <div class="pf-loading">
+            <div class="pf-loading__mark"></div>
+        </div>
+    }
+    else if (Vm.Config == null)
     {
         <div class="pf-not-found">
             <h1>404</h1>

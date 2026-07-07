@@ -14,9 +14,15 @@ public class PortfolioAdminViewModel
     private readonly IResumeStore _resumes;
     private readonly IContactStore _contacts;
     private readonly IMediaService _media;
+    private readonly PortfolioUserContext _userContext;
 
     public bool IsAuthenticated { get; private set; }
     public bool IsLoaded { get; private set; }
+    public bool IsSignedIn { get; private set; }
+    public bool IsLinkedToCurrentUser { get; private set; }
+    public bool IsOwner { get; private set; }
+    public IReadOnlyList<PortfolioAdminUser> EffectiveAdminUsers { get; private set; } = [];
+    public string CurrentUserLabel { get; private set; } = "";
     public string LoginPassword { get; set; } = "";
     public string StatusMessage { get; set; } = "";
     public bool IsUploading { get; set; }
@@ -44,22 +50,93 @@ public class PortfolioAdminViewModel
         IProjectStore projects,
         IResumeStore resumes,
         IContactStore contacts,
-        IMediaService media)
+        IMediaService media,
+        PortfolioUserContext userContext)
     {
         _tenants = tenants;
         _projects = projects;
         _resumes = resumes;
         _contacts = contacts;
         _media = media;
+        _userContext = userContext;
+    }
+
+    public async Task InitializeAsync(string slug)
+    {
+        StatusMessage = "";
+        await RefreshCurrentUserAsync().ConfigureAwait(false);
+
+        var cfg = await _tenants.GetAsync(slug).ConfigureAwait(false);
+        if (cfg is null)
+        {
+            return;
+        }
+
+        var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+        IsOwner = IsOwnerUser(cfg, user);
+        IsLinkedToCurrentUser = IsAdminUser(cfg, user);
+        EffectiveAdminUsers = BuildEffectiveAdminUsers(cfg);
+
+        if (IsLinkedToCurrentUser)
+        {
+            IsAuthenticated = true;
+            await LoadAsync(slug).ConfigureAwait(false);
+        }
     }
 
     public async Task<bool> LoginAsync(string slug)
     {
         var cfg = await _tenants.GetAsync(slug);
         if (cfg == null) { StatusMessage = "❌ 존재하지 않는 포트폴리오입니다."; return false; }
+
+        var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+        await RefreshCurrentUserAsync().ConfigureAwait(false);
+
+        if (IsAdminUser(cfg, user))
+        {
+            IsAuthenticated = true;
+            IsLinkedToCurrentUser = true;
+            IsOwner = IsOwnerUser(cfg, user);
+            EffectiveAdminUsers = BuildEffectiveAdminUsers(cfg);
+            StatusMessage = "";
+            return true;
+        }
+
         if (Hash(LoginPassword) != cfg.PasswordHash) { StatusMessage = "❌ 비밀번호가 틀렸습니다."; return false; }
         IsAuthenticated = true;
-        StatusMessage = "";
+
+        if (user.IsAuthenticated && string.IsNullOrWhiteSpace(cfg.OwnerUserId))
+        {
+            cfg.OwnerUserId = user.Id;
+            cfg.OwnerProvider = user.Provider;
+            cfg.OwnerEmail = user.Email;
+            cfg.OwnerDisplayName = user.DisplayName;
+            cfg.OwnerLinkedAt = DateTime.Now;
+            EnsureAdminUser(cfg, user, "Owner");
+            await _tenants.SaveAsync(cfg).ConfigureAwait(false);
+            IsLinkedToCurrentUser = true;
+            IsOwner = true;
+            EffectiveAdminUsers = BuildEffectiveAdminUsers(cfg);
+            StatusMessage = "✅ CodeMaru/Dreamine 계정에 대표 관리자로 연결되었습니다.";
+        }
+        else if (user.IsAuthenticated)
+        {
+            EnsureAdminUser(cfg, user, "Admin");
+            await _tenants.SaveAsync(cfg).ConfigureAwait(false);
+            IsLinkedToCurrentUser = true;
+            IsOwner = IsOwnerUser(cfg, user);
+            EffectiveAdminUsers = BuildEffectiveAdminUsers(cfg);
+            StatusMessage = "✅ 현재 CodeMaru/Dreamine 계정이 이 포트폴리오의 관리자로 추가되었습니다.";
+        }
+        else if (string.IsNullOrWhiteSpace(cfg.OwnerUserId))
+        {
+            StatusMessage = "✅ 로그인 성공. 공용 계정에 연결하려면 먼저 CodeMaru/Dreamine 로그인을 해주세요.";
+        }
+        else
+        {
+            StatusMessage = "";
+        }
+
         return true;
     }
 
@@ -67,6 +144,7 @@ public class PortfolioAdminViewModel
     {
         Config = await _tenants.GetAsync(slug);
         if (Config == null) return;
+        EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
         Projects = await _projects.GetAllAsync(slug);
         Resume = await _resumes.GetAsync(slug);
         Messages = await _contacts.GetAllAsync(slug);
@@ -225,7 +303,36 @@ public class PortfolioAdminViewModel
     {
         if (Config == null) return;
         await _tenants.SaveAsync(Config);
+        EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
         StatusMessage = "✅ 설정이 저장되었습니다.";
+    }
+
+    public async Task RemoveAdminAsync(string userId)
+    {
+        if (Config is null) return;
+        var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+        if (!IsOwnerUser(Config, user))
+        {
+            StatusMessage = "❌ 대표 관리자만 관리자 계정을 삭제할 수 있습니다.";
+            return;
+        }
+
+        if (string.Equals(Config.OwnerUserId, userId, StringComparison.Ordinal))
+        {
+            StatusMessage = "❌ 대표 관리자는 삭제할 수 없습니다.";
+            return;
+        }
+
+        var removed = GetAdminUsers(Config).RemoveAll(x => string.Equals(x.UserId, userId, StringComparison.Ordinal));
+        if (removed == 0)
+        {
+            StatusMessage = "❌ 삭제할 관리자를 찾을 수 없습니다.";
+            return;
+        }
+
+        await _tenants.SaveAsync(Config).ConfigureAwait(false);
+        EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
+        StatusMessage = "✅ 관리자 계정이 삭제되었습니다.";
     }
 
     public async Task<bool> ChangePasswordAsync(string slug, string current, string next, string confirm)
@@ -272,6 +379,88 @@ public class PortfolioAdminViewModel
 
     private static string Hash(string s) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(s))).ToLower();
+
+    private async Task RefreshCurrentUserAsync()
+    {
+        var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+        IsSignedIn = user.IsAuthenticated;
+        CurrentUserLabel = user.IsAuthenticated
+            ? string.IsNullOrWhiteSpace(user.DisplayName)
+                ? user.Provider
+                : $"{user.DisplayName} ({user.Provider})"
+            : "";
+    }
+
+    private static List<PortfolioAdminUser> GetAdminUsers(PortfolioConfig config) => config.AdminUsers ??= [];
+
+    private static bool IsOwnerUser(PortfolioConfig config, PortfolioCurrentUser user) =>
+        user.IsAuthenticated &&
+        !string.IsNullOrWhiteSpace(config.OwnerUserId) &&
+        string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal);
+
+    private static bool IsAdminUser(PortfolioConfig config, PortfolioCurrentUser user)
+    {
+        if (!user.IsAuthenticated) return false;
+        if (IsOwnerUser(config, user)) return true;
+        return GetAdminUsers(config).Any(x => string.Equals(x.UserId, user.Id, StringComparison.Ordinal));
+    }
+
+    private static void EnsureAdminUser(PortfolioConfig config, PortfolioCurrentUser user, string role)
+    {
+        if (!user.IsAuthenticated) return;
+
+        var users = GetAdminUsers(config);
+        var existing = users.FirstOrDefault(x => string.Equals(x.UserId, user.Id, StringComparison.Ordinal));
+        if (existing is null)
+        {
+            users.Add(new PortfolioAdminUser
+            {
+                UserId = user.Id,
+                Provider = user.Provider,
+                Email = user.Email,
+                DisplayName = user.DisplayName,
+                Role = role,
+                AddedAt = DateTime.Now
+            });
+            return;
+        }
+
+        existing.Provider = user.Provider;
+        existing.Email = user.Email;
+        existing.DisplayName = user.DisplayName;
+        if (role == "Owner")
+        {
+            existing.Role = "Owner";
+        }
+    }
+
+    private static IReadOnlyList<PortfolioAdminUser> BuildEffectiveAdminUsers(PortfolioConfig config)
+    {
+        var users = GetAdminUsers(config);
+        if (!string.IsNullOrWhiteSpace(config.OwnerUserId) &&
+            users.All(x => !string.Equals(x.UserId, config.OwnerUserId, StringComparison.Ordinal)))
+        {
+            users.Insert(0, new PortfolioAdminUser
+            {
+                UserId = config.OwnerUserId,
+                Provider = config.OwnerProvider,
+                Email = config.OwnerEmail,
+                DisplayName = config.OwnerDisplayName,
+                Role = "Owner",
+                AddedAt = config.OwnerLinkedAt ?? config.CreatedAt
+            });
+        }
+
+        foreach (var user in users.Where(x => string.Equals(x.UserId, config.OwnerUserId, StringComparison.Ordinal)))
+        {
+            user.Role = "Owner";
+        }
+
+        return users
+            .OrderByDescending(x => string.Equals(x.Role, "Owner", StringComparison.OrdinalIgnoreCase))
+            .ThenBy(x => x.AddedAt)
+            .ToList();
+    }
 }
 
 internal static class ProjectItemExtensions
