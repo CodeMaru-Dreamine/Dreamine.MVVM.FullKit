@@ -2,6 +2,7 @@
 @inherits LayoutComponentBase
 @inject UserPreferencesService Prefs
 @inject SiteSettingsService SiteSettings
+@inject NavigationManager Nav
 @implements IDisposable
 
 <CascadingValue Value="Prefs">
@@ -51,10 +52,37 @@
 @code {
     protected override void OnInitialized()
     {
+        ApplyLangFromQuery();
         Prefs.Changed += OnPrefChanged;
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    // ?lang=en / ?lang=ko 쿼리스트링으로 언어를 강제 지정할 수 있게 한다.
+    // 외부 README 벳지에서 영어 페이지로 딥링크할 때 사용된다.
+    private void ApplyLangFromQuery()
+    {
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers
+            .ParseQuery(new Uri(Nav.Uri).Query);
+        if (query.TryGetValue("lang", out var value))
+        {
+            var lang = value.ToString();
+            if (lang == "en" || lang == "ko")
+            {
+                Prefs.Set(lang);
+            }
+        }
     }
 
     private void OnPrefChanged() => InvokeAsync(StateHasChanged);
 
-    public void Dispose() => Prefs.Changed -= OnPrefChanged;
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        ApplyLangFromQuery();
+    }
+
+    public void Dispose()
+    {
+        Prefs.Changed -= OnPrefChanged;
+        Nav.LocationChanged -= OnLocationChanged;
+    }
 }
