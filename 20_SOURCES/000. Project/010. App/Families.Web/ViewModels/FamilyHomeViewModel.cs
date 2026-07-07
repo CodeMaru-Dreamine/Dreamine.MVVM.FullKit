@@ -96,6 +96,15 @@ public sealed class FamilyHomeViewModel
             config.OwnerEmail = owner.Email;
             config.OwnerDisplayName = owner.DisplayName;
             config.OwnerLinkedAt = DateTime.Now;
+            config.AdminUsers.Add(new FamilyAdminUser
+            {
+                UserId = owner.Id,
+                Provider = owner.Provider,
+                Email = owner.Email,
+                DisplayName = owner.DisplayName,
+                Role = "Owner",
+                AddedAt = DateTime.Now
+            });
         }
 
         await _tenants.SaveAsync(config, ct).ConfigureAwait(false);

@@ -30,10 +30,13 @@ public sealed class FamilyAdminViewModel
     public bool IsAuthenticated { get; private set; }
     public bool IsSignedIn { get; private set; }
     public bool IsLinkedToCurrentUser { get; private set; }
+    public bool IsOwner { get; private set; }
     public string StatusMessage { get; private set; } = "";
     public string CurrentUserLabel { get; private set; } = "";
     public bool IsUploading { get; private set; }
     public string LoginPassword { get; set; } = "";
+    public IReadOnlyList<FamilyAdminUser> EffectiveAdminUsers =>
+        Config is null ? [] : BuildEffectiveAdminUsers(Config);
 
     // ── 포스트 편집 ─────────────────────────────────────────
     public PostEntry? EditingPost { get; private set; }
@@ -51,11 +54,11 @@ public sealed class FamilyAdminViewModel
         var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
         await RefreshCurrentUserAsync().ConfigureAwait(false);
 
-        if (user.IsAuthenticated &&
-            string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal))
+        if (IsAdminUser(config, user))
         {
             IsAuthenticated = true;
             IsLinkedToCurrentUser = true;
+            IsOwner = IsOwnerUser(config, user);
             StatusMessage = "";
             return true;
         }
@@ -74,9 +77,19 @@ public sealed class FamilyAdminViewModel
             config.OwnerEmail = user.Email;
             config.OwnerDisplayName = user.DisplayName;
             config.OwnerLinkedAt = DateTime.Now;
+            EnsureAdminUser(config, user, "Owner");
             await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
             IsLinkedToCurrentUser = true;
+            IsOwner = true;
             StatusMessage = "CodeMaru/Dreamine 계정에 연결되었습니다. 다음부터는 공용 로그인으로 관리할 수 있습니다.";
+        }
+        else if (user.IsAuthenticated)
+        {
+            EnsureAdminUser(config, user, "Admin");
+            await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+            IsLinkedToCurrentUser = true;
+            IsOwner = IsOwnerUser(config, user);
+            StatusMessage = "현재 CodeMaru/Dreamine 계정이 이 가족 앨범의 관리자로 추가되었습니다.";
         }
         else if (!user.IsAuthenticated && string.IsNullOrWhiteSpace(config.OwnerUserId))
         {
@@ -102,9 +115,8 @@ public sealed class FamilyAdminViewModel
         }
 
         var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
-        IsLinkedToCurrentUser =
-            user.IsAuthenticated &&
-            string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal);
+        IsLinkedToCurrentUser = IsAdminUser(config, user);
+        IsOwner = IsOwnerUser(config, user);
 
         if (IsLinkedToCurrentUser)
         {
@@ -122,6 +134,38 @@ public sealed class FamilyAdminViewModel
         IsLoaded = true;
     }
 
+    public async Task RemoveAdminAsync(string userId, CancellationToken ct = default)
+    {
+        if (Config is null || string.IsNullOrWhiteSpace(userId))
+        {
+            return;
+        }
+
+        var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+        if (!IsOwnerUser(Config, user))
+        {
+            StatusMessage = "대표 관리자만 관리자를 삭제할 수 있습니다.";
+            return;
+        }
+
+        if (string.Equals(Config.OwnerUserId, userId, StringComparison.Ordinal))
+        {
+            StatusMessage = "대표 관리자는 삭제할 수 없습니다.";
+            return;
+        }
+
+        var removed = Config.AdminUsers.RemoveAll(x =>
+            string.Equals(x.UserId, userId, StringComparison.Ordinal)) > 0;
+        if (!removed)
+        {
+            StatusMessage = "삭제할 관리자를 찾을 수 없습니다.";
+            return;
+        }
+
+        await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+        StatusMessage = "관리자가 삭제되었습니다.";
+    }
+
     private async Task RefreshCurrentUserAsync()
     {
         var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
@@ -131,6 +175,80 @@ public sealed class FamilyAdminViewModel
                 ? user.Provider
                 : $"{user.DisplayName} ({user.Provider})"
             : "";
+    }
+
+    private static bool IsOwnerUser(FamilyConfig config, FamilyCurrentUser user) =>
+        user.IsAuthenticated &&
+        string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal);
+
+    private static bool IsAdminUser(FamilyConfig config, FamilyCurrentUser user) =>
+        user.IsAuthenticated &&
+        (IsOwnerUser(config, user) ||
+         config.AdminUsers.Any(x => string.Equals(x.UserId, user.Id, StringComparison.Ordinal)));
+
+    private static void EnsureAdminUser(FamilyConfig config, FamilyCurrentUser user, string role)
+    {
+        var existing = config.AdminUsers.FirstOrDefault(x =>
+            string.Equals(x.UserId, user.Id, StringComparison.Ordinal));
+        if (existing is null)
+        {
+            config.AdminUsers.Add(new FamilyAdminUser
+            {
+                UserId = user.Id,
+                Provider = user.Provider,
+                Email = user.Email,
+                DisplayName = user.DisplayName,
+                Role = role,
+                AddedAt = DateTime.Now
+            });
+            return;
+        }
+
+        existing.Provider = user.Provider;
+        existing.Email = user.Email;
+        existing.DisplayName = user.DisplayName;
+        if (string.Equals(role, "Owner", StringComparison.OrdinalIgnoreCase))
+        {
+            existing.Role = "Owner";
+        }
+    }
+
+    private static IReadOnlyList<FamilyAdminUser> BuildEffectiveAdminUsers(FamilyConfig config)
+    {
+        var result = new List<FamilyAdminUser>();
+        if (!string.IsNullOrWhiteSpace(config.OwnerUserId))
+        {
+            result.Add(new FamilyAdminUser
+            {
+                UserId = config.OwnerUserId,
+                Provider = config.OwnerProvider,
+                Email = config.OwnerEmail,
+                DisplayName = config.OwnerDisplayName,
+                Role = "Owner",
+                AddedAt = config.OwnerLinkedAt ?? DateTime.MinValue
+            });
+        }
+
+        foreach (var admin in config.AdminUsers)
+        {
+            var existing = result.FirstOrDefault(x =>
+                string.Equals(x.UserId, admin.UserId, StringComparison.Ordinal));
+            if (existing is null)
+            {
+                result.Add(admin);
+            }
+            else if (string.Equals(existing.Role, "Owner", StringComparison.OrdinalIgnoreCase))
+            {
+                existing.Provider = string.IsNullOrWhiteSpace(existing.Provider) ? admin.Provider : existing.Provider;
+                existing.Email = string.IsNullOrWhiteSpace(existing.Email) ? admin.Email : existing.Email;
+                existing.DisplayName = string.IsNullOrWhiteSpace(existing.DisplayName) ? admin.DisplayName : existing.DisplayName;
+            }
+        }
+
+        return result
+            .OrderBy(x => string.Equals(x.Role, "Owner", StringComparison.OrdinalIgnoreCase) ? 0 : 1)
+            .ThenBy(x => x.AddedAt)
+            .ToList();
     }
 
     public async Task SaveConfigAsync(CancellationToken ct = default)

@@ -19,7 +19,7 @@
             @if (Vm.IsSignedIn)
             {
                 <p class="w-hint">현재 공용 로그인: <strong>@Vm.CurrentUserLabel</strong></p>
-                <p class="w-hint">기존 관리자 비밀번호를 한 번 입력하면 이 웨딩 사이트가 현재 계정에 연결됩니다.</p>
+                <p class="w-hint">기존 관리자 비밀번호를 한 번 입력하면 이 계정이 청첩장 관리자로 추가됩니다.</p>
             }
             else
             {
@@ -46,8 +46,41 @@
         }
         @if (Vm.IsSignedIn)
         {
-            <p class="w-status">공용 로그인: @Vm.CurrentUserLabel</p>
+            <p class="w-status">공용 로그인: @Vm.CurrentUserLabel · @(Vm.IsOwner ? "대표 관리자" : "관리자")</p>
         }
+
+        <section class="w-admin__section">
+            <h2>관리자 계정</h2>
+            <p class="w-hint">공용 로그인 상태에서 기존 관리자 비밀번호를 입력하면 여러 계정이 같은 청첩장을 관리할 수 있습니다.</p>
+            @if (Vm.EffectiveAdminUsers.Count == 0)
+            {
+                <p class="w-hint">아직 공용 로그인에 연결된 관리자 계정이 없습니다.</p>
+            }
+            else
+            {
+                <div class="w-admin-users">
+                    @foreach (var admin in Vm.EffectiveAdminUsers)
+                    {
+                        var isOwner = string.Equals(admin.Role, "Owner", StringComparison.OrdinalIgnoreCase);
+                        <div class="w-admin-users__item">
+                            <div>
+                                <strong>@(isOwner ? "대표 관리자" : "관리자")</strong>
+                                <span>@(string.IsNullOrWhiteSpace(admin.DisplayName) ? admin.Provider : admin.DisplayName)</span>
+                                @if (!string.IsNullOrWhiteSpace(admin.Email))
+                                {
+                                    <small>@admin.Email</small>
+                                }
+                                <small>@admin.Provider · @admin.AddedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                            </div>
+                            @if (Vm.IsOwner && !isOwner)
+                            {
+                                <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => OnRemoveAdmin(admin.UserId)">삭제</button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </section>
 
         <!-- ── 기본 정보 ── -->
         <section class="w-admin__section">
@@ -503,6 +536,12 @@
     }
 
     private async Task OnSaveConfig() => await Vm.SaveConfigAsync();
+
+    private async Task OnRemoveAdmin(string userId)
+    {
+        await Vm.RemoveAdminAsync(userId);
+        StateHasChanged();
+    }
 
     private void AddAccount()
     {

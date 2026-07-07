@@ -301,7 +301,7 @@
             .ToList();
         myInvites = currentUser.IsAuthenticated
             ? Vm.Tenants
-                .Where(t => string.Equals(t.OwnerUserId, currentUser.Id, StringComparison.Ordinal))
+                .Where(IsMyInvite)
                 .OrderByDescending(t => t.CreatedAt)
                 .ToList()
             : [];
@@ -334,4 +334,8 @@
         }
         finally { isCreating = false; }
     }
+
+    private bool IsMyInvite(WeddingPlatform.Models.TenantConfig config) =>
+        string.Equals(config.OwnerUserId, currentUser.Id, StringComparison.Ordinal)
+        || (config.AdminUsers?.Any(x => string.Equals(x.UserId, currentUser.Id, StringComparison.Ordinal)) == true);
 }

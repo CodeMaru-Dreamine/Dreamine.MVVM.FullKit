@@ -61,6 +61,7 @@ public sealed class TenantConfig
     public string OwnerEmail { get; set; } = "";
     public string OwnerDisplayName { get; set; } = "";
     public DateTime? OwnerLinkedAt { get; set; }
+    public List<WeddingAdminUser> AdminUsers { get; set; } = new();
     public string ThankYouUrl { get; set; } = "";
     public bool IsPublished { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -69,6 +70,16 @@ public sealed class TenantConfig
     public int PinOrder { get; set; } = 0;
     public List<string> GalleryFileNames { get; set; } = new();
     public int GalleryAutoPlaySeconds { get; set; } = 3;
+}
+
+public sealed class WeddingAdminUser
+{
+    public string UserId { get; set; } = "";
+    public string Provider { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string DisplayName { get; set; } = "";
+    public string Role { get; set; } = "Admin";
+    public DateTime AddedAt { get; set; } = DateTime.Now;
 }
 
 public enum WeddingSiteMode

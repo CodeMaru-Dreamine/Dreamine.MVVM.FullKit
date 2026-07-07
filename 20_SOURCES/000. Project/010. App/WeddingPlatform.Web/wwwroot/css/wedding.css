@@ -322,6 +322,17 @@ body {
 .w-admin__section h2 { font-size: 1.1rem; margin-bottom: 1rem; }
 .w-label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .3rem; color: #555; }
 .w-hint  { font-size: .8rem; color: #888; margin: .25rem 0 .75rem; }
+.w-admin-users { display: flex; flex-direction: column; gap: .65rem; }
+.w-admin-users__item {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; padding: .85rem 1rem;
+    border: 1px solid var(--w-border); border-radius: 8px;
+    background: #fff;
+}
+.w-admin-users__item > div { min-width: 0; display: flex; flex-direction: column; gap: .2rem; }
+.w-admin-users__item span,
+.w-admin-users__item small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.w-admin-users__item small { color: #999; font-size: .76rem; }
 .w-range { width: 100%; accent-color: #c8a882; margin: .3rem 0 .2rem; cursor: pointer; }
 .w-file-input { display: block; margin-bottom: .75rem; }
 .w-textarea--code { font-family: 'Courier New', monospace; font-size: .85rem; }

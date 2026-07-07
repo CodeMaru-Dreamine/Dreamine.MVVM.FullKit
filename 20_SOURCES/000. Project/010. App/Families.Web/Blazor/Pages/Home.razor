@@ -261,7 +261,7 @@
             .ToList();
         myAlbums = currentUser.IsAuthenticated
             ? Vm.Tenants
-                .Where(t => string.Equals(t.OwnerUserId, currentUser.Id, StringComparison.Ordinal))
+                .Where(t => IsMyAlbum(t))
                 .OrderByDescending(t => t.CreatedAt)
                 .ToList()
             : [];
@@ -290,7 +290,11 @@
                 await Task.Delay(1200);
                 Nav.NavigateTo($"/{slug}/admin");
             }
-        }
+            }
         finally { isCreating = false; }
     }
+
+    private bool IsMyAlbum(FamilyConfig config) =>
+        string.Equals(config.OwnerUserId, currentUser.Id, StringComparison.Ordinal)
+        || config.AdminUsers.Any(x => string.Equals(x.UserId, currentUser.Id, StringComparison.Ordinal));
 }

@@ -106,6 +106,15 @@ public sealed class WeddingSuperAdminViewModel
             config.OwnerEmail = user.Email;
             config.OwnerDisplayName = user.DisplayName;
             config.OwnerLinkedAt = DateTime.Now;
+            config.AdminUsers.Add(new WeddingAdminUser
+            {
+                UserId = user.Id,
+                Provider = user.Provider,
+                Email = user.Email,
+                DisplayName = user.DisplayName,
+                Role = "Owner",
+                AddedAt = DateTime.Now
+            });
         }
 
         await _tenants.SaveAsync(config, ct).ConfigureAwait(false);

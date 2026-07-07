@@ -20,6 +20,7 @@ public sealed class FamilyConfig
     public string OwnerEmail { get; set; } = "";
     public string OwnerDisplayName { get; set; } = "";
     public DateTime? OwnerLinkedAt { get; set; }
+    public List<FamilyAdminUser> AdminUsers { get; set; } = new();
 
     /// <summary>방문자 이모지/좋아요 반응 허용 여부</summary>
     public bool AllowReactions { get; set; } = true;
@@ -34,4 +35,14 @@ public sealed class FamilyConfig
     public int? MaxImageSizeMb { get; set; } = null;
     /// <summary>이 계정 전용 동영상 업로드 최대 용량(MB). null이면 전체 설정(GlobalSettings) 값을 따름. 0이면 무제한.</summary>
     public int? MaxVideoSizeMb { get; set; } = null;
+}
+
+public sealed class FamilyAdminUser
+{
+    public string UserId { get; set; } = "";
+    public string Provider { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string DisplayName { get; set; } = "";
+    public string Role { get; set; } = "Admin";
+    public DateTime AddedAt { get; set; } = DateTime.Now;
 }

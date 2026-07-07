@@ -51,13 +51,13 @@
 
         @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
         {
-            <p class="fa-status @(Vm.StatusMessage.StartsWith("✅") || Vm.StatusMessage.Contains("저장") || Vm.StatusMessage.Contains("추가") || Vm.StatusMessage.Contains("업로드") || Vm.StatusMessage.Contains("연결") ? "fa-status--ok" : "fa-status--err")">
+            <p class="fa-status @(Vm.StatusMessage.StartsWith("✅") || Vm.StatusMessage.Contains("저장") || Vm.StatusMessage.Contains("추가") || Vm.StatusMessage.Contains("업로드") || Vm.StatusMessage.Contains("연결") || Vm.StatusMessage.Contains("삭제") ? "fa-status--ok" : "fa-status--err")">
                 @Vm.StatusMessage
             </p>
         }
         @if (Vm.IsSignedIn)
         {
-            <p class="fa-status fa-status--ok">공용 로그인: @Vm.CurrentUserLabel</p>
+            <p class="fa-status fa-status--ok">공용 로그인: @Vm.CurrentUserLabel · @(Vm.IsOwner ? "대표 관리자" : "관리자")</p>
         }
 
         <div class="fa-tabs">
@@ -415,6 +415,39 @@
                     <span class="fa-label__hint">비워두지 말고 항상 값을 입력해야 합니다. 저장하면 즉시 적용됩니다.</span>
                 </div>
 
+                <div class="fa-form__row">
+                    <label class="fa-label">관리자 계정</label>
+                    <div class="fa-album-admin-list">
+                        @foreach (var admin in Vm.EffectiveAdminUsers)
+                        {
+                            var isOwner = string.Equals(admin.Role, "Owner", StringComparison.OrdinalIgnoreCase);
+                            <div class="fa-album-admin-item">
+                                <span class="fa-album-admin-item__name">
+                                    @(isOwner ? "👑" : "👤")
+                                    @(string.IsNullOrWhiteSpace(admin.DisplayName) ? admin.Provider : admin.DisplayName)
+                                </span>
+                                <span class="fa-album-admin-item__desc">
+                                    @(isOwner ? "대표 관리자" : "관리자")
+                                    @if (!string.IsNullOrWhiteSpace(admin.Provider))
+                                    {
+                                        <span> · @admin.Provider</span>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(admin.Email))
+                                    {
+                                        <span> · @admin.Email</span>
+                                    }
+                                </span>
+                                @if (Vm.IsOwner && !isOwner)
+                                {
+                                    <button class="fa-btn fa-btn--sm fa-btn--danger"
+                                            @onclick="() => OnRemoveAdmin(admin.UserId)">삭제</button>
+                                }
+                            </div>
+                        }
+                    </div>
+                    <span class="fa-label__hint">공용 로그인 상태에서 기존 어드민 비밀번호로 로그인하면 관리자 계정에 자동 추가됩니다.</span>
+                </div>
+
                 <button class="fa-btn fa-btn--primary" @onclick="OnSaveConfig">💾 설정 저장</button>
 
                 <hr class="fa-divider" />
@@ -511,6 +544,11 @@
     private async Task OnDeletePost(string postId)
     {
         await Vm.DeletePostAsync(Slug, postId);
+    }
+
+    private async Task OnRemoveAdmin(string userId)
+    {
+        await Vm.RemoveAdminAsync(userId);
     }
 
     private void OnAddImageUrl()

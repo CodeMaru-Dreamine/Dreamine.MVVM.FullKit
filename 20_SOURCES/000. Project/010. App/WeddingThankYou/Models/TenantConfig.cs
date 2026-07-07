@@ -63,6 +63,7 @@ public sealed class TenantConfig
     public string OwnerEmail { get; set; } = "";
     public string OwnerDisplayName { get; set; } = "";
     public DateTime? OwnerLinkedAt { get; set; }
+    public List<ThankYouAdminUser> AdminUsers { get; set; } = new();
     public string ThankYouUrl { get; set; } = "";
     public bool IsPublished { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.Now;
@@ -73,4 +74,14 @@ public sealed class TenantConfig
     public bool ShowOnHome { get; set; } = false;
     /// <summary>메인 노출 고정 순서 — 1이 최우선. 0이면 날짜순 자동 정렬.</summary>
     public int PinOrder { get; set; } = 0;
+}
+
+public sealed class ThankYouAdminUser
+{
+    public string UserId { get; set; } = "";
+    public string Provider { get; set; } = "";
+    public string Email { get; set; } = "";
+    public string DisplayName { get; set; } = "";
+    public string Role { get; set; } = "Admin";
+    public DateTime AddedAt { get; set; } = DateTime.Now;
 }

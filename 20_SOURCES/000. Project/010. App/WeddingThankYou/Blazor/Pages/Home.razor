@@ -289,7 +289,7 @@
             .ToList();
         myThankYous = currentUser.IsAuthenticated
             ? Vm.Tenants
-                .Where(t => string.Equals(t.OwnerUserId, currentUser.Id, StringComparison.Ordinal))
+                .Where(IsMyThankYou)
                 .OrderByDescending(t => t.CreatedAt)
                 .ToList()
             : [];
@@ -322,4 +322,8 @@
         }
         finally { isCreating = false; }
     }
+
+    private bool IsMyThankYou(WeddingThankYou.Models.TenantConfig config) =>
+        string.Equals(config.OwnerUserId, currentUser.Id, StringComparison.Ordinal)
+        || (config.AdminUsers?.Any(x => string.Equals(x.UserId, currentUser.Id, StringComparison.Ordinal)) == true);
 }

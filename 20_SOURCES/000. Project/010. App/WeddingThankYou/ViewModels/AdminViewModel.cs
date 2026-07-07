@@ -50,6 +50,8 @@ namespace WeddingThankYou.ViewModels
 		public bool IsAuthenticated { get; private set; }
 		public bool IsSignedIn { get; private set; }
 		public bool IsLinkedToCurrentUser { get; private set; }
+		public bool IsOwner { get; private set; }
+		public IReadOnlyList<ThankYouAdminUser> EffectiveAdminUsers { get; private set; } = [];
 		public string StatusMessage { get; private set; } = "";
 		public string CurrentUserLabel { get; private set; } = "";
 		public bool IsUploading { get; private set; }
@@ -70,9 +72,9 @@ namespace WeddingThankYou.ViewModels
 			}
 
 			var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
-			IsLinkedToCurrentUser =
-				user.IsAuthenticated &&
-				string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal);
+			IsOwner = IsOwnerUser(config, user);
+			IsLinkedToCurrentUser = IsAdminUser(config, user);
+			EffectiveAdminUsers = BuildEffectiveAdminUsers(config);
 
 			if (IsLinkedToCurrentUser)
 			{
@@ -89,11 +91,12 @@ namespace WeddingThankYou.ViewModels
 			var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
 			await RefreshCurrentUserAsync().ConfigureAwait(false);
 
-			if (user.IsAuthenticated &&
-				string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal))
+			if (IsAdminUser(config, user))
 			{
 				IsAuthenticated = true;
 				IsLinkedToCurrentUser = true;
+				IsOwner = IsOwnerUser(config, user);
+				EffectiveAdminUsers = BuildEffectiveAdminUsers(config);
 				StatusMessage = "";
 				return true;
 			}
@@ -112,9 +115,21 @@ namespace WeddingThankYou.ViewModels
 				config.OwnerEmail = user.Email;
 				config.OwnerDisplayName = user.DisplayName;
 				config.OwnerLinkedAt = DateTime.Now;
+				EnsureAdminUser(config, user, "Owner");
 				await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
 				IsLinkedToCurrentUser = true;
-				StatusMessage = "CodeMaru/Dreamine 계정에 연결되었습니다. 다음부터는 공용 로그인으로 관리할 수 있습니다.";
+				IsOwner = true;
+				EffectiveAdminUsers = BuildEffectiveAdminUsers(config);
+				StatusMessage = "CodeMaru/Dreamine 계정에 대표 관리자로 연결되었습니다. 다음부터는 공용 로그인으로 관리할 수 있습니다.";
+			}
+			else if (user.IsAuthenticated)
+			{
+				EnsureAdminUser(config, user, "Admin");
+				await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+				IsLinkedToCurrentUser = true;
+				IsOwner = IsOwnerUser(config, user);
+				EffectiveAdminUsers = BuildEffectiveAdminUsers(config);
+				StatusMessage = "현재 CodeMaru/Dreamine 계정이 이 감사장의 관리자로 추가되었습니다.";
 			}
 			else if (!user.IsAuthenticated && string.IsNullOrWhiteSpace(config.OwnerUserId))
 			{
@@ -133,6 +148,7 @@ namespace WeddingThankYou.ViewModels
 			Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false)
 					 ?? new TenantConfig { Slug = slug };
 			Gallery = await _photos.GetGalleryAsync(slug, ct).ConfigureAwait(false);
+			EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
 
 			var settings = await _globalSettings.GetAsync(ct).ConfigureAwait(false);
 
@@ -161,9 +177,38 @@ namespace WeddingThankYou.ViewModels
 			try
 			{
 				await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+				EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
 				StatusMessage = "설정이 저장되었습니다.";
 			}
 			catch (Exception ex) { StatusMessage = $"저장 오류: {ex.Message}"; }
+		}
+
+		public async Task RemoveAdminAsync(string userId, CancellationToken ct = default)
+		{
+			if (Config is null) return;
+			var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+			if (!IsOwnerUser(Config, user))
+			{
+				StatusMessage = "대표 관리자만 관리자 계정을 삭제할 수 있습니다.";
+				return;
+			}
+
+			if (string.Equals(Config.OwnerUserId, userId, StringComparison.Ordinal))
+			{
+				StatusMessage = "대표 관리자는 삭제할 수 없습니다.";
+				return;
+			}
+
+			var removed = GetAdminUsers(Config).RemoveAll(x => string.Equals(x.UserId, userId, StringComparison.Ordinal));
+			if (removed == 0)
+			{
+				StatusMessage = "삭제할 관리자를 찾을 수 없습니다.";
+				return;
+			}
+
+			await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+			EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
+			StatusMessage = "관리자 계정이 삭제되었습니다.";
 		}
 
 		public async Task UploadGalleryAsync(string slug, IBrowserFile file, CancellationToken ct = default)
@@ -334,6 +379,77 @@ namespace WeddingThankYou.ViewModels
 			}
 			catch (Exception ex) { StatusMessage = $"음악 업로드 오류: {ex.Message}"; }
 			finally { IsUploading = false; }
+		}
+
+		private static List<ThankYouAdminUser> GetAdminUsers(TenantConfig config) => config.AdminUsers ??= [];
+
+		private static bool IsOwnerUser(TenantConfig config, ThankYouCurrentUser user) =>
+			user.IsAuthenticated &&
+			!string.IsNullOrWhiteSpace(config.OwnerUserId) &&
+			string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal);
+
+		private static bool IsAdminUser(TenantConfig config, ThankYouCurrentUser user)
+		{
+			if (!user.IsAuthenticated) return false;
+			if (IsOwnerUser(config, user)) return true;
+			return GetAdminUsers(config).Any(x => string.Equals(x.UserId, user.Id, StringComparison.Ordinal));
+		}
+
+		private static void EnsureAdminUser(TenantConfig config, ThankYouCurrentUser user, string role)
+		{
+			if (!user.IsAuthenticated) return;
+
+			var users = GetAdminUsers(config);
+			var existing = users.FirstOrDefault(x => string.Equals(x.UserId, user.Id, StringComparison.Ordinal));
+			if (existing is null)
+			{
+				users.Add(new ThankYouAdminUser
+				{
+					UserId = user.Id,
+					Provider = user.Provider,
+					Email = user.Email,
+					DisplayName = user.DisplayName,
+					Role = role,
+					AddedAt = DateTime.Now
+				});
+				return;
+			}
+
+			existing.Provider = user.Provider;
+			existing.Email = user.Email;
+			existing.DisplayName = user.DisplayName;
+			if (role == "Owner")
+			{
+				existing.Role = "Owner";
+			}
+		}
+
+		private static IReadOnlyList<ThankYouAdminUser> BuildEffectiveAdminUsers(TenantConfig config)
+		{
+			var users = GetAdminUsers(config);
+			if (!string.IsNullOrWhiteSpace(config.OwnerUserId) &&
+				users.All(x => !string.Equals(x.UserId, config.OwnerUserId, StringComparison.Ordinal)))
+			{
+				users.Insert(0, new ThankYouAdminUser
+				{
+					UserId = config.OwnerUserId,
+					Provider = config.OwnerProvider,
+					Email = config.OwnerEmail,
+					DisplayName = config.OwnerDisplayName,
+					Role = "Owner",
+					AddedAt = config.OwnerLinkedAt ?? config.CreatedAt
+				});
+			}
+
+			foreach (var user in users.Where(x => string.Equals(x.UserId, config.OwnerUserId, StringComparison.Ordinal)))
+			{
+				user.Role = "Owner";
+			}
+
+			return users
+				.OrderByDescending(x => string.Equals(x.Role, "Owner", StringComparison.OrdinalIgnoreCase))
+				.ThenBy(x => x.AddedAt)
+				.ToList();
 		}
 	}
 }
