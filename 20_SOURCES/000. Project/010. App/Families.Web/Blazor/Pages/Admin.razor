@@ -15,7 +15,16 @@
         <!-- ── 로그인 ── -->
         <div class="fa-login-box">
             <h1 class="fa-login-box__title">👨‍👩‍👧‍👦 @Slug</h1>
-            <p class="fa-login-box__desc">어드민 비밀번호를 입력하세요</p>
+            @if (Vm.IsSignedIn)
+            {
+                <p class="fa-login-box__desc">현재 공용 로그인: <strong>@Vm.CurrentUserLabel</strong></p>
+                <p class="fa-login-box__desc">기존 어드민 비밀번호를 한 번 입력하면 이 가족 앨범이 현재 계정에 연결됩니다.</p>
+            }
+            else
+            {
+                <p class="fa-login-box__desc">CodeMaru/Dreamine 계정으로 먼저 로그인하면, 기존 비밀번호 확인 후 이 가족 앨범을 계정에 연결할 수 있습니다.</p>
+                <a class="fa-btn fa-btn--ghost fa-btn--full" href="@LoginUrl">공용 로그인</a>
+            }
 
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
@@ -42,9 +51,13 @@
 
         @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
         {
-            <p class="fa-status @(Vm.StatusMessage.StartsWith("✅") || Vm.StatusMessage.Contains("저장") || Vm.StatusMessage.Contains("추가") || Vm.StatusMessage.Contains("업로드") ? "fa-status--ok" : "fa-status--err")">
+            <p class="fa-status @(Vm.StatusMessage.StartsWith("✅") || Vm.StatusMessage.Contains("저장") || Vm.StatusMessage.Contains("추가") || Vm.StatusMessage.Contains("업로드") || Vm.StatusMessage.Contains("연결") ? "fa-status--ok" : "fa-status--err")">
                 @Vm.StatusMessage
             </p>
+        }
+        @if (Vm.IsSignedIn)
+        {
+            <p class="fa-status fa-status--ok">공용 로그인: @Vm.CurrentUserLabel</p>
         }
 
         <div class="fa-tabs">
@@ -441,9 +454,13 @@
     private int managePage = 1;
     private int albumPage = 1;
 
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+
     protected override async Task OnParametersSetAsync()
     {
-        if (!Vm.IsLoaded)
+        if (!Vm.IsLoaded && !Vm.IsAuthenticated)
+            await Vm.InitializeAsync(Slug);
+        if (!Vm.IsLoaded && Vm.IsAuthenticated)
             await Vm.LoadAsync(Slug);
     }
 

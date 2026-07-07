@@ -62,7 +62,7 @@ public sealed class FamilyHomeViewModel
         StatusMessage = "";
     }
 
-    public async Task<bool> CreateTenantAsync(CancellationToken ct = default)
+    public async Task<bool> CreateTenantAsync(FamilyCurrentUser? owner = null, CancellationToken ct = default)
     {
         var slug = NewSlug.Trim().ToLowerInvariant();
 
@@ -88,6 +88,15 @@ public sealed class FamilyHomeViewModel
             PasswordHash = NewPassword,
             IsPublished = true
         };
+
+        if (owner?.IsAuthenticated == true)
+        {
+            config.OwnerUserId = owner.Id;
+            config.OwnerProvider = owner.Provider;
+            config.OwnerEmail = owner.Email;
+            config.OwnerDisplayName = owner.DisplayName;
+            config.OwnerLinkedAt = DateTime.Now;
+        }
 
         await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
         await LoadAsync(ct).ConfigureAwait(false);

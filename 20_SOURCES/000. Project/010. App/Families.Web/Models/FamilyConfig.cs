@@ -15,6 +15,11 @@ public sealed class FamilyConfig
     public string OgTitle { get; set; } = "";
     public string OgDescription { get; set; } = "";
     public string OgImageFileName { get; set; } = "";
+    public string OwnerUserId { get; set; } = "";
+    public string OwnerProvider { get; set; } = "";
+    public string OwnerEmail { get; set; } = "";
+    public string OwnerDisplayName { get; set; } = "";
+    public DateTime? OwnerLinkedAt { get; set; }
 
     /// <summary>방문자 이모지/좋아요 반응 허용 여부</summary>
     public bool AllowReactions { get; set; } = true;

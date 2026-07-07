@@ -1,15 +1,38 @@
 @namespace FamiliesApp.Blazor.Layout
 @inherits LayoutComponentBase
+@inject FamilyUserContext UserContext
 @inject NavigationManager Nav
 
-<header class="fa-nav">
-    <div class="fa-nav__inner">
-        <a href="/" class="fa-nav__logo">👨‍👩‍👧‍👦 Codemaru Family</a>
-        <nav class="fa-nav__links">
-            <a href="/" class="fa-nav__link @(IsHome ? "fa-nav__link--active" : "")">홈</a>
-            <a href="/guide" class="fa-nav__link @(IsGuide ? "fa-nav__link--active" : "")">사용법</a>
-        </nav>
-    </div>
+<header class="fa-topnav">
+    <a class="fa-topnav__brand" href="https://codemaru.co.kr">
+        <img class="fa-topnav__mark" src="/img/Codemaru%20Bloom%20Light.jpg" alt="" />
+        <span>CodeMaru</span>
+    </a>
+    <nav class="fa-topnav__links" aria-label="CodeMaru 서비스">
+        <a href="https://codemaru.co.kr">Home</a>
+        <a href="https://dreamine.kr/" target="_blank" rel="noopener">Dreamine</a>
+        <a href="https://codemaru.co.kr/cardhybrid">CardHybrid</a>
+        <a href="https://wedding.codemaru.co.kr">Wedding</a>
+        <a href="https://thankyou.codemaru.co.kr/">ThankYou</a>
+        <a href="https://families.codemaru.co.kr" class="active" aria-current="page">Families</a>
+        <a href="https://portfolio.codemaru.co.kr/">Portfolio</a>
+        <a href="https://cctvviewer.codemaru.co.kr">CCTV</a>
+        <a href="https://shop.codemaru.co.kr/">ShopStore</a>
+        <a href="https://codemaru.co.kr/contact">Contact</a>
+    </nav>
+    @if (!hasLoadedCurrentUser)
+    {
+        <span class="fa-topnav__auth fa-topnav__auth--pending" aria-hidden="true"></span>
+    }
+    else if (currentUser.IsAuthenticated)
+    {
+        <a class="fa-topnav__auth" href="@AccountUrl">@NavUserLabel</a>
+        <a class="fa-topnav__auth" href="@SignoutUrl">로그아웃</a>
+    }
+    else
+    {
+        <a class="fa-topnav__auth" href="@LoginUrl">로그인</a>
+    }
 </header>
 
 <div id="main-content" tabindex="-1">
@@ -17,6 +40,17 @@
 </div>
 
 @code {
-    private bool IsHome => Nav.Uri == Nav.BaseUri || Nav.Uri == Nav.BaseUri.TrimEnd('/');
-    private bool IsGuide => Nav.Uri.Contains("/guide");
+    private FamilyCurrentUser currentUser = FamilyCurrentUser.Anonymous;
+    private bool hasLoadedCurrentUser;
+
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string AccountUrl => $"https://codemaru.co.kr/_identity/account?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string SignoutUrl => $"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string NavUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? "내 계정" : currentUser.DisplayName;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentUser = await UserContext.GetCurrentAsync();
+        hasLoadedCurrentUser = true;
+    }
 }

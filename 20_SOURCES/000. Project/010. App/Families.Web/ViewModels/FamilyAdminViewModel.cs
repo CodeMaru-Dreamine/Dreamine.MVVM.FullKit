@@ -11,14 +11,16 @@ public sealed class FamilyAdminViewModel
     private readonly IPostStore _posts;
     private readonly IAlbumStore _albums;
     private readonly IMediaService _media;
+    private readonly FamilyUserContext _userContext;
 
     public FamilyAdminViewModel(IFamilyTenantStore tenants, IPostStore posts,
-        IAlbumStore albums, IMediaService media)
+        IAlbumStore albums, IMediaService media, FamilyUserContext userContext)
     {
         _tenants = tenants;
         _posts = posts;
         _albums = albums;
         _media = media;
+        _userContext = userContext;
     }
 
     public FamilyConfig? Config { get; private set; }
@@ -26,7 +28,10 @@ public sealed class FamilyAdminViewModel
     public IReadOnlyList<AlbumInfo> Albums { get; private set; } = [];
     public bool IsLoaded { get; private set; }
     public bool IsAuthenticated { get; private set; }
+    public bool IsSignedIn { get; private set; }
+    public bool IsLinkedToCurrentUser { get; private set; }
     public string StatusMessage { get; private set; } = "";
+    public string CurrentUserLabel { get; private set; } = "";
     public bool IsUploading { get; private set; }
     public string LoginPassword { get; set; } = "";
 
@@ -43,9 +48,69 @@ public sealed class FamilyAdminViewModel
         var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
         if (config is null) { StatusMessage = "존재하지 않는 슬러그입니다."; return false; }
 
+        var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+        await RefreshCurrentUserAsync().ConfigureAwait(false);
+
+        if (user.IsAuthenticated &&
+            string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal))
+        {
+            IsAuthenticated = true;
+            IsLinkedToCurrentUser = true;
+            StatusMessage = "";
+            return true;
+        }
+
         IsAuthenticated = config.PasswordHash == LoginPassword;
-        StatusMessage = IsAuthenticated ? "" : "비밀번호가 틀렸습니다.";
+        if (!IsAuthenticated)
+        {
+            StatusMessage = "비밀번호가 틀렸습니다.";
+            return false;
+        }
+
+        if (user.IsAuthenticated && string.IsNullOrWhiteSpace(config.OwnerUserId))
+        {
+            config.OwnerUserId = user.Id;
+            config.OwnerProvider = user.Provider;
+            config.OwnerEmail = user.Email;
+            config.OwnerDisplayName = user.DisplayName;
+            config.OwnerLinkedAt = DateTime.Now;
+            await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+            IsLinkedToCurrentUser = true;
+            StatusMessage = "CodeMaru/Dreamine 계정에 연결되었습니다. 다음부터는 공용 로그인으로 관리할 수 있습니다.";
+        }
+        else if (!user.IsAuthenticated && string.IsNullOrWhiteSpace(config.OwnerUserId))
+        {
+            StatusMessage = "로그인은 성공했습니다. 공용 계정에 연결하려면 먼저 CodeMaru/Dreamine 로그인을 해주세요.";
+        }
+        else
+        {
+            StatusMessage = "";
+        }
+
         return IsAuthenticated;
+    }
+
+    public async Task InitializeAsync(string slug, CancellationToken ct = default)
+    {
+        StatusMessage = "";
+        await RefreshCurrentUserAsync().ConfigureAwait(false);
+
+        var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+        if (config is null)
+        {
+            return;
+        }
+
+        var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+        IsLinkedToCurrentUser =
+            user.IsAuthenticated &&
+            string.Equals(config.OwnerUserId, user.Id, StringComparison.Ordinal);
+
+        if (IsLinkedToCurrentUser)
+        {
+            IsAuthenticated = true;
+            await LoadAsync(slug, ct).ConfigureAwait(false);
+        }
     }
 
     public async Task LoadAsync(string slug, CancellationToken ct = default)
@@ -55,6 +120,17 @@ public sealed class FamilyAdminViewModel
         Posts = await _posts.GetAllAsync(slug, ct).ConfigureAwait(false);
         Albums = await _albums.GetAllAsync(slug, ct).ConfigureAwait(false);
         IsLoaded = true;
+    }
+
+    private async Task RefreshCurrentUserAsync()
+    {
+        var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+        IsSignedIn = user.IsAuthenticated;
+        CurrentUserLabel = user.IsAuthenticated
+            ? string.IsNullOrWhiteSpace(user.DisplayName)
+                ? user.Provider
+                : $"{user.DisplayName} ({user.Provider})"
+            : "";
     }
 
     public async Task SaveConfigAsync(CancellationToken ct = default)

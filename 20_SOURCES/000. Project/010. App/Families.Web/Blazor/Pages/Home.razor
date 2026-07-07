@@ -4,6 +4,7 @@
 @rendermode InteractiveServer
 
 @inject FamilyHomeViewModel Vm
+@inject FamilyUserContext UserContext
 @inject NavigationManager Nav
 
 <PageTitle>👨‍👩‍👧‍👦 무료 가족 앨범 — Codemaru Family</PageTitle>
@@ -28,7 +29,18 @@
             <p class="fa-hero__badge">✨ 무료 가족 앨범</p>
             <h1 class="fa-hero__title">소중한 순간을<br />가족 앨범으로 기록하세요</h1>
             <p class="fa-hero__sub">사진·동영상·이야기 — 5분이면 완성</p>
-            <a href="#create" class="fa-btn fa-btn--primary">지금 무료로 만들기 →</a>
+            <div class="fa-hero__actions">
+                <a href="#create" class="fa-btn fa-btn--primary">지금 무료로 만들기 →</a>
+                <a href="https://codemaru.co.kr" class="fa-btn fa-btn--secondary">CodeMaru 홈</a>
+                @if (currentUser.IsAuthenticated)
+                {
+                    <a href="#my-families" class="fa-btn fa-btn--secondary">내 앨범 관리</a>
+                }
+                else if (hasLoadedCurrentUser)
+                {
+                    <a href="@LoginUrl" class="fa-btn fa-btn--secondary">로그인</a>
+                }
+            </div>
         </div>
     </section>
 
@@ -76,6 +88,23 @@
     <!-- ── 가입 폼 ── -->
     <section class="fa-create" id="create">
         <div class="fa-create__box">
+            @if (currentUser.IsAuthenticated)
+            {
+                <div class="fa-account">
+                    <span>공용 로그인</span>
+                    <strong>@CurrentUserLabel</strong>
+                    <a href="@AccountUrl" class="fa-account__link">내 계정</a>
+                    <a href="@SignoutUrl" class="fa-account__link">로그아웃</a>
+                </div>
+            }
+            else if (hasLoadedCurrentUser)
+            {
+                <div class="fa-account fa-account--guest">
+                    <span>로그인하면 생성한 가족 앨범이 내 계정에 바로 연결됩니다.</span>
+                    <a href="@LoginUrl" class="fa-account__link">공용 로그인</a>
+                </div>
+            }
+
             <h2 class="fa-create__title">무료로 시작하기</h2>
             <p class="fa-create__desc">아래 정보를 입력하면 바로 가족 앨범이 생성됩니다.</p>
 
@@ -129,6 +158,35 @@
         </div>
     </section>
 
+    @if (myAlbums.Count > 0)
+    {
+        <section class="fa-albums-list" id="my-families">
+            <h2 class="fa-albums-list__title">내 가족 앨범</h2>
+            <div class="fa-albums-list__grid">
+                @foreach (var t in myAlbums)
+                {
+                    var imgUrl = !string.IsNullOrWhiteSpace(t.CoverImageFileName)
+                        ? $"/family-data/{t.Slug}/{Uri.EscapeDataString(t.CoverImageFileName)}"
+                        : null;
+
+                    <a href="/@t.Slug/admin" class="fa-album-card">
+                        <div class="fa-album-card__thumb"
+                             style="@(imgUrl != null ? $"background-image:url('{imgUrl}')" : "")">
+                            @if (imgUrl == null)
+                            {
+                                <span class="fa-album-card__no-img">👨‍👩‍👧‍👦</span>
+                            }
+                        </div>
+                        <div class="fa-album-card__body">
+                            <div class="fa-album-card__name">@t.FamilyName</div>
+                            <div class="fa-album-card__bio">관리 열기 →</div>
+                        </div>
+                    </a>
+                }
+            </div>
+        </section>
+    }
+
     <!-- ── 공개 앨범 목록 ── -->
     @if (publicAlbums.Count > 0)
     {
@@ -173,6 +231,16 @@
     private bool isCreating;
     private string slugPreview = "";
     private List<FamilyConfig> publicAlbums = [];
+    private List<FamilyConfig> myAlbums = [];
+    private FamilyCurrentUser currentUser = FamilyCurrentUser.Anonymous;
+    private bool hasLoadedCurrentUser;
+
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string AccountUrl => $"https://codemaru.co.kr/_identity/account?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string SignoutUrl => $"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string CurrentUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName)
+        ? currentUser.Provider
+        : $"{currentUser.DisplayName} ({currentUser.Provider})";
 
     protected override void OnInitialized()
     {
@@ -183,12 +251,20 @@
 
     protected override async Task OnInitializedAsync()
     {
+        currentUser = await UserContext.GetCurrentAsync();
+        hasLoadedCurrentUser = true;
         await Vm.LoadAsync();
         publicAlbums = Vm.Tenants
             .Where(t => t.ShowOnHome)
             .OrderBy(t => t.PinOrder == 0 ? int.MaxValue : t.PinOrder)
             .ThenByDescending(t => t.CreatedAt)
             .ToList();
+        myAlbums = currentUser.IsAuthenticated
+            ? Vm.Tenants
+                .Where(t => string.Equals(t.OwnerUserId, currentUser.Id, StringComparison.Ordinal))
+                .OrderByDescending(t => t.CreatedAt)
+                .ToList()
+            : [];
     }
 
     private void OnSlugInput(ChangeEventArgs e)
@@ -208,7 +284,7 @@
         try
         {
             var slug = Vm.NewSlug.Trim().ToLowerInvariant();
-            var ok = await Vm.CreateTenantAsync();
+            var ok = await Vm.CreateTenantAsync(currentUser);
             if (ok)
             {
                 await Task.Delay(1200);

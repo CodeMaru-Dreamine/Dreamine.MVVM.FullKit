@@ -5,6 +5,7 @@
 
 @using WeddingPlatform.Models
 @inject WeddingAdminViewModel Vm
+@inject NavigationManager Nav
 
 <PageTitle>어드민 — @Slug</PageTitle>
 
@@ -449,7 +450,7 @@
 @code {
     [Parameter] public string Slug { get; set; } = "";
 
-    private string LoginUrl => $"/_identity/login?returnUrl=/{Uri.EscapeDataString(Slug)}/admin";
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
 
     private static readonly HashSet<string> _defaultLabels =
         ["신랑", "신부", "신랑 아버지", "신랑 어머니", "신부 아버지", "신부 어머니"];
