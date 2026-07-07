@@ -270,6 +270,13 @@ public sealed class JsonLibraryStore : ILibraryStore
             DescriptionEn = ".NET MAUI dark-theme control library with cross-platform API parity."
         },
         new() {
+            Id = "identity", Name = "Dreamine.Identity", Category = "Identity", SortOrder = 39, Status = "stable", IsVisible = true,
+            Tags = ["identity","oauth","auth","cookie"],
+            RepoUrl       = "https://github.com/CodeMaru-Dreamine/Dreamine.Identity",
+            Description   = "OAuth 통합 로그인 라이브러리 — Google/Naver/Kakao 소셜 로그인, 로컬 이메일 로그인, 공용 쿠키/DataProtection 키 공유로 서비스 간 세션 공유.",
+            DescriptionEn = "OAuth-integrated login library — Google/Naver/Kakao social login, local email login, shared cookie and DataProtection keys for cross-service session sharing."
+        },
+        new() {
             Id = "logging", Name = "Dreamine.Logging", Category = "Infrastructure", SortOrder = 40, Status = "stable", IsVisible = true,
             Tags = ["logging"],
             RepoUrl       = "https://github.com/CodeMaru-Dreamine/Dreamine.Logging",

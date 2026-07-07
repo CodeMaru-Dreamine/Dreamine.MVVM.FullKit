@@ -188,6 +188,7 @@ public sealed class LibraryCatalogSyncService
         if (packageId.StartsWith("Dreamine.Threading", StringComparison.OrdinalIgnoreCase)) return "Infrastructure";
         if (packageId.StartsWith("Dreamine.Logging", StringComparison.OrdinalIgnoreCase)) return "Infrastructure";
         if (packageId.StartsWith("Dreamine.Hybrid", StringComparison.OrdinalIgnoreCase)) return "Hybrid";
+        if (packageId.StartsWith("Dreamine.Identity", StringComparison.OrdinalIgnoreCase)) return "Identity";
         return "Other";
     }
 
@@ -196,11 +197,12 @@ public sealed class LibraryCatalogSyncService
         "MVVM" => 1,
         "Hybrid" => 2,
         "UI" => 3,
-        "Infrastructure" => 4,
-        "Database" => 5,
-        "Communication" => 6,
-        "IO" => 7,
-        "PLC" => 8,
+        "Identity" => 4,
+        "Infrastructure" => 5,
+        "Database" => 6,
+        "Communication" => 7,
+        "IO" => 8,
+        "PLC" => 9,
         _ => 99
     };
 
