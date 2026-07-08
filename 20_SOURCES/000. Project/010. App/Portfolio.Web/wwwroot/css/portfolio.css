@@ -35,44 +35,50 @@ body { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; background: #0f172a
 a { color: inherit; text-decoration: none; }
 input, select, textarea { font-family: inherit; }
 
-/* ── CodeMaru 공통 Nav ───────────────────── */
+/* ── CodeMaru 공통 Nav (통일 규격) ───────────────────── */
 .pf-topnav {
-    position: sticky; top: 0; z-index: 120;
-    display: flex; align-items: center; gap: 1rem;
-    padding: .7rem clamp(1rem, 4vw, 2rem);
-    background: rgba(15,23,42,.94);
-    border-bottom: 1px solid #1e293b;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    position: sticky; top: 0; z-index: 2000;
+    display: flex; align-items: center; justify-content: space-between;
+    gap: .75rem;
+    padding: .75rem 1rem;
+    background: rgba(15, 23, 42, .88);
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }
-.pf-topnav a { color: #e2e8f0; text-decoration: none; }
+.pf-topnav a { color: #e5e7eb; text-decoration: none; }
 .pf-topnav__brand {
-    display: inline-flex; align-items: center; gap: .55rem;
-    flex: 0 0 auto; font-weight: 800;
+    display: inline-flex; align-items: center; gap: .6rem;
+    flex: 0 0 auto; font-weight: 800; color: #ffffff;
 }
 .pf-topnav__mark {
-    width: 2rem; height: 2rem; border-radius: 8px;
-    object-fit: cover; box-shadow: inset 0 0 0 1px rgba(148,163,184,.25);
+    width: 32px; height: 32px; border-radius: 6px;
+    object-fit: cover;
 }
 .pf-topnav__links {
-    display: flex; align-items: center; gap: .35rem;
+    display: flex; align-items: center; gap: .75rem;
     min-width: 0; margin-left: auto;
     overflow-x: auto; scrollbar-width: none;
 }
 .pf-topnav__links::-webkit-scrollbar { display: none; }
 .pf-topnav__links a,
 .pf-topnav__auth {
-    flex: 0 0 auto; padding: .48rem .72rem;
-    border-radius: 8px; font-size: .9rem; font-weight: 700;
+    flex: 0 0 auto;
+    padding: .35rem .6rem;
+    border-radius: .5rem;
+    font-weight: 650;
     white-space: nowrap;
+    color: #e5e7eb;
 }
 .pf-topnav__links a:hover,
-.pf-topnav__links a.active,
-.pf-topnav__auth {
-    background: rgba(99,102,241,.16);
-    box-shadow: inset 0 0 0 1px rgba(99,102,241,.35);
+.pf-topnav__links a.active {
+    background: rgba(255, 255, 255, .08);
+    color: #ffffff;
 }
-.pf-topnav__auth { color: #c7d2fe; }
+.pf-topnav__auth {
+    border: 1px solid rgba(255, 255, 255, .16);
+}
+.pf-topnav__auth:hover { background: rgba(255, 255, 255, .1); }
 .pf-topnav__auth--pending {
     width: 4rem; min-height: 2rem; visibility: hidden;
 }
@@ -91,8 +97,8 @@ input, select, textarea { font-family: inherit; }
 .pf-topnav__burger span {
     display: block;
     height: 3px;
-    border-radius: 999px;
-    background: #e2e8f0;
+    border-radius: 2px;
+    background: #e5e7eb;
 }
 
 /* ── 네비바 ─────────────────────────────────── */
@@ -551,32 +557,31 @@ input, select, textarea { font-family: inherit; }
 .pf-not-found p { color: #94a3b8; margin: 1rem 0 2rem; }
 
 /* ── 반응형 ──────────────────────────────────  */
-@media (max-width: 600px) {
-    .pf-topnav { align-items: center; justify-content: space-between; gap: .6rem; padding: .65rem .8rem; }
-    .pf-topnav__brand span:last-child { display: inline; }
+@media (max-width: 960px) {
     .pf-topnav__burger { display: flex; }
     .pf-topnav__links {
         display: none;
         position: absolute;
-        top: calc(100% + .45rem);
-        left: .75rem;
-        right: .75rem;
-        z-index: 140;
+        top: 60px;
+        right: 1rem;
         flex-direction: column;
         align-items: stretch;
         gap: .35rem;
-        min-width: 0;
+        min-width: 200px;
+        max-height: calc(100vh - 80px);
         margin-left: 0;
-        padding: .8rem;
+        padding: 1rem;
         overflow-x: visible;
-        border: 1px solid #334155;
-        border-radius: 14px;
-        background: rgba(15, 23, 42, .98);
-        box-shadow: 0 12px 32px rgba(0, 0, 0, .4);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border: 1px solid rgba(255, 255, 255, .08);
+        border-radius: 12px;
+        background: rgba(15, 23, 42, .96);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
     }
     .pf-topnav__links.open { display: flex; }
-    .pf-topnav__links a,
-    .pf-topnav__auth { display: flex; justify-content: center; padding: .42rem .58rem; font-size: .82rem; }
+}
+@media (max-width: 600px) {
     .pf-nav { padding: 0 .8rem; height: auto; min-height: 56px; flex-wrap: wrap; gap: .3rem; padding-top: .4rem; padding-bottom: .4rem; }
     .pf-nav__brand { font-size: .95rem; min-width: 0; }
     .pf-nav__brand-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; display: inline-block; vertical-align: middle; }

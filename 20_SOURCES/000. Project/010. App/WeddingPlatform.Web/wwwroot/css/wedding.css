@@ -630,18 +630,20 @@ body.w-theme-blush {
     min-height: 100vh;
 }
 
+/* ── CodeMaru 공통 Nav (통일 규격, 라이트 테마) ── */
 .wh-topnav {
     position: sticky;
     top: 0;
-    z-index: 20;
+    z-index: 2000;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: .7rem clamp(1rem, 4vw, 2rem);
-    background: rgba(253, 246, 238, .92);
-    border-bottom: 1px solid #eadccb;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .75rem 1rem;
+    background: rgba(253, 246, 238, .88);
+    border-bottom: 1px solid rgba(107, 78, 42, .12);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }
 .wh-topnav a {
     color: #6b4e2a;
@@ -650,22 +652,21 @@ body.w-theme-blush {
 .wh-topnav__brand {
     display: inline-flex;
     align-items: center;
-    gap: .55rem;
+    gap: .6rem;
     flex: 0 0 auto;
     font-weight: 800;
     color: #3a2e28;
 }
 .wh-topnav__mark {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
     object-fit: cover;
-    box-shadow: inset 0 0 0 1px rgba(200, 168, 130, .35);
 }
 .wh-topnav__links {
     display: flex;
     align-items: center;
-    gap: .35rem;
+    gap: .75rem;
     min-width: 0;
     margin-left: auto;
     overflow-x: auto;
@@ -675,21 +676,22 @@ body.w-theme-blush {
 .wh-topnav__links a,
 .wh-topnav__auth {
     flex: 0 0 auto;
-    padding: .48rem .72rem;
-    border-radius: 999px;
-    font-size: .9rem;
-    font-weight: 700;
+    padding: .35rem .6rem;
+    border-radius: .5rem;
+    font-weight: 650;
     white-space: nowrap;
+    color: #6b4e2a;
 }
 .wh-topnav__links a:hover,
-.wh-topnav__links a.active,
-.wh-topnav__auth {
-    background: #fff;
-    box-shadow: inset 0 0 0 1px #e4d6c5;
+.wh-topnav__links a.active {
+    background: rgba(107, 78, 42, .08);
+    color: #3a2e28;
 }
 .wh-topnav__auth {
+    border: 1px solid rgba(107, 78, 42, .2);
     color: #7a5d3a;
 }
+.wh-topnav__auth:hover { background: rgba(107, 78, 42, .08); }
 .wh-topnav__auth--pending {
     width: 4rem;
     min-height: 2rem;
@@ -710,7 +712,7 @@ body.w-theme-blush {
 .wh-topnav__burger span {
     display: block;
     height: 3px;
-    border-radius: 999px;
+    border-radius: 2px;
     background: #6b4e2a;
 }
 
@@ -924,44 +926,33 @@ body.w-theme-blush {
 .wh-admin-link { color: transparent; font-size: .7rem; text-decoration: none; }
 .wh-admin-link:hover { color: #ccc; }
 
-@media (max-width: 480px) {
-    .wh-topnav {
-        align-items: center;
-        justify-content: space-between;
-        gap: .6rem;
-        padding: .65rem .8rem;
-    }
-    .wh-topnav__brand span:last-child { display: inline; }
+@media (max-width: 960px) {
     .wh-topnav__burger { display: flex; }
     .wh-topnav__links {
         display: none;
         position: absolute;
-        top: calc(100% + .45rem);
-        left: .75rem;
-        right: .75rem;
-        z-index: 40;
+        top: 60px;
+        right: 1rem;
         flex-direction: column;
         align-items: stretch;
         gap: .35rem;
-        min-width: 0;
+        min-width: 200px;
+        max-height: calc(100vh - 80px);
         margin-left: 0;
-        padding: .8rem;
+        padding: 1rem;
         overflow-x: visible;
-        border: 1px solid #eadccb;
-        border-radius: 14px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border: 1px solid rgba(107, 78, 42, .12);
+        border-radius: 12px;
         background: rgba(253, 246, 238, .98);
-        box-shadow: 0 12px 32px rgba(58, 46, 40, .18);
+        box-shadow: 0 10px 30px rgba(58, 46, 40, .18);
     }
     .wh-topnav__links.open {
         display: flex;
     }
-    .wh-topnav__links a,
-    .wh-topnav__auth {
-        display: flex;
-        justify-content: center;
-        padding: .42rem .58rem;
-        font-size: .82rem;
-    }
+}
+@media (max-width: 480px) {
     .wh-hero { padding: 3.5rem 1rem 2.5rem; }
     .wh-create__box { padding: 1.8rem 1.2rem; }
     .wh-account { flex-direction: column; align-items: flex-start; }

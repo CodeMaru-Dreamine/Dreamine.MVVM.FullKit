@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
     branches: [main]
 
@@ -85,3 +86,80 @@ jobs:
           dotnet build "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/SampleCore/SampleCore.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
           dotnet build "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Wpf/SampleCrossUi.Wpf.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
           dotnet build "20_SOURCES/000. Project/010. App/Dreamine.Web/Dreamine.Web.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+
+  publish-nuget:
+    name: Publish NuGet packages
+    runs-on: windows-latest
+    needs: build-and-test
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    permissions:
+      id-token: write  # OIDC token for NuGet.org Trusted Publishing
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Enable Git long paths
+        run: git config --global core.longpaths true
+
+      - name: Checkout submodules
+        shell: pwsh
+        run: |
+          $modules = @()
+          $current = @{}
+
+          foreach ($line in Get-Content ".gitmodules") {
+            if ($line -match '^\[submodule "(.+)"\]') {
+              if ($current.Path -and $current.Url) {
+                $modules += [pscustomobject]$current
+              }
+              $current = @{}
+            }
+            elseif ($line -match '^\s*path = (.+)$') {
+              $current.Path = $Matches[1].Trim()
+            }
+            elseif ($line -match '^\s*url = (.+)$') {
+              $current.Url = $Matches[1].Trim()
+            }
+          }
+
+          if ($current.Path -and $current.Url) {
+            $modules += [pscustomobject]$current
+          }
+
+          foreach ($module in $modules) {
+            $treeLine = git ls-tree HEAD -- "$($module.Path)"
+            if ($treeLine -notmatch '^160000\s+commit\s+([0-9a-f]+)\s+') {
+              throw "Could not find gitlink SHA for $($module.Path)"
+            }
+
+            $sha = $Matches[1]
+            Write-Host "Checking out $($module.Path) at $sha"
+            New-Item -ItemType Directory -Force -Path (Split-Path $module.Path) | Out-Null
+            git clone --no-checkout "$($module.Url)" "$($module.Path)"
+            git -C "$($module.Path)" checkout "$sha"
+          }
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Login to NuGet.org (Trusted Publishing)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: minsujang
+
+      - name: Build and push all packages
+        shell: cmd
+        env:
+          NUGET_API_KEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+        working-directory: 20_SOURCES/100. Library
+        run: call "NuGet.Org Push.bat"

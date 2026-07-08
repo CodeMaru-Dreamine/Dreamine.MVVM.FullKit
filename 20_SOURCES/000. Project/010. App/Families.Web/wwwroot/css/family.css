@@ -37,18 +37,20 @@ a { color: inherit; text-decoration: none; }
 #main-content { outline: none; }
 
 /* ── CodeMaru 공통 Nav ── */
+/* ── CodeMaru 공통 Nav (통일 규격, 라이트 테마) ── */
 .fa-topnav {
     position: sticky;
     top: 0;
-    z-index: 120;
+    z-index: 2000;
     display: flex;
     align-items: center;
-    gap: 1rem;
-    padding: .7rem clamp(1rem, 4vw, 2rem);
-    background: rgba(255, 250, 240, .94);
-    border-bottom: 1px solid #fed7aa;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .75rem 1rem;
+    background: rgba(255, 250, 240, .88);
+    border-bottom: 1px solid rgba(124, 74, 3, .12);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }
 .fa-topnav a {
     color: #7c4a03;
@@ -57,22 +59,21 @@ a { color: inherit; text-decoration: none; }
 .fa-topnav__brand {
     display: inline-flex;
     align-items: center;
-    gap: .55rem;
+    gap: .6rem;
     flex: 0 0 auto;
     font-weight: 800;
     color: #1f2937;
 }
 .fa-topnav__mark {
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
     object-fit: cover;
-    box-shadow: inset 0 0 0 1px rgba(249, 115, 22, .28);
 }
 .fa-topnav__links {
     display: flex;
     align-items: center;
-    gap: .35rem;
+    gap: .75rem;
     min-width: 0;
     margin-left: auto;
     overflow-x: auto;
@@ -82,21 +83,22 @@ a { color: inherit; text-decoration: none; }
 .fa-topnav__links a,
 .fa-topnav__auth {
     flex: 0 0 auto;
-    padding: .48rem .72rem;
-    border-radius: 999px;
-    font-size: .9rem;
-    font-weight: 700;
+    padding: .35rem .6rem;
+    border-radius: .5rem;
+    font-weight: 650;
     white-space: nowrap;
+    color: #7c4a03;
 }
 .fa-topnav__links a:hover,
-.fa-topnav__links a.active,
-.fa-topnav__auth {
-    background: #fff;
-    box-shadow: inset 0 0 0 1px #fdba74;
+.fa-topnav__links a.active {
+    background: rgba(124, 74, 3, .08);
+    color: #431407;
 }
 .fa-topnav__auth {
+    border: 1px solid rgba(124, 74, 3, .2);
     color: #9a3412;
 }
+.fa-topnav__auth:hover { background: rgba(124, 74, 3, .08); }
 .fa-topnav__auth--pending {
     width: 4rem;
     min-height: 2rem;
@@ -117,7 +119,7 @@ a { color: inherit; text-decoration: none; }
 .fa-topnav__burger span {
     display: block;
     height: 3px;
-    border-radius: 999px;
+    border-radius: 2px;
     background: #7c4a03;
 }
 
@@ -914,44 +916,33 @@ a { color: inherit; text-decoration: none; }
 .fa-link { color: var(--fa-primary); text-decoration: underline; }
 
 /* ── 반응형 ── */
-@media (max-width: 600px) {
-    .fa-topnav {
-        align-items: center;
-        justify-content: space-between;
-        gap: .55rem;
-        padding-inline: .75rem;
-    }
-    .fa-topnav__brand span:last-child { display: inline; }
+@media (max-width: 960px) {
     .fa-topnav__burger { display: flex; }
     .fa-topnav__links {
         display: none;
         position: absolute;
-        top: calc(100% + .45rem);
-        left: .75rem;
-        right: .75rem;
-        z-index: 140;
+        top: 60px;
+        right: 1rem;
         flex-direction: column;
         align-items: stretch;
         gap: .35rem;
-        min-width: 0;
+        min-width: 200px;
+        max-height: calc(100vh - 80px);
         margin-left: 0;
-        padding: .8rem;
+        padding: 1rem;
         overflow-x: visible;
-        border: 1px solid #fed7aa;
-        border-radius: 14px;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        border: 1px solid rgba(124, 74, 3, .12);
+        border-radius: 12px;
         background: rgba(255, 250, 240, .98);
-        box-shadow: 0 12px 32px rgba(124, 74, 3, .18);
+        box-shadow: 0 10px 30px rgba(124, 74, 3, .18);
     }
     .fa-topnav__links.open {
         display: flex;
     }
-    .fa-topnav__links a,
-    .fa-topnav__auth {
-        display: flex;
-        justify-content: center;
-        padding: .42rem .58rem;
-        font-size: .8rem;
-    }
+}
+@media (max-width: 600px) {
     .fa-account { flex-direction: column; align-items: flex-start; }
     .fa-hero__title { font-size: 1.5rem; }
     .fa-post-card__thumb { width: 80px; }

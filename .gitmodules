@@ -73,9 +73,6 @@
 [submodule "20_SOURCES/100. Library/Communication.RabbitMQ"]
 	path = 20_SOURCES/100. Library/Communication.RabbitMQ
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.Communication.RabbitMQ
-[submodule "20_SOURCES/100. Library/Communication.FullKit"]
-	path = 20_SOURCES/100. Library/Communication.FullKit
-	url = https://github.com/CodeMaru-Dreamine/Dreamine.Communication.FullKit
 [submodule "20_SOURCES/100. Library/PLC.Abstractions"]
 	path = 20_SOURCES/100. Library/PLC.Abstractions
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.PLC.Abstractions
