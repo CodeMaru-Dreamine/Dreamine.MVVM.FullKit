@@ -1,5 +1,7 @@
 using System;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using Dreamine.Hybrid.Wpf.DependencyInjection;
 using Dreamine.Hybrid.Wpf.Hosting;
 using Dreamine.Identity;
@@ -23,11 +25,34 @@ public static class Program
     [STAThread]
     public static void Main()
     {
+        try
+        {
+            Run();
+        }
+        catch (Exception ex)
+        {
+            WriteStartupFailureLog(ex);
+            System.Windows.MessageBox.Show(
+                $"Wedding ThankYou 실행 중 오류가 발생했습니다.\n\n{ex.Message}\n\n자세한 내용은 로그를 확인하세요.",
+                "Wedding ThankYou",
+                System.Windows.MessageBoxButton.OK,
+                System.Windows.MessageBoxImage.Error);
+        }
+    }
+
+    private static void Run()
+    {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
         builder.Configuration.AddUserSecrets("codemaru-oauth-2ba4e1b2");
 
         int serverPort = GetInt(builder.Configuration, "WeddingServer:Port", 4088);
         bool listenAnyIp = GetBool(builder.Configuration, "WeddingServer:ListenAnyIp", true);
+        if (!IsTcpPortAvailable(serverPort, listenAnyIp))
+        {
+            serverPort = GetFreeLoopbackPort();
+            listenAnyIp = false;
+        }
+
         AuthOptions authOptions =
             builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
         string usersDbPath = ResolvePath(
@@ -96,6 +121,59 @@ public static class Program
         });
 
         builder.Build().RunDreamineWpfApp<App>();
+    }
+
+    private static bool IsTcpPortAvailable(int port, bool listenAnyIp)
+    {
+        if (port <= 0) return false;
+
+        TcpListener? listener = null;
+        try
+        {
+            listener = new TcpListener(listenAnyIp ? IPAddress.Any : IPAddress.Loopback, port);
+            listener.Start();
+            return true;
+        }
+        catch (SocketException)
+        {
+            return false;
+        }
+        finally
+        {
+            listener?.Stop();
+        }
+    }
+
+    private static int GetFreeLoopbackPort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        try
+        {
+            return ((IPEndPoint)listener.LocalEndpoint).Port;
+        }
+        finally
+        {
+            listener.Stop();
+        }
+    }
+
+    private static void WriteStartupFailureLog(Exception ex)
+    {
+        try
+        {
+            var dir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "WeddingThankYou",
+                "Logs");
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, "startup-error.log");
+            File.AppendAllText(path, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex}\r\n\r\n");
+        }
+        catch
+        {
+            // 마지막 안전망: 오류 로그 작성 실패가 앱 종료 원인이 되지 않게 둡니다.
+        }
     }
 
     private static int GetInt(IConfiguration cfg, string key, int fallback) =>

@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Forms;
+using Wedding.Common;
 using WeddingThankYou.Models;
 using WeddingThankYou.Services;
 
@@ -59,6 +60,11 @@ namespace WeddingThankYou.ViewModels
 		public string GeocodeStatus { get; private set; } = "";
 
 		public string LoginPassword { get; set; } = "";
+
+		public void SetStatusMessage(string message)
+		{
+			StatusMessage = message;
+		}
 
 		public async Task InitializeAsync(string slug, CancellationToken ct = default)
 		{
@@ -147,6 +153,7 @@ namespace WeddingThankYou.ViewModels
 		{
 			Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false)
 					 ?? new TenantConfig { Slug = slug };
+			ThankYouDesignCatalog.Normalize(Config);
 			Gallery = await _photos.GetGalleryAsync(slug, ct).ConfigureAwait(false);
 			EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
 
@@ -176,11 +183,57 @@ namespace WeddingThankYou.ViewModels
 			if (Config is null) return;
 			try
 			{
+				if (!ValidateLayoutForSave(Config))
+				{
+					return;
+				}
+
+				ThankYouDesignCatalog.Normalize(Config);
 				await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
 				EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
 				StatusMessage = "설정이 저장되었습니다.";
 			}
 			catch (Exception ex) { StatusMessage = $"저장 오류: {ex.Message}"; }
+		}
+
+		private bool ValidateLayoutForSave(TenantConfig config)
+		{
+			if (!WeddingLayoutCatalog.IsKnownKey(config.ThankYouStyle))
+			{
+				StatusMessage = "저장 오류: 존재하지 않는 레이아웃입니다.";
+				return false;
+			}
+
+			var mode = ThankYouDesignCatalog.ResolveLayoutMode(config.ThankYouStyle);
+			var option = WeddingLayoutCatalog.Instance.Find(mode);
+			if (option is null)
+			{
+				StatusMessage = "저장 오류: 존재하지 않는 레이아웃입니다.";
+				return false;
+			}
+
+			if (!option.IsImplemented)
+			{
+				StatusMessage = "저장 오류: 아직 준비 중인 레이아웃입니다.";
+				return false;
+			}
+
+			var access = new WeddingLayoutAccessState
+			{
+				HasPremiumPlan = config.HasPremiumPlan,
+				UnlockedLayouts = config.UnlockedLayoutModes
+					.Select(WeddingLayoutCatalog.FromLegacyKey)
+					.Where(x => x != WeddingLayoutMode.Unknown)
+					.ToArray(),
+			};
+
+			if (!new WeddingLayoutAccessPolicy().CanUse(option, access))
+			{
+				StatusMessage = "저장 오류: 프리미엄 레이아웃은 플랜 또는 잠금 해제 후 저장할 수 있습니다.";
+				return false;
+			}
+
+			return true;
 		}
 
 		public async Task RemoveAdminAsync(string userId, CancellationToken ct = default)

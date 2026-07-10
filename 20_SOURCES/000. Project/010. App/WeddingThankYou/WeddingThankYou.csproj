@@ -28,6 +28,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Wedding.Common\WeddingLayoutCatalog.cs" Link="Common\WeddingLayoutCatalog.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Identity\Dreamine.Identity.csproj" />

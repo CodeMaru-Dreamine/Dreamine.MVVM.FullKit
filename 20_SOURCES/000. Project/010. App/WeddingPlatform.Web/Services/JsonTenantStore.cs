@@ -34,8 +34,7 @@ public sealed class JsonTenantStore : ITenantStore
         await _gate.WaitAsync(ct).ConfigureAwait(false);
         try
         {
-            await using var fs = File.OpenRead(path);
-            return await JsonSerializer.DeserializeAsync<TenantConfig>(fs, _jsonOpts, ct).ConfigureAwait(false);
+            return await ReadTenantAsync(path, ct).ConfigureAwait(false);
         }
         finally { _gate.Release(); }
     }
@@ -53,9 +52,12 @@ public sealed class JsonTenantStore : ITenantStore
             await _gate.WaitAsync(ct).ConfigureAwait(false);
             try
             {
-                await using var fs = File.OpenRead(cfg);
-                var t = await JsonSerializer.DeserializeAsync<TenantConfig>(fs, _jsonOpts, ct).ConfigureAwait(false);
+                var t = await ReadTenantAsync(cfg, ct).ConfigureAwait(false);
                 if (t != null) list.Add(t);
+            }
+            catch (JsonException ex)
+            {
+                LogTenantReadError(cfg, ex);
             }
             finally { _gate.Release(); }
         }
@@ -98,4 +100,70 @@ public sealed class JsonTenantStore : ITenantStore
 
     private static string Sanitize(string slug) =>
         string.Concat(slug.ToLowerInvariant().Split(Path.GetInvalidFileNameChars()));
+
+    private static async Task<TenantConfig?> ReadTenantAsync(string path, CancellationToken ct)
+    {
+        var json = await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
+        LogLegacyLayoutModeFallback(path, json);
+        return JsonSerializer.Deserialize<TenantConfig>(json, _jsonOpts);
+    }
+
+    private static void LogLegacyLayoutModeFallback(string path, string json)
+    {
+        var raw = TryGetDesignLayoutMode(json);
+        if (raw is null || IsCanonicalLayoutMode(raw)) return;
+
+        Console.Error.WriteLine($"[JsonTenantStore] Legacy DesignSettings.LayoutMode '{raw}' in '{path}' was loaded with compatibility fallback.");
+    }
+
+    private static string? TryGetDesignLayoutMode(string json)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(json);
+            if (!TryGetProperty(doc.RootElement, "DesignSettings", out var design)) return null;
+            if (!TryGetProperty(design, "LayoutMode", out var layout)) return null;
+
+            return layout.ValueKind switch
+            {
+                JsonValueKind.String => layout.GetString(),
+                JsonValueKind.Null => "",
+                JsonValueKind.Number => layout.GetRawText(),
+                _ => layout.GetRawText(),
+            };
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private static bool TryGetProperty(JsonElement element, string name, out JsonElement value)
+    {
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, name, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
+    }
+
+    private static bool IsCanonicalLayoutMode(string? value) =>
+        value is not null
+        && (string.Equals(value, "WebPage", StringComparison.Ordinal)
+            || string.Equals(value, "TabMenu", StringComparison.Ordinal)
+            || string.Equals(value, "Gallery", StringComparison.Ordinal)
+            || string.Equals(value, "Story", StringComparison.Ordinal)
+            || string.Equals(value, "Card", StringComparison.Ordinal)
+            || string.Equals(value, "PhotoBook", StringComparison.Ordinal));
+
+    private static void LogTenantReadError(string path, JsonException ex)
+    {
+        Console.Error.WriteLine($"[JsonTenantStore] Skipped invalid tenant JSON '{path}': {ex.Message}");
+    }
 }

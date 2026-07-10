@@ -1,4 +1,5 @@
 using Markdig;
+using Wedding.Common;
 using WeddingPlatform.Models;
 using WeddingPlatform.Services;
 
@@ -46,7 +47,14 @@ public sealed class WeddingInvitationViewModel
     public double VenueLat => Config?.VenueLat ?? 0;
     public double VenueLng => Config?.VenueLng ?? 0;
     public bool HasVenueCoords => VenueLat != 0 && VenueLng != 0;
-    public string ThemeName => Config?.ThemeName ?? "rose";
+    public DesignSettings DesignSettings => Config?.DesignSettings ?? new DesignSettings();
+    public string ThemeName => InvitationDesignCatalog.GetTheme(DesignSettings.ThemeKey).Key;
+    public WeddingLayoutMode LayoutMode => DesignSettings.LayoutMode == WeddingLayoutMode.Unknown
+        ? InvitationDesignCatalog.FromLegacyLayoutKey(Config?.InvitationStyle)
+        : DesignSettings.LayoutMode;
+    public WeddingLayoutOption LayoutDescriptor => InvitationDesignCatalog.GetLayout(LayoutMode);
+    public string InvitationStyle => InvitationDesignCatalog.ToLegacyLayoutKey(LayoutMode);
+    public bool UsesBottomNavigation => LayoutDescriptor.UsesBottomNavigation;
     public string CeremonyNoteHtml
     {
         get
@@ -113,10 +121,18 @@ public sealed class WeddingInvitationViewModel
 
     public string MusicButtonPosition => Config?.MusicButtonPosition ?? "bottom";
 
-    public string HeroPanelVerticalDesktop => Config?.HeroPanelVerticalDesktop ?? "top";
-    public string HeroPanelHorizontalDesktop => Config?.HeroPanelHorizontalDesktop ?? "center";
-    public string HeroPanelVerticalMobile => Config?.HeroPanelVerticalMobile ?? "top";
-    public string HeroPanelHorizontalMobile => Config?.HeroPanelHorizontalMobile ?? "center";
+    public string HeroPanelVerticalDesktop => NormalizeOption(DesignSettings.HeroPlacement.ThankYou.DesktopVertical, ["top", "middle", "bottom"], "top");
+    public string HeroPanelHorizontalDesktop => NormalizeOption(DesignSettings.HeroPlacement.ThankYou.DesktopHorizontal, ["left", "center", "right"], "center");
+    public string HeroPanelVerticalMobile => NormalizeOption(DesignSettings.HeroPlacement.ThankYou.MobileVertical, ["top", "middle", "bottom"], "top");
+    public string HeroPanelHorizontalMobile => NormalizeOption(DesignSettings.HeroPlacement.ThankYou.MobileHorizontal, ["left", "center", "right"], "center");
+    public string InviteHeroTopVerticalDesktop => NormalizeOption(DesignSettings.HeroPlacement.InviteTop.DesktopVertical, ["top", "middle", "bottom"], "top");
+    public string InviteHeroTopHorizontalDesktop => NormalizeOption(DesignSettings.HeroPlacement.InviteTop.DesktopHorizontal, ["left", "center", "right"], "center");
+    public string InviteHeroTopVerticalMobile => NormalizeOption(DesignSettings.HeroPlacement.InviteTop.MobileVertical, ["top", "middle", "bottom"], "top");
+    public string InviteHeroTopHorizontalMobile => NormalizeOption(DesignSettings.HeroPlacement.InviteTop.MobileHorizontal, ["left", "center", "right"], "center");
+    public string InviteHeroBottomVerticalDesktop => NormalizeOption(DesignSettings.HeroPlacement.InviteBottom.DesktopVertical, ["top", "middle", "bottom"], "bottom");
+    public string InviteHeroBottomHorizontalDesktop => NormalizeOption(DesignSettings.HeroPlacement.InviteBottom.DesktopHorizontal, ["left", "center", "right"], "center");
+    public string InviteHeroBottomVerticalMobile => NormalizeOption(DesignSettings.HeroPlacement.InviteBottom.MobileVertical, ["top", "middle", "bottom"], "bottom");
+    public string InviteHeroBottomHorizontalMobile => NormalizeOption(DesignSettings.HeroPlacement.InviteBottom.MobileHorizontal, ["left", "center", "right"], "center");
 
     public string SelectedTab { get; private set; } = "map";
     public void SetMap() => SelectedTab = "map";
@@ -139,6 +155,7 @@ public sealed class WeddingInvitationViewModel
     {
         Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
         if (Config is null) { NotFound = true; IsLoaded = true; return; }
+        InvitationDesignCatalog.Normalize(Config);
 
         var all = await _photos.GetGalleryAsync(slug, ct).ConfigureAwait(false);
         var sorted = all.OrderByDescending(p => p.LastModified)
@@ -147,5 +164,11 @@ public sealed class WeddingInvitationViewModel
         AllPhotos = sorted;
         Gallery = sorted.Take(10).ToList();
         IsLoaded = true;
+    }
+
+    private static string NormalizeOption(string? value, string[] allowed, string fallback)
+    {
+        var normalized = value?.Trim().ToLowerInvariant();
+        return !string.IsNullOrWhiteSpace(normalized) && allowed.Contains(normalized) ? normalized : fallback;
     }
 }

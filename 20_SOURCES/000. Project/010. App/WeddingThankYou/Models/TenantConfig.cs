@@ -41,6 +41,9 @@ public sealed class TenantConfig
     /// <summary>테마 이름 — rose(기본), ivory, forest, navy, blush</summary>
     public string ThemeName { get; set; } = "rose";
 
+    /// <summary>감사장 레이아웃 스타일 — "onepage"(기본, 위→아래 스크롤) 또는 "tabs"(하단 탭 메뉴)</summary>
+    public string ThankYouStyle { get; set; } = "onepage";
+
     /// <summary>배경 음악 파일명</summary>
     public string MusicFileName { get; set; } = "";
     /// <summary>배경 음악 버튼 위치 — "bottom"(기본) 또는 "top"</summary>
@@ -74,6 +77,8 @@ public sealed class TenantConfig
     public bool ShowOnHome { get; set; } = false;
     /// <summary>메인 노출 고정 순서 — 1이 최우선. 0이면 날짜순 자동 정렬.</summary>
     public int PinOrder { get; set; } = 0;
+    public bool HasPremiumPlan { get; set; } = false;
+    public List<string> UnlockedLayoutModes { get; set; } = new();
 }
 
 public sealed class ThankYouAdminUser

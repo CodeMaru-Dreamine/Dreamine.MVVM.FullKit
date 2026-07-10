@@ -1,4 +1,5 @@
 using Markdig;
+using Wedding.Common;
 using WeddingThankYou.Models;
 using WeddingThankYou.Services;
 
@@ -46,6 +47,8 @@ namespace WeddingThankYou.ViewModels
 		public string Story => Config?.Story ?? "";
 		public string Story2 => Config?.Story2 ?? "";
 		public string ThemeName => Config?.ThemeName ?? "rose";
+		public string ThankYouStyle => Config?.ThankYouStyle ?? "onepage";
+		public WeddingLayoutMode LayoutMode => WeddingLayoutCatalog.FromLegacyKey(ThankYouStyle);
 		public string CeremonyNoteHtml
 		{
 			get

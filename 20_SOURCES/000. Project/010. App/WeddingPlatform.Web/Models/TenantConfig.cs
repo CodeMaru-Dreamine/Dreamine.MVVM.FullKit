@@ -15,8 +15,22 @@ public sealed class TenantConfig
     public string Story { get; set; } = "";
     public string Story2 { get; set; } = "";
     public string HeroImageFileName { get; set; } = "";
+    public DesignSettings DesignSettings { get; set; } = new();
+    /// <summary>청첩장 표시 스타일 — "onepage"(기본) 또는 "tabs". 하위 호환용이며 내부 사용은 DesignSettings.LayoutMode를 우선합니다.</summary>
+    public string InvitationStyle { get; set; } = "onepage";
 
-    // ── 히어로 문구 패널 위치 (PC/모바일 별도 지정, ThankYou 페이지에서 사용) ──
+    // ── 청첩장 히어로 문구 패널 위치 (상단/하단 박스, PC/모바일 별도 지정) ──
+    // Vertical: "top" | "middle" | "bottom" / Horizontal: "left" | "center" | "right"
+    public string InviteHeroTopVerticalDesktop { get; set; } = "top";
+    public string InviteHeroTopHorizontalDesktop { get; set; } = "center";
+    public string InviteHeroTopVerticalMobile { get; set; } = "top";
+    public string InviteHeroTopHorizontalMobile { get; set; } = "center";
+    public string InviteHeroBottomVerticalDesktop { get; set; } = "bottom";
+    public string InviteHeroBottomHorizontalDesktop { get; set; } = "center";
+    public string InviteHeroBottomVerticalMobile { get; set; } = "bottom";
+    public string InviteHeroBottomHorizontalMobile { get; set; } = "center";
+
+    // ── 감사장 히어로 문구 패널 위치 (PC/모바일 별도 지정) ──
     // Vertical: "top" | "middle" | "bottom" / Horizontal: "left" | "center" | "right"
     public string HeroPanelVerticalDesktop { get; set; } = "top";
     public string HeroPanelHorizontalDesktop { get; set; } = "center";
@@ -33,7 +47,7 @@ public sealed class TenantConfig
     /// <summary>마음 전하실 곳 — 신랑·신부·부모님 계좌 및 연락처 (최대 제한 없음, UI에서 4개까지 권장)</summary>
     public List<AccountInfo> Accounts { get; set; } = new();
 
-    /// <summary>테마 이름 — rose(기본), ivory, forest, navy</summary>
+    /// <summary>테마 이름 — rose(기본), ivory, forest, navy. 하위 호환용이며 내부 사용은 DesignSettings.ThemeKey를 우선합니다.</summary>
     public string ThemeName { get; set; } = "rose";
 
     /// <summary>배경 음악 파일명</summary>
@@ -68,6 +82,8 @@ public sealed class TenantConfig
     public bool ShowOnHome { get; set; } = false;
     /// <summary>메인 노출 고정 순서 — 1이 최우선. 0이면 날짜순 자동 정렬.</summary>
     public int PinOrder { get; set; } = 0;
+    public bool HasPremiumPlan { get; set; } = false;
+    public List<string> UnlockedLayoutModes { get; set; } = new();
     public List<string> GalleryFileNames { get; set; } = new();
     public int GalleryAutoPlaySeconds { get; set; } = 3;
 }

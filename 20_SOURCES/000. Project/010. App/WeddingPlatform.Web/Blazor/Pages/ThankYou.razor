@@ -105,7 +105,7 @@ else
                 {
                     <button class="w-lb__prev" @onclick="VideoPrev">‹</button>
                 }
-                <video class="w-lb__video" src="@Vm.VideoUrls[videoLightboxIdx]" controls autoplay playsinline></video>
+                <video class="w-lb__video" src="@Vm.VideoUrls[videoLightboxIdx]" controls autoplay playsinline @onplay="PauseMusicForVideo"></video>
                 @if (Vm.VideoUrls.Count > 1)
                 {
                     <button class="w-lb__next" @onclick="VideoNext">›</button>
@@ -192,12 +192,15 @@ else
     private ElementReference vlbRef;
     private ElementReference audioRef;
     private bool isMusicPlaying;
+    private bool musicSyncInitialized;
     private double? startX;
     private bool isAutoPlaying;
     private System.Threading.CancellationTokenSource? autoCts;
 
     private bool videoLightboxOpen;
     private int videoLightboxIdx;
+    private bool shouldFocusLightbox;
+    private bool shouldFocusVideoLightbox;
 
     private DotNetObjectReference<ThankYou>? _selfRef;
 
@@ -212,12 +215,28 @@ else
         if (firstRender)
         {
             await JS.InvokeVoidAsync("weddingInterop.applyTheme", Vm.ThemeName);
-            if (!string.IsNullOrWhiteSpace(Vm.MusicUrl))
-            {
-                _selfRef = DotNetObjectReference.Create(this);
-                await JS.InvokeVoidAsync("weddingInterop.initMusicSync", _selfRef);
-                await JS.InvokeVoidAsync("weddingInterop.initMusicAutoplay");
-            }
+        }
+
+        if (Vm.IsLoaded && !string.IsNullOrWhiteSpace(Vm.MusicUrl) && !musicSyncInitialized)
+        {
+            _selfRef = DotNetObjectReference.Create(this);
+            await JS.InvokeVoidAsync("weddingInterop.initMusicSync", _selfRef);
+            await JS.InvokeVoidAsync("weddingInterop.initMusicAutoplay");
+            isMusicPlaying = await JS.InvokeAsync<bool>("weddingInterop.isMusicPlaying");
+            musicSyncInitialized = true;
+            StateHasChanged();
+        }
+
+        if (shouldFocusLightbox)
+        {
+            shouldFocusLightbox = false;
+            await lbRef.FocusAsync();
+        }
+
+        if (shouldFocusVideoLightbox)
+        {
+            shouldFocusVideoLightbox = false;
+            await vlbRef.FocusAsync();
         }
     }
 
@@ -226,7 +245,19 @@ else
         // 실제 아이콘 상태는 audio 엘리먼트의 play/pause 이벤트(OnMusicStateChanged)가 동기화합니다.
         try
         {
-            await JS.InvokeVoidAsync(isMusicPlaying ? "weddingInterop.pauseMusic" : "weddingInterop.playMusic");
+            isMusicPlaying = await JS.InvokeAsync<bool>(isMusicPlaying ? "weddingInterop.pauseMusic" : "weddingInterop.playMusic");
+            StateHasChanged();
+        }
+        catch { }
+    }
+
+    private async Task PauseMusicForVideo()
+    {
+        if (!isMusicPlaying) return;
+        try
+        {
+            isMusicPlaying = await JS.InvokeAsync<bool>("weddingInterop.pauseMusic");
+            StateHasChanged();
         }
         catch { }
     }
@@ -239,11 +270,10 @@ else
         StateHasChanged();
     }
 
-    private async Task OpenLightbox(int idx)
+    private void OpenLightbox(int idx)
     {
         Vm.OpenLightbox(idx);
-        await Task.Yield();
-        await lbRef.FocusAsync();
+        shouldFocusLightbox = true;
     }
 
     private async Task CloseLightbox() { await StopAutoPlay(); Vm.CloseLightbox(); }
@@ -269,10 +299,10 @@ else
 
     private async Task OpenVideoLightbox(int idx)
     {
+        await PauseMusicForVideo();
         videoLightboxIdx = idx;
         videoLightboxOpen = true;
-        await Task.Yield();
-        await vlbRef.FocusAsync();
+        shouldFocusVideoLightbox = true;
     }
 
     private void CloseVideoLightbox() => videoLightboxOpen = false;

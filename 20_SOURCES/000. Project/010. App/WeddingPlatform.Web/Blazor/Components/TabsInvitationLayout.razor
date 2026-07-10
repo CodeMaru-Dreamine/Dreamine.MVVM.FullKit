@@ -1,0 +1,145 @@
+@namespace WeddingPlatform.Blazor.Components
+@using Microsoft.JSInterop
+@using WeddingPlatform.Models
+@using WeddingPlatform.ViewModels
+@inject IJSRuntime JS
+
+@if (ActiveInviteTab == "hero")
+{
+    <section class="w-hero w-hero--invite-positioned w-hero--style-@Vm.InvitationStyle @Vm.LayoutDescriptor.CssClass" role="banner">
+        @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
+        {
+            <div class="w-hero__bg" style="background-image:url('@Vm.HeroImageUrl')"></div>
+        }
+        else
+        {
+            <div class="w-hero__bg w-hero__bg--default"></div>
+        }
+        <div class="w-hero__overlay"></div>
+        <div class="w-hero__content">
+            <div class="w-hero__top w-panel w-hero-panel--dv-@Vm.InviteHeroTopVerticalDesktop w-hero-panel--dh-@Vm.InviteHeroTopHorizontalDesktop w-hero-panel--mv-@Vm.InviteHeroTopVerticalMobile w-hero-panel--mh-@Vm.InviteHeroTopHorizontalMobile">
+                <h1 class="w-hero__title">@Vm.HeroTitle</h1>
+                <p class="w-hero__names">@Vm.CoupleName</p>
+                <p class="w-hero__date">@Vm.WeddingDate.ToString("yyyy년 MM월 dd일") @Vm.WeddingTime</p>
+            </div>
+            <div class="w-hero__bottom w-panel w-hero-panel--dv-@Vm.InviteHeroBottomVerticalDesktop w-hero-panel--dh-@Vm.InviteHeroBottomHorizontalDesktop w-hero-panel--mv-@Vm.InviteHeroBottomVerticalMobile w-hero-panel--mh-@Vm.InviteHeroBottomHorizontalMobile">
+                <p class="w-hero__venue">@Vm.VenueName</p>
+                <p class="w-hero__addr">@Vm.VenueAddress</p>
+                <div class="w-hero__cta">
+                    <button class="w-btn w-btn--gb" @onclick='() => SetInviteTab("guestbook")'>✍ 방명록 쓰기</button>
+                    @if (Vm.ShowThankYouLink && !string.IsNullOrWhiteSpace(Vm.ThankYouUrl))
+                    {
+                        <a href="@Vm.ThankYouUrl" class="w-btn w-btn--primary">Thank You 페이지</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<nav class="w-invite-tabs-bar" aria-label="청첩장 메뉴">
+    <button class="@InviteTabClass("hero")" @onclick='() => SetInviteTab("hero")'><span>⌂</span><small>홈</small></button>
+    @foreach (var item in TabItems)
+    {
+        <button class="@InviteTabClass(item.Key)" @onclick="() => SetInviteTab(item.Key)"><span>@item.Icon</span><small>@item.Label</small></button>
+    }
+</nav>
+
+<button class="w-invite-menu-fab @(_mobileTabMenuOpen ? "is-open" : "")"
+        @onclick="ToggleMobileTabMenu"
+        aria-label="메뉴 열기">
+    @(_mobileTabMenuOpen ? "✕" : "☰")
+</button>
+
+@if (_mobileTabMenuOpen)
+{
+    <div class="w-invite-menu-backdrop" @onclick="ToggleMobileTabMenu"></div>
+    <nav class="w-invite-menu-sheet" aria-label="청첩장 메뉴 (모바일)">
+        <div class="w-invite-menu-sheet__handle"></div>
+        <div class="w-invite-menu-sheet__grid">
+            <button class="w-invite-menu-item @(ActiveInviteTab == "hero" ? "active" : "")" @onclick='() => SelectInviteTab("hero")'>
+                <span class="w-invite-menu-item__ico">⌂</span><span>홈</span>
+            </button>
+            @foreach (var item in TabItems)
+            {
+                <button class="w-invite-menu-item @(ActiveInviteTab == item.Key ? "active" : "")" @onclick="() => SelectInviteTab(item.Key)">
+                    <span class="w-invite-menu-item__ico">@item.Icon</span><span>@item.Label</span>
+                </button>
+            }
+        </div>
+    </nav>
+}
+
+<InvitationSections Slug="@Slug"
+                    Vm="@Vm"
+                    VmGuest="@VmGuest"
+                    IsTabbed="true"
+                    ActiveSection="@ActiveInviteTab"
+                    PauseMusicRequested="@PauseMusicRequested" />
+
+@code {
+    [Parameter, EditorRequired] public string Slug { get; set; } = "";
+    [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
+    [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
+    [Parameter] public EventCallback PauseMusicRequested { get; set; }
+
+    private string ActiveInviteTab { get; set; } = "hero";
+    private bool _mobileTabMenuOpen;
+
+    private IReadOnlyList<TabItem> TabItems =>
+        [
+            .. BuildTabItems()
+        ];
+
+    private IEnumerable<TabItem> BuildTabItems()
+    {
+        if (IsAvailable("story")) yield return new("story", "♡", "이야기");
+        if (IsAvailable("gallery")) yield return new("gallery", "▧", "사진");
+        if (IsAvailable("video")) yield return new("video", "▷", "영상");
+        if (IsAvailable("info")) yield return new("info", "ⓘ", "안내");
+        if (IsAvailable("details")) yield return new("details", "⌖", "지도");
+        if (IsAvailable("guestbook")) yield return new("guestbook", "✎", "방명록");
+        if (IsAvailable("gift")) yield return new("gift", "▭", "계좌 안내");
+    }
+
+    private bool IsAvailable(string section)
+    {
+        if (!Vm.LayoutDescriptor.SupportedSections.Contains(section)) return false;
+        if (Vm.DesignSettings.SectionVisibility.TryGetValue(section, out var visible) && !visible) return false;
+
+        return section switch
+        {
+            "story" => !string.IsNullOrWhiteSpace(Vm.Story) || !string.IsNullOrWhiteSpace(Vm.Story2),
+            "gallery" => Vm.Gallery.Count > 0,
+            "video" => Vm.VideoUrls.Count > 0,
+            "info" => Vm.Mode != WeddingSiteMode.ThankYou || !string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml),
+            "details" => Vm.Mode != WeddingSiteMode.ThankYou,
+            "guestbook" => true,
+            "gift" => Vm.Accounts.Count > 0,
+            _ => false,
+        };
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JS.InvokeVoidAsync("weddingInterop.initInviteMenuFab");
+    }
+
+    private void ToggleMobileTabMenu() => _mobileTabMenuOpen = !_mobileTabMenuOpen;
+
+    private async Task SelectInviteTab(string tab)
+    {
+        await SetInviteTab(tab);
+        _mobileTabMenuOpen = false;
+    }
+
+    private Task SetInviteTab(string tab)
+    {
+        ActiveInviteTab = tab;
+        return Task.CompletedTask;
+    }
+
+    private string InviteTabClass(string tab) => ActiveInviteTab == tab ? "active" : "";
+
+    private sealed record TabItem(string Key, string Icon, string Label);
+}

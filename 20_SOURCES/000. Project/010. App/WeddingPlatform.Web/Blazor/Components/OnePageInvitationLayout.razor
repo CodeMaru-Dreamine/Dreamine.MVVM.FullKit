@@ -1,0 +1,52 @@
+@namespace WeddingPlatform.Blazor.Components
+@using Microsoft.JSInterop
+@using WeddingPlatform.ViewModels
+@inject IJSRuntime JS
+
+<section class="w-hero w-hero--invite-positioned w-hero--style-@Vm.InvitationStyle @Vm.LayoutDescriptor.CssClass" role="banner">
+    @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
+    {
+        <div class="w-hero__bg" style="background-image:url('@Vm.HeroImageUrl')"></div>
+    }
+    else
+    {
+        <div class="w-hero__bg w-hero__bg--default"></div>
+    }
+    <div class="w-hero__overlay"></div>
+    <div class="w-hero__content">
+        <div class="w-hero__top w-panel w-hero-panel--dv-@Vm.InviteHeroTopVerticalDesktop w-hero-panel--dh-@Vm.InviteHeroTopHorizontalDesktop w-hero-panel--mv-@Vm.InviteHeroTopVerticalMobile w-hero-panel--mh-@Vm.InviteHeroTopHorizontalMobile">
+            <h1 class="w-hero__title">@Vm.HeroTitle</h1>
+            <p class="w-hero__names">@Vm.CoupleName</p>
+            <p class="w-hero__date">@Vm.WeddingDate.ToString("yyyy년 MM월 dd일") @Vm.WeddingTime</p>
+        </div>
+        <div class="w-hero__bottom w-panel w-hero-panel--dv-@Vm.InviteHeroBottomVerticalDesktop w-hero-panel--dh-@Vm.InviteHeroBottomHorizontalDesktop w-hero-panel--mv-@Vm.InviteHeroBottomVerticalMobile w-hero-panel--mh-@Vm.InviteHeroBottomHorizontalMobile">
+            <p class="w-hero__venue">@Vm.VenueName</p>
+            <p class="w-hero__addr">@Vm.VenueAddress</p>
+            <div class="w-hero__cta">
+                <button class="w-btn w-btn--gb" @onclick="ScrollToGuestbook">✍ 방명록 쓰기</button>
+                @if (Vm.ShowThankYouLink && !string.IsNullOrWhiteSpace(Vm.ThankYouUrl))
+                {
+                    <a href="@Vm.ThankYouUrl" class="w-btn w-btn--primary">Thank You 페이지</a>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<InvitationSections Slug="@Slug"
+                    Vm="@Vm"
+                    VmGuest="@VmGuest"
+                    IsTabbed="false"
+                    PauseMusicRequested="@PauseMusicRequested" />
+
+@code {
+    [Parameter, EditorRequired] public string Slug { get; set; } = "";
+    [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
+    [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
+    [Parameter] public EventCallback PauseMusicRequested { get; set; }
+
+    private async Task ScrollToGuestbook()
+    {
+        await JS.InvokeVoidAsync("weddingInterop.scrollToElement", "guestbook");
+    }
+}

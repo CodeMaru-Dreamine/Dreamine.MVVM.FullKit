@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Microsoft.AspNetCore.Components.Forms;
+using Wedding.Common;
 using WeddingPlatform.Models;
 using WeddingPlatform.Services;
 
@@ -142,6 +143,7 @@ public sealed class WeddingAdminViewModel
     {
         Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false)
                  ?? new TenantConfig { Slug = slug };
+        InvitationDesignCatalog.Normalize(Config);
         Gallery = await _photos.GetGalleryAsync(slug, ct).ConfigureAwait(false);
         EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
 
@@ -171,11 +173,66 @@ public sealed class WeddingAdminViewModel
         if (Config is null) return;
         try
         {
+            if (!ValidateLayoutForSave(Config))
+            {
+                return;
+            }
+
+            InvitationDesignCatalog.Normalize(Config);
             await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
             EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
             StatusMessage = "설정이 저장되었습니다.";
         }
         catch (Exception ex) { StatusMessage = $"저장 오류: {ex.Message}"; }
+    }
+
+    public void SetStatusMessage(string message) => StatusMessage = message;
+
+    private bool ValidateLayoutForSave(TenantConfig config)
+    {
+        config.DesignSettings ??= new DesignSettings();
+        if (!WeddingLayoutCatalog.IsKnownKey(config.InvitationStyle))
+        {
+            StatusMessage = "저장 오류: 존재하지 않는 레이아웃입니다.";
+            return false;
+        }
+
+        var mode = config.DesignSettings.LayoutMode;
+        if (mode == WeddingLayoutMode.Unknown)
+        {
+            mode = InvitationDesignCatalog.FromLegacyLayoutKey(config.InvitationStyle);
+            config.DesignSettings.LayoutMode = mode;
+        }
+
+        var option = WeddingLayoutCatalog.Instance.Find(mode);
+        if (option is null)
+        {
+            StatusMessage = "저장 오류: 존재하지 않는 레이아웃입니다.";
+            return false;
+        }
+
+        if (!option.IsImplemented)
+        {
+            StatusMessage = "저장 오류: 아직 준비 중인 레이아웃입니다.";
+            return false;
+        }
+
+        var access = new WeddingLayoutAccessState
+        {
+            HasPremiumPlan = config.HasPremiumPlan,
+            UnlockedLayouts = config.UnlockedLayoutModes
+                .Select(WeddingLayoutCatalog.FromLegacyKey)
+                .Where(x => x != WeddingLayoutMode.Unknown)
+                .ToArray(),
+        };
+
+        if (!new WeddingLayoutAccessPolicy().CanUse(option, access))
+        {
+            StatusMessage = "저장 오류: 프리미엄 레이아웃은 플랜 또는 잠금 해제 후 저장할 수 있습니다.";
+            return false;
+        }
+
+        return true;
     }
 
     public async Task RemoveAdminAsync(string userId, CancellationToken ct = default)
@@ -445,5 +502,28 @@ public sealed class WeddingAdminViewModel
             .OrderByDescending(x => string.Equals(x.Role, "Owner", StringComparison.OrdinalIgnoreCase))
             .ThenBy(x => x.AddedAt)
             .ToList();
+    }
+
+    private static void NormalizeHeroPanelPosition(TenantConfig config)
+    {
+        InvitationDesignCatalog.Normalize(config);
+        config.InviteHeroTopVerticalDesktop = NormalizeOption(config.InviteHeroTopVerticalDesktop, ["top", "middle", "bottom"], "top");
+        config.InviteHeroTopHorizontalDesktop = NormalizeOption(config.InviteHeroTopHorizontalDesktop, ["left", "center", "right"], "center");
+        config.InviteHeroTopVerticalMobile = NormalizeOption(config.InviteHeroTopVerticalMobile, ["top", "middle", "bottom"], "top");
+        config.InviteHeroTopHorizontalMobile = NormalizeOption(config.InviteHeroTopHorizontalMobile, ["left", "center", "right"], "center");
+        config.InviteHeroBottomVerticalDesktop = NormalizeOption(config.InviteHeroBottomVerticalDesktop, ["top", "middle", "bottom"], "bottom");
+        config.InviteHeroBottomHorizontalDesktop = NormalizeOption(config.InviteHeroBottomHorizontalDesktop, ["left", "center", "right"], "center");
+        config.InviteHeroBottomVerticalMobile = NormalizeOption(config.InviteHeroBottomVerticalMobile, ["top", "middle", "bottom"], "bottom");
+        config.InviteHeroBottomHorizontalMobile = NormalizeOption(config.InviteHeroBottomHorizontalMobile, ["left", "center", "right"], "center");
+        config.HeroPanelVerticalDesktop = NormalizeOption(config.HeroPanelVerticalDesktop, ["top", "middle", "bottom"], "top");
+        config.HeroPanelHorizontalDesktop = NormalizeOption(config.HeroPanelHorizontalDesktop, ["left", "center", "right"], "center");
+        config.HeroPanelVerticalMobile = NormalizeOption(config.HeroPanelVerticalMobile, ["top", "middle", "bottom"], "top");
+        config.HeroPanelHorizontalMobile = NormalizeOption(config.HeroPanelHorizontalMobile, ["left", "center", "right"], "center");
+    }
+
+    private static string NormalizeOption(string? value, string[] allowed, string fallback)
+    {
+        var normalized = value?.Trim().ToLowerInvariant();
+        return !string.IsNullOrWhiteSpace(normalized) && allowed.Contains(normalized) ? normalized : fallback;
     }
 }

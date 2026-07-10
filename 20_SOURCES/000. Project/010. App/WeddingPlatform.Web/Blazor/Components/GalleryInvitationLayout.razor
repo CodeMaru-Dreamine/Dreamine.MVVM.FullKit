@@ -1,0 +1,60 @@
+@namespace WeddingPlatform.Blazor.Components
+@using WeddingPlatform.ViewModels
+
+<section class="wedding-layout-gallery @Vm.LayoutDescriptor.CssClass">
+    <section class="wedding-gallery-cover" role="banner">
+        @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
+        {
+            <img class="wedding-gallery-cover__image" src="@Vm.HeroImageUrl" alt="@Vm.CoupleName 대표 사진" />
+        }
+        else
+        {
+            <div class="wedding-gallery-cover__image wedding-gallery-cover__image--empty"></div>
+        }
+        <div class="wedding-gallery-cover__panel">
+            <p class="wedding-layout-kicker">@Vm.HeroTitle</p>
+            <h1>@Vm.CoupleName</h1>
+            <p>@Vm.WeddingDate.ToString("yyyy년 MM월 dd일") @Vm.WeddingTime</p>
+            @if (!string.IsNullOrWhiteSpace(Vm.VenueName))
+            {
+                <p class="wedding-layout-muted">@Vm.VenueName</p>
+            }
+        </div>
+    </section>
+
+    <section class="wedding-gallery-section" id="gallery">
+        <div class="wedding-layout-heading">
+            <p class="wedding-layout-kicker">Gallery</p>
+            <h2>사진으로 남긴 순간</h2>
+            <span>최근 @(Vm.Gallery.Count)장 / 전체 @(Vm.AllPhotos.Count)장</span>
+        </div>
+
+        @if (Vm.Gallery.Count == 0)
+        {
+            <div class="wedding-gallery-empty">아직 등록된 사진이 없습니다.</div>
+        }
+        else
+        {
+            <div class="wedding-gallery-grid">
+                @for (int i = 0; i < Vm.Gallery.Count; i++)
+                {
+                    <figure class="wedding-gallery-tile">
+                        <img src="@Vm.Gallery[i].ThumbUrl" alt="사진 @(i + 1)" loading="lazy" />
+                    </figure>
+                }
+            </div>
+        }
+    </section>
+
+    <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="video" PauseMusicRequested="@PauseMusicRequested" />
+    <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="story" PauseMusicRequested="@PauseMusicRequested" />
+    <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="guestbook" PauseMusicRequested="@PauseMusicRequested" />
+    <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="gift" PauseMusicRequested="@PauseMusicRequested" />
+</section>
+
+@code {
+    [Parameter, EditorRequired] public string Slug { get; set; } = "";
+    [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
+    [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
+    [Parameter] public EventCallback PauseMusicRequested { get; set; }
+}

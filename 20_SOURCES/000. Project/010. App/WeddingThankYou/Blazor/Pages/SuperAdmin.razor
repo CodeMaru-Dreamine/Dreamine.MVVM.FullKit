@@ -3,8 +3,11 @@
 @namespace WeddingThankYou.Blazor.Pages
 @rendermode InteractiveServer
 
+@using Wedding.Common
 @using WeddingThankYou.Models
+@using Microsoft.JSInterop
 @inject WeddingThankYou.ViewModels.SuperAdminViewModel Vm
+@inject IJSRuntime JS
 
 <PageTitle>Wedding Thank You 통합 어드민</PageTitle>
 
@@ -125,6 +128,7 @@
                         <span>메인 노출</span>
                         <span>영상 용량</span>
                         <span>영상 개수</span>
+                        <span>프리미엄 레이아웃</span>
                         <span>링크</span>
                         <span></span>
                     </div>
@@ -173,6 +177,22 @@
                                     <option value="0">무제한</option>
                                 </select>
                             </span>
+                            <span class="w-sa-layout-unlocks">
+                                @foreach (var option in PremiumLayouts)
+                                {
+                                    <label class="w-sa-check">
+                                        <input type="checkbox"
+                                               checked="@IsLayoutUnlocked(t, option.Mode)"
+                                               @onchange="e => OnLayoutUnlockChange(t, option.Mode, e)" />
+                                        @option.Label
+                                        @if (!option.IsImplemented)
+                                        {
+                                            <small>준비 중</small>
+                                        }
+                                    </label>
+                                }
+                                <button class="w-btn w-btn--sm" @onclick="() => OnSaveLayoutUnlocks(t)">권한 저장</button>
+                            </span>
                             <span class="w-sa-links">
                                 <a href="/@t.Slug/thankyou" target="_blank" class="w-btn w-btn--sm">감사장</a>
                                 <a href="/@t.Slug/admin" target="_blank" class="w-btn w-btn--sm">어드민</a>
@@ -202,13 +222,26 @@
 
 @code {
     private string? _confirmSlug;
+    private static IReadOnlyList<WeddingLayoutOption> PremiumLayouts =>
+        WeddingLayoutCatalog.Options.Where(x => x.Tier == WeddingLayoutTier.Premium).ToArray();
 
     protected override void OnInitialized() { }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+
+        try { await JS.InvokeVoidAsync("weddingInterop.setSuperAdminSession", false); }
+        catch { }
+    }
 
     private async Task OnLogin()
     {
         if (await Vm.LoginAsync())
+        {
             await Vm.LoadAsync();
+        }
         StateHasChanged();
     }
 
@@ -266,6 +299,29 @@
         var raw = e.Value?.ToString();
         int? maxCount = string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw);
         await Vm.SetMaxVideoCountAsync(t.Slug, maxCount);
+        StateHasChanged();
+    }
+
+    private static bool IsLayoutUnlocked(TenantConfig tenant, WeddingLayoutMode mode)
+    {
+        var key = WeddingLayoutCatalog.ToLegacyKey(mode);
+        return tenant.UnlockedLayoutModes.Any(x => string.Equals(x, key, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static void OnLayoutUnlockChange(TenantConfig tenant, WeddingLayoutMode mode, ChangeEventArgs e)
+    {
+        var key = WeddingLayoutCatalog.ToLegacyKey(mode);
+        tenant.UnlockedLayoutModes ??= new();
+        tenant.UnlockedLayoutModes.RemoveAll(x => string.Equals(x, key, StringComparison.OrdinalIgnoreCase));
+        if (e.Value is bool enabled && enabled)
+        {
+            tenant.UnlockedLayoutModes.Add(key);
+        }
+    }
+
+    private async Task OnSaveLayoutUnlocks(TenantConfig tenant)
+    {
+        await Vm.SetUnlockedLayoutsAsync(tenant.Slug, tenant.UnlockedLayoutModes);
         StateHasChanged();
     }
 

@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using WeddingThankYou.Models;
 using WeddingThankYou.Services;
+using Wedding.Common;
 
 namespace WeddingThankYou.ViewModels
 {
@@ -59,6 +60,12 @@ namespace WeddingThankYou.ViewModels
 			IsAuthenticated = _opts.SuperAdminPassword == LoginPassword;
 			StatusMessage = IsAuthenticated ? "" : "비밀번호가 틀렸습니다.";
 			return Task.FromResult(IsAuthenticated);
+		}
+
+		public void RestoreSession()
+		{
+			IsAuthenticated = true;
+			StatusMessage = "";
 		}
 
 		public IReadOnlyList<TenantConfig> Tenants { get; private set; } = [];
@@ -189,5 +196,26 @@ namespace WeddingThankYou.ViewModels
 			await LoadAsync(ct).ConfigureAwait(false);
 			StatusMessage = $"✅ '{slug}' 동영상 개수 제한 저장됨";
 		}
+
+		public async Task SetUnlockedLayoutsAsync(string slug, IEnumerable<string> unlockedLayoutModes, CancellationToken ct = default)
+		{
+			var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+			if (config is null) return;
+
+			config.UnlockedLayoutModes = NormalizeUnlockedLayoutKeys(unlockedLayoutModes);
+			await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+			await LoadAsync(ct).ConfigureAwait(false);
+			StatusMessage = $"✅ '{slug}' 레이아웃 권한 저장됨";
+		}
+
+		private static List<string> NormalizeUnlockedLayoutKeys(IEnumerable<string> unlockedLayoutModes) =>
+			unlockedLayoutModes
+				.Select(WeddingLayoutCatalog.FromLegacyKey)
+				.Select(mode => WeddingLayoutCatalog.Instance.Find(mode))
+				.Where(option => option is { Tier: WeddingLayoutTier.Premium })
+				.Select(option => option!.Key)
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.OrderBy(x => x)
+				.ToList();
 	}
 }
