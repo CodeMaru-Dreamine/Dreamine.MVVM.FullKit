@@ -8,6 +8,7 @@ public sealed class DesignSettings
     public string ThemeKey { get; set; } = "rose";
     public WeddingLayoutMode LayoutMode { get; set; } = WeddingLayoutMode.WebPage;
     public HeroPlacement HeroPlacement { get; set; } = new();
+    public List<StoryChapter> StoryChapters { get; set; } = WeddingStoryChapterDefaults.Create();
     public List<string> SectionOrder { get; set; } =
         ["hero", "story", "info", "details", "video", "gallery", "guestbook", "gift"];
     public Dictionary<string, bool> SectionVisibility { get; set; } = new();
@@ -40,30 +41,17 @@ public sealed class HeroPanelPlacement
     public string MobileHorizontal { get; set; } = "center";
 }
 
-public sealed record ThemeDescriptor(
-    string Key,
-    string Primary,
-    string Accent,
-    string Label);
-
 public static class InvitationDesignCatalog
 {
-    public static readonly IReadOnlyList<ThemeDescriptor> Themes =
-    [
-        new("rose", "#c8a882", "#a07850", "로즈 골드 (기본)"),
-        new("ivory", "#b8a99a", "#8a7060", "아이보리 크림"),
-        new("forest", "#6b8f71", "#4a6b50", "포레스트 그린"),
-        new("navy", "#3d5a80", "#98c1d9", "네이비 & 골드"),
-        new("blush", "#d4a5a5", "#b07575", "블러쉬 핑크"),
-    ];
+    public static IReadOnlyList<WeddingThemeOption> Themes => WeddingThemeCatalog.Options;
 
     public static IReadOnlyList<WeddingLayoutOption> Layouts => WeddingLayoutCatalog.Options;
 
     public static WeddingLayoutOption GetLayout(WeddingLayoutMode mode) =>
         WeddingLayoutCatalog.Instance.Find(mode) ?? WeddingLayoutCatalog.Options[0];
 
-    public static ThemeDescriptor GetTheme(string? key) =>
-        Themes.FirstOrDefault(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase)) ?? Themes[0];
+    public static WeddingThemeOption GetTheme(string? key) =>
+        WeddingThemeCatalog.Instance.Find(key) ?? WeddingThemeCatalog.Options[0];
 
     public static void Normalize(TenantConfig config)
     {
@@ -72,13 +60,16 @@ public static class InvitationDesignCatalog
         config.DesignSettings.HeroPlacement.InviteTop ??= new HeroPanelPlacement();
         config.DesignSettings.HeroPlacement.InviteBottom ??= new HeroPanelPlacement();
         config.DesignSettings.HeroPlacement.ThankYou ??= new HeroPanelPlacement();
+        config.DesignSettings.StoryChapters = WeddingStoryChapterDefaults.Normalize(config.DesignSettings.StoryChapters);
         config.DesignSettings.SectionOrder ??= ["hero", "story", "info", "details", "video", "gallery", "guestbook", "gift"];
         config.DesignSettings.SectionVisibility ??= new Dictionary<string, bool>();
+        config.UnlockedLayoutModes ??= new();
+        config.UnlockedThemeKeys ??= new();
 
         var themeKey = !string.IsNullOrWhiteSpace(config.DesignSettings.ThemeKey)
             ? config.DesignSettings.ThemeKey
             : config.ThemeName;
-        config.DesignSettings.ThemeKey = GetTheme(themeKey).Key;
+        config.DesignSettings.ThemeKey = WeddingThemeCatalog.NormalizeKey(themeKey);
         config.ThemeName = config.DesignSettings.ThemeKey;
 
         config.DesignSettings.LayoutMode = ResolveLayoutMode(config.DesignSettings.LayoutMode, config.InvitationStyle);

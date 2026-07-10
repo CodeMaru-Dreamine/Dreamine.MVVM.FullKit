@@ -71,6 +71,10 @@ public sealed class WeddingSuperAdminViewModel
     public async Task LoadAsync(CancellationToken ct = default)
     {
         Tenants = await _tenants.GetAllAsync(ct).ConfigureAwait(false);
+        foreach (var tenant in Tenants)
+        {
+            InvitationDesignCatalog.Normalize(tenant);
+        }
         await LoadGlobalSettingsAsync(ct).ConfigureAwait(false);
         IsLoaded = true;
         StatusMessage = "";
@@ -200,11 +204,32 @@ public sealed class WeddingSuperAdminViewModel
         StatusMessage = $"✅ '{slug}' 레이아웃 권한 저장됨";
     }
 
+    public async Task SetUnlockedThemesAsync(string slug, IEnumerable<string> unlockedThemeKeys, CancellationToken ct = default)
+    {
+        var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+        if (config is null) return;
+
+        config.UnlockedThemeKeys = NormalizeUnlockedThemeKeys(unlockedThemeKeys);
+        await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+        await LoadAsync(ct).ConfigureAwait(false);
+        StatusMessage = $"✅ '{slug}' 테마 권한 저장됨";
+    }
+
     private static List<string> NormalizeUnlockedLayoutKeys(IEnumerable<string> unlockedLayoutModes) =>
         unlockedLayoutModes
             .Select(WeddingLayoutCatalog.FromLegacyKey)
             .Select(mode => WeddingLayoutCatalog.Instance.Find(mode))
             .Where(option => option is { Tier: WeddingLayoutTier.Premium })
+            .Select(option => option!.Key)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(x => x)
+            .ToList();
+
+    private static List<string> NormalizeUnlockedThemeKeys(IEnumerable<string> unlockedThemeKeys) =>
+        unlockedThemeKeys
+            .Select(WeddingThemeCatalog.NormalizeKey)
+            .Select(key => WeddingThemeCatalog.Instance.Find(key))
+            .Where(option => option is { Tier: WeddingThemeTier.Premium })
             .Select(option => option!.Key)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(x => x)

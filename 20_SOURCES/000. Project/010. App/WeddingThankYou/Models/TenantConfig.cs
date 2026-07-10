@@ -1,3 +1,5 @@
+using Wedding.Common;
+
 namespace WeddingThankYou.Models;
 
 /// <summary>
@@ -19,6 +21,7 @@ public sealed class TenantConfig
     public double VenueLng { get; set; }
     public string Story { get; set; } = "";
     public string Story2 { get; set; } = "";
+    public List<StoryChapter> StoryChapters { get; set; } = WeddingStoryChapterDefaults.Create();
     public string HeroImageFileName { get; set; } = "";
 
     // ── 히어로 문구 패널 위치 (PC/모바일 별도 지정) ──────────
@@ -79,6 +82,7 @@ public sealed class TenantConfig
     public int PinOrder { get; set; } = 0;
     public bool HasPremiumPlan { get; set; } = false;
     public List<string> UnlockedLayoutModes { get; set; } = new();
+    public List<string> UnlockedThemeKeys { get; set; } = new();
 }
 
 public sealed class ThankYouAdminUser

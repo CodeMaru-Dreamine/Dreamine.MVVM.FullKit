@@ -1,60 +1,79 @@
 @namespace WeddingPlatform.Blazor.Components
+@using Microsoft.AspNetCore.Components.Rendering
+@using Wedding.Common
+@using WeddingPlatform.Models
 @using WeddingPlatform.ViewModels
 
+@*
+    Story 레이아웃 — 챕터/타임라인 흐름형 (앨범형인 Gallery와 시각적으로 확실히 구분).
+    2열 썸네일 그리드 금지. 큰 이미지 + 넓은 텍스트 블록 + 세로 흐름.
+*@
 <section class="wedding-layout-story @Vm.LayoutDescriptor.CssClass">
-    <section class="wedding-story-cover" role="banner">
-        <div class="wedding-story-cover__text">
-            <p class="wedding-layout-kicker">@Vm.HeroTitle</p>
-            <h1>@Vm.CoupleName</h1>
-            <p>@Vm.WeddingDate.ToString("yyyy년 MM월 dd일") @Vm.WeddingTime</p>
-            @if (!string.IsNullOrWhiteSpace(Vm.VenueName))
-            {
-                <p class="wedding-layout-muted">@Vm.VenueName</p>
-            }
-        </div>
-        @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
-        {
-            <img class="wedding-story-cover__image" src="@Vm.HeroImageUrl" alt="@Vm.CoupleName 대표 사진" />
-        }
-    </section>
-
-    <section class="wedding-story-section" id="story">
-        <p class="wedding-layout-kicker">Story</p>
-        <h2>우리 이야기</h2>
-        @if (!string.IsNullOrWhiteSpace(Vm.Story))
-        {
-            <p>@Vm.Story</p>
-        }
-        @if (!string.IsNullOrWhiteSpace(Vm.Story2))
-        {
-            <hr class="w-divider" />
-            <p>@Vm.Story2</p>
-        }
-        @if (string.IsNullOrWhiteSpace(Vm.Story) && string.IsNullOrWhiteSpace(Vm.Story2))
-        {
-            <p class="wedding-layout-muted">아직 등록된 이야기가 없습니다.</p>
-        }
-    </section>
-
-    @if (Vm.Gallery.Count > 0)
+    @for (var i = 0; i < Vm.StoryChapters.Count; i++)
     {
-        <section class="wedding-story-section wedding-story-section--photos" id="gallery">
-            <div class="wedding-layout-heading">
-                <p class="wedding-layout-kicker">Photos</p>
-                <h2>함께한 순간</h2>
+        var chapterIndex = i;
+        var chapter = Vm.StoryChapters[chapterIndex];
+        var photo = Vm.ResolveStoryChapterPhoto(chapter, chapterIndex);
+        var isReverse = chapterIndex % 2 == 1;
+        var isClosing = chapterIndex == Vm.StoryChapters.Count - 1;
+        <section class="wedding-story-chapter @(isReverse ? "wedding-story-chapter--reverse" : "") @(isClosing ? "wedding-story-chapter--closing" : "")">
+            <div class="wedding-story-chapter-label">
+                <span class="wedding-story-chapter-label__no">@chapter.Label</span>
+                <span class="wedding-story-chapter-label__title">@chapter.Title</span>
             </div>
-            <div class="wedding-story-photo-grid">
-                @for (int i = 0; i < Math.Min(Vm.Gallery.Count, 6); i++)
+            @if (photo is not null)
+            {
+                <figure class="wedding-story-hero-photo @(isReverse ? "wedding-story-hero-photo--portrait" : "")">
+                    <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPhoto(photo)" aria-label="@chapter.Title 사진 크게 보기">
+                        <img src="@photo.ThumbUrl" alt="@chapter.Title" loading="@(chapterIndex == 0 ? "eager" : "lazy")" />
+                    </button>
+                </figure>
+            }
+            <div class="wedding-story-text-block @(isClosing ? "wedding-story-text-block--wide" : "")">
+                @RenderChapterBody(chapter, chapterIndex)
+            </div>
+        </section>
+    }
+
+    @* ─────────── 하단 보조 : 함께한 순간 ─────────── *@
+    @if (StripTotal > 0)
+    {
+        <section class="wedding-story-moment-strip" id="gallery">
+            <div class="wedding-layout-heading">
+                <p class="wedding-layout-kicker">Moments</p>
+                <h2>함께한 순간</h2>
+                <span>표시 @(StripVisible)장 / 전체 @(StripTotal)장</span>
+            </div>
+            <div class="wedding-story-moment-strip__grid">
+                @for (int i = 0; i < StripVisible; i++)
                 {
-                    <img src="@Vm.Gallery[i].ThumbUrl" alt="사진 @(i + 1)" loading="lazy" />
+                    var photoIndex = i;
+                    <figure>
+                        <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPhoto(photoIndex)" aria-label="사진 @(photoIndex + 1) 크게 보기">
+                            <img src="@Vm.AllPhotos[photoIndex].ThumbUrl" alt="사진 @(photoIndex + 1)" loading="lazy" />
+                        </button>
+                    </figure>
                 }
             </div>
+            @if (StripVisible < StripTotal)
+            {
+                <div class="wedding-layout-more">
+                    <button type="button" class="w-btn w-btn--primary" @onclick="LoadMoreStrip">
+                        사진 더 보기 (+@Math.Min(PageSize, StripTotal - StripVisible))
+                    </button>
+                </div>
+            }
         </section>
     }
 
     <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="video" PauseMusicRequested="@PauseMusicRequested" />
     <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="guestbook" PauseMusicRequested="@PauseMusicRequested" />
     <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="gift" PauseMusicRequested="@PauseMusicRequested" />
+    <PhotoLightbox Photos="@Vm.AllPhotos"
+                   IsOpen="@_photoLightboxOpen"
+                   CurrentIndex="@_photoLightboxIndex"
+                   CurrentIndexChanged="OnPhotoIndexChanged"
+                   Closed="ClosePhoto" />
 </section>
 
 @code {
@@ -62,4 +81,106 @@
     [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
     [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
     [Parameter] public EventCallback PauseMusicRequested { get; set; }
+
+    private RenderFragment RenderChapterBody(StoryChapter chapter, int chapterIndex) => builder =>
+    {
+        if (!string.IsNullOrWhiteSpace(chapter.Body))
+        {
+            builder.OpenElement(0, "p");
+            builder.AddContent(1, chapter.Body);
+            builder.CloseElement();
+            return;
+        }
+
+        switch (chapterIndex)
+        {
+            case 0:
+                builder.OpenElement(2, "p");
+                builder.AddAttribute(3, "class", "wedding-story-kicker");
+                builder.AddContent(4, Vm.HeroTitle);
+                builder.CloseElement();
+                builder.OpenElement(5, "h1");
+                builder.AddContent(6, Vm.CoupleName);
+                builder.CloseElement();
+                builder.OpenElement(7, "p");
+                builder.AddAttribute(8, "class", "wedding-story-lede");
+                builder.AddContent(9, $"{Vm.WeddingDate:yyyy년 MM월 dd일 (ddd)} · {Vm.WeddingTime}");
+                builder.CloseElement();
+                builder.OpenElement(10, "p");
+                builder.AddContent(11, string.IsNullOrWhiteSpace(Vm.Story) ? "두 사람의 이야기가 여기서부터 시작됩니다." : Vm.Story);
+                builder.CloseElement();
+                break;
+            case 1:
+                builder.OpenElement(12, "p");
+                builder.AddContent(13, string.IsNullOrWhiteSpace(Vm.Story2) ? "쌓아온 시간을 담아 전해드립니다." : Vm.Story2);
+                builder.CloseElement();
+                break;
+            case 2:
+                builder.OpenElement(14, "dl");
+                builder.AddAttribute(15, "class", "wedding-story-facts");
+                AddFact(builder, 16, "일시", $"{Vm.WeddingDate:yyyy년 MM월 dd일 (ddd)} · {Vm.WeddingTime}");
+                if (!string.IsNullOrWhiteSpace(Vm.VenueName))
+                {
+                    AddFact(builder, 24, "장소", Vm.VenueName);
+                }
+                if (!string.IsNullOrWhiteSpace(Vm.VenueAddress))
+                {
+                    AddFact(builder, 32, "주소", Vm.VenueAddress);
+                }
+                builder.CloseElement();
+                break;
+            default:
+                if (!string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml))
+                {
+                    builder.AddMarkupContent(40, Vm.CeremonyNoteHtml);
+                }
+                else
+                {
+                    builder.OpenElement(41, "p");
+                    builder.AddContent(42, "귀한 시간을 내어 함께해 주시는 모든 분들께 감사드립니다.");
+                    builder.CloseElement();
+                }
+                break;
+        }
+    };
+
+    private static void AddFact(RenderTreeBuilder builder, int seq, string label, string value)
+    {
+        builder.OpenElement(seq, "div");
+        builder.OpenElement(seq + 1, "dt");
+        builder.AddContent(seq + 2, label);
+        builder.CloseElement();
+        builder.OpenElement(seq + 3, "dd");
+        builder.AddContent(seq + 4, value);
+        builder.CloseElement();
+        builder.CloseElement();
+    }
+
+    private const int InitialCount = 6;
+    private const int PageSize = 12;
+    private int _stripVisible = InitialCount;
+    private bool _photoLightboxOpen;
+    private int _photoLightboxIndex;
+
+    private int StripTotal => Vm.AllPhotos.Count;
+    private int StripVisible => Math.Min(_stripVisible, StripTotal);
+
+    private void LoadMoreStrip()
+        => _stripVisible = Math.Min(_stripVisible + PageSize, StripTotal);
+
+    private void OpenPhoto(PhotoInfo photo)
+    {
+        var index = Vm.AllPhotos.ToList().FindIndex(p => string.Equals(p.FileName, photo.FileName, StringComparison.OrdinalIgnoreCase));
+        OpenPhoto(index < 0 ? 0 : index);
+    }
+
+    private void OpenPhoto(int index)
+    {
+        _photoLightboxIndex = Math.Clamp(index, 0, Math.Max(0, Vm.AllPhotos.Count - 1));
+        _photoLightboxOpen = Vm.AllPhotos.Count > 0;
+    }
+
+    private void ClosePhoto() => _photoLightboxOpen = false;
+
+    private void OnPhotoIndexChanged(int index) => _photoLightboxIndex = index;
 }

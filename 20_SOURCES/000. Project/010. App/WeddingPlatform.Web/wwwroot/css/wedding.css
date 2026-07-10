@@ -622,6 +622,37 @@ body {
     background: transparent;
 }
 
+/* Story 흐름 중간에 배치되는 대표 사진 (본문 텍스트 사이 삽입) */
+.wedding-story-feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: .75rem;
+    margin: 1.25rem 0 1.5rem;
+}
+.wedding-story-feature-grid figure {
+    margin: 0;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: calc(var(--w-radius) - 4px);
+    background: color-mix(in srgb, var(--w-primary) 10%, var(--w-bg));
+}
+.wedding-story-feature-grid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* "사진 더 보기" 버튼 컨테이너 (Gallery/Story 공용) */
+.wedding-layout-more {
+    display: flex;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+.wedding-layout-more .w-btn {
+    min-width: 12rem;
+}
+
 @media (max-width: 760px) {
     .wedding-layout-gallery,
     .wedding-layout-story {
@@ -629,10 +660,17 @@ body {
     }
 
     .wedding-gallery-cover,
-    .wedding-story-cover,
+    .wedding-story-cover {
+        grid-template-columns: 1fr;
+    }
+
+    /* 폰에서는 2열 그리드로 (요구사항: 1~2열 자연스럽게) */
     .wedding-gallery-grid,
     .wedding-story-photo-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .wedding-story-feature-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .wedding-gallery-cover__image,
@@ -642,6 +680,331 @@ body {
 
     .wedding-layout-heading {
         display: block;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════
+ * Story 레이아웃 — 챕터/타임라인 흐름형 (Gallery와 시각 구분)
+ * ═══════════════════════════════════════════════════════════ */
+
+.wedding-layout-story {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(3rem, 6vw, 6rem);
+    padding: clamp(2rem, 4vw, 4rem) clamp(1rem, 4vw, 3rem) 6rem;
+    max-width: 960px;
+    margin: 0 auto;
+}
+
+.wedding-story-chapter {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: clamp(1.5rem, 3vw, 3rem);
+    align-items: center;
+    position: relative;
+    padding-top: 2rem;
+    border-top: 1px solid color-mix(in srgb, var(--w-primary) 22%, transparent);
+}
+.wedding-story-chapter:first-of-type {
+    border-top: 0;
+    padding-top: 0;
+}
+/* 짝수 챕터는 좌우 반전 (지그재그 타임라인 느낌) */
+.wedding-story-chapter--reverse {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+}
+.wedding-story-chapter--reverse .wedding-story-hero-photo {
+    order: 2;
+}
+.wedding-story-chapter--reverse .wedding-story-text-block {
+    order: 1;
+}
+/* 마지막 챕터 (마무리 문구) — 사진 없이 텍스트만 크게 */
+.wedding-story-chapter--closing {
+    grid-template-columns: 1fr;
+    text-align: center;
+    padding: clamp(2rem, 4vw, 3rem) 0;
+}
+.wedding-story-chapter--closing .wedding-story-chapter-label {
+    justify-content: center;
+    text-align: center;
+}
+
+.wedding-story-chapter-label {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    margin-bottom: 1.25rem;
+    font-family: 'Noto Serif KR', serif;
+}
+.wedding-story-chapter-label__no {
+    font-size: .8rem;
+    letter-spacing: .32em;
+    color: var(--w-primary);
+    font-weight: 600;
+}
+.wedding-story-chapter-label__title {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: var(--w-dark);
+    font-weight: 600;
+    letter-spacing: .05em;
+}
+
+.wedding-story-hero-photo {
+    margin: 0;
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+    border-radius: var(--w-radius);
+    background: color-mix(in srgb, var(--w-primary) 8%, var(--w-bg));
+    box-shadow: 0 10px 30px rgba(58, 46, 40, .12);
+}
+.wedding-story-hero-photo--portrait {
+    aspect-ratio: 3 / 4;
+}
+.wedding-story-hero-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.wedding-story-text-block {
+    font-family: 'Noto Serif KR', serif;
+    line-height: 1.9;
+    font-size: clamp(.95rem, 1.5vw, 1.05rem);
+    color: var(--w-text);
+}
+.wedding-story-text-block--wide {
+    max-width: 720px;
+    margin: 0 auto;
+    font-size: clamp(1rem, 1.8vw, 1.15rem);
+}
+.wedding-story-text-block p {
+    margin: 0 0 1rem;
+}
+.wedding-story-text-block p:last-child {
+    margin-bottom: 0;
+}
+.wedding-story-text-block h1 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    margin: .25rem 0 .75rem;
+    font-weight: 300;
+    letter-spacing: .1em;
+    color: var(--w-dark);
+}
+
+.wedding-story-kicker {
+    font-size: .78rem;
+    letter-spacing: .3em;
+    color: var(--w-primary);
+    text-transform: uppercase;
+    margin: 0 0 .35rem;
+    font-weight: 600;
+}
+.wedding-story-lede {
+    color: color-mix(in srgb, var(--w-text) 74%, transparent);
+    font-size: .95rem;
+    margin: 0 0 1.25rem;
+}
+
+.wedding-story-facts {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+}
+.wedding-story-facts > div {
+    display: grid;
+    grid-template-columns: 4rem 1fr;
+    gap: 1rem;
+    align-items: baseline;
+}
+.wedding-story-facts dt {
+    font-size: .8rem;
+    letter-spacing: .2em;
+    color: var(--w-primary);
+    margin: 0;
+    font-weight: 600;
+}
+.wedding-story-facts dd {
+    margin: 0;
+    color: var(--w-text);
+}
+
+/* 하단 보조 사진 영역 — Story의 메인처럼 보이지 않도록 여백/투명도로 낮춤 */
+.wedding-story-moment-strip {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px dashed color-mix(in srgb, var(--w-primary) 32%, transparent);
+    opacity: .92;
+}
+.wedding-story-moment-strip .wedding-layout-heading {
+    margin-bottom: 1rem;
+}
+.wedding-story-moment-strip__grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .55rem;
+}
+.wedding-story-moment-strip__grid figure {
+    margin: 0;
+    aspect-ratio: 1;
+    overflow: hidden;
+    border-radius: 6px;
+    background: color-mix(in srgb, var(--w-primary) 6%, var(--w-bg));
+}
+.wedding-story-moment-strip__grid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.wedding-photo-thumb {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    padding: 0;
+    margin: 0;
+    background: transparent;
+    cursor: zoom-in;
+    overflow: hidden;
+    border-radius: inherit;
+}
+
+.wedding-photo-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.wedding-photo-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 2200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(1rem, 3vw, 2rem);
+    outline: none;
+}
+
+.wedding-photo-lightbox-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, .78);
+}
+
+.wedding-photo-lightbox-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(94vw, 1080px);
+    height: min(88svh, 820px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wedding-photo-lightbox-image {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .35);
+    background: #111;
+}
+
+.wedding-photo-lightbox-close,
+.wedding-photo-lightbox-nav {
+    position: absolute;
+    z-index: 2;
+    border: 0;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .92);
+    color: #222;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, .22);
+    cursor: pointer;
+}
+
+.wedding-photo-lightbox-close {
+    top: 0;
+    right: 0;
+    width: 42px;
+    height: 42px;
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.wedding-photo-lightbox-nav {
+    top: 50%;
+    transform: translateY(-50%);
+    width: 46px;
+    height: 46px;
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.wedding-photo-lightbox-nav--prev { left: 0; }
+.wedding-photo-lightbox-nav--next { right: 0; }
+
+.wedding-photo-lightbox-counter {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    z-index: 2;
+    padding: .35rem .75rem;
+    border-radius: 999px;
+    background: rgba(0, 0, 0, .6);
+    color: #fff;
+    font-size: .9rem;
+}
+
+.wedding-layout-story > .w-video {
+    width: 100%;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: clamp(2rem, 4vw, 3rem) 0;
+}
+
+.wedding-layout-story > .w-video .w-section-title {
+    text-align: center;
+}
+
+.wedding-layout-story > .w-video .w-video__grid {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 240px));
+    justify-content: center;
+}
+
+/* Story 레이아웃 반응형 — 모바일은 단일 컬럼 흐름 */
+@media (max-width: 760px) {
+    .wedding-layout-story {
+        padding: 1.5rem 1rem 6rem;
+        gap: 2.5rem;
+    }
+    .wedding-story-chapter,
+    .wedding-story-chapter--reverse {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+    /* 모바일에서는 사진 위, 텍스트 아래 순서로 통일 */
+    .wedding-story-chapter--reverse .wedding-story-hero-photo { order: 0; }
+    .wedding-story-chapter--reverse .wedding-story-text-block { order: 1; }
+
+    .wedding-story-hero-photo {
+        aspect-ratio: 4 / 3;
+    }
+    .wedding-story-hero-photo--portrait {
+        aspect-ratio: 4 / 5;
+    }
+
+    .wedding-story-moment-strip__grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
 
@@ -805,6 +1168,65 @@ body {
 }
 .w-uploading { font-size: .85rem; color: var(--w-primary); }
 
+.w-story-admin-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.w-story-admin-card {
+    border: 1px solid var(--w-border);
+    border-radius: 8px;
+    padding: 1rem;
+    background: color-mix(in srgb, var(--w-bg) 82%, #fff);
+}
+
+.w-story-admin-card__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    margin-bottom: .75rem;
+}
+
+.w-admin-section-title-row,
+.w-story-admin-card__actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    flex-wrap: wrap;
+}
+
+.w-story-admin-photo {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-top: .75rem;
+    font-size: .85rem;
+    color: var(--w-muted);
+}
+
+.w-story-admin-photo img {
+    width: 72px;
+    height: 54px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--w-border);
+}
+
+.w-admin__photo-order {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: .25rem;
+    width: 100%;
+}
+
+.w-admin__photo-order .w-btn {
+    min-width: 0;
+    padding-inline: .35rem;
+}
+
 /* ── 동영상 (초대장 페이지) ── */
 /* 작은 썸네일 그리드로 표시하고, 클릭하면 라이트박스로 크게 재생 */
 .w-video { padding: 3rem 1.5rem; text-align: center; }
@@ -915,11 +1337,11 @@ body {
 .w-sa-table__head,
 .w-sa-table__row {
     display: grid;
-    grid-template-columns: 130px 130px 100px 90px 70px 150px 120px 110px 220px 150px 70px;
+    grid-template-columns: 130px 130px 100px 90px 70px 150px 120px 110px 220px 220px 150px 70px;
     align-items: center;
     gap: .75rem;
     padding: .65rem 1rem;
-    min-width: 1480px;
+    min-width: 1710px;
 }
 .w-sa-table__head {
     background: var(--w-primary);
@@ -1004,6 +1426,14 @@ body.w-theme-blush {
     cursor: pointer; font-size: .85rem; transition: border-color .2s;
 }
 .w-theme-btn.active { border-color: var(--tc, var(--w-primary)); }
+.w-theme-btn.is-locked,
+.w-theme-btn:disabled {
+    opacity: .58;
+    cursor: not-allowed;
+}
+.w-theme-btn .w-layout-lock {
+    margin-left: .25rem;
+}
 .w-theme-swatch {
     width: 16px; height: 16px; border-radius: 50%;
     background: var(--tc, #c8a882);

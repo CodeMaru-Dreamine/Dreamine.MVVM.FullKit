@@ -84,6 +84,7 @@ public sealed class TenantConfig
     public int PinOrder { get; set; } = 0;
     public bool HasPremiumPlan { get; set; } = false;
     public List<string> UnlockedLayoutModes { get; set; } = new();
+    public List<string> UnlockedThemeKeys { get; set; } = new();
     public List<string> GalleryFileNames { get; set; } = new();
     public int GalleryAutoPlaySeconds { get; set; } = 3;
 }

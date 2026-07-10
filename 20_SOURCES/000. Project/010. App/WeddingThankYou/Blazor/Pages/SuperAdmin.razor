@@ -129,6 +129,7 @@
                         <span>영상 용량</span>
                         <span>영상 개수</span>
                         <span>프리미엄 레이아웃</span>
+                        <span>프리미엄 테마</span>
                         <span>링크</span>
                         <span></span>
                     </div>
@@ -193,6 +194,22 @@
                                 }
                                 <button class="w-btn w-btn--sm" @onclick="() => OnSaveLayoutUnlocks(t)">권한 저장</button>
                             </span>
+                            <span class="w-sa-layout-unlocks">
+                                @foreach (var option in PremiumThemes)
+                                {
+                                    <label class="w-sa-check">
+                                        <input type="checkbox"
+                                               checked="@IsThemeUnlocked(t, option.Key)"
+                                               @onchange="e => OnThemeUnlockChange(t, option.Key, e)" />
+                                        @option.DisplayName
+                                        @if (!option.IsImplemented)
+                                        {
+                                            <small>준비 중</small>
+                                        }
+                                    </label>
+                                }
+                                <button class="w-btn w-btn--sm" @onclick="() => OnSaveThemeUnlocks(t)">권한 저장</button>
+                            </span>
                             <span class="w-sa-links">
                                 <a href="/@t.Slug/thankyou" target="_blank" class="w-btn w-btn--sm">감사장</a>
                                 <a href="/@t.Slug/admin" target="_blank" class="w-btn w-btn--sm">어드민</a>
@@ -224,6 +241,8 @@
     private string? _confirmSlug;
     private static IReadOnlyList<WeddingLayoutOption> PremiumLayouts =>
         WeddingLayoutCatalog.Options.Where(x => x.Tier == WeddingLayoutTier.Premium).ToArray();
+    private static IReadOnlyList<WeddingThemeOption> PremiumThemes =>
+        WeddingThemeCatalog.Options.Where(x => x.Tier == WeddingThemeTier.Premium).ToArray();
 
     protected override void OnInitialized() { }
 
@@ -322,6 +341,29 @@
     private async Task OnSaveLayoutUnlocks(TenantConfig tenant)
     {
         await Vm.SetUnlockedLayoutsAsync(tenant.Slug, tenant.UnlockedLayoutModes);
+        StateHasChanged();
+    }
+
+    private static bool IsThemeUnlocked(TenantConfig tenant, string themeKey)
+    {
+        var key = WeddingThemeCatalog.NormalizeKey(themeKey);
+        return tenant.UnlockedThemeKeys?.Any(x => string.Equals(WeddingThemeCatalog.NormalizeKey(x), key, StringComparison.OrdinalIgnoreCase)) == true;
+    }
+
+    private static void OnThemeUnlockChange(TenantConfig tenant, string themeKey, ChangeEventArgs e)
+    {
+        var key = WeddingThemeCatalog.NormalizeKey(themeKey);
+        tenant.UnlockedThemeKeys ??= new();
+        tenant.UnlockedThemeKeys.RemoveAll(x => string.Equals(WeddingThemeCatalog.NormalizeKey(x), key, StringComparison.OrdinalIgnoreCase));
+        if (e.Value is bool enabled && enabled)
+        {
+            tenant.UnlockedThemeKeys.Add(key);
+        }
+    }
+
+    private async Task OnSaveThemeUnlocks(TenantConfig tenant)
+    {
+        await Vm.SetUnlockedThemesAsync(tenant.Slug, tenant.UnlockedThemeKeys);
         StateHasChanged();
     }
 

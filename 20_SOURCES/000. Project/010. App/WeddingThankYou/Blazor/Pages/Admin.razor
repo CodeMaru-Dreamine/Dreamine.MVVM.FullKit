@@ -60,7 +60,7 @@
                 </div>
 
                 <nav class="w-admin-nav__list">
-                    @foreach (var item in _navItems)
+                    @foreach (var item in VisibleNavItems)
                     {
                         <button class="w-admin-nav__item @(_selected == item.Key ? "active" : "")"
                                 @onclick="() => SelectSection(item.Key)">
@@ -173,13 +173,26 @@
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🎨 테마 색상</h3>
                             <div class="w-theme-picker">
-                                @foreach (var t in _themes)
+                                @foreach (var t in ThankYouDesignCatalog.Themes)
                                 {
-                                    <button class="w-theme-btn @(Vm.Config!.ThemeName == t.Key ? "active" : "")"
-                                            style="--tc:@t.Value.Primary;--tca:@t.Value.Accent"
-                                            @onclick="() => Vm.Config!.ThemeName = t.Key">
+                                    var canUse = CanUseTheme(t);
+                                    var canSelect = canUse && t.IsImplemented;
+                                    <button class="w-theme-btn @(Vm.Config!.ThemeName == t.Key ? "active" : "") @(!canSelect ? "is-locked" : "")"
+                                            style="--tc:@t.Primary;--tca:@t.Accent"
+                                            disabled="@(!canSelect)"
+                                            @onclick="() => SelectTheme(t.Key)">
                                         <span class="w-theme-swatch"></span>
-                                        <span>@t.Value.Label</span>
+                                        <span>
+                                            @t.DisplayName
+                                            @if (!t.IsImplemented)
+                                            {
+                                                <small class="w-layout-lock">준비 중</small>
+                                            }
+                                            else if (!canUse)
+                                            {
+                                                <small class="w-layout-lock">잠금</small>
+                                            }
+                                        </span>
                                     </button>
                                 }
                             </div>
@@ -268,6 +281,68 @@
                             </div>
                         </section>
                     }
+                    else if (_selected == "story")
+                    {
+                        @if (!IsStoryLayout)
+                        {
+                            <section class="w-admin__section">
+                                <h3 class="w-admin__section-h">스토리 챕터</h3>
+                                <p class="w-hint">Story 레이아웃을 선택하면 챕터 문구와 대표 사진을 관리할 수 있습니다.</p>
+                            </section>
+                        }
+                        else
+                        {
+                            <section class="w-admin__section">
+                                <div class="w-admin-section-title-row">
+                                    <div>
+                                        <h3 class="w-admin__section-h">스토리 챕터</h3>
+                                        <p class="w-hint">Story 레이아웃에서 사용할 챕터별 대표 사진과 문구입니다. 기본 4개 챕터는 유지되고, 필요한 챕터를 추가할 수 있습니다.</p>
+                                    </div>
+                                    <button type="button" class="w-btn w-btn--primary" @onclick="OnAddStoryChapter">챕터 추가</button>
+                                </div>
+                                <div class="w-story-admin-list">
+                                    @foreach (var chapter in Vm.Config!.StoryChapters)
+                                    {
+                                        <article class="w-story-admin-card">
+                                            <div class="w-story-admin-card__head">
+                                                <strong>@chapter.Label</strong>
+                                                <div class="w-story-admin-card__actions">
+                                                    @if (chapter.ChapterNumber <= 4)
+                                                    {
+                                                        <span class="w-layout-lock">기본</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeleteStoryChapter(chapter.ChapterNumber)">삭제</button>
+                                                    }
+                                                    <button type="button" class="w-btn w-btn--small" @onclick="() => OnSaveStoryChapter(chapter)">챕터 저장</button>
+                                                </div>
+                                            </div>
+                                            <label class="w-label">챕터 제목</label>
+                                            <input class="w-input" @bind="chapter.Title" />
+                                            <label class="w-label">챕터 본문</label>
+                                            <textarea class="w-input w-textarea" rows="4" @bind="chapter.Body"></textarea>
+                                            <label class="w-label">대표 사진</label>
+                                            <select class="w-input" @bind="chapter.PhotoPath">
+                                                <option value="">자동 선택</option>
+                                                @foreach (var photo in Vm.Gallery)
+                                                {
+                                                    <option value="@photo.FileName">@photo.FileName</option>
+                                                }
+                                            </select>
+                                            @if (!string.IsNullOrWhiteSpace(chapter.PhotoPath))
+                                            {
+                                                <div class="w-story-admin-photo">
+                                                    <img src="@Vm.GetThumbUrl(Slug, chapter.PhotoPath)" alt="선택된 대표 사진" />
+                                                    <span>@chapter.PhotoPath</span>
+                                                </div>
+                                            }
+                                        </article>
+                                    }
+                                </div>
+                            </section>
+                        }
+                    }
                     else if (_selected == "content")
                     {
                         <section class="w-admin__section">
@@ -316,6 +391,12 @@
                                 {
                                     <div class="w-admin__gallery-item">
                                         <img src="@Vm.GetThumbUrl(Slug, p.FileName)" alt="@p.FileName" />
+                                        <div class="w-admin__photo-order">
+                                            <button type="button" class="w-btn w-btn--sm" title="맨 앞으로" @onclick="() => OnMovePhotoTo(p.FileName, true)">처음</button>
+                                            <button type="button" class="w-btn w-btn--sm" title="앞으로" @onclick="() => OnMovePhoto(p.FileName, -1)">↑</button>
+                                            <button type="button" class="w-btn w-btn--sm" title="뒤로" @onclick="() => OnMovePhoto(p.FileName, 1)">↓</button>
+                                            <button type="button" class="w-btn w-btn--sm" title="맨 뒤로" @onclick="() => OnMovePhotoTo(p.FileName, false)">끝</button>
+                                        </div>
                                         <button class="w-btn w-btn--danger w-btn--sm"
                                                 @onclick="() => OnDeletePhoto(p.FileName)">삭제</button>
                                         <span class="w-admin__fname">@p.FileName</span>
@@ -569,13 +650,16 @@
     [
         new("basic",   Icon("user"), "기본 정보"),
         new("design",  Icon("palette"), "디자인"),
+        new("story",   Icon("palette"), "스토리 챕터"),
         new("content", Icon("media"), "사진·동영상"),
         new("map",     Icon("pin"), "지도"),
         new("account", Icon("card"), "계좌 안내"),
         new("share",   Icon("share"), "공유 설정"),
     ];
 
-    private NavItem CurrentNavItem => _navItems.FirstOrDefault(i => i.Key == _selected) ?? _navItems[0];
+    private bool IsStoryLayout => CurrentLayoutMode == WeddingLayoutMode.Story;
+    private IEnumerable<NavItem> VisibleNavItems => _navItems.Where(i => i.Key != "story" || IsStoryLayout);
+    private NavItem CurrentNavItem => VisibleNavItems.FirstOrDefault(i => i.Key == _selected) ?? _navItems[0];
     private string PreviewUrl => $"/{Slug}/thankyou";
     private string PreviewTitle => "감사장 미리보기";
 
@@ -597,20 +681,18 @@
     private static readonly HashSet<string> _defaultLabels =
         ["신랑", "신부", "신랑 아버지", "신랑 어머니", "신부 아버지", "신부 어머니"];
 
-    private static readonly Dictionary<string, (string Primary, string Accent, string Label)> _themes = new()
-    {
-        ["rose"]   = ("#c8a882", "#a07850", "로즈 골드 (기본)"),
-        ["ivory"]  = ("#b8a99a", "#8a7060", "아이보리 크림"),
-        ["forest"] = ("#6b8f71", "#4a6b50", "포레스트 그린"),
-        ["navy"]   = ("#3d5a80", "#98c1d9", "네이비 & 골드"),
-        ["blush"]  = ("#d4a5a5", "#b07575", "블러쉬 핑크"),
-    };
-
     private int _uploadElapsedSec;
     private System.Threading.CancellationTokenSource? _uploadTickCts;
 
     private void SelectSection(string key)
     {
+        if (key == "story" && !IsStoryLayout)
+        {
+            _selected = "design";
+            _navOpen = false;
+            return;
+        }
+
         _selected = key;
         _navOpen = false;
     }
@@ -626,6 +708,10 @@
         var option = WeddingLayoutCatalog.Instance.Find(mode);
         if (option is null || !option.IsImplemented || !CanUseLayout(option)) return;
         Vm.Config.ThankYouStyle = ThankYouDesignCatalog.ToLegacyLayoutKey(mode);
+        if (mode != WeddingLayoutMode.Story && _selected == "story")
+        {
+            _selected = "design";
+        }
     }
 
     private bool CanUseLayout(WeddingLayoutOption option)
@@ -645,6 +731,33 @@
                 .Where(x => x != WeddingLayoutMode.Unknown)
                 .ToArray(),
         };
+    }
+
+    private bool CanUseTheme(WeddingThemeOption option)
+    {
+        if (Vm.Config is null) return option.Tier == WeddingThemeTier.Free;
+        return new WeddingThemeAccessPolicy().CanUse(option, BuildThemeAccessState());
+    }
+
+    private WeddingThemeAccessState BuildThemeAccessState()
+    {
+        if (Vm.Config is null) return new WeddingThemeAccessState();
+        return new WeddingThemeAccessState
+        {
+            HasPremiumPlan = Vm.Config.HasPremiumPlan,
+            UnlockedThemeKeys = Vm.Config.UnlockedThemeKeys
+                .Select(WeddingThemeCatalog.NormalizeKey)
+                .Where(WeddingThemeCatalog.IsKnownKey)
+                .ToArray(),
+        };
+    }
+
+    private void SelectTheme(string themeKey)
+    {
+        if (Vm.Config is null) return;
+        var option = WeddingThemeCatalog.Instance.Find(themeKey);
+        if (option is null || !option.IsImplemented || !CanUseTheme(option)) return;
+        Vm.Config.ThemeName = option.Key;
     }
 
     private async Task ReloadPreview()
@@ -733,6 +846,27 @@
     {
         await Vm.SaveConfigAsync();
         await ReloadPreview();
+    }
+
+    private async Task OnSaveStoryChapter(StoryChapter chapter)
+    {
+        await Vm.SaveStoryChapterAsync(chapter);
+        await ReloadPreview();
+        StateHasChanged();
+    }
+
+    private async Task OnAddStoryChapter()
+    {
+        await Vm.AddStoryChapterAsync();
+        await ReloadPreview();
+        StateHasChanged();
+    }
+
+    private async Task OnDeleteStoryChapter(int chapterNumber)
+    {
+        await Vm.DeleteStoryChapterAsync(chapterNumber);
+        await ReloadPreview();
+        StateHasChanged();
     }
 
     private async Task OnShareThankYou()
@@ -839,6 +973,20 @@
     private async Task OnDeletePhoto(string fileName)
     {
         await Vm.DeletePhotoAsync(Slug, fileName);
+        StateHasChanged();
+    }
+
+    private async Task OnMovePhoto(string fileName, int offset)
+    {
+        await Vm.MoveGalleryPhotoAsync(fileName, offset);
+        await ReloadPreview();
+        StateHasChanged();
+    }
+
+    private async Task OnMovePhotoTo(string fileName, bool first)
+    {
+        await Vm.MoveGalleryPhotoToAsync(fileName, first);
+        await ReloadPreview();
         StateHasChanged();
     }
 }

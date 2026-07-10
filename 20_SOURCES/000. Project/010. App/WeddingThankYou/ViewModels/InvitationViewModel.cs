@@ -46,6 +46,7 @@ namespace WeddingThankYou.ViewModels
 		public string VenueAddress => Config?.VenueAddress ?? "";
 		public string Story => Config?.Story ?? "";
 		public string Story2 => Config?.Story2 ?? "";
+		public IReadOnlyList<StoryChapter> StoryChapters => Config?.StoryChapters ?? WeddingStoryChapterDefaults.Create();
 		public string ThemeName => Config?.ThemeName ?? "rose";
 		public string ThankYouStyle => Config?.ThankYouStyle ?? "onepage";
 		public WeddingLayoutMode LayoutMode => WeddingLayoutCatalog.FromLegacyKey(ThankYouStyle);
@@ -131,18 +132,60 @@ namespace WeddingThankYou.ViewModels
 		public void LightboxNext() => LightboxIdx = (LightboxIdx + 1) % Math.Max(1, AllPhotos.Count);
 		public void LightboxPrev() => LightboxIdx = (LightboxIdx - 1 + Math.Max(1, AllPhotos.Count)) % Math.Max(1, AllPhotos.Count);
 
+		public PhotoInfo? ResolveStoryChapterPhoto(StoryChapter chapter, int chapterIndex)
+		{
+			var explicitPhoto = FindPhoto(chapter.PhotoPath) ?? FindPhoto(chapter.PhotoId);
+			if (explicitPhoto is not null)
+			{
+				return explicitPhoto;
+			}
+
+			return chapterIndex >= 0 && chapterIndex < AllPhotos.Count
+				? AllPhotos[chapterIndex]
+				: null;
+		}
+
 		public async Task LoadAsync(string slug, CancellationToken ct = default)
 		{
 			Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
 			if (Config is null) { NotFound = true; IsLoaded = true; return; }
+			ThankYouDesignCatalog.Normalize(Config);
 
 			var all = await _photos.GetGalleryAsync(slug, ct).ConfigureAwait(false);
-			var sorted = all.OrderByDescending(p => p.LastModified)
-							.ThenByDescending(p => p.FileName)
-							.ToList();
+			var sorted = ApplyGalleryOrder(all, Config.GalleryFileNames);
 			AllPhotos = sorted;
 			Gallery = sorted.Take(10).ToList();
 			IsLoaded = true;
+		}
+
+		private static List<PhotoInfo> ApplyGalleryOrder(IReadOnlyList<PhotoInfo> photos, IReadOnlyList<string> order)
+		{
+			var orderMap = order
+				.Select((fileName, index) => new { fileName, index })
+				.GroupBy(x => x.fileName, StringComparer.OrdinalIgnoreCase)
+				.ToDictionary(x => x.Key, x => x.First().index, StringComparer.OrdinalIgnoreCase);
+
+			return photos
+				.OrderBy(p => orderMap.TryGetValue(p.FileName, out var index) ? index : int.MaxValue)
+				.ThenByDescending(p => p.LastModified)
+				.ThenByDescending(p => p.FileName)
+				.ToList();
+		}
+
+		private PhotoInfo? FindPhoto(string? value)
+		{
+			if (string.IsNullOrWhiteSpace(value))
+			{
+				return null;
+			}
+
+			var key = value.Trim();
+			return AllPhotos.FirstOrDefault(p =>
+				string.Equals(p.FileName, key, StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(p.Url, key, StringComparison.OrdinalIgnoreCase) ||
+				string.Equals(p.ThumbUrl, key, StringComparison.OrdinalIgnoreCase) ||
+				p.Url.EndsWith("/" + key, StringComparison.OrdinalIgnoreCase) ||
+				p.ThumbUrl.EndsWith("/" + key, StringComparison.OrdinalIgnoreCase));
 		}
 	}
 }

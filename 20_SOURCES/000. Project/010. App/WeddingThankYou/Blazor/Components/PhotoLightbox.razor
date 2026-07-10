@@ -1,0 +1,70 @@
+@namespace WeddingThankYou.Blazor.Components
+@using WeddingThankYou.Models
+
+@if (IsOpen && Photos.Count > 0)
+{
+    <div class="wedding-photo-lightbox" tabindex="0" @ref="_lightboxRef" @onkeydown="OnKeyDown">
+        <div class="wedding-photo-lightbox-backdrop" @onclick="Close"></div>
+        <div class="wedding-photo-lightbox-dialog" role="dialog" aria-modal="true" aria-label="사진 크게 보기">
+            <button type="button" class="wedding-photo-lightbox-close" @onclick="Close" aria-label="닫기">×</button>
+            @if (Photos.Count > 1)
+            {
+                <button type="button" class="wedding-photo-lightbox-nav wedding-photo-lightbox-nav--prev" @onclick="Prev" aria-label="이전 사진">‹</button>
+            }
+            <img class="wedding-photo-lightbox-image" src="@CurrentPhoto.Url" alt="사진 @(SafeIndex + 1)" />
+            @if (Photos.Count > 1)
+            {
+                <button type="button" class="wedding-photo-lightbox-nav wedding-photo-lightbox-nav--next" @onclick="Next" aria-label="다음 사진">›</button>
+            }
+            <span class="wedding-photo-lightbox-counter">@(SafeIndex + 1) / @Photos.Count</span>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<PhotoInfo> Photos { get; set; } = [];
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public int CurrentIndex { get; set; }
+    [Parameter] public EventCallback<int> CurrentIndexChanged { get; set; }
+    [Parameter] public EventCallback Closed { get; set; }
+
+    private ElementReference _lightboxRef;
+
+    private int SafeIndex => Photos.Count == 0 ? 0 : Math.Clamp(CurrentIndex, 0, Photos.Count - 1);
+    private PhotoInfo CurrentPhoto => Photos[SafeIndex];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!IsOpen)
+        {
+            return;
+        }
+
+        try { await _lightboxRef.FocusAsync(); }
+        catch { }
+    }
+
+    private Task Close() => Closed.InvokeAsync();
+
+    private Task Prev()
+    {
+        if (Photos.Count <= 1) return Task.CompletedTask;
+        var next = (SafeIndex - 1 + Photos.Count) % Photos.Count;
+        return CurrentIndexChanged.InvokeAsync(next);
+    }
+
+    private Task Next()
+    {
+        if (Photos.Count <= 1) return Task.CompletedTask;
+        var next = (SafeIndex + 1) % Photos.Count;
+        return CurrentIndexChanged.InvokeAsync(next);
+    }
+
+    private Task OnKeyDown(KeyboardEventArgs e) => e.Key switch
+    {
+        "Escape" => Close(),
+        "ArrowLeft" => Prev(),
+        "ArrowRight" => Next(),
+        _ => Task.CompletedTask,
+    };
+}

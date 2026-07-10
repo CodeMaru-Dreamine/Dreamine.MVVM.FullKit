@@ -26,23 +26,38 @@
         <div class="wedding-layout-heading">
             <p class="wedding-layout-kicker">Gallery</p>
             <h2>사진으로 남긴 순간</h2>
-            <span>최근 @(Vm.Gallery.Count)장 / 전체 @(Vm.AllPhotos.Count)장</span>
+            @if (TotalCount > 0)
+            {
+                <span>표시 @(VisibleCount)장 / 전체 @(TotalCount)장</span>
+            }
         </div>
 
-        @if (Vm.Gallery.Count == 0)
+        @if (TotalCount == 0)
         {
             <div class="wedding-gallery-empty">아직 등록된 사진이 없습니다.</div>
         }
         else
         {
             <div class="wedding-gallery-grid">
-                @for (int i = 0; i < Vm.Gallery.Count; i++)
+                @for (int i = 0; i < VisibleCount; i++)
                 {
+                    var photoIndex = i;
                     <figure class="wedding-gallery-tile">
-                        <img src="@Vm.Gallery[i].ThumbUrl" alt="사진 @(i + 1)" loading="lazy" />
+                        <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPhoto(photoIndex)" aria-label="사진 @(photoIndex + 1) 크게 보기">
+                            <img src="@Vm.AllPhotos[photoIndex].ThumbUrl" alt="사진 @(photoIndex + 1)" loading="lazy" />
+                        </button>
                     </figure>
                 }
             </div>
+
+            @if (VisibleCount < TotalCount)
+            {
+                <div class="wedding-layout-more">
+                    <button type="button" class="w-btn w-btn--primary" @onclick="LoadMore">
+                        사진 더 보기 (+@Math.Min(PageSize, TotalCount - VisibleCount))
+                    </button>
+                </div>
+            }
         }
     </section>
 
@@ -50,6 +65,11 @@
     <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="story" PauseMusicRequested="@PauseMusicRequested" />
     <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="guestbook" PauseMusicRequested="@PauseMusicRequested" />
     <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="gift" PauseMusicRequested="@PauseMusicRequested" />
+    <PhotoLightbox Photos="@Vm.AllPhotos"
+                   IsOpen="@_photoLightboxOpen"
+                   CurrentIndex="@_photoLightboxIndex"
+                   CurrentIndexChanged="OnPhotoIndexChanged"
+                   Closed="ClosePhoto" />
 </section>
 
 @code {
@@ -57,4 +77,28 @@
     [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
     [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
     [Parameter] public EventCallback PauseMusicRequested { get; set; }
+
+    private const int InitialCount = 12;
+    private const int PageSize = 12;
+    private int _visibleCount = InitialCount;
+    private bool _photoLightboxOpen;
+    private int _photoLightboxIndex;
+
+    private int TotalCount => Vm.AllPhotos.Count;
+    private int VisibleCount => Math.Min(_visibleCount, TotalCount);
+
+    private void LoadMore()
+    {
+        _visibleCount = Math.Min(_visibleCount + PageSize, TotalCount);
+    }
+
+    private void OpenPhoto(int index)
+    {
+        _photoLightboxIndex = Math.Clamp(index, 0, Math.Max(0, TotalCount - 1));
+        _photoLightboxOpen = TotalCount > 0;
+    }
+
+    private void ClosePhoto() => _photoLightboxOpen = false;
+
+    private void OnPhotoIndexChanged(int index) => _photoLightboxIndex = index;
 }

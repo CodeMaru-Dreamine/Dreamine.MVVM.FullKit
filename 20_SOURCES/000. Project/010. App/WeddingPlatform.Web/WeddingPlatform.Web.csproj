@@ -30,6 +30,8 @@
 
   <ItemGroup>
     <Compile Include="..\Wedding.Common\WeddingLayoutCatalog.cs" Link="Common\WeddingLayoutCatalog.cs" />
+    <Compile Include="..\Wedding.Common\WeddingStoryChapter.cs" Link="Common\WeddingStoryChapter.cs" />
+    <Compile Include="..\Wedding.Common\WeddingThemeCatalog.cs" Link="Common\WeddingThemeCatalog.cs" />
   </ItemGroup>
 
   <ItemGroup>

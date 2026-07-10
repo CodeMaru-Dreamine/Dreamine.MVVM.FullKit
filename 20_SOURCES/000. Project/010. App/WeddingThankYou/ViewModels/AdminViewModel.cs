@@ -188,12 +188,104 @@ namespace WeddingThankYou.ViewModels
 					return;
 				}
 
+				if (!ValidateThemeForSave(Config))
+				{
+					return;
+				}
+
 				ThankYouDesignCatalog.Normalize(Config);
 				await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
 				EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
 				StatusMessage = "설정이 저장되었습니다.";
 			}
 			catch (Exception ex) { StatusMessage = $"저장 오류: {ex.Message}"; }
+		}
+
+		public async Task SaveStoryChapterAsync(StoryChapter chapter, CancellationToken ct = default)
+		{
+			if (Config is null) return;
+			try
+			{
+				ThankYouDesignCatalog.Normalize(Config);
+				var chapters = Config.StoryChapters;
+				var index = chapters.FindIndex(x => x.ChapterNumber == chapter.ChapterNumber);
+				var normalized = WeddingStoryChapterDefaults.Clone(chapter);
+				normalized.Label = string.IsNullOrWhiteSpace(normalized.Label)
+					? $"CHAPTER {Math.Max(1, normalized.ChapterNumber):00}"
+					: normalized.Label.Trim();
+				normalized.Title = string.IsNullOrWhiteSpace(normalized.Title)
+					? "스토리"
+					: normalized.Title.Trim();
+
+				if (index >= 0)
+				{
+					chapters[index] = normalized;
+				}
+				else
+				{
+					chapters.Add(normalized);
+					Config.StoryChapters = WeddingStoryChapterDefaults.Normalize(chapters);
+				}
+
+				await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+				StatusMessage = $"{normalized.Label} 챕터가 저장되었습니다.";
+			}
+			catch (Exception ex)
+			{
+				StatusMessage = $"챕터 저장 오류: {ex.Message}";
+			}
+		}
+
+		public async Task AddStoryChapterAsync(CancellationToken ct = default)
+		{
+			if (Config is null) return;
+			try
+			{
+				ThankYouDesignCatalog.Normalize(Config);
+				var chapters = Config.StoryChapters;
+				var nextNumber = chapters.Count == 0 ? 1 : chapters.Max(x => x.ChapterNumber) + 1;
+				chapters.Add(new StoryChapter
+				{
+					ChapterNumber = nextNumber,
+					Label = $"CHAPTER {nextNumber:00}",
+					Title = "새로운 이야기",
+				});
+
+				await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+				StatusMessage = $"CHAPTER {nextNumber:00} 챕터가 추가되었습니다.";
+			}
+			catch (Exception ex)
+			{
+				StatusMessage = $"챕터 추가 오류: {ex.Message}";
+			}
+		}
+
+		public async Task DeleteStoryChapterAsync(int chapterNumber, CancellationToken ct = default)
+		{
+			if (Config is null) return;
+			try
+			{
+				ThankYouDesignCatalog.Normalize(Config);
+				if (chapterNumber <= 4)
+				{
+					StatusMessage = "기본 4개 챕터는 유지됩니다.";
+					return;
+				}
+
+				var removed = Config.StoryChapters.RemoveAll(x => x.ChapterNumber == chapterNumber);
+				if (removed == 0)
+				{
+					StatusMessage = "삭제할 챕터를 찾을 수 없습니다.";
+					return;
+				}
+
+				await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+				StatusMessage = $"CHAPTER {chapterNumber:00} 챕터가 삭제되었습니다.";
+			}
+			catch (Exception ex)
+			{
+				StatusMessage = $"챕터 삭제 오류: {ex.Message}";
+			}
 		}
 
 		private bool ValidateLayoutForSave(TenantConfig config)
@@ -233,6 +325,47 @@ namespace WeddingThankYou.ViewModels
 				return false;
 			}
 
+			return true;
+		}
+
+		private bool ValidateThemeForSave(TenantConfig config)
+		{
+			config.UnlockedThemeKeys ??= new();
+			if (!WeddingThemeCatalog.IsKnownKey(config.ThemeName))
+			{
+				StatusMessage = "저장 오류: 존재하지 않는 테마입니다.";
+				return false;
+			}
+
+			var option = WeddingThemeCatalog.Instance.Find(config.ThemeName);
+			if (option is null)
+			{
+				StatusMessage = "저장 오류: 존재하지 않는 테마입니다.";
+				return false;
+			}
+
+			if (!option.IsImplemented)
+			{
+				StatusMessage = "저장 오류: 아직 준비 중인 테마입니다.";
+				return false;
+			}
+
+			var access = new WeddingThemeAccessState
+			{
+				HasPremiumPlan = config.HasPremiumPlan,
+				UnlockedThemeKeys = config.UnlockedThemeKeys
+					.Select(WeddingThemeCatalog.NormalizeKey)
+					.Where(WeddingThemeCatalog.IsKnownKey)
+					.ToArray(),
+			};
+
+			if (!new WeddingThemeAccessPolicy().CanUse(option, access))
+			{
+				StatusMessage = "저장 오류: 프리미엄 테마는 플랜 또는 잠금 해제 후 저장할 수 있습니다.";
+				return false;
+			}
+
+			config.ThemeName = option.Key;
 			return true;
 		}
 
@@ -303,6 +436,63 @@ namespace WeddingThankYou.ViewModels
 				StatusMessage = "삭제 완료";
 			}
 			catch (Exception ex) { StatusMessage = $"삭제 오류: {ex.Message}"; }
+		}
+
+		public async Task MoveGalleryPhotoAsync(string fileName, int offset, CancellationToken ct = default)
+		{
+			if (Config is null) return;
+			try
+			{
+				NormalizeGalleryFileOrder();
+				var index = Config.GalleryFileNames.FindIndex(x => string.Equals(x, fileName, StringComparison.OrdinalIgnoreCase));
+				if (index < 0) return;
+
+				var target = Math.Clamp(index + offset, 0, Config.GalleryFileNames.Count - 1);
+				if (index == target) return;
+
+				Config.GalleryFileNames.RemoveAt(index);
+				Config.GalleryFileNames.Insert(target, fileName);
+				await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+				Gallery = await _photos.GetGalleryAsync(Config.Slug, ct).ConfigureAwait(false);
+				StatusMessage = "사진 노출 순서가 저장되었습니다.";
+			}
+			catch (Exception ex) { StatusMessage = $"순서 변경 오류: {ex.Message}"; }
+		}
+
+		public async Task MoveGalleryPhotoToAsync(string fileName, bool first, CancellationToken ct = default)
+		{
+			if (Config is null) return;
+			try
+			{
+				NormalizeGalleryFileOrder();
+				var index = Config.GalleryFileNames.FindIndex(x => string.Equals(x, fileName, StringComparison.OrdinalIgnoreCase));
+				if (index < 0) return;
+
+				Config.GalleryFileNames.RemoveAt(index);
+				Config.GalleryFileNames.Insert(first ? 0 : Config.GalleryFileNames.Count, fileName);
+				await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+				Gallery = await _photos.GetGalleryAsync(Config.Slug, ct).ConfigureAwait(false);
+				StatusMessage = "사진 노출 순서가 저장되었습니다.";
+			}
+			catch (Exception ex) { StatusMessage = $"순서 변경 오류: {ex.Message}"; }
+		}
+
+		private void NormalizeGalleryFileOrder()
+		{
+			if (Config is null) return;
+			var existing = Gallery.Select(x => x.FileName).ToHashSet(StringComparer.OrdinalIgnoreCase);
+			Config.GalleryFileNames = Config.GalleryFileNames
+				.Where(existing.Contains)
+				.Distinct(StringComparer.OrdinalIgnoreCase)
+				.ToList();
+
+			foreach (var photo in Gallery)
+			{
+				if (!Config.GalleryFileNames.Contains(photo.FileName, StringComparer.OrdinalIgnoreCase))
+				{
+					Config.GalleryFileNames.Add(photo.FileName);
+				}
+			}
 		}
 
 		public async Task UploadRoadMapAsync(string slug, IBrowserFile file, CancellationToken ct = default)
