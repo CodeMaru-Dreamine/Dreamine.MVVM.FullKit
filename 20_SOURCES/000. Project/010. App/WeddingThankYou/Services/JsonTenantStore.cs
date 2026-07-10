@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Wedding.Common;
 using WeddingThankYou.Models;
 
 namespace WeddingThankYou.Services;
@@ -22,7 +23,7 @@ public sealed class JsonTenantStore : ITenantStore
     {
         WriteIndented = true,
         PropertyNameCaseInsensitive = true,
-        Converters = { new JsonStringEnumConverter() }
+        Converters = { new WeddingLayoutModeJsonConverter(), new JsonStringEnumConverter() }
     };
 
     public JsonTenantStore(WeddingOptions opts)
