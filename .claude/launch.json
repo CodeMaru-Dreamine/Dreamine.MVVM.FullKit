@@ -27,6 +27,13 @@
       "port": 3080,
       "autoPort": false,
       "env": { "CodemaruServer__Port": "3080" }
+    },
+    {
+      "name": "wedding-platform-web",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/WeddingPlatform.Web.csproj"],
+      "port": 5050,
+      "autoPort": false
     }
   ]
 }

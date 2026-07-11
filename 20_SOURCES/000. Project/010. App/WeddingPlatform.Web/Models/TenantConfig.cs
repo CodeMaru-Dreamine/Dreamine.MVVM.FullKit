@@ -61,12 +61,20 @@ public sealed class TenantConfig
     public int? MaxVideoSizeMb { get; set; } = null;
     /// <summary>이 계정 전용 동영상 업로드 최대 개수. null이면 전체 설정(GlobalSettings) 값을 따름. 0이면 무제한.</summary>
     public int? MaxVideoCount { get; set; } = null;
+    /// <summary>이 계정 전용 이미지/영상 정책 override. null이면 등급 정책을 따릅니다.</summary>
+    public MediaPolicyOverride? MediaPolicyOverride { get; set; } = null;
 
     // ── 링크 미리보기 (Open Graph) ──────────────────────
     public string OgTitle { get; set; } = "";
     public string OgDescription { get; set; } = "";
     /// <summary>OG 이미지 파일명 — 비우면 히어로 이미지 사용</summary>
     public string OgImageFileName { get; set; } = "";
+
+    // ── 자동 감사장 링크 미리보기 (Open Graph) ──────────────────────
+    public string ThankYouOgTitle { get; set; } = "";
+    public string ThankYouOgDescription { get; set; } = "";
+    /// <summary>자동 감사장 OG 이미지 파일명 — 비우면 히어로 이미지 사용</summary>
+    public string ThankYouOgImageFileName { get; set; } = "";
 
     public WeddingSiteMode Mode { get; set; } = WeddingSiteMode.Invite;
     public string PasswordHash { get; set; } = "";

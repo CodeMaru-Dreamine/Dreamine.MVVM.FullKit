@@ -1,5 +1,6 @@
 @namespace WeddingPlatform.Blazor.Components
 @using WeddingPlatform.ViewModels
+@implements IAsyncDisposable
 
 <section class="wedding-layout-gallery @Vm.LayoutDescriptor.CssClass">
     <section class="wedding-gallery-cover" role="banner">
@@ -22,49 +23,59 @@
         </div>
     </section>
 
-    <section class="wedding-gallery-section" id="gallery">
-        <div class="wedding-layout-heading">
-            <p class="wedding-layout-kicker">Gallery</p>
-            <h2>사진으로 남긴 순간</h2>
-            @if (TotalCount > 0)
-            {
-                <span>표시 @(VisibleCount)장 / 전체 @(TotalCount)장</span>
-            }
-        </div>
-
-        @if (TotalCount == 0)
+    @foreach (var activeSection in Vm.OrderedSections.Where(x => x != "hero"))
+    {
+        if (activeSection == "gallery")
         {
-            <div class="wedding-gallery-empty">아직 등록된 사진이 없습니다.</div>
+            <section class="wedding-gallery-section" id="gallery">
+                <div class="wedding-layout-heading">
+                    <p class="wedding-layout-kicker">Gallery</p>
+                    <h2>사진으로 남긴 순간</h2>
+                    @if (TotalCount > 0)
+                    {
+                        <span>표시 @(VisibleCount)장 / 전체 @(TotalCount)장</span>
+                    }
+                </div>
+
+                @if (TotalCount == 0)
+                {
+                    <div class="wedding-gallery-empty">아직 등록된 사진이 없습니다.</div>
+                }
+                else
+                {
+                    <div class="w-gallery__controls">
+                        <button class="w-btn" type="button" @onclick="ToggleAutoPlay">
+                            @(_autoPlaying ? "⏸ 정지" : "▶ 자동재생")
+                        </button>
+                    </div>
+                    <div class="wedding-gallery-grid">
+                        @for (int i = 0; i < VisibleCount; i++)
+                        {
+                            var photoIndex = i;
+                            <figure class="wedding-gallery-tile">
+                                <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPhoto(photoIndex)" aria-label="사진 @(photoIndex + 1) 크게 보기">
+                                    <img src="@Vm.AllPhotos[photoIndex].ThumbUrl" alt="사진 @(photoIndex + 1)" loading="lazy" />
+                                </button>
+                            </figure>
+                        }
+                    </div>
+
+                    @if (VisibleCount < TotalCount)
+                    {
+                        <div class="wedding-layout-more">
+                            <button type="button" class="w-btn w-btn--primary" @onclick="LoadMore">
+                                사진 더 보기 (+@Math.Min(PageSize, TotalCount - VisibleCount))
+                            </button>
+                        </div>
+                    }
+                }
+            </section>
         }
         else
         {
-            <div class="wedding-gallery-grid">
-                @for (int i = 0; i < VisibleCount; i++)
-                {
-                    var photoIndex = i;
-                    <figure class="wedding-gallery-tile">
-                        <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPhoto(photoIndex)" aria-label="사진 @(photoIndex + 1) 크게 보기">
-                            <img src="@Vm.AllPhotos[photoIndex].ThumbUrl" alt="사진 @(photoIndex + 1)" loading="lazy" />
-                        </button>
-                    </figure>
-                }
-            </div>
-
-            @if (VisibleCount < TotalCount)
-            {
-                <div class="wedding-layout-more">
-                    <button type="button" class="w-btn w-btn--primary" @onclick="LoadMore">
-                        사진 더 보기 (+@Math.Min(PageSize, TotalCount - VisibleCount))
-                    </button>
-                </div>
-            }
+            <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="@activeSection" PauseMusicRequested="@PauseMusicRequested" />
         }
-    </section>
-
-    <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="video" PauseMusicRequested="@PauseMusicRequested" />
-    <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="story" PauseMusicRequested="@PauseMusicRequested" />
-    <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="guestbook" PauseMusicRequested="@PauseMusicRequested" />
-    <InvitationSections Slug="@Slug" Vm="@Vm" VmGuest="@VmGuest" IsTabbed="true" ActiveSection="gift" PauseMusicRequested="@PauseMusicRequested" />
+    }
     <PhotoLightbox Photos="@Vm.AllPhotos"
                    IsOpen="@_photoLightboxOpen"
                    CurrentIndex="@_photoLightboxIndex"
@@ -83,6 +94,8 @@
     private int _visibleCount = InitialCount;
     private bool _photoLightboxOpen;
     private int _photoLightboxIndex;
+    private bool _autoPlaying;
+    private CancellationTokenSource? _autoPlayCts;
 
     private int TotalCount => Vm.AllPhotos.Count;
     private int VisibleCount => Math.Min(_visibleCount, TotalCount);
@@ -98,7 +111,72 @@
         _photoLightboxOpen = TotalCount > 0;
     }
 
-    private void ClosePhoto() => _photoLightboxOpen = false;
+    private async Task ClosePhoto()
+    {
+        await StopAutoPlay();
+        _photoLightboxOpen = false;
+    }
 
     private void OnPhotoIndexChanged(int index) => _photoLightboxIndex = index;
+
+    private async Task ToggleAutoPlay()
+    {
+        if (_autoPlaying)
+        {
+            await StopAutoPlay();
+        }
+        else
+        {
+            await StartAutoPlay();
+        }
+    }
+
+    private Task StartAutoPlay()
+    {
+        if (TotalCount == 0 || _autoPlaying) return Task.CompletedTask;
+
+        if (!_photoLightboxOpen)
+        {
+            _photoLightboxIndex = 0;
+            _photoLightboxOpen = true;
+        }
+
+        _autoPlaying = true;
+        _autoPlayCts = new CancellationTokenSource();
+        var token = _autoPlayCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    await Task.Delay(Vm.GalleryAutoPlayMs, token).ConfigureAwait(false);
+                    await InvokeAsync(() =>
+                    {
+                        if (_photoLightboxOpen && TotalCount > 0)
+                        {
+                            _photoLightboxIndex = (_photoLightboxIndex + 1) % TotalCount;
+                            StateHasChanged();
+                        }
+                    });
+                }
+            }
+            catch (TaskCanceledException) { }
+        }, token);
+
+        return Task.CompletedTask;
+    }
+
+    private Task StopAutoPlay()
+    {
+        _autoPlaying = false;
+        _autoPlayCts?.Cancel();
+        return Task.CompletedTask;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await StopAutoPlay();
+        _autoPlayCts?.Dispose();
+    }
 }

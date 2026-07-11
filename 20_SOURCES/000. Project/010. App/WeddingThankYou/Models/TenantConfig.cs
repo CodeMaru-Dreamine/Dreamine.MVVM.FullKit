@@ -21,6 +21,7 @@ public sealed class TenantConfig
     public double VenueLng { get; set; }
     public string Story { get; set; } = "";
     public string Story2 { get; set; } = "";
+    public List<string> SectionOrder { get; set; } = WeddingSectionOrderCatalog.ThankYouRecommendedOrder.ToList();
     public List<StoryChapter> StoryChapters { get; set; } = WeddingStoryChapterDefaults.Create();
     public string HeroImageFileName { get; set; } = "";
 
@@ -30,6 +31,7 @@ public sealed class TenantConfig
     public string HeroPanelHorizontalDesktop { get; set; } = "center";
     public string HeroPanelVerticalMobile { get; set; } = "top";
     public string HeroPanelHorizontalMobile { get; set; } = "center";
+    public WeddingFloatingPosition HeroPanelPlacement { get; set; } = new();
     public string MapLinkKakao { get; set; } = "";
     public string MapLinkNaver { get; set; } = "";
     public string MapLinkAtlan { get; set; } = "";
@@ -51,11 +53,14 @@ public sealed class TenantConfig
     public string MusicFileName { get; set; } = "";
     /// <summary>배경 음악 버튼 위치 — "bottom"(기본) 또는 "top"</summary>
     public string MusicButtonPosition { get; set; } = "bottom";
+    public WeddingFloatingPosition MusicButtonPlacement { get; set; } = new();
     public List<string> VideoFileNames { get; set; } = new();
     /// <summary>이 계정 전용 동영상 업로드 최대 용량(MB). null이면 전체 설정(GlobalSettings) 값을 따름. 0이면 무제한.</summary>
     public int? MaxVideoSizeMb { get; set; } = null;
     /// <summary>이 계정 전용 동영상 업로드 최대 개수. null이면 전체 설정(GlobalSettings) 값을 따름. 0이면 무제한.</summary>
     public int? MaxVideoCount { get; set; } = null;
+    /// <summary>이 계정 전용 이미지/영상 정책 override. null이면 등급 정책을 따릅니다.</summary>
+    public MediaPolicyOverride? MediaPolicyOverride { get; set; } = null;
 
     // ── 링크 미리보기 (Open Graph) ──────────────────────
     public string OgTitle { get; set; } = "";

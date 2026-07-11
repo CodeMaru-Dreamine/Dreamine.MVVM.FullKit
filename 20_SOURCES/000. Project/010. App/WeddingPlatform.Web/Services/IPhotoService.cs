@@ -11,6 +11,7 @@ public interface IPhotoService
     Task<string> UploadRoadMapAsync(string slug, IBrowserFile file, CancellationToken ct = default);
     Task<string> UploadMusicAsync(string slug, IBrowserFile file, CancellationToken ct = default);
     Task<string> UploadOgImageAsync(string slug, IBrowserFile file, CancellationToken ct = default);
+    Task<string> UploadThankYouOgImageAsync(string slug, IBrowserFile file, CancellationToken ct = default);
     Task<string> UploadVideoAsync(string slug, IBrowserFile file, CancellationToken ct = default);
     Task DeleteVideoAsync(string slug, string fileName, CancellationToken ct = default);
     Task DeleteAsync(string slug, string fileName, CancellationToken ct = default);

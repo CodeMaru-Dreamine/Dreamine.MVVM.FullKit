@@ -5,23 +5,22 @@
 
 @using Wedding.Common
 @using WeddingPlatform.Models
+@using WeddingPlatform.Services
 @using Microsoft.JSInterop
+@using System.IO
 @inject WeddingSuperAdminViewModel Vm
+@inject ITenantStore TenantStore
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 
 <PageTitle>Wedding 통합 어드민</PageTitle>
 
-<div class="w-admin">
-    <div class="w-sa-header">
-        <h1 class="w-admin__title">💒 Wedding 통합 어드민</h1>
-        <p class="w-sa-subtitle">등록된 커플 계정을 관리하고 새 청첩장을 만듭니다.</p>
-    </div>
-
+<div class="w-admin @(Vm.IsAuthenticated ? "wedding-admin-shell" : "")">
     @if (!Vm.IsAuthenticated)
     {
         <div class="w-admin__login w-panel">
             <h2>슈퍼 어드민 로그인</h2>
-            <p class="w-sa-hint">appsettings.json → Wedding:SuperAdminPassword</p>
+            <p class="w-sa-hint">appsettings.json -> Wedding:SuperAdminPassword</p>
             <input class="w-input" type="password" placeholder="어드민 비밀번호"
                    @bind="Vm.LoginPassword"
                    @onkeydown="OnLoginKeyDown" />
@@ -38,242 +37,680 @@
     }
     else
     {
-        @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
-        {
-            <p class="w-status @(Vm.StatusMessage.StartsWith("✅") ? "" : "w-status--error")">
-                @Vm.StatusMessage
-            </p>
-        }
+        var filteredTenants = FilteredTenants.ToArray();
+        var totalPages = GetTotalPages(filteredTenants.Length);
+        var currentPage = Math.Min(_currentPage, totalPages);
+        var pagedTenants = filteredTenants
+            .Skip((currentPage - 1) * _pageSize)
+            .Take(_pageSize)
+            .ToArray();
 
-        <section class="w-admin__section w-sa-create">
-            <h2>➕ 새 청첩장 만들기</h2>
-
-            <div class="w-sa-form">
-                <div class="w-sa-field">
-                    <label class="w-label">슬러그 (URL ID)</label>
-                    <input class="w-input" placeholder="예: gildong-sunja (영문·숫자·하이픈)"
-                           @bind="Vm.NewSlug" />
-                    @if (!string.IsNullOrWhiteSpace(Vm.NewSlug))
-                    {
-                        <span class="w-sa-preview">
-                            → /@Vm.NewSlug.Trim().ToLowerInvariant()
-                        </span>
-                    }
+        <aside class="wedding-admin-sidebar">
+            <div class="wedding-admin-brand">
+                <span class="wedding-admin-brand__mark">W</span>
+                <div>
+                    <strong>Wedding</strong>
+                    <span>통합 어드민</span>
                 </div>
-
-                <div class="w-sa-field">
-                    <label class="w-label">커플 이름</label>
-                    <input class="w-input" placeholder="예: 홍길동 ♥ 성춘향"
-                           @bind="Vm.NewCoupleName" />
-                </div>
-
-                <div class="w-sa-field">
-                    <label class="w-label">결혼 날짜</label>
-                    <input class="w-input" type="date" @bind="Vm.NewWeddingDate" />
-                </div>
-
-                <div class="w-sa-field">
-                    <label class="w-label">커플 어드민 비밀번호</label>
-                    <input class="w-input" type="password" placeholder="커플이 어드민 접속 시 사용"
-                           @bind="Vm.NewPassword" />
-                </div>
-
-                <button class="w-btn w-btn--primary w-sa-create-btn" @onclick="OnCreate">
-                    청첩장 생성
-                </button>
             </div>
-        </section>
 
-        <section class="w-admin__section">
-            <h2>⚙ 전체 설정</h2>
-            <p class="w-hint">모든 청첩장 계정에 공통으로 적용되는 설정입니다.</p>
+            <nav class="wedding-admin-nav" aria-label="슈퍼 어드민 메뉴">
+                <button class="@NavClass("dashboard")" type="button" @onclick='() => SetActiveMenu("dashboard")'>대시보드</button>
+                <button class="@NavClass("invite")" type="button" @onclick='() => SetActiveMenu("invite")'>청첩장 관리</button>
+                <button class="@NavClass("account")" type="button" @onclick='() => SetActiveMenu("account")'>계정 관리</button>
+                <button class="@NavClass("media")" type="button" @onclick='() => SetActiveMenu("media")'>미디어 관리</button>
+                <button class="@NavClass("settings")" type="button" @onclick='() => SetActiveMenu("settings")'>설정</button>
+            </nav>
 
-            <label class="w-label">동영상 업로드 최대 용량</label>
-            <select class="w-input" @bind="Vm.MaxVideoSizeMb">
-                <option value="200">200MB</option>
-                <option value="500">500MB</option>
-                <option value="1024">1GB</option>
-                <option value="2048">2GB</option>
-                <option value="0">무제한</option>
-            </select>
-            <p class="w-hint">무제한으로 설정하면 디스크 용량을 직접 관리해야 합니다.</p>
+            <div class="wedding-admin-sidebar__meter">
+                <span>무료 미디어 기본 정책</span>
+                <strong>@FormatVideoSize(Vm.MediaPolicy.FreeTier.VideoMaxFileSizeMb)</strong>
+                <small>영상 @FormatLimit(Vm.MediaPolicy.FreeTier.VideoMaxCount, "개") · 이미지 @FormatLimit(Vm.MediaPolicy.FreeTier.ImageMaxCount, "장")</small>
+            </div>
+        </aside>
 
-            <label class="w-label" style="margin-top:.75rem">동영상 업로드 최대 개수 (계정당)</label>
-            <select class="w-input" @bind="Vm.MaxVideoCount">
-                <option value="6">6개</option>
-                <option value="10">10개</option>
-                <option value="20">20개</option>
-                <option value="0">무제한</option>
-            </select>
-            <p class="w-hint">계정별로 별도 설정이 없으면 이 값이 기본으로 적용됩니다.</p>
+        <main class="wedding-admin-content">
+            <header class="wedding-admin-header">
+                <div>
+                    <p class="wedding-admin-eyebrow">Super Admin</p>
+                    <h1>@ActiveTitle</h1>
+                    <span>@ActiveDescription</span>
+                </div>
 
-            <button class="w-btn w-btn--primary" @onclick="OnSaveGlobalSettings">💾 전체 설정 저장</button>
-        </section>
+                <div class="wedding-admin-header__tools">
+                    <label class="wedding-admin-search">
+                        <span>검색</span>
+                        <input value="@_searchText"
+                               @oninput="OnSearchInput"
+                               placeholder="커플 이름, 슬러그, 이메일 검색" />
+                    </label>
+                    <button class="wedding-admin-action-button is-compact" type="button" @onclick="OnRefresh" title="전체 목록 새로고침">
+                        새로고침
+                    </button>
+                    <button class="wedding-admin-icon-button" type="button" title="알림">!</button>
+                    <div class="wedding-admin-profile">
+                        <span>A</span>
+                        <div>
+                            <strong>Admin</strong>
+                            <small>최고 관리자</small>
+                        </div>
+                    </div>
+                </div>
+            </header>
 
-        <section class="w-admin__section">
-            <h2>📋 등록된 커플 (@Vm.Tenants.Count 쌍)</h2>
-
-            @if (Vm.Tenants.Count == 0)
+            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
-                <p class="w-sa-empty">등록된 청첩장이 없습니다. 위에서 새로 만들어보세요.</p>
+                <p class="w-status @(Vm.StatusMessage.StartsWith("✅") ? "" : "w-status--error")">
+                    @Vm.StatusMessage
+                </p>
+            }
+
+            @if (ShowStats)
+            {
+                <section class="wedding-admin-stats" aria-label="요약">
+                    <article class="wedding-admin-stat-card">
+                        <span class="wedding-admin-stat-card__icon">A</span>
+                        <div>
+                            <small>전체 계정 수</small>
+                            <strong>@Vm.Tenants.Count</strong>
+                            <em>등록된 커플</em>
+                        </div>
+                    </article>
+                    <article class="wedding-admin-stat-card">
+                        <span class="wedding-admin-stat-card__icon is-green">H</span>
+                        <div>
+                            <small>메인 노출</small>
+                            <strong>@MainVisibleCount</strong>
+                            <em>@Percent(MainVisibleCount, Vm.Tenants.Count)</em>
+                        </div>
+                    </article>
+                    <article class="wedding-admin-stat-card">
+                        <span class="wedding-admin-stat-card__icon is-gold">PR</span>
+                        <div>
+                            <small>Premium 활성</small>
+                            <strong>@PremiumActiveCount</strong>
+                            <em>권한 보유 계정</em>
+                        </div>
+                    </article>
+                    <article class="wedding-admin-stat-card">
+                        <span class="wedding-admin-stat-card__icon is-sage">M</span>
+                        <div>
+                            <small>저장 용량</small>
+                            <strong>@TotalStorageLabel</strong>
+                            <em>@AvailableStorageLabel</em>
+                        </div>
+                    </article>
+                    <article class="wedding-admin-stat-card">
+                        <span class="wedding-admin-stat-card__icon is-blue">V</span>
+                        <div>
+                            <small>동영상 사용량</small>
+                            <strong>@TotalVideoCount 개</strong>
+                            <em>사진 @TotalPhotoCount 장</em>
+                        </div>
+                    </article>
+                </section>
+            }
+
+            @if (!ShowStats)
+            {
+                <section class="wedding-admin-card wedding-admin-section-summary">
+                    <h2>@ActiveTitle</h2>
+                    <p>@ActiveDescription</p>
+                </section>
+            }
+
+            @if (ShowCreateCard || ShowSettingsCard)
+            {
+                <section class="wedding-admin-card-grid @(ShowCreateCard && ShowSettingsCard ? "" : "is-single")">
+                @if (ShowCreateCard)
+                {
+                    <article class="wedding-admin-card wedding-admin-card--create">
+                    <div class="wedding-admin-card__header">
+                        <div>
+                            <h2>새 청첩장 만들기</h2>
+                            <p>URL ID와 기본 정보를 입력해 새 계정을 생성합니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="w-sa-form wedding-admin-form">
+                        <div class="w-sa-field">
+                            <label class="w-label">슬러그 (URL ID)</label>
+                            <input class="w-input" placeholder="예: gildong-sunja"
+                                   @bind="Vm.NewSlug" />
+                            @if (!string.IsNullOrWhiteSpace(Vm.NewSlug))
+                            {
+                                <span class="w-sa-preview">/@Vm.NewSlug.Trim().ToLowerInvariant()</span>
+                            }
+                        </div>
+
+                        <div class="w-sa-field">
+                            <label class="w-label">커플 이름</label>
+                            <input class="w-input" placeholder="예: 홍길동 ♥ 성춘향"
+                                   @bind="Vm.NewCoupleName" />
+                        </div>
+
+                        <div class="w-sa-field">
+                            <label class="w-label">결혼 날짜</label>
+                            <input class="w-input" type="date" @bind="Vm.NewWeddingDate" />
+                        </div>
+
+                        <div class="w-sa-field">
+                            <label class="w-label">커플 어드민 비밀번호</label>
+                            <input class="w-input" type="password" placeholder="커플이 어드민 접속 시 사용"
+                                   @bind="Vm.NewPassword" />
+                        </div>
+
+                        <button class="w-btn w-btn--primary w-sa-create-btn" @onclick="OnCreate">
+                            청첩장 생성
+                        </button>
+                    </div>
+                    </article>
+                }
+
+                @if (ShowSettingsCard)
+                {
+                    <article class="wedding-admin-card wedding-admin-card--settings">
+                    <div class="wedding-admin-card__header">
+                        <div>
+                            <h2>미디어 정책 설정</h2>
+                            <p>Account Override → Tier Policy → System Default 순서로 최종 정책이 계산됩니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="wedding-admin-policy-grid">
+                        <section>
+                            <h3>무료 계정 기본 정책</h3>
+                            <label class="w-label">이미지 최대 개수</label>
+                            <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.FreeTier.ImageMaxCount" />
+                            <label class="w-label">이미지 최대 저장 용량(MB)</label>
+                            <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.FreeTier.ImageOptimizedMaxStorageMb" />
+                            <label class="w-label">영상 한 파일 최대 용량(MB)</label>
+                            <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.FreeTier.VideoMaxFileSizeMb" />
+                            <label class="w-label">영상 최대 개수</label>
+                            <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.FreeTier.VideoMaxCount" />
+                            <label class="wedding-admin-checkline">
+                                <input type="checkbox" @bind="Vm.MediaPolicy.FreeTier.KeepOriginalImages" />
+                                <span>원본 이미지 보관</span>
+                            </label>
+                            <label class="wedding-admin-checkline">
+                                <input type="checkbox" @bind="Vm.MediaPolicy.FreeTier.KeepOriginalVideos" />
+                                <span>원본 영상 보관</span>
+                            </label>
+                        </section>
+
+                        <section>
+                            <h3>Premium 계정 기본 정책</h3>
+                            <label class="w-label">이미지 최대 개수</label>
+                            <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.ImageMaxCount" />
+                            <label class="w-label">이미지 최대 저장 용량(MB)</label>
+                            <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.ImageOptimizedMaxStorageMb" />
+                            <label class="w-label">원본 이미지 저장 용량(MB)</label>
+                            <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.ImageOriginalMaxStorageMb" />
+                            <label class="w-label">영상 한 파일 최대 용량(MB)</label>
+                            <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.VideoMaxFileSizeMb" />
+                            <label class="w-label">영상 최대 개수</label>
+                            <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.VideoMaxCount" />
+                            <label class="wedding-admin-checkline">
+                                <input type="checkbox" @bind="Vm.MediaPolicy.PremiumTier.KeepOriginalImages" />
+                                <span>원본 이미지 보관</span>
+                            </label>
+                            <label class="wedding-admin-checkline">
+                                <input type="checkbox" @bind="Vm.MediaPolicy.PremiumTier.KeepOriginalVideos" />
+                                <span>원본 영상 보관</span>
+                            </label>
+                        </section>
+
+                        <section>
+                            <h3>이미지 처리 설정</h3>
+                            <label class="w-label">이미지 최대 해상도(px)</label>
+                            <input class="w-input" type="number" min="320" @bind="Vm.MediaPolicy.FreeTier.ImageMaxLongSidePx" />
+                            <label class="w-label">이미지 출력 형식</label>
+                            <select class="w-input" @bind="Vm.MediaPolicy.FreeTier.ImageOutputFormat">
+                                <option value="WebP">WebP</option>
+                                <option value="Jpeg">JPEG</option>
+                                <option value="Png">PNG</option>
+                            </select>
+                            <label class="w-label">이미지 품질</label>
+                            <input class="w-input" type="number" min="1" max="100" @bind="Vm.MediaPolicy.FreeTier.ImageQuality" />
+                            <label class="wedding-admin-checkline">
+                                <input type="checkbox" @bind="Vm.MediaPolicy.FreeTier.StripExif" />
+                                <span>EXIF 제거</span>
+                            </label>
+                            <p class="w-hint">무료 정책의 이미지 처리값은 시스템 기본 처리 기준으로도 사용됩니다.</p>
+                        </section>
+
+                        <section>
+                            <h3>영상 처리 설정</h3>
+                            <label class="w-label">무료 영상 저장 용량(MB)</label>
+                            <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.FreeTier.VideoMaxStorageMb" />
+                            <label class="w-label">Premium 영상 저장 용량(MB)</label>
+                            <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.VideoMaxStorageMb" />
+                            <p class="w-hint">0은 무제한입니다. 계정별 override가 있으면 우측 상세 패널 값이 우선합니다.</p>
+                        </section>
+                    </div>
+
+                    <button class="w-btn w-btn--primary" @onclick="OnSaveGlobalSettings">전체 설정 저장</button>
+                    </article>
+                }
+                </section>
+            }
+
+            @if (ShowTenantTable)
+            {
+            <section class="wedding-admin-card wedding-admin-table-card">
+                <div class="wedding-admin-table-card__header">
+                    <div>
+                        <h2>@TableTitle <span>@filteredTenants.Length</span></h2>
+                        <p>@TableDescription</p>
+                    </div>
+
+                    <div class="wedding-admin-table-tools">
+                        <select class="wedding-admin-select" value="@_statusFilter" @onchange="OnFilterChange">
+                            <option value="all">전체</option>
+                            <option value="published">메인 노출</option>
+                            <option value="hidden">메인 숨김</option>
+                            <option value="premium">Premium 활성</option>
+                            @if (IsMediaMenu)
+                            {
+                                <option value="image">이미지 있음</option>
+                                <option value="video">영상 있음</option>
+                                <option value="free">무료</option>
+                                <option value="migration-completed">최적화 완료</option>
+                                <option value="migration-pending">변환 대기</option>
+                                <option value="migration-failed">변환 실패</option>
+                                <option value="keep-original">원본 보관 계정</option>
+                            }
+                        </select>
+                        <button class="wedding-admin-action-button" type="button" @onclick="OnRefresh">새로고침</button>
+                    </div>
+                </div>
+
+                @if (filteredTenants.Length == 0)
+                {
+                    <p class="w-sa-empty">@EmptyText</p>
+                }
+                else
+                {
+                    <div class="wedding-admin-table-wrap">
+                        <table class="wedding-admin-table">
+                            <thead>
+                                <tr>
+                                    <th>슬러그</th>
+                                    <th>커플 이름</th>
+                                    <th>결혼일</th>
+                                    <th>메인 노출</th>
+                                    @if (IsMediaMenu)
+                                    {
+                                        <th>등급</th>
+                                        <th>이미지</th>
+                                        <th>최적화 용량</th>
+                                        <th>원본 용량</th>
+                                        <th>영상</th>
+                                        <th>전체 사용량</th>
+                                        <th>마이그레이션</th>
+                                    }
+                                    else
+                                    {
+                                        <th>Premium 레이아웃</th>
+                                        <th>Premium 테마</th>
+                                        <th>저장 용량</th>
+                                        <th>영상 개수</th>
+                                    }
+                                    <th>최근 수정</th>
+                                    <th>링크</th>
+                                    <th>액션</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var t in pagedTenants)
+                                {
+                                    <tr class="@(IsSelected(t) ? "is-selected" : "")" @onclick="() => SelectTenant(t)">
+                                        <td><span class="w-sa-slug">@t.Slug</span></td>
+                                        <td>@t.CoupleName</td>
+                                        <td>@t.WeddingDate.ToString("yyyy-MM-dd")</td>
+                                        <td>
+                                            <span class="wedding-admin-badge @(t.ShowOnHome ? "is-success" : "is-muted")">
+                                                @(t.ShowOnHome ? "노출" : "숨김")
+                                            </span>
+                                        </td>
+                                        @if (IsMediaMenu)
+                                        {
+                                            var usage = GetUsage(t);
+                                            <td><span class="wedding-admin-badge @(t.HasPremiumPlan ? "is-gold" : "is-muted")">@(t.HasPremiumPlan ? "Premium" : "Free")</span></td>
+                                            <td>@usage.ImageCount 장</td>
+                                            <td>@FormatBytes(usage.OptimizedImageBytes)</td>
+                                            <td>@FormatBytes(usage.OriginalImageBytes)</td>
+                                            <td>@usage.VideoCount 개 / @FormatBytes(usage.VideoBytes)</td>
+                                            <td>@FormatBytes(usage.TotalBytes)</td>
+                                            <td><span class="wedding-admin-badge @MigrationBadgeClass(usage.MigrationState)">@MigrationLabel(usage.MigrationState)</span></td>
+                                            <td>@(usage.LastModified?.ToString("yyyy-MM-dd") ?? t.CreatedAt.ToString("yyyy-MM-dd"))</td>
+                                        }
+                                        else
+                                        {
+                                            <td>@RenderLayoutBadges(t)</td>
+                                            <td>@RenderThemeBadges(t)</td>
+                                            <td>@EstimateTenantStorage(t)</td>
+                                            <td>@t.VideoFileNames.Count 개</td>
+                                            <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
+                                        }
+                                        <td>
+                                            <a class="wedding-admin-icon-link" href="@PublicPath(t)" target="_blank" @onclick:stopPropagation="true">열기</a>
+                                        </td>
+                                        <td>
+                                            <button class="wedding-admin-action-button is-compact" type="button" @onclick="() => SelectTenant(t)" @onclick:stopPropagation="true">
+                                                상세
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="wedding-admin-pagination">
+                        <span>@currentPage / @totalPages 페이지</span>
+                        <div>
+                            <button class="wedding-admin-action-button is-compact" type="button" disabled="@(currentPage <= 1)" @onclick="PrevPage">이전</button>
+                            <button class="wedding-admin-action-button is-compact" type="button" disabled="@(currentPage >= totalPages)" @onclick="NextPage">다음</button>
+                        </div>
+                        <label>
+                            페이지당
+                            <select class="wedding-admin-select" value="@_pageSize" @onchange="OnPageSizeChange">
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </label>
+                    </div>
+                }
+            </section>
+            }
+        </main>
+
+        <aside class="wedding-admin-detail-panel">
+            @if (SelectedTenant is { } selected)
+            {
+                <div class="wedding-admin-detail-panel__header">
+                    <div>
+                        <span>선택한 계정 상세</span>
+                        <h2>@selected.CoupleName</h2>
+                        <p>@selected.Slug</p>
+                    </div>
+                    <button class="wedding-admin-icon-button" type="button" @onclick="ClearSelection" title="선택 해제">x</button>
+                </div>
+
+                var mediaOverride = EnsureMediaOverride(selected);
+                var selectedUsage = GetUsage(selected);
+
+                <dl class="wedding-admin-detail-list">
+                    <div>
+                        <dt>결혼일</dt>
+                        <dd>@selected.WeddingDate.ToString("yyyy-MM-dd")</dd>
+                    </div>
+                    <div>
+                        <dt>공개 상태</dt>
+                        <dd><span class="wedding-admin-badge @(selected.IsPublished ? "is-success" : "is-muted")">@(selected.IsPublished ? "공개 중" : "비공개")</span></dd>
+                    </div>
+                    <div>
+                        <dt>메인 노출</dt>
+                        <dd>
+                            <label class="wedding-admin-switch">
+                                <input type="checkbox" checked="@selected.ShowOnHome" @onchange="e => OnShowOnHomeChange(selected, e)" />
+                                <span>@(selected.ShowOnHome ? "노출" : "숨김")</span>
+                            </label>
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>고정 순서</dt>
+                        <dd>
+                            <input type="number" class="wedding-admin-number-input" min="0" max="99"
+                                   value="@selected.PinOrder"
+                                   @onchange="e => OnPinOrderChange(selected, e)" />
+                        </dd>
+                    </div>
+                </dl>
+
+                <section class="wedding-admin-panel-section">
+                    <h3>계정별 미디어 설정</h3>
+                    <div class="wedding-admin-usage-mini">
+                        <span>이미지 @selectedUsage.ImageCount 장</span>
+                        <span>최적화 @FormatBytes(selectedUsage.OptimizedImageBytes)</span>
+                        <span>원본 @FormatBytes(selectedUsage.OriginalImageBytes)</span>
+                        <span>영상 @selectedUsage.VideoCount 개 / @FormatBytes(selectedUsage.VideoBytes)</span>
+                    </div>
+
+                    <label class="w-label">이미지 최대 개수</label>
+                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                           @bind="mediaOverride.ImageMaxCount" />
+
+                    <label class="w-label">이미지 최대 저장 용량(MB)</label>
+                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                           @bind="mediaOverride.ImageOptimizedMaxStorageMb" />
+
+                    <label class="w-label">원본 이미지 저장 용량(MB)</label>
+                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                           @bind="mediaOverride.ImageOriginalMaxStorageMb" />
+
+                    <label class="w-label">영상 한 파일 최대 용량(MB)</label>
+                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                           @bind="mediaOverride.VideoMaxFileSizeMb" />
+
+                    <label class="w-label">영상 최대 개수</label>
+                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                           @bind="mediaOverride.VideoMaxCount" />
+
+                    <label class="w-label">영상 저장 용량(MB)</label>
+                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                           @bind="mediaOverride.VideoMaxStorageMb" />
+
+                    <label class="wedding-admin-checkline">
+                        <input type="checkbox"
+                               checked="@(mediaOverride.KeepOriginalImages == true)"
+                               @onchange="e => mediaOverride.KeepOriginalImages = ReadBool(e)" />
+                        <span>원본 이미지 보관</span>
+                    </label>
+                    <label class="wedding-admin-checkline">
+                        <input type="checkbox"
+                               checked="@(mediaOverride.KeepOriginalVideos == true)"
+                               @onchange="e => mediaOverride.KeepOriginalVideos = ReadBool(e)" />
+                        <span>원본 영상 보관</span>
+                    </label>
+
+                    <button class="wedding-admin-action-button is-primary" type="button" @onclick="() => OnSaveMediaOverride(selected)">미디어 정책 저장</button>
+                    <button class="wedding-admin-action-button" type="button" @onclick="() => OnResetMediaOverride(selected)">계정별 Override 초기화</button>
+                </section>
+
+                <section class="wedding-admin-panel-section">
+                    <h3>이미지 마이그레이션</h3>
+                    <div class="wedding-admin-migration-state">
+                        <span class="wedding-admin-badge @MigrationBadgeClass(selectedUsage.MigrationState)">@MigrationLabel(selectedUsage.MigrationState)</span>
+                        <small>@(Vm.MigrationStatuses.TryGetValue(selected.Slug, out var migration) ? migration.Message : "아직 실행 기록이 없습니다.")</small>
+                    </div>
+                    <button class="wedding-admin-action-button" type="button" @onclick="() => OnQueueMigration(selected)">이미지 최적화 실행</button>
+                    <button class="wedding-admin-action-button" type="button" @onclick="() => OnRetryMigration(selected)">실패 항목 재시도</button>
+                </section>
+
+                <section class="wedding-admin-panel-section">
+                    <h3>Premium 레이아웃 권한</h3>
+                    <div class="wedding-admin-permission-list">
+                        @foreach (var option in PremiumLayouts)
+                        {
+                            <label class="wedding-admin-permission">
+                                <input type="checkbox"
+                                       checked="@IsLayoutUnlocked(selected, option.Mode)"
+                                       @onchange="e => OnLayoutUnlockChange(selected, option.Mode, e)" />
+                                <span>
+                                    <strong>@option.Label</strong>
+                                    <small>@(option.IsImplemented ? option.Description : "준비 중")</small>
+                                </span>
+                            </label>
+                        }
+                    </div>
+                    <button class="wedding-admin-action-button is-primary" type="button" @onclick="() => OnSaveLayoutUnlocks(selected)">레이아웃 권한 저장</button>
+                </section>
+
+                <section class="wedding-admin-panel-section">
+                    <h3>Premium 테마 권한</h3>
+                    <div class="wedding-admin-permission-list">
+                        @foreach (var option in PremiumThemes)
+                        {
+                            <label class="wedding-admin-permission">
+                                <input type="checkbox"
+                                       checked="@IsThemeUnlocked(selected, option.Key)"
+                                       @onchange="e => OnThemeUnlockChange(selected, option.Key, e)" />
+                                <span>
+                                    <strong>@option.DisplayName</strong>
+                                    <small>@(option.IsImplemented ? option.Description : "준비 중")</small>
+                                </span>
+                            </label>
+                        }
+                    </div>
+                    <button class="wedding-admin-action-button is-primary" type="button" @onclick="() => OnSaveThemeUnlocks(selected)">테마 권한 저장</button>
+                </section>
+
+                <section class="wedding-admin-panel-section">
+                    <h3>빠른 액션</h3>
+                    <div class="wedding-admin-quick-actions">
+                        <a class="wedding-admin-action-button" href="@PublicPath(selected)" target="_blank">미리보기 열기</a>
+                        <button class="wedding-admin-action-button" type="button" @onclick="() => CopyPublicLink(selected)">링크 복사</button>
+                        <a class="wedding-admin-action-button" href="/@selected.Slug/admin" target="_blank">계정 관리</a>
+                        @if (_confirmSlug == selected.Slug)
+                        {
+                            <button class="wedding-admin-action-button is-danger" type="button" @onclick="() => OnDeleteConfirmed(selected.Slug)">삭제 확인</button>
+                            <button class="wedding-admin-action-button" type="button" @onclick="() => _confirmSlug = null">취소</button>
+                        }
+                        else
+                        {
+                            <button class="wedding-admin-action-button is-danger" type="button" @onclick="() => _confirmSlug = selected.Slug">계정 삭제</button>
+                        }
+                    </div>
+                </section>
             }
             else
             {
-                <div class="w-sa-table">
-                    <div class="w-sa-table__head">
-                        <span>슬러그</span>
-                        <span>커플 이름</span>
-                        <span>결혼일</span>
-                        <span>모드</span>
-                        <span>사진</span>
-                        <span>메인 노출</span>
-                        <span>영상 용량</span>
-                        <span>영상 개수</span>
-                        <span>프리미엄 레이아웃</span>
-                        <span>프리미엄 테마</span>
-                        <span>링크</span>
-                        <span></span>
-                    </div>
-                    @foreach (var t in Vm.Tenants)
-                    {
-                        var displayKey = t.Slug;
-                        <div class="w-sa-table__row">
-                            <span class="w-sa-slug">@t.Slug</span>
-                            <span>@t.CoupleName</span>
-                            <span>@t.WeddingDate.ToString("yyyy-MM-dd")</span>
-                            <span class="w-sa-mode w-sa-mode--@t.Mode.ToString().ToLower()">
-                                @(t.Mode switch
-                                {
-                                    WeddingSiteMode.Invite => "청첩장",
-                                    WeddingSiteMode.ThankYou => "감사장",
-                                    _ => "둘 다"
-                                })
-                            </span>
-                            <span>@t.GalleryFileNames.Count 장</span>
-                            <span class="w-sa-display">
-                                <label class="w-sa-check">
-                                    <input type="checkbox" checked="@t.ShowOnHome"
-                                           @onchange="e => OnShowOnHomeChange(t, e)" />
-                                    노출
-                                </label>
-                                @if (t.ShowOnHome)
-                                {
-                                    <label class="w-sa-pin-label">
-                                        📌
-                                        <input type="number" class="w-sa-pin-input" min="0" max="99"
-                                               value="@t.PinOrder"
-                                               @onchange="e => OnPinOrderChange(t, e)"
-                                               title="고정 순서 (1=최우선, 0=자동)" />
-                                    </label>
-                                }
-                            </span>
-                            <span>
-                                <select class="w-input w-sa-video-limit" value="@(t.MaxVideoSizeMb?.ToString() ?? "")"
-                                        @onchange="e => OnVideoLimitChange(t, e)" title="이 계정의 동영상 업로드 용량 제한">
-                                    <option value="">기본값(전체 설정)</option>
-                                    <option value="200">200MB</option>
-                                    <option value="500">500MB</option>
-                                    <option value="1024">1GB</option>
-                                    <option value="2048">2GB</option>
-                                    <option value="0">무제한</option>
-                                </select>
-                            </span>
-                            <span>
-                                <select class="w-input w-sa-video-limit" value="@(t.MaxVideoCount?.ToString() ?? "")"
-                                        @onchange="e => OnVideoCountChange(t, e)" title="이 계정의 동영상 업로드 최대 개수">
-                                    <option value="">기본값(전체 설정)</option>
-                                    <option value="6">6개</option>
-                                    <option value="10">10개</option>
-                                    <option value="20">20개</option>
-                                    <option value="0">무제한</option>
-                                </select>
-                            </span>
-                            <span class="w-sa-layout-unlocks">
-                                @foreach (var option in PremiumLayouts)
-                                {
-                                    <label class="w-sa-check">
-                                        <input type="checkbox"
-                                               checked="@IsLayoutUnlocked(t, option.Mode)"
-                                               @onchange="e => OnLayoutUnlockChange(t, option.Mode, e)" />
-                                        @option.Label
-                                        @if (!option.IsImplemented)
-                                        {
-                                            <small>준비 중</small>
-                                        }
-                                    </label>
-                                }
-                                <button class="w-btn w-btn--sm" @onclick="() => OnSaveLayoutUnlocks(t)">권한 저장</button>
-                            </span>
-                            <span class="w-sa-layout-unlocks">
-                                @foreach (var option in PremiumThemes)
-                                {
-                                    <label class="w-sa-check">
-                                        <input type="checkbox"
-                                               checked="@IsThemeUnlocked(t, option.Key)"
-                                               @onchange="e => OnThemeUnlockChange(t, option.Key, e)" />
-                                        @option.DisplayName
-                                        @if (!option.IsImplemented)
-                                        {
-                                            <small>준비 중</small>
-                                        }
-                                    </label>
-                                }
-                                <button class="w-btn w-btn--sm" @onclick="() => OnSaveThemeUnlocks(t)">권한 저장</button>
-                            </span>
-                            <span class="w-sa-links">
-                                <a href="/@t.Slug" target="_blank" class="w-btn w-btn--sm">청첩장</a>
-                                @if (t.Mode == WeddingSiteMode.ThankYou || t.Mode == WeddingSiteMode.Both)
-                                {
-                                    <a href="/@t.Slug/thankyou" target="_blank" class="w-btn w-btn--sm">감사장</a>
-                                }
-                                <a href="/@t.Slug/admin" target="_blank" class="w-btn w-btn--sm">어드민</a>
-                            </span>
-                            <span>
-                                @if (_confirmSlug == t.Slug)
-                                {
-                                    <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => OnDeleteConfirmed(t.Slug)">확인</button>
-                                    <button class="w-btn w-btn--sm" @onclick="() => _confirmSlug = null">취소</button>
-                                }
-                                else
-                                {
-                                    <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => _confirmSlug = t.Slug">삭제</button>
-                                }
-                            </span>
-                        </div>
-                    }
+                <div class="wedding-admin-detail-empty">
+                    <strong>선택한 계정이 없습니다.</strong>
+                    <span>등록된 커플을 선택하면 권한과 빠른 액션이 표시됩니다.</span>
                 </div>
             }
-        </section>
-
-        <div class="w-sa-refresh">
-            <button class="w-btn" @onclick="OnRefresh">🔄 새로고침</button>
-        </div>
+        </aside>
     }
 </div>
 
 @code {
     private string? _confirmSlug;
+    private string? _selectedSlug;
+    private string _searchText = "";
+    private string _statusFilter = "all";
+    private string _activeMenu = "dashboard";
+    private int _pageSize = 10;
+    private int _currentPage = 1;
+
     private static IReadOnlyList<WeddingLayoutOption> PremiumLayouts =>
         WeddingLayoutCatalog.Options.Where(x => x.Tier == WeddingLayoutTier.Premium).ToArray();
     private static IReadOnlyList<WeddingThemeOption> PremiumThemes =>
         WeddingThemeCatalog.Options.Where(x => x.Tier == WeddingThemeTier.Premium).ToArray();
 
+    private TenantConfig? SelectedTenant =>
+        !string.IsNullOrWhiteSpace(_selectedSlug)
+            ? Vm.Tenants.FirstOrDefault(x => string.Equals(x.Slug, _selectedSlug, StringComparison.OrdinalIgnoreCase))
+            : Vm.Tenants.FirstOrDefault();
+
+    private bool ShowStats => _activeMenu == "dashboard";
+    private bool IsMediaMenu => _activeMenu == "media";
+    private bool ShowCreateCard => _activeMenu == "invite";
+    private bool ShowSettingsCard => _activeMenu is "media" or "settings";
+    private bool ShowTenantTable => _activeMenu != "settings";
+    private string ActiveTitle => _activeMenu switch
+    {
+        "invite" => "청첩장 관리",
+        "account" => "계정 관리",
+        "media" => "미디어 관리",
+        "settings" => "설정",
+        _ => "Wedding 통합 어드민"
+    };
+    private string ActiveDescription => _activeMenu switch
+    {
+        "invite" => "청첩장 계정을 모아 보고 메인 노출과 링크를 관리합니다.",
+        "account" => "계정을 선택해 업로드 제한, 권한, 삭제를 관리합니다.",
+        "media" => "이미지와 영상 정책, 사용량, 최적화 마이그레이션을 관리합니다.",
+        "settings" => "전체 설정을 조정합니다.",
+        _ => "등록된 커플 계정을 관리하고 새 청첩장을 만듭니다."
+    };
+    private string TableTitle => _activeMenu switch
+    {
+        "invite" => "청첩장 계정",
+        "account" => "계정 목록",
+        "media" => "미디어 관리 대상",
+        _ => "등록된 커플"
+    };
+    private string TableDescription => _activeMenu switch
+    {
+        "media" => "계정을 선택하면 우측에서 계정별 미디어 제한과 이미지 최적화를 처리할 수 있습니다.",
+        _ => "목록에서는 상태를 빠르게 보고, 권한 관리는 우측 상세 패널에서 처리합니다."
+    };
+    private string EmptyText => _activeMenu switch
+    {
+        "invite" => "조건에 맞는 청첩장 계정이 없습니다.",
+        _ => "조건에 맞는 계정이 없습니다."
+    };
+
+    private IEnumerable<TenantConfig> FilteredTenants
+    {
+        get
+        {
+            IEnumerable<TenantConfig> tenants = ApplyMenuFilter(Vm.Tenants);
+            var query = _searchText.Trim();
+
+            if (!string.IsNullOrWhiteSpace(query))
+            {
+                tenants = tenants.Where(t => MatchesSearch(t, query));
+            }
+
+            tenants = _statusFilter switch
+            {
+                "published" => tenants.Where(t => t.ShowOnHome),
+                "hidden" => tenants.Where(t => !t.ShowOnHome),
+                "premium" => tenants.Where(IsPremiumActive),
+                "image" => tenants.Where(t => GetUsage(t).ImageCount > 0),
+                "video" => tenants.Where(t => GetUsage(t).VideoCount > 0),
+                "free" => tenants.Where(t => !t.HasPremiumPlan),
+                "migration-completed" => tenants.Where(t => GetUsage(t).MigrationState == MediaMigrationState.Completed),
+                "migration-pending" => tenants.Where(t => GetUsage(t).MigrationState == MediaMigrationState.Pending),
+                "migration-failed" => tenants.Where(t => GetUsage(t).MigrationState == MediaMigrationState.Failed),
+                "keep-original" => tenants.Where(HasOriginalRetention),
+                _ => tenants
+            };
+
+            return tenants.OrderByDescending(t => t.CreatedAt).ThenBy(t => t.Slug);
+        }
+    }
+
+    private int PremiumActiveCount => Vm.Tenants.Count(IsPremiumActive);
+    private int MainVisibleCount => Vm.Tenants.Count(t => t.ShowOnHome);
+    private int TotalPhotoCount => Vm.MediaUsage.Values.Sum(x => x.ImageCount);
+    private int TotalVideoCount => Vm.MediaUsage.Values.Sum(x => x.VideoCount);
+    private long TotalStorageBytes => Vm.MediaUsage.Values.Sum(x => x.TotalBytes);
+    private string TotalStorageLabel => Vm.IsMediaUsageAccurate ? FormatBytes(TotalStorageBytes) : "빠른 집계";
+    private string AvailableStorageLabel => Vm.IsMediaUsageAccurate && GetAvailableStorageBytes() is long bytes
+        ? $"{FormatBytes(bytes)} 남음"
+        : "미디어 관리에서 갱신";
+
     protected override void OnInitialized() { }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (!firstRender)
-            return;
-
-        try { await JS.InvokeVoidAsync("weddingInterop.setSuperAdminSession", false); }
-        catch { }
-    }
+    protected override void OnAfterRender(bool firstRender) { }
 
     private async Task OnLogin()
     {
         if (await Vm.LoginAsync())
         {
+            await StoreSuperAdminTokenAsync();
             await Vm.LoadAsync();
+            EnsureSelectedTenant();
+        }
+        else
+        {
+            await ClearSuperAdminTokenAsync();
         }
         StateHasChanged();
     }
@@ -283,9 +720,27 @@
         if (e.Key == "Enter") await OnLogin();
     }
 
+    private async Task StoreSuperAdminTokenAsync()
+    {
+        try { await JS.InvokeVoidAsync("weddingInterop.setSuperAdminSessionToken", Vm.SuperAdminSessionToken); }
+        catch { }
+    }
+
+    private async Task ClearSuperAdminTokenAsync()
+    {
+        try { await JS.InvokeVoidAsync("weddingInterop.setSuperAdminSessionToken", ""); }
+        catch { }
+    }
+
     private async Task OnCreate()
     {
-        await Vm.CreateTenantAsync();
+        var slug = Vm.NewSlug.Trim().ToLowerInvariant();
+        if (await Vm.CreateTenantAsync())
+        {
+            _selectedSlug = slug;
+            _currentPage = 1;
+            EnsureSelectedTenant();
+        }
         StateHasChanged();
     }
 
@@ -293,6 +748,7 @@
     {
         t.ShowOnHome = (bool)(e.Value ?? false);
         await Vm.SetDisplayAsync(t.Slug, t.ShowOnHome, t.PinOrder);
+        EnsureSelectedTenant(t.Slug);
         StateHasChanged();
     }
 
@@ -302,6 +758,7 @@
         {
             t.PinOrder = Math.Max(0, order);
             await Vm.SetDisplayAsync(t.Slug, t.ShowOnHome, t.PinOrder);
+            EnsureSelectedTenant(t.Slug);
             StateHasChanged();
         }
     }
@@ -310,6 +767,7 @@
     {
         _confirmSlug = null;
         await Vm.DeleteTenantAsync(slug);
+        EnsureSelectedTenant();
         StateHasChanged();
     }
 
@@ -319,19 +777,31 @@
         StateHasChanged();
     }
 
-    private async Task OnVideoLimitChange(TenantConfig t, ChangeEventArgs e)
+    private async Task OnSaveMediaOverride(TenantConfig t)
     {
-        var raw = e.Value?.ToString();
-        int? maxMb = string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw);
-        await Vm.SetMaxVideoSizeAsync(t.Slug, maxMb);
+        await Vm.SaveMediaOverrideAsync(t);
+        EnsureSelectedTenant(t.Slug);
         StateHasChanged();
     }
 
-    private async Task OnVideoCountChange(TenantConfig t, ChangeEventArgs e)
+    private async Task OnResetMediaOverride(TenantConfig t)
     {
-        var raw = e.Value?.ToString();
-        int? maxCount = string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw);
-        await Vm.SetMaxVideoCountAsync(t.Slug, maxCount);
+        await Vm.ResetMediaOverrideAsync(t.Slug);
+        EnsureSelectedTenant(t.Slug);
+        StateHasChanged();
+    }
+
+    private async Task OnQueueMigration(TenantConfig t)
+    {
+        await Vm.QueueImageMigrationAsync(t.Slug);
+        EnsureSelectedTenant(t.Slug);
+        StateHasChanged();
+    }
+
+    private async Task OnRetryMigration(TenantConfig t)
+    {
+        await Vm.RetryImageMigrationAsync(t.Slug);
+        EnsureSelectedTenant(t.Slug);
         StateHasChanged();
     }
 
@@ -355,6 +825,7 @@
     private async Task OnSaveLayoutUnlocks(TenantConfig tenant)
     {
         await Vm.SetUnlockedLayoutsAsync(tenant.Slug, tenant.UnlockedLayoutModes);
+        EnsureSelectedTenant(tenant.Slug);
         StateHasChanged();
     }
 
@@ -378,12 +849,262 @@
     private async Task OnSaveThemeUnlocks(TenantConfig tenant)
     {
         await Vm.SetUnlockedThemesAsync(tenant.Slug, tenant.UnlockedThemeKeys);
+        EnsureSelectedTenant(tenant.Slug);
         StateHasChanged();
     }
 
     private async Task OnRefresh()
     {
         await Vm.LoadAsync();
+        if (IsMediaMenu)
+        {
+            await Vm.RefreshMediaUsageAsync();
+        }
+        EnsureSelectedTenant();
         StateHasChanged();
+    }
+
+    private void SelectTenant(TenantConfig tenant)
+    {
+        _selectedSlug = tenant.Slug;
+        _confirmSlug = null;
+    }
+
+    private void ClearSelection()
+    {
+        _selectedSlug = null;
+        _confirmSlug = null;
+    }
+
+    private void OnSearchInput(ChangeEventArgs e)
+    {
+        _searchText = e.Value?.ToString() ?? "";
+        _currentPage = 1;
+    }
+
+    private void OnFilterChange(ChangeEventArgs e)
+    {
+        _statusFilter = e.Value?.ToString() ?? "all";
+        _currentPage = 1;
+    }
+
+    private void OnPageSizeChange(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var size))
+        {
+            _pageSize = Math.Clamp(size, 10, 50);
+            _currentPage = 1;
+        }
+    }
+
+    private async Task SetActiveMenu(string menu)
+    {
+        _activeMenu = menu;
+        _statusFilter = "all";
+        _currentPage = 1;
+        if (IsMediaMenu && !Vm.IsMediaUsageAccurate)
+        {
+            await Vm.RefreshMediaUsageAsync();
+        }
+        EnsureSelectedTenant();
+    }
+
+    private string NavClass(string menu) =>
+        $"wedding-admin-nav__item{(_activeMenu == menu ? " is-active" : "")}";
+
+    private void PrevPage() => _currentPage = Math.Max(1, _currentPage - 1);
+
+    private void NextPage()
+    {
+        var totalPages = GetTotalPages(FilteredTenants.Count());
+        _currentPage = Math.Min(totalPages, _currentPage + 1);
+    }
+
+    private async Task CopyPublicLink(TenantConfig tenant)
+    {
+        var url = Nav.ToAbsoluteUri(PublicPath(tenant)).ToString();
+        await JS.InvokeVoidAsync("weddingInterop.copyToClipboard", url);
+    }
+
+    private void EnsureSelectedTenant(string? preferredSlug = null)
+    {
+        if (Vm.Tenants.Count == 0)
+        {
+            _selectedSlug = null;
+            return;
+        }
+
+        var slug = preferredSlug ?? _selectedSlug;
+        if (!string.IsNullOrWhiteSpace(slug)
+            && Vm.Tenants.Any(x => string.Equals(x.Slug, slug, StringComparison.OrdinalIgnoreCase)))
+        {
+            _selectedSlug = slug;
+            return;
+        }
+
+        _selectedSlug = Vm.Tenants.OrderByDescending(x => x.CreatedAt).First().Slug;
+    }
+
+    private bool IsSelected(TenantConfig tenant) =>
+        string.Equals(SelectedTenant?.Slug, tenant.Slug, StringComparison.OrdinalIgnoreCase);
+
+    private static bool MatchesSearch(TenantConfig tenant, string query) =>
+        Contains(tenant.Slug, query)
+        || Contains(tenant.CoupleName, query)
+        || Contains(tenant.OwnerEmail, query)
+        || Contains(tenant.OwnerDisplayName, query)
+        || tenant.AdminUsers.Any(x => Contains(x.Email, query) || Contains(x.DisplayName, query));
+
+    private static bool Contains(string? value, string query) =>
+        !string.IsNullOrWhiteSpace(value)
+        && value.Contains(query, StringComparison.OrdinalIgnoreCase);
+
+    private IEnumerable<TenantConfig> ApplyMenuFilter(IEnumerable<TenantConfig> tenants) =>
+        _activeMenu == "invite"
+            ? tenants.Where(t => t.Mode is WeddingSiteMode.Invite or WeddingSiteMode.Both)
+            : tenants;
+
+    private static bool IsPremiumActive(TenantConfig tenant) =>
+        tenant.HasPremiumPlan
+        || tenant.UnlockedLayoutModes.Count > 0
+        || tenant.UnlockedThemeKeys.Count > 0;
+
+    private static int GetTotalPages(int count, int pageSize = 0)
+    {
+        var size = pageSize <= 0 ? 10 : pageSize;
+        return Math.Max(1, (int)Math.Ceiling(count / (double)size));
+    }
+
+    private int GetTotalPages(int count) => GetTotalPages(count, _pageSize);
+
+    private static string Percent(int part, int total) =>
+        total <= 0 ? "0%" : $"{Math.Round(part * 100d / total)}%";
+
+    private static string FormatVideoSize(int mb) =>
+        mb <= 0 ? "무제한" : mb >= 1024 ? $"{mb / 1024d:0.#}GB" : $"{mb}MB";
+
+    private static string FormatVideoCount(int count) =>
+        count <= 0 ? "영상 무제한" : $"영상 {count}개";
+
+    private static string FormatLimit(int value, string unit) =>
+        value <= 0 ? "무제한" : $"{value}{unit}";
+
+    private string EstimateTenantStorage(TenantConfig tenant)
+    {
+        var usage = GetUsage(tenant);
+        return Vm.IsMediaUsageAccurate || usage.TotalBytes > 0
+            ? FormatBytes(usage.TotalBytes)
+            : "갱신 전";
+    }
+
+    private TenantMediaUsageSummary GetUsage(TenantConfig tenant) =>
+        Vm.MediaUsage.TryGetValue(tenant.Slug, out var usage)
+            ? usage
+            : new TenantMediaUsageSummary
+            {
+                Slug = tenant.Slug,
+                ImageCount = tenant.GalleryFileNames.Count,
+                VideoCount = tenant.VideoFileNames.Count,
+                MigrationState = tenant.GalleryFileNames.Count == 0 ? MediaMigrationState.Skipped : MediaMigrationState.Pending,
+                LastModified = tenant.CreatedAt
+            };
+
+    private static bool HasOriginalRetention(TenantConfig tenant) =>
+        tenant.MediaPolicyOverride?.KeepOriginalImages == true
+        || tenant.MediaPolicyOverride?.KeepOriginalVideos == true;
+
+    private static string MigrationLabel(MediaMigrationState state) => state switch
+    {
+        MediaMigrationState.Pending => "변환 대기",
+        MediaMigrationState.Processing => "처리 중",
+        MediaMigrationState.Completed => "완료",
+        MediaMigrationState.Failed => "실패",
+        _ => "건너뜀"
+    };
+
+    private static string MigrationBadgeClass(MediaMigrationState state) => state switch
+    {
+        MediaMigrationState.Completed => "is-success",
+        MediaMigrationState.Failed => "is-danger",
+        MediaMigrationState.Processing => "is-gold",
+        MediaMigrationState.Pending => "is-blue",
+        _ => "is-muted"
+    };
+
+    private static bool ReadBool(ChangeEventArgs e) =>
+        e.Value is bool value && value;
+
+    private static MediaPolicyOverride EnsureMediaOverride(TenantConfig tenant)
+    {
+        tenant.MediaPolicyOverride ??= new MediaPolicyOverride();
+        return tenant.MediaPolicyOverride;
+    }
+
+    private long? GetAvailableStorageBytes()
+    {
+        try
+        {
+            var tenant = Vm.Tenants.FirstOrDefault();
+            if (tenant is null) return null;
+
+            var path = TenantStore.GetTenantDataPath(tenant.Slug);
+            var root = Path.GetPathRoot(Path.GetFullPath(path));
+            if (string.IsNullOrWhiteSpace(root)) return null;
+
+            return new DriveInfo(root).AvailableFreeSpace;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        double value = Math.Max(0, bytes);
+        var index = 0;
+
+        while (value >= 1024 && index < units.Length - 1)
+        {
+            value /= 1024;
+            index++;
+        }
+
+        return index == 0 ? $"{value:0} {units[index]}" : $"{value:0.#} {units[index]}";
+    }
+
+    private string PublicPath(TenantConfig tenant) => $"/{tenant.Slug}";
+
+    private MarkupString RenderLayoutBadges(TenantConfig tenant)
+    {
+        var labels = PremiumLayouts
+            .Where(x => IsLayoutUnlocked(tenant, x.Mode))
+            .Select(x => x.Label)
+            .ToArray();
+
+        return BuildBadgeMarkup(labels);
+    }
+
+    private MarkupString RenderThemeBadges(TenantConfig tenant)
+    {
+        var labels = PremiumThemes
+            .Where(x => IsThemeUnlocked(tenant, x.Key))
+            .Select(x => x.DisplayName)
+            .ToArray();
+
+        return BuildBadgeMarkup(labels);
+    }
+
+    private static MarkupString BuildBadgeMarkup(IReadOnlyList<string> labels)
+    {
+        if (labels.Count == 0)
+        {
+            return new MarkupString("<span class=\"wedding-admin-badge is-muted\">없음</span>");
+        }
+
+        var visible = labels.Take(2).Select(label => $"<span class=\"wedding-admin-badge\">{System.Net.WebUtility.HtmlEncode(label)}</span>");
+        var extra = labels.Count > 2 ? $"<span class=\"wedding-admin-badge is-muted\">+{labels.Count - 2}</span>" : "";
+        return new MarkupString(string.Join("", visible) + extra);
     }
 }

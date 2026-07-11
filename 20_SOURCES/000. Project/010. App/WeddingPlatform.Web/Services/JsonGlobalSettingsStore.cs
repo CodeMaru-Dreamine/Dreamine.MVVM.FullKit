@@ -45,6 +45,7 @@ namespace WeddingPlatform.Services
 				await using var fs = File.OpenRead(_path);
 				_cache = await JsonSerializer.DeserializeAsync<GlobalSettings>(fs, _jsonOpts, ct).ConfigureAwait(false)
 					?? new GlobalSettings();
+				_cache.Normalize();
 				return _cache;
 			}
 			finally { _gate.Release(); }
@@ -52,6 +53,7 @@ namespace WeddingPlatform.Services
 
 		public async Task SaveAsync(GlobalSettings settings, CancellationToken ct = default)
 		{
+			settings.Normalize();
 			await _gate.WaitAsync(ct).ConfigureAwait(false);
 			try
 			{

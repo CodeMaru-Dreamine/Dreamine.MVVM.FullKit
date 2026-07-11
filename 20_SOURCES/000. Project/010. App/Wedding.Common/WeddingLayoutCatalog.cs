@@ -77,7 +77,7 @@ public sealed class WeddingLayoutCatalog : IWeddingLayoutCatalog
             true,
             "w-layout-gallery",
             true,
-            ["hero", "gallery", "video", "story", "guestbook", "gift"]),
+            ["hero", "info", "gallery", "video", "story", "details", "guestbook", "gift"]),
         new(
             WeddingLayoutMode.Story,
             "스토리",
@@ -86,7 +86,7 @@ public sealed class WeddingLayoutCatalog : IWeddingLayoutCatalog
             true,
             "w-layout-story",
             true,
-            ["hero", "story", "gallery", "video", "guestbook", "gift"]),
+            ["hero", "info", "story", "gallery", "video", "details", "guestbook", "gift"]),
         new(
             WeddingLayoutMode.Card,
             "카드",

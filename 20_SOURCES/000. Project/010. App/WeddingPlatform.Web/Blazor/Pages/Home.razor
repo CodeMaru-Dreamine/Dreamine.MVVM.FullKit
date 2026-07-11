@@ -307,8 +307,9 @@
         await Vm.LoadAsync();
         publicInvites = Vm.Tenants
             .Where(t => t.ShowOnHome)
-            .OrderBy(t => t.PinOrder == 0 ? int.MaxValue : t.PinOrder)
+            .OrderBy(t => t.PinOrder <= 0 ? int.MaxValue : t.PinOrder)
             .ThenByDescending(t => t.WeddingDate)
+            .ThenByDescending(t => t.CreatedAt)
             .ToList();
         myInvites = currentUser.IsAuthenticated
             ? Vm.Tenants

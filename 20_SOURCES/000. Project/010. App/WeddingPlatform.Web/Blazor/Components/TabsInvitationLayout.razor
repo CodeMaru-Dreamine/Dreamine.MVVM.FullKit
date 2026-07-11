@@ -1,5 +1,6 @@
 @namespace WeddingPlatform.Blazor.Components
 @using Microsoft.JSInterop
+@using Wedding.Common
 @using WeddingPlatform.Models
 @using WeddingPlatform.ViewModels
 @inject IJSRuntime JS
@@ -17,12 +18,16 @@
         }
         <div class="w-hero__overlay"></div>
         <div class="w-hero__content">
-            <div class="w-hero__top w-panel w-hero-panel--dv-@Vm.InviteHeroTopVerticalDesktop w-hero-panel--dh-@Vm.InviteHeroTopHorizontalDesktop w-hero-panel--mv-@Vm.InviteHeroTopVerticalMobile w-hero-panel--mh-@Vm.InviteHeroTopHorizontalMobile">
+            <div class="w-hero__top w-panel w-hero-panel--dv-@Vm.InviteHeroTopVerticalDesktop w-hero-panel--dh-@Vm.InviteHeroTopHorizontalDesktop w-hero-panel--mv-@Vm.InviteHeroTopVerticalMobile w-hero-panel--mh-@Vm.InviteHeroTopHorizontalMobile @(Vm.HasInviteHeroTopCustomPosition ? "w-draggable-positioned" : "")"
+                 data-drag-target="heroTop"
+                 style="@Vm.InviteHeroTopStyle">
                 <h1 class="w-hero__title">@Vm.HeroTitle</h1>
                 <p class="w-hero__names">@Vm.CoupleName</p>
                 <p class="w-hero__date">@Vm.WeddingDate.ToString("yyyy년 MM월 dd일") @Vm.WeddingTime</p>
             </div>
-            <div class="w-hero__bottom w-panel w-hero-panel--dv-@Vm.InviteHeroBottomVerticalDesktop w-hero-panel--dh-@Vm.InviteHeroBottomHorizontalDesktop w-hero-panel--mv-@Vm.InviteHeroBottomVerticalMobile w-hero-panel--mh-@Vm.InviteHeroBottomHorizontalMobile">
+            <div class="w-hero__bottom w-panel w-hero-panel--dv-@Vm.InviteHeroBottomVerticalDesktop w-hero-panel--dh-@Vm.InviteHeroBottomHorizontalDesktop w-hero-panel--mv-@Vm.InviteHeroBottomVerticalMobile w-hero-panel--mh-@Vm.InviteHeroBottomHorizontalMobile @(Vm.HasInviteHeroBottomCustomPosition ? "w-draggable-positioned" : "")"
+                 data-drag-target="heroBottom"
+                 style="@Vm.InviteHeroBottomStyle">
                 <p class="w-hero__venue">@Vm.VenueName</p>
                 <p class="w-hero__addr">@Vm.VenueAddress</p>
                 <div class="w-hero__cta">
@@ -93,13 +98,13 @@
 
     private IEnumerable<TabItem> BuildTabItems()
     {
-        if (IsAvailable("story")) yield return new("story", "♡", "이야기");
-        if (IsAvailable("gallery")) yield return new("gallery", "▧", "사진");
-        if (IsAvailable("video")) yield return new("video", "▷", "영상");
-        if (IsAvailable("info")) yield return new("info", "ⓘ", "안내");
-        if (IsAvailable("details")) yield return new("details", "⌖", "지도");
-        if (IsAvailable("guestbook")) yield return new("guestbook", "✎", "방명록");
-        if (IsAvailable("gift")) yield return new("gift", "▭", "계좌 안내");
+        foreach (var section in Vm.OrderedSections.Where(x => x != "hero"))
+        {
+            if (IsAvailable(section))
+            {
+                yield return new(section, WeddingSectionOrderCatalog.GetIcon(section), WeddingSectionOrderCatalog.GetLabel(section));
+            }
+        }
     }
 
     private bool IsAvailable(string section)

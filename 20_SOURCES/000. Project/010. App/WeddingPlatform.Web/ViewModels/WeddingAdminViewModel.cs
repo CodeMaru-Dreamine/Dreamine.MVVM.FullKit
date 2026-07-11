@@ -13,8 +13,9 @@ public sealed class WeddingAdminViewModel
     private readonly ITenantStore _tenants;
     private readonly IPhotoService _photos;
     private readonly WeddingOptions _opts;
-    private readonly IGlobalSettingsStore _globalSettings;
     private readonly WeddingUserContext _userContext;
+    private readonly IMediaQuotaPolicyResolver _mediaPolicyResolver;
+    private readonly ISuperAdminSessionTokenService _superAdminTokens;
 
     private static readonly HttpClient _geocodeHttp = new()
     {
@@ -25,20 +26,24 @@ public sealed class WeddingAdminViewModel
         ITenantStore tenants,
         IPhotoService photos,
         WeddingOptions opts,
-        IGlobalSettingsStore globalSettings,
-        WeddingUserContext userContext)
+        WeddingUserContext userContext,
+        IMediaQuotaPolicyResolver mediaPolicyResolver,
+        ISuperAdminSessionTokenService superAdminTokens)
     {
         _tenants = tenants;
         _photos = photos;
         _opts = opts;
-        _globalSettings = globalSettings;
         _userContext = userContext;
+        _mediaPolicyResolver = mediaPolicyResolver;
+        _superAdminTokens = superAdminTokens;
     }
 
     /// <summary>동영상 업로드 최대 용량 안내 문구 (예: "최대 200MB" 또는 "무제한").</summary>
     public string MaxVideoSizeLabel { get; private set; } = "최대 200MB";
     /// <summary>동영상 업로드 최대 개수 (0이면 무제한).</summary>
     public int MaxVideoCount { get; private set; } = 6;
+    /// <summary>현재 계정에 적용되는 최종 미디어 정책입니다.</summary>
+    public EffectiveMediaPolicy? EffectiveMediaPolicy { get; private set; }
 
     public TenantConfig? Config { get; private set; }
     public IReadOnlyList<PhotoInfo> Gallery { get; private set; } = [];
@@ -139,6 +144,29 @@ public sealed class WeddingAdminViewModel
         return IsAuthenticated;
     }
 
+    public async Task<bool> LoginAsSuperAdminAsync(string slug, string? sessionToken, CancellationToken ct = default)
+    {
+        if (!_superAdminTokens.ValidateToken(sessionToken))
+        {
+            return false;
+        }
+
+        var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+        if (config is null)
+        {
+            StatusMessage = "존재하지 않는 슬러그입니다.";
+            return false;
+        }
+
+        IsAuthenticated = true;
+        IsLinkedToCurrentUser = false;
+        IsOwner = false;
+        EffectiveAdminUsers = BuildEffectiveAdminUsers(config);
+        StatusMessage = "슈퍼관리자 권한으로 접속했습니다.";
+        await LoadAsync(slug, ct).ConfigureAwait(false);
+        return true;
+    }
+
     public async Task LoadAsync(string slug, CancellationToken ct = default)
     {
         Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false)
@@ -147,12 +175,12 @@ public sealed class WeddingAdminViewModel
         Gallery = await _photos.GetGalleryAsync(slug, ct).ConfigureAwait(false);
         EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
 
-        var settings = await _globalSettings.GetAsync(ct).ConfigureAwait(false);
+        EffectiveMediaPolicy = await _mediaPolicyResolver.ResolveAsync(Config, ct).ConfigureAwait(false);
 
-        var effectiveMb = Config.MaxVideoSizeMb ?? settings.MaxVideoSizeMb;
+        var effectiveMb = EffectiveMediaPolicy.VideoMaxFileSizeMb;
         MaxVideoSizeLabel = effectiveMb <= 0 ? "무제한" : $"최대 {effectiveMb}MB";
 
-        MaxVideoCount = Config.MaxVideoCount ?? settings.MaxVideoCount;
+        MaxVideoCount = EffectiveMediaPolicy.VideoMaxCount;
 
         IsLoaded = true;
     }
@@ -585,6 +613,19 @@ public sealed class WeddingAdminViewModel
             StatusMessage = "미리보기 이미지 업로드 완료";
         }
         catch (Exception ex) { StatusMessage = $"미리보기 이미지 오류: {ex.Message}"; }
+        finally { IsUploading = false; }
+    }
+
+    public async Task UploadThankYouOgImageAsync(string slug, IBrowserFile file, CancellationToken ct = default)
+    {
+        IsUploading = true;
+        try
+        {
+            await _photos.UploadThankYouOgImageAsync(slug, file, ct).ConfigureAwait(false);
+            Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+            StatusMessage = "감사장 미리보기 이미지 업로드 완료";
+        }
+        catch (Exception ex) { StatusMessage = $"감사장 미리보기 이미지 오류: {ex.Message}"; }
         finally { IsUploading = false; }
     }
 

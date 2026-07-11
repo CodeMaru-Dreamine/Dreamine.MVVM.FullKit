@@ -42,6 +42,7 @@ public static class Program
 
         int serverPort = GetInt(builder.Configuration, "WeddingServer:Port", 5050);
         bool listenAnyIp = GetBool(builder.Configuration, "WeddingServer:ListenAnyIp", true);
+        bool useEmbeddedWebView = GetBool(builder.Configuration, "WeddingShell:UseEmbeddedWebView", true);
         if (!IsTcpPortAvailable(serverPort, listenAnyIp))
         {
             serverPort = GetFreeLoopbackPort();
@@ -63,6 +64,11 @@ public static class Program
         builder.Services.AddSingleton<ITenantStore, JsonTenantStore>();
         builder.Services.AddSingleton<IGuestbookStorage, CsvGuestbookStorage>();
         builder.Services.AddSingleton<IGlobalSettingsStore, JsonGlobalSettingsStore>();
+        builder.Services.AddSingleton<IMediaQuotaPolicyResolver, MediaQuotaPolicyResolver>();
+        builder.Services.AddSingleton<IImageOptimizationService, SystemDrawingImageOptimizationService>();
+        builder.Services.AddSingleton<IMediaMigrationService, JsonMediaMigrationService>();
+        builder.Services.AddSingleton<IMediaUsageQueryService, FileSystemMediaUsageQueryService>();
+        builder.Services.AddSingleton<ISuperAdminSessionTokenService, SuperAdminSessionTokenService>();
         builder.Services.AddSingleton<IPhotoService, LocalPhotoService>();
 
         builder.Services.AddSingleton<Views.MainWindow>();
@@ -72,11 +78,17 @@ public static class Program
         {
             options.Port = serverPort;
             options.ListenAnyIp = listenAnyIp;
+            options.UseEmbeddedWebView = useEmbeddedWebView;
             // Wedding 서비스 Blazor 호스트에 공유 (ViewModel은 AutoRegisterViewModels로 자동 등록)
             options.SharedServiceTypes.Add(typeof(WeddingOptions));
             options.SharedServiceTypes.Add(typeof(ITenantStore));
             options.SharedServiceTypes.Add(typeof(IGuestbookStorage));
             options.SharedServiceTypes.Add(typeof(IGlobalSettingsStore));
+            options.SharedServiceTypes.Add(typeof(IMediaQuotaPolicyResolver));
+            options.SharedServiceTypes.Add(typeof(IImageOptimizationService));
+            options.SharedServiceTypes.Add(typeof(IMediaMigrationService));
+            options.SharedServiceTypes.Add(typeof(IMediaUsageQueryService));
+            options.SharedServiceTypes.Add(typeof(ISuperAdminSessionTokenService));
             options.SharedServiceTypes.Add(typeof(IPhotoService));
             // 업로드된 사진을 /wedding-data/ URL로 제공
             options.AddPhysicalStaticFiles(weddingOpts.ResolvedDataPath, "/wedding-data");

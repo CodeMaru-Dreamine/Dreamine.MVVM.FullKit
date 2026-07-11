@@ -50,22 +50,28 @@ namespace WeddingThankYou.ViewModels
 		public string ThemeName => Config?.ThemeName ?? "rose";
 		public string ThankYouStyle => Config?.ThankYouStyle ?? "onepage";
 		public WeddingLayoutMode LayoutMode => WeddingLayoutCatalog.FromLegacyKey(ThankYouStyle);
+		public IReadOnlyList<string> OrderedSections => WeddingSectionOrderCatalog.NormalizeThankYouOrder(Config?.SectionOrder);
 		public string CeremonyNoteHtml
 		{
 			get
 			{
 				var raw = Config?.CeremonyNote ?? "";
 				if (string.IsNullOrWhiteSpace(raw)) return "";
-				if (string.Equals(Config?.CeremonyNoteFormat, "Html", StringComparison.OrdinalIgnoreCase))
+				if (IsCeremonyNoteHtml)
 					return raw;
 				return Markdown.ToHtml(raw, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
 			}
 		}
+		public bool IsCeremonyNoteHtml =>
+			string.Equals(Config?.CeremonyNoteFormat, "Html", StringComparison.OrdinalIgnoreCase);
 
 		public string HeroPanelVerticalDesktop => Config?.HeroPanelVerticalDesktop ?? "top";
 		public string HeroPanelHorizontalDesktop => Config?.HeroPanelHorizontalDesktop ?? "center";
 		public string HeroPanelVerticalMobile => Config?.HeroPanelVerticalMobile ?? "top";
 		public string HeroPanelHorizontalMobile => Config?.HeroPanelHorizontalMobile ?? "center";
+		public string HeroPanelStyle => BuildFloatingStyle(Config?.HeroPanelPlacement ?? new WeddingFloatingPosition());
+		public bool HasCustomHeroPanelPosition =>
+			Config?.HeroPanelPlacement.HasDesktop == true || Config?.HeroPanelPlacement.HasMobile == true;
 
 		public string HeroImageUrl
 		{
@@ -119,6 +125,9 @@ namespace WeddingThankYou.ViewModels
 		}
 
 		public string MusicButtonPosition => Config?.MusicButtonPosition ?? "bottom";
+		public string MusicButtonStyle => BuildFloatingStyle(Config?.MusicButtonPlacement ?? new WeddingFloatingPosition());
+		public bool HasCustomMusicButtonPosition =>
+			Config?.MusicButtonPlacement.HasDesktop == true || Config?.MusicButtonPlacement.HasMobile == true;
 
 		public bool LightboxOpen { get; private set; }
 		public int LightboxIdx { get; private set; }
@@ -187,5 +196,23 @@ namespace WeddingThankYou.ViewModels
 				p.Url.EndsWith("/" + key, StringComparison.OrdinalIgnoreCase) ||
 				p.ThumbUrl.EndsWith("/" + key, StringComparison.OrdinalIgnoreCase));
 		}
+
+		private static string BuildFloatingStyle(WeddingFloatingPosition position)
+		{
+			var parts = new List<string>();
+			if (position.HasDesktop)
+			{
+				parts.Add($"--w-drag-x:{ClampPercent(position.DesktopX):0.##}%;");
+				parts.Add($"--w-drag-y:{ClampPercent(position.DesktopY):0.##}%;");
+			}
+			if (position.HasMobile)
+			{
+				parts.Add($"--w-drag-mobile-x:{ClampPercent(position.MobileX):0.##}%;");
+				parts.Add($"--w-drag-mobile-y:{ClampPercent(position.MobileY):0.##}%;");
+			}
+			return string.Concat(parts);
+		}
+
+		private static double ClampPercent(double? value) => Math.Clamp(value ?? 50, 0, 100);
 	}
 }

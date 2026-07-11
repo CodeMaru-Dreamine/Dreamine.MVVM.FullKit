@@ -8,9 +8,10 @@ public sealed class DesignSettings
     public string ThemeKey { get; set; } = "rose";
     public WeddingLayoutMode LayoutMode { get; set; } = WeddingLayoutMode.WebPage;
     public HeroPlacement HeroPlacement { get; set; } = new();
+    public WeddingFloatingPosition MusicButtonPlacement { get; set; } = new();
     public List<StoryChapter> StoryChapters { get; set; } = WeddingStoryChapterDefaults.Create();
     public List<string> SectionOrder { get; set; } =
-        ["hero", "story", "info", "details", "video", "gallery", "guestbook", "gift"];
+        WeddingSectionOrderCatalog.InvitationRecommendedOrder.ToList();
     public Dictionary<string, bool> SectionVisibility { get; set; } = new();
 }
 
@@ -39,6 +40,13 @@ public sealed class HeroPanelPlacement
     public string DesktopHorizontal { get; set; } = "center";
     public string MobileVertical { get; set; } = "top";
     public string MobileHorizontal { get; set; } = "center";
+    public double? DesktopX { get; set; }
+    public double? DesktopY { get; set; }
+    public double? MobileX { get; set; }
+    public double? MobileY { get; set; }
+
+    public bool HasDesktopCustomPosition => DesktopX.HasValue && DesktopY.HasValue;
+    public bool HasMobileCustomPosition => MobileX.HasValue && MobileY.HasValue;
 }
 
 public static class InvitationDesignCatalog
@@ -60,9 +68,8 @@ public static class InvitationDesignCatalog
         config.DesignSettings.HeroPlacement.InviteTop ??= new HeroPanelPlacement();
         config.DesignSettings.HeroPlacement.InviteBottom ??= new HeroPanelPlacement();
         config.DesignSettings.HeroPlacement.ThankYou ??= new HeroPanelPlacement();
+        config.DesignSettings.MusicButtonPlacement ??= new WeddingFloatingPosition();
         config.DesignSettings.StoryChapters = WeddingStoryChapterDefaults.Normalize(config.DesignSettings.StoryChapters);
-        config.DesignSettings.SectionOrder ??= ["hero", "story", "info", "details", "video", "gallery", "guestbook", "gift"];
-        config.DesignSettings.SectionVisibility ??= new Dictionary<string, bool>();
         config.UnlockedLayoutModes ??= new();
         config.UnlockedThemeKeys ??= new();
 
@@ -74,6 +81,10 @@ public static class InvitationDesignCatalog
 
         config.DesignSettings.LayoutMode = ResolveLayoutMode(config.DesignSettings.LayoutMode, config.InvitationStyle);
         config.InvitationStyle = ToLegacyLayoutKey(config.DesignSettings.LayoutMode);
+        config.DesignSettings.SectionOrder = WeddingSectionOrderCatalog.NormalizeInvitationOrder(
+            config.DesignSettings.SectionOrder,
+            GetLayout(config.DesignSettings.LayoutMode).SupportedSections);
+        config.DesignSettings.SectionVisibility ??= new Dictionary<string, bool>();
 
         SyncPlacementFromLegacy(config);
         NormalizePlacement(config.DesignSettings.HeroPlacement.InviteTop, "top");

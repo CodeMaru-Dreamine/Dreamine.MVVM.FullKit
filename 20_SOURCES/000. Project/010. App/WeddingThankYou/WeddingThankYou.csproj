@@ -29,6 +29,8 @@
 
   <ItemGroup>
     <Compile Include="..\Wedding.Common\WeddingLayoutCatalog.cs" Link="Common\WeddingLayoutCatalog.cs" />
+    <Compile Include="..\Wedding.Common\WeddingFloatingPosition.cs" Link="Common\WeddingFloatingPosition.cs" />
+    <Compile Include="..\Wedding.Common\WeddingSectionOrderCatalog.cs" Link="Common\WeddingSectionOrderCatalog.cs" />
     <Compile Include="..\Wedding.Common\WeddingStoryChapter.cs" Link="Common\WeddingStoryChapter.cs" />
     <Compile Include="..\Wedding.Common\WeddingThemeCatalog.cs" Link="Common\WeddingThemeCatalog.cs" />
   </ItemGroup>
@@ -41,6 +43,7 @@
 
   <ItemGroup>
     <PackageReference Include="Markdig" />
+    <PackageReference Include="System.Drawing.Common" />
   </ItemGroup>
 
 </Project>

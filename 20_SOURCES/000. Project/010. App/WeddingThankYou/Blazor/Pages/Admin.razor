@@ -9,6 +9,7 @@
 @inject WeddingThankYou.ViewModels.AdminViewModel Vm
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@implements IDisposable
 
 <PageTitle>관리 — @Slug</PageTitle>
 
@@ -171,6 +172,36 @@
                         </section>
 
                         <section class="w-admin__section">
+                            <div class="w-admin-section-title-row">
+                                <div>
+                                    <h3 class="w-admin__section-h">모바일 섹션 순서</h3>
+                                    <p class="w-hint">감사장 모바일 화면과 탭 메뉴가 이 순서를 따릅니다.</p>
+                                </div>
+                                <button type="button" class="w-btn w-btn--sm" @onclick="ResetSectionOrder">추천 순서</button>
+                            </div>
+                            <div class="w-section-order-list">
+                                @foreach (var section in OrderedDesignSections)
+                                {
+                                    <div class="w-section-order-item @(section == "hero" ? "is-fixed" : "")">
+                                        <span class="w-section-order-item__icon">@WeddingSectionOrderCatalog.GetIcon(section)</span>
+                                        <span class="w-section-order-item__label">@WeddingSectionOrderCatalog.GetLabel(section)</span>
+                                        <div class="w-section-order-item__actions">
+                                            @if (section == "hero")
+                                            {
+                                                <span class="w-hint">고정</span>
+                                            }
+                                            else
+                                            {
+                                                <button type="button" class="w-btn w-btn--sm" @onclick="() => MoveSection(section, -1)">위</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick="() => MoveSection(section, 1)">아래</button>
+                                            }
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </section>
+
+                        <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🎨 테마 색상</h3>
                             <div class="w-theme-picker">
                                 @foreach (var t in ThankYouDesignCatalog.Themes)
@@ -211,49 +242,19 @@
                             @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
                         </section>
 
-                        <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">히어로 문구 위치</h3>
-                            <p class="w-hint">감사장 문구 박스를 화면 어디에 둘지 PC·모바일 따로 정합니다.</p>
-                            <label class="w-label">PC 화면</label>
-                            <div class="w-coord-row">
-                                <div>
-                                    <label class="w-label">세로</label>
-                                    <select class="w-input" @bind="Vm.Config!.HeroPanelVerticalDesktop">
-                                        <option value="top">위</option>
-                                        <option value="middle">가운데</option>
-                                        <option value="bottom">아래</option>
-                                    </select>
+                        @if (UsesThankYouHeroPlacement)
+                        {
+                            <section class="w-admin__section">
+                                <h3 class="w-admin__section-h">히어로 문구 위치</h3>
+                                <p class="w-hint">오른쪽 미리보기에서 감사장 문구 박스를 끌어 위치를 정합니다. 드래그를 놓으면 자동 저장됩니다.</p>
+                                <div class="w-drag-control-card">
+                                    <strong>감사장 문구 박스</strong>
+                                    <span>@FormatFloatingPosition(Vm.Config!.HeroPanelPlacement)</span>
+                                    <button type="button" class="w-btn w-btn--sm" @onclick="AlignHeroPanel">가까운 정렬</button>
+                                    <button type="button" class="w-btn w-btn--sm" @onclick="ResetHeroPanel">기본 위치</button>
                                 </div>
-                                <div>
-                                    <label class="w-label">가로</label>
-                                    <select class="w-input" @bind="Vm.Config!.HeroPanelHorizontalDesktop">
-                                        <option value="left">왼쪽</option>
-                                        <option value="center">가운데</option>
-                                        <option value="right">오른쪽</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <label class="w-label" style="margin-top:.75rem">모바일 화면</label>
-                            <div class="w-coord-row">
-                                <div>
-                                    <label class="w-label">세로</label>
-                                    <select class="w-input" @bind="Vm.Config!.HeroPanelVerticalMobile">
-                                        <option value="top">위</option>
-                                        <option value="middle">가운데</option>
-                                        <option value="bottom">아래</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="w-label">가로</label>
-                                    <select class="w-input" @bind="Vm.Config!.HeroPanelHorizontalMobile">
-                                        <option value="left">왼쪽</option>
-                                        <option value="center">가운데</option>
-                                        <option value="right">오른쪽</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </section>
+                            </section>
+                        }
 
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🎵 배경 음악</h3>
@@ -273,11 +274,10 @@
                             @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
 
                             <label class="w-label" style="margin-top:.75rem">음악 버튼 위치</label>
-                            <div class="w-note-toolbar">
-                                <button class="@(Vm.Config!.MusicButtonPosition == "bottom" ? "active" : "")"
-                                        @onclick='() => Vm.Config!.MusicButtonPosition = "bottom"'>화면 하단</button>
-                                <button class="@(Vm.Config!.MusicButtonPosition == "top" ? "active" : "")"
-                                        @onclick='() => Vm.Config!.MusicButtonPosition = "top"'>화면 상단</button>
+                            <div class="w-drag-control-card">
+                                <span>오른쪽 미리보기의 음악 버튼을 원하는 위치로 끌어 놓으면 자동 저장됩니다.</span>
+                                <span>@FormatFloatingPosition(Vm.Config!.MusicButtonPlacement)</span>
+                                <button type="button" class="w-btn w-btn--sm" @onclick="ResetMusicButtonPosition">기본 위치</button>
                             </div>
                         </section>
                     }
@@ -614,16 +614,25 @@
 
             <aside class="w-admin-preview @(_previewOpen ? "is-open" : "")">
                 <div class="w-admin-preview__head">
-                    <strong>@_previewMode.ToUpperInvariant() 미리보기</strong>
+                    <strong>@PreviewHeaderTitle</strong>
                     <div class="w-admin-preview__actions">
                         <button class="w-admin-preview__mode @(_previewMode == "phone" ? "active" : "")" @onclick='() => SetPreviewMode("phone")'>폰</button>
                         <button class="w-admin-preview__mode @(_previewMode == "pc" ? "active" : "")" @onclick='() => SetPreviewMode("pc")'>PC</button>
+                        @if (_previewMode == "phone")
+                        {
+                            <select class="w-admin-preview__device" value="@_previewDeviceKey" @onchange="SetPreviewDevice" title="폰 미리보기 기기">
+                                @foreach (var device in _previewDevices)
+                                {
+                                    <option value="@device.Key">@device.Label</option>
+                                }
+                            </select>
+                        }
                         <button class="w-btn w-btn--sm" @onclick="ReloadPreview" title="미리보기 새로고침">🔄</button>
                         <a class="w-btn w-btn--sm" href="@PreviewUrl" target="_blank" title="새 탭에서 열기">↗</a>
                         <button class="w-admin-preview__close" @onclick="OnClosePreview" aria-label="미리보기 접기">✕</button>
                     </div>
                 </div>
-                <div class="w-admin-preview__frame w-admin-preview__frame--@_previewMode">
+                <div class="w-admin-preview__frame w-admin-preview__frame--@_previewMode" style="@PreviewFrameStyle">
                     <iframe id="w-preview-iframe" src="@PreviewUrl" title="@PreviewTitle"></iframe>
                 </div>
                 <p class="w-admin-preview__hint">저장 후 자동으로 새로고침됩니다.</p>
@@ -642,9 +651,31 @@
     private bool _previewOpen;
     private bool _previewCollapsed;
     private bool _initialStateLoaded;
+    private bool _adminInteropInitialized;
+    private bool _superAdminAutoLoginChecked;
     private string _previewMode = "phone";
+    private string _previewDeviceKey = "galaxyS26";
+    private DotNetObjectReference<Admin>? _selfRef;
 
     private record NavItem(string Key, string Icon, string Label);
+    private record PreviewDevice(string Key, string Label, int Width, int Height);
+
+    private static readonly PreviewDevice[] _previewDevices =
+    [
+        new("galaxyS26", "Galaxy S26 · 360×780", 360, 780),
+        new("galaxyS26Plus", "Galaxy S26+ · 384×854", 384, 854),
+        new("galaxyS26Ultra", "Galaxy S26 Ultra · 412×915", 412, 915),
+        new("galaxyZFlip7", "Galaxy Z Flip 7 · 360×840", 360, 840),
+        new("galaxyZFold7", "Galaxy Z Fold 7 · 412×915", 412, 915),
+        new("iphone17", "iPhone 17 · 393×852", 393, 852),
+        new("iphone17Pro", "iPhone 17 Pro · 402×874", 402, 874),
+        new("iphone17Max", "iPhone 17 Pro Max · 430×932", 430, 932),
+        new("iphoneSE", "iPhone SE · 375×667", 375, 667),
+        new("iphone15", "iPhone 15 · 393×852", 393, 852),
+        new("iphone15Max", "iPhone 15 Pro Max · 430×932", 430, 932),
+        new("galaxyS24", "Galaxy S24 · 360×780", 360, 780),
+        new("galaxyS24Ultra", "Galaxy S24 Ultra · 384×854", 384, 854),
+    ];
 
     private static readonly NavItem[] _navItems =
     [
@@ -658,14 +689,36 @@
     ];
 
     private bool IsStoryLayout => CurrentLayoutMode == WeddingLayoutMode.Story;
+    private bool UsesThankYouHeroPlacement => CurrentLayoutMode is WeddingLayoutMode.WebPage or WeddingLayoutMode.TabMenu;
     private IEnumerable<NavItem> VisibleNavItems => _navItems.Where(i => i.Key != "story" || IsStoryLayout);
     private NavItem CurrentNavItem => VisibleNavItems.FirstOrDefault(i => i.Key == _selected) ?? _navItems[0];
-    private string PreviewUrl => $"/{Slug}/thankyou";
+    private string PreviewUrl => $"/{Slug}/thankyou?adminPreview=true";
     private string PreviewTitle => "감사장 미리보기";
+    private PreviewDevice CurrentPreviewDevice =>
+        _previewDevices.FirstOrDefault(x => string.Equals(x.Key, _previewDeviceKey, StringComparison.OrdinalIgnoreCase))
+        ?? _previewDevices[0];
+    private string PreviewHeaderTitle =>
+        _previewMode == "phone" ? $"폰 미리보기 · {CurrentPreviewDevice.Label}" : "PC 미리보기";
+    private string PreviewFrameStyle =>
+        _previewMode == "phone"
+            ? $"--w-preview-device-width:{CurrentPreviewDevice.Width}px;--w-preview-device-height:{CurrentPreviewDevice.Height}px;"
+            : "";
+    private IReadOnlyList<string> OrderedDesignSections =>
+        WeddingSectionOrderCatalog.NormalizeThankYouOrder(Vm.Config?.SectionOrder);
 
     private void SetPreviewMode(string mode)
     {
         _previewMode = mode == "pc" ? "pc" : "phone";
+    }
+
+    private void SetPreviewDevice(ChangeEventArgs e)
+    {
+        var key = e.Value?.ToString();
+        if (_previewDevices.Any(x => string.Equals(x.Key, key, StringComparison.OrdinalIgnoreCase)))
+        {
+            _previewDeviceKey = key!;
+            _previewMode = "phone";
+        }
     }
 
     private static string Icon(string name) => name switch
@@ -684,13 +737,20 @@
     private int _uploadElapsedSec;
     private System.Threading.CancellationTokenSource? _uploadTickCts;
 
-    private void SelectSection(string key)
+    private async Task SelectSection(string key)
     {
+        if (string.Equals(_selected, key, StringComparison.OrdinalIgnoreCase)) return;
+
         if (key == "story" && !IsStoryLayout)
         {
             _selected = "design";
             _navOpen = false;
             return;
+        }
+
+        if (Vm.Config is not null)
+        {
+            await Vm.SaveConfigAsync();
         }
 
         _selected = key;
@@ -776,10 +836,28 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender && !Vm.IsAuthenticated && !_superAdminAutoLoginChecked)
+        {
+            _superAdminAutoLoginChecked = true;
+            if (await TrySuperAdminAutoLoginAsync())
+            {
+                StateHasChanged();
+                return;
+            }
+        }
+
         if (Vm.IsAuthenticated && Vm.IsLoaded)
         {
-            try { await JS.InvokeVoidAsync("weddingInterop.initAdminSplitter"); }
-            catch { }
+            if (!_adminInteropInitialized)
+            {
+                _adminInteropInitialized = true;
+                try { await JS.InvokeVoidAsync("weddingInterop.initAdminSplitter"); }
+                catch { }
+
+                _selfRef ??= DotNetObjectReference.Create(this);
+                try { await JS.InvokeVoidAsync("weddingInterop.initAdminPreviewDesignBridge", _selfRef); }
+                catch { }
+            }
 
             if (!_initialStateLoaded)
             {
@@ -836,6 +914,19 @@
         finally { _uploadTickCts.Cancel(); }
     }
 
+    private async Task<bool> TrySuperAdminAutoLoginAsync()
+    {
+        try
+        {
+            var token = await JS.InvokeAsync<string>("weddingInterop.getSuperAdminSessionToken");
+            return await Vm.LoginAsSuperAdminAsync(Slug, token);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private async Task OnLogin()
     {
         if (await Vm.LoginAsync(Slug))
@@ -846,6 +937,115 @@
     {
         await Vm.SaveConfigAsync();
         await ReloadPreview();
+    }
+
+    private void MoveSection(string section, int offset)
+    {
+        if (Vm.Config is null || section == "hero") return;
+        var order = OrderedDesignSections.ToList();
+        var index = order.FindIndex(x => string.Equals(x, section, StringComparison.OrdinalIgnoreCase));
+        if (index < 0) return;
+        var target = Math.Clamp(index + offset, 1, order.Count - 1);
+        if (target == index) return;
+        order.RemoveAt(index);
+        order.Insert(target, section);
+        Vm.Config.SectionOrder = order;
+    }
+
+    private void ResetSectionOrder()
+    {
+        if (Vm.Config is null) return;
+        Vm.Config.SectionOrder = WeddingSectionOrderCatalog.ThankYouRecommendedOrder.ToList();
+    }
+
+    private async Task ResetMusicButtonPosition()
+    {
+        if (Vm.Config is null) return;
+        Vm.Config.MusicButtonPlacement = new WeddingFloatingPosition();
+        Vm.Config.MusicButtonPosition = "bottom";
+        await Vm.SaveConfigAsync();
+        await ReloadPreview();
+    }
+
+    private async Task ResetHeroPanel()
+    {
+        if (Vm.Config is null) return;
+        Vm.Config.HeroPanelPlacement = new WeddingFloatingPosition();
+        await Vm.SaveConfigAsync();
+        await ReloadPreview();
+    }
+
+    private async Task AlignHeroPanel()
+    {
+        if (Vm.Config is null) return;
+        SnapFloatingPosition(Vm.Config.HeroPanelPlacement);
+        await Vm.SaveConfigAsync();
+        await ReloadPreview();
+    }
+
+    [JSInvokable]
+    public async Task OnPreviewElementMoved(string target, double xPercent, double yPercent, string viewport)
+    {
+        if (Vm.Config is null) return;
+        var isMobile = string.Equals(viewport, "mobile", StringComparison.OrdinalIgnoreCase);
+        switch (target)
+        {
+            case "music":
+                SetFloatingPosition(Vm.Config.MusicButtonPlacement, xPercent, yPercent, isMobile);
+                Vm.Config.MusicButtonPosition = "custom";
+                break;
+            case "heroThankYou":
+                SetFloatingPosition(Vm.Config.HeroPanelPlacement, xPercent, yPercent, isMobile);
+                break;
+            default:
+                return;
+        }
+
+        await Vm.SaveConfigAsync();
+        StateHasChanged();
+    }
+
+    private static void SetFloatingPosition(WeddingFloatingPosition position, double xPercent, double yPercent, bool mobile)
+    {
+        if (mobile)
+        {
+            position.MobileX = ClampPercent(xPercent);
+            position.MobileY = ClampPercent(yPercent);
+        }
+        else
+        {
+            position.DesktopX = ClampPercent(xPercent);
+            position.DesktopY = ClampPercent(yPercent);
+        }
+    }
+
+    private static void SnapFloatingPosition(WeddingFloatingPosition position)
+    {
+        if (position.HasDesktop)
+        {
+            position.DesktopX = SnapPercent(position.DesktopX!.Value);
+            position.DesktopY = SnapPercent(position.DesktopY!.Value);
+        }
+        if (position.HasMobile)
+        {
+            position.MobileX = SnapPercent(position.MobileX!.Value);
+            position.MobileY = SnapPercent(position.MobileY!.Value);
+        }
+    }
+
+    private static double SnapPercent(double value)
+    {
+        var anchors = new[] { 15d, 50d, 85d };
+        return anchors.OrderBy(x => Math.Abs(x - value)).First();
+    }
+
+    private static double ClampPercent(double value) => Math.Clamp(value, 0, 100);
+
+    private static string FormatFloatingPosition(WeddingFloatingPosition position)
+    {
+        var mobile = position.HasMobile ? $"모바일 {position.MobileX:0.#}%, {position.MobileY:0.#}%" : "모바일 기본";
+        var desktop = position.HasDesktop ? $"PC {position.DesktopX:0.#}%, {position.DesktopY:0.#}%" : "PC 기본";
+        return $"{desktop} · {mobile}";
     }
 
     private async Task OnSaveStoryChapter(StoryChapter chapter)
@@ -988,5 +1188,10 @@
         await Vm.MoveGalleryPhotoToAsync(fileName, first);
         await ReloadPreview();
         StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        _selfRef?.Dispose();
     }
 }

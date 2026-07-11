@@ -56,17 +56,21 @@ public sealed class WeddingInvitationViewModel
     public WeddingLayoutOption LayoutDescriptor => InvitationDesignCatalog.GetLayout(LayoutMode);
     public string InvitationStyle => InvitationDesignCatalog.ToLegacyLayoutKey(LayoutMode);
     public bool UsesBottomNavigation => LayoutDescriptor.UsesBottomNavigation;
+    public IReadOnlyList<string> OrderedSections =>
+        WeddingSectionOrderCatalog.NormalizeInvitationOrder(DesignSettings.SectionOrder, LayoutDescriptor.SupportedSections);
     public string CeremonyNoteHtml
     {
         get
         {
             var raw = Config?.CeremonyNote ?? "";
             if (string.IsNullOrWhiteSpace(raw)) return "";
-            if (string.Equals(Config?.CeremonyNoteFormat, "Html", StringComparison.OrdinalIgnoreCase))
+            if (IsCeremonyNoteHtml)
                 return raw;
             return Markdown.ToHtml(raw, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
         }
     }
+    public bool IsCeremonyNoteHtml =>
+        string.Equals(Config?.CeremonyNoteFormat, "Html", StringComparison.OrdinalIgnoreCase);
 
     public string HeroImageUrl
     {
@@ -111,6 +115,26 @@ public sealed class WeddingInvitationViewModel
         }
     }
 
+    public string ThankYouOgTitle => !string.IsNullOrWhiteSpace(Config?.ThankYouOgTitle)
+        ? Config.ThankYouOgTitle
+        : $"{CoupleName} 감사 인사";
+
+    public string ThankYouOgDescription => !string.IsNullOrWhiteSpace(Config?.ThankYouOgDescription)
+        ? Config.ThankYouOgDescription
+        : $"{WeddingDate:yyyy년 MM월 dd일} {VenueName}에서의 결혼식을 마쳤습니다. 함께해 주셔서 감사합니다.";
+
+    public string ThankYouOgImageUrl
+    {
+        get
+        {
+            if (Config is null) return "";
+            var fn = !string.IsNullOrWhiteSpace(Config.ThankYouOgImageFileName)
+                ? Config.ThankYouOgImageFileName
+                : Config.HeroImageFileName;
+            return string.IsNullOrWhiteSpace(fn) ? "" : _photos.GetHeroUrl(Config.Slug, fn);
+        }
+    }
+
     public string MusicUrl
     {
         get
@@ -121,6 +145,9 @@ public sealed class WeddingInvitationViewModel
     }
 
     public string MusicButtonPosition => Config?.MusicButtonPosition ?? "bottom";
+    public string MusicButtonStyle => BuildFloatingStyle(DesignSettings.MusicButtonPlacement);
+    public bool HasCustomMusicButtonPosition =>
+        DesignSettings.MusicButtonPlacement.HasDesktop || DesignSettings.MusicButtonPlacement.HasMobile;
 
     public string HeroPanelVerticalDesktop => NormalizeOption(DesignSettings.HeroPlacement.ThankYou.DesktopVertical, ["top", "middle", "bottom"], "top");
     public string HeroPanelHorizontalDesktop => NormalizeOption(DesignSettings.HeroPlacement.ThankYou.DesktopHorizontal, ["left", "center", "right"], "center");
@@ -134,6 +161,12 @@ public sealed class WeddingInvitationViewModel
     public string InviteHeroBottomHorizontalDesktop => NormalizeOption(DesignSettings.HeroPlacement.InviteBottom.DesktopHorizontal, ["left", "center", "right"], "center");
     public string InviteHeroBottomVerticalMobile => NormalizeOption(DesignSettings.HeroPlacement.InviteBottom.MobileVertical, ["top", "middle", "bottom"], "bottom");
     public string InviteHeroBottomHorizontalMobile => NormalizeOption(DesignSettings.HeroPlacement.InviteBottom.MobileHorizontal, ["left", "center", "right"], "center");
+    public string InviteHeroTopStyle => BuildHeroPanelStyle(DesignSettings.HeroPlacement.InviteTop);
+    public string InviteHeroBottomStyle => BuildHeroPanelStyle(DesignSettings.HeroPlacement.InviteBottom);
+    public bool HasInviteHeroTopCustomPosition =>
+        DesignSettings.HeroPlacement.InviteTop.HasDesktopCustomPosition || DesignSettings.HeroPlacement.InviteTop.HasMobileCustomPosition;
+    public bool HasInviteHeroBottomCustomPosition =>
+        DesignSettings.HeroPlacement.InviteBottom.HasDesktopCustomPosition || DesignSettings.HeroPlacement.InviteBottom.HasMobileCustomPosition;
 
     public string SelectedTab { get; private set; } = "map";
     public void SetMap() => SelectedTab = "map";
@@ -213,4 +246,38 @@ public sealed class WeddingInvitationViewModel
         var normalized = value?.Trim().ToLowerInvariant();
         return !string.IsNullOrWhiteSpace(normalized) && allowed.Contains(normalized) ? normalized : fallback;
     }
+
+    private static string BuildFloatingStyle(WeddingFloatingPosition position)
+    {
+        var parts = new List<string>();
+        if (position.HasDesktop)
+        {
+            parts.Add($"--w-drag-x:{ClampPercent(position.DesktopX):0.##}%;");
+            parts.Add($"--w-drag-y:{ClampPercent(position.DesktopY):0.##}%;");
+        }
+        if (position.HasMobile)
+        {
+            parts.Add($"--w-drag-mobile-x:{ClampPercent(position.MobileX):0.##}%;");
+            parts.Add($"--w-drag-mobile-y:{ClampPercent(position.MobileY):0.##}%;");
+        }
+        return string.Concat(parts);
+    }
+
+    private static string BuildHeroPanelStyle(HeroPanelPlacement placement)
+    {
+        var parts = new List<string>();
+        if (placement.HasDesktopCustomPosition)
+        {
+            parts.Add($"--w-drag-x:{ClampPercent(placement.DesktopX):0.##}%;");
+            parts.Add($"--w-drag-y:{ClampPercent(placement.DesktopY):0.##}%;");
+        }
+        if (placement.HasMobileCustomPosition)
+        {
+            parts.Add($"--w-drag-mobile-x:{ClampPercent(placement.MobileX):0.##}%;");
+            parts.Add($"--w-drag-mobile-y:{ClampPercent(placement.MobileY):0.##}%;");
+        }
+        return string.Concat(parts);
+    }
+
+    private static double ClampPercent(double? value) => Math.Clamp(value ?? 50, 0, 100);
 }

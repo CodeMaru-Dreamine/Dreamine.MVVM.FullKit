@@ -1,3 +1,4 @@
+using System.IO;
 using WeddingPlatform.Models;
 using WeddingPlatform.Services;
 using Wedding.Common;
@@ -10,46 +11,77 @@ public sealed class WeddingSuperAdminViewModel
     private readonly WeddingOptions _opts;
     private readonly IGlobalSettingsStore _globalSettings;
     private readonly WeddingUserContext _userContext;
+    private readonly IMediaUsageQueryService _mediaUsage;
+    private readonly IMediaMigrationService _mediaMigration;
+    private readonly ISuperAdminSessionTokenService _superAdminTokens;
 
     public WeddingSuperAdminViewModel(
         ITenantStore tenants,
         WeddingOptions opts,
         IGlobalSettingsStore globalSettings,
-        WeddingUserContext userContext)
+        WeddingUserContext userContext,
+        IMediaUsageQueryService mediaUsage,
+        IMediaMigrationService mediaMigration,
+        ISuperAdminSessionTokenService superAdminTokens)
     {
         _tenants = tenants;
         _opts = opts;
         _globalSettings = globalSettings;
         _userContext = userContext;
+        _mediaUsage = mediaUsage;
+        _mediaMigration = mediaMigration;
+        _superAdminTokens = superAdminTokens;
     }
 
     /// <summary>동영상 업로드 최대 용량(MB). 0이면 무제한.</summary>
-    public int MaxVideoSizeMb { get; set; } = 200;
+    public int MaxVideoSizeMb { get; set; } = 50;
     /// <summary>계정당 동영상 업로드 최대 개수(기본값). 0이면 무제한.</summary>
-    public int MaxVideoCount { get; set; } = 6;
+    public int MaxVideoCount { get; set; } = 1;
+    /// <summary>전체/등급별 미디어 정책입니다.</summary>
+    public MediaPolicySettings MediaPolicy { get; set; } = MediaPolicySettings.CreateDefault();
+    /// <summary>테넌트별 미디어 사용량 요약입니다.</summary>
+    public IReadOnlyDictionary<string, TenantMediaUsageSummary> MediaUsage { get; private set; }
+        = new Dictionary<string, TenantMediaUsageSummary>(StringComparer.OrdinalIgnoreCase);
+    /// <summary>현재 미디어 사용량이 실제 파일 시스템 스캔으로 갱신된 값인지 여부입니다.</summary>
+    public bool IsMediaUsageAccurate { get; private set; }
+    /// <summary>테넌트별 이미지 최적화 마이그레이션 상태입니다.</summary>
+    public IReadOnlyDictionary<string, MediaMigrationTenantStatus> MigrationStatuses { get; private set; }
+        = new Dictionary<string, MediaMigrationTenantStatus>(StringComparer.OrdinalIgnoreCase);
 
     public async Task LoadGlobalSettingsAsync(CancellationToken ct = default)
     {
         var settings = await _globalSettings.GetAsync(ct).ConfigureAwait(false);
-        MaxVideoSizeMb = settings.MaxVideoSizeMb;
-        MaxVideoCount = settings.MaxVideoCount;
+        settings.Normalize();
+        MediaPolicy = settings.MediaPolicy;
+        MaxVideoSizeMb = MediaPolicy.FreeTier.VideoMaxFileSizeMb;
+        MaxVideoCount = MediaPolicy.FreeTier.VideoMaxCount;
     }
 
     public async Task SaveGlobalSettingsAsync(CancellationToken ct = default)
     {
+        MediaPolicy.Normalize();
+        MaxVideoSizeMb = MediaPolicy.FreeTier.VideoMaxFileSizeMb;
+        MaxVideoCount = MediaPolicy.FreeTier.VideoMaxCount;
         await _globalSettings.SaveAsync(
-            new GlobalSettings { MaxVideoSizeMb = MaxVideoSizeMb, MaxVideoCount = MaxVideoCount }, ct)
+            new GlobalSettings
+            {
+                MaxVideoSizeMb = MaxVideoSizeMb,
+                MaxVideoCount = MaxVideoCount,
+                MediaPolicy = MediaPolicy
+            }, ct)
             .ConfigureAwait(false);
         StatusMessage = "✅ 전체 설정이 저장되었습니다.";
     }
 
     public bool IsAuthenticated { get; private set; }
     public string LoginPassword { get; set; } = "";
+    public string SuperAdminSessionToken { get; private set; } = "";
 
     public Task<bool> LoginAsync()
     {
         IsAuthenticated = _opts.SuperAdminPassword == LoginPassword;
         StatusMessage = IsAuthenticated ? "" : "비밀번호가 틀렸습니다.";
+        SuperAdminSessionToken = IsAuthenticated ? _superAdminTokens.CreateToken() : "";
         return Task.FromResult(IsAuthenticated);
     }
 
@@ -70,14 +102,72 @@ public sealed class WeddingSuperAdminViewModel
 
     public async Task LoadAsync(CancellationToken ct = default)
     {
+        await ReloadTenantsAsync(ct).ConfigureAwait(false);
+        await LoadGlobalSettingsAsync(ct).ConfigureAwait(false);
+        MigrationStatuses = await _mediaMigration.GetAllAsync(ct).ConfigureAwait(false);
+        MediaUsage = BuildFastMediaUsage();
+        IsMediaUsageAccurate = false;
+        IsLoaded = true;
+        StatusMessage = "";
+    }
+
+    /// <summary>
+    /// \brief 실제 파일 시스템을 스캔해 미디어 사용량을 갱신합니다.
+    /// </summary>
+    public async Task RefreshMediaUsageAsync(CancellationToken ct = default)
+    {
+        MigrationStatuses = await _mediaMigration.GetAllAsync(ct).ConfigureAwait(false);
+        MediaUsage = await _mediaUsage.GetTenantUsageAsync(Tenants, ct).ConfigureAwait(false);
+        IsMediaUsageAccurate = true;
+    }
+
+    private async Task ReloadTenantsAsync(CancellationToken ct)
+    {
         Tenants = await _tenants.GetAllAsync(ct).ConfigureAwait(false);
         foreach (var tenant in Tenants)
         {
             InvitationDesignCatalog.Normalize(tenant);
         }
-        await LoadGlobalSettingsAsync(ct).ConfigureAwait(false);
-        IsLoaded = true;
-        StatusMessage = "";
+    }
+
+    private IReadOnlyDictionary<string, TenantMediaUsageSummary> BuildFastMediaUsage()
+    {
+        var result = new Dictionary<string, TenantMediaUsageSummary>(StringComparer.OrdinalIgnoreCase);
+        foreach (var tenant in Tenants)
+        {
+            if (MediaUsage.TryGetValue(tenant.Slug, out var existing))
+            {
+                existing.ImageCount = tenant.GalleryFileNames.Count;
+                existing.VideoCount = tenant.VideoFileNames.Count;
+                existing.MigrationState = ResolveMigrationState(tenant);
+                result[tenant.Slug] = existing;
+                continue;
+            }
+
+            result[tenant.Slug] = new TenantMediaUsageSummary
+            {
+                Slug = tenant.Slug,
+                ImageCount = tenant.GalleryFileNames.Count,
+                VideoCount = tenant.VideoFileNames.Count,
+                MigrationState = ResolveMigrationState(tenant),
+                LastModified = tenant.CreatedAt
+            };
+        }
+
+        return result;
+    }
+
+    private MediaMigrationState ResolveMigrationState(TenantConfig tenant)
+    {
+        if (MigrationStatuses.TryGetValue(tenant.Slug, out var status))
+        {
+            return status.State;
+        }
+
+        if (tenant.GalleryFileNames.Count == 0) return MediaMigrationState.Skipped;
+        return tenant.GalleryFileNames.All(x => Path.GetExtension(x).Equals(".webp", StringComparison.OrdinalIgnoreCase))
+            ? MediaMigrationState.Completed
+            : MediaMigrationState.Pending;
     }
 
     public async Task<bool> CreateTenantAsync(CancellationToken ct = default)
@@ -173,7 +263,9 @@ public sealed class WeddingSuperAdminViewModel
     {
         var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
         if (config is null) return;
-        config.MaxVideoSizeMb = maxVideoSizeMb;
+        config.MediaPolicyOverride ??= new MediaPolicyOverride();
+        config.MediaPolicyOverride.VideoMaxFileSizeMb = NormalizeNullableNonNegative(maxVideoSizeMb);
+        config.MaxVideoSizeMb = null;
         await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
         await LoadAsync(ct).ConfigureAwait(false);
         StatusMessage = $"✅ '{slug}' 동영상 용량 제한 저장됨";
@@ -187,10 +279,66 @@ public sealed class WeddingSuperAdminViewModel
     {
         var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
         if (config is null) return;
-        config.MaxVideoCount = maxVideoCount;
+        config.MediaPolicyOverride ??= new MediaPolicyOverride();
+        config.MediaPolicyOverride.VideoMaxCount = NormalizeNullableNonNegative(maxVideoCount);
+        config.MaxVideoCount = null;
         await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
         await LoadAsync(ct).ConfigureAwait(false);
         StatusMessage = $"✅ '{slug}' 동영상 개수 제한 저장됨";
+    }
+
+    /// <summary>
+    /// \brief 계정별 미디어 정책 override를 저장합니다.
+    /// </summary>
+    public async Task SaveMediaOverrideAsync(TenantConfig tenant, CancellationToken ct = default)
+    {
+        var config = await _tenants.GetAsync(tenant.Slug, ct).ConfigureAwait(false);
+        if (config is null) return;
+
+        config.MediaPolicyOverride = NormalizeOverride(tenant.MediaPolicyOverride);
+        config.MaxVideoSizeMb = null;
+        config.MaxVideoCount = null;
+
+        await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+        await LoadAsync(ct).ConfigureAwait(false);
+        StatusMessage = $"✅ '{tenant.Slug}' 미디어 정책 override 저장됨";
+    }
+
+    /// <summary>
+    /// \brief 계정별 미디어 정책 override를 제거해 등급 정책을 따르게 합니다.
+    /// </summary>
+    public async Task ResetMediaOverrideAsync(string slug, CancellationToken ct = default)
+    {
+        var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+        if (config is null) return;
+
+        config.MediaPolicyOverride = null;
+        config.MaxVideoSizeMb = null;
+        config.MaxVideoCount = null;
+
+        await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+        await LoadAsync(ct).ConfigureAwait(false);
+        StatusMessage = $"✅ '{slug}' 계정별 미디어 override 초기화됨";
+    }
+
+    /// <summary>
+    /// \brief 테넌트 이미지 최적화 마이그레이션을 백그라운드로 시작합니다.
+    /// </summary>
+    public async Task QueueImageMigrationAsync(string slug, CancellationToken ct = default)
+    {
+        await _mediaMigration.QueueTenantAsync(slug, ct).ConfigureAwait(false);
+        await LoadAsync(ct).ConfigureAwait(false);
+        StatusMessage = $"✅ '{slug}' 이미지 최적화 작업이 대기열에 등록되었습니다.";
+    }
+
+    /// <summary>
+    /// \brief 실패한 이미지 최적화 마이그레이션을 재시도합니다.
+    /// </summary>
+    public async Task RetryImageMigrationAsync(string slug, CancellationToken ct = default)
+    {
+        await _mediaMigration.RetryTenantAsync(slug, ct).ConfigureAwait(false);
+        await LoadAsync(ct).ConfigureAwait(false);
+        StatusMessage = $"✅ '{slug}' 이미지 최적화 실패 항목을 재시도합니다.";
     }
 
     public async Task SetUnlockedLayoutsAsync(string slug, IEnumerable<string> unlockedLayoutModes, CancellationToken ct = default)
@@ -234,4 +382,26 @@ public sealed class WeddingSuperAdminViewModel
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(x => x)
             .ToList();
+
+    private static int? NormalizeNullableNonNegative(int? value) =>
+        value.HasValue ? Math.Max(0, value.Value) : null;
+
+    private static MediaPolicyOverride? NormalizeOverride(MediaPolicyOverride? value)
+    {
+        if (value is null || value.IsEmpty)
+        {
+            return null;
+        }
+
+        value.ImageMaxCount = NormalizeNullableNonNegative(value.ImageMaxCount);
+        value.ImageOptimizedMaxStorageMb = NormalizeNullableNonNegative(value.ImageOptimizedMaxStorageMb);
+        value.ImageOriginalMaxStorageMb = NormalizeNullableNonNegative(value.ImageOriginalMaxStorageMb);
+        value.ImageMaxLongSidePx = NormalizeNullableNonNegative(value.ImageMaxLongSidePx);
+        value.ImageQuality = value.ImageQuality.HasValue ? Math.Clamp(value.ImageQuality.Value, 1, 100) : null;
+        value.VideoMaxFileSizeMb = NormalizeNullableNonNegative(value.VideoMaxFileSizeMb);
+        value.VideoMaxCount = NormalizeNullableNonNegative(value.VideoMaxCount);
+        value.VideoMaxStorageMb = NormalizeNullableNonNegative(value.VideoMaxStorageMb);
+        value.ImageOutputFormat = string.IsNullOrWhiteSpace(value.ImageOutputFormat) ? null : value.ImageOutputFormat.Trim();
+        return value.IsEmpty ? null : value;
+    }
 }

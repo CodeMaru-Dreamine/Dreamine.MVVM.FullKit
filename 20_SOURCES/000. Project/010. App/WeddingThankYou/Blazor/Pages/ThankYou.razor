@@ -34,7 +34,9 @@ else
 {
     @if (!string.IsNullOrWhiteSpace(Vm.MusicUrl))
     {
-        <div class="w-music-bar @(Vm.MusicButtonPosition == "top" ? "w-music-bar--top" : "")">
+        <div class="w-music-bar @(Vm.MusicButtonPosition == "top" ? "w-music-bar--top" : "") @(Vm.HasCustomMusicButtonPosition ? "w-draggable-positioned" : "") @(AdminPreview ? "w-design-draggable" : "")"
+             data-drag-target="music"
+             style="@Vm.MusicButtonStyle">
             <audio @ref="audioRef" src="@Vm.MusicUrl" loop preload="auto"></audio>
             <button class="w-music-btn" @onclick="ToggleMusic" title="@(isMusicPlaying ? "음악 끄기" : "음악 켜기")">
                 @(isMusicPlaying ? "⏸" : "🎵")
@@ -46,17 +48,10 @@ else
     @if (UseTabs)
     {
         <nav class="w-invite-tabs-bar" aria-label="감사장 메뉴">
-            <button class="@TabClass("hero")" @onclick='() => SetTab("hero")'><span>⌂</span><small>홈</small></button>
-            <button class="@TabClass("message")" @onclick='() => SetTab("message")'><span>✉</span><small>감사</small></button>
-            @if (HasVideo)
+            @foreach (var item in TabItems)
             {
-                <button class="@TabClass("video")" @onclick='() => SetTab("video")'><span>▷</span><small>영상</small></button>
+                <button class="@TabClass(item.Key)" @onclick="() => SetTab(item.Key)"><span>@item.Icon</span><small>@item.Label</small></button>
             }
-            @if (HasGallery)
-            {
-                <button class="@TabClass("gallery")" @onclick='() => SetTab("gallery")'><span>▧</span><small>사진</small></button>
-            }
-            <button class="@TabClass("guestbook")" @onclick='() => SetTab("guestbook")'><span>✎</span><small>방명록</small></button>
         </nav>
 
         <button class="w-invite-menu-fab @(_mobileTabMenuOpen ? "is-open" : "")"
@@ -70,27 +65,12 @@ else
             <nav class="w-invite-menu-sheet" aria-label="감사장 메뉴 (모바일)">
                 <div class="w-invite-menu-sheet__handle"></div>
                 <div class="w-invite-menu-sheet__grid">
-                    <button class="w-invite-menu-item @(ActiveTab == "hero" ? "active" : "")" @onclick='() => SelectTabAndClose("hero")'>
-                        <span class="w-invite-menu-item__ico">⌂</span><span>홈</span>
-                    </button>
-                    <button class="w-invite-menu-item @(ActiveTab == "message" ? "active" : "")" @onclick='() => SelectTabAndClose("message")'>
-                        <span class="w-invite-menu-item__ico">✉</span><span>감사 인사</span>
-                    </button>
-                    @if (HasVideo)
+                    @foreach (var item in TabItems)
                     {
-                        <button class="w-invite-menu-item @(ActiveTab == "video" ? "active" : "")" @onclick='() => SelectTabAndClose("video")'>
-                            <span class="w-invite-menu-item__ico">▷</span><span>영상</span>
+                        <button class="w-invite-menu-item @(ActiveTab == item.Key ? "active" : "")" @onclick="() => SelectTabAndClose(item.Key)">
+                            <span class="w-invite-menu-item__ico">@item.Icon</span><span>@item.Label</span>
                         </button>
                     }
-                    @if (HasGallery)
-                    {
-                        <button class="w-invite-menu-item @(ActiveTab == "gallery" ? "active" : "")" @onclick='() => SelectTabAndClose("gallery")'>
-                            <span class="w-invite-menu-item__ico">▧</span><span>사진</span>
-                        </button>
-                    }
-                    <button class="w-invite-menu-item @(ActiveTab == "guestbook" ? "active" : "")" @onclick='() => SelectTabAndClose("guestbook")'>
-                        <span class="w-invite-menu-item__ico">✎</span><span>방명록</span>
-                    </button>
                 </div>
             </nav>
         }
@@ -119,72 +99,10 @@ else
                 </div>
             </section>
 
-            <section class="wedding-gallery-section" id="gallery">
-                <div class="wedding-layout-heading">
-                    <p class="wedding-layout-kicker">Gallery</p>
-                    <h2>감사의 순간들</h2>
-                    @if (GalleryTotalCount > 0)
-                    {
-                        <span>표시 @(GalleryVisibleCount)장 / 전체 @(GalleryTotalCount)장</span>
-                    }
-                </div>
-                @if (GalleryTotalCount == 0)
-                {
-                    <div class="wedding-gallery-empty">아직 등록된 사진이 없습니다.</div>
-                }
-                else
-                {
-                    <div class="wedding-gallery-grid">
-                        @for (int i = 0; i < GalleryVisibleCount; i++)
-                        {
-                            var photoIndex = i;
-                            <figure class="wedding-gallery-tile">
-                                <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photoIndex)" aria-label="사진 @(photoIndex + 1) 크게 보기">
-                                    <img src="@Vm.AllPhotos[photoIndex].ThumbUrl" alt="사진 @(photoIndex + 1)" loading="lazy" />
-                                </button>
-                            </figure>
-                        }
-                    </div>
-                    @if (GalleryVisibleCount < GalleryTotalCount)
-                    {
-                        <div class="wedding-layout-more">
-                            <button type="button" class="w-btn w-btn--primary" @onclick="LoadMoreGallery">
-                                사진 더 보기 (+@Math.Min(GalleryPageSize, GalleryTotalCount - GalleryVisibleCount))
-                            </button>
-                        </div>
-                    }
-                }
-            </section>
-
-            <section class="wedding-story-section">
-                <h2>감사 인사</h2>
-                <p>@Vm.WeddingDate.ToString("yyyy년 MM월 dd일"), @(Vm.VenueName)에서의 결혼식을 많은 분들의 축복 속에 무사히 마쳤습니다.</p>
-                @if (!string.IsNullOrWhiteSpace(Vm.Story))
-                {
-                    <p>@Vm.Story</p>
-                }
-                @if (!string.IsNullOrWhiteSpace(Vm.Story2))
-                {
-                    <hr class="w-divider" />
-                    <p>@Vm.Story2</p>
-                }
-            </section>
-
-            @if (HasVideo)
+            @foreach (var section in Vm.OrderedSections.Where(x => x != "hero"))
             {
-                <section class="w-video">
-                    <h2 class="w-section-title">우리의 영상</h2>
-                    <div class="w-video__grid">
-                        @for (int i = 0; i < Vm.VideoUrls.Count; i++)
-                        {
-                            <div class="w-video__item">
-                                <video src="@Vm.VideoUrls[i]" preload="metadata" controls playsinline @onplay="PauseMusicForVideo"></video>
-                            </div>
-                        }
-                    </div>
-                </section>
+                @RenderPremiumGallerySection(section)
             }
-            @RenderGuestbook()
         </section>
     }
     else if (UseStoryLayout)
@@ -192,78 +110,10 @@ else
         @* ══ Story 레이아웃 — 챕터 흐름형 (Gallery 앨범형과 시각적으로 구분) ══ *@
         <section class="wedding-layout-story w-layout-story">
 
-            @for (var i = 0; i < Vm.StoryChapters.Count; i++)
+            @foreach (var section in Vm.OrderedSections.Where(x => x != "hero"))
             {
-                var chapterIndex = i;
-                var chapter = Vm.StoryChapters[chapterIndex];
-                var photo = Vm.ResolveStoryChapterPhoto(chapter, chapterIndex);
-                var isReverse = chapterIndex % 2 == 1;
-                var isClosing = chapterIndex == Vm.StoryChapters.Count - 1;
-                <section class="wedding-story-chapter @(isReverse ? "wedding-story-chapter--reverse" : "") @(isClosing ? "wedding-story-chapter--closing" : "")">
-                    <div class="wedding-story-chapter-label">
-                        <span class="wedding-story-chapter-label__no">@chapter.Label</span>
-                        <span class="wedding-story-chapter-label__title">@chapter.Title</span>
-                    </div>
-                    @if (photo is not null)
-                    {
-                        <figure class="wedding-story-hero-photo @(isReverse ? "wedding-story-hero-photo--portrait" : "")">
-                            <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photo)" aria-label="@chapter.Title 사진 크게 보기">
-                                <img src="@photo.ThumbUrl" alt="@chapter.Title" loading="@(chapterIndex == 0 ? "eager" : "lazy")" />
-                            </button>
-                        </figure>
-                    }
-                    <div class="wedding-story-text-block @(isClosing ? "wedding-story-text-block--wide" : "")">
-                        @RenderStoryChapterBody(chapter, chapterIndex)
-                    </div>
-                </section>
+                @RenderPremiumStorySection(section)
             }
-
-            @* ─── 하단 보조 : 함께한 순간 ─── *@
-            @if (StoryStripTotal > 0)
-            {
-                <section class="wedding-story-moment-strip" id="gallery">
-                    <div class="wedding-layout-heading">
-                        <p class="wedding-layout-kicker">Moments</p>
-                        <h2>함께한 순간</h2>
-                        <span>표시 @(StoryStripVisible)장 / 전체 @(StoryStripTotal)장</span>
-                    </div>
-                    <div class="wedding-story-moment-strip__grid">
-                        @for (int i = 0; i < StoryStripVisible; i++)
-                        {
-                            var photoIndex = i;
-                            <figure>
-                                <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photoIndex)" aria-label="사진 @(photoIndex + 1) 크게 보기">
-                                    <img src="@Vm.AllPhotos[photoIndex].ThumbUrl" alt="사진 @(photoIndex + 1)" loading="lazy" />
-                                </button>
-                            </figure>
-                        }
-                    </div>
-                    @if (StoryStripVisible < StoryStripTotal)
-                    {
-                        <div class="wedding-layout-more">
-                            <button type="button" class="w-btn w-btn--primary" @onclick="LoadMoreStoryStrip">
-                                사진 더 보기 (+@Math.Min(StoryStripPageSize, StoryStripTotal - StoryStripVisible))
-                            </button>
-                        </div>
-                    }
-                </section>
-            }
-
-            @if (HasVideo)
-            {
-                <section class="w-video">
-                    <h2 class="w-section-title">우리의 영상</h2>
-                    <div class="w-video__grid">
-                        @for (int i = 0; i < Vm.VideoUrls.Count; i++)
-                        {
-                            <div class="w-video__item">
-                                <video src="@Vm.VideoUrls[i]" preload="metadata" controls playsinline @onplay="PauseMusicForVideo"></video>
-                            </div>
-                        }
-                    </div>
-                </section>
-            }
-            @RenderGuestbook()
         </section>
     }
     else if (!UseTabs || ActiveTab == "hero")
@@ -278,7 +128,9 @@ else
             <div class="w-hero__bg w-hero__bg--default"></div>
         }
         <div class="w-hero__overlay"></div>
-        <div class="w-hero__content w-hero__content--dv-@Vm.HeroPanelVerticalDesktop w-hero__content--mv-@Vm.HeroPanelVerticalMobile">
+        <div class="w-hero__content w-hero__content--dv-@Vm.HeroPanelVerticalDesktop w-hero__content--mv-@Vm.HeroPanelVerticalMobile @(Vm.HasCustomHeroPanelPosition ? "w-draggable-positioned" : "") @(AdminPreview ? "w-design-draggable" : "")"
+             data-drag-target="heroThankYou"
+             style="@Vm.HeroPanelStyle">
             <div class="w-hero__top w-panel">
                 <h1 class="w-hero__title">Thank You</h1>
                 <p class="w-hero__names">@Vm.CoupleName</p>
@@ -290,7 +142,7 @@ else
 
     @if (!UsePremiumLayout && (!UseTabs || ActiveTab == "message"))
     {
-    <section class="w-thankyou-msg glass-panel">
+    <section class="w-thankyou-msg glass-panel w-invite-tab-page">
         <h2 class="w-section-title">감사 인사</h2>
         <p>
             @Vm.WeddingDate.ToString("yyyy년 MM월 dd일"), @(Vm.VenueName)에서의 결혼식을<br />
@@ -314,7 +166,7 @@ else
 
     @if ((HasVideo) && (!UsePremiumLayout && (!UseTabs || ActiveTab == "video")))
     {
-        <section class="w-video">
+        <section class="w-video w-invite-tab-page">
             <h2 class="w-section-title">우리의 영상</h2>
             <div class="w-video__grid">
                 @for (int i = 0; i < Vm.VideoUrls.Count; i++)
@@ -349,7 +201,7 @@ else
 
     @if ((HasGallery) && (!UsePremiumLayout && (!UseTabs || ActiveTab == "gallery")))
     {
-        <section class="w-gallery">
+        <section class="w-gallery w-invite-tab-page">
             <h2 class="w-section-title">우리의 사진</h2>
             <div class="w-gallery__controls">
                 <button class="w-btn" @onclick="ToggleAutoPlay">
@@ -384,7 +236,7 @@ else
 
     @if (!UsePremiumLayout && (!UseTabs || ActiveTab == "guestbook"))
     {
-    <section class="w-guestbook">
+    <section class="w-guestbook w-invite-tab-page">
         <h2 class="w-section-title">📖 감사 방명록</h2>
         <div class="w-gb__form">
             <input class="w-input" type="text" placeholder="이름" @bind="VmGuest.Name" />
@@ -429,6 +281,7 @@ else
 
 @code {
     [Parameter] public string Slug { get; set; } = "";
+    [SupplyParameterFromQuery(Name = "adminPreview")] public bool AdminPreview { get; set; }
 
     private ElementReference lbRef;
     private ElementReference vlbRef;
@@ -458,6 +311,8 @@ else
     private int _galleryVisibleCount = GalleryInitialCount;
     private bool premiumPhotoLightboxOpen;
     private int premiumPhotoLightboxIndex;
+    private bool premiumAutoPlaying;
+    private System.Threading.CancellationTokenSource? premiumAutoCts;
     private int GalleryTotalCount => Vm.AllPhotos.Count;
     private int GalleryVisibleCount => Math.Min(_galleryVisibleCount, GalleryTotalCount);
     private void LoadMoreGallery()
@@ -475,9 +330,68 @@ else
         premiumPhotoLightboxOpen = Vm.AllPhotos.Count > 0;
     }
 
-    private void ClosePremiumPhoto() => premiumPhotoLightboxOpen = false;
+    private async Task ClosePremiumPhoto()
+    {
+        await StopPremiumAutoPlay();
+        premiumPhotoLightboxOpen = false;
+    }
 
     private void OnPremiumPhotoIndexChanged(int index) => premiumPhotoLightboxIndex = index;
+
+    private async Task TogglePremiumAutoPlay()
+    {
+        if (premiumAutoPlaying)
+        {
+            await StopPremiumAutoPlay();
+        }
+        else
+        {
+            await StartPremiumAutoPlay();
+        }
+    }
+
+    private Task StartPremiumAutoPlay()
+    {
+        if (Vm.AllPhotos.Count == 0 || premiumAutoPlaying) return Task.CompletedTask;
+
+        if (!premiumPhotoLightboxOpen)
+        {
+            premiumPhotoLightboxIndex = 0;
+            premiumPhotoLightboxOpen = true;
+        }
+
+        premiumAutoPlaying = true;
+        premiumAutoCts = new System.Threading.CancellationTokenSource();
+        var token = premiumAutoCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    await Task.Delay(Vm.GalleryAutoPlayMs, token).ConfigureAwait(false);
+                    await InvokeAsync(() =>
+                    {
+                        if (premiumPhotoLightboxOpen && Vm.AllPhotos.Count > 0)
+                        {
+                            premiumPhotoLightboxIndex = (premiumPhotoLightboxIndex + 1) % Vm.AllPhotos.Count;
+                            StateHasChanged();
+                        }
+                    });
+                }
+            }
+            catch (TaskCanceledException) { }
+        }, token);
+
+        return Task.CompletedTask;
+    }
+
+    private Task StopPremiumAutoPlay()
+    {
+        premiumAutoPlaying = false;
+        premiumAutoCts?.Cancel();
+        return Task.CompletedTask;
+    }
 
     private RenderFragment RenderStoryChapterBody(StoryChapter chapter, int chapterIndex) => builder =>
     {
@@ -513,45 +427,20 @@ else
                 builder.CloseElement();
                 break;
             case 2:
-                builder.OpenElement(14, "dl");
-                builder.AddAttribute(15, "class", "wedding-story-facts");
-                AddStoryFact(builder, 16, "일시", $"{Vm.WeddingDate:yyyy년 MM월 dd일}");
-                if (!string.IsNullOrWhiteSpace(Vm.VenueName))
-                {
-                    AddStoryFact(builder, 24, "장소", Vm.VenueName);
-                }
-                if (!string.IsNullOrWhiteSpace(Vm.VenueAddress))
-                {
-                    AddStoryFact(builder, 32, "주소", Vm.VenueAddress);
-                }
+                builder.OpenElement(14, "p");
+                builder.AddContent(15, "함께해 주신 시간과 축복의 순간을 사진과 이야기로 천천히 전해드립니다.");
+                builder.CloseElement();
+                builder.OpenElement(16, "p");
+                builder.AddContent(17, "소중한 마음을 보내주신 모든 분들께 오래 기억될 감사의 인사를 남깁니다.");
                 builder.CloseElement();
                 break;
             default:
-                if (!string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml))
-                {
-                    builder.AddMarkupContent(40, Vm.CeremonyNoteHtml);
-                }
-                else
-                {
-                    builder.OpenElement(41, "p");
-                    builder.AddContent(42, $"{Vm.WeddingDate:yyyy년 MM월 dd일}, {Vm.VenueName}에서의 결혼식을 많은 분들의 축복 속에 무사히 마쳤습니다. 따뜻한 마음과 귀한 발걸음을 보내주신 모든 분들께 진심으로 감사드립니다.");
-                    builder.CloseElement();
-                }
+                builder.OpenElement(40, "p");
+                builder.AddContent(41, $"{Vm.WeddingDate:yyyy년 MM월 dd일}, {Vm.VenueName}에서의 결혼식을 많은 분들의 축복 속에 무사히 마쳤습니다. 따뜻한 마음과 귀한 발걸음을 보내주신 모든 분들께 진심으로 감사드립니다.");
+                builder.CloseElement();
                 break;
         }
     };
-
-    private static void AddStoryFact(RenderTreeBuilder builder, int seq, string label, string value)
-    {
-        builder.OpenElement(seq, "div");
-        builder.OpenElement(seq + 1, "dt");
-        builder.AddContent(seq + 2, label);
-        builder.CloseElement();
-        builder.OpenElement(seq + 3, "dd");
-        builder.AddContent(seq + 4, value);
-        builder.CloseElement();
-        builder.CloseElement();
-    }
 
     private const int StoryStripInitial = 6;
     private const int StoryStripPageSize = 12;
@@ -564,6 +453,10 @@ else
     private bool HasVideo => Vm.VideoUrls.Count > 0;
     private bool HasGallery => Vm.Gallery.Count > 0;
     private bool _mobileTabMenuOpen;
+    private IReadOnlyList<TabItem> TabItems =>
+        [.. Vm.OrderedSections.Where(IsAvailable).Select(x => new TabItem(x, WeddingSectionOrderCatalog.GetIcon(x), WeddingSectionOrderCatalog.GetLabel(x)))];
+
+    private sealed record TabItem(string Key, string Icon, string Label);
 
     private void SetTab(string tab)
     {
@@ -576,6 +469,16 @@ else
         ActiveTab = tab;
         _mobileTabMenuOpen = false;
     }
+
+    private bool IsAvailable(string section) => section switch
+    {
+        "hero" => true,
+        "message" => true,
+        "gallery" => HasGallery || UseGalleryLayout || UseStoryLayout,
+        "video" => HasVideo,
+        "guestbook" => true,
+        _ => false,
+    };
 
     protected override async Task OnParametersSetAsync()
     {
@@ -603,6 +506,9 @@ else
         // 탭 스타일일 때 폰 FAB 에 드래그 이동 바인딩 (JS 내부에서 중복 방지)
         if (UseTabs)
             await JS.InvokeVoidAsync("weddingInterop.initInviteMenuFab");
+
+        if (Vm.IsLoaded && AdminPreview)
+            await JS.InvokeVoidAsync("weddingInterop.initDesignDragTargets");
 
         if (shouldFocusLightbox)
         {
@@ -715,7 +621,7 @@ else
             {
                 while (!token.IsCancellationRequested)
                 {
-                    await Task.Delay(3000, token);
+                    await Task.Delay(Vm.GalleryAutoPlayMs, token);
                     if (Vm.LightboxOpen)
                         await InvokeAsync(() => { Vm.LightboxNext(); StateHasChanged(); });
                 }
@@ -729,6 +635,152 @@ else
 
     private async Task OnGuestbookAdd() { await VmGuest.AddEntryAsync(Slug); StateHasChanged(); }
     private async Task OnGuestbookReload() { await VmGuest.ReloadAsync(Slug); StateHasChanged(); }
+
+    private RenderFragment RenderPremiumGallerySection(string section) => section switch
+    {
+        "gallery" => RenderPremiumGallery(),
+        "message" or "story" => RenderThankYouMessage(),
+        "video" when HasVideo => RenderPremiumVideo(),
+        "guestbook" => RenderGuestbook(),
+        _ => builder => { },
+    };
+
+    private RenderFragment RenderPremiumStorySection(string section) => section switch
+    {
+        "story" or "message" => RenderStoryChapters(),
+        "gallery" when StoryStripTotal > 0 => RenderStoryMomentStrip(),
+        "video" when HasVideo => RenderPremiumVideo(),
+        "guestbook" => RenderGuestbook(),
+        _ => builder => { },
+    };
+
+    private RenderFragment RenderPremiumGallery() => @<section class="wedding-gallery-section" id="gallery">
+        <div class="wedding-layout-heading">
+            <p class="wedding-layout-kicker">Gallery</p>
+            <h2>감사의 순간들</h2>
+            @if (GalleryTotalCount > 0)
+            {
+                <span>표시 @(GalleryVisibleCount)장 / 전체 @(GalleryTotalCount)장</span>
+            }
+        </div>
+        @if (GalleryTotalCount == 0)
+        {
+            <div class="wedding-gallery-empty">아직 등록된 사진이 없습니다.</div>
+        }
+        else
+        {
+            <div class="w-gallery__controls">
+                <button class="w-btn" type="button" @onclick="TogglePremiumAutoPlay">
+                    @(premiumAutoPlaying ? "⏸ 정지" : "▶ 자동재생")
+                </button>
+            </div>
+            <div class="wedding-gallery-grid">
+                @for (int i = 0; i < GalleryVisibleCount; i++)
+                {
+                    var photoIndex = i;
+                    <figure class="wedding-gallery-tile">
+                        <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photoIndex)" aria-label="사진 @(photoIndex + 1) 크게 보기">
+                            <img src="@Vm.AllPhotos[photoIndex].ThumbUrl" alt="사진 @(photoIndex + 1)" loading="lazy" />
+                        </button>
+                    </figure>
+                }
+            </div>
+            @if (GalleryVisibleCount < GalleryTotalCount)
+            {
+                <div class="wedding-layout-more">
+                    <button type="button" class="w-btn w-btn--primary" @onclick="LoadMoreGallery">
+                        사진 더 보기 (+@Math.Min(GalleryPageSize, GalleryTotalCount - GalleryVisibleCount))
+                    </button>
+                </div>
+            }
+        }
+    </section>;
+
+    private RenderFragment RenderThankYouMessage() => @<section class="wedding-story-section">
+        <h2>감사 인사</h2>
+        <p>@Vm.WeddingDate.ToString("yyyy년 MM월 dd일"), @(Vm.VenueName)에서의 결혼식을 많은 분들의 축복 속에 무사히 마쳤습니다.</p>
+        @if (!string.IsNullOrWhiteSpace(Vm.Story))
+        {
+            <p>@Vm.Story</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Vm.Story2))
+        {
+            <hr class="w-divider" />
+            <p>@Vm.Story2</p>
+        }
+    </section>;
+
+    private RenderFragment RenderPremiumVideo() => @<section class="w-video">
+        <h2 class="w-section-title">우리의 영상</h2>
+        <div class="w-video__grid">
+            @for (int i = 0; i < Vm.VideoUrls.Count; i++)
+            {
+                <div class="w-video__item">
+                    <video src="@Vm.VideoUrls[i]" preload="metadata" controls playsinline @onplay="PauseMusicForVideo"></video>
+                </div>
+            }
+        </div>
+    </section>;
+
+    private RenderFragment RenderStoryChapters() => @<text>
+        @for (var i = 0; i < Vm.StoryChapters.Count; i++)
+        {
+            var chapterIndex = i;
+            var chapter = Vm.StoryChapters[chapterIndex];
+            var photo = Vm.ResolveStoryChapterPhoto(chapter, chapterIndex);
+            var isReverse = chapterIndex % 2 == 1;
+            var isClosing = chapterIndex == Vm.StoryChapters.Count - 1;
+            <section class="wedding-story-chapter @(isReverse ? "wedding-story-chapter--reverse" : "") @(isClosing ? "wedding-story-chapter--closing" : "")">
+                <div class="wedding-story-chapter-label">
+                    <span class="wedding-story-chapter-label__no">@chapter.Label</span>
+                    <span class="wedding-story-chapter-label__title">@chapter.Title</span>
+                </div>
+                @if (photo is not null)
+                {
+                    <figure class="wedding-story-hero-photo @(isReverse ? "wedding-story-hero-photo--portrait" : "")">
+                        <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photo)" aria-label="@chapter.Title 사진 크게 보기">
+                            <img src="@photo.ThumbUrl" alt="@chapter.Title" loading="@(chapterIndex == 0 ? "eager" : "lazy")" />
+                        </button>
+                    </figure>
+                }
+                <div class="wedding-story-text-block @(isClosing ? "wedding-story-text-block--wide" : "")">
+                    @RenderStoryChapterBody(chapter, chapterIndex)
+                </div>
+            </section>
+        }
+    </text>;
+
+    private RenderFragment RenderStoryMomentStrip() => @<section class="wedding-story-moment-strip" id="gallery">
+        <div class="wedding-layout-heading">
+            <p class="wedding-layout-kicker">Moments</p>
+            <h2>함께한 순간</h2>
+            <span>표시 @(StoryStripVisible)장 / 전체 @(StoryStripTotal)장</span>
+        </div>
+        <div class="w-gallery__controls">
+            <button class="w-btn" type="button" @onclick="TogglePremiumAutoPlay">
+                @(premiumAutoPlaying ? "⏸ 정지" : "▶ 자동재생")
+            </button>
+        </div>
+        <div class="wedding-story-moment-strip__grid">
+            @for (int i = 0; i < StoryStripVisible; i++)
+            {
+                var photoIndex = i;
+                <figure>
+                    <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photoIndex)" aria-label="사진 @(photoIndex + 1) 크게 보기">
+                        <img src="@Vm.AllPhotos[photoIndex].ThumbUrl" alt="사진 @(photoIndex + 1)" loading="lazy" />
+                    </button>
+                </figure>
+            }
+        </div>
+        @if (StoryStripVisible < StoryStripTotal)
+        {
+            <div class="wedding-layout-more">
+                <button type="button" class="w-btn w-btn--primary" @onclick="LoadMoreStoryStrip">
+                    사진 더 보기 (+@Math.Min(StoryStripPageSize, StoryStripTotal - StoryStripVisible))
+                </button>
+            </div>
+        }
+    </section>;
 
     private RenderFragment RenderGuestbook() => @<section class="w-guestbook">
         <h2 class="w-section-title">📖 감사 방명록</h2>
@@ -756,5 +808,12 @@ else
         </ul>
     </section>;
 
-    public async ValueTask DisposeAsync() { await StopAutoPlay(); autoCts?.Dispose(); _selfRef?.Dispose(); }
+    public async ValueTask DisposeAsync()
+    {
+        await StopAutoPlay();
+        await StopPremiumAutoPlay();
+        autoCts?.Dispose();
+        premiumAutoCts?.Dispose();
+        _selfRef?.Dispose();
+    }
 }

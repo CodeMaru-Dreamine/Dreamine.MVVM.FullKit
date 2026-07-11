@@ -46,7 +46,9 @@ else
 {
     @if (!string.IsNullOrWhiteSpace(Vm.MusicUrl))
     {
-        <div class="w-music-bar @(Vm.MusicButtonPosition == "top" ? "w-music-bar--top" : "") @(Vm.UsesBottomNavigation ? "w-music-bar--with-tabs" : "")">
+        <div class="w-music-bar @(Vm.MusicButtonPosition == "top" ? "w-music-bar--top" : "") @(Vm.UsesBottomNavigation ? "w-music-bar--with-tabs" : "") @(Vm.HasCustomMusicButtonPosition ? "w-draggable-positioned" : "") @(AdminPreview ? "w-design-draggable" : "")"
+             data-drag-target="music"
+             style="@Vm.MusicButtonStyle">
             <audio @ref="audioRef" src="@Vm.MusicUrl" loop preload="auto"></audio>
             <button class="w-music-btn" @onclick="ToggleMusic" title="@(isMusicPlaying ? "음악 끄기" : "음악 켜기")">
                 @(isMusicPlaying ? "⏸" : "🎵")
@@ -90,6 +92,7 @@ else
 
 @code {
     [Parameter] public string Slug { get; set; } = "";
+    [SupplyParameterFromQuery(Name = "adminPreview")] public bool AdminPreview { get; set; }
 
     private ElementReference audioRef;
     private bool isMusicPlaying;
@@ -118,6 +121,11 @@ else
             isMusicPlaying = await JS.InvokeAsync<bool>("weddingInterop.isMusicPlaying");
             musicSyncInitialized = true;
             StateHasChanged();
+        }
+
+        if (Vm.IsLoaded && AdminPreview)
+        {
+            await JS.InvokeVoidAsync("weddingInterop.initDesignDragTargets");
         }
     }
 

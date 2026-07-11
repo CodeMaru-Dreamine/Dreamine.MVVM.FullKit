@@ -116,7 +116,7 @@ body {
     margin: 0 auto;
     bottom: calc(1.1rem + env(safe-area-inset-bottom, 0px));
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     gap: .1rem;
     padding: .65rem .55rem;
     border-radius: 22px;
@@ -152,20 +152,23 @@ body {
 .w-invite-tabs-bar ~ .w-gallery.w-invite-tab-page,
 .w-invite-tabs-bar ~ .w-gift.w-invite-tab-page,
 .w-invite-tabs-bar ~ .w-guestbook.w-invite-tab-page {
-    position: relative;
+    position: fixed;
+    inset: 0;
     isolation: isolate;
     width: 100%;
     max-width: none;
-    min-height: 100svh;
+    height: 100dvh;
+    min-height: 0;
     margin: 0;
     padding: 5rem clamp(1rem, 5vw, 5rem) 9rem;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     overflow: hidden auto;
     border-top: 0;
     background: var(--w-bg);
+    z-index: 1;
 }
 .w-invite-tabs-bar ~ .w-invite-tab-page::before,
 .w-invite-tabs-bar ~ .w-video.w-invite-tab-page::before,
@@ -293,10 +296,8 @@ body {
     }
 
     .w-hero--style-tabs.w-hero--invite-positioned .w-panel {
-        position: relative;
-        inset: auto;
-        transform: none;
-        max-width: 100%;
+        position: absolute;
+        max-width: calc(100% - 2rem);
     }
 
     .w-hero--style-tabs .w-hero__top {
@@ -341,7 +342,8 @@ body {
     .w-invite-tabs-bar ~ .w-gallery.w-invite-tab-page,
     .w-invite-tabs-bar ~ .w-gift.w-invite-tab-page,
     .w-invite-tabs-bar ~ .w-guestbook.w-invite-tab-page {
-        min-height: 100svh;
+        height: 100dvh;
+        min-height: 0;
         padding-top: 4.25rem;
         padding-bottom: 9rem;
     }
@@ -436,7 +438,23 @@ body {
 .w-map-btn--atlan  { background: #f04e37; }
 .w-map-btn--tmap   { background: #3182f6; }
 .w-map-links { margin-top: .75rem; }
-.w-ceremony-note   { margin-top: 1.5rem; padding: 1.5rem; background: var(--w-bg); border-radius: var(--w-radius); }
+.w-ceremony-note { margin-top: 1.5rem; }
+.w-ceremony-note--markdown {
+    padding: 1.5rem;
+    background: var(--w-bg);
+    border-radius: var(--w-radius);
+}
+.w-ceremony-note--html {
+    max-width: 100%;
+}
+.w-ceremony-note--html img,
+.w-ceremony-note--html video {
+    max-width: 100%;
+    height: auto;
+}
+.w-ceremony-note--html table {
+    max-width: 100%;
+}
 .w-road-placeholder {
     border: 2px dashed var(--w-border);
     border-radius: var(--w-radius);
@@ -978,6 +996,59 @@ body {
     justify-content: center;
 }
 
+.wedding-layout-gallery > .w-details,
+.wedding-layout-gallery > .w-gift,
+.wedding-layout-gallery > .w-guestbook,
+.wedding-layout-story > .w-details,
+.wedding-layout-story > .w-gift,
+.wedding-layout-story > .w-guestbook {
+    width: min(100%, 820px);
+    max-width: 820px;
+    padding: clamp(22px, 4vw, 36px);
+    border: 1px solid var(--w-border);
+    border-radius: var(--w-radius);
+    border-top: 1px solid var(--w-border);
+    background: var(--w-panel-bg);
+    box-shadow: var(--w-shadow);
+}
+
+.wedding-layout-gallery > .w-details .w-tabs,
+.wedding-layout-story > .w-details .w-tabs {
+    max-width: 420px;
+    margin-inline: auto;
+}
+
+.wedding-layout-gallery > .w-details .w-map-links,
+.wedding-layout-story > .w-details .w-map-links {
+    justify-content: center;
+}
+
+.wedding-layout-gallery > .w-details .w-osm__frame,
+.wedding-layout-story > .w-details .w-osm__frame {
+    height: clamp(280px, 42vw, 420px);
+    border-radius: calc(var(--w-radius) - 4px);
+    box-shadow: var(--w-shadow);
+}
+
+.wedding-layout-gallery > .w-gift .w-gift__cards,
+.wedding-layout-story > .w-gift .w-gift__cards {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 1rem;
+}
+
+.wedding-layout-gallery > .w-guestbook .w-gb__form,
+.wedding-layout-gallery > .w-guestbook .w-gb__list,
+.wedding-layout-story > .w-guestbook .w-gb__form,
+.wedding-layout-story > .w-guestbook .w-gb__list {
+    width: min(100%, 640px);
+    margin-inline: auto;
+}
+
+.wedding-layout-gallery > .w-guestbook .w-gb__list,
+.wedding-layout-story > .w-guestbook .w-gb__list {
+    margin-block: 0;
+}
+
 @media (max-width: 760px) {
     .wedding-layout-story {
         padding: 1.5rem 1rem 6rem;
@@ -1000,6 +1071,20 @@ body {
 
     .wedding-story-moment-strip__grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .wedding-layout-gallery > .w-details,
+    .wedding-layout-gallery > .w-gift,
+    .wedding-layout-gallery > .w-guestbook,
+    .wedding-layout-story > .w-details,
+    .wedding-layout-story > .w-gift,
+    .wedding-layout-story > .w-guestbook {
+        padding: 1.2rem;
+    }
+
+    .wedding-layout-gallery > .w-details .w-osm__frame,
+    .wedding-layout-story > .w-details .w-osm__frame {
+        height: 300px;
     }
 }
 
@@ -1089,7 +1174,7 @@ body {
     font-family: system-ui, sans-serif;
 }
 /* 로그인 / 로딩 화면(3컬럼 셸이 아닐 때)만 좁게 감쌈 */
-.w-admin:not(:has(.w-admin-shell)) {
+.w-admin:not(:has(.w-admin-shell)):not(.wedding-admin-shell) {
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem 1.5rem;
@@ -1277,57 +1362,614 @@ body {
 }
 .w-admin-link:hover { color: #bbb; }
 
-/* ── 슈퍼 어드민 ───────────────────────────────────── */
-.w-sa-header { margin-bottom: 2rem; }
-.w-sa-subtitle { color: #888; margin: 0; }
+/* ── 슈퍼 어드민 대시보드 ───────────────────────────── */
 .w-sa-hint { font-size: .82rem; color: #aaa; margin: 0 0 .5rem; }
+.w-sa-field { display: flex; flex-direction: column; gap: .35rem; }
+.w-sa-preview { font-size: .78rem; color: var(--w-primary); margin-top: .15rem; }
+.w-sa-create-btn { align-self: end; min-height: 42px; }
+.w-sa-slug { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: .86rem; color: #43382f; }
+.w-sa-empty { color: #8e8276; text-align: center; padding: 2.5rem 1rem; }
 
-.w-sa-form {
+.wedding-admin-shell {
+    --wa-bg: #f7f3eb;
+    --wa-card: rgba(255, 253, 249, .96);
+    --wa-card-strong: #fff;
+    --wa-border: rgba(178, 151, 111, .22);
+    --wa-border-strong: rgba(178, 151, 111, .34);
+    --wa-text: #332b25;
+    --wa-muted: #8b8075;
+    --wa-gold: #c6a47a;
+    --wa-gold-dark: #9a7448;
+    --wa-sage: #6d9276;
+    --wa-blue: #466a8e;
+    --wa-danger: #d85959;
+    min-height: 100vh;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 248px minmax(0, 1fr) 330px;
+    background:
+        radial-gradient(circle at 16% 10%, rgba(198, 164, 122, .12), transparent 28%),
+        linear-gradient(180deg, #fbfaf7 0%, var(--wa-bg) 100%);
+    color: var(--wa-text);
+}
+.wedding-admin-sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    padding: 1.35rem 1rem;
+    border-right: 1px solid var(--wa-border);
+    background: rgba(255, 253, 249, .78);
+    backdrop-filter: blur(16px);
+}
+.wedding-admin-brand {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .35rem .45rem 1rem;
+    border-bottom: 1px solid var(--wa-border);
+}
+.wedding-admin-brand__mark,
+.wedding-admin-profile > span,
+.wedding-admin-stat-card__icon {
+    display: inline-grid;
+    place-items: center;
+    flex: 0 0 auto;
+    border-radius: 12px;
+    background: rgba(198, 164, 122, .16);
+    color: var(--wa-gold-dark);
+    font-weight: 800;
+}
+.wedding-admin-brand__mark { width: 40px; height: 40px; }
+.wedding-admin-brand strong { display: block; font-size: 1.05rem; }
+.wedding-admin-brand span { display: block; font-size: .78rem; color: var(--wa-muted); margin-top: .1rem; }
+.wedding-admin-nav { display: flex; flex-direction: column; gap: .35rem; }
+.wedding-admin-nav__item {
+    border: 0;
+    background: transparent;
+    color: #5d5147;
+    text-align: left;
+    border-radius: 8px;
+    padding: .72rem .8rem;
+    font: inherit;
+    font-size: .94rem;
+    cursor: pointer;
+}
+.wedding-admin-nav__item:hover { background: rgba(198, 164, 122, .1); }
+.wedding-admin-nav__item.is-active {
+    background: rgba(198, 164, 122, .16);
+    color: var(--wa-gold-dark);
+    font-weight: 700;
+}
+.wedding-admin-sidebar__meter {
+    margin-top: auto;
+    border: 1px solid var(--wa-border);
+    background: var(--wa-card);
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 12px 28px rgba(79, 64, 45, .06);
+}
+.wedding-admin-sidebar__meter span,
+.wedding-admin-sidebar__meter small {
+    display: block;
+    color: var(--wa-muted);
+    font-size: .78rem;
+}
+.wedding-admin-sidebar__meter strong {
+    display: block;
+    margin: .35rem 0 .15rem;
+    font-size: 1.2rem;
+}
+.wedding-admin-content {
+    min-width: 0;
+    padding: 1.35rem;
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
+}
+.wedding-admin-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    min-height: 64px;
+    padding-bottom: .4rem;
+}
+.wedding-admin-eyebrow {
+    margin: 0 0 .2rem;
+    font-size: .78rem;
+    color: var(--wa-gold-dark);
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.wedding-admin-header h1 {
+    margin: 0;
+    font-size: clamp(1.45rem, 2vw, 2rem);
+    letter-spacing: 0;
+}
+.wedding-admin-header span { color: var(--wa-muted); font-size: .92rem; }
+.wedding-admin-header__tools {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: .7rem;
+    min-width: min(620px, 58%);
+}
+.wedding-admin-search {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    border: 1px solid var(--wa-border);
+    background: var(--wa-card-strong);
+    border-radius: 8px;
+    padding: .55rem .75rem;
+}
+.wedding-admin-search span {
+    color: var(--wa-muted);
+    font-size: .78rem;
+    white-space: nowrap;
+}
+.wedding-admin-search input {
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--wa-text);
+    font: inherit;
+}
+.wedding-admin-icon-button,
+.wedding-admin-action-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    min-height: 36px;
+    border: 1px solid var(--wa-border-strong);
+    background: var(--wa-card-strong);
+    color: #5b4c40;
+    border-radius: 8px;
+    padding: .45rem .75rem;
+    font: inherit;
+    font-size: .88rem;
+    line-height: 1.35;
+    white-space: normal;
+    text-decoration: none;
+    cursor: pointer;
+}
+.wedding-admin-icon-button {
+    width: 36px;
+    padding: 0;
+    font-weight: 700;
+}
+.wedding-admin-action-button:hover,
+.wedding-admin-icon-link:hover { border-color: rgba(154, 116, 72, .48); color: var(--wa-gold-dark); }
+.wedding-admin-action-button.is-primary {
+    background: var(--wa-gold);
+    border-color: var(--wa-gold);
+    color: #fff;
+    font-weight: 700;
+}
+.wedding-admin-action-button.is-danger {
+    border-color: rgba(216, 89, 89, .36);
+    color: var(--wa-danger);
+}
+.wedding-admin-action-button.is-compact {
+    min-height: 30px;
+    padding: .25rem .55rem;
+    font-size: .8rem;
+}
+.wedding-admin-action-button:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+.wedding-admin-profile {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding-left: .25rem;
+}
+.wedding-admin-profile > span {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #526f63;
+    color: #fff;
+}
+.wedding-admin-profile strong,
+.wedding-admin-profile small { display: block; white-space: nowrap; }
+.wedding-admin-profile small { color: var(--wa-muted); font-size: .76rem; }
+.wedding-admin-stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(150px, 1fr));
+    gap: .85rem;
+}
+.wedding-admin-stat-card,
+.wedding-admin-card,
+.wedding-admin-detail-panel {
+    border: 1px solid var(--wa-border);
+    background: var(--wa-card);
+    border-radius: 8px;
+    box-shadow: 0 16px 36px rgba(79, 64, 45, .07);
+}
+.wedding-admin-stat-card {
+    display: flex;
+    gap: .85rem;
+    align-items: center;
+    min-height: 108px;
+    padding: 1rem;
+}
+.wedding-admin-stat-card__icon {
+    width: 44px;
+    height: 44px;
+    font-size: .75rem;
+}
+.wedding-admin-stat-card__icon.is-green { background: rgba(109, 146, 118, .15); color: #477356; }
+.wedding-admin-stat-card__icon.is-gold { background: rgba(198, 164, 122, .18); color: var(--wa-gold-dark); }
+.wedding-admin-stat-card__icon.is-sage { background: rgba(119, 154, 138, .16); color: #527a68; }
+.wedding-admin-stat-card__icon.is-blue { background: rgba(70, 106, 142, .14); color: var(--wa-blue); }
+.wedding-admin-stat-card small,
+.wedding-admin-stat-card em {
+    display: block;
+    color: var(--wa-muted);
+    font-style: normal;
+    font-size: .78rem;
+}
+.wedding-admin-stat-card strong {
+    display: block;
+    margin: .2rem 0;
+    font-size: 1.55rem;
+    font-weight: 800;
+}
+.wedding-admin-card-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(310px, .9fr);
+    gap: .85rem;
+}
+.wedding-admin-card-grid.is-single { grid-template-columns: 1fr; }
+.wedding-admin-card { padding: 1rem; }
+.wedding-admin-section-summary h2 {
+    margin: 0;
+    letter-spacing: 0;
+}
+.wedding-admin-section-summary p {
+    margin: .35rem 0 0;
+    color: var(--wa-muted);
+}
+.wedding-admin-card__header,
+.wedding-admin-table-card__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+.wedding-admin-card h2,
+.wedding-admin-table-card h2,
+.wedding-admin-panel-section h3 {
+    margin: 0;
+    letter-spacing: 0;
+}
+.wedding-admin-card p,
+.wedding-admin-table-card p {
+    margin: .25rem 0 0;
+    color: var(--wa-muted);
+    font-size: .84rem;
+}
+.wedding-admin-form {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .85rem;
     align-items: end;
 }
-.w-sa-field { display: flex; flex-direction: column; gap: .3rem; }
-.w-sa-preview { font-size: .8rem; color: var(--w-primary); margin-top: .2rem; }
-.w-sa-create-btn { grid-column: 1 / -1; }
-
-/* 테이블 — 좁은 화면에서는 가로 스크롤 (내용이 잘리지 않도록) */
-.w-sa-table { margin-top: 1rem; border: 1px solid var(--w-border); border-radius: var(--w-radius); overflow-x: auto; }
-.w-sa-table__head,
-.w-sa-table__row {
+.wedding-admin-form .w-sa-create-btn { grid-column: auto; }
+.wedding-admin-card--settings {
+    display: flex;
+    flex-direction: column;
+    gap: .45rem;
+}
+.wedding-admin-card--settings .w-btn { margin-top: auto; }
+.wedding-admin-policy-grid {
     display: grid;
-    grid-template-columns: 130px 130px 100px 70px 150px 120px 110px 220px 220px 150px 70px;
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+    gap: .85rem;
+}
+.wedding-admin-policy-grid section {
+    border: 1px solid rgba(178, 151, 111, .18);
+    background: rgba(255, 255, 255, .52);
+    border-radius: 8px;
+    padding: .85rem;
+}
+.wedding-admin-policy-grid h3 {
+    margin: 0 0 .75rem;
+    font-size: .92rem;
+    letter-spacing: 0;
+}
+.wedding-admin-checkline {
+    display: flex;
     align-items: center;
-    gap: .75rem;
-    padding: .65rem 1rem;
-    min-width: 1590px;
+    gap: .5rem;
+    margin-top: .6rem;
+    color: #5f5145;
+    font-size: .86rem;
 }
-.w-sa-table__head {
-    background: var(--w-primary);
-    color: #fff;
+.wedding-admin-table-card { padding: 0; overflow: hidden; }
+.wedding-admin-table-card__header {
+    padding: 1rem 1rem 0;
+    align-items: center;
+}
+.wedding-admin-table-card h2 span {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    background: rgba(198, 164, 122, .14);
+    color: var(--wa-gold-dark);
+    padding: .18rem .5rem;
+    font-size: .8rem;
+    vertical-align: middle;
+}
+.wedding-admin-table-tools {
+    display: flex;
+    gap: .5rem;
+    align-items: center;
+}
+.wedding-admin-select {
+    min-height: 36px;
+    border: 1px solid var(--wa-border);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--wa-text);
+    padding: .35rem .65rem;
+    font: inherit;
+}
+.wedding-admin-table-wrap { overflow-x: auto; }
+.wedding-admin-table {
+    width: 100%;
+    min-width: 1050px;
+    border-collapse: collapse;
+    font-size: .88rem;
+}
+.wedding-admin-table th,
+.wedding-admin-table td {
+    padding: .82rem .9rem;
+    border-top: 1px solid rgba(178, 151, 111, .16);
+    text-align: left;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+.wedding-admin-table th {
+    color: #827568;
+    font-size: .78rem;
+    font-weight: 700;
+    background: rgba(250, 247, 241, .8);
+}
+.wedding-admin-table tbody tr { cursor: pointer; transition: background .15s ease; }
+.wedding-admin-table tbody tr:hover,
+.wedding-admin-table tbody tr.is-selected { background: rgba(198, 164, 122, .08); }
+.wedding-admin-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    border-radius: 999px;
+    background: rgba(70, 106, 142, .1);
+    color: var(--wa-blue);
+    padding: .18rem .55rem;
+    margin: .08rem .18rem .08rem 0;
+    font-size: .76rem;
+    font-weight: 700;
+}
+.wedding-admin-badge.is-success { background: rgba(109, 146, 118, .14); color: #477356; }
+.wedding-admin-badge.is-muted { background: rgba(139, 128, 117, .12); color: #786d62; }
+.wedding-admin-badge.is-gold { background: rgba(198, 164, 122, .16); color: var(--wa-gold-dark); }
+.wedding-admin-badge.is-blue { background: rgba(70, 106, 142, .12); color: var(--wa-blue); }
+.wedding-admin-badge.is-danger { background: rgba(216, 89, 89, .12); color: var(--wa-danger); }
+.wedding-admin-icon-link {
+    color: var(--wa-gold-dark);
+    text-decoration: none;
+    font-weight: 700;
+}
+.wedding-admin-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: .85rem 1rem 1rem;
+    border-top: 1px solid rgba(178, 151, 111, .16);
+    color: var(--wa-muted);
+    font-size: .86rem;
+}
+.wedding-admin-pagination > div,
+.wedding-admin-pagination label {
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+}
+.wedding-admin-detail-panel {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    border-radius: 0;
+    border-top: 0;
+    border-right: 0;
+    border-bottom: 0;
+    padding: 1.1rem;
+}
+.wedding-admin-detail-panel__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--wa-border);
+}
+.wedding-admin-detail-panel__header span {
+    color: var(--wa-muted);
+    font-size: .78rem;
+    font-weight: 700;
+}
+.wedding-admin-detail-panel__header h2 {
+    margin: .4rem 0 .2rem;
+    font-size: 1.15rem;
+}
+.wedding-admin-detail-panel__header p {
+    margin: 0;
+    color: var(--wa-muted);
+    font-size: .86rem;
+}
+.wedding-admin-detail-list {
+    display: grid;
+    gap: .7rem;
+    margin: 1rem 0;
+}
+.wedding-admin-detail-list > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+}
+.wedding-admin-detail-list dt {
+    color: var(--wa-muted);
     font-size: .82rem;
-    font-weight: 600;
 }
-.w-sa-table__row {
-    border-top: 1px solid var(--w-border);
-    font-size: .9rem;
+.wedding-admin-detail-list dd { margin: 0; font-weight: 700; }
+.wedding-admin-switch {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    cursor: pointer;
 }
-.w-sa-table__row:hover { background: #faf7f3; }
-.w-sa-slug { font-family: monospace; font-size: .85rem; color: var(--w-dark); }
-.w-sa-mode { font-size: .78rem; padding: .2rem .5rem; border-radius: 4px; text-align: center; }
-.w-sa-mode--invite   { background: #e8f0fe; color: #1a56db; }
-.w-sa-mode--thankyou { background: #ede9fe; color: #6d28d9; }
-.w-sa-mode--both     { background: #e8f4ec; color: #1a7a3a; }
-.w-sa-links { display: flex; gap: .3rem; flex-wrap: wrap; }
-.w-sa-display { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
-.w-sa-check { display: flex; align-items: center; gap: .25rem; font-size: .82rem; cursor: pointer; white-space: nowrap; }
-.w-sa-layout-unlocks { display: flex; flex-direction: column; align-items: flex-start; gap: .25rem; }
-.w-sa-layout-unlocks small { color: #a77b4a; font-size: .7rem; margin-left: .15rem; }
-.w-sa-pin-label { display: flex; align-items: center; gap: .2rem; font-size: .82rem; color: #c8a882; }
-.w-sa-pin-input { width: 44px; padding: .2rem .3rem; border: 1px solid #ddd; border-radius: 4px; font-size: .8rem; text-align: center; }
-.w-sa-empty { color: #aaa; text-align: center; padding: 2rem; }
-.w-sa-refresh { text-align: right; margin-top: 1rem; }
+.wedding-admin-number-input {
+    width: 68px;
+    min-height: 32px;
+    border: 1px solid var(--wa-border);
+    border-radius: 8px;
+    padding: .25rem .45rem;
+    text-align: center;
+}
+.wedding-admin-panel-section {
+    padding: 1rem 0;
+    border-top: 1px solid var(--wa-border);
+}
+.wedding-admin-panel-section h3 {
+    font-size: .92rem;
+    margin-bottom: .75rem;
+}
+.wedding-admin-panel-section .w-label { margin-top: .7rem; }
+.wedding-admin-panel-section > .wedding-admin-action-button {
+    width: 100%;
+    margin-top: .45rem;
+}
+.wedding-admin-panel-section > .wedding-admin-action-button + .wedding-admin-action-button {
+    margin-top: .45rem;
+}
+.wedding-admin-usage-mini {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .35rem;
+    padding: .65rem;
+    border-radius: 8px;
+    background: rgba(250, 247, 241, .75);
+    color: #6f6255;
+    font-size: .78rem;
+}
+.wedding-admin-migration-state {
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+    margin-bottom: .7rem;
+}
+.wedding-admin-migration-state small {
+    color: var(--wa-muted);
+    line-height: 1.4;
+}
+.wedding-admin-permission-list {
+    display: grid;
+    gap: .45rem;
+    margin-bottom: .8rem;
+}
+.wedding-admin-permission {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: .55rem;
+    align-items: start;
+    padding: .65rem;
+    border: 1px solid rgba(178, 151, 111, .18);
+    background: rgba(255, 255, 255, .58);
+    border-radius: 8px;
+}
+.wedding-admin-permission strong,
+.wedding-admin-permission small {
+    display: block;
+}
+.wedding-admin-permission small {
+    color: var(--wa-muted);
+    font-size: .76rem;
+    line-height: 1.45;
+    margin-top: .12rem;
+}
+.wedding-admin-quick-actions {
+    display: grid;
+    gap: .5rem;
+}
+.wedding-admin-detail-empty {
+    display: grid;
+    place-items: center;
+    min-height: 240px;
+    text-align: center;
+    color: var(--wa-muted);
+    gap: .4rem;
+}
+.wedding-admin-detail-empty strong { color: var(--wa-text); }
+
+@media (max-width: 1440px) {
+    .wedding-admin-shell { grid-template-columns: 220px minmax(0, 1fr) 310px; }
+    .wedding-admin-stats { grid-template-columns: repeat(3, minmax(150px, 1fr)); }
+    .wedding-admin-card-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 1080px) {
+    .wedding-admin-shell {
+        grid-template-columns: 1fr;
+    }
+    .wedding-admin-sidebar,
+    .wedding-admin-detail-panel {
+        position: static;
+        height: auto;
+        border: 0;
+        border-bottom: 1px solid var(--wa-border);
+    }
+    .wedding-admin-sidebar {
+        flex-direction: row;
+        align-items: center;
+        overflow-x: auto;
+    }
+    .wedding-admin-nav {
+        flex-direction: row;
+        min-width: max-content;
+    }
+    .wedding-admin-sidebar__meter { margin-left: auto; margin-top: 0; min-width: 180px; }
+    .wedding-admin-detail-panel { border-top: 1px solid var(--wa-border); }
+}
+@media (max-width: 760px) {
+    .wedding-admin-content { padding: .85rem; }
+    .wedding-admin-header,
+    .wedding-admin-header__tools,
+    .wedding-admin-table-card__header,
+    .wedding-admin-pagination {
+        align-items: stretch;
+        flex-direction: column;
+    }
+    .wedding-admin-header__tools { min-width: 0; width: 100%; }
+    .wedding-admin-profile { display: none; }
+    .wedding-admin-stats,
+    .wedding-admin-form {
+        grid-template-columns: 1fr;
+    }
+    .wedding-admin-sidebar {
+        padding: .8rem;
+    }
+}
 
 /* ── 테마 변수 (body에 class 적용) ─────────────────── */
 /* rose (기본) — :root 값 그대로 */
@@ -1369,6 +2011,27 @@ body.w-theme-blush {
 .w-music-bar--with-tabs:not(.w-music-bar--top) {
     bottom: calc(6.4rem + env(safe-area-inset-bottom, 0px));
 }
+.w-draggable-positioned {
+    left: var(--w-drag-x, 50%);
+    top: var(--w-drag-y, 50%);
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+}
+.w-design-draggable {
+    cursor: move;
+    touch-action: none;
+    outline: 2px dashed color-mix(in srgb, var(--w-primary) 58%, transparent);
+    outline-offset: 4px;
+    user-select: none;
+}
+.w-design-draggable.is-dragging {
+    opacity: .9;
+    z-index: 1200;
+}
+.w-hero .w-design-draggable {
+    z-index: 5;
+}
 .w-music-btn {
     background: var(--w-primary); border: none; cursor: pointer;
     width: 36px; height: 36px; border-radius: 50%;
@@ -1377,8 +2040,69 @@ body.w-theme-blush {
 }
 .w-music-label { font-size: .8rem; color: var(--w-dark); white-space: nowrap; }
 
+@media (max-width: 640px) {
+    .w-draggable-positioned {
+        left: var(--w-drag-mobile-x, var(--w-drag-x, 50%));
+        top: var(--w-drag-mobile-y, var(--w-drag-y, 50%));
+    }
+}
+
 /* ── 테마 피커 (어드민) ─────────────────────────────── */
 .w-theme-picker { display: flex; flex-wrap: wrap; gap: .75rem; margin-bottom: .75rem; }
+.w-section-order-list {
+    display: grid;
+    gap: .55rem;
+}
+.w-section-order-item {
+    display: grid;
+    grid-template-columns: 2.2rem 1fr auto;
+    align-items: center;
+    gap: .65rem;
+    padding: .65rem .75rem;
+    border: 1px solid var(--w-border);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .72);
+}
+.w-section-order-item.is-fixed {
+    opacity: .72;
+}
+.w-section-order-item__icon {
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: color-mix(in srgb, var(--w-primary) 14%, #fff);
+    color: var(--w-primary);
+}
+.w-section-order-item__label {
+    font-weight: 700;
+    color: var(--w-dark);
+}
+.w-section-order-item__actions {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+}
+.w-drag-control-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .75rem;
+}
+.w-drag-control-card {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding: .85rem;
+    border: 1px solid var(--w-border);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, .72);
+}
+.w-drag-control-card > span {
+    font-size: .86rem;
+    color: color-mix(in srgb, var(--w-text) 72%, transparent);
+}
 .w-theme-btn {
     display: flex; align-items: center; gap: .5rem;
     padding: .45rem .9rem; border-radius: 999px;
@@ -2149,12 +2873,15 @@ body.w-theme-blush {
     justify-content: space-between;
     gap: .5rem;
     padding: 0 .25rem;
+    flex-wrap: wrap;
 }
 
 .w-admin-preview__actions {
     display: flex;
     gap: .35rem;
     align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 .w-admin-preview__mode {
@@ -2170,6 +2897,16 @@ body.w-theme-blush {
     background: var(--w-primary);
     border-color: var(--w-primary);
     color: #fff;
+}
+
+.w-admin-preview__device {
+    max-width: 11.5rem;
+    border: 1px solid var(--w-border);
+    background: rgba(255, 255, 255, .78);
+    color: #6b5a4e;
+    border-radius: 6px;
+    padding: .28rem .45rem;
+    font-size: .75rem;
 }
 
 .w-admin-preview__actions .w-btn {
@@ -2199,8 +2936,10 @@ body.w-theme-blush {
 }
 
 .w-admin-preview__frame--phone {
-    max-width: 430px;
-    width: 100%;
+    max-width: min(100%, var(--w-preview-device-width, 393px));
+    width: var(--w-preview-device-width, 393px);
+    height: min(var(--w-preview-device-height, 852px), calc(100dvh - 7.5rem));
+    flex: 0 1 auto;
     align-self: center;
 }
 
@@ -2507,6 +3246,13 @@ body.w-theme-blush {
         left: auto !important;
         padding: .35rem !important;
         gap: 0 !important;
+    }
+    .w-music-bar.w-draggable-positioned {
+        left: var(--w-drag-mobile-x, var(--w-drag-x, 50%)) !important;
+        top: var(--w-drag-mobile-y, var(--w-drag-y, 50%)) !important;
+        right: auto !important;
+        bottom: auto !important;
+        transform: translate(-50%, -50%) !important;
     }
     .w-music-label {
         display: none !important;

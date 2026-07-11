@@ -46,7 +46,7 @@
 
                     @if (!string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml))
                     {
-                        <div class="w-ceremony-note">
+                        <div class="@CeremonyNoteClass">
                             @((MarkupString)Vm.CeremonyNoteHtml)
                         </div>
                     }
@@ -288,16 +288,39 @@
 
     private bool HasStory => !string.IsNullOrWhiteSpace(Vm.Story) || !string.IsNullOrWhiteSpace(Vm.Story2);
     private bool HasInfo => Vm.Mode != WeddingSiteMode.ThankYou || !string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml);
+    private string CeremonyNoteClass => Vm.IsCeremonyNoteHtml
+        ? "w-ceremony-note w-ceremony-note--html"
+        : "w-ceremony-note w-ceremony-note--markdown";
+    private bool HasDetails =>
+        Vm.Mode != WeddingSiteMode.ThankYou
+        && (!string.IsNullOrWhiteSpace(Vm.VenueName)
+            || !string.IsNullOrWhiteSpace(Vm.VenueAddress)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkKakao)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkNaver)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkAtlan)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkTmap)
+            || Vm.HasVenueCoords
+            || !string.IsNullOrWhiteSpace(Vm.RoadMapUrl));
 
     private IEnumerable<string> SectionsToRender =>
         IsTabbed
-            ? string.IsNullOrWhiteSpace(ActiveSection) ? [] : [ActiveSection]
-            : Vm.DesignSettings.SectionOrder.Where(IsSectionVisible);
+            ? string.IsNullOrWhiteSpace(ActiveSection) || !IsSectionVisible(ActiveSection) ? [] : [ActiveSection]
+            : Vm.OrderedSections.Where(IsSectionVisible);
 
     private bool IsSectionVisible(string section) =>
         section != "hero"
         && Vm.LayoutDescriptor.SupportedSections.Contains(section)
-        && (!Vm.DesignSettings.SectionVisibility.TryGetValue(section, out var visible) || visible);
+        && (!Vm.DesignSettings.SectionVisibility.TryGetValue(section, out var visible) || visible)
+        && section switch
+        {
+            "details" => HasDetails,
+            "story" => HasStory,
+            "gallery" => Vm.Gallery.Count > 0,
+            "video" => Vm.VideoUrls.Count > 0,
+            "gift" => Vm.Accounts.Count > 0,
+            "info" => HasInfo,
+            _ => true,
+        };
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

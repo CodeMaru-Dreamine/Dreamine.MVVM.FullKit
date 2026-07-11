@@ -6,16 +6,16 @@
     <members>
         <member name="T:Dreamine.Communication.FullKit.FullKitMarker">
             <summary>
-            Dreamine Communication FullKit 패키지의 존재를 나타내는 마커 클래스입니다.
+            Dreamine Communication FullKit package marker.
             </summary>
             <remarks>
-            이 클래스는 FullKit 패키지가 정상적으로 참조되었는지 확인하기 위한 용도입니다.
-            실제 통신 기능은 개별 Communication 패키지에서 제공합니다.
+            This type is intentionally tiny. The package itself aggregates the core
+            communication transports through project/package references.
             </remarks>
         </member>
         <member name="F:Dreamine.Communication.FullKit.FullKitMarker.PackageName">
             <summary>
-            FullKit 패키지 이름입니다.
+            The package id exposed by this meta package.
             </summary>
         </member>
     </members>

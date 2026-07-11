@@ -135,6 +135,15 @@
             Keep this disabled unless the shared instance is safe for the Blazor Server host to dispose when it stops.
             </remarks>
         </member>
+        <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.UseEmbeddedWebView">
+            <summary>
+            Gets or sets a value indicating whether the WPF shell should host an embedded WebView2 control.
+            </summary>
+            <remarks>
+            Set this to <c>false</c> to keep the in-process server running while opening the admin URL
+            in the user's default browser. This avoids machine-specific WebView2 rendering/input issues.
+            </remarks>
+        </member>
         <member name="P:Dreamine.Hybrid.Wpf.Hosting.DreamineBlazorServerHostOptions.ConfigureServices">
             <summary>
             Optional callback invoked before the Blazor Server host is built.

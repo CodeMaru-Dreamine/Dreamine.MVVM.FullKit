@@ -12,12 +12,16 @@
 <PageTitle>@Vm.CoupleName 감사 인사</PageTitle>
 
 <HeadContent>
-    <meta property="og:title" content="@Vm.OgTitle" />
-    <meta property="og:description" content="@Vm.OgDescription" />
-    <meta property="og:image" content="@(string.IsNullOrWhiteSpace(Vm.OgImageUrl) ? "/img/og-platform.jpg" : Vm.OgImageUrl)" />
+    <meta property="og:title" content="@Vm.ThankYouOgTitle" />
+    <meta property="og:description" content="@Vm.ThankYouOgDescription" />
+    <meta property="og:image" content="@(string.IsNullOrWhiteSpace(Vm.ThankYouOgImageUrl) ? "/img/og-platform.jpg" : Vm.ThankYouOgImageUrl)" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@Vm.ThankYouOgTitle" />
+    <meta name="twitter:description" content="@Vm.ThankYouOgDescription" />
+    <meta name="twitter:image" content="@(string.IsNullOrWhiteSpace(Vm.ThankYouOgImageUrl) ? "/img/og-platform.jpg" : Vm.ThankYouOgImageUrl)" />
 </HeadContent>
 
 @if (!Vm.IsLoaded)
@@ -338,7 +342,7 @@ else
             {
                 while (!token.IsCancellationRequested)
                 {
-                    await Task.Delay(3000, token);
+                    await Task.Delay(Vm.GalleryAutoPlayMs, token);
                     if (Vm.LightboxOpen)
                         await InvokeAsync(() => { Vm.LightboxNext(); StateHasChanged(); });
                 }

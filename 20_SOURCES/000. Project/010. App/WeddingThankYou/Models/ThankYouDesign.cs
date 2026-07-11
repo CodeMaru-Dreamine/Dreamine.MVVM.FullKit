@@ -56,6 +56,9 @@ public static class ThankYouDesignCatalog
     {
         config.UnlockedLayoutModes ??= new();
         config.UnlockedThemeKeys ??= new();
+        config.SectionOrder ??= WeddingSectionOrderCatalog.ThankYouRecommendedOrder.ToList();
+        config.HeroPanelPlacement ??= new WeddingFloatingPosition();
+        config.MusicButtonPlacement ??= new WeddingFloatingPosition();
         config.StoryChapters = WeddingStoryChapterDefaults.Normalize(config.StoryChapters);
 
         // 테마
@@ -65,5 +68,6 @@ public static class ThankYouDesignCatalog
         // 레이아웃
         var mode = ResolveLayoutMode(config.ThankYouStyle);
         config.ThankYouStyle = ToLegacyLayoutKey(mode);
+        config.SectionOrder = WeddingSectionOrderCatalog.NormalizeThankYouOrder(config.SectionOrder);
     }
 }
