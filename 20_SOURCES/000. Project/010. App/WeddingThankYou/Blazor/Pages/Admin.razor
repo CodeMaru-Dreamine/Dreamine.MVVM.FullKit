@@ -347,7 +347,7 @@
                     {
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🎬 우리의 영상</h3>
-                            <p class="w-hint">mp4 / webm / mov 권장, @Vm.MaxVideoSizeLabel, @(Vm.MaxVideoCount <= 0 ? "개수 무제한" : $"최대 {Vm.MaxVideoCount}개").</p>
+                            <p class="w-hint">브라우저 재생 호환성은 mp4 / webm이 가장 좋습니다. mov / m4v는 기기나 코덱에 따라 재생되지 않을 수 있습니다. @Vm.MaxVideoSizeLabel, @(Vm.MaxVideoCount <= 0 ? "개수 무제한" : $"최대 {Vm.MaxVideoCount}개").</p>
 
                             @if (Vm.Config!.VideoFileNames.Count > 0)
                             {
@@ -443,19 +443,17 @@
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🗺 지도 앱 링크</h3>
                             <div class="w-maplink-header">
-                                <span class="w-label" style="margin:0">지도 앱 링크</span>
-                                <button class="w-btn w-btn--sm" type="button" @onclick="OnAutoGenerateMapLinks">
+                                <span class="w-label" style="margin:0">카카오맵 · 네이버지도 · 아틀란 · T맵</span>
+                                <button class="w-btn w-btn--sm" type="button" @onclick="OnAutoGenerateMapLinks"
+                                        title="예식장 이름·주소·좌표를 이용해 링크를 자동으로 채워드립니다">
                                     ✨ 자동 생성
                                 </button>
                             </div>
-                            <label class="w-label">카카오맵</label>
-                            <input class="w-input" @bind="Vm.Config!.MapLinkKakao" />
-                            <label class="w-label">네이버지도</label>
-                            <input class="w-input" @bind="Vm.Config!.MapLinkNaver" />
-                            <label class="w-label">아틀란</label>
-                            <input class="w-input" @bind="Vm.Config!.MapLinkAtlan" />
-                            <label class="w-label">T맵</label>
-                            <input class="w-input" @bind="Vm.Config!.MapLinkTmap" />
+                            <p class="w-hint">예식장 이름/주소/좌표를 먼저 입력한 후 <strong>자동 생성</strong> 버튼을 누르세요.</p>
+                            @if (Vm.Config!.MapLinkKakao != "" || Vm.Config.MapLinkNaver != "" || Vm.Config.MapLinkAtlan != "" || Vm.Config.MapLinkTmap != "")
+                            {
+                                <p class="w-hint" style="color:green">✅ 링크 생성 완료 (카카오맵 · 네이버지도 · 아틀란 · T맵)</p>
+                            }
                         </section>
 
                         <section class="w-admin__section">
@@ -546,6 +544,11 @@
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🔗 링크 미리보기</h3>
                             <p class="w-hint">카카오톡·문자 등으로 감사장 링크를 공유할 때 표시되는 제목·설명·이미지입니다.</p>
+
+                            <label class="w-label">연결할 청첩장 URL</label>
+                            <input class="w-input" @bind="Vm.Config!.InvitationUrl"
+                                   placeholder="https://wedding.example.com/couple" />
+                            <p class="w-hint">비워두면 감사장 하단의 청첩장 보기 링크를 숨깁니다.</p>
 
                             <label class="w-label">미리보기 제목</label>
                             <input class="w-input" @bind="Vm.Config!.OgTitle"
@@ -683,8 +686,6 @@
         new("design",  Icon("palette"), "디자인"),
         new("story",   Icon("palette"), "스토리 챕터"),
         new("content", Icon("media"), "사진·동영상"),
-        new("map",     Icon("pin"), "지도"),
-        new("account", Icon("card"), "계좌 안내"),
         new("share",   Icon("share"), "공유 설정"),
     ];
 

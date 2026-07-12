@@ -118,7 +118,7 @@ else
     }
     else if (!UseTabs || ActiveTab == "hero")
     {
-    <section class="w-hero w-hero--thankyou w-hero--dh-@Vm.HeroPanelHorizontalDesktop w-hero--mh-@Vm.HeroPanelHorizontalMobile" role="banner">
+    <section class="w-hero w-hero--thankyou w-hero--thankyou-positioned w-hero--style-@Vm.ThankYouStyle w-hero--dh-@Vm.HeroPanelHorizontalDesktop w-hero--mh-@Vm.HeroPanelHorizontalMobile" role="banner">
         @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
         {
             <div class="w-hero__bg" style="background-image:url('@Vm.HeroImageUrl')"></div>
@@ -128,10 +128,10 @@ else
             <div class="w-hero__bg w-hero__bg--default"></div>
         }
         <div class="w-hero__overlay"></div>
-        <div class="w-hero__content w-hero__content--dv-@Vm.HeroPanelVerticalDesktop w-hero__content--mv-@Vm.HeroPanelVerticalMobile @(Vm.HasCustomHeroPanelPosition ? "w-draggable-positioned" : "") @(AdminPreview ? "w-design-draggable" : "")"
-             data-drag-target="heroThankYou"
-             style="@Vm.HeroPanelStyle">
-            <div class="w-hero__top w-panel">
+        <div class="w-hero__content">
+            <div class="w-hero__top w-panel w-hero-panel--dv-@Vm.HeroPanelVerticalDesktop w-hero-panel--dh-@Vm.HeroPanelHorizontalDesktop w-hero-panel--mv-@Vm.HeroPanelVerticalMobile w-hero-panel--mh-@Vm.HeroPanelHorizontalMobile @(Vm.HasCustomHeroPanelPosition ? "w-draggable-positioned" : "") @(AdminPreview ? "w-design-draggable" : "")"
+                 data-drag-target="heroThankYou"
+                 style="@Vm.HeroPanelStyle">
                 <h1 class="w-hero__title">Thank You</h1>
                 <p class="w-hero__names">@Vm.CoupleName</p>
                 <p class="w-hero__date">@Vm.WeddingDate.ToString("yyyy년 MM월 dd일"), 소중한 자리에 함께해 주셔서 감사합니다.</p>
@@ -140,133 +140,23 @@ else
     </section>
     }
 
-    @if (!UsePremiumLayout && (!UseTabs || ActiveTab == "message"))
+    @if (!UsePremiumLayout)
     {
-    <section class="w-thankyou-msg glass-panel w-invite-tab-page">
-        <h2 class="w-section-title">감사 인사</h2>
-        <p>
-            @Vm.WeddingDate.ToString("yyyy년 MM월 dd일"), @(Vm.VenueName)에서의 결혼식을<br />
-            많은 분들의 축복 속에 무사히 마쳤습니다. 🙇‍♂️🙇‍♀️
-        </p>
-        <p>
-            따뜻한 마음과 귀한 발걸음을 보내주신 모든 분들께<br />
-            진심으로 감사드립니다.
-        </p>
-        @if (!string.IsNullOrWhiteSpace(Vm.Story))
+        @foreach (var section in Vm.OrderedSections.Where(x => x != "hero"))
         {
-            <hr class="w-divider" />
-            <p>@Vm.Story</p>
-        }
-        @if (!string.IsNullOrWhiteSpace(Vm.Story2))
-        {
-            <p>@Vm.Story2</p>
-        }
-    </section>
-    }
-
-    @if ((HasVideo) && (!UsePremiumLayout && (!UseTabs || ActiveTab == "video")))
-    {
-        <section class="w-video w-invite-tab-page">
-            <h2 class="w-section-title">우리의 영상</h2>
-            <div class="w-video__grid">
-                @for (int i = 0; i < Vm.VideoUrls.Count; i++)
-                {
-                    var idx = i;
-                    <button class="w-video__item" @onclick="() => OpenVideoLightbox(idx)">
-                        <video src="@Vm.VideoUrls[idx]" preload="metadata" muted playsinline></video>
-                        <span class="w-video__play">▶</span>
-                    </button>
-                }
-            </div>
-        </section>
-
-        @if (videoLightboxOpen)
-        {
-            <div class="w-lightbox" role="dialog" tabindex="-1" @ref="vlbRef" @onkeydown="OnVideoKeyDown">
-                <button class="w-lb__close" @onclick="CloseVideoLightbox">✕</button>
-                @if (Vm.VideoUrls.Count > 1)
-                {
-                    <button class="w-lb__prev" @onclick="VideoPrev">‹</button>
-                }
-                <video class="w-lb__video" src="@Vm.VideoUrls[videoLightboxIdx]" controls autoplay playsinline @onplay="PauseMusicForVideo"></video>
-                @if (Vm.VideoUrls.Count > 1)
-                {
-                    <button class="w-lb__next" @onclick="VideoNext">›</button>
-                    <span class="w-lb__counter">@(videoLightboxIdx + 1) / @Vm.VideoUrls.Count</span>
-                }
-            </div>
-            <div class="w-lb__backdrop" @onclick="CloseVideoLightbox"></div>
-        }
-    }
-
-    @if ((HasGallery) && (!UsePremiumLayout && (!UseTabs || ActiveTab == "gallery")))
-    {
-        <section class="w-gallery w-invite-tab-page">
-            <h2 class="w-section-title">우리의 사진</h2>
-            <div class="w-gallery__controls">
-                <button class="w-btn" @onclick="ToggleAutoPlay">
-                    @(isAutoPlaying ? "⏸ 정지" : "▶ 자동재생")
-                </button>
-                <span class="w-gallery__count">최근 @(Vm.Gallery.Count)장 / 전체 @(Vm.AllPhotos.Count)장</span>
-            </div>
-            <div class="w-gallery__grid">
-                @for (int i = 0; i < Vm.Gallery.Count; i++)
-                {
-                    var idx = i;
-                    <button class="w-gallery__item" @onclick="() => OpenLightbox(idx)">
-                        <img src="@Vm.Gallery[idx].ThumbUrl" alt="사진 @(idx+1)" loading="lazy" />
-                    </button>
-                }
-            </div>
-        </section>
-
-        @if (Vm.LightboxOpen)
-        {
-            <div class="w-lightbox" role="dialog" tabindex="-1" @ref="lbRef"
-                 @onkeydown="OnKeyDown" @onpointerdown="OnPointerDown" @onpointerup="OnPointerUp">
-                <button class="w-lb__close" @onclick="CloseLightbox">✕</button>
-                <button class="w-lb__prev" @onclick="Vm.LightboxPrev">‹</button>
-                <img class="w-lb__img" src="@Vm.AllPhotos[Vm.LightboxIdx].Url" alt="사진 @(Vm.LightboxIdx+1)" />
-                <button class="w-lb__next" @onclick="Vm.LightboxNext">›</button>
-                <span class="w-lb__counter">@(Vm.LightboxIdx+1) / @Vm.AllPhotos.Count</span>
-            </div>
-            <div class="w-lb__backdrop" @onclick="CloseLightbox"></div>
-        }
-    }
-
-    @if (!UsePremiumLayout && (!UseTabs || ActiveTab == "guestbook"))
-    {
-    <section class="w-guestbook w-invite-tab-page">
-        <h2 class="w-section-title">📖 감사 방명록</h2>
-        <div class="w-gb__form">
-            <input class="w-input" type="text" placeholder="이름" @bind="VmGuest.Name" />
-            <input class="w-input" type="text" placeholder="연락처 (선택)" @bind="VmGuest.Contact" />
-            <textarea class="w-input w-textarea" rows="4" placeholder="감사 메시지를 남겨주세요"
-                      @bind="VmGuest.Message"></textarea>
-            <div class="w-gb__actions">
-                <button class="w-btn w-btn--primary" @onclick="OnGuestbookAdd" disabled="@VmGuest.IsSaving">등록</button>
-                <button class="w-btn" @onclick="OnGuestbookReload">새로고침</button>
-            </div>
-            @if (!string.IsNullOrWhiteSpace(VmGuest.LastStatus))
+            if (!UseTabs || ActiveTab == section)
             {
-                <p class="w-status">@VmGuest.LastStatus</p>
+                @RenderStandardSection(section)
             }
-        </div>
-        <ul class="w-gb__list">
-            @foreach (var e in VmGuest.EntriesView)
-            {
-                <li class="w-gb__entry">
-                    <div class="w-gb__meta"><strong>@e.Name</strong><span class="w-gb__date">@e.CreatedLocal.ToString("yyyy-MM-dd HH:mm")</span></div>
-                    <div class="w-gb__msg">@e.Message</div>
-                </li>
-            }
-        </ul>
-    </section>
+        }
     }
 
     <footer class="w-footer">
-        <a href="/@Slug">청첩장 보기</a>
-        <span> · </span>
+        @if (!string.IsNullOrWhiteSpace(Vm.InvitationUrl))
+        {
+            <a href="@Vm.InvitationUrl" target="_blank" rel="noopener">청첩장 보기</a>
+            <span> · </span>
+        }
         <a href="/@Slug/admin" class="w-admin-link">⚙ 관리자</a>
     </footer>
     @if (UsePremiumLayout)
@@ -276,6 +166,23 @@ else
                        CurrentIndex="@premiumPhotoLightboxIndex"
                        CurrentIndexChanged="OnPremiumPhotoIndexChanged"
                        Closed="ClosePremiumPhoto" />
+    }
+    @if (videoLightboxOpen && Vm.VideoUrls.Count > 0)
+    {
+        <div class="w-lightbox" role="dialog" tabindex="-1" @ref="vlbRef" @onkeydown="OnVideoKeyDown">
+            <button class="w-lb__close" @onclick="CloseVideoLightbox">✕</button>
+            @if (Vm.VideoUrls.Count > 1)
+            {
+                <button class="w-lb__prev" @onclick="VideoPrev">‹</button>
+            }
+            <video class="w-lb__video" src="@Vm.VideoUrls[videoLightboxIdx]" controls autoplay playsinline @onplay="PauseMusicForVideo"></video>
+            @if (Vm.VideoUrls.Count > 1)
+            {
+                <button class="w-lb__next" @onclick="VideoNext">›</button>
+                <span class="w-lb__counter">@(videoLightboxIdx + 1) / @Vm.VideoUrls.Count</span>
+            }
+        </div>
+        <div class="w-lb__backdrop" @onclick="CloseVideoLightbox"></div>
     }
 }
 
@@ -292,9 +199,9 @@ else
     private bool isAutoPlaying;
     private System.Threading.CancellationTokenSource? autoCts;
 
+    private bool shouldFocusLightbox;
     private bool videoLightboxOpen;
     private int videoLightboxIdx;
-    private bool shouldFocusLightbox;
     private bool shouldFocusVideoLightbox;
 
     private DotNetObjectReference<ThankYou>? _selfRef;
@@ -521,6 +428,7 @@ else
             shouldFocusVideoLightbox = false;
             await vlbRef.FocusAsync();
         }
+
     }
 
     private async Task ToggleMusic()
@@ -583,7 +491,7 @@ else
     private async Task OpenVideoLightbox(int idx)
     {
         await PauseMusicForVideo();
-        videoLightboxIdx = idx;
+        videoLightboxIdx = Math.Clamp(idx, 0, Math.Max(0, Vm.VideoUrls.Count - 1));
         videoLightboxOpen = true;
         shouldFocusVideoLightbox = true;
     }
@@ -636,6 +544,15 @@ else
     private async Task OnGuestbookAdd() { await VmGuest.AddEntryAsync(Slug); StateHasChanged(); }
     private async Task OnGuestbookReload() { await VmGuest.ReloadAsync(Slug); StateHasChanged(); }
 
+    private RenderFragment RenderStandardSection(string section) => section switch
+    {
+        "message" => RenderStandardMessage(),
+        "gallery" when HasGallery => RenderStandardGallery(),
+        "video" when HasVideo => RenderStandardVideo(),
+        "guestbook" => RenderGuestbook(),
+        _ => builder => { },
+    };
+
     private RenderFragment RenderPremiumGallerySection(string section) => section switch
     {
         "gallery" => RenderPremiumGallery(),
@@ -653,6 +570,77 @@ else
         "guestbook" => RenderGuestbook(),
         _ => builder => { },
     };
+
+    private RenderFragment RenderStandardMessage() => @<section class="w-thankyou-msg glass-panel w-invite-tab-page">
+        <h2 class="w-section-title">감사 인사</h2>
+        <p>
+            @Vm.WeddingDate.ToString("yyyy년 MM월 dd일"), @(Vm.VenueName)에서의 결혼식을<br />
+            많은 분들의 축복 속에 무사히 마쳤습니다. 🙇‍♂️🙇‍♀️
+        </p>
+        <p>
+            따뜻한 마음과 귀한 발걸음을 보내주신 모든 분들께<br />
+            진심으로 감사드립니다.
+        </p>
+        @if (!string.IsNullOrWhiteSpace(Vm.Story))
+        {
+            <hr class="w-divider" />
+            <p>@Vm.Story</p>
+        }
+        @if (!string.IsNullOrWhiteSpace(Vm.Story2))
+        {
+            <p>@Vm.Story2</p>
+        }
+    </section>;
+
+    private RenderFragment RenderStandardVideo() => @<text>
+        <section class="w-video w-invite-tab-page">
+            <h2 class="w-section-title">우리의 영상</h2>
+            <div class="w-video__grid">
+                @for (int i = 0; i < Vm.VideoUrls.Count; i++)
+                {
+                    var idx = i;
+                    <button type="button" class="w-video__item" @onclick="() => OpenVideoLightbox(idx)">
+                        <video src="@Vm.VideoUrls[idx]" preload="metadata" muted playsinline></video>
+                        <span class="w-video__play">▶</span>
+                    </button>
+                }
+            </div>
+        </section>
+    </text>;
+
+    private RenderFragment RenderStandardGallery() => @<text>
+        <section class="w-gallery w-invite-tab-page">
+            <h2 class="w-section-title">우리의 사진</h2>
+            <div class="w-gallery__controls">
+                <button class="w-btn" @onclick="ToggleAutoPlay">
+                    @(isAutoPlaying ? "⏸ 정지" : "▶ 자동재생")
+                </button>
+                <span class="w-gallery__count">최근 @(Vm.Gallery.Count)장 / 전체 @(Vm.AllPhotos.Count)장</span>
+            </div>
+            <div class="w-gallery__grid">
+                @for (int i = 0; i < Vm.Gallery.Count; i++)
+                {
+                    var idx = i;
+                    <button class="w-gallery__item" @onclick="() => OpenLightbox(idx)">
+                        <img src="@Vm.Gallery[idx].ThumbUrl" alt="사진 @(idx+1)" loading="lazy" />
+                    </button>
+                }
+            </div>
+        </section>
+
+        @if (Vm.LightboxOpen)
+        {
+            <div class="w-lightbox" role="dialog" tabindex="-1" @ref="lbRef"
+                 @onkeydown="OnKeyDown" @onpointerdown="OnPointerDown" @onpointerup="OnPointerUp">
+                <button class="w-lb__close" @onclick="CloseLightbox">✕</button>
+                <button class="w-lb__prev" @onclick="Vm.LightboxPrev">‹</button>
+                <img class="w-lb__img" src="@Vm.AllPhotos[Vm.LightboxIdx].Url" alt="사진 @(Vm.LightboxIdx+1)" />
+                <button class="w-lb__next" @onclick="Vm.LightboxNext">›</button>
+                <span class="w-lb__counter">@(Vm.LightboxIdx+1) / @Vm.AllPhotos.Count</span>
+            </div>
+            <div class="w-lb__backdrop" @onclick="CloseLightbox"></div>
+        }
+    </text>;
 
     private RenderFragment RenderPremiumGallery() => @<section class="wedding-gallery-section" id="gallery">
         <div class="wedding-layout-heading">
@@ -715,9 +703,11 @@ else
         <div class="w-video__grid">
             @for (int i = 0; i < Vm.VideoUrls.Count; i++)
             {
-                <div class="w-video__item">
-                    <video src="@Vm.VideoUrls[i]" preload="metadata" controls playsinline @onplay="PauseMusicForVideo"></video>
-                </div>
+                var idx = i;
+                <button type="button" class="w-video__item" @onclick="() => OpenVideoLightbox(idx)">
+                    <video src="@Vm.VideoUrls[idx]" preload="metadata" muted playsinline></video>
+                    <span class="w-video__play">▶</span>
+                </button>
             }
         </div>
     </section>;
@@ -782,7 +772,7 @@ else
         }
     </section>;
 
-    private RenderFragment RenderGuestbook() => @<section class="w-guestbook">
+    private RenderFragment RenderGuestbook() => @<section class="w-guestbook w-invite-tab-page">
         <h2 class="w-section-title">📖 감사 방명록</h2>
         <div class="w-gb__form">
             <input class="w-input" type="text" placeholder="이름" @bind="VmGuest.Name" />

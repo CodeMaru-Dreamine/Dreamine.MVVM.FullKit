@@ -105,6 +105,14 @@ body {
     position: absolute;
     max-width: calc(100% - 3rem);
 }
+.w-hero--thankyou-positioned .w-hero__content {
+    position: relative;
+    justify-content: initial;
+}
+.w-hero--thankyou-positioned .w-panel {
+    position: absolute;
+    max-width: calc(100% - 3rem);
+}
 .w-hero--style-tabs .w-hero__bottom {
     display: block;
 }
@@ -295,7 +303,8 @@ body {
         padding: 1rem 1rem 8.4rem;
     }
 
-    .w-hero--style-tabs.w-hero--invite-positioned .w-panel {
+    .w-hero--style-tabs.w-hero--invite-positioned .w-panel,
+    .w-hero--style-tabs.w-hero--thankyou-positioned .w-panel {
         position: absolute;
         max-width: calc(100% - 2rem);
     }
@@ -1291,6 +1300,13 @@ body {
 .w-video__item video {
     width: 100%; height: 100%; object-fit: cover;
     pointer-events: none; /* 썸네일은 재생 컨트롤 없이 클릭만 */
+}
+.w-video__item--player {
+    cursor: default;
+}
+.w-video__item--player video {
+    object-fit: contain;
+    pointer-events: auto;
 }
 .w-video__play {
     position: absolute; inset: 0;

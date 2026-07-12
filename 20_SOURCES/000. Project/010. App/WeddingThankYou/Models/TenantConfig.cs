@@ -76,6 +76,8 @@ public sealed class TenantConfig
     public DateTime? OwnerLinkedAt { get; set; }
     public List<ThankYouAdminUser> AdminUsers { get; set; } = new();
     public string ThankYouUrl { get; set; } = "";
+    /// <summary>감사장 하단에서 연결할 외부 청첩장 URL. 비어 있으면 청첩장 보기 링크를 숨깁니다.</summary>
+    public string InvitationUrl { get; set; } = "";
     public bool IsPublished { get; set; } = true;
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     public List<string> GalleryFileNames { get; set; } = new();

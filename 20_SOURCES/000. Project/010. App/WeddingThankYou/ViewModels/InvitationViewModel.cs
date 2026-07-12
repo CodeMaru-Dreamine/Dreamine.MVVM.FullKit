@@ -44,6 +44,9 @@ namespace WeddingThankYou.ViewModels
 		public string WeddingTime => Config?.WeddingTime ?? "";
 		public string VenueName => Config?.VenueName ?? "";
 		public string VenueAddress => Config?.VenueAddress ?? "";
+		public double VenueLat => Config?.VenueLat ?? 0;
+		public double VenueLng => Config?.VenueLng ?? 0;
+		public bool HasVenueCoords => VenueLat != 0 && VenueLng != 0;
 		public string Story => Config?.Story ?? "";
 		public string Story2 => Config?.Story2 ?? "";
 		public IReadOnlyList<StoryChapter> StoryChapters => Config?.StoryChapters ?? WeddingStoryChapterDefaults.Create();
@@ -93,7 +96,23 @@ namespace WeddingThankYou.ViewModels
 			}
 		}
 
+		public string MapLinkKakao => Config?.MapLinkKakao ?? "";
+		public string MapLinkNaver => Config?.MapLinkNaver ?? "";
+		public string MapLinkAtlan => Config?.MapLinkAtlan ?? "";
+		public string MapLinkTmap => Config?.MapLinkTmap ?? "";
+		public bool HasMapLinks =>
+			!string.IsNullOrWhiteSpace(MapLinkKakao) ||
+			!string.IsNullOrWhiteSpace(MapLinkNaver) ||
+			!string.IsNullOrWhiteSpace(MapLinkAtlan) ||
+			!string.IsNullOrWhiteSpace(MapLinkTmap);
+		public bool HasMapSection => HasVenueCoords || !string.IsNullOrWhiteSpace(RoadMapUrl) || HasMapLinks;
+		public string SelectedTab { get; private set; } = "map";
+		public void SetMap() => SelectedTab = "map";
+		public void SetRoad() => SelectedTab = "road";
+		public string TabClass(string tab) => SelectedTab == tab ? "active" : "";
+
 		public IReadOnlyList<AccountInfo> Accounts => Config?.Accounts ?? [];
+		public string InvitationUrl => NormalizeLinkUrl(Config?.InvitationUrl);
 
 		public string OgTitle => !string.IsNullOrWhiteSpace(Config?.OgTitle)
 			? Config.OgTitle
@@ -214,5 +233,27 @@ namespace WeddingThankYou.ViewModels
 		}
 
 		private static double ClampPercent(double? value) => Math.Clamp(value ?? 50, 0, 100);
+
+		private static string NormalizeLinkUrl(string? value)
+		{
+			var url = value?.Trim() ?? "";
+			if (string.IsNullOrWhiteSpace(url))
+			{
+				return "";
+			}
+
+			if (url.StartsWith("/", StringComparison.Ordinal))
+			{
+				return url;
+			}
+
+			if (Uri.TryCreate(url, UriKind.Absolute, out var absolute)
+				&& (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps))
+			{
+				return url;
+			}
+
+			return $"https://{url}";
+		}
 	}
 }
