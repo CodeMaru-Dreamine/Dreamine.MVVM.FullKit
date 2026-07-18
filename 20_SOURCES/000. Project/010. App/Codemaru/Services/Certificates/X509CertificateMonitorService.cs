@@ -10,11 +10,47 @@ using System.Security.Cryptography.X509Certificates;
 namespace Codemaru.Services.Certificates;
 
 /// <summary>
-/// \brief 파일 시스템의 X509 인증서를 읽어 만료 상태를 계산합니다.
+/// \if KO
+/// <para>\brief 파일 시스템의 X509 인증서를 읽어 만료 상태를 계산합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates x509 certificate monitor service functionality and related state.</para>
+/// \endif
 /// </summary>
 public sealed class X509CertificateMonitorService : ICertificateMonitorService
 {
-    /// <inheritdoc />
+    /// <summary>
+    /// \if KO
+    /// <para>Status Async 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the status async value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="options">
+    /// \if KO
+    /// <para>동작을 구성하는 설정입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The options that configure the operation.</para>
+    /// \endif
+    /// </param>
+    /// <param name="cancellationToken">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Status Async 작업에서 생성한 <c>Task&lt;CertificateStatusInfo&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task&lt;CertificateStatusInfo&gt;</c> result produced by the get status async operation.</para>
+    /// \endif
+    /// </returns>
     public Task<CertificateStatusInfo> GetStatusAsync(
         CertificateMonitorOptions options,
         CancellationToken cancellationToken)
@@ -84,6 +120,30 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Certificate Files 항목을 찾습니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Finds the certificate files item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="options">
+    /// \if KO
+    /// <para>동작을 구성하는 설정입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The options that configure the operation.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Find Certificate Files 작업에서 생성한 <c>IEnumerable&lt;string&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IEnumerable&lt;string&gt;</c> result produced by the find certificate files operation.</para>
+    /// \endif
+    /// </returns>
     private static IEnumerable<string> FindCertificateFiles(CertificateMonitorOptions options)
     {
         string[] patterns = options.CertificateFilePatterns is { Length: > 0 }
@@ -103,6 +163,30 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
             .ThenByDescending(File.GetLastWriteTimeUtc);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Is Certificate Candidate 조건을 확인합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Determines whether is certificate candidate.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="path">
+    /// \if KO
+    /// <para>path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for path.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Is Certificate Candidate 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the is certificate candidate condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private static bool IsCertificateCandidate(string path)
     {
         string fileName = Path.GetFileName(path).ToLowerInvariant();
@@ -126,6 +210,30 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
         return extension is ".pem" or ".crt" or ".cer" or ".pfx" or ".p12";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Certificate Priority 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the certificate priority value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="path">
+    /// \if KO
+    /// <para>path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for path.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Certificate Priority 작업에서 생성한 <c>int</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> result produced by the get certificate priority operation.</para>
+    /// \endif
+    /// </returns>
     private static int GetCertificatePriority(string path)
     {
         string fileName = Path.GetFileName(path).ToLowerInvariant();
@@ -164,6 +272,46 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
         return 0;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Read Certificate 작업을 시도하고 성공 여부를 반환합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Attempts to read certificate and returns whether the operation succeeds.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="path">
+    /// \if KO
+    /// <para>path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for path.</para>
+    /// \endif
+    /// </param>
+    /// <param name="options">
+    /// \if KO
+    /// <para>동작을 구성하는 설정입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The options that configure the operation.</para>
+    /// \endif
+    /// </param>
+    /// <param name="readErrors">
+    /// \if KO
+    /// <para>read Errors에 사용할 <c>List&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;string&gt;</c> value used for read errors.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Try Read Certificate 작업에서 생성한 <c>CertificateStatusInfo?</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CertificateStatusInfo?</c> result produced by the try read certificate operation.</para>
+    /// \endif
+    /// </returns>
     private static CertificateStatusInfo? TryReadCertificate(
         string path,
         CertificateMonitorOptions options,
@@ -205,6 +353,38 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Certificate 데이터를 불러옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Loads certificate data.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="path">
+    /// \if KO
+    /// <para>path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for path.</para>
+    /// \endif
+    /// </param>
+    /// <param name="options">
+    /// \if KO
+    /// <para>동작을 구성하는 설정입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The options that configure the operation.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Load Certificate 작업에서 생성한 <c>X509Certificate2</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>X509Certificate2</c> result produced by the load certificate operation.</para>
+    /// \endif
+    /// </returns>
     private static X509Certificate2 LoadCertificate(
         string path,
         CertificateMonitorOptions options)
@@ -226,6 +406,38 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
         return new X509Certificate2(path);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Certificate From Pem 데이터를 불러옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Loads certificate from pem data.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="path">
+    /// \if KO
+    /// <para>path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for path.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Load Certificate From Pem 작업에서 생성한 <c>X509Certificate2</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>X509Certificate2</c> result produced by the load certificate from pem operation.</para>
+    /// \endif
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// \if KO
+    /// <para>현재 객체 상태에서 Load Certificate From Pem 작업을 수행할 수 없는 경우 발생합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Thrown when the load certificate from pem operation is not valid for the current object state.</para>
+    /// \endif
+    /// </exception>
     private static X509Certificate2 LoadCertificateFromPem(string path)
     {
         string pem = File.ReadAllText(path);
@@ -257,6 +469,30 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
         return new X509Certificate2(first.RawData);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Is Server Certificate 조건을 확인합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Determines whether is server certificate.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="certificate">
+    /// \if KO
+    /// <para>certificate에 사용할 <c>X509Certificate2</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>X509Certificate2</c> value used for certificate.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Is Server Certificate 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the is server certificate condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private static bool IsServerCertificate(X509Certificate2 certificate)
     {
         foreach (X509Extension extension in certificate.Extensions)
@@ -276,6 +512,30 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
         return certificate.Subject.Contains("CN=", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Select Best Certificate 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the select best certificate operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="candidates">
+    /// \if KO
+    /// <para>candidates에 사용할 <c>IReadOnlyCollection&lt;CertificateStatusInfo&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IReadOnlyCollection&lt;CertificateStatusInfo&gt;</c> value used for candidates.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Select Best Certificate 작업에서 생성한 <c>CertificateStatusInfo</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CertificateStatusInfo</c> result produced by the select best certificate operation.</para>
+    /// \endif
+    /// </returns>
     private static CertificateStatusInfo SelectBestCertificate(
         IReadOnlyCollection<CertificateStatusInfo> candidates)
     {
@@ -297,6 +557,30 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
             .First();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Selected File Priority 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the selected file priority value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="path">
+    /// \if KO
+    /// <para>path에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for path.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Selected File Priority 작업에서 생성한 <c>int</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> result produced by the get selected file priority operation.</para>
+    /// \endif
+    /// </returns>
     private static int GetSelectedFilePriority(string? path)
     {
         if (string.IsNullOrWhiteSpace(path))
@@ -335,6 +619,38 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
         return 10;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Resolve State 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the resolve state operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="remainingDays">
+    /// \if KO
+    /// <para>remaining Days에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for remaining days.</para>
+    /// \endif
+    /// </param>
+    /// <param name="options">
+    /// \if KO
+    /// <para>동작을 구성하는 설정입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The options that configure the operation.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Resolve State 작업에서 생성한 <c>CertificateHealthState</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CertificateHealthState</c> result produced by the resolve state operation.</para>
+    /// \endif
+    /// </returns>
     private static CertificateHealthState ResolveState(
         int remainingDays,
         CertificateMonitorOptions options)
@@ -357,6 +673,46 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
         return CertificateHealthState.Ok;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Message 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the message value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="state">
+    /// \if KO
+    /// <para>state에 사용할 <c>CertificateHealthState</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CertificateHealthState</c> value used for state.</para>
+    /// \endif
+    /// </param>
+    /// <param name="remainingDays">
+    /// \if KO
+    /// <para>remaining Days에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for remaining days.</para>
+    /// \endif
+    /// </param>
+    /// <param name="certificatePath">
+    /// \if KO
+    /// <para>certificate Path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for certificate path.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Message 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build message operation.</para>
+    /// \endif
+    /// </returns>
     private static string BuildMessage(
         CertificateHealthState state,
         int remainingDays,
@@ -383,6 +739,38 @@ public sealed class X509CertificateMonitorService : ICertificateMonitorService
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Failure 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the failure operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="directory">
+    /// \if KO
+    /// <para>directory에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for directory.</para>
+    /// \endif
+    /// </param>
+    /// <param name="message">
+    /// \if KO
+    /// <para>처리할 메시지입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The message to process.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Failure 작업에서 생성한 <c>CertificateStatusInfo</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CertificateStatusInfo</c> result produced by the failure operation.</para>
+    /// \endif
+    /// </returns>
     private static CertificateStatusInfo Failure(string? directory, string message)
     {
         return new CertificateStatusInfo

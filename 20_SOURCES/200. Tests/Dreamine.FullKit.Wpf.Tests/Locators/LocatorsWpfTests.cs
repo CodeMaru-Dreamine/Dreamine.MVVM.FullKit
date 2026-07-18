@@ -3,8 +3,24 @@ using Dreamine.MVVM.Locators.Wpf;
 
 namespace Dreamine.FullKit.Wpf.Tests.Locators;
 
+/// <summary>
+/// \if KO
+/// <para>Locators Wpf Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates locators wpf tests functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class LocatorsWpfTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Region Binder Stores Region Name Attached Property 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the region binder stores region name attached property operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void RegionBinder_StoresRegionNameAttachedProperty()
     {
@@ -20,6 +36,14 @@ public sealed class LocatorsWpfTests
         });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Region Binder Navigate Uses Current Region Name Only 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the region binder navigate uses current region name only operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void RegionBinder_NavigateUsesCurrentRegionNameOnly()
     {
@@ -43,6 +67,14 @@ public sealed class LocatorsWpfTests
         });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Region Binder Navigate Throws Plain Message When Region Is Missing 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the region binder navigate throws plain message when region is missing operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void RegionBinder_NavigateThrowsPlainMessageWhenRegionIsMissing()
     {
@@ -58,6 +90,14 @@ public sealed class LocatorsWpfTests
         });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Region Binder Helper Find Region Control Returns Matching Region 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the region binder helper find region control returns matching region operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void RegionBinderHelper_FindRegionControlReturnsMatchingRegion()
     {
@@ -77,6 +117,14 @@ public sealed class LocatorsWpfTests
         });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Region Binder Helper Find Region Control Throws For Null Root 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the region binder helper find region control throws for null root operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void RegionBinderHelper_FindRegionControlThrowsForNullRoot()
     {
@@ -84,6 +132,14 @@ public sealed class LocatorsWpfTests
             () => RegionBinderHelper.FindRegionControl(null!, "FindRegionControl_Main"));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Region Binder Helper Find Region Control Throws For Empty Region Name 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the region binder helper find region control throws for empty region name operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void RegionBinderHelper_FindRegionControlThrowsForEmptyRegionName()
     {
@@ -96,6 +152,14 @@ public sealed class LocatorsWpfTests
         });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>View Model Binder Resolve View Creates Matching View And Assigns Data Context 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the view model binder resolve view creates matching view and assigns data context operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void ViewModelBinder_ResolveViewCreatesMatchingViewAndAssignsDataContext()
     {
@@ -110,6 +174,22 @@ public sealed class LocatorsWpfTests
         });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Run Sta 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the run sta operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="action">
+    /// \if KO
+    /// <para>action에 사용할 <c>Action</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Action</c> value used for action.</para>
+    /// \endif
+    /// </param>
     private static void RunSta(Action action)
     {
         Exception? exception = null;
@@ -136,10 +216,26 @@ public sealed class LocatorsWpfTests
     }
 }
 
+/// <summary>
+/// \if KO
+/// <para>Sample View Model 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates sample view model functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class SampleViewModel
 {
 }
 
+/// <summary>
+/// \if KO
+/// <para>Sample View 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates sample view functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class SampleView : UserControl
 {
 }

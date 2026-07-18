@@ -2,8 +2,24 @@ using Dreamine.MVVM.Attributes;
 
 namespace Dreamine.FullKit.Tests.Attributes;
 
+/// <summary>
+/// \if KO
+/// <para>Dreamine Attribute Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates dreamine attribute tests functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class DreamineAttributeTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Dreamine Command Attribute Stores Configured Values 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the dreamine command attribute stores configured values operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void DreamineCommandAttribute_StoresConfiguredValues()
     {
@@ -18,12 +34,28 @@ public sealed class DreamineAttributeTests
         Assert.Equal("LoadCommand", attribute.CommandName);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Dreamine Command Attribute Rejects Null Target Method 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the dreamine command attribute rejects null target method operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void DreamineCommandAttribute_RejectsNullTargetMethod()
     {
         Assert.Throws<ArgumentNullException>(() => new DreamineCommandAttribute(null!));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Optional Name Attributes Expose Configured Names 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the optional name attributes expose configured names operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void OptionalNameAttributes_ExposeConfiguredNames()
     {

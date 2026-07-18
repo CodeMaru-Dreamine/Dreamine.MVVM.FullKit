@@ -8,8 +8,24 @@ using Dreamine.Communication.Wpf.Models;
 
 namespace Dreamine.FullKit.Wpf.Tests.Communication;
 
+/// <summary>
+/// \if KO
+/// <para>Communication Wpf Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates communication wpf tests functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class CommunicationWpfTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Delegate Command Executes And Raises Can Execute Changed 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the delegate command executes and raises can execute changed operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void DelegateCommand_ExecutesAndRaisesCanExecuteChanged()
     {
@@ -29,6 +45,14 @@ public sealed class CommunicationWpfTests
         Assert.True(raised);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Connection State Brush Converter Maps States To Brushes 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the connection state brush converter maps states to brushes operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void ConnectionStateBrushConverter_MapsStatesToBrushes()
     {
@@ -41,6 +65,14 @@ public sealed class CommunicationWpfTests
         Assert.Same(Binding.DoNothing, converter.ConvertBack(Brushes.Gray, typeof(ConnectionState), null!, CultureInfo.InvariantCulture));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Communication Channel View Item Raises Property Changed For Changed Values Only 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the communication channel view item raises property changed for changed values only operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void CommunicationChannelViewItem_RaisesPropertyChangedForChangedValuesOnly()
     {
@@ -55,6 +87,14 @@ public sealed class CommunicationWpfTests
         Assert.Equal(new[] { "Name", "State" }, changed);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Communication Message Log Item Stores Display Values 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the communication message log item stores display values operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void CommunicationMessageLogItem_StoresDisplayValues()
     {

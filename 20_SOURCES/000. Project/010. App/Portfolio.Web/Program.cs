@@ -12,8 +12,24 @@ using PortfolioApp.Services;
 
 namespace PortfolioApp;
 
+/// <summary>
+/// \if KO
+/// <para>Program 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates program functionality and related state.</para>
+/// \endif
+/// </summary>
 public static class Program
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Main 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the main operation.</para>
+    /// \endif
+    /// </summary>
     [STAThread]
     public static void Main()
     {
@@ -87,12 +103,124 @@ public static class Program
         builder.Build().RunDreamineWpfApp<App>();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Int 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the int value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cfg">
+    /// \if KO
+    /// <para>cfg에 사용할 <c>IConfiguration</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IConfiguration</c> value used for cfg.</para>
+    /// \endif
+    /// </param>
+    /// <param name="key">
+    /// \if KO
+    /// <para>key에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for key.</para>
+    /// \endif
+    /// </param>
+    /// <param name="fallback">
+    /// \if KO
+    /// <para>fallback에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for fallback.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Int 작업에서 생성한 <c>int</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> result produced by the get int operation.</para>
+    /// \endif
+    /// </returns>
     private static int GetInt(IConfiguration cfg, string key, int fallback) =>
         int.TryParse(cfg[key], out int v) ? v : fallback;
 
+    /// <summary>
+    /// \if KO
+    /// <para>Bool 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the bool value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cfg">
+    /// \if KO
+    /// <para>cfg에 사용할 <c>IConfiguration</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IConfiguration</c> value used for cfg.</para>
+    /// \endif
+    /// </param>
+    /// <param name="key">
+    /// \if KO
+    /// <para>key에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for key.</para>
+    /// \endif
+    /// </param>
+    /// <param name="fallback">
+    /// \if KO
+    /// <para>fallback에 사용할 <c>bool</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for fallback.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Bool 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the get bool condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private static bool GetBool(IConfiguration cfg, string key, bool fallback) =>
         bool.TryParse(cfg[key], out bool v) ? v : fallback;
 
+    /// <summary>
+    /// \if KO
+    /// <para>Resolve Path 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the resolve path operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="configuredPath">
+    /// \if KO
+    /// <para>configured Path에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for configured path.</para>
+    /// \endif
+    /// </param>
+    /// <param name="fallback">
+    /// \if KO
+    /// <para>fallback에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for fallback.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Resolve Path 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the resolve path operation.</para>
+    /// \endif
+    /// </returns>
     private static string ResolvePath(string? configuredPath, string fallback)
     {
         if (string.IsNullOrWhiteSpace(configuredPath))

@@ -4,23 +4,43 @@ using Dreamine.MVVM.ViewModels;
 namespace SampleSmart.Pages.PageSub.CommunicationTabs.Udp;
 
 /// <summary>
-/// \brief UDP Peer Loopback 테스트 ViewModel입니다.
+/// \if KO
+/// <para>\brief UDP Peer Loopback 테스트 ViewModel입니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates udp peer test view model functionality and related state.</para>
+/// \endif
 /// </summary>
 public partial class UdpPeerTestViewModel : ViewModelBase
 {
     /// <summary>
-    /// \brief UDP Peer Loopback 테스트 이벤트 처리 객체입니다.
+    /// \if KO
+    /// <para>\brief UDP Peer Loopback 테스트 이벤트 처리 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the event value.</para>
+    /// \endif
     /// </summary>
     [DreamineEvent]
     private UdpPeerTestViewEvent _event;
 
     /// <summary>
-    /// \brief 선택 가능한 UDP 프로토콜 목록입니다.
+    /// \if KO
+    /// <para>\brief 선택 가능한 UDP 프로토콜 목록입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the udp protocols value.</para>
+    /// \endif
     /// </summary>
     public IReadOnlyList<string> UdpProtocols => Event.UdpProtocols;
 
     /// <summary>
-    /// \brief 선택된 UDP 프로토콜입니다.
+    /// \if KO
+    /// <para>\brief 선택된 UDP 프로토콜입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the selected udp protocol value.</para>
+    /// \endif
     /// </summary>
     public string SelectedUdpProtocol
     {
@@ -38,12 +58,22 @@ public partial class UdpPeerTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief 선택 가능한 UDP PlainText 인코딩 목록입니다.
+    /// \if KO
+    /// <para>\brief 선택 가능한 UDP PlainText 인코딩 목록입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the udp text encodings value.</para>
+    /// \endif
     /// </summary>
     public IReadOnlyList<string> UdpTextEncodings => Event.UdpTextEncodings;
 
     /// <summary>
-    /// \brief 선택된 UDP PlainText 인코딩입니다.
+    /// \if KO
+    /// <para>\brief 선택된 UDP PlainText 인코딩입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the selected udp encoding value.</para>
+    /// \endif
     /// </summary>
     public string SelectedUdpEncoding
     {
@@ -61,7 +91,12 @@ public partial class UdpPeerTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief UDP 송신 문자열입니다.
+    /// \if KO
+    /// <para>\brief UDP 송신 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the udp send text value.</para>
+    /// \endif
     /// </summary>
     public string UdpSendText
     {
@@ -79,65 +114,119 @@ public partial class UdpPeerTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief UDP Peer 엔드포인트 요약입니다.
+    /// \if KO
+    /// <para>\brief UDP Peer 엔드포인트 요약입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the udp endpoint summary value.</para>
+    /// \endif
     /// </summary>
     public string UdpEndpointSummary => Event.UdpEndpointSummary;
 
     /// <summary>
-    /// \brief UDP Peer A와 Peer B를 모두 시작하는 명령입니다.
+    /// \if KO
+    /// <para>\brief UDP Peer A와 Peer B를 모두 시작하는 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start udp loopback operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.StartUdpLoopback")]
     private partial void StartUdpLoopback();
 
     /// <summary>
-    /// \brief UDP Peer A와 Peer B를 모두 종료하는 명령입니다.
+    /// \if KO
+    /// <para>\brief UDP Peer A와 Peer B를 모두 종료하는 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop udp loopback operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.StopUdpLoopback")]
     private partial void StopUdpLoopback();
 
     /// <summary>
-    /// \brief UDP Peer A 연결 명령입니다.
+    /// \if KO
+    /// <para>\brief UDP Peer A 연결 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the connect udp peer a operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.ConnectUdpPeerA")]
     private partial void ConnectUdpPeerA();
 
     /// <summary>
-    /// \brief UDP Peer B 연결 명령입니다.
+    /// \if KO
+    /// <para>\brief UDP Peer B 연결 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the connect udp peer b operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.ConnectUdpPeerB")]
     private partial void ConnectUdpPeerB();
 
     /// <summary>
-    /// \brief UDP Peer A 연결 해제 명령입니다.
+    /// \if KO
+    /// <para>\brief UDP Peer A 연결 해제 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the disconnect udp peer a operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.DisconnectUdpPeerA")]
     private partial void DisconnectUdpPeerA();
 
     /// <summary>
-    /// \brief UDP Peer B 연결 해제 명령입니다.
+    /// \if KO
+    /// <para>\brief UDP Peer B 연결 해제 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the disconnect udp peer b operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.DisconnectUdpPeerB")]
     private partial void DisconnectUdpPeerB();
 
     /// <summary>
-    /// \brief UDP Peer A에서 Peer B로 메시지를 송신하는 명령입니다.
+    /// \if KO
+    /// <para>\brief UDP Peer A에서 Peer B로 메시지를 송신하는 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the send udp peer a operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.SendUdpPeerA")]
     private partial void SendUdpPeerA();
 
     /// <summary>
-    /// \brief UDP Peer B에서 Peer A로 메시지를 송신하는 명령입니다.
+    /// \if KO
+    /// <para>\brief UDP Peer B에서 Peer A로 메시지를 송신하는 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the send udp peer b operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.SendUdpPeerB")]
     private partial void SendUdpPeerB();
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="UdpPeerTestViewModel"/> class.
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="UdpPeerTestViewModel"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="UdpPeerTestViewModel"/> class.</para>
+    /// \endif
     /// </summary>
-    /// <param name="event">The event handler used by the UDP peer test view.</param>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="event"/> is <c>null</c>.
-    /// </exception>
+    /// <param name="event">
+    /// \if KO
+    /// <para>event에 사용할 <c>UdpPeerTestViewEvent</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The event handler used by the UDP peer test view.</para>
+    /// \endif
+    /// </param>
     public UdpPeerTestViewModel(UdpPeerTestViewEvent @event)
     {
         ArgumentNullException.ThrowIfNull(@event);

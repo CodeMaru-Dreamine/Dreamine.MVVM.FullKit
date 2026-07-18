@@ -23,12 +23,22 @@ using Microsoft.Extensions.Logging;
 namespace DreamineVMS;
 
 /// <summary>
-/// \brief DreamineVMS 하이브리드 애플리케이션의 진입점입니다.
+/// \if KO
+/// <para>\brief DreamineVMS 하이브리드 애플리케이션의 진입점입니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates program functionality and related state.</para>
+/// \endif
 /// </summary>
 public static class Program
 {
     /// <summary>
-    /// \brief WPF + Blazor Server 기반 DreamineVMS 애플리케이션을 시작합니다.
+    /// \if KO
+    /// <para>\brief WPF + Blazor Server 기반 DreamineVMS 애플리케이션을 시작합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the main operation.</para>
+    /// \endif
     /// </summary>
     [STAThread]
     public static void Main()
@@ -74,9 +84,21 @@ public static class Program
     }
 
     /// <summary>
-    /// \brief 설정 옵션 바인딩을 등록합니다.
+    /// \if KO
+    /// <para>\brief 설정 옵션 바인딩을 등록합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the register options operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="builder">애플리케이션 Host Builder입니다.</param>
+    /// <param name="builder">
+    /// \if KO
+    /// <para>애플리케이션 Host Builder입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HostApplicationBuilder</c> value used for builder.</para>
+    /// \endif
+    /// </param>
     private static void RegisterOptions(HostApplicationBuilder builder)
     {
         builder.Services.Configure<HostOptions>(options =>
@@ -92,18 +114,42 @@ public static class Program
     }
 
     /// <summary>
-    /// \brief Dreamine Hybrid WPF 서비스를 등록합니다.
+    /// \if KO
+    /// <para>\brief Dreamine Hybrid WPF 서비스를 등록합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the register dreamine hybrid operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="builder">애플리케이션 Host Builder입니다.</param>
+    /// <param name="builder">
+    /// \if KO
+    /// <para>애플리케이션 Host Builder입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HostApplicationBuilder</c> value used for builder.</para>
+    /// \endif
+    /// </param>
     private static void RegisterDreamineHybrid(HostApplicationBuilder builder)
     {
         builder.Services.AddDreamineHybridWpf();
     }
 
     /// <summary>
-    /// \brief WPF Shell 및 ViewModel 서비스를 등록합니다.
+    /// \if KO
+    /// <para>\brief WPF Shell 및 ViewModel 서비스를 등록합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the register auth services operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="builder">애플리케이션 Host Builder입니다.</param>
+    /// <param name="builder">
+    /// \if KO
+    /// <para>애플리케이션 Host Builder입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HostApplicationBuilder</c> value used for builder.</para>
+    /// \endif
+    /// </param>
     private static void RegisterAuthServices(HostApplicationBuilder builder)
     {
         builder.Services.AddSingleton<VmsDatabase>();
@@ -113,6 +159,22 @@ public static class Program
         builder.Services.AddHostedService<HlsSegmentPusherService>();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Register Application Services 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the register application services operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="builder">
+    /// \if KO
+    /// <para>builder에 사용할 <c>HostApplicationBuilder</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HostApplicationBuilder</c> value used for builder.</para>
+    /// \endif
+    /// </param>
     private static void RegisterApplicationServices(HostApplicationBuilder builder)
     {
         builder.Services.AddSingleton<AgentSettingsWriter>();
@@ -122,9 +184,21 @@ public static class Program
     }
 
     /// <summary>
-    /// \brief Blazor ViewModel 및 Blazor Adapter 서비스를 등록합니다.
+    /// \if KO
+    /// <para>\brief Blazor ViewModel 및 Blazor Adapter 서비스를 등록합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the register blazor view models operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="builder">애플리케이션 Host Builder입니다.</param>
+    /// <param name="builder">
+    /// \if KO
+    /// <para>애플리케이션 Host Builder입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HostApplicationBuilder</c> value used for builder.</para>
+    /// \endif
+    /// </param>
     private static void RegisterBlazorViewModels(HostApplicationBuilder builder)
     {
         builder.Services.AddScoped<LivePageViewModel>();
@@ -133,9 +207,21 @@ public static class Program
     }
 
     /// <summary>
-    /// \brief 카메라 Repository, Runtime State, Stream 서비스를 등록합니다.
+    /// \if KO
+    /// <para>\brief 카메라 Repository, Runtime State, Stream 서비스를 등록합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the register camera services operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="builder">애플리케이션 Host Builder입니다.</param>
+    /// <param name="builder">
+    /// \if KO
+    /// <para>애플리케이션 Host Builder입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HostApplicationBuilder</c> value used for builder.</para>
+    /// \endif
+    /// </param>
     private static void RegisterCameraServices(HostApplicationBuilder builder)
     {
         builder.Services.AddSingleton<IVmsCameraRepository, SqliteCameraRepository>();
@@ -148,9 +234,21 @@ public static class Program
     }
 
     /// <summary>
-    /// \brief WPF와 Blazor가 공유하는 Hybrid State Store를 등록합니다.
+    /// \if KO
+    /// <para>\brief WPF와 Blazor가 공유하는 Hybrid State Store를 등록합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the register hybrid state operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="builder">애플리케이션 Host Builder입니다.</param>
+    /// <param name="builder">
+    /// \if KO
+    /// <para>애플리케이션 Host Builder입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HostApplicationBuilder</c> value used for builder.</para>
+    /// \endif
+    /// </param>
     private static void RegisterHybridState(HostApplicationBuilder builder)
     {
         builder.Services.AddSingleton<IHybridStateStore<VmsDashboardState>>(
@@ -158,18 +256,42 @@ public static class Program
     }
 
     /// <summary>
-    /// \brief Dashboard 상태 도메인 서비스를 등록합니다.
+    /// \if KO
+    /// <para>\brief Dashboard 상태 도메인 서비스를 등록합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the register dashboard services operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="builder">애플리케이션 Host Builder입니다.</param>
+    /// <param name="builder">
+    /// \if KO
+    /// <para>애플리케이션 Host Builder입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HostApplicationBuilder</c> value used for builder.</para>
+    /// \endif
+    /// </param>
     private static void RegisterDashboardServices(HostApplicationBuilder builder)
     {
         builder.Services.AddSingleton<IVmsDashboardStateService, VmsDashboardStateService>();
     }
 
     /// <summary>
-    /// \brief 백그라운드 Hosted Service를 등록합니다.
+    /// \if KO
+    /// <para>\brief 백그라운드 Hosted Service를 등록합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the register hosted services operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="builder">애플리케이션 Host Builder입니다.</param>
+    /// <param name="builder">
+    /// \if KO
+    /// <para>애플리케이션 Host Builder입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HostApplicationBuilder</c> value used for builder.</para>
+    /// \endif
+    /// </param>
     private static void RegisterHostedServices(HostApplicationBuilder builder)
     {
         builder.Services.AddHostedService(

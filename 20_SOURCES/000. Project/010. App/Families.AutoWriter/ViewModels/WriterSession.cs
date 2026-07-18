@@ -12,58 +12,281 @@ using Microsoft.Win32;
 
 namespace FamiliesAutoWriter.ViewModels;
 
-/// <summary>세션 파싱 모드 — 탭마다 독립 설정</summary>
-public enum SessionMode { Travel, Cooking }
-
-/// <summary>실행 간격 옵션 (콤보박스 표시용)</summary>
-public sealed record IntervalOption(int Minutes, string Label)
+/// <summary>
+/// \if KO
+/// <para>세션 파싱 모드 — 탭마다 독립 설정</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates session mode functionality and related state.</para>
+/// \endif
+/// </summary>
+public enum SessionMode
 {
-    public override string ToString() => Label;
+    /// <summary>
+    /// \if KO
+    /// <para>여행 콘텐츠 작성 모드입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Uses travel-content writing mode.</para>
+    /// \endif
+    /// </summary>
+    Travel,
+
+    /// <summary>
+    /// \if KO
+    /// <para>요리 콘텐츠 작성 모드입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Uses cooking-content writing mode.</para>
+    /// \endif
+    /// </summary>
+    Cooking
 }
 
-/// <summary>AI 대기 시간 옵션 (콤보박스 표시용)</summary>
-public sealed record WaitOption(int Seconds, string Label)
+/// <summary>
+/// \if KO
+/// <para>실행 간격 옵션 (콤보박스 표시용)</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates interval option functionality and related state.</para>
+/// \endif
+/// </summary>
+public sealed record IntervalOption(int Minutes, string Label)
 {
+    /// <summary>
+    /// \if KO
+    /// <para>To String 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the to string operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>To String 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the to string operation.</para>
+    /// \endif
+    /// </returns>
     public override string ToString() => Label;
 }
 
 /// <summary>
-/// 탭 하나에 대응하는 독립 세션 — 슬러그/앨범/프롬프트/루프 상태를 각자 보유
+/// \if KO
+/// <para>AI 대기 시간 옵션 (콤보박스 표시용)</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates wait option functionality and related state.</para>
+/// \endif
+/// </summary>
+public sealed record WaitOption(int Seconds, string Label)
+{
+    /// <summary>
+    /// \if KO
+    /// <para>To String 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the to string operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>To String 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the to string operation.</para>
+    /// \endif
+    /// </returns>
+    public override string ToString() => Label;
+}
+
+/// <summary>
+/// \if KO
+/// <para>탭 하나에 대응하는 독립 세션 — 슬러그/앨범/프롬프트/루프 상태를 각자 보유</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates writer session functionality and related state.</para>
+/// \endif
 /// </summary>
 public sealed partial class WriterSession : ViewModelBase
 {
+    /// <summary>
+    /// \if KO
+    /// <para>writer 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the writer value.</para>
+    /// \endif
+    /// </summary>
     private readonly PostWriterService    _writer  = new();
+    /// <summary>
+    /// \if KO
+    /// <para>history 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the history value.</para>
+    /// \endif
+    /// </summary>
     private readonly PromptHistoryService _history = new();
 
     // ── 탭 모드 (Travel / Cooking) ─────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>Mode 값을 가져오거나 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the mode value.</para>
+    /// \endif
+    /// </summary>
     public SessionMode Mode { get; set; } = SessionMode.Travel;
 
     // ── 브라우저 위임 (코드비하인드에서 주입) ───────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>Execute Script Async 값을 가져오거나 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the execute script async value.</para>
+    /// \endif
+    /// </summary>
     public Func<string, Task<string?>>? ExecuteScriptAsync { get; set; }
+    /// <summary>
+    /// \if KO
+    /// <para>Navigate Tab 값을 가져오거나 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the navigate tab value.</para>
+    /// \endif
+    /// </summary>
     public Action<string>?              NavigateTab        { get; set; }
 
     // ── 루프 태스크 ────────────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>ui Dispatcher 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the ui dispatcher value.</para>
+    /// \endif
+    /// </summary>
     private readonly System.Windows.Threading.Dispatcher _uiDispatcher;
+    /// <summary>
+    /// \if KO
+    /// <para>next Loop At 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the next loop at value.</para>
+    /// \endif
+    /// </summary>
     private DateTime _nextLoopAt = DateTime.MaxValue;
+    /// <summary>
+    /// \if KO
+    /// <para>loop Cts 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the loop cts value.</para>
+    /// \endif
+    /// </summary>
     private CancellationTokenSource? _loopCts;
+    /// <summary>
+    /// \if KO
+    /// <para>loop Task 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the loop task value.</para>
+    /// \endif
+    /// </summary>
     private Task? _loopTask;
+    /// <summary>
+    /// \if KO
+    /// <para>cycle Count 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the cycle count value.</para>
+    /// \endif
+    /// </summary>
     private int _cycleCount;
+    /// <summary>
+    /// \if KO
+    /// <para>used Image Urls 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the used image urls value.</para>
+    /// \endif
+    /// </summary>
     private readonly HashSet<string> _usedImageUrls = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>
+    /// \if KO
+    /// <para>album Index 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the album index value.</para>
+    /// \endif
+    /// </summary>
     private int _albumIndex;
+    /// <summary>
+    /// \if KO
+    /// <para>Extraction Retry Delay Seconds 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the extraction retry delay seconds value.</para>
+    /// \endif
+    /// </summary>
     private const int ExtractionRetryDelaySeconds = 30;
+    /// <summary>
+    /// \if KO
+    /// <para>Extraction Retry Max Attempts 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the extraction retry max attempts value.</para>
+    /// \endif
+    /// </summary>
     private const int ExtractionRetryMaxAttempts = 10;
 
     // ── 컬렉션 ─────────────────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>Slugs 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the slugs value.</para>
+    /// \endif
+    /// </summary>
     public ObservableCollection<string>    Slugs  { get; } = [];
+    /// <summary>
+    /// \if KO
+    /// <para>Albums 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the albums value.</para>
+    /// \endif
+    /// </summary>
     public ObservableCollection<AlbumInfo> Albums { get; } = [];
 
     // ── 콤보박스 상수 옵션 ─────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>Interval Options 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the interval options value.</para>
+    /// \endif
+    /// </summary>
     public static IntervalOption[] IntervalOptions { get; } =
     [
         new(5,   "5분"),    new(10, "10분"), new(15, "15분"),
         new(20,  "20분"),   new(30, "30분"), new(60, "1시간"),
         new(120, "2시간"),  new(180,"3시간"), new(360,"6시간"),
     ];
+    /// <summary>
+    /// \if KO
+    /// <para>Wait Options 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the wait options value.</para>
+    /// \endif
+    /// </summary>
     public static WaitOption[] WaitOptions { get; } =
     [
         new(15,  "15초"),  new(20, "20초"),  new(30,  "30초"),
@@ -71,41 +294,177 @@ public sealed partial class WriterSession : ViewModelBase
         new(120, "2분"),   new(150,"2분 30초"), new(180,"3분"),
         new(210, "3분 30초"),
     ];
+    /// <summary>
+    /// \if KO
+    /// <para>New Chat Options 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the new chat options value.</para>
+    /// \endif
+    /// </summary>
     public static int[] NewChatOptions { get; } = [0, 3, 5, 10, 20, 30];
 
     // ── [DreamineProperty] — 단순 속성 ──────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>album Rotation Enabled 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the album rotation enabled value.</para>
+    /// \endif
+    /// </summary>
     [DreamineProperty] private bool          _albumRotationEnabled;
+    /// <summary>
+    /// \if KO
+    /// <para>new Chat Every N 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the new chat every n value.</para>
+    /// \endif
+    /// </summary>
     [DreamineProperty] private int           _newChatEveryN = 5;
+    /// <summary>
+    /// \if KO
+    /// <para>loop Status 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the loop status value.</para>
+    /// \endif
+    /// </summary>
     [DreamineProperty] private string        _loopStatus    = "⏸ 루프 꺼짐";
+    /// <summary>
+    /// \if KO
+    /// <para>loop Countdown 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the loop countdown value.</para>
+    /// \endif
+    /// </summary>
     [DreamineProperty] private string        _loopCountdown = "";
+    /// <summary>
+    /// \if KO
+    /// <para>media Position 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the media position value.</para>
+    /// \endif
+    /// </summary>
     [DreamineProperty] private MediaPosition _mediaPosition = MediaPosition.Bottom;
+    /// <summary>
+    /// \if KO
+    /// <para>prompt Text 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the prompt text value.</para>
+    /// \endif
+    /// </summary>
     [DreamineProperty] private string        _promptText    = BuildTravelPrompt([]);
+    /// <summary>
+    /// \if KO
+    /// <para>prompt Status 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the prompt status value.</para>
+    /// \endif
+    /// </summary>
     [DreamineProperty] private string        _promptStatus  = "";
+    /// <summary>
+    /// \if KO
+    /// <para>extract Status 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the extract status value.</para>
+    /// \endif
+    /// </summary>
     [DreamineProperty] private string        _extractStatus = "";
 
     // ── 사이드이펙트 있는 속성 — 수동 구현 ──────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>app Data Root 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the app data root value.</para>
+    /// \endif
+    /// </summary>
     private string _appDataRoot = DetectDefaultRoot();
+    /// <summary>
+    /// \if KO
+    /// <para>App Data Root 값을 가져오거나 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the app data root value.</para>
+    /// \endif
+    /// </summary>
     public string AppDataRoot
     {
         get => _appDataRoot;
         set { if (SetProperty(ref _appDataRoot, value)) { _writer.AppDataRoot = value; RefreshSlugs(); } }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>selected Slug 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the selected slug value.</para>
+    /// \endif
+    /// </summary>
     private string _selectedSlug = "";
+    /// <summary>
+    /// \if KO
+    /// <para>Selected Slug 값을 가져오거나 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the selected slug value.</para>
+    /// \endif
+    /// </summary>
     public string SelectedSlug
     {
         get => _selectedSlug;
         set { if (SetProperty(ref _selectedSlug, value)) RefreshAlbums(); }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>selected Album 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the selected album value.</para>
+    /// \endif
+    /// </summary>
     private AlbumInfo? _selectedAlbum;
+    /// <summary>
+    /// \if KO
+    /// <para>Selected Album 값을 가져오거나 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the selected album value.</para>
+    /// \endif
+    /// </summary>
     public AlbumInfo? SelectedAlbum
     {
         get => _selectedAlbum;
         set => SetProperty(ref _selectedAlbum, value);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>loop Enabled 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the loop enabled value.</para>
+    /// \endif
+    /// </summary>
     private bool _loopEnabled;
+    /// <summary>
+    /// \if KO
+    /// <para>Loop Enabled 값을 가져오거나 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the loop enabled value.</para>
+    /// \endif
+    /// </summary>
     public bool LoopEnabled
     {
         get => _loopEnabled;
@@ -118,16 +477,56 @@ public sealed partial class WriterSession : ViewModelBase
             }
         }
     }
+    /// <summary>
+    /// \if KO
+    /// <para>Loop Label 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the loop label value.</para>
+    /// \endif
+    /// </summary>
     public string LoopLabel => LoopEnabled ? "▶ 실행 중" : "⏸ 루프 꺼짐";
 
+    /// <summary>
+    /// \if KO
+    /// <para>selected Interval 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the selected interval value.</para>
+    /// \endif
+    /// </summary>
     private IntervalOption _selectedInterval = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>Selected Interval 값을 가져오거나 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the selected interval value.</para>
+    /// \endif
+    /// </summary>
     public IntervalOption SelectedInterval
     {
         get => _selectedInterval;
         set { if (SetProperty(ref _selectedInterval, value) && LoopEnabled) StartLoop(); }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>ai Wait Option 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the ai wait option value.</para>
+    /// \endif
+    /// </summary>
     private WaitOption _aiWaitOption = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>Ai Wait Option 값을 가져오거나 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the ai wait option value.</para>
+    /// \endif
+    /// </summary>
     public WaitOption AiWaitOption
     {
         get => _aiWaitOption;
@@ -135,6 +534,22 @@ public sealed partial class WriterSession : ViewModelBase
     }
 
     // ── 생성자 ─────────────────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="WriterSession"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="WriterSession"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="initialPrompt">
+    /// \if KO
+    /// <para>initial Prompt에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for initial prompt.</para>
+    /// \endif
+    /// </param>
     public WriterSession(string? initialPrompt = null)
     {
         _uiDispatcher     = System.Windows.Application.Current.Dispatcher;
@@ -145,11 +560,59 @@ public sealed partial class WriterSession : ViewModelBase
     }
 
     // ── 커맨드 ─────────────────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>Refresh Slug List 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the refresh slug list operation.</para>
+    /// \endif
+    /// </summary>
     [DreamineCommand] private void RefreshSlugList() { RefreshSlugs(); RefreshAlbums(); }
+    /// <summary>
+    /// \if KO
+    /// <para>Run Now 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the run now operation.</para>
+    /// \endif
+    /// </summary>
     [DreamineCommand] private void RunNow()          => _ = RunLoopCycleAsync(CancellationToken.None);
+    /// <summary>
+    /// \if KO
+    /// <para>Send Prompt Now 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the send prompt now operation.</para>
+    /// \endif
+    /// </summary>
     [DreamineCommand] private void SendPromptNow()   => _ = SendPromptNowAsync();
+    /// <summary>
+    /// \if KO
+    /// <para>Extract And Save 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the extract and save operation.</para>
+    /// \endif
+    /// </summary>
     [DreamineCommand] private void ExtractAndSave()  => _ = ExtractAndSaveAsync();
+    /// <summary>
+    /// \if KO
+    /// <para>Clear Prompt History 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the clear prompt history operation.</para>
+    /// \endif
+    /// </summary>
     [DreamineCommand] private void ClearPromptHistory() { _history.Clear(); PromptStatus = "🗑 초기화"; }
+    /// <summary>
+    /// \if KO
+    /// <para>Browse App Data 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the browse app data operation.</para>
+    /// \endif
+    /// </summary>
     [DreamineCommand] private void BrowseAppData()
     {
         var dlg = new OpenFolderDialog { Title = "Families.Web App_Data 폴더 선택" };
@@ -157,6 +620,14 @@ public sealed partial class WriterSession : ViewModelBase
     }
 
     // ── 슬러그 / 앨범 ─────────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>Refresh Slugs 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the refresh slugs operation.</para>
+    /// \endif
+    /// </summary>
     private void RefreshSlugs()
     {
         _writer.AppDataRoot = AppDataRoot;
@@ -166,6 +637,14 @@ public sealed partial class WriterSession : ViewModelBase
             SelectedSlug = Slugs[0];
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Refresh Albums 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the refresh albums operation.</para>
+    /// \endif
+    /// </summary>
     private void RefreshAlbums()
     {
         Albums.Clear();
@@ -176,6 +655,14 @@ public sealed partial class WriterSession : ViewModelBase
         RefreshPromptWithExisting();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Refresh Prompt With Existing 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the refresh prompt with existing operation.</para>
+    /// \endif
+    /// </summary>
     private void RefreshPromptWithExisting()
     {
         if (string.IsNullOrWhiteSpace(SelectedSlug)) return;
@@ -186,8 +673,24 @@ public sealed partial class WriterSession : ViewModelBase
     }
 
     // ── 루프 제어 ─────────────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>Interval Minutes 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the interval minutes value.</para>
+    /// \endif
+    /// </summary>
     private int IntervalMinutes => SelectedInterval?.Minutes ?? 10;
 
+    /// <summary>
+    /// \if KO
+    /// <para>Start Loop 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start loop operation.</para>
+    /// \endif
+    /// </summary>
     private void StartLoop()
     {
         _loopCts?.Cancel();
@@ -200,6 +703,14 @@ public sealed partial class WriterSession : ViewModelBase
         LoopStatus = $"✅ {SelectedInterval?.Label} | AI대기 {AiWaitOption?.Label}{nc}";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Stop Loop 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop loop operation.</para>
+    /// \endif
+    /// </summary>
     private void StopLoop()
     {
         _loopCts?.Cancel();
@@ -210,6 +721,14 @@ public sealed partial class WriterSession : ViewModelBase
         LoopStatus = "⏸ 루프 꺼짐";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Stop Automation 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop automation operation.</para>
+    /// \endif
+    /// </summary>
     public void StopAutomation()
     {
         if (LoopEnabled)
@@ -219,6 +738,30 @@ public sealed partial class WriterSession : ViewModelBase
     }
 
     // 백그라운드 루프 워커 — 각 탭이 독립적으로 돌아감
+    /// <summary>
+    /// \if KO
+    /// <para>Loop Worker Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the loop worker async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="ct">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Loop Worker Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the loop worker async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task LoopWorkerAsync(CancellationToken ct)
     {
         try
@@ -272,6 +815,30 @@ public sealed partial class WriterSession : ViewModelBase
     }
 
     // ── 루프 사이클 ───────────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>Run Loop Cycle Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the run loop cycle async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="ct">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Run Loop Cycle Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the run loop cycle async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task RunLoopCycleAsync(CancellationToken ct)
     {
         // 상태 읽기는 UI 스레드에서
@@ -483,8 +1050,40 @@ public sealed partial class WriterSession : ViewModelBase
         catch (Exception ex)               { await SetStatus($"❌ {ex.Message}"); }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Status 값을 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Sets the status value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="msg">
+    /// \if KO
+    /// <para>msg에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for msg.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Set Status 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the set status operation.</para>
+    /// \endif
+    /// </returns>
     private Task SetStatus(string msg) => _uiDispatcher.InvokeAsync(() => LoopStatus = msg).Task;
 
+    /// <summary>
+    /// \if KO
+    /// <para>Rotate Album 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the rotate album operation.</para>
+    /// \endif
+    /// </summary>
     private void RotateAlbum()
     {
         if (Albums.Count == 0) return;
@@ -493,6 +1092,22 @@ public sealed partial class WriterSession : ViewModelBase
     }
 
     // ── 수동 전송 / 추출 ──────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>Send Prompt Now Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the send prompt now async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Send Prompt Now Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the send prompt now async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task SendPromptNowAsync()
     {
         if (string.IsNullOrWhiteSpace(PromptText)) { PromptStatus = "❌ 프롬프트를 입력하세요."; return; }
@@ -503,6 +1118,22 @@ public sealed partial class WriterSession : ViewModelBase
         PromptStatus = $"✅ 전송 ({DateTime.Now:HH:mm})";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Extract And Save Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the extract and save async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Extract And Save Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the extract and save async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task ExtractAndSaveAsync()
     {
         if (string.IsNullOrWhiteSpace(SelectedSlug)) { ExtractStatus = "❌ 슬러그를 선택하세요."; return; }
@@ -594,9 +1225,41 @@ public sealed partial class WriterSession : ViewModelBase
     }
 
     // ── 파싱 / 검증 ───────────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>Ai Post Result 기능과 관련 상태를 캡슐화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Encapsulates ai post result functionality and related state.</para>
+    /// \endif
+    /// </summary>
     private sealed record AiPostResult(string Title, string Content, List<string> Photos, List<string> Videos);
 
     // AI 응답 raw JSON → 텍스트 변환
+    /// <summary>
+    /// \if KO
+    /// <para>Unwrap Raw 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the unwrap raw operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="raw">
+    /// \if KO
+    /// <para>raw에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for raw.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Unwrap Raw 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the unwrap raw operation.</para>
+    /// \endif
+    /// </returns>
     private static string UnwrapRaw(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw)) return "";
@@ -611,6 +1274,38 @@ public sealed partial class WriterSession : ViewModelBase
     }
 
     // ===TAG=== 섹션 추출 공통 헬퍼
+    /// <summary>
+    /// \if KO
+    /// <para>Section 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the section value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="tag">
+    /// \if KO
+    /// <para>tag에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for tag.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Section 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the get section operation.</para>
+    /// \endif
+    /// </returns>
     private static string GetSection(string text, string tag)
     {
         var marker = $"==={tag}===";
@@ -623,6 +1318,46 @@ public sealed partial class WriterSession : ViewModelBase
 
     // content 안의 [IMAGES N번째 URL] 플레이스홀더를 실제 URL로 치환
     // offset: 이 content가 몇 번째 이미지부터 시작하는지 (여행=0, 요리 각 포스트=해당 순번)
+    /// <summary>
+    /// \if KO
+    /// <para>Substitute Images 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the substitute images operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="content">
+    /// \if KO
+    /// <para>content에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for content.</para>
+    /// \endif
+    /// </param>
+    /// <param name="urls">
+    /// \if KO
+    /// <para>urls에 사용할 <c>IList&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IList&lt;string&gt;</c> value used for urls.</para>
+    /// \endif
+    /// </param>
+    /// <param name="offset">
+    /// \if KO
+    /// <para>offset에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for offset.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Substitute Images 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the substitute images operation.</para>
+    /// \endif
+    /// </returns>
     private static string SubstituteImages(string content, IList<string> urls, int offset = 0)
     {
         // 한국어 순서 표현 매핑
@@ -654,6 +1389,30 @@ public sealed partial class WriterSession : ViewModelBase
     }
 
     // ── 여행 모드 파싱 (===TITLE=== / ===CONTENT=== / ===IMAGES=== / ===VIDEO===) ──
+    /// <summary>
+    /// \if KO
+    /// <para>Parse Travel Response 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the parse travel response operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="raw">
+    /// \if KO
+    /// <para>raw에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for raw.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Parse Travel Response 작업에서 생성한 <c>AiPostResult?</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>AiPostResult?</c> result produced by the parse travel response operation.</para>
+    /// \endif
+    /// </returns>
     private static AiPostResult? ParseTravelResponse(string? raw)
     {
         var text = UnwrapRaw(raw);
@@ -693,6 +1452,30 @@ public sealed partial class WriterSession : ViewModelBase
     }
 
     // ── 요리 모드 파싱 (===DETAIL_NNN_TITLE=== / ===DETAIL_NNN_CONTENT===) ──
+    /// <summary>
+    /// \if KO
+    /// <para>Parse Cooking Response Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the parse cooking response async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="raw">
+    /// \if KO
+    /// <para>raw에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for raw.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Parse Cooking Response Async 작업에서 생성한 <c>Task&lt;List&lt;PostEntry&gt;&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task&lt;List&lt;PostEntry&gt;&gt;</c> result produced by the parse cooking response async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task<List<PostEntry>> ParseCookingResponseAsync(string? raw)
     {
         var text = UnwrapRaw(raw);
@@ -772,6 +1555,30 @@ public sealed partial class WriterSession : ViewModelBase
         return posts;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Next Cooking Slot 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the next cooking slot value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="lastPostedAt">
+    /// \if KO
+    /// <para>last Posted At에 사용할 <c>DateTime?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>DateTime?</c> value used for last posted at.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Next Cooking Slot 작업에서 생성한 <c>DateTime</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>DateTime</c> result produced by the get next cooking slot operation.</para>
+    /// \endif
+    /// </returns>
     private static DateTime GetNextCookingSlot(DateTime? lastPostedAt)
     {
         if (lastPostedAt is null)
@@ -786,6 +1593,30 @@ public sealed partial class WriterSession : ViewModelBase
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Cooking Meal Name 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the cooking meal name value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="postedAt">
+    /// \if KO
+    /// <para>posted At에 사용할 <c>DateTime</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>DateTime</c> value used for posted at.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Cooking Meal Name 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the get cooking meal name operation.</para>
+    /// \endif
+    /// </returns>
     private static string GetCookingMealName(DateTime postedAt) =>
         postedAt.Hour switch
         {
@@ -794,6 +1625,46 @@ public sealed partial class WriterSession : ViewModelBase
             _ => "저녁",
         };
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Cooking Title 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize cooking title operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="title">
+    /// \if KO
+    /// <para>title에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for title.</para>
+    /// \endif
+    /// </param>
+    /// <param name="number">
+    /// \if KO
+    /// <para>number에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for number.</para>
+    /// \endif
+    /// </param>
+    /// <param name="mealName">
+    /// \if KO
+    /// <para>meal Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for meal name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Cooking Title 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize cooking title operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeCookingTitle(string title, int number, string mealName)
     {
         var normalized = string.IsNullOrWhiteSpace(title)
@@ -817,18 +1688,98 @@ public sealed partial class WriterSession : ViewModelBase
         return normalized;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Extract Cooking Number From Title 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the extract cooking number from title operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="title">
+    /// \if KO
+    /// <para>title에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for title.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Extract Cooking Number From Title 작업에서 생성한 <c>int</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> result produced by the extract cooking number from title operation.</para>
+    /// \endif
+    /// </returns>
     private static int ExtractCookingNumberFromTitle(string title)
     {
         var match = Regex.Match(title ?? "", @"#(?<n>\d+)");
         return match.Success && int.TryParse(match.Groups["n"].Value, out var number) ? number : 0;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Extract Image Urls 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the extract image urls operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="content">
+    /// \if KO
+    /// <para>content에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for content.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Extract Image Urls 작업에서 생성한 <c>List&lt;string&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;string&gt;</c> result produced by the extract image urls operation.</para>
+    /// \endif
+    /// </returns>
     private static List<string> ExtractImageUrls(string content) =>
         Regex.Matches(content, @"<img\b[^>]*\bsrc\s*=\s*[""'](?<url>https?://[^""']+)[""'][^>]*>", RegexOptions.IgnoreCase)
             .Select(m => System.Net.WebUtility.HtmlDecode(m.Groups["url"].Value.Trim()))
             .Where(u => u.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             .ToList();
 
+    /// <summary>
+    /// \if KO
+    /// <para>Invalid Inline Images 항목을 제거합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Removes the invalid inline images item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="content">
+    /// \if KO
+    /// <para>content에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for content.</para>
+    /// \endif
+    /// </param>
+    /// <param name="allowedUrls">
+    /// \if KO
+    /// <para>allowed Urls에 사용할 <c>IReadOnlyCollection&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IReadOnlyCollection&lt;string&gt;</c> value used for allowed urls.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Remove Invalid Inline Images 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the remove invalid inline images operation.</para>
+    /// \endif
+    /// </returns>
     private static string RemoveInvalidInlineImages(string content, IReadOnlyCollection<string> allowedUrls)
     {
         if (string.IsNullOrWhiteSpace(content))
@@ -854,6 +1805,38 @@ public sealed partial class WriterSession : ViewModelBase
             RegexOptions.IgnoreCase);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Merge Urls 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the merge urls operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="primary">
+    /// \if KO
+    /// <para>primary에 사용할 <c>IEnumerable&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IEnumerable&lt;string&gt;</c> value used for primary.</para>
+    /// \endif
+    /// </param>
+    /// <param name="secondary">
+    /// \if KO
+    /// <para>secondary에 사용할 <c>IEnumerable&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IEnumerable&lt;string&gt;</c> value used for secondary.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Merge Urls 작업에서 생성한 <c>List&lt;string&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;string&gt;</c> result produced by the merge urls operation.</para>
+    /// \endif
+    /// </returns>
     private static List<string> MergeUrls(IEnumerable<string> primary, IEnumerable<string> secondary)
     {
         var merged = new List<string>();
@@ -867,6 +1850,30 @@ public sealed partial class WriterSession : ViewModelBase
         return merged;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Travel Content 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize travel content operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="content">
+    /// \if KO
+    /// <para>content에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for content.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Travel Content 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize travel content operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeTravelContent(string content)
     {
         var text = NormalizeKnownHeadings(content, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -886,6 +1893,30 @@ public sealed partial class WriterSession : ViewModelBase
         return NormalizeImageBlockSpacing(NormalizeSimpleTables(text));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Is Allowed Video Url 조건을 확인합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Determines whether is allowed video url.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="url">
+    /// \if KO
+    /// <para>url에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for url.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Is Allowed Video Url 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the is allowed video url condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private static bool IsAllowedVideoUrl(string url)
     {
         if (!url.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return false;
@@ -897,6 +1928,30 @@ public sealed partial class WriterSession : ViewModelBase
         return url.Contains("/embed/", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Cooking Content 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize cooking content operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="content">
+    /// \if KO
+    /// <para>content에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for content.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Cooking Content 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize cooking content operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeCookingContent(string content)
     {
         var text = Regex.Replace(
@@ -926,6 +1981,38 @@ public sealed partial class WriterSession : ViewModelBase
         return NormalizeImageBlockSpacing(NormalizeIngredientLines(text)).Trim();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Known Headings 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize known headings operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="content">
+    /// \if KO
+    /// <para>content에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for content.</para>
+    /// \endif
+    /// </param>
+    /// <param name="headings">
+    /// \if KO
+    /// <para>headings에 사용할 <c>IReadOnlyDictionary&lt;string, string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IReadOnlyDictionary&lt;string, string&gt;</c> value used for headings.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Known Headings 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize known headings operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeKnownHeadings(string content, IReadOnlyDictionary<string, string> headings)
     {
         var lines = content.Replace("\r\n", "\n").Split('\n');
@@ -944,6 +2031,30 @@ public sealed partial class WriterSession : ViewModelBase
         return string.Join("\n", lines);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Simple Tables 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize simple tables operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="content">
+    /// \if KO
+    /// <para>content에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for content.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Simple Tables 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize simple tables operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeSimpleTables(string content)
     {
         var lines = content.Replace("\r\n", "\n").Split('\n').ToList();
@@ -991,6 +2102,30 @@ public sealed partial class WriterSession : ViewModelBase
         return string.Join("\n", lines);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Image Block Spacing 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize image block spacing operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="content">
+    /// \if KO
+    /// <para>content에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for content.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Image Block Spacing 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize image block spacing operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeImageBlockSpacing(string content)
     {
         var text = Regex.Replace(
@@ -1031,12 +2166,52 @@ public sealed partial class WriterSession : ViewModelBase
         return string.Join("\n", normalized).Trim();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Blank Line If Needed 항목을 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Adds the blank line if needed item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="lines">
+    /// \if KO
+    /// <para>lines에 사용할 <c>List&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;string&gt;</c> value used for lines.</para>
+    /// \endif
+    /// </param>
     private static void AddBlankLineIfNeeded(List<string> lines)
     {
         if (lines.Count > 0 && lines[^1].Trim().Length > 0)
             lines.Add("");
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Expand Collapsed Pipe Table 작업을 시도하고 성공 여부를 반환합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Attempts to expand collapsed pipe table and returns whether the operation succeeds.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="line">
+    /// \if KO
+    /// <para>line에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for line.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Try Expand Collapsed Pipe Table 작업에서 생성한 <c>List&lt;string&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;string&gt;</c> result produced by the try expand collapsed pipe table operation.</para>
+    /// \endif
+    /// </returns>
     private static List<string> TryExpandCollapsedPipeTable(string line)
     {
         var trimmed = line.Trim();
@@ -1079,6 +2254,30 @@ public sealed partial class WriterSession : ViewModelBase
         return result;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Split Table Line 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the split table line operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="line">
+    /// \if KO
+    /// <para>line에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for line.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Split Table Line 작업에서 생성한 <c>List&lt;string&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;string&gt;</c> result produced by the split table line operation.</para>
+    /// \endif
+    /// </returns>
     private static List<string> SplitTableLine(string line) =>
         line.Contains('\t')
             ? line.Split('\t', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList()
@@ -1087,6 +2286,30 @@ public sealed partial class WriterSession : ViewModelBase
                 .Select(c => c.Trim())
                 .ToList();
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Ingredient Lines 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize ingredient lines operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="content">
+    /// \if KO
+    /// <para>content에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for content.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Ingredient Lines 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize ingredient lines operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeIngredientLines(string content)
     {
         var lines = content.Replace("\r\n", "\n").Split('\n');
@@ -1122,9 +2345,25 @@ public sealed partial class WriterSession : ViewModelBase
         return builder.ToString().TrimEnd();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>http 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the http value.</para>
+    /// \endif
+    /// </summary>
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(15) };
 
     // HTTP 검증 없이 신뢰하는 도메인 — 실제 이미지 파일만 제공하는 공식 CDN
+    /// <summary>
+    /// \if KO
+    /// <para>trusted Image Hosts 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the trusted image hosts value.</para>
+    /// \endif
+    /// </summary>
     private static readonly string[] _trustedImageHosts =
     [
         "upload.wikimedia.org",
@@ -1136,6 +2375,30 @@ public sealed partial class WriterSession : ViewModelBase
         "cdn.visitkorea.or.kr",
     ];
 
+    /// <summary>
+    /// \if KO
+    /// <para>Is Plausible Image Url 조건을 확인합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Determines whether is plausible image url.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="url">
+    /// \if KO
+    /// <para>url에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for url.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Is Plausible Image Url 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the is plausible image url condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private static bool IsPlausibleImageUrl(string url)
     {
         if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
@@ -1154,6 +2417,30 @@ public sealed partial class WriterSession : ViewModelBase
         return true;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Is Likely Direct Image Url 조건을 확인합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Determines whether is likely direct image url.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="url">
+    /// \if KO
+    /// <para>url에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for url.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Is Likely Direct Image Url 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the is likely direct image url condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private static bool IsLikelyDirectImageUrl(string url)
     {
         if (!IsPlausibleImageUrl(url) || !Uri.TryCreate(url, UriKind.Absolute, out var uri))
@@ -1170,6 +2457,46 @@ public sealed partial class WriterSession : ViewModelBase
                host.Contains("cdn.imweb.me", StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Image Urls Async 값의 유효성을 검사합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Validates the image urls async value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="urls">
+    /// \if KO
+    /// <para>urls에 사용할 <c>List&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;string&gt;</c> value used for urls.</para>
+    /// \endif
+    /// </param>
+    /// <param name="onStatus">
+    /// \if KO
+    /// <para>on Status에 사용할 <c>Action&lt;string&gt;?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Action&lt;string&gt;?</c> value used for on status.</para>
+    /// \endif
+    /// </param>
+    /// <param name="excludeUrls">
+    /// \if KO
+    /// <para>exclude Urls에 사용할 <c>ISet&lt;string&gt;?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ISet&lt;string&gt;?</c> value used for exclude urls.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Validate Image Urls Async 작업에서 생성한 <c>Task&lt;List&lt;string&gt;&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task&lt;List&lt;string&gt;&gt;</c> result produced by the validate image urls async operation.</para>
+    /// \endif
+    /// </returns>
     private static async Task<List<string>> ValidateImageUrlsAsync(List<string> urls, Action<string>? onStatus = null, ISet<string>? excludeUrls = null)
     {
         var valid = new List<string>();
@@ -1208,6 +2535,38 @@ public sealed partial class WriterSession : ViewModelBase
         return valid;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Is Reachable Image Async 조건을 확인합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Determines whether is reachable image async.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="url">
+    /// \if KO
+    /// <para>url에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for url.</para>
+    /// \endif
+    /// </param>
+    /// <param name="method">
+    /// \if KO
+    /// <para>method에 사용할 <c>HttpMethod</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HttpMethod</c> value used for method.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Is Reachable Image Async 작업에서 생성한 <c>Task&lt;bool&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task&lt;bool&gt;</c> result produced by the is reachable image async operation.</para>
+    /// \endif
+    /// </returns>
     private static async Task<bool> IsReachableImageAsync(string url, HttpMethod method)
     {
         try
@@ -1226,6 +2585,30 @@ public sealed partial class WriterSession : ViewModelBase
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Travel Prompt 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the travel prompt value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="existingTitles">
+    /// \if KO
+    /// <para>existing Titles에 사용할 <c>IReadOnlyList&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IReadOnlyList&lt;string&gt;</c> value used for existing titles.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Travel Prompt 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build travel prompt operation.</para>
+    /// \endif
+    /// </returns>
     public static string BuildTravelPrompt(IReadOnlyList<string> existingTitles) =>
         $$"""
         {앨범} 주제로 한국 가족 나들이·여행 블로그 포스트 1개를 작성해줘.
@@ -1334,9 +2717,57 @@ public sealed partial class WriterSession : ViewModelBase
         없음
         """;
 
+    /// <summary>
+    /// \if KO
+    /// <para>Cooking Prompt 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the cooking prompt value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="existingTitles">
+    /// \if KO
+    /// <para>existing Titles에 사용할 <c>IReadOnlyList&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IReadOnlyList&lt;string&gt;</c> value used for existing titles.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Cooking Prompt 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build cooking prompt operation.</para>
+    /// \endif
+    /// </returns>
     public static string BuildCookingPrompt(IReadOnlyList<string> existingTitles) =>
         BuildCookingPrompt(existingTitles, (null, 0));
 
+    /// <summary>
+    /// \if KO
+    /// <para>Cooking Timeline Instruction 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the cooking timeline instruction value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="timeline">
+    /// \if KO
+    /// <para>timeline에 사용할 <c>(DateTime? LastPostedAt, int LastNumber)</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>(DateTime? LastPostedAt, int LastNumber)</c> value used for timeline.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Cooking Timeline Instruction 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build cooking timeline instruction operation.</para>
+    /// \endif
+    /// </returns>
     private static string BuildCookingTimelineInstruction((DateTime? LastPostedAt, int LastNumber) timeline)
     {
         var nextAt = GetNextCookingSlot(timeline.LastPostedAt);
@@ -1351,6 +2782,38 @@ public sealed partial class WriterSession : ViewModelBase
         """;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Cooking Prompt 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the cooking prompt value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="existingTitles">
+    /// \if KO
+    /// <para>existing Titles에 사용할 <c>IReadOnlyList&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IReadOnlyList&lt;string&gt;</c> value used for existing titles.</para>
+    /// \endif
+    /// </param>
+    /// <param name="timeline">
+    /// \if KO
+    /// <para>timeline에 사용할 <c>(DateTime? LastPostedAt, int LastNumber)</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>(DateTime? LastPostedAt, int LastNumber)</c> value used for timeline.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Cooking Prompt 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build cooking prompt operation.</para>
+    /// \endif
+    /// </returns>
     public static string BuildCookingPrompt(IReadOnlyList<string> existingTitles, (DateTime? LastPostedAt, int LastNumber) timeline) =>
         $$"""
         {앨범} 주제로 1983년 한국 가족 집밥·육아 기록 블로그 포스트를 1개 작성해줘.
@@ -1470,6 +2933,22 @@ public sealed partial class WriterSession : ViewModelBase
         없음
         """;
 
+    /// <summary>
+    /// \if KO
+    /// <para>Detect Default Root 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the detect default root operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Detect Default Root 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the detect default root operation.</para>
+    /// \endif
+    /// </returns>
     private static string DetectDefaultRoot()
     {
         foreach (var c in new[]

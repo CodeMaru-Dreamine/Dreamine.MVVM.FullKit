@@ -21,73 +21,454 @@ using Dreamine.Communication.Wpf.ViewModels;
 namespace SampleSmart.Pages.PageSub.CommunicationTabs;
 
 /// <summary>
-/// \brief Communication 샘플 전체에서 공유되는 Runtime 컨텍스트입니다.
+/// \if KO
+/// <para>\brief Communication 샘플 전체에서 공유되는 Runtime 컨텍스트입니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates communication sample runtime functionality and related state.</para>
+/// \endif
 /// </summary>
 /// <remarks>
-/// 이 클래스는 Communication 샘플 탭들이 공유하는 Monitor, InMemory MessageBus,
-/// TCP Server, TCP Client, Serial Port, RabbitMQ MessageBus 인스턴스를 관리합니다.
+/// \if KO
+/// <para>이 클래스는 Communication 샘플 탭들이 공유하는 Monitor, InMemory MessageBus, TCP Server, TCP Client, Serial Port, RabbitMQ MessageBus 인스턴스를 관리합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Describes behavior and usage considerations for this member.</para>
+/// \endif
 /// </remarks>
 public sealed class CommunicationSampleRuntime
 {
+    /// <summary>
+    /// \if KO
+    /// <para>In Memory Channel Name 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the in memory channel name value.</para>
+    /// \endif
+    /// </summary>
     private const string InMemoryChannelName = "InMemory-Communication";
+    /// <summary>
+    /// \if KO
+    /// <para>In Memory Route Name 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the in memory route name value.</para>
+    /// \endif
+    /// </summary>
     private const string InMemoryRouteName = "sample.communication.message";
 
+    /// <summary>
+    /// \if KO
+    /// <para>Rabbit Mq Channel Name 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the rabbit mq channel name value.</para>
+    /// \endif
+    /// </summary>
     private const string RabbitMqChannelName = "RabbitMQ-MessageBus";
+    /// <summary>
+    /// \if KO
+    /// <para>Rabbit Mq Protocol 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the rabbit mq protocol value.</para>
+    /// \endif
+    /// </summary>
     private const string RabbitMqProtocol = "RabbitMQ";
 
+    /// <summary>
+    /// \if KO
+    /// <para>Dreamine Envelope Protocol 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the dreamine envelope protocol value.</para>
+    /// \endif
+    /// </summary>
     private const string DreamineEnvelopeProtocol = "DreamineEnvelope";
+    /// <summary>
+    /// \if KO
+    /// <para>Plain Text Protocol 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the plain text protocol value.</para>
+    /// \endif
+    /// </summary>
     private const string PlainTextProtocol = "PlainText";
+    /// <summary>
+    /// \if KO
+    /// <para>Raw Available Protocol 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the raw available protocol value.</para>
+    /// \endif
+    /// </summary>
     private const string RawAvailableProtocol = "RawAvailable";
+    /// <summary>
+    /// \if KO
+    /// <para>Raw Json Protocol 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the raw json protocol value.</para>
+    /// \endif
+    /// </summary>
     private const string RawJsonProtocol = "RawJson";
 
+    /// <summary>
+    /// \if KO
+    /// <para>Dreamine Protocol Port 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the dreamine protocol port value.</para>
+    /// \endif
+    /// </summary>
     private const int DreamineProtocolPort = 15001;
+    /// <summary>
+    /// \if KO
+    /// <para>Plain Text Protocol Port 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the plain text protocol port value.</para>
+    /// \endif
+    /// </summary>
     private const int PlainTextProtocolPort = 15002;
+    /// <summary>
+    /// \if KO
+    /// <para>Raw Available Protocol Port 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the raw available protocol port value.</para>
+    /// \endif
+    /// </summary>
     private const int RawAvailableProtocolPort = 15002;
+    /// <summary>
+    /// \if KO
+    /// <para>Raw Json Protocol Port 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the raw json protocol port value.</para>
+    /// \endif
+    /// </summary>
     private const int RawJsonProtocolPort = 15003;
 
+    /// <summary>
+    /// \if KO
+    /// <para>Udp Peer A Local Port 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the udp peer a local port value.</para>
+    /// \endif
+    /// </summary>
     private const int UdpPeerALocalPort = 16001;
+    /// <summary>
+    /// \if KO
+    /// <para>Udp Peer B Local Port 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the udp peer b local port value.</para>
+    /// \endif
+    /// </summary>
     private const int UdpPeerBLocalPort = 16002;
 
+    /// <summary>
+    /// \if KO
+    /// <para>message Bus 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the message bus value.</para>
+    /// \endif
+    /// </summary>
     private readonly IMessageBus _messageBus;
 
+    /// <summary>
+    /// \if KO
+    /// <para>is In Memory Subscribed 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the is in memory subscribed value.</para>
+    /// \endif
+    /// </summary>
     private bool _isInMemorySubscribed;
+    /// <summary>
+    /// \if KO
+    /// <para>is Rabbit Mq Subscribed 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the is rabbit mq subscribed value.</para>
+    /// \endif
+    /// </summary>
     private bool _isRabbitMqSubscribed;
 
+    /// <summary>
+    /// \if KO
+    /// <para>tcp Server 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tcp server value.</para>
+    /// \endif
+    /// </summary>
     private IMessageTransport? _tcpServer;
+    /// <summary>
+    /// \if KO
+    /// <para>raw Tcp Server 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the raw tcp server value.</para>
+    /// \endif
+    /// </summary>
     private TcpServerTransport? _rawTcpServer;
+    /// <summary>
+    /// \if KO
+    /// <para>tcp Client 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tcp client value.</para>
+    /// \endif
+    /// </summary>
     private IMessageTransport? _tcpClient;
+    /// <summary>
+    /// \if KO
+    /// <para>udp Peer A 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the udp peer a value.</para>
+    /// \endif
+    /// </summary>
     private UdpTransport? _udpPeerA;
+    /// <summary>
+    /// \if KO
+    /// <para>udp Peer B 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the udp peer b value.</para>
+    /// \endif
+    /// </summary>
     private UdpTransport? _udpPeerB;
+    /// <summary>
+    /// \if KO
+    /// <para>serial Transport 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the serial transport value.</para>
+    /// \endif
+    /// </summary>
     private SerialPortTransport? _serialTransport;
+    /// <summary>
+    /// \if KO
+    /// <para>rabbit Mq Bus 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the rabbit mq bus value.</para>
+    /// \endif
+    /// </summary>
     private RabbitMqMessageBus? _rabbitMqBus;
 
+    /// <summary>
+    /// \if KO
+    /// <para>current Server Protocol 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current server protocol value.</para>
+    /// \endif
+    /// </summary>
     private string _currentServerProtocol = PlainTextProtocol;
+    /// <summary>
+    /// \if KO
+    /// <para>current Client Protocol 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current client protocol value.</para>
+    /// \endif
+    /// </summary>
     private string _currentClientProtocol = PlainTextProtocol;
+    /// <summary>
+    /// \if KO
+    /// <para>current Server Encoding 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current server encoding value.</para>
+    /// \endif
+    /// </summary>
     private string _currentServerEncoding = PlainTextProtocolOptions.Utf8EncodingName;
+    /// <summary>
+    /// \if KO
+    /// <para>current Client Encoding 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current client encoding value.</para>
+    /// \endif
+    /// </summary>
     private string _currentClientEncoding = PlainTextProtocolOptions.Utf8EncodingName;
+    /// <summary>
+    /// \if KO
+    /// <para>current Server Send Target Mode 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current server send target mode value.</para>
+    /// \endif
+    /// </summary>
     private TcpServerSendTargetMode _currentServerSendTargetMode = TcpServerSendTargetMode.Broadcast;
+    /// <summary>
+    /// \if KO
+    /// <para>current Server Echo Enabled 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current server echo enabled value.</para>
+    /// \endif
+    /// </summary>
     private bool _currentServerEchoEnabled;
+    /// <summary>
+    /// \if KO
+    /// <para>current Udp Peer A Protocol 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current udp peer a protocol value.</para>
+    /// \endif
+    /// </summary>
     private string _currentUdpPeerAProtocol = PlainTextProtocol;
+    /// <summary>
+    /// \if KO
+    /// <para>current Udp Peer B Protocol 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current udp peer b protocol value.</para>
+    /// \endif
+    /// </summary>
     private string _currentUdpPeerBProtocol = PlainTextProtocol;
+    /// <summary>
+    /// \if KO
+    /// <para>current Udp Peer A Encoding 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current udp peer a encoding value.</para>
+    /// \endif
+    /// </summary>
     private string _currentUdpPeerAEncoding = PlainTextProtocolOptions.Utf8EncodingName;
+    /// <summary>
+    /// \if KO
+    /// <para>current Udp Peer B Encoding 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current udp peer b encoding value.</para>
+    /// \endif
+    /// </summary>
     private string _currentUdpPeerBEncoding = PlainTextProtocolOptions.Utf8EncodingName;
 
+    /// <summary>
+    /// \if KO
+    /// <para>current Serial Protocol 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current serial protocol value.</para>
+    /// \endif
+    /// </summary>
     private string _currentSerialProtocol = RawAvailableProtocol;
+    /// <summary>
+    /// \if KO
+    /// <para>current Serial Encoding 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current serial encoding value.</para>
+    /// \endif
+    /// </summary>
     private string _currentSerialEncoding = PlainTextProtocolOptions.Utf8EncodingName;
+    /// <summary>
+    /// \if KO
+    /// <para>current Serial Port Name 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current serial port name value.</para>
+    /// \endif
+    /// </summary>
     private string _currentSerialPortName = string.Empty;
+    /// <summary>
+    /// \if KO
+    /// <para>current Serial Baud Rate 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current serial baud rate value.</para>
+    /// \endif
+    /// </summary>
     private int _currentSerialBaudRate = 9600;
 
+    /// <summary>
+    /// \if KO
+    /// <para>current Rabbit Mq Host 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current rabbit mq host value.</para>
+    /// \endif
+    /// </summary>
     private string _currentRabbitMqHost = "localhost";
+    /// <summary>
+    /// \if KO
+    /// <para>current Rabbit Mq Port 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current rabbit mq port value.</para>
+    /// \endif
+    /// </summary>
     private int _currentRabbitMqPort = 5672;
+    /// <summary>
+    /// \if KO
+    /// <para>current Rabbit Mq Virtual Host 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current rabbit mq virtual host value.</para>
+    /// \endif
+    /// </summary>
     private string _currentRabbitMqVirtualHost = "/";
+    /// <summary>
+    /// \if KO
+    /// <para>current Rabbit Mq Exchange Name 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current rabbit mq exchange name value.</para>
+    /// \endif
+    /// </summary>
     private string _currentRabbitMqExchangeName = "dreamine.sample.exchange";
+    /// <summary>
+    /// \if KO
+    /// <para>current Rabbit Mq Queue Name 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current rabbit mq queue name value.</para>
+    /// \endif
+    /// </summary>
     private string _currentRabbitMqQueueName = "dreamine.sample.queue";
+    /// <summary>
+    /// \if KO
+    /// <para>current Rabbit Mq Routing Key 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current rabbit mq routing key value.</para>
+    /// \endif
+    /// </summary>
     private string _currentRabbitMqRoutingKey = "dreamine.sample.route";
 
     /// <summary>
-    /// \brief CommunicationSampleRuntime 클래스의 새 인스턴스를 초기화합니다.
+    /// \if KO
+    /// <para>\brief CommunicationSampleRuntime 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="CommunicationSampleRuntime"/> class with the specified settings.</para>
+    /// \endif
     /// </summary>
-    /// <param name="messageBus">InMemory 샘플에 사용할 MessageBus입니다.</param>
+    /// <param name="messageBus">
+    /// \if KO
+    /// <para>InMemory 샘플에 사용할 MessageBus입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IMessageBus</c> value used for message bus.</para>
+    /// \endif
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// \if KO
+    /// <para>필수 입력 인자 중 하나가 <see langword="null"/>인 경우 발생합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Thrown when a required input argument is <see langword="null"/>.</para>
+    /// \endif
+    /// </exception>
     public CommunicationSampleRuntime(IMessageBus messageBus)
     {
         _messageBus = messageBus ?? throw new ArgumentNullException(nameof(messageBus));
@@ -97,12 +478,22 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief Communication Monitor ViewModel입니다.
+    /// \if KO
+    /// <para>\brief Communication Monitor ViewModel입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the monitor value.</para>
+    /// \endif
     /// </summary>
     public CommunicationMonitorViewModel Monitor { get; }
 
     /// <summary>
-    /// \brief 선택 가능한 TCP 프로토콜 목록입니다.
+    /// \if KO
+    /// <para>\brief 선택 가능한 TCP 프로토콜 목록입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the tcp protocols value.</para>
+    /// \endif
     /// </summary>
     public IReadOnlyList<string> TcpProtocols { get; } =
     [
@@ -113,7 +504,12 @@ public sealed class CommunicationSampleRuntime
     ];
 
     /// <summary>
-    /// \brief 선택 가능한 Serial 프로토콜 목록입니다.
+    /// \if KO
+    /// <para>\brief 선택 가능한 Serial 프로토콜 목록입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the serial protocols value.</para>
+    /// \endif
     /// </summary>
     public IReadOnlyList<string> SerialProtocols { get; } =
     [
@@ -123,7 +519,12 @@ public sealed class CommunicationSampleRuntime
     ];
 
     /// <summary>
-    /// \brief 선택 가능한 UDP 프로토콜 목록입니다.
+    /// \if KO
+    /// <para>\brief 선택 가능한 UDP 프로토콜 목록입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the udp protocols value.</para>
+    /// \endif
     /// </summary>
     public IReadOnlyList<string> UdpProtocols { get; } =
     [
@@ -134,7 +535,12 @@ public sealed class CommunicationSampleRuntime
     ];
 
     /// <summary>
-    /// \brief 선택 가능한 외부 PlainText 인코딩 목록입니다.
+    /// \if KO
+    /// <para>\brief 선택 가능한 외부 PlainText 인코딩 목록입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the text encodings value.</para>
+    /// \endif
     /// </summary>
     public IReadOnlyList<string> TextEncodings { get; } =
     [
@@ -143,7 +549,12 @@ public sealed class CommunicationSampleRuntime
     ];
 
     /// <summary>
-    /// \brief 선택 가능한 TCP Server 송신 대상 정책 목록입니다.
+    /// \if KO
+    /// <para>\brief 선택 가능한 TCP Server 송신 대상 정책 목록입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the tcp server send target modes value.</para>
+    /// \endif
     /// </summary>
     public IReadOnlyList<string> TcpServerSendTargetModes { get; } =
     [
@@ -153,12 +564,22 @@ public sealed class CommunicationSampleRuntime
     ];
 
     /// <summary>
-    /// \brief 선택 가능한 UDP PlainText 인코딩 목록입니다.
+    /// \if KO
+    /// <para>\brief 선택 가능한 UDP PlainText 인코딩 목록입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the udp text encodings value.</para>
+    /// \endif
     /// </summary>
     public IReadOnlyList<string> UdpTextEncodings => TextEncodings;
 
     /// <summary>
-    /// \brief InMemory 채널을 추가합니다.
+    /// \if KO
+    /// <para>\brief InMemory 채널을 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Adds the in memory channel item.</para>
+    /// \endif
     /// </summary>
     public void AddInMemoryChannel()
     {
@@ -174,8 +595,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief InMemory MessageBus에 연결합니다.
+    /// \if KO
+    /// <para>\brief InMemory MessageBus에 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the connect in memory async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Connect In Memory Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the connect in memory async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task ConnectInMemoryAsync()
     {
         AddInMemoryChannel();
@@ -188,8 +622,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief InMemory MessageBus 연결을 해제합니다.
+    /// \if KO
+    /// <para>\brief InMemory MessageBus 연결을 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the disconnect in memory async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Disconnect In Memory Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the disconnect in memory async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task DisconnectInMemoryAsync()
     {
         AddInMemoryChannel();
@@ -202,9 +649,29 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief InMemory MessageBus로 테스트 메시지를 송신합니다.
+    /// \if KO
+    /// <para>\brief InMemory MessageBus로 테스트 메시지를 송신합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the send in memory async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="text">송신 문자열입니다.</param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>송신 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Send In Memory Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the send in memory async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task SendInMemoryAsync(string text)
     {
         AddInMemoryChannel();
@@ -234,9 +701,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief InMemory 수동 수신 테스트 로그를 추가합니다.
+    /// \if KO
+    /// <para>\brief InMemory 수동 수신 테스트 로그를 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the receive in memory operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="text">수신으로 표시할 문자열입니다.</param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>수신으로 표시할 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
     public void ReceiveInMemory(string text)
     {
         AddInMemoryChannel();
@@ -259,10 +738,53 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 선택된 프로토콜로 TCP Server를 시작합니다.
+    /// \if KO
+    /// <para>\brief 선택된 프로토콜로 TCP Server를 시작합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start tcp server async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="sendTargetMode">
+    /// \if KO
+    /// <para>send Target Mode에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for send target mode.</para>
+    /// \endif
+    /// </param>
+    /// <param name="echoEnabled">
+    /// \if KO
+    /// <para>echo Enabled에 사용할 <c>bool</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for echo enabled.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Start Tcp Server Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the start tcp server async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StartTcpServerAsync(
         string protocol,
         string encodingName = PlainTextProtocolOptions.Utf8EncodingName,
@@ -358,12 +880,45 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 실행 중인 TCP Server의 송신 대상과 Echo 옵션을 갱신합니다.
+    /// \if KO
+    /// <para>\brief 실행 중인 TCP Server의 송신 대상과 Echo 옵션을 갱신합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the update tcp server options operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
-    /// <param name="sendTargetMode">서버 송신 대상 정책입니다.</param>
-    /// <param name="echoEnabled">Echo 응답 사용 여부입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="sendTargetMode">
+    /// \if KO
+    /// <para>서버 송신 대상 정책입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for send target mode.</para>
+    /// \endif
+    /// </param>
+    /// <param name="echoEnabled">
+    /// \if KO
+    /// <para>Echo 응답 사용 여부입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for echo enabled.</para>
+    /// \endif
+    /// </param>
     public void UpdateTcpServerOptions(
         string protocol,
         string encodingName = PlainTextProtocolOptions.Utf8EncodingName,
@@ -395,8 +950,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 현재 TCP Server를 종료합니다.
+    /// \if KO
+    /// <para>\brief 현재 TCP Server를 종료합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop tcp server async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Stop Tcp Server Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the stop tcp server async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StopTcpServerAsync()
     {
         var protocol = _currentServerProtocol;
@@ -427,11 +995,53 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 선택된 프로토콜로 TCP Server에서 연결된 클라이언트에게 메시지를 송신합니다.
+    /// \if KO
+    /// <para>\brief 선택된 프로토콜로 TCP Server에서 연결된 클라이언트에게 메시지를 송신합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the send tcp server async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="text">송신 문자열입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>송신 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="sendTargetMode">
+    /// \if KO
+    /// <para>send Target Mode에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for send target mode.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Send Tcp Server Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the send tcp server async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task SendTcpServerAsync(
         string protocol,
         string text,
@@ -489,10 +1099,37 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 선택된 프로토콜로 TCP Client를 연결합니다.
+    /// \if KO
+    /// <para>\brief 선택된 프로토콜로 TCP Client를 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the connect tcp client async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Connect Tcp Client Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the connect tcp client async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task ConnectTcpClientAsync(
         string protocol,
         string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
@@ -536,10 +1173,37 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief TCP Client Transport를 준비합니다. 연결은 수행하지 않고, 송신 큐와 재연결 Decorator를 구성합니다.
+    /// \if KO
+    /// <para>\brief TCP Client Transport를 준비합니다. 연결은 수행하지 않고, 송신 큐와 재연결 Decorator를 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the prepare tcp client transport async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Prepare Tcp Client Transport Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the prepare tcp client transport async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task PrepareTcpClientTransportAsync(
         string protocol,
         string encodingName)
@@ -604,8 +1268,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 현재 TCP Client 연결을 해제합니다.
+    /// \if KO
+    /// <para>\brief 현재 TCP Client 연결을 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the disconnect tcp client async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Disconnect Tcp Client Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the disconnect tcp client async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task DisconnectTcpClientAsync()
     {
         var protocol = _currentClientProtocol;
@@ -635,11 +1312,45 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 선택된 프로토콜로 TCP Client에서 서버로 메시지를 송신합니다.
+    /// \if KO
+    /// <para>\brief 선택된 프로토콜로 TCP Client에서 서버로 메시지를 송신합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the send tcp client async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="text">송신 문자열입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>송신 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Send Tcp Client Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the send tcp client async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task SendTcpClientAsync(
         string protocol,
         string text,
@@ -695,8 +1406,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief TCP Server와 TCP Client를 모두 종료합니다.
+    /// \if KO
+    /// <para>\brief TCP Server와 TCP Client를 모두 종료합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop all tcp async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Stop All Tcp Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the stop all tcp async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StopAllTcpAsync()
     {
         await DisconnectTcpClientAsync();
@@ -704,10 +1428,37 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief UDP Peer A와 Peer B를 모두 시작합니다.
+    /// \if KO
+    /// <para>\brief UDP Peer A와 Peer B를 모두 시작합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start udp loopback async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Start Udp Loopback Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the start udp loopback async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StartUdpLoopbackAsync(
         string protocol,
         string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
@@ -717,10 +1468,37 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 선택된 프로토콜로 UDP Peer A를 시작합니다.
+    /// \if KO
+    /// <para>\brief 선택된 프로토콜로 UDP Peer A를 시작합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the connect udp peer a async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Connect Udp Peer A Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the connect udp peer a async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task ConnectUdpPeerAAsync(
         string protocol,
         string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
@@ -771,10 +1549,37 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 선택된 프로토콜로 UDP Peer B를 시작합니다.
+    /// \if KO
+    /// <para>\brief 선택된 프로토콜로 UDP Peer B를 시작합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the connect udp peer b async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Connect Udp Peer B Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the connect udp peer b async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task ConnectUdpPeerBAsync(
         string protocol,
         string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
@@ -825,8 +1630,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief UDP Peer A 연결을 해제합니다.
+    /// \if KO
+    /// <para>\brief UDP Peer A 연결을 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the disconnect udp peer a async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Disconnect Udp Peer A Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the disconnect udp peer a async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task DisconnectUdpPeerAAsync()
     {
         var protocol = _currentUdpPeerAProtocol;
@@ -856,8 +1674,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief UDP Peer B 연결을 해제합니다.
+    /// \if KO
+    /// <para>\brief UDP Peer B 연결을 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the disconnect udp peer b async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Disconnect Udp Peer B Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the disconnect udp peer b async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task DisconnectUdpPeerBAsync()
     {
         var protocol = _currentUdpPeerBProtocol;
@@ -887,8 +1718,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief UDP Peer A와 Peer B를 모두 종료합니다.
+    /// \if KO
+    /// <para>\brief UDP Peer A와 Peer B를 모두 종료합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop all udp async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Stop All Udp Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the stop all udp async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StopAllUdpAsync()
     {
         await DisconnectUdpPeerBAsync();
@@ -896,11 +1740,45 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief UDP Peer A에서 Peer B로 메시지를 송신합니다.
+    /// \if KO
+    /// <para>\brief UDP Peer A에서 Peer B로 메시지를 송신합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the send udp peer a async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="text">송신 문자열입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>송신 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Send Udp Peer A Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the send udp peer a async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task SendUdpPeerAAsync(
         string protocol,
         string text,
@@ -944,11 +1822,45 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief UDP Peer B에서 Peer A로 메시지를 송신합니다.
+    /// \if KO
+    /// <para>\brief UDP Peer B에서 Peer A로 메시지를 송신합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the send udp peer b async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="text">송신 문자열입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>송신 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Send Udp Peer B Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the send udp peer b async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task SendUdpPeerBAsync(
         string protocol,
         string text,
@@ -992,12 +1904,53 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 선택된 설정으로 Serial Port를 연결합니다.
+    /// \if KO
+    /// <para>\brief 선택된 설정으로 Serial Port를 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the connect serial async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="portName">Serial Port 이름입니다.</param>
-    /// <param name="baudRate">BaudRate입니다.</param>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="portName">
+    /// \if KO
+    /// <para>Serial Port 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for port name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="baudRate">
+    /// \if KO
+    /// <para>BaudRate입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for baud rate.</para>
+    /// \endif
+    /// </param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Connect Serial Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the connect serial async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task ConnectSerialAsync(
         string portName,
         int baudRate,
@@ -1057,8 +2010,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 현재 Serial Port 연결을 해제합니다.
+    /// \if KO
+    /// <para>\brief 현재 Serial Port 연결을 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the disconnect serial async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Disconnect Serial Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the disconnect serial async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task DisconnectSerialAsync()
     {
         var channelName = GetSerialChannelName();
@@ -1086,11 +2052,45 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 현재 Serial Port로 메시지를 송신합니다.
+    /// \if KO
+    /// <para>\brief 현재 Serial Port로 메시지를 송신합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the send serial async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="protocol">프로토콜 이름입니다.</param>
-    /// <param name="text">송신 문자열입니다.</param>
-    /// <param name="encodingName">PlainText 외부 송수신 인코딩 이름입니다.</param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>프로토콜 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>송신 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>PlainText 외부 송수신 인코딩 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Send Serial Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the send serial async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task SendSerialAsync(
         string protocol,
         string text,
@@ -1127,16 +2127,85 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief RabbitMQ에 연결합니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ에 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the connect rabbit mq async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="host">RabbitMQ Host입니다.</param>
-    /// <param name="port">RabbitMQ Port입니다.</param>
-    /// <param name="virtualHost">RabbitMQ VirtualHost입니다.</param>
-    /// <param name="userName">RabbitMQ 사용자 이름입니다.</param>
-    /// <param name="password">RabbitMQ 비밀번호입니다.</param>
-    /// <param name="exchangeName">Exchange 이름입니다.</param>
-    /// <param name="queueName">Queue 이름입니다.</param>
-    /// <param name="routingKey">RoutingKey입니다.</param>
+    /// <param name="host">
+    /// \if KO
+    /// <para>RabbitMQ Host입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for host.</para>
+    /// \endif
+    /// </param>
+    /// <param name="port">
+    /// \if KO
+    /// <para>RabbitMQ Port입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for port.</para>
+    /// \endif
+    /// </param>
+    /// <param name="virtualHost">
+    /// \if KO
+    /// <para>RabbitMQ VirtualHost입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for virtual host.</para>
+    /// \endif
+    /// </param>
+    /// <param name="userName">
+    /// \if KO
+    /// <para>RabbitMQ 사용자 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for user name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="password">
+    /// \if KO
+    /// <para>RabbitMQ 비밀번호입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for password.</para>
+    /// \endif
+    /// </param>
+    /// <param name="exchangeName">
+    /// \if KO
+    /// <para>Exchange 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for exchange name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="queueName">
+    /// \if KO
+    /// <para>Queue 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for queue name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="routingKey">
+    /// \if KO
+    /// <para>RoutingKey입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for routing key.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Connect Rabbit Mq Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the connect rabbit mq async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task ConnectRabbitMqAsync(
         string host,
         int port,
@@ -1219,11 +2288,45 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief RabbitMQ 메시지 구독을 시작합니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ 메시지 구독을 시작합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the subscribe rabbit mq async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="exchangeName">Exchange 이름입니다.</param>
-    /// <param name="queueName">Queue 이름입니다.</param>
-    /// <param name="routingKey">RoutingKey입니다.</param>
+    /// <param name="exchangeName">
+    /// \if KO
+    /// <para>Exchange 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for exchange name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="queueName">
+    /// \if KO
+    /// <para>Queue 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for queue name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="routingKey">
+    /// \if KO
+    /// <para>RoutingKey입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for routing key.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Subscribe Rabbit Mq Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the subscribe rabbit mq async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task SubscribeRabbitMqAsync(
         string exchangeName,
         string queueName,
@@ -1284,11 +2387,45 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief RabbitMQ 메시지를 발행합니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ 메시지를 발행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the publish rabbit mq async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="exchangeName">Exchange 이름입니다.</param>
-    /// <param name="routingKey">RoutingKey입니다.</param>
-    /// <param name="text">송신 문자열입니다.</param>
+    /// <param name="exchangeName">
+    /// \if KO
+    /// <para>Exchange 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for exchange name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="routingKey">
+    /// \if KO
+    /// <para>RoutingKey입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for routing key.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>송신 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Publish Rabbit Mq Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the publish rabbit mq async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task PublishRabbitMqAsync(
         string exchangeName,
         string routingKey,
@@ -1342,8 +2479,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief RabbitMQ 연결을 해제합니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ 연결을 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the disconnect rabbit mq async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Disconnect Rabbit Mq Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the disconnect rabbit mq async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task DisconnectRabbitMqAsync()
     {
         if (_rabbitMqBus is null)
@@ -1372,8 +2522,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief 모든 통신 샘플 연결을 종료합니다.
+    /// \if KO
+    /// <para>\brief 모든 통신 샘플 연결을 종료합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop all async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Stop All Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the stop all async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StopAllAsync()
     {
         await DisconnectRabbitMqAsync();
@@ -1383,6 +2546,22 @@ public sealed class CommunicationSampleRuntime
         await DisconnectInMemoryAsync();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Subscribe In Memory Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the subscribe in memory async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Subscribe In Memory Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the subscribe in memory async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task SubscribeInMemoryAsync()
     {
         if (_isInMemorySubscribed)
@@ -1408,6 +2587,30 @@ public sealed class CommunicationSampleRuntime
             });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Tcp Server Message Received 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the tcp server message received event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="message">
+    /// \if KO
+    /// <para>처리할 메시지입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The message to process.</para>
+    /// \endif
+    /// </param>
     private async void OnTcpServerMessageReceived(object? sender, MessageEnvelope message)
     {
         var protocol = _currentServerProtocol;
@@ -1449,9 +2652,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief SampleSmart TCP Client 예제에서 사용할 재연결 정책을 생성합니다.
+    /// \if KO
+    /// <para>\brief SampleSmart TCP Client 예제에서 사용할 재연결 정책을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the sample reconnect policy value.</para>
+    /// \endif
     /// </summary>
-    /// <returns>재연결 정책입니다.</returns>
+    /// <returns>
+    /// \if KO
+    /// <para>재연결 정책입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ReconnectPolicy</c> result produced by the create sample reconnect policy operation.</para>
+    /// \endif
+    /// </returns>
     private static ReconnectPolicy CreateSampleReconnectPolicy()
     {
         return new ReconnectPolicy
@@ -1466,9 +2681,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief SampleSmart TCP Client 예제에서 사용할 송신 큐 정책을 생성합니다.
+    /// \if KO
+    /// <para>\brief SampleSmart TCP Client 예제에서 사용할 송신 큐 정책을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the sample outbound queue options value.</para>
+    /// \endif
     /// </summary>
-    /// <returns>송신 큐 정책입니다.</returns>
+    /// <returns>
+    /// \if KO
+    /// <para>송신 큐 정책입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>OutboundQueueOptions</c> result produced by the create sample outbound queue options operation.</para>
+    /// \endif
+    /// </returns>
     private static OutboundQueueOptions CreateSampleOutboundQueueOptions()
     {
         return new OutboundQueueOptions
@@ -1482,9 +2709,21 @@ public sealed class CommunicationSampleRuntime
     }
 
     /// <summary>
-    /// \brief TCP Server 예제에서 사용할 송신 큐 정책을 생성합니다.
+    /// \if KO
+    /// <para>\brief TCP Server 예제에서 사용할 송신 큐 정책을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the sample server outbound queue options value.</para>
+    /// \endif
     /// </summary>
-    /// <returns>송신 큐 정책입니다.</returns>
+    /// <returns>
+    /// \if KO
+    /// <para>송신 큐 정책입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>OutboundQueueOptions</c> result produced by the create sample server outbound queue options operation.</para>
+    /// \endif
+    /// </returns>
     private static OutboundQueueOptions CreateSampleServerOutboundQueueOptions()
     {
         return new OutboundQueueOptions
@@ -1497,6 +2736,30 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>대상 객체에 동작을 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Attaches the behavior to a target object.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="transport">
+    /// \if KO
+    /// <para>transport에 사용할 <c>IMessageTransport</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IMessageTransport</c> value used for transport.</para>
+    /// \endif
+    /// </param>
+    /// <param name="channelName">
+    /// \if KO
+    /// <para>channel Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for channel name.</para>
+    /// \endif
+    /// </param>
     private void AttachTcpResilientStateMonitor(
         IMessageTransport transport,
         string channelName)
@@ -1517,6 +2780,38 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>대상 객체에 동작을 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Attaches the behavior to a target object.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="tcpServerTransport">
+    /// \if KO
+    /// <para>tcp Server Transport에 사용할 <c>TcpServerTransport</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>TcpServerTransport</c> value used for tcp server transport.</para>
+    /// \endif
+    /// </param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
     private void AttachTcpServerClientCountMonitor(
         TcpServerTransport tcpServerTransport,
         string protocol,
@@ -1536,6 +2831,54 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Update Tcp Server Description 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the update tcp server description operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="clientCount">
+    /// \if KO
+    /// <para>client Count에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for client count.</para>
+    /// \endif
+    /// </param>
+    /// <param name="targetMode">
+    /// \if KO
+    /// <para>target Mode에 사용할 <c>TcpServerSendTargetMode</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>TcpServerSendTargetMode</c> value used for target mode.</para>
+    /// \endif
+    /// </param>
+    /// <param name="echoEnabled">
+    /// \if KO
+    /// <para>echo Enabled에 사용할 <c>bool</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for echo enabled.</para>
+    /// \endif
+    /// </param>
     private void UpdateTcpServerDescription(
         string protocol,
         string encodingName,
@@ -1551,6 +2894,70 @@ public sealed class CommunicationSampleRuntime
             CreateTcpServerDescription(protocol, encodingName, port, clientCount, targetMode, echoEnabled));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Tcp Server Description 값을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the tcp server description value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="port">
+    /// \if KO
+    /// <para>port에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for port.</para>
+    /// \endif
+    /// </param>
+    /// <param name="clientCount">
+    /// \if KO
+    /// <para>client Count에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for client count.</para>
+    /// \endif
+    /// </param>
+    /// <param name="targetMode">
+    /// \if KO
+    /// <para>target Mode에 사용할 <c>TcpServerSendTargetMode</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>TcpServerSendTargetMode</c> value used for target mode.</para>
+    /// \endif
+    /// </param>
+    /// <param name="echoEnabled">
+    /// \if KO
+    /// <para>echo Enabled에 사용할 <c>bool</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for echo enabled.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Create Tcp Server Description 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the create tcp server description operation.</para>
+    /// \endif
+    /// </returns>
     private static string CreateTcpServerDescription(
         string protocol,
         string encodingName,
@@ -1564,6 +2971,46 @@ public sealed class CommunicationSampleRuntime
         return $"TCP server [{protocol}/{NormalizeTextEncodingName(encodingName)}] on 127.0.0.1:{port}. Clients={clientCount}. Target={targetMode}. Echo={echoText}.";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>대상 객체에 동작을 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Attaches the behavior to a target object.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="transport">
+    /// \if KO
+    /// <para>transport에 사용할 <c>IMessageTransport</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IMessageTransport</c> value used for transport.</para>
+    /// \endif
+    /// </param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="channelName">
+    /// \if KO
+    /// <para>channel Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for channel name.</para>
+    /// \endif
+    /// </param>
     private void AttachTcpClientQueueMonitor(
         IMessageTransport transport,
         string protocol,
@@ -1597,6 +3044,30 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Tcp Client Message Received 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the tcp client message received event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="message">
+    /// \if KO
+    /// <para>처리할 메시지입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The message to process.</para>
+    /// \endif
+    /// </param>
     private void OnTcpClientMessageReceived(object? sender, MessageEnvelope message)
     {
         var protocol = _currentClientProtocol;
@@ -1612,6 +3083,30 @@ public sealed class CommunicationSampleRuntime
         });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Udp Peer A Message Received 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the udp peer a message received event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="message">
+    /// \if KO
+    /// <para>처리할 메시지입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The message to process.</para>
+    /// \endif
+    /// </param>
     private void OnUdpPeerAMessageReceived(object? sender, MessageEnvelope message)
     {
         var protocol = _currentUdpPeerAProtocol;
@@ -1627,6 +3122,30 @@ public sealed class CommunicationSampleRuntime
         });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Udp Peer B Message Received 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the udp peer b message received event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="message">
+    /// \if KO
+    /// <para>처리할 메시지입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The message to process.</para>
+    /// \endif
+    /// </param>
     private void OnUdpPeerBMessageReceived(object? sender, MessageEnvelope message)
     {
         var protocol = _currentUdpPeerBProtocol;
@@ -1642,6 +3161,30 @@ public sealed class CommunicationSampleRuntime
         });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Serial Message Received 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the serial message received event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="message">
+    /// \if KO
+    /// <para>처리할 메시지입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The message to process.</para>
+    /// \endif
+    /// </param>
     private void OnSerialMessageReceived(object? sender, MessageEnvelope message)
     {
         var channelName = GetSerialChannelName();
@@ -1655,6 +3198,30 @@ public sealed class CommunicationSampleRuntime
         });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Ensure Tcp Server Channel 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure tcp server channel operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
     private void EnsureTcpServerChannel(
         string protocol,
         string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
@@ -1679,6 +3246,30 @@ public sealed class CommunicationSampleRuntime
                 _currentServerEchoEnabled));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Ensure Tcp Client Channel 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure tcp client channel operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
     private void EnsureTcpClientChannel(
         string protocol,
         string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
@@ -1697,6 +3288,38 @@ public sealed class CommunicationSampleRuntime
             $"TCP client [{protocol}/{NormalizeTextEncodingName(encodingName)}] to 127.0.0.1:{port}.");
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Ensure Udp Peer Channel 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure udp peer channel operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="peerName">
+    /// \if KO
+    /// <para>peer Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for peer name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
     private void EnsureUdpPeerChannel(
         string peerName,
         string protocol,
@@ -1719,6 +3342,14 @@ public sealed class CommunicationSampleRuntime
             $"UDP peer {peerName} [{protocol}/{encodingName}] 127.0.0.1:{localPort} -> 127.0.0.1:{remotePort}.");
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Ensure Serial Channel 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure serial channel operation.</para>
+    /// \endif
+    /// </summary>
     private void EnsureSerialChannel()
     {
         var channelName = GetSerialChannelName();
@@ -1734,6 +3365,14 @@ public sealed class CommunicationSampleRuntime
             $"Serial [{_currentSerialProtocol}/{_currentSerialEncoding}] on {_currentSerialPortName}:{_currentSerialBaudRate}.");
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Ensure Rabbit Mq Channel 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure rabbit mq channel operation.</para>
+    /// \endif
+    /// </summary>
     private void EnsureRabbitMqChannel()
     {
         if (Monitor.Channels.Any(x => x.Name == RabbitMqChannelName))
@@ -1747,6 +3386,22 @@ public sealed class CommunicationSampleRuntime
             $"RabbitMQ on {_currentRabbitMqHost}:{_currentRabbitMqPort}, vhost={_currentRabbitMqVirtualHost}, exchange={_currentRabbitMqExchangeName}, queue={_currentRabbitMqQueueName}, route={_currentRabbitMqRoutingKey}.");
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Serial Channel Name 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the serial channel name value.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Serial Channel Name 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the get serial channel name operation.</para>
+    /// \endif
+    /// </returns>
     private string GetSerialChannelName()
     {
         if (string.IsNullOrWhiteSpace(_currentSerialPortName))
@@ -1757,6 +3412,54 @@ public sealed class CommunicationSampleRuntime
         return $"Serial-{_currentSerialPortName}";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Protocol Adapter 값을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the protocol adapter value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="routePrefix">
+    /// \if KO
+    /// <para>route Prefix에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for route prefix.</para>
+    /// \endif
+    /// </param>
+    /// <param name="namePrefix">
+    /// \if KO
+    /// <para>name Prefix에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for name prefix.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Create Protocol Adapter 작업에서 생성한 <c>IMessageProtocolAdapter</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IMessageProtocolAdapter</c> result produced by the create protocol adapter operation.</para>
+    /// \endif
+    /// </returns>
     private static IMessageProtocolAdapter CreateProtocolAdapter(
         string protocol,
         string routePrefix = "tcp",
@@ -1792,6 +3495,38 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Frame Codec 값을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the frame codec value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Create Frame Codec 작업에서 생성한 <c>IMessageFrameCodec</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IMessageFrameCodec</c> result produced by the create frame codec operation.</para>
+    /// \endif
+    /// </returns>
     private static IMessageFrameCodec CreateFrameCodec(
         string protocol,
         string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
@@ -1821,6 +3556,30 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Tcp Port 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the tcp port value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Tcp Port 작업에서 생성한 <c>int</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> result produced by the get tcp port operation.</para>
+    /// \endif
+    /// </returns>
     private static int GetTcpPort(string protocol)
     {
         return NormalizeProtocol(protocol) switch
@@ -1833,6 +3592,38 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Tcp Server Channel Name 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the tcp server channel name value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Tcp Server Channel Name 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the get tcp server channel name operation.</para>
+    /// \endif
+    /// </returns>
     private static string GetTcpServerChannelName(
         string protocol,
         string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
@@ -1849,6 +3640,38 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Tcp Client Channel Name 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the tcp client channel name value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Tcp Client Channel Name 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the get tcp client channel name operation.</para>
+    /// \endif
+    /// </returns>
     private static string GetTcpClientChannelName(
         string protocol,
         string encodingName = PlainTextProtocolOptions.Utf8EncodingName)
@@ -1865,6 +3688,46 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Udp Peer Channel Name 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the udp peer channel name value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="peerName">
+    /// \if KO
+    /// <para>peer Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for peer name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Udp Peer Channel Name 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the get udp peer channel name operation.</para>
+    /// \endif
+    /// </returns>
     private static string GetUdpPeerChannelName(
         string peerName,
         string protocol,
@@ -1882,6 +3745,30 @@ public sealed class CommunicationSampleRuntime
             _ => $"UDP-Peer{normalizedPeerName}-PlainText-{normalizedEncodingName}"
         };
     }
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Text Encoding Name 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize text encoding name operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Text Encoding Name 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize text encoding name operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeTextEncodingName(string encodingName)
     {
         if (string.Equals(encodingName, PlainTextProtocolOptions.KoreanCodePage949EncodingName, StringComparison.OrdinalIgnoreCase) ||
@@ -1894,6 +3781,30 @@ public sealed class CommunicationSampleRuntime
     }
 
 
+    /// <summary>
+    /// \if KO
+    /// <para>Udp Local Port 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the udp local port value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="peerName">
+    /// \if KO
+    /// <para>peer Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for peer name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Udp Local Port 작업에서 생성한 <c>int</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> result produced by the get udp local port operation.</para>
+    /// \endif
+    /// </returns>
     private static int GetUdpLocalPort(string peerName)
     {
         return NormalizeUdpPeerName(peerName) == "B"
@@ -1901,6 +3812,30 @@ public sealed class CommunicationSampleRuntime
             : UdpPeerALocalPort;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Udp Remote Port 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the udp remote port value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="peerName">
+    /// \if KO
+    /// <para>peer Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for peer name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Udp Remote Port 작업에서 생성한 <c>int</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> result produced by the get udp remote port operation.</para>
+    /// \endif
+    /// </returns>
     private static int GetUdpRemotePort(string peerName)
     {
         return NormalizeUdpPeerName(peerName) == "B"
@@ -1908,6 +3843,30 @@ public sealed class CommunicationSampleRuntime
             : UdpPeerBLocalPort;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Udp Peer Name 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize udp peer name operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="peerName">
+    /// \if KO
+    /// <para>peer Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for peer name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Udp Peer Name 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize udp peer name operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeUdpPeerName(string peerName)
     {
         return string.Equals(peerName, "B", StringComparison.OrdinalIgnoreCase)
@@ -1915,6 +3874,54 @@ public sealed class CommunicationSampleRuntime
             : "A";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Tcp Message By Protocol 값을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the tcp message by protocol value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="direction">
+    /// \if KO
+    /// <para>direction에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for direction.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Create Tcp Message By Protocol 작업에서 생성한 <c>MessageEnvelope</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>MessageEnvelope</c> result produced by the create tcp message by protocol operation.</para>
+    /// \endif
+    /// </returns>
     private static MessageEnvelope CreateTcpMessageByProtocol(
         string protocol,
         string direction,
@@ -1991,6 +3998,54 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Udp Message By Protocol 값을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the udp message by protocol value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="direction">
+    /// \if KO
+    /// <para>direction에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for direction.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Create Udp Message By Protocol 작업에서 생성한 <c>MessageEnvelope</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>MessageEnvelope</c> result produced by the create udp message by protocol operation.</para>
+    /// \endif
+    /// </returns>
     private static MessageEnvelope CreateUdpMessageByProtocol(
         string protocol,
         string direction,
@@ -2067,6 +4122,54 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Serial Message By Protocol 값을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the serial message by protocol value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <param name="direction">
+    /// \if KO
+    /// <para>direction에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for direction.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encodingName">
+    /// \if KO
+    /// <para>encoding Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for encoding name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Create Serial Message By Protocol 작업에서 생성한 <c>MessageEnvelope</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>MessageEnvelope</c> result produced by the create serial message by protocol operation.</para>
+    /// \endif
+    /// </returns>
     private static MessageEnvelope CreateSerialMessageByProtocol(
         string protocol,
         string direction,
@@ -2143,6 +4246,46 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Rabbit Mq Message 값을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the rabbit mq message value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="direction">
+    /// \if KO
+    /// <para>direction에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for direction.</para>
+    /// \endif
+    /// </param>
+    /// <param name="route">
+    /// \if KO
+    /// <para>route에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for route.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Create Rabbit Mq Message 작업에서 생성한 <c>MessageEnvelope</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>MessageEnvelope</c> result produced by the create rabbit mq message operation.</para>
+    /// \endif
+    /// </returns>
     private static MessageEnvelope CreateRabbitMqMessage(
         string direction,
         string route,
@@ -2161,6 +4304,54 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Text Message 값을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the text message value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="name">
+    /// \if KO
+    /// <para>name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="route">
+    /// \if KO
+    /// <para>route에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for route.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Create Text Message 작업에서 생성한 <c>MessageEnvelope</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>MessageEnvelope</c> result produced by the create text message operation.</para>
+    /// \endif
+    /// </returns>
     private static MessageEnvelope CreateTextMessage(
         string name,
         string route,
@@ -2180,6 +4371,30 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Rabbit Mq Error Log 항목을 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Adds the rabbit mq error log item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="name">
+    /// \if KO
+    /// <para>name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
     private void AddRabbitMqErrorLog(
         string name,
         string text)
@@ -2196,6 +4411,30 @@ public sealed class CommunicationSampleRuntime
             message);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Ensure Json Payload 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure json payload operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Ensure Json Payload 작업에서 생성한 <c>byte[]</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>byte[]</c> result produced by the ensure json payload operation.</para>
+    /// \endif
+    /// </returns>
     private static byte[] EnsureJsonPayload(string text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -2218,6 +4457,30 @@ public sealed class CommunicationSampleRuntime
         return Encoding.UTF8.GetBytes(json);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Escape Json String 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the escape json string operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Escape Json String 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the escape json string operation.</para>
+    /// \endif
+    /// </returns>
     private static string EscapeJsonString(string value)
     {
         return value
@@ -2227,6 +4490,30 @@ public sealed class CommunicationSampleRuntime
             .Replace("\n", "\\n", StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Tcp Server Send Target Mode 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize tcp server send target mode operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sendTargetMode">
+    /// \if KO
+    /// <para>send Target Mode에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for send target mode.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Tcp Server Send Target Mode 작업에서 생성한 <c>TcpServerSendTargetMode</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>TcpServerSendTargetMode</c> result produced by the normalize tcp server send target mode operation.</para>
+    /// \endif
+    /// </returns>
     private static TcpServerSendTargetMode NormalizeTcpServerSendTargetMode(string? sendTargetMode)
     {
         if (Enum.TryParse<TcpServerSendTargetMode>(
@@ -2240,6 +4527,30 @@ public sealed class CommunicationSampleRuntime
         return TcpServerSendTargetMode.Broadcast;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Protocol 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize protocol operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="protocol">
+    /// \if KO
+    /// <para>protocol에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for protocol.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Protocol 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize protocol operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeProtocol(string? protocol)
     {
         if (string.IsNullOrWhiteSpace(protocol))
@@ -2257,6 +4568,38 @@ public sealed class CommunicationSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Text 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize text operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <param name="defaultValue">
+    /// \if KO
+    /// <para>default Value에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for default value.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Text 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize text operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeText(
         string? value,
         string defaultValue)
@@ -2266,6 +4609,22 @@ public sealed class CommunicationSampleRuntime
             : value.Trim();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Run On Ui Thread 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the run on ui thread operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="action">
+    /// \if KO
+    /// <para>action에 사용할 <c>Action</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Action</c> value used for action.</para>
+    /// \endif
+    /// </param>
     private static void RunOnUiThread(Action action)
     {
         ArgumentNullException.ThrowIfNull(action);

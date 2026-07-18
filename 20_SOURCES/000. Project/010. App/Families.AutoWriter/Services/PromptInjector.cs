@@ -1,10 +1,39 @@
 namespace FamiliesAutoWriter.Services;
 
 /// <summary>
-/// 각 AI 웹사이트의 DOM에 프롬프트를 주입하고 전송하는 JS 코드를 생성합니다.
+/// \if KO
+/// <para>각 AI 웹사이트의 DOM에 프롬프트를 주입하고 전송하는 JS 코드를 생성합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates prompt injector functionality and related state.</para>
+/// \endif
 /// </summary>
 public static class PromptInjector
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Inject Script 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the inject script value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="prompt">
+    /// \if KO
+    /// <para>prompt에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for prompt.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Inject Script 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build inject script operation.</para>
+    /// \endif
+    /// </returns>
     public static string BuildInjectScript(string prompt)
     {
         // JSON 문자열로 안전하게 이스케이프

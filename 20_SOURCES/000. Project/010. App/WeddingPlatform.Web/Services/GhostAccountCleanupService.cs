@@ -4,21 +4,106 @@ using Microsoft.Extensions.Logging;
 namespace WeddingPlatform.Services;
 
 /// <summary>
-/// 사진 없이 24시간 이상 방치된 계정을 자동 삭제합니다.
+/// \if KO
+/// <para>사진 없이 24시간 이상 방치된 계정을 자동 삭제합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates ghost account cleanup service functionality and related state.</para>
+/// \endif
 /// </summary>
 public sealed class GhostAccountCleanupService : BackgroundService
 {
+    /// <summary>
+    /// \if KO
+    /// <para>tenants 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tenants value.</para>
+    /// \endif
+    /// </summary>
     private readonly ITenantStore _tenants;
+    /// <summary>
+    /// \if KO
+    /// <para>logger 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the logger value.</para>
+    /// \endif
+    /// </summary>
     private readonly ILogger<GhostAccountCleanupService> _logger;
+    /// <summary>
+    /// \if KO
+    /// <para>Interval 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the interval value.</para>
+    /// \endif
+    /// </summary>
     private static readonly TimeSpan Interval = TimeSpan.FromHours(1);
+    /// <summary>
+    /// \if KO
+    /// <para>Grace Period 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the grace period value.</para>
+    /// \endif
+    /// </summary>
     private static readonly TimeSpan GracePeriod = TimeSpan.FromHours(24);
 
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="GhostAccountCleanupService"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="GhostAccountCleanupService"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="tenants">
+    /// \if KO
+    /// <para>tenants에 사용할 <c>ITenantStore</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ITenantStore</c> value used for tenants.</para>
+    /// \endif
+    /// </param>
+    /// <param name="logger">
+    /// \if KO
+    /// <para>logger에 사용할 <c>ILogger&lt;GhostAccountCleanupService&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ILogger&lt;GhostAccountCleanupService&gt;</c> value used for logger.</para>
+    /// \endif
+    /// </param>
     public GhostAccountCleanupService(ITenantStore tenants, ILogger<GhostAccountCleanupService> logger)
     {
         _tenants = tenants;
         _logger = logger;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Execute Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the execute async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="stoppingToken">
+    /// \if KO
+    /// <para>stopping Token에 사용할 <c>CancellationToken</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CancellationToken</c> value used for stopping token.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Execute Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the execute async operation.</para>
+    /// \endif
+    /// </returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -28,6 +113,30 @@ public sealed class GhostAccountCleanupService : BackgroundService
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Run Cleanup Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the run cleanup async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="ct">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Run Cleanup Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the run cleanup async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task RunCleanupAsync(CancellationToken ct)
     {
         try

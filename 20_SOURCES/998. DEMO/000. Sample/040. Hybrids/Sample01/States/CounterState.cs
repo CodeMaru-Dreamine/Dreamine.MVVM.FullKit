@@ -3,11 +3,13 @@
 namespace Sample01.States
 {
     /// <summary>
-    /// \brief Represents the shared counter state for the hybrid sample.
+    /// \if KO
+    /// <para>Counter State 기능과 관련 상태를 캡슐화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>\brief Represents the shared counter state for the hybrid sample.</para>
+    /// \endif
     /// </summary>
-    /// <param name="Count">The current counter value.</param>
-    /// <param name="LastSource">The last update source.</param>
-    /// <param name="LastUpdated">The last update time.</param>
     public sealed record CounterState(
         int Count,
         string LastSource,

@@ -3,89 +3,107 @@
 namespace SampleCore
 {
     /// <summary>
-    /// Provides optional Dreamine application customization hooks.
+    /// \if KO
+    /// <para>App 기능과 관련 상태를 캡슐화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Provides optional Dreamine application customization hooks.</para>
+    /// \endif
     /// </summary>
     /// <remarks>
-    /// This file is optional. You may delete it when no custom startup behavior is required.
+    /// \if KO
+    /// <para>이 멤버의 동작과 사용 시 고려 사항을 설명합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>This file is optional. You may delete it when no custom startup behavior is required.</para>
+    /// \endif
     /// </remarks>
     public partial class App
     {
         /// <summary>
-        /// Runs before Dreamine initializes its default services and automatic registration.
+        /// \if KO
+        /// <para>Register Before 작업을 수행합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Runs before Dreamine initializes its default services and automatic registration.</para>
+        /// \endif
         /// </summary>
         /// <remarks>
-        /// Use this hook when you need to register custom services before Dreamine performs
-        /// automatic ViewModel, Model, Event, and Manager registration.
+        /// \if KO
+        /// <para>이 멤버의 동작과 사용 시 고려 사항을 설명합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Use this hook when you need to register custom services before Dreamine performs automatic ViewModel, Model, Event, and Manager registration.</para>
+        /// \endif
         /// </remarks>
-        /// <example>
-        /// <code>
-        /// static partial void RegisterBefore()
-        /// {
-        ///     DMContainer.RegisterSingleton&lt;IMyService&gt;(new MyService());
-        /// }
-        /// </code>
-        /// </example>
         static partial void RegisterBefore()
         {
         }
 
         /// <summary>
-        /// Allows customization of Dreamine WPF runtime options before initialization.
+        /// \if KO
+        /// <para>Configure Dreamine 작업을 수행합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Allows customization of Dreamine WPF runtime options before initialization.</para>
+        /// \endif
         /// </summary>
-        /// <param name="options">The Dreamine WPF runtime options.</param>
+        /// <param name="options">
+        /// \if KO
+        /// <para>동작을 구성하는 설정입니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>The Dreamine WPF runtime options.</para>
+        /// \endif
+        /// </param>
         /// <remarks>
-        /// Use this hook to change the default region name, disable global ViewModel auto-wiring,
-        /// or disable automatic navigator registration.
+        /// \if KO
+        /// <para>이 멤버의 동작과 사용 시 고려 사항을 설명합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Use this hook to change the default region name, disable global ViewModel auto-wiring, or disable automatic navigator registration.</para>
+        /// \endif
         /// </remarks>
-        /// <example>
-        /// <code>
-        /// static partial void ConfigureDreamine(DreamineWpfOptions options)
-        /// {
-        ///     options.DefaultRegionName = "MainRegion";
-        ///     options.EnableGlobalAutoWireOnLoaded = false;
-        /// }
-        /// </code>
-        /// </example>
         static partial void ConfigureDreamine(DreamineWpfOptions options)
         {
         }
 
         /// <summary>
-        /// Runs after Dreamine initialization has completed.
+        /// \if KO
+        /// <para>Register After 작업을 수행합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Runs after Dreamine initialization has completed.</para>
+        /// \endif
         /// </summary>
         /// <remarks>
-        /// Use this hook for startup navigation, event subscriptions, or post-initialization logic.
-        /// Avoid registering core Dreamine services here unless you intentionally want to override
-        /// behavior after initialization.
+        /// \if KO
+        /// <para>이 멤버의 동작과 사용 시 고려 사항을 설명합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Use this hook for startup navigation, event subscriptions, or post-initialization logic. Avoid registering core Dreamine services here unless you intentionally want to override behavior after initialization.</para>
+        /// \endif
         /// </remarks>
-        /// <example>
-        /// <code>
-        /// static partial void RegisterAfter()
-        /// {
-        ///     // Perform startup navigation or application-specific initialization here.
-        /// }
-        /// </code>
-        /// </example>
         static partial void RegisterAfter()
         {
         }
 
         /// <summary>
-        /// Allows manual MainWindow creation when StartupUri is not used.
+        /// \if KO
+        /// <para>Show Main Window 작업을 수행합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Allows manual MainWindow creation when StartupUri is not used.</para>
+        /// \endif
         /// </summary>
         /// <remarks>
-        /// Use this hook only when you want to create and show the main window manually.
-        /// If App.xaml already defines StartupUri, leave this hook unused.
+        /// \if KO
+        /// <para>이 멤버의 동작과 사용 시 고려 사항을 설명합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Use this hook only when you want to create and show the main window manually. If App.xaml already defines StartupUri, leave this hook unused.</para>
+        /// \endif
         /// </remarks>
-        /// <example>
-        /// <code>
-        /// static partial void ShowMainWindow()
-        /// {
-        ///     var window = new MainWindow();
-        ///     window.Show();
-        /// }
-        /// </code>
-        /// </example>
         static partial void ShowMainWindow()
         {
         }

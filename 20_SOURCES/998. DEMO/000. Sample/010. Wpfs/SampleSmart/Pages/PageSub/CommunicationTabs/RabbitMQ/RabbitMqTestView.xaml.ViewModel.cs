@@ -5,18 +5,33 @@ using Microsoft.Extensions.Logging;
 namespace SampleSmart.Pages.PageSub.CommunicationTabs.RabbitMQ;
 
 /// <summary>
-/// \brief RabbitMQ 테스트 ViewModel입니다.
+/// \if KO
+/// <para>\brief RabbitMQ 테스트 ViewModel입니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates rabbit mq test view model functionality and related state.</para>
+/// \endif
 /// </summary>
 public partial class RabbitMqTestViewModel : ViewModelBase
 {
     /// <summary>
-    /// \brief RabbitMQ 테스트 이벤트 처리 객체입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ 테스트 이벤트 처리 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the event value.</para>
+    /// \endif
     /// </summary>
     [DreamineEvent]
     private RabbitMqTestViewEvent _event;
 
     /// <summary>
-    /// \brief RabbitMQ Host입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ Host입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the host value.</para>
+    /// \endif
     /// </summary>
     public string Host
     {
@@ -35,7 +50,12 @@ public partial class RabbitMqTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief RabbitMQ Port입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ Port입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the port value.</para>
+    /// \endif
     /// </summary>
     public int Port
     {
@@ -54,7 +74,12 @@ public partial class RabbitMqTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief RabbitMQ VirtualHost입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ VirtualHost입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the virtual host value.</para>
+    /// \endif
     /// </summary>
     public string VirtualHost
     {
@@ -73,7 +98,12 @@ public partial class RabbitMqTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief RabbitMQ 사용자 이름입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ 사용자 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the user name value.</para>
+    /// \endif
     /// </summary>
     public string UserName
     {
@@ -92,7 +122,12 @@ public partial class RabbitMqTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief RabbitMQ 비밀번호입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ 비밀번호입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the password value.</para>
+    /// \endif
     /// </summary>
     public string Password
     {
@@ -110,7 +145,12 @@ public partial class RabbitMqTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief RabbitMQ Exchange 이름입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ Exchange 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the exchange name value.</para>
+    /// \endif
     /// </summary>
     public string ExchangeName
     {
@@ -129,7 +169,12 @@ public partial class RabbitMqTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief RabbitMQ Queue 이름입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ Queue 이름입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the queue name value.</para>
+    /// \endif
     /// </summary>
     public string QueueName
     {
@@ -148,7 +193,12 @@ public partial class RabbitMqTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief RabbitMQ RoutingKey입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ RoutingKey입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the routing key value.</para>
+    /// \endif
     /// </summary>
     public string RoutingKey
     {
@@ -167,7 +217,12 @@ public partial class RabbitMqTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief RabbitMQ 송신 메시지입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ 송신 메시지입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the message text value.</para>
+    /// \endif
     /// </summary>
     public string MessageText
     {
@@ -185,41 +240,75 @@ public partial class RabbitMqTestViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief 현재 RabbitMQ 선택 상태 요약 문자열입니다.
+    /// \if KO
+    /// <para>\brief 현재 RabbitMQ 선택 상태 요약 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the rabbit mq selection summary value.</para>
+    /// \endif
     /// </summary>
     public string RabbitMqSelectionSummary => Event.RabbitMqSelectionSummary;
 
     /// <summary>
-    /// \brief RabbitMQ 연결 명령입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ 연결 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the connect rabbit mq operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.ConnectRabbitMq")]
     private partial void ConnectRabbitMq();
 
     /// <summary>
-    /// \brief RabbitMQ 구독 명령입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ 구독 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the subscribe rabbit mq operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.SubscribeRabbitMq")]
     private partial void SubscribeRabbitMq();
 
     /// <summary>
-    /// \brief RabbitMQ 발행 명령입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ 발행 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the publish rabbit mq operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.PublishRabbitMq")]
     private partial void PublishRabbitMq();
 
     /// <summary>
-    /// \brief RabbitMQ 연결 해제 명령입니다.
+    /// \if KO
+    /// <para>\brief RabbitMQ 연결 해제 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the disconnect rabbit mq operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.DisconnectRabbitMq")]
     private partial void DisconnectRabbitMq();
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="RabbitMqTestViewModel"/> class.
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="RabbitMqTestViewModel"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="RabbitMqTestViewModel"/> class.</para>
+    /// \endif
     /// </summary>
-    /// <param name="event">The event handler used by the RabbitMQ test view.</param>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="event"/> is <c>null</c>.
-    /// </exception>
+    /// <param name="event">
+    /// \if KO
+    /// <para>event에 사용할 <c>RabbitMqTestViewEvent</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The event handler used by the RabbitMQ test view.</para>
+    /// \endif
+    /// </param>
     public RabbitMqTestViewModel(RabbitMqTestViewEvent @event)
     {
         ArgumentNullException.ThrowIfNull(@event);

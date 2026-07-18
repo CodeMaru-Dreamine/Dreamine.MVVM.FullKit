@@ -26,7 +26,7 @@ Run the same core checks used by CI:
 ```powershell
 dotnet test "20_SOURCES/200. Tests/Dreamine.FullKit.Tests/Dreamine.FullKit.Tests.csproj" --no-restore --configuration Release -m:1
 dotnet test "20_SOURCES/200. Tests/Dreamine.FullKit.Wpf.Tests/Dreamine.FullKit.Wpf.Tests.csproj" --no-restore --configuration Release -m:1
-dotnet test "20_SOURCES/100. Library/UI.WinForms.Tests/Dreamine.UI.WinForms.Tests.csproj" --no-restore --configuration Release -m:1
+dotnet test "20_SOURCES/200. Tests/UI.WinForms.Tests/Dreamine.UI.WinForms.Tests.csproj" --no-restore --configuration Release -m:1
 ```
 
 For UI-facing changes, also build representative samples:

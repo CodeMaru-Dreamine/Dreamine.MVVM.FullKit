@@ -6,11 +6,31 @@ using System.IO;
 namespace WeddingPlatform.Services;
 
 /// <summary>
-/// 앱 시작 시 wwwroot/img/og-platform.jpg 를 자동 생성한다.
-/// System.Drawing (net8.0-windows) 사용.
+/// \if KO
+/// <para>앱 시작 시 wwwroot/img/og-platform.jpg 를 자동 생성한다. System.Drawing (net8.0-windows) 사용.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates og image generator functionality and related state.</para>
+/// \endif
 /// </summary>
 public static class OgImageGenerator
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Ensure Generated 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure generated operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="wwwrootPath">
+    /// \if KO
+    /// <para>wwwroot Path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for wwwroot path.</para>
+    /// \endif
+    /// </param>
     public static void EnsureGenerated(string wwwrootPath)
     {
         var imgDir = Path.Combine(wwwrootPath, "img");
@@ -85,6 +105,62 @@ public static class OgImageGenerator
         bmp.Save(outPath, jpegCodec, jpegParams);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Draw Centered Text 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the draw centered text operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="g">
+    /// \if KO
+    /// <para>g에 사용할 <c>Graphics</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Graphics</c> value used for g.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="font">
+    /// \if KO
+    /// <para>font에 사용할 <c>Font</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Font</c> value used for font.</para>
+    /// \endif
+    /// </param>
+    /// <param name="color">
+    /// \if KO
+    /// <para>color에 사용할 <c>Color</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Color</c> value used for color.</para>
+    /// \endif
+    /// </param>
+    /// <param name="cx">
+    /// \if KO
+    /// <para>cx에 사용할 <c>float</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>float</c> value used for cx.</para>
+    /// \endif
+    /// </param>
+    /// <param name="cy">
+    /// \if KO
+    /// <para>cy에 사용할 <c>float</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>float</c> value used for cy.</para>
+    /// \endif
+    /// </param>
     private static void DrawCenteredText(Graphics g, string text, Font font, Color color, float cx, float cy)
     {
         using var brush = new SolidBrush(color);
@@ -92,6 +168,54 @@ public static class OgImageGenerator
         g.DrawString(text, font, brush, cx - size.Width / 2f, cy - size.Height / 2f);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Draw Circle 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the draw circle operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="g">
+    /// \if KO
+    /// <para>g에 사용할 <c>Graphics</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Graphics</c> value used for g.</para>
+    /// \endif
+    /// </param>
+    /// <param name="x">
+    /// \if KO
+    /// <para>x에 사용할 <c>float</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>float</c> value used for x.</para>
+    /// \endif
+    /// </param>
+    /// <param name="y">
+    /// \if KO
+    /// <para>y에 사용할 <c>float</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>float</c> value used for y.</para>
+    /// \endif
+    /// </param>
+    /// <param name="diameter">
+    /// \if KO
+    /// <para>diameter에 사용할 <c>float</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>float</c> value used for diameter.</para>
+    /// \endif
+    /// </param>
+    /// <param name="alphaPercent">
+    /// \if KO
+    /// <para>alpha Percent에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for alpha percent.</para>
+    /// \endif
+    /// </param>
     private static void DrawCircle(Graphics g, float x, float y, float diameter, int alphaPercent)
     {
         int alpha = (int)(255 * alphaPercent / 100.0);
@@ -99,6 +223,62 @@ public static class OgImageGenerator
         g.FillEllipse(brush, x, y, diameter, diameter);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Draw Rounded Rect 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the draw rounded rect operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="g">
+    /// \if KO
+    /// <para>g에 사용할 <c>Graphics</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Graphics</c> value used for g.</para>
+    /// \endif
+    /// </param>
+    /// <param name="rect">
+    /// \if KO
+    /// <para>rect에 사용할 <c>RectangleF</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>RectangleF</c> value used for rect.</para>
+    /// \endif
+    /// </param>
+    /// <param name="radius">
+    /// \if KO
+    /// <para>radius에 사용할 <c>float</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>float</c> value used for radius.</para>
+    /// \endif
+    /// </param>
+    /// <param name="fill">
+    /// \if KO
+    /// <para>fill에 사용할 <c>Color</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Color</c> value used for fill.</para>
+    /// \endif
+    /// </param>
+    /// <param name="stroke">
+    /// \if KO
+    /// <para>stroke에 사용할 <c>Color</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Color</c> value used for stroke.</para>
+    /// \endif
+    /// </param>
+    /// <param name="strokeWidth">
+    /// \if KO
+    /// <para>stroke Width에 사용할 <c>float</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>float</c> value used for stroke width.</para>
+    /// \endif
+    /// </param>
     private static void DrawRoundedRect(Graphics g, RectangleF rect, float radius,
         Color fill, Color stroke, float strokeWidth)
     {
@@ -109,12 +289,84 @@ public static class OgImageGenerator
         g.DrawPath(pen, path);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Fill Rounded Rect 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the fill rounded rect operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="g">
+    /// \if KO
+    /// <para>g에 사용할 <c>Graphics</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Graphics</c> value used for g.</para>
+    /// \endif
+    /// </param>
+    /// <param name="brush">
+    /// \if KO
+    /// <para>brush에 사용할 <c>Brush</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Brush</c> value used for brush.</para>
+    /// \endif
+    /// </param>
+    /// <param name="rect">
+    /// \if KO
+    /// <para>rect에 사용할 <c>RectangleF</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>RectangleF</c> value used for rect.</para>
+    /// \endif
+    /// </param>
+    /// <param name="radius">
+    /// \if KO
+    /// <para>radius에 사용할 <c>float</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>float</c> value used for radius.</para>
+    /// \endif
+    /// </param>
     private static void FillRoundedRect(Graphics g, Brush brush, RectangleF rect, float radius)
     {
         using var path = RoundedRectPath(rect, radius);
         g.FillPath(brush, path);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Rounded Rect Path 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the rounded rect path operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="rect">
+    /// \if KO
+    /// <para>rect에 사용할 <c>RectangleF</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>RectangleF</c> value used for rect.</para>
+    /// \endif
+    /// </param>
+    /// <param name="r">
+    /// \if KO
+    /// <para>r에 사용할 <c>float</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>float</c> value used for r.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Rounded Rect Path 작업에서 생성한 <c>GraphicsPath</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>GraphicsPath</c> result produced by the rounded rect path operation.</para>
+    /// \endif
+    /// </returns>
     private static GraphicsPath RoundedRectPath(RectangleF rect, float r)
     {
         var path = new GraphicsPath();

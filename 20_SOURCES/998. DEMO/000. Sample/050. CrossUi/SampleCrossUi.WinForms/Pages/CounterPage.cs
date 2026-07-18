@@ -6,22 +6,125 @@ using SampleCrossUi.Shared.ViewModels;
 
 namespace SampleCrossUi.WinForms.Pages;
 
+/// <summary>
+/// \if KO
+/// <para>Counter Page 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates counter page functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class CounterPage : UserControl
 {
+    /// <summary>
+    /// \if KO
+    /// <para>title 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the title value.</para>
+    /// \endif
+    /// </summary>
     private Label           _title        = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>count Label 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the count label value.</para>
+    /// \endif
+    /// </summary>
     private Label           _countLabel   = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Increment 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn increment value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton  _btnIncrement = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Reset 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn reset value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton  _btnReset     = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Panel 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn panel value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _btnPanel     = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>log Title 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the log title value.</para>
+    /// \endif
+    /// </summary>
     private Label           _logTitle     = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>log List 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the log list value.</para>
+    /// \endif
+    /// </summary>
     private ListBox         _logList      = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>layout 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the layout value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _layout       = null!;
 
+    /// <summary>
+    /// \if KO
+    /// <para>vm 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the vm value.</para>
+    /// \endif
+    /// </summary>
     private readonly CounterViewModel _vm;
 
-    /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>
+    /// <summary>
+    /// \if KO
+    /// <para>VS WinForms 디자이너용 기본 생성자.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="CounterPage"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
     public CounterPage() : this(new CounterViewModel(new CounterEvent(new CounterService()))) { }
 
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="CounterPage"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="CounterPage"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="vm">
+    /// \if KO
+    /// <para>vm에 사용할 <c>CounterViewModel</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CounterViewModel</c> value used for vm.</para>
+    /// \endif
+    /// </param>
     public CounterPage(CounterViewModel vm)
     {
         _vm = vm;
@@ -35,12 +138,44 @@ public sealed class CounterPage : UserControl
         RefreshLog();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Property Changed 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the property changed event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(CounterViewModel.Count))
             _countLabel.Text = $"Count: {_vm.Count}";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Refresh Log 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the refresh log operation.</para>
+    /// \endif
+    /// </summary>
     private void RefreshLog()
     {
         _logList.BeginUpdate();
@@ -50,6 +185,14 @@ public sealed class CounterPage : UserControl
         _logList.EndUpdate();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Initialize Component 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the initialize component operation.</para>
+    /// \endif
+    /// </summary>
     private void InitializeComponent()
     {
         _title        = new Label();
@@ -165,6 +308,22 @@ public sealed class CounterPage : UserControl
         PerformLayout();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>이 인스턴스가 소유한 리소스를 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Releases resources owned by this instance.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="disposing">
+    /// \if KO
+    /// <para>disposing에 사용할 <c>bool</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for disposing.</para>
+    /// \endif
+    /// </param>
     protected override void Dispose(bool disposing)
     {
         if (disposing) _vm.PropertyChanged -= OnPropertyChanged;

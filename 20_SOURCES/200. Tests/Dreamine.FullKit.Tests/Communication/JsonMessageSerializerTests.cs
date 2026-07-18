@@ -4,8 +4,24 @@ using Dreamine.Communication.Core.Serialization;
 
 namespace Dreamine.FullKit.Tests.Communication;
 
+/// <summary>
+/// \if KO
+/// <para>Json Message Serializer Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates json message serializer tests functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class JsonMessageSerializerTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Serialize Then Deserialize Preserves Envelope Values 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the serialize then deserialize preserves envelope values operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void SerializeThenDeserialize_PreservesEnvelopeValues()
     {
@@ -34,6 +50,14 @@ public sealed class JsonMessageSerializerTests
         Assert.Equal(envelope.CreatedAt, result.CreatedAt);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Deserialize Accepts Case Insensitive Property Names 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the deserialize accepts case insensitive property names operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void Deserialize_AcceptsCaseInsensitivePropertyNames()
     {

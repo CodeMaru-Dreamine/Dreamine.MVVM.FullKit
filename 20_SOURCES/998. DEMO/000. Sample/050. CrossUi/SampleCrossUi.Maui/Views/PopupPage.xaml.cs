@@ -2,13 +2,53 @@ using Dreamine.UI.Maui.Popup;
 
 namespace SampleCrossUi.Maui.Views;
 
+/// <summary>
+/// \if KO
+/// <para>Popup Page 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates popup page functionality and related state.</para>
+/// \endif
+/// </summary>
 public partial class PopupPage : ContentView
 {
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="PopupPage"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="PopupPage"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
     public PopupPage()
     {
         InitializeComponent();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Show Message Box Clicked 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the show message box clicked event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private async void OnShowMessageBoxClicked(object? sender, EventArgs e)
     {
         var result = await DreamineMessageBox.ShowAsync(
@@ -18,6 +58,30 @@ public partial class PopupPage : ContentView
         ResultLabel.Text = $"Last result: MessageBox → {result}";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Show Blink Ok Clicked 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the show blink ok clicked event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private async void OnShowBlinkOkClicked(object? sender, EventArgs e)
     {
         var result = await DreamineBlinkPopup.ShowAsync(new BlinkPopupOptions
@@ -33,6 +97,30 @@ public partial class PopupPage : ContentView
         ResultLabel.Text = $"Last result: BlinkPopup(OK) → {result}";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Show Blink Alarm Clicked 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the show blink alarm clicked event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private async void OnShowBlinkAlarmClicked(object? sender, EventArgs e)
     {
         var result = await DreamineBlinkPopup.ShowAsync(new BlinkPopupOptions

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dreamine FullKit 지식 허브</title>
+  <meta name="description" content="Dreamine.MVVM.FullKit의 시작 가이드, 사용 레시피, API 계약과 전체 소스 관계를 탐색하세요." />
+  <link rel="canonical" href="https://dreamine.kr/understand/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Dreamine" />
+  <meta property="og:locale" content="ko_KR" />
+  <meta property="og:title" content="Dreamine FullKit 지식 허브" />
+  <meta property="og:description" content="처음 쓰는 사람을 위한 레시피부터 클래스·메서드·예외·소스 관계까지 한곳에서 살펴보세요." />
+  <meta property="og:url" content="https://dreamine.kr/understand/" />
+  <meta property="og:image" content="https://dreamine.kr/understand/og-knowledge-graph.png" />
+  <meta property="og:image:width" content="1731" />
+  <meta property="og:image:height" content="909" />
+  <meta property="og:image:alt" content="Dreamine.MVVM.FullKit Knowledge Graph" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="theme-color" content="#0b1018" />
+  <link rel="stylesheet" href="./hub-v6.css" />
+</head>
+<body>
+  <a class="skip" href="#content">본문으로 건너뛰기</a>
+  <header class="site-header">
+    <a class="brand" href="#/start" aria-label="Dreamine 지식 허브 홈">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+      <span><strong>Dreamine</strong><small>FullKit Knowledge Hub</small></span>
+    </a>
+    <button id="menuButton" class="menu-button" aria-expanded="false" aria-controls="mainNav">메뉴</button>
+    <nav id="mainNav" aria-label="주요 메뉴">
+      <a href="#/start" data-route="start">시작</a>
+      <a href="#/recipes" data-route="recipes">레시피</a>
+      <a href="#/api" data-route="api">API</a>
+      <a href="#/architecture" data-route="architecture">구조</a>
+      <a href="#/troubleshooting" data-route="troubleshooting">문제 해결</a>
+      <a class="graph-link" href="./graph/" target="_blank" rel="noopener">전체 그래프 ↗</a>
+    </nav>
+  </header>
+  <main id="content" tabindex="-1">
+    <div id="loading" class="loading"><span></span> 지식 그래프를 불러오는 중…</div>
+    <div id="app" hidden></div>
+  </main>
+  <footer>
+    <span>Dreamine.MVVM.FullKit · 소스와 XML 문서를 바탕으로 생성</span>
+    <a href="https://github.com/CodeMaru-Dreamine" target="_blank" rel="noopener">GitHub ↗</a>
+  </footer>
+  <script src="./app.js?v=20260717-6" defer></script>
+</body>
+</html>

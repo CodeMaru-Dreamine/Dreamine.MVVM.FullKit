@@ -5,23 +5,43 @@ using Dreamine.PLC.Wpf.ViewModels;
 namespace SampleSmart.Pages.PageSub;
 
 /// <summary>
-/// \brief Dreamine PLC 모니터 샘플 페이지 ViewModel입니다.
+/// \if KO
+/// <para>\brief Dreamine PLC 모니터 샘플 페이지 ViewModel입니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates page plc monitor view model functionality and related state.</para>
+/// \endif
 /// </summary>
 public partial class PagePlcMonitorViewModel : ViewModelBase
 {
     /// <summary>
-    /// \brief Dreamine PLC 모니터 샘플 이벤트 처리 객체입니다.
+    /// \if KO
+    /// <para>\brief Dreamine PLC 모니터 샘플 이벤트 처리 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the event value.</para>
+    /// \endif
     /// </summary>
     [DreamineEvent]
     private PagePlcMonitorEvent _event;
 
     /// <summary>
-    /// \brief PLC Monitor ViewModel입니다.
+    /// \if KO
+    /// <para>\brief PLC Monitor ViewModel입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the monitor value.</para>
+    /// \endif
     /// </summary>
     public PlcMonitorViewModel Monitor => Event.Monitor;
 
     /// <summary>
-    /// \brief Simulator Host입니다.
+    /// \if KO
+    /// <para>\brief Simulator Host입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the host value.</para>
+    /// \endif
     /// </summary>
     public string Host
     {
@@ -39,7 +59,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief Simulator Port 문자열입니다.
+    /// \if KO
+    /// <para>\brief Simulator Port 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the port text value.</para>
+    /// \endif
     /// </summary>
     public string PortText
     {
@@ -60,7 +85,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
 
 
     /// <summary>
-    /// \brief PLC Client 선택 모드 문자열입니다. SimulatorTcp, McTcp, McUdp, FinsTcp, FinsUdp, MxComponent, CxComponent를 사용합니다.
+    /// \if KO
+    /// <para>\brief PLC Client 선택 모드 문자열입니다. SimulatorTcp, McTcp, McUdp, FinsTcp, FinsUdp, MxComponent, CxComponent를 사용합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the client mode text value.</para>
+    /// \endif
     /// </summary>
     public string ClientModeText
     {
@@ -78,7 +108,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief MX Component ProgID입니다.
+    /// \if KO
+    /// <para>\brief MX Component ProgID입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the mx prog id value.</para>
+    /// \endif
     /// </summary>
     public string MxProgId
     {
@@ -96,7 +131,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief MX Component logical station number 문자열입니다.
+    /// \if KO
+    /// <para>\brief MX Component logical station number 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the mx logical station number text value.</para>
+    /// \endif
     /// </summary>
     public string MxLogicalStationNumberText
     {
@@ -114,7 +154,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief CX-Compolet ProgID입니다.
+    /// \if KO
+    /// <para>\brief CX-Compolet ProgID입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the cx prog id value.</para>
+    /// \endif
     /// </summary>
     public string CxProgId
     {
@@ -132,7 +177,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief CX-Compolet peer address입니다.
+    /// \if KO
+    /// <para>\brief CX-Compolet peer address입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the cx peer address value.</para>
+    /// \endif
     /// </summary>
     public string CxPeerAddress
     {
@@ -150,7 +200,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief Mitsubishi MC Host입니다.
+    /// \if KO
+    /// <para>\brief Mitsubishi MC Host입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the mc host value.</para>
+    /// \endif
     /// </summary>
     public string McHost
     {
@@ -168,7 +223,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief Mitsubishi MC Port 문자열입니다.
+    /// \if KO
+    /// <para>\brief Mitsubishi MC Port 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the mc port text value.</para>
+    /// \endif
     /// </summary>
     public string McPortText
     {
@@ -186,7 +246,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief Mitsubishi MC Transport 문자열입니다.
+    /// \if KO
+    /// <para>\brief Mitsubishi MC Transport 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the mc transport text value.</para>
+    /// \endif
     /// </summary>
     public string McTransportText
     {
@@ -204,7 +269,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief Mitsubishi MC Retry Count 문자열입니다.
+    /// \if KO
+    /// <para>\brief Mitsubishi MC Retry Count 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the mc retry count text value.</para>
+    /// \endif
     /// </summary>
     public string McRetryCountText
     {
@@ -222,7 +292,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief Handshake 시작 값 문자열입니다.
+    /// \if KO
+    /// <para>\brief Handshake 시작 값 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the handshake start value text value.</para>
+    /// \endif
     /// </summary>
     public string HandshakeStartValueText
     {
@@ -240,7 +315,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief Handshake 반복 횟수 문자열입니다.
+    /// \if KO
+    /// <para>\brief Handshake 반복 횟수 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the handshake iterations text value.</para>
+    /// \endif
     /// </summary>
     public string HandshakeIterationsText
     {
@@ -258,7 +338,12 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief Handshake 반복 간격 문자열입니다.
+    /// \if KO
+    /// <para>\brief Handshake 반복 간격 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the handshake delay ms text value.</para>
+    /// \endif
     /// </summary>
     public string HandshakeDelayMsText
     {
@@ -276,56 +361,100 @@ public partial class PagePlcMonitorViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// \brief InMemory PLC Client 선택 명령입니다.
+    /// \if KO
+    /// <para>\brief InMemory PLC Client 선택 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the use in memory operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.UseInMemory")]
     private partial void UseInMemory();
 
     /// <summary>
-    /// \brief PLC Simulator 서버 시작 명령입니다.
+    /// \if KO
+    /// <para>\brief PLC Simulator 서버 시작 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start server operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.StartServer")]
     private partial void StartServer();
 
     /// <summary>
-    /// \brief PLC Simulator 서버 중지 명령입니다.
+    /// \if KO
+    /// <para>\brief PLC Simulator 서버 중지 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop server operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.StopServer")]
     private partial void StopServer();
 
     /// <summary>
-    /// \brief PLC Simulator TCP Client 선택 명령입니다.
+    /// \if KO
+    /// <para>\brief PLC Simulator TCP Client 선택 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the use tcp client operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.UseTcpClient")]
     private partial void UseTcpClient();
 
 
     /// <summary>
-    /// \brief 선택된 PLC Client를 모니터에 연결하는 명령입니다.
+    /// \if KO
+    /// <para>\brief 선택된 PLC Client를 모니터에 연결하는 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the use selected client operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.UseSelectedClient")]
     private partial void UseSelectedClient();
 
 
     /// <summary>
-    /// \brief Mitsubishi MC Client 선택 명령입니다.
+    /// \if KO
+    /// <para>\brief Mitsubishi MC Client 선택 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the use mc client operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.UseMcClient")]
     private partial void UseMcClient();
 
     /// <summary>
-    /// \brief D100/D101 기반 자동 응답 Handshake 테스트 명령입니다.
+    /// \if KO
+    /// <para>\brief D100/D101 기반 자동 응답 Handshake 테스트 명령입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the run handshake test operation.</para>
+    /// \endif
     /// </summary>
     [DreamineCommand("Event.RunHandshakeTest")]
     private partial void RunHandshakeTest();
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="PagePlcMonitorViewModel"/> class.
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="PagePlcMonitorViewModel"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="PagePlcMonitorViewModel"/> class.</para>
+    /// \endif
     /// </summary>
-    /// <param name="event">The event handler used by the PLC monitor page.</param>
-    /// <exception cref="ArgumentNullException">
-    /// Thrown when <paramref name="event"/> is <c>null</c>.
-    /// </exception>
+    /// <param name="event">
+    /// \if KO
+    /// <para>event에 사용할 <c>PagePlcMonitorEvent</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The event handler used by the PLC monitor page.</para>
+    /// \endif
+    /// </param>
     public PagePlcMonitorViewModel(PagePlcMonitorEvent @event)
     {
         ArgumentNullException.ThrowIfNull(@event);

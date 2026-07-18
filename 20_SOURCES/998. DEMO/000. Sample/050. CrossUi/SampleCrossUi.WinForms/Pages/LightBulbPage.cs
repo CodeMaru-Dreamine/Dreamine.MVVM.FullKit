@@ -5,20 +5,124 @@ using SampleCrossUi.Shared.ViewModels;
 
 namespace SampleCrossUi.WinForms.Pages;
 
+/// <summary>
+/// \if KO
+/// <para>Light Bulb Page 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates light bulb page functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class LightBulbPage : UserControl
 {
+    /// <summary>
+    /// \if KO
+    /// <para>vm 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the vm value.</para>
+    /// \endif
+    /// </summary>
     private readonly LightBulbViewModel _vm;
+    /// <summary>
+    /// \if KO
+    /// <para>title 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the title value.</para>
+    /// \endif
+    /// </summary>
     private readonly Label _title;
+    /// <summary>
+    /// \if KO
+    /// <para>description 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the description value.</para>
+    /// \endif
+    /// </summary>
     private readonly Label _description;
+    /// <summary>
+    /// \if KO
+    /// <para>bulb 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the bulb value.</para>
+    /// \endif
+    /// </summary>
     private readonly DreamineLightBulb _bulb;
+    /// <summary>
+    /// \if KO
+    /// <para>status 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the status value.</para>
+    /// \endif
+    /// </summary>
     private readonly Label _status;
+    /// <summary>
+    /// \if KO
+    /// <para>toggle Button 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the toggle button value.</para>
+    /// \endif
+    /// </summary>
     private readonly DreamineButton _toggleButton;
+    /// <summary>
+    /// \if KO
+    /// <para>power Check Box 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the power check box value.</para>
+    /// \endif
+    /// </summary>
     private readonly CheckBox _powerCheckBox;
+    /// <summary>
+    /// \if KO
+    /// <para>count 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the count value.</para>
+    /// \endif
+    /// </summary>
     private readonly Label _count;
+    /// <summary>
+    /// \if KO
+    /// <para>refreshing 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the refreshing value.</para>
+    /// \endif
+    /// </summary>
     private bool _refreshing;
 
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="LightBulbPage"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="LightBulbPage"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
     public LightBulbPage() : this(new LightBulbViewModel(new LightBulbEvent(new LightBulbModel()))) { }
 
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="LightBulbPage"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="LightBulbPage"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="vm">
+    /// \if KO
+    /// <para>vm에 사용할 <c>LightBulbViewModel</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>LightBulbViewModel</c> value used for vm.</para>
+    /// \endif
+    /// </param>
     public LightBulbPage(LightBulbViewModel vm)
     {
         _vm = vm;
@@ -134,6 +238,30 @@ public sealed class LightBulbPage : UserControl
         RefreshState();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>View Model Property Changed 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the view model property changed event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (IsDisposed) return;
@@ -141,6 +269,14 @@ public sealed class LightBulbPage : UserControl
         else RefreshState();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Refresh State 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the refresh state operation.</para>
+    /// \endif
+    /// </summary>
     private void RefreshState()
     {
         _refreshing = true;
@@ -151,6 +287,22 @@ public sealed class LightBulbPage : UserControl
         _refreshing = false;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>이 인스턴스가 소유한 리소스를 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Releases resources owned by this instance.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="disposing">
+    /// \if KO
+    /// <para>disposing에 사용할 <c>bool</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for disposing.</para>
+    /// \endif
+    /// </param>
     protected override void Dispose(bool disposing)
     {
         if (disposing)

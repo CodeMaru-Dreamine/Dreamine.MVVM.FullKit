@@ -11,8 +11,32 @@ using SampleCrossUi.Wpf.ViewModels; // PopupViewModel, MainViewModel
 
 namespace SampleCrossUi.Wpf;
 
+/// <summary>
+/// \if KO
+/// <para>App 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates app functionality and related state.</para>
+/// \endif
+/// </summary>
 public partial class App : Application
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Startup 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the startup event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);

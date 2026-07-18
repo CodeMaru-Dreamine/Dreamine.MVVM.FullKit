@@ -8,10 +8,23 @@ using Microsoft.Extensions.Logging;
 namespace Codemaru.Services;
 
 /// <summary>
-/// 외부 사이트의 og:image를 주기적으로 가져와 wwwroot/img/previews/ 에 캐시합니다.
+/// \if KO
+/// <para>외부 사이트의 og:image를 주기적으로 가져와 wwwroot/img/previews/ 에 캐시합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates site preview service functionality and related state.</para>
+/// \endif
 /// </summary>
 public sealed class SitePreviewService : BackgroundService
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Sites 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the sites value.</para>
+    /// \endif
+    /// </summary>
     private static readonly (string Key, string Url)[] Sites =
     [
         ("dreamine",   "https://dreamine.kr/"),
@@ -23,19 +36,91 @@ public sealed class SitePreviewService : BackgroundService
         ("shop",       "https://shop.codemaru.co.kr/"),
     ];
 
+    /// <summary>
+    /// \if KO
+    /// <para>Og Image Regex 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the og image regex value.</para>
+    /// \endif
+    /// </summary>
     private static readonly Regex OgImageRegex = new(
         @"<meta[^>]+property=[""']og:image[""'][^>]+content=[""']([^""']+)[""']",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    /// <summary>
+    /// \if KO
+    /// <para>Og Image Regex2 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the og image regex2 value.</para>
+    /// \endif
+    /// </summary>
     private static readonly Regex OgImageRegex2 = new(
         @"<meta[^>]+content=[""']([^""']+)[""'][^>]+property=[""']og:image[""']",
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
+    /// <summary>
+    /// \if KO
+    /// <para>www Root 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the www root value.</para>
+    /// \endif
+    /// </summary>
     private readonly string _wwwRoot;
+    /// <summary>
+    /// \if KO
+    /// <para>logger 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the logger value.</para>
+    /// \endif
+    /// </summary>
     private readonly ILogger<SitePreviewService> _logger;
+    /// <summary>
+    /// \if KO
+    /// <para>interval 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the interval value.</para>
+    /// \endif
+    /// </summary>
     private readonly TimeSpan _interval;
+    /// <summary>
+    /// \if KO
+    /// <para>http 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the http value.</para>
+    /// \endif
+    /// </summary>
     private readonly HttpClient _http;
 
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="SitePreviewService"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="SitePreviewService"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="logger">
+    /// \if KO
+    /// <para>logger에 사용할 <c>ILogger&lt;SitePreviewService&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ILogger&lt;SitePreviewService&gt;</c> value used for logger.</para>
+    /// \endif
+    /// </param>
+    /// <param name="config">
+    /// \if KO
+    /// <para>config에 사용할 <c>IConfiguration</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IConfiguration</c> value used for config.</para>
+    /// \endif
+    /// </param>
     public SitePreviewService(ILogger<SitePreviewService> logger, IConfiguration config)
     {
         _logger = logger;
@@ -47,6 +132,30 @@ public sealed class SitePreviewService : BackgroundService
         _http.Timeout = TimeSpan.FromSeconds(15);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Execute Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the execute async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="stoppingToken">
+    /// \if KO
+    /// <para>stopping Token에 사용할 <c>CancellationToken</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CancellationToken</c> value used for stopping token.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Execute Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the execute async operation.</para>
+    /// \endif
+    /// </returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -58,6 +167,30 @@ public sealed class SitePreviewService : BackgroundService
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Fetch All Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the fetch all async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="ct">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Fetch All Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the fetch all async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task FetchAllAsync(CancellationToken ct)
     {
         var outputDir = Path.Combine(_wwwRoot, "img", "previews");
@@ -70,6 +203,54 @@ public sealed class SitePreviewService : BackgroundService
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Fetch One Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the fetch one async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="key">
+    /// \if KO
+    /// <para>key에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for key.</para>
+    /// \endif
+    /// </param>
+    /// <param name="siteUrl">
+    /// \if KO
+    /// <para>site Url에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for site url.</para>
+    /// \endif
+    /// </param>
+    /// <param name="outputDir">
+    /// \if KO
+    /// <para>output Dir에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for output dir.</para>
+    /// \endif
+    /// </param>
+    /// <param name="ct">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Fetch One Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the fetch one async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task FetchOneAsync(string key, string siteUrl, string outputDir, CancellationToken ct)
     {
         var destPath = Path.Combine(outputDir, $"{key}.jpg");
@@ -112,6 +293,14 @@ public sealed class SitePreviewService : BackgroundService
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>이 인스턴스가 소유한 리소스를 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Releases resources owned by this instance.</para>
+    /// \endif
+    /// </summary>
     public override void Dispose()
     {
         _http.Dispose();

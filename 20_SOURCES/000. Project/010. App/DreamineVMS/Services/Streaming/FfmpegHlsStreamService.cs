@@ -13,51 +13,207 @@ using System.Text.RegularExpressions;
 namespace DreamineVMS.Services.Streaming;
 
 /// <summary>
-/// \brief FFmpeg 프로세스를 사용해서 RTSP 스트림을 HLS 스트림으로 변환하는 서비스입니다.
+/// \if KO
+/// <para>\brief FFmpeg 프로세스를 사용해서 RTSP 스트림을 HLS 스트림으로 변환하는 서비스입니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates ffmpeg hls stream service functionality and related state.</para>
+/// \endif
 /// </summary>
 public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamService
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Media Seq Regex 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the media seq regex value.</para>
+    /// \endif
+    /// </summary>
     private static readonly Regex MediaSeqRegex = new(@"#EXT-X-MEDIA-SEQUENCE:(\d+)", RegexOptions.Compiled);
 
-    /// <summary>\brief ffmpeg에 'q'를 보내고 graceful exit를 기다리는 최대 시간입니다.</summary>
+    /// <summary>
+    /// \if KO
+    /// <para>\brief ffmpeg에 'q'를 보내고 graceful exit를 기다리는 최대 시간입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the graceful exit timeout value.</para>
+    /// \endif
+    /// </summary>
     private static readonly TimeSpan GracefulExitTimeout = TimeSpan.FromMilliseconds(800);
 
-    /// <summary>\brief Kill 이후 프로세스 종료를 기다리는 최대 시간입니다.</summary>
+    /// <summary>
+    /// \if KO
+    /// <para>\brief Kill 이후 프로세스 종료를 기다리는 최대 시간입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the kill wait timeout value.</para>
+    /// \endif
+    /// </summary>
     private static readonly TimeSpan KillWaitTimeout = TimeSpan.FromSeconds(2);
 
+    /// <summary>
+    /// \if KO
+    /// <para>logger 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the logger value.</para>
+    /// \endif
+    /// </summary>
     private readonly ILogger<FfmpegHlsStreamService> _logger;
+    /// <summary>
+    /// \if KO
+    /// <para>repository 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the repository value.</para>
+    /// \endif
+    /// </summary>
     private readonly IVmsCameraRepository _repository;
+    /// <summary>
+    /// \if KO
+    /// <para>runtime State 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the runtime state value.</para>
+    /// \endif
+    /// </summary>
     private readonly ICameraRuntimeStateService _runtimeState;
+    /// <summary>
+    /// \if KO
+    /// <para>options 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the options value.</para>
+    /// \endif
+    /// </summary>
     private readonly FfmpegOptions _options;
+    /// <summary>
+    /// \if KO
+    /// <para>processes 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the processes value.</para>
+    /// \endif
+    /// </summary>
     private readonly Dictionary<string, Process> _processes = new();
+    /// <summary>
+    /// \if KO
+    /// <para>last Sequences 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the last sequences value.</para>
+    /// \endif
+    /// </summary>
     private readonly Dictionary<string, long> _lastSequences = new();
+    /// <summary>
+    /// \if KO
+    /// <para>last Writes 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the last writes value.</para>
+    /// \endif
+    /// </summary>
     private readonly Dictionary<string, DateTime> _lastWrites = new();
+    /// <summary>
+    /// \if KO
+    /// <para>camera Operation Locks 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the camera operation locks value.</para>
+    /// \endif
+    /// </summary>
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _cameraOperationLocks = new();
 
     /// <summary>
-    /// \brief 의도된 정지(StopAsync / Restart)로 인해 곧 종료될 프로세스의 카메라 ID 집합입니다.
-    /// process.Exited 이벤트 핸들러는 이 집합에 포함된 카메라에 대해서는
-    /// Faulted 상태를 덮어쓰지 않습니다.
+    /// \if KO
+    /// <para>\brief 의도된 정지(StopAsync / Restart)로 인해 곧 종료될 프로세스의 카메라 ID 집합입니다. process.Exited 이벤트 핸들러는 이 집합에 포함된 카메라에 대해서는 Faulted 상태를 덮어쓰지 않습니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the intentional stops value.</para>
+    /// \endif
     /// </summary>
     private readonly ConcurrentDictionary<string, byte> _intentionalStops = new();
 
+    /// <summary>
+    /// \if KO
+    /// <para>sync 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the sync value.</para>
+    /// \endif
+    /// </summary>
     private readonly SemaphoreSlim _sync = new(1, 1);
 
     /// <summary>
-    /// \brief 자식 ffmpeg 프로세스를 부모와 묶는 Windows Job Object입니다.
+    /// \if KO
+    /// <para>\brief 자식 ffmpeg 프로세스를 부모와 묶는 Windows Job Object입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the process job value.</para>
+    /// \endif
     /// </summary>
     private readonly ChildProcessJob? _processJob =
         OperatingSystem.IsWindows() ? new ChildProcessJob() : null;
 
+    /// <summary>
+    /// \if KO
+    /// <para>disposed 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the disposed value.</para>
+    /// \endif
+    /// </summary>
     private bool _disposed;
 
     /// <summary>
-    /// \brief FfmpegHlsStreamService 클래스의 새 인스턴스를 초기화합니다.
+    /// \if KO
+    /// <para>\brief FfmpegHlsStreamService 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="FfmpegHlsStreamService"/> class with the specified settings.</para>
+    /// \endif
     /// </summary>
-    /// <param name="logger">로거입니다.</param>
-    /// <param name="repository">카메라 저장소입니다.</param>
-    /// <param name="runtimeState">카메라 런타임 상태 서비스입니다.</param>
-    /// <param name="options">FFmpeg 옵션입니다.</param>
+    /// <param name="logger">
+    /// \if KO
+    /// <para>로거입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ILogger&lt;FfmpegHlsStreamService&gt;</c> value used for logger.</para>
+    /// \endif
+    /// </param>
+    /// <param name="repository">
+    /// \if KO
+    /// <para>카메라 저장소입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IVmsCameraRepository</c> value used for repository.</para>
+    /// \endif
+    /// </param>
+    /// <param name="runtimeState">
+    /// \if KO
+    /// <para>카메라 런타임 상태 서비스입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ICameraRuntimeStateService</c> value used for runtime state.</para>
+    /// \endif
+    /// </param>
+    /// <param name="options">
+    /// \if KO
+    /// <para>FFmpeg 옵션입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The options that configure the operation.</para>
+    /// \endif
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// \if KO
+    /// <para>필수 입력 인자 중 하나가 <see langword="null"/>인 경우 발생합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Thrown when a required input argument is <see langword="null"/>.</para>
+    /// \endif
+    /// </exception>
     public FfmpegHlsStreamService(
         ILogger<FfmpegHlsStreamService> logger,
         IVmsCameraRepository repository,
@@ -70,7 +226,30 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// \if KO
+    /// <para>Execute Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the execute async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="stoppingToken">
+    /// \if KO
+    /// <para>stopping Token에 사용할 <c>CancellationToken</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CancellationToken</c> value used for stopping token.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Execute Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the execute async operation.</para>
+    /// \endif
+    /// </returns>
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         Directory.CreateDirectory(GetOutputRoot());
@@ -108,7 +287,30 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// \if KO
+    /// <para>Stop Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Stop Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the stop async operation.</para>
+    /// \endif
+    /// </returns>
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         await StopAllAsync(cancellationToken);
@@ -117,7 +319,12 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
     }
 
     /// <summary>
-    /// \brief 서비스 Dispose 시 남은 ffmpeg 프로세스와 Job Object를 정리합니다.
+    /// \if KO
+    /// <para>\brief 서비스 Dispose 시 남은 ffmpeg 프로세스와 Job Object를 정리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Releases resources owned by this instance.</para>
+    /// \endif
     /// </summary>
     public override void Dispose()
     {
@@ -164,7 +371,30 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         base.Dispose();
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// \if KO
+    /// <para>Start All Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start all async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Start All Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the start all async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StartAllAsync(CancellationToken cancellationToken = default)
     {
         // 직렬로 시작합니다. 시작 자체는 빠르고, FFmpeg 동시 spawn으로 인한
@@ -175,7 +405,30 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// \if KO
+    /// <para>Stop All Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop all async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Stop All Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the stop all async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StopAllAsync(CancellationToken cancellationToken = default)
     {
         // 카메라별 Stop을 병렬 실행합니다. 각 카메라의 Kill/WaitForExitAsync는
@@ -188,7 +441,38 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         await Task.WhenAll(tasks);
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// \if KO
+    /// <para>Start Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>camera Id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
+    /// <param name="cancellationToken">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Start Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the start async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StartAsync(string cameraId, CancellationToken cancellationToken = default)
     {
         SemaphoreSlim cameraLock = GetCameraOperationLock(cameraId);
@@ -203,7 +487,38 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
-    /// <inheritdoc />
+    /// <summary>
+    /// \if KO
+    /// <para>Stop Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>camera Id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
+    /// <param name="cancellationToken">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Stop Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the stop async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StopAsync(string cameraId, CancellationToken cancellationToken = default)
     {
         SemaphoreSlim cameraLock = GetCameraOperationLock(cameraId);
@@ -218,6 +533,46 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Start Internal Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start internal async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>camera Id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
+    /// <param name="cancellationToken">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Start Internal Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the start internal async operation.</para>
+    /// \endif
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// \if KO
+    /// <para>현재 객체 상태에서 Start Internal Async 작업을 수행할 수 없는 경우 발생합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Thrown when the start internal async operation is not valid for the current object state.</para>
+    /// \endif
+    /// </exception>
     private async Task StartInternalAsync(string cameraId, CancellationToken cancellationToken)
     {
         CameraDevice? camera = _repository.GetAll().FirstOrDefault(item => item.Id == cameraId);
@@ -274,6 +629,38 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Stop Internal Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop internal async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>camera Id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
+    /// <param name="cancellationToken">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Stop Internal Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the stop internal async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task StopInternalAsync(string cameraId, CancellationToken cancellationToken)
     {
         Process? toStop = null;
@@ -314,6 +701,30 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         _intentionalStops.TryRemove(cameraId, out _);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Watchdog Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the watchdog async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cancellationToken">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Watchdog Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the watchdog async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task WatchdogAsync(CancellationToken cancellationToken)
     {
         foreach (CameraDevice camera in _repository.GetAll().Where(camera => camera.Enabled && camera.AutoReconnect && !camera.IsDirectHls))
@@ -420,6 +831,22 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Start Process Unsafe 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start process unsafe operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="camera">
+    /// \if KO
+    /// <para>camera에 사용할 <c>CameraDevice</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CameraDevice</c> value used for camera.</para>
+    /// \endif
+    /// </param>
     private void StartProcessUnsafe(CameraDevice camera)
     {
         if (camera.IsDirectHls)
@@ -501,12 +928,45 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
     }
 
     /// <summary>
-    /// \brief ffmpeg 프로세스를 graceful → kill 순서로 비동기 종료합니다.
+    /// \if KO
+    /// <para>\brief ffmpeg 프로세스를 graceful → kill 순서로 비동기 종료합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the shutdown process async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="cameraId">카메라 ID입니다.</param>
-    /// <param name="process">종료할 프로세스입니다.</param>
-    /// <param name="cancellationToken">취소 토큰입니다.</param>
-    /// <returns>비동기 작업입니다.</returns>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>카메라 ID입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
+    /// <param name="process">
+    /// \if KO
+    /// <para>종료할 프로세스입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Process</c> value used for process.</para>
+    /// \endif
+    /// </param>
+    /// <param name="cancellationToken">
+    /// \if KO
+    /// <para>취소 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A token used to observe cancellation requests.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>비동기 작업입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the shutdown process async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task ShutdownProcessAsync(string cameraId, Process process, CancellationToken cancellationToken)
     {
         try
@@ -577,9 +1037,21 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
     }
 
     /// <summary>
-    /// \brief Dispose 등 비동기 호출이 불가능한 시점에 사용하는 동기 강제 종료입니다.
+    /// \if KO
+    /// <para>\brief Dispose 등 비동기 호출이 불가능한 시점에 사용하는 동기 강제 종료입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the force kill process unsafe operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="cameraId">카메라 ID입니다.</param>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>카메라 ID입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
     private void ForceKillProcessUnsafe(string cameraId)
     {
         if (!_processes.TryGetValue(cameraId, out Process? process))
@@ -607,11 +1079,59 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
     }
 
 
+    /// <summary>
+    /// \if KO
+    /// <para>Camera Operation Lock 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the camera operation lock value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>camera Id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Camera Operation Lock 작업에서 생성한 <c>SemaphoreSlim</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>SemaphoreSlim</c> result produced by the get camera operation lock operation.</para>
+    /// \endif
+    /// </returns>
     private SemaphoreSlim GetCameraOperationLock(string cameraId)
     {
         return _cameraOperationLocks.GetOrAdd(cameraId, _ => new SemaphoreSlim(1, 1));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Arguments 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the arguments value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="camera">
+    /// \if KO
+    /// <para>camera에 사용할 <c>CameraDevice</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CameraDevice</c> value used for camera.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Arguments 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build arguments operation.</para>
+    /// \endif
+    /// </returns>
     private string BuildArguments(CameraDevice camera)
     {
         bool isDshow = camera.RtspUrl.StartsWith("dshow://", StringComparison.OrdinalIgnoreCase);
@@ -715,6 +1235,22 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         return string.Join(' ', parts);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Init Watch Stats 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the init watch stats operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>camera Id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
     private void InitWatchStats(string cameraId)
     {
         string path = GetPlaylistPath(cameraId);
@@ -731,6 +1267,30 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Sequence And Write Time 데이터를 읽습니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Reads sequence and write time data.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="path">
+    /// \if KO
+    /// <para>path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for path.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Read Sequence And Write Time 작업에서 생성한 <c>(long sequence, DateTime writeTime)</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>(long sequence, DateTime writeTime)</c> result produced by the read sequence and write time operation.</para>
+    /// \endif
+    /// </returns>
     private static (long sequence, DateTime writeTime) ReadSequenceAndWriteTime(string path)
     {
         DateTime writeTime = File.GetLastWriteTimeUtc(path);
@@ -747,6 +1307,22 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Output Root 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the output root value.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Output Root 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the get output root operation.</para>
+    /// \endif
+    /// </returns>
     private string GetOutputRoot()
     {
         return Path.IsPathRooted(_options.OutputRoot)
@@ -754,16 +1330,80 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
             : Path.Combine(AppContext.BaseDirectory, _options.OutputRoot);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Camera Output Directory 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the camera output directory value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>camera Id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Camera Output Directory 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the get camera output directory operation.</para>
+    /// \endif
+    /// </returns>
     private string GetCameraOutputDirectory(string cameraId)
     {
         return Path.Combine(GetOutputRoot(), cameraId);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Playlist Path 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the playlist path value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>camera Id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Playlist Path 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the get playlist path operation.</para>
+    /// \endif
+    /// </returns>
     private string GetPlaylistPath(string cameraId)
     {
         return Path.Combine(GetCameraOutputDirectory(cameraId), "index.m3u8");
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Prepare Playlist For New Session 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the prepare playlist for new session operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>camera Id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
     private void PreparePlaylistForNewSession(string cameraId)
     {
         string directory = GetCameraOutputDirectory(cameraId);
@@ -791,6 +1431,30 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Cleanup Old Segment Files 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the cleanup old segment files operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cameraId">
+    /// \if KO
+    /// <para>camera Id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for camera id.</para>
+    /// \endif
+    /// </param>
+    /// <param name="minimumAge">
+    /// \if KO
+    /// <para>minimum Age에 사용할 <c>TimeSpan</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>TimeSpan</c> value used for minimum age.</para>
+    /// \endif
+    /// </param>
     private void CleanupOldSegmentFiles(string cameraId, TimeSpan minimumAge)
     {
         string directory = GetCameraOutputDirectory(cameraId);
@@ -823,6 +1487,30 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Quote 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the quote operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Quote 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the quote operation.</para>
+    /// \endif
+    /// </returns>
     private static string Quote(string value)
     {
         return $"\"{value}\"";

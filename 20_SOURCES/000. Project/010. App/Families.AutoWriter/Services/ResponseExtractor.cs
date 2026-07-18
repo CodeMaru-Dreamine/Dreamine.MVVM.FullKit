@@ -1,7 +1,31 @@
 namespace FamiliesAutoWriter.Services;
 
+/// <summary>
+/// \if KO
+/// <para>Response Extractor 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates response extractor functionality and related state.</para>
+/// \endif
+/// </summary>
 public static class ResponseExtractor
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Extract Script 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the extract script value.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Extract Script 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build extract script operation.</para>
+    /// \endif
+    /// </returns>
     public static string BuildExtractScript() => """
         (function() {
             // 응답 영역에서 텍스트를 추출하는 함수

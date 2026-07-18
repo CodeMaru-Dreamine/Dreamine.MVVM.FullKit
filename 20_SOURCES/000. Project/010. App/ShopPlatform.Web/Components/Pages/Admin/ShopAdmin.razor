@@ -1,4 +1,5 @@
 @page "/{Slug}/admin"
+@using Dreamine.Identity
 @inject TenantContext Tenant
 @inject IShopTenantStore TenantStore
 @inject ShopUserContext UserContext
@@ -114,8 +115,14 @@ else
     private async Task LinkLegacyAdmin()
     {
         if (_config == null) return;
-        if (_password == _config.AdminPasswordHash || BCryptVerify(_password, _config.AdminPasswordHash))
+        var verification = DreaminePasswordHasher.VerifyPassword(_password, _config.AdminPasswordHash, out var upgradedHash);
+        if (verification is not PasswordHashVerificationResult.Failed)
         {
+            if (verification is PasswordHashVerificationResult.SuccessRehashNeeded && upgradedHash is not null)
+            {
+                _config.AdminPasswordHash = upgradedHash;
+            }
+
             if (string.IsNullOrWhiteSpace(_config.OwnerUserId))
             {
                 _config.OwnerUserId = currentUser.Id;
@@ -155,12 +162,6 @@ else
     {
         await TenantStore.SaveAsync(cfg);
         StateHasChanged();
-    }
-
-    private static bool BCryptVerify(string plain, string hash)
-    {
-        // BCrypt.Net-Next 미사용 시 단순 비교 (개발 편의)
-        return plain == hash;
     }
 
     private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";

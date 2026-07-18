@@ -4,8 +4,24 @@ using Dreamine.Communication.Abstractions.Options;
 
 namespace Dreamine.FullKit.Tests.Communication;
 
+/// <summary>
+/// \if KO
+/// <para>Communication Abstractions Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates communication abstractions tests functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class CommunicationAbstractionsTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Option Types Expose Documented Defaults 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the option types expose documented defaults operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void OptionTypes_ExposeDocumentedDefaults()
     {
@@ -27,6 +43,14 @@ public sealed class CommunicationAbstractionsTests
         Assert.Equal("127.0.0.1", transport.Host);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Message Envelope Creates Reasonable Defaults 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the message envelope creates reasonable defaults operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void MessageEnvelope_CreatesReasonableDefaults()
     {

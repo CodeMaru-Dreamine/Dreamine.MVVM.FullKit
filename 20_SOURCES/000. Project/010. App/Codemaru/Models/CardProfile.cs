@@ -1,5 +1,13 @@
 namespace Codemaru.Models;
 
+/// <summary>
+/// \if KO
+/// <para>Card Profile 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates card profile functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed record CardProfile(
     string Brand,
     string Tagline,
@@ -38,6 +46,14 @@ public sealed record CardProfile(
     string? ImportedFrontImageDataUrl,
     string? ImportedBackImageDataUrl)
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Default 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the default value.</para>
+    /// \endif
+    /// </summary>
     public static CardProfile Default { get; } = new(
         Brand: "Dreamine",
         Tagline: "Modular Automation Framework",
@@ -78,6 +94,14 @@ public sealed record CardProfile(
         ImportedFrontImageDataUrl: null,
         ImportedBackImageDataUrl: null);
 
+    /// <summary>
+    /// \if KO
+    /// <para>Landing Url 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the landing url value.</para>
+    /// \endif
+    /// </summary>
     public string LandingUrl
     {
         get

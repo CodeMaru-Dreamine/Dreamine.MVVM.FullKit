@@ -3,12 +3,75 @@ using ShopPlatform.Services;
 
 namespace ShopPlatform.Data;
 
-/// <summary>앱 시작 시 샘플 데이터 시드.</summary>
+/// <summary>
+/// \if KO
+/// <para>앱 시작 시 샘플 데이터 시드.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates shop seeder functionality and related state.</para>
+/// \endif
+/// </summary>
 public static class ShopSeeder
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Demo Client Key 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the demo client key value.</para>
+    /// \endif
+    /// </summary>
     private const string DemoClientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+    /// <summary>
+    /// \if KO
+    /// <para>Demo Secret Key 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the demo secret key value.</para>
+    /// \endif
+    /// </summary>
     private const string DemoSecretKey = "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
 
+    /// <summary>
+    /// \if KO
+    /// <para>Seed Codemaru Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the seed codemaru async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="dbFactory">
+    /// \if KO
+    /// <para>db Factory에 사용할 <c>TenantDbContextFactory</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>TenantDbContextFactory</c> value used for db factory.</para>
+    /// \endif
+    /// </param>
+    /// <param name="tenantStore">
+    /// \if KO
+    /// <para>tenant Store에 사용할 <c>IShopTenantStore</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IShopTenantStore</c> value used for tenant store.</para>
+    /// \endif
+    /// </param>
+    /// <param name="keyProtector">
+    /// \if KO
+    /// <para>key Protector에 사용할 <c>PaymentKeyProtector</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>PaymentKeyProtector</c> value used for key protector.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Seed Codemaru Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the seed codemaru async operation.</para>
+    /// \endif
+    /// </returns>
     public static async Task SeedCodemaruAsync(
         TenantDbContextFactory dbFactory,
         IShopTenantStore tenantStore,

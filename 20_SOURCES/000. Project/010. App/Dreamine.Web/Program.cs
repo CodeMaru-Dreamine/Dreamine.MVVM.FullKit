@@ -12,14 +12,31 @@ using Microsoft.Extensions.Hosting;
 
 namespace DreamineWeb;
 
+/// <summary>
+/// \if KO
+/// <para>Program 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates program functionality and related state.</para>
+/// \endif
+/// </summary>
 public static class Program
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Main 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the main operation.</para>
+    /// \endif
+    /// </summary>
     [STAThread]
     public static void Main()
     {
         var builder = Host.CreateApplicationBuilder();
         int port = builder.Configuration.GetValue("DreamineServer:Port", 4090);
         bool listenAny = builder.Configuration.GetValue("DreamineServer:ListenAnyIp", true);
+        string? doxygenRoot = DocumentationPathResolver.ResolveDoxygenRoot(builder.Configuration);
 
         var opts = builder.Configuration.GetSection("Dreamine").Get<DreamineOptions>() ?? new();
         builder.Services.AddSingleton(opts);
@@ -40,12 +57,15 @@ public static class Program
             options.SharedServiceTypes.Add(typeof(DreamineOptions));
             options.SharedServiceTypes.Add(typeof(SiteSettingsService));
             options.SharedServiceTypes.Add(typeof(AdminAuthService));
+            if (doxygenRoot is not null)
+                options.AddPhysicalStaticFiles(doxygenRoot, "/docs/doxygen");
             options.ConfigureServices = services =>
             {
                 services.AddScoped<XmlDocAutoLinker>();
                 services.AddScoped<LibraryCatalogSyncService>();
                 services.AddScoped<VersionSyncService>();
                 services.AddScoped<UserPreferencesService>();
+                services.AddSingleton<DocumentationCatalogService>();
                 services.AddScoped<PlaygroundMediaService>();
                 services.AddScoped<Dreamine.UI.Blazor.DreamineDialogService>();
                 services.AddScoped<HomeViewModel>();

@@ -3,8 +3,24 @@ using Dreamine.PLC.Abstractions.Results;
 
 namespace Dreamine.FullKit.Tests.PLC;
 
+/// <summary>
+/// \if KO
+/// <para>Plc Abstractions Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates plc abstractions tests functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class PlcAbstractionsTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Plc Address To String Includes Bit Offset When Present 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the plc address to string includes bit offset when present operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void PlcAddress_ToStringIncludesBitOffsetWhenPresent()
     {
@@ -13,6 +29,14 @@ public sealed class PlcAbstractionsTests
         Assert.True(new PlcAddress(PlcDeviceType.M, 20, 3).IsBitAddress);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Plc Result Success And Failure Expose State 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the plc result success and failure expose state operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void PlcResult_SuccessAndFailureExposeState()
     {
@@ -29,6 +53,14 @@ public sealed class PlcAbstractionsTests
         Assert.Null(valueFailure.Value);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Plc Result Failure Rejects Empty Message 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the plc result failure rejects empty message operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void PlcResult_FailureRejectsEmptyMessage()
     {

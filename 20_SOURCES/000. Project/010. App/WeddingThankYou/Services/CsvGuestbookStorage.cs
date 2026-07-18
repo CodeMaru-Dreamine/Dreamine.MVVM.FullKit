@@ -11,32 +11,142 @@ using WeddingThankYou.Models;
 namespace WeddingThankYou.Services
 {
 	/// <summary>
-	/// \file CsvGuestbookStorage.cs
-	/// \brief CSV 기반 방명록 저장소 구현. 슬러그별로 별도 CSV 파일에 저장합니다.
-	/// \details 세마포어 잠금 + 임시파일 교체(원자적 저장)로 데이터 안전성을 확보합니다.
+	/// \if KO
+	/// <para>\file CsvGuestbookStorage.cs \brief CSV 기반 방명록 저장소 구현. 슬러그별로 별도 CSV 파일에 저장합니다. \details 세마포어 잠금 + 임시파일 교체(원자적 저장)로 데이터 안전성을 확보합니다.</para>
+	/// \endif
+	/// \if EN
+	/// <para>Encapsulates csv guestbook storage functionality and related state.</para>
+	/// \endif
 	/// </summary>
 	public sealed class CsvGuestbookStorage : IGuestbookStorage
 	{
+		/// <summary>
+		/// \if KO
+		/// <para>data Dir 값을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the data dir value.</para>
+		/// \endif
+		/// </summary>
 		private readonly string _dataDir;
+		/// <summary>
+		/// \if KO
+		/// <para>gate 값을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the gate value.</para>
+		/// \endif
+		/// </summary>
 		private static readonly SemaphoreSlim _gate = new(1, 1);
 
 		/// <summary>
-		/// \brief 생성자.
+		/// \if KO
+		/// <para>\brief 생성자.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Initializes a new instance of the <see cref="CsvGuestbookStorage"/> class with the specified settings.</para>
+		/// \endif
 		/// </summary>
-		/// <param name="env">호스트 환경(컨텐츠 루트 경로 계산).</param>
+		/// <param name="env">
+		/// \if KO
+		/// <para>호스트 환경(컨텐츠 루트 경로 계산).</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>IHostEnvironment</c> value used for env.</para>
+		/// \endif
+		/// </param>
 		public CsvGuestbookStorage(IHostEnvironment env)
 		{
 			_dataDir = Path.Combine(env.ContentRootPath, "App_Data", "Guestbook");
 			Directory.CreateDirectory(_dataDir);
 		}
 
+		/// <summary>
+		/// \if KO
+		/// <para>Csv Path 작업을 수행합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Performs the csv path operation.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="slug">
+		/// \if KO
+		/// <para>slug에 사용할 <c>string</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>string</c> value used for slug.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>Csv Path 작업에서 생성한 <c>string</c> 결과입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>string</c> result produced by the csv path operation.</para>
+		/// \endif
+		/// </returns>
 		private string CsvPath(string slug) =>
 			Path.Combine(_dataDir, $"{Sanitize(slug)}.csv");
 
+		/// <summary>
+		/// \if KO
+		/// <para>Sanitize 작업을 수행합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Performs the sanitize operation.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="slug">
+		/// \if KO
+		/// <para>slug에 사용할 <c>string</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>string</c> value used for slug.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>Sanitize 작업에서 생성한 <c>string</c> 결과입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>string</c> result produced by the sanitize operation.</para>
+		/// \endif
+		/// </returns>
 		private static string Sanitize(string slug) =>
 			string.Concat((slug ?? string.Empty).ToLowerInvariant().Split(Path.GetInvalidFileNameChars()));
 
-		/// <inheritdoc/>
+		/// <summary>
+		/// \if KO
+		/// <para>Async 데이터를 불러옵니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Loads async data.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="slug">
+		/// \if KO
+		/// <para>slug에 사용할 <c>string</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>string</c> value used for slug.</para>
+		/// \endif
+		/// </param>
+		/// <param name="ct">
+		/// \if KO
+		/// <para>취소 요청을 감시하는 토큰입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>A token used to observe cancellation requests.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>Load Async 작업에서 생성한 <c>Task&lt;IReadOnlyList&lt;GuestbookEntry&gt;&gt;</c> 결과입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>Task&lt;IReadOnlyList&lt;GuestbookEntry&gt;&gt;</c> result produced by the load async operation.</para>
+		/// \endif
+		/// </returns>
 		public async Task<IReadOnlyList<GuestbookEntry>> LoadAsync(string slug, CancellationToken ct = default)
 		{
 			var csvPath = CsvPath(slug);
@@ -83,7 +193,46 @@ namespace WeddingThankYou.Services
 			}
 		}
 
-		/// <inheritdoc/>
+		/// <summary>
+		/// \if KO
+		/// <para>Async 데이터를 저장합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Saves async data.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="slug">
+		/// \if KO
+		/// <para>slug에 사용할 <c>string</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>string</c> value used for slug.</para>
+		/// \endif
+		/// </param>
+		/// <param name="entries">
+		/// \if KO
+		/// <para>entries에 사용할 <c>IReadOnlyList&lt;GuestbookEntry&gt;</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>IReadOnlyList&lt;GuestbookEntry&gt;</c> value used for entries.</para>
+		/// \endif
+		/// </param>
+		/// <param name="ct">
+		/// \if KO
+		/// <para>취소 요청을 감시하는 토큰입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>A token used to observe cancellation requests.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>Save Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>Task</c> result produced by the save async operation.</para>
+		/// \endif
+		/// </returns>
 		public async Task SaveAsync(string slug, IReadOnlyList<GuestbookEntry> entries, CancellationToken ct = default)
 		{
 			var csvPath = CsvPath(slug);
@@ -119,8 +268,29 @@ namespace WeddingThankYou.Services
 		}
 
 		/// <summary>
-		/// \brief CSV 헤더 여부를 대략 판별합니다.
+		/// \if KO
+		/// <para>\brief CSV 헤더 여부를 대략 판별합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Determines whether is header.</para>
+		/// \endif
 		/// </summary>
+		/// <param name="line">
+		/// \if KO
+		/// <para>line에 사용할 <c>string</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>string</c> value used for line.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>Is Header 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para><see langword="true"/> when the is header condition is satisfied; otherwise, <see langword="false"/>.</para>
+		/// \endif
+		/// </returns>
 		private static bool IsHeader(string line)
 		{
 			var l = line.Trim().ToLowerInvariant();
@@ -128,8 +298,29 @@ namespace WeddingThankYou.Services
 		}
 
 		/// <summary>
-		/// \brief CSV 필드 이스케이프(RFC4180 준수).
+		/// \if KO
+		/// <para>\brief CSV 필드 이스케이프(RFC4180 준수).</para>
+		/// \endif
+		/// \if EN
+		/// <para>Performs the escape csv operation.</para>
+		/// \endif
 		/// </summary>
+		/// <param name="value">
+		/// \if KO
+		/// <para>적용할 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The value to apply.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>Escape Csv 작업에서 생성한 <c>string</c> 결과입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>string</c> result produced by the escape csv operation.</para>
+		/// \endif
+		/// </returns>
 		private static string EscapeCsv(string value)
 		{
 			value ??= string.Empty;
@@ -139,8 +330,29 @@ namespace WeddingThankYou.Services
 		}
 
 		/// <summary>
-		/// \brief CSV 한 줄 파싱(따옴표, 이스케이프 처리).
+		/// \if KO
+		/// <para>\brief CSV 한 줄 파싱(따옴표, 이스케이프 처리).</para>
+		/// \endif
+		/// \if EN
+		/// <para>Performs the parse csv line operation.</para>
+		/// \endif
 		/// </summary>
+		/// <param name="line">
+		/// \if KO
+		/// <para>line에 사용할 <c>string</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>string</c> value used for line.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>Parse Csv Line 작업에서 생성한 <c>List&lt;string&gt;</c> 결과입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>List&lt;string&gt;</c> result produced by the parse csv line operation.</para>
+		/// \endif
+		/// </returns>
 		private static List<string> ParseCsvLine(string line)
 		{
 			var list = new List<string>();

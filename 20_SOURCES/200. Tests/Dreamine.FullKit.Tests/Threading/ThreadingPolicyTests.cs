@@ -8,9 +8,25 @@ using Dreamine.FullKit.Tests.Core;
 
 namespace Dreamine.FullKit.Tests.Threading;
 
+/// <summary>
+/// \if KO
+/// <para>Threading Policy Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates threading policy tests functionality and related state.</para>
+/// \endif
+/// </summary>
 [Collection(DMContainerCollection.Name)]
 public sealed class ThreadingPolicyTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Thread Options Normalize Repairs Invalid Values 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the thread options normalize repairs invalid values operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void ThreadOptions_NormalizeRepairsInvalidValues()
     {
@@ -28,6 +44,14 @@ public sealed class ThreadingPolicyTests
         Assert.Equal(100, options.OverflowPollingIntervalMs);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Thread Job Options Normalize Repairs Invalid Values 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the thread job options normalize repairs invalid values operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void ThreadJobOptions_NormalizeRepairsInvalidValues()
     {
@@ -41,6 +65,14 @@ public sealed class ThreadingPolicyTests
         Assert.Equal(10, options.IntervalMs);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Fixed And Overflow Policies Return Expected Delays 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the fixed and overflow policies return expected delays operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void FixedAndOverflowPolicies_ReturnExpectedDelays()
     {
@@ -52,6 +84,30 @@ public sealed class ThreadingPolicyTests
         Assert.Equal(80, new OverflowPollingPolicy().GetDelayMs(options, DreamineThreadCoreAssignment.None(), context));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Adaptive Cpu Policy Returns Delay By Cpu Usage 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the adaptive cpu policy returns delay by cpu usage operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="cpuUsage">
+    /// \if KO
+    /// <para>cpu Usage에 사용할 <c>double</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>double</c> value used for cpu usage.</para>
+    /// \endif
+    /// </param>
+    /// <param name="expectedDelay">
+    /// \if KO
+    /// <para>expected Delay에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for expected delay.</para>
+    /// \endif
+    /// </param>
     [Theory]
     [InlineData(10, 0)]
     [InlineData(30, 1)]
@@ -68,6 +124,14 @@ public sealed class ThreadingPolicyTests
         Assert.Equal(expectedDelay, delay);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Core Assignment Factories Expose Expected Flags 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the core assignment factories expose expected flags operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void CoreAssignmentFactories_ExposeExpectedFlags()
     {
@@ -77,6 +141,14 @@ public sealed class ThreadingPolicyTests
         Assert.True(new DreamineThreadingOptions().RegisterWindowsServices);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Threading Registration Uses Fixed Policy When Cpu Usage Provider Is Missing 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the threading registration uses fixed policy when cpu usage provider is missing operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void ThreadingRegistration_UsesFixedPolicyWhenCpuUsageProviderIsMissing()
     {
@@ -99,6 +171,14 @@ public sealed class ThreadingPolicyTests
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Thread Options Normalize Repairs Invalid Stop Timeout 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the thread options normalize repairs invalid stop timeout operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void ThreadOptions_NormalizeRepairsInvalidStopTimeout()
     {
@@ -110,15 +190,63 @@ public sealed class ThreadingPolicyTests
         Assert.Equal(TimeSpan.FromSeconds(2), options.StopTimeout);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Cpu Usage Provider 기능과 관련 상태를 캡슐화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Encapsulates cpu usage provider functionality and related state.</para>
+    /// \endif
+    /// </summary>
     private sealed class CpuUsageProvider : ICpuUsageProvider
     {
+        /// <summary>
+        /// \if KO
+        /// <para>cpu Usage 값을 보관합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Stores the cpu usage value.</para>
+        /// \endif
+        /// </summary>
         private readonly double _cpuUsage;
 
+        /// <summary>
+        /// \if KO
+        /// <para>지정한 설정으로 <see cref="CpuUsageProvider"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Initializes a new instance of the <see cref="CpuUsageProvider"/> class with the specified settings.</para>
+        /// \endif
+        /// </summary>
+        /// <param name="cpuUsage">
+        /// \if KO
+        /// <para>cpu Usage에 사용할 <c>double</c> 값입니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>The <c>double</c> value used for cpu usage.</para>
+        /// \endif
+        /// </param>
         public CpuUsageProvider(double cpuUsage)
         {
             _cpuUsage = cpuUsage;
         }
 
+        /// <summary>
+        /// \if KO
+        /// <para>Total Cpu Usage Percent 값을 가져옵니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Gets the total cpu usage percent value.</para>
+        /// \endif
+        /// </summary>
+        /// <returns>
+        /// \if KO
+        /// <para>Get Total Cpu Usage Percent 작업에서 생성한 <c>double</c> 결과입니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>The <c>double</c> result produced by the get total cpu usage percent operation.</para>
+        /// \endif
+        /// </returns>
         public double GetTotalCpuUsagePercent()
         {
             return _cpuUsage;

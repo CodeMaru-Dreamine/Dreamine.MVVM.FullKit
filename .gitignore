@@ -440,3 +440,24 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# Generated documentation and knowledge-graph outputs
+/.ua/
+/10_DOCUMENTS/Doxygen/000. Project/
+/10_DOCUMENTS/Doxygen/100. Library/
+/10_DOCUMENTS/Doxygen/200. Tests/
+/10_DOCUMENTS/Doxygen/998. DEMO/
+/10_DOCUMENTS/Doxygen/*.zip
+/10_DOCUMENTS/Doxygen/*.tar
+/10_DOCUMENTS/Doxygen/*.7z
+/10_DOCUMENTS/Doxygen/*.csv
+/10_DOCUMENTS/Doxygen/*.log
+/10_DOCUMENTS/Doxygen/doxygen-build-summary*.json
+/10_DOCUMENTS/Doxygen.zip
+/10_DOCUMENTS/Doxygen.tar
+/10_DOCUMENTS/Doxygen.7z
+/20_SOURCES/000. Project/010. App/Dreamine.Web/wwwroot/understand/
+/20_SOURCES/000. Project/010. App/Dreamine.Web/wwwroot/xmldocs/
+
+# Runtime application data
+**/App_Data/

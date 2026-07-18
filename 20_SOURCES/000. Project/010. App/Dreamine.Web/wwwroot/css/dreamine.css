@@ -759,3 +759,62 @@ html, body {
     text-transform: uppercase;
     margin: 0 0 12px;
 }
+
+/* ── 프로젝트 문서·지식 그래프 허브 ─────────────────────────── */
+.dw-knowledge { max-width: 1380px; }
+.dw-knowledge__hero {
+    display: flex; align-items: flex-end; justify-content: space-between; gap: 28px;
+    padding: 32px; border: 1px solid var(--line); border-radius: var(--radius-lg);
+    background: radial-gradient(circle at 92% 0, rgba(73,178,255,.13), transparent 38%), rgba(255,255,255,.018);
+}
+.dw-knowledge__hero .dw-page__copy { max-width: 850px; }
+.dw-knowledge__eyebrow { color: var(--accent); font: 700 12px/1.4 "Cascadia Code", monospace; letter-spacing: .12em; }
+.dw-knowledge__toolbar {
+    display: grid; grid-template-columns: minmax(280px, 1fr) 220px auto; align-items: center; gap: 12px;
+    margin: 28px 0 36px;
+}
+.dw-knowledge__search .dw-input { width: 100%; }
+.dw-knowledge__category { width: 100%; }
+.dw-knowledge__count { color: var(--sub); font-size: 13px; white-space: nowrap; text-align: right; }
+.dw-knowledge__count strong { color: var(--accent); font-size: 18px; }
+.dw-knowledge__group { margin-bottom: 46px; }
+.dw-knowledge__group-head { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.dw-knowledge__group-head h2 { margin: 0; font-size: 1.35rem; }
+.dw-knowledge__group-head span { color: var(--accent); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; font-size: 12px; }
+.dw-knowledge__grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.dw-knowledge-card {
+    min-width: 0; display: flex; flex-direction: column; gap: 12px; padding: 20px;
+    border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(255,255,255,.022);
+    transition: transform .15s, border-color .15s, background .15s;
+}
+.dw-knowledge-card:hover { transform: translateY(-2px); border-color: var(--line-strong); background: rgba(73,178,255,.035); }
+.dw-knowledge-card__top { display: flex; justify-content: space-between; gap: 12px; font-size: 11px; }
+.dw-knowledge-card__category { color: var(--accent); font-weight: 700; letter-spacing: .06em; }
+.dw-knowledge-card__version { color: var(--sub); font-family: "Cascadia Code", monospace; }
+.dw-knowledge-card h3 { margin: 0; overflow-wrap: anywhere; font-size: 1.05rem; line-height: 1.4; }
+.dw-knowledge-card p { color: var(--sub); margin: 0; min-height: 4.8em; font-size: 13px; line-height: 1.6; }
+.dw-knowledge-card__frameworks { display: flex; flex-wrap: wrap; gap: 6px; min-height: 24px; }
+.dw-knowledge-card__frameworks span { padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); color: var(--sub); font: 11px "Cascadia Code", monospace; }
+.dw-knowledge-card__actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: auto; padding-top: 5px; }
+.dw-knowledge-card__actions a,
+.dw-knowledge-card__actions span {
+    padding: 7px 10px; border: 1px solid var(--line); border-radius: 9px;
+    color: var(--text); font-size: 12px; text-decoration: none;
+}
+.dw-knowledge-card__actions a:hover { border-color: var(--accent-2); color: var(--accent-2); }
+.dw-knowledge-card__actions .is-primary { margin-left: auto; color: #07131c; background: var(--accent); border-color: var(--accent); font-weight: 700; }
+.dw-knowledge-card__actions .is-primary:hover { color: #07131c; filter: brightness(1.08); }
+.dw-knowledge-card__actions .is-disabled { opacity: .42; cursor: not-allowed; }
+.dw-knowledge__notice, .dw-knowledge__empty { padding: 24px; border: 1px solid var(--line); border-radius: var(--radius-lg); color: var(--sub); }
+.dw-knowledge__notice { display: flex; flex-direction: column; gap: 8px; border-color: rgba(251,191,36,.25); }
+.dw-knowledge__notice strong { color: #fcd77a; }
+@media (max-width: 1050px) {
+    .dw-knowledge__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+    .dw-knowledge__hero { align-items: flex-start; flex-direction: column; padding: 22px; }
+    .dw-knowledge__toolbar { grid-template-columns: 1fr; }
+    .dw-knowledge__count { text-align: left; }
+    .dw-knowledge__grid { grid-template-columns: 1fr; }
+    .dw-knowledge-card p { min-height: 0; }
+}

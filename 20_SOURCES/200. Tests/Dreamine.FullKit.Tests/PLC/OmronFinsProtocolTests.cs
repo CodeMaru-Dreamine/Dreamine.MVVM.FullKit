@@ -5,8 +5,24 @@ using Dreamine.PLC.Omron.Fins.Protocol;
 
 namespace Dreamine.FullKit.Tests.PLC;
 
+/// <summary>
+/// \if KO
+/// <para>Omron Fins Protocol Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates omron fins protocol tests functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class OmronFinsProtocolTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Memory Area Mapper Maps Device Types And Area Kinds 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the memory area mapper maps device types and area kinds operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void MemoryAreaMapper_MapsDeviceTypesAndAreaKinds()
     {
@@ -19,6 +35,14 @@ public sealed class OmronFinsProtocolTests
         Assert.True(OmronFinsMemoryAreaMapper.IsBitArea(dmBit));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Frame Builder Builds Memory Read Frame 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the frame builder builds memory read frame operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void FrameBuilder_BuildsMemoryReadFrame()
     {
@@ -33,6 +57,14 @@ public sealed class OmronFinsProtocolTests
         Assert.Equal(OmronFinsMemoryAreaCode.DmWord, frame[12]);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Frame Builder Rejects Out Of Range Address With Clear Message 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the frame builder rejects out of range address with clear message operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void FrameBuilder_RejectsOutOfRangeAddressWithClearMessage()
     {
@@ -49,6 +81,14 @@ public sealed class OmronFinsProtocolTests
         Assert.Contains("between 0 and 65535", ex.Message);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Frame Builder Generates Distinct Sids Across Parallel Calls 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the frame builder generates distinct sids across parallel calls operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void FrameBuilder_GeneratesDistinctSidsAcrossParallelCalls()
     {
@@ -63,6 +103,14 @@ public sealed class OmronFinsProtocolTests
         Assert.Equal(64, sids.Distinct().Count());
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Response Parser Extracts Payload And Parses Words And Bits 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the response parser extracts payload and parses words and bits operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void ResponseParser_ExtractsPayloadAndParsesWordsAndBits()
     {
@@ -79,6 +127,14 @@ public sealed class OmronFinsProtocolTests
         Assert.Equal(new[] { true, true }, parser.ParseBits(new byte[] { 1, 2 }, 2).Value);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Tcp Packet Wraps And Extracts Frame 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the tcp packet wraps and extracts frame operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void TcpPacket_WrapsAndExtractsFrame()
     {

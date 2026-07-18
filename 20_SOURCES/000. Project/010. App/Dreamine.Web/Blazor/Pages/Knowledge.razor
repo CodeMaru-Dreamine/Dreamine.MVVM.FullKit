@@ -1,0 +1,175 @@
+@page "/knowledge"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@inject DocumentationCatalogService Catalog
+@implements IDisposable
+
+<PageTitle>@(Ko ? "프로젝트 문서와 지식 그래프" : "Project Documentation & Knowledge Graphs") — Dreamine</PageTitle>
+
+<div class="dw-page dw-knowledge">
+    <div class="dw-page__head dw-knowledge__hero">
+        <div>
+            <span class="dw-knowledge__eyebrow">@(Ko ? "80개 프로젝트 · 두 언어" : "80 PROJECTS · TWO LANGUAGES")</span>
+            <h1 class="dw-page__title">@(Ko ? "프로젝트 문서 허브" : "Project Documentation Hub")</h1>
+            <p class="dw-page__copy">
+                @(Ko
+                    ? "프로젝트를 선택해 빌드 XML 문서, Doxygen API 문서, 프로젝트 전용 지식 그래프를 확인하세요. 상단 언어 버튼을 누르면 모든 문서 링크가 함께 전환됩니다."
+                    : "Choose a project to open its build XML, Doxygen API reference, or focused knowledge graph. The language button in the top navigation switches every localized link together.")
+            </p>
+        </div>
+        <a class="dw-btn dw-btn--outline" href="@FullGraphUrl" target="_blank" rel="noopener">
+            @(Ko ? "전체 그래프(고급) ↗" : "Full graph (advanced) ↗")
+        </a>
+    </div>
+
+    <div class="dw-knowledge__toolbar">
+        <label class="dw-knowledge__search">
+            <span class="sr-only">@(Ko ? "프로젝트 검색" : "Search projects")</span>
+            <input class="dw-input" type="search"
+                   placeholder="@(Ko ? "프로젝트 이름·설명·프레임워크 검색..." : "Search name, description, or framework...")"
+                   @bind="SearchText" @bind:event="oninput" />
+        </label>
+        <select class="dw-input dw-knowledge__category" @bind="SelectedCategory">
+            <option value="">@(Ko ? "모든 분류" : "All categories")</option>
+            @foreach (string category in Categories)
+            {
+                <option value="@category">@CategoryLabel(category)</option>
+            }
+        </select>
+        <span class="dw-knowledge__count">
+            <strong>@FilteredProjects.Count()</strong> @(Ko ? "개 프로젝트" : "projects")
+        </span>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div class="dw-knowledge__notice">
+            <strong>@(Ko ? "문서 카탈로그를 불러오지 못했습니다." : "The documentation catalog is unavailable.")</strong>
+            <span>@ErrorMessage</span>
+        </div>
+    }
+    else if (!FilteredProjects.Any())
+    {
+        <div class="dw-knowledge__empty">@(Ko ? "검색 조건에 맞는 프로젝트가 없습니다." : "No projects match the current filters.")</div>
+    }
+    else
+    {
+        @foreach (IGrouping<string, DocumentationProjectInfo> group in FilteredProjects.GroupBy(project => project.Category))
+        {
+            <section class="dw-knowledge__group">
+                <div class="dw-knowledge__group-head">
+                    <h2>@CategoryLabel(group.Key)</h2>
+                    <span>@group.Count()</span>
+                </div>
+                <div class="dw-knowledge__grid">
+                    @foreach (DocumentationProjectInfo project in group)
+                    {
+                        <article class="dw-knowledge-card">
+                            <div class="dw-knowledge-card__top">
+                                <span class="dw-knowledge-card__category">@CategoryLabel(project.Category)</span>
+                                <span class="dw-knowledge-card__version">v@project.Version</span>
+                            </div>
+                            <h3 title="@project.Name">@project.Name</h3>
+                            <p>@project.GetDescription(Language)</p>
+                            <div class="dw-knowledge-card__frameworks">
+                                @foreach (string framework in project.TargetFrameworks)
+                                {
+                                    <span>@framework</span>
+                                }
+                            </div>
+                            <div class="dw-knowledge-card__actions">
+                                @if (!string.IsNullOrWhiteSpace(project.BuildDocumentUrl))
+                                {
+                                    <a href="@project.BuildDocumentUrl" target="_blank" rel="noopener">@(Ko ? "빌드 XML" : "Build XML")</a>
+                                }
+                                else
+                                {
+                                    <span class="is-disabled" title="@(Ko ? "이 프로젝트는 XML 문서 출력을 생성하지 않습니다." : "This project does not emit a build XML document.")">
+                                        @(Ko ? "빌드 XML 없음" : "No build XML")
+                                    </span>
+                                }
+                                <a href="@project.GetDoxygenUrl(Language)" target="_blank" rel="noopener">Doxygen ↗</a>
+                                <a class="is-primary" href="@project.GetGraphUrl(Language)" target="_blank" rel="noopener">
+                                    @(Ko ? "지식 그래프 ↗" : "Knowledge graph ↗")
+                                </a>
+                            </div>
+                        </article>
+                    }
+                </div>
+            </section>
+        }
+    }
+</div>
+
+@code {
+    [CascadingParameter] public UserPreferencesService Lang { get; set; } = default!;
+
+    private IReadOnlyList<DocumentationProjectInfo> Projects { get; set; } = [];
+    private string SearchText { get; set; } = string.Empty;
+    private string SelectedCategory { get; set; } = string.Empty;
+    private string? ErrorMessage { get; set; }
+    private bool Ko => Lang?.IsKorean ?? true;
+    private string Language => Ko ? "ko" : "en";
+    private string FullGraphUrl => $"/understand/graph/?lang={Language}";
+
+    private IEnumerable<string> Categories =>
+        Projects.Select(project => project.Category).Distinct().OrderBy(CategoryOrder);
+
+    private IEnumerable<DocumentationProjectInfo> FilteredProjects =>
+        Projects.Where(Matches).OrderBy(project => CategoryOrder(project.Category)).ThenBy(project => project.Name);
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            Projects = Catalog.GetProjects();
+        }
+        catch (Exception exception)
+        {
+            ErrorMessage = exception.Message;
+        }
+
+        if (Lang is not null)
+            Lang.Changed += OnLanguageChanged;
+    }
+
+    private bool Matches(DocumentationProjectInfo project)
+    {
+        if (!string.IsNullOrWhiteSpace(SelectedCategory) && project.Category != SelectedCategory)
+            return false;
+
+        if (string.IsNullOrWhiteSpace(SearchText))
+            return true;
+
+        string query = SearchText.Trim();
+        return project.Name.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || project.GetDescription(Language).Contains(query, StringComparison.OrdinalIgnoreCase)
+            || project.TargetFrameworks.Any(framework => framework.Contains(query, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private string CategoryLabel(string category) => category switch
+    {
+        "000. Project" => Ko ? "애플리케이션" : "Applications",
+        "100. Library" => Ko ? "라이브러리" : "Libraries",
+        "200. Tests" => Ko ? "테스트" : "Tests",
+        "998. DEMO" => Ko ? "샘플·데모" : "Samples & Demos",
+        _ => category
+    };
+
+    private static int CategoryOrder(string category) => category switch
+    {
+        "000. Project" => 0,
+        "100. Library" => 1,
+        "200. Tests" => 2,
+        "998. DEMO" => 3,
+        _ => 4
+    };
+
+    private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        if (Lang is not null)
+            Lang.Changed -= OnLanguageChanged;
+    }
+}

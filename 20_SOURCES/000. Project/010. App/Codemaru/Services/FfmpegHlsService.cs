@@ -20,24 +20,134 @@ using Codemaru.Models;
 
 namespace Codemaru.Services
 {
-	/// <summary>\brief ffmpeg 프로세스를 관리하는 HostedService(워치독 포함).</summary>
+	/// <summary>
+	/// \if KO
+	/// <para>\brief ffmpeg 프로세스를 관리하는 HostedService(워치독 포함).</para>
+	/// \endif
+	/// \if EN
+	/// <para>Encapsulates ffmpeg hls service functionality and related state.</para>
+	/// \endif
+	/// </summary>
 	public sealed class FfmpegHlsService : BackgroundService
 	{
+		/// <summary>
+		/// \if KO
+		/// <para>log 값을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the log value.</para>
+		/// \endif
+		/// </summary>
 		private readonly ILogger<FfmpegHlsService> _log;
+		/// <summary>
+		/// \if KO
+		/// <para>opt 값을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the opt value.</para>
+		/// \endif
+		/// </summary>
 		private readonly FfmpegOptions _opt;
+		/// <summary>
+		/// \if KO
+		/// <para>streams 값을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the streams value.</para>
+		/// \endif
+		/// </summary>
 		private readonly IReadOnlyList<StreamConfig> _streams;
+		/// <summary>
+		/// \if KO
+		/// <para>env 값을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the env value.</para>
+		/// \endif
+		/// </summary>
 		private readonly IWebHostEnvironment _env;
 
 		// 스트림명 → ffmpeg 프로세스
+		/// <summary>
+		/// \if KO
+		/// <para>procs 값을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the procs value.</para>
+		/// \endif
+		/// </summary>
 		private readonly Dictionary<string, Process> _procs = new();
 
 		// 스트림명 → 최근 m3u8 시퀀스/타임스탬프
+		/// <summary>
+		/// \if KO
+		/// <para>last Seq 값을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the last seq value.</para>
+		/// \endif
+		/// </summary>
 		private readonly Dictionary<string, long> _lastSeq = new();
+		/// <summary>
+		/// \if KO
+		/// <para>last Write 값을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the last write value.</para>
+		/// \endif
+		/// </summary>
 		private readonly Dictionary<string, DateTime> _lastWrite = new();
 
+		/// <summary>
+		/// \if KO
+		/// <para>Media Seq Regex 값을 보관합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Stores the media seq regex value.</para>
+		/// \endif
+		/// </summary>
 		private static readonly Regex MediaSeqRegex = new(@"#EXT-X-MEDIA-SEQUENCE:(\d+)", RegexOptions.Compiled);
 
-		/// <summary>\brief 생성자.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>\brief 생성자.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Initializes a new instance of the <see cref="FfmpegHlsService"/> class with the specified settings.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="log">
+		/// \if KO
+		/// <para>log에 사용할 <c>ILogger&lt;FfmpegHlsService&gt;</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>ILogger&lt;FfmpegHlsService&gt;</c> value used for log.</para>
+		/// \endif
+		/// </param>
+		/// <param name="opt">
+		/// \if KO
+		/// <para>opt에 사용할 <c>IOptions&lt;FfmpegOptions&gt;</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>IOptions&lt;FfmpegOptions&gt;</c> value used for opt.</para>
+		/// \endif
+		/// </param>
+		/// <param name="streams">
+		/// \if KO
+		/// <para>streams에 사용할 <c>IOptions&lt;List&lt;StreamConfig&gt;&gt;</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>IOptions&lt;List&lt;StreamConfig&gt;&gt;</c> value used for streams.</para>
+		/// \endif
+		/// </param>
+		/// <param name="env">
+		/// \if KO
+		/// <para>env에 사용할 <c>IWebHostEnvironment</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>IWebHostEnvironment</c> value used for env.</para>
+		/// \endif
+		/// </param>
 		public FfmpegHlsService(
 			ILogger<FfmpegHlsService> log,
 			IOptions<FfmpegOptions> opt,
@@ -50,7 +160,30 @@ namespace Codemaru.Services
 			_env = env;
 		}
 
-		/// <summary>\brief 서비스 시작 시 각 스트림 ffmpeg 실행 + 워치독 루프 가동.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>\brief 서비스 시작 시 각 스트림 ffmpeg 실행 + 워치독 루프 가동.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Performs the execute async operation.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="ct">
+		/// \if KO
+		/// <para>취소 요청을 감시하는 토큰입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>A token used to observe cancellation requests.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>Execute Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>Task</c> result produced by the execute async operation.</para>
+		/// \endif
+		/// </returns>
 		protected override async Task ExecuteAsync(CancellationToken ct)
 		{
 			Directory.CreateDirectory(GetOutputRoot());
@@ -115,7 +248,30 @@ namespace Codemaru.Services
 			}
 		}
 
-		/// <summary>\brief 서비스 중지 시 모든 ffmpeg 종료.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>\brief 서비스 중지 시 모든 ffmpeg 종료.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Performs the stop async operation.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="cancellationToken">
+		/// \if KO
+		/// <para>취소 요청을 감시하는 토큰입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>A token used to observe cancellation requests.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>Stop Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>Task</c> result produced by the stop async operation.</para>
+		/// \endif
+		/// </returns>
 		public override Task StopAsync(CancellationToken cancellationToken)
 		{
 			foreach (var p in _procs.Values)
@@ -134,7 +290,22 @@ namespace Codemaru.Services
 			return Task.CompletedTask;
 		}
 
-		/// <summary>\brief HLS 출력 루트의 절대경로를 반환합니다.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>\brief HLS 출력 루트의 절대경로를 반환합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Gets the output root value.</para>
+		/// \endif
+		/// </summary>
+		/// <returns>
+		/// \if KO
+		/// <para>Get Output Root 작업에서 생성한 <c>string</c> 결과입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>string</c> result produced by the get output root operation.</para>
+		/// \endif
+		/// </returns>
 		private string GetOutputRoot()
 		{
 			// appsettings에 상대경로("wwwroot\\hls")인 경우 ContentRoot 기준으로 절대경로화
@@ -143,7 +314,30 @@ namespace Codemaru.Services
 				: Path.Combine(_env.ContentRootPath, _opt.OutputRoot);
 		}
 
-		/// <summary>\brief 스트림별 m3u8/세그먼트 경로를 반환합니다.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>\brief 스트림별 m3u8/세그먼트 경로를 반환합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Gets the output paths value.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="s">
+		/// \if KO
+		/// <para>이벤트를 발생시킨 객체입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The object that raised the event.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>Get Output Paths 작업에서 생성한 <c>(string m3u8Path, string segFmt)</c> 결과입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>(string m3u8Path, string segFmt)</c> result produced by the get output paths operation.</para>
+		/// \endif
+		/// </returns>
 		private (string m3u8Path, string segFmt) GetOutputPaths(StreamConfig s)
 		{
 			var outRoot = GetOutputRoot();
@@ -156,7 +350,22 @@ namespace Codemaru.Services
 			return (m3u8Path, segFmt);
 		}
 
-		/// <summary>\brief 한 개 스트림 ffmpeg 시작(이미 있으면 종료 후 재시작).</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>\brief 한 개 스트림 ffmpeg 시작(이미 있으면 종료 후 재시작).</para>
+		/// \endif
+		/// \if EN
+		/// <para>Performs the safe restart operation.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="s">
+		/// \if KO
+		/// <para>이벤트를 발생시킨 객체입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The object that raised the event.</para>
+		/// \endif
+		/// </param>
 		private void SafeRestart(StreamConfig s)
 		{
 			if (_procs.TryGetValue(s.Name, out var old))
@@ -174,7 +383,22 @@ namespace Codemaru.Services
 			TryStartOne(s);
 		}
 
-		/// <summary>\brief ffmpeg 시작 시도(성공 시 딕셔너리 등록).</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>\brief ffmpeg 시작 시도(성공 시 딕셔너리 등록).</para>
+		/// \endif
+		/// \if EN
+		/// <para>Attempts to start one and returns whether the operation succeeds.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="s">
+		/// \if KO
+		/// <para>이벤트를 발생시킨 객체입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The object that raised the event.</para>
+		/// \endif
+		/// </param>
 		private void TryStartOne(StreamConfig s)
 		{
 			var (m3u8Path, segFmt) = GetOutputPaths(s);
@@ -259,7 +483,22 @@ namespace Codemaru.Services
 			}
 		}
 
-		/// <summary>\brief 워치독 초기 통계값을 리셋합니다.</summary>
+		/// <summary>
+		/// \if KO
+		/// <para>\brief 워치독 초기 통계값을 리셋합니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>Performs the init watch stats operation.</para>
+		/// \endif
+		/// </summary>
+		/// <param name="s">
+		/// \if KO
+		/// <para>이벤트를 발생시킨 객체입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The object that raised the event.</para>
+		/// \endif
+		/// </param>
 		private void InitWatchStats(StreamConfig s)
 		{
 			_lastSeq[s.Name] = -1;
@@ -267,9 +506,29 @@ namespace Codemaru.Services
 		}
 
 		/// <summary>
-		/// \brief m3u8에서 MEDIA-SEQUENCE와 파일 수정시각을 읽습니다.
-		/// \return (seq, lastWrite)
+		/// \if KO
+		/// <para>\brief m3u8에서 MEDIA-SEQUENCE와 파일 수정시각을 읽습니다. \return (seq, lastWrite)</para>
+		/// \endif
+		/// \if EN
+		/// <para>Reads seq and time data.</para>
+		/// \endif
 		/// </summary>
+		/// <param name="m3u8Path">
+		/// \if KO
+		/// <para>m3u8 Path에 사용할 <c>string</c> 값입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>string</c> value used for m3u8 path.</para>
+		/// \endif
+		/// </param>
+		/// <returns>
+		/// \if KO
+		/// <para>Read Seq And Time 작업에서 생성한 <c>(long seq, DateTime lastWrite)</c> 결과입니다.</para>
+		/// \endif
+		/// \if EN
+		/// <para>The <c>(long seq, DateTime lastWrite)</c> result produced by the read seq and time operation.</para>
+		/// \endif
+		/// </returns>
 		private (long seq, DateTime lastWrite) ReadSeqAndTime(string m3u8Path)
 		{
 			try

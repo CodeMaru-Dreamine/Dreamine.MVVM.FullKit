@@ -1,4 +1,5 @@
 @page "/{Slug}/login"
+@using Dreamine.Identity
 @inject TenantContext Tenant
 @inject IShopTenantStore TenantStore
 @inject TenantDbContextFactory DbFactory
@@ -80,12 +81,34 @@
         _loading = true;
         using var db = DbFactory.Create(Slug);
         var user = db.Users.FirstOrDefault(u => u.Email == _email.Trim().ToLower());
-        if (user == null || !BCrypt.Verify(_password, user.PasswordHash))
+        if (user == null)
         {
             _error = "이메일 또는 비밀번호가 올바르지 않습니다.";
             _loading = false;
             return;
         }
+
+        var verification = DreaminePasswordHasher.VerifyPassword(_password, user.PasswordHash, out var upgradedHash);
+        if (verification is PasswordHashVerificationResult.Failed && VerifyLegacyShopHash(_password, user.PasswordHash))
+        {
+            verification = PasswordHashVerificationResult.SuccessRehashNeeded;
+            upgradedHash = DreaminePasswordHasher.HashPassword(_password);
+        }
+
+        if (verification is PasswordHashVerificationResult.Failed)
+        {
+            _error = "이메일 또는 비밀번호가 올바르지 않습니다.";
+            _loading = false;
+            return;
+        }
+
+        if (verification is PasswordHashVerificationResult.SuccessRehashNeeded && upgradedHash is not null)
+        {
+            user.PasswordHash = upgradedHash;
+            db.Users.Update(user);
+            db.SaveChanges();
+        }
+
         Session.Login(user);
         Nav.NavigateTo(ReturnUrl ?? $"/{Slug}");
     }
@@ -96,13 +119,10 @@
         return Task.CompletedTask;
     }
 
-    // 간단한 BCrypt 대체 (실제로는 BCrypt.Net-Next 패키지 사용 권장)
-    private static class BCrypt
+    private static bool VerifyLegacyShopHash(string plain, string hash)
     {
-        public static string Hash(string plain) =>
-            Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(
-                System.Text.Encoding.UTF8.GetBytes(plain + "ShopPlatformSalt2025")));
-
-        public static bool Verify(string plain, string hash) => Hash(plain) == hash;
+        var actual = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(plain + "ShopPlatformSalt2025")));
+        return string.Equals(actual, hash, StringComparison.Ordinal);
     }
 }

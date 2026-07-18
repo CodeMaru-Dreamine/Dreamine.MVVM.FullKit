@@ -4,8 +4,32 @@ using Dreamine.Communication.Core.Framing;
 
 namespace Dreamine.FullKit.Tests.Communication;
 
+/// <summary>
+/// \if KO
+/// <para>Frame Codec Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates frame codec tests functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class FrameCodecTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Length Prefixed Codec Round Trips Payload 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the length prefixed codec round trips payload operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Length Prefixed Codec Round Trips Payload 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the length prefixed codec round trips payload operation.</para>
+    /// \endif
+    /// </returns>
     [Fact]
     public async Task LengthPrefixedCodec_RoundTripsPayload()
     {
@@ -21,6 +45,22 @@ public sealed class FrameCodecTests
         Assert.Equal(payload, result);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Length Prefixed Codec Returns Null When Stream Ends Before Payload Completes 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the length prefixed codec returns null when stream ends before payload completes operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Length Prefixed Codec Returns Null When Stream Ends Before Payload Completes 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the length prefixed codec returns null when stream ends before payload completes operation.</para>
+    /// \endif
+    /// </returns>
     [Fact]
     public async Task LengthPrefixedCodec_ReturnsNullWhenStreamEndsBeforePayloadCompletes()
     {
@@ -33,6 +73,22 @@ public sealed class FrameCodecTests
         Assert.Null(result);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Length Prefixed Codec Rejects Frames Larger Than Limit 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the length prefixed codec rejects frames larger than limit operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Length Prefixed Codec Rejects Frames Larger Than Limit 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the length prefixed codec rejects frames larger than limit operation.</para>
+    /// \endif
+    /// </returns>
     [Fact]
     public async Task LengthPrefixedCodec_RejectsFramesLargerThanLimit()
     {
@@ -43,6 +99,22 @@ public sealed class FrameCodecTests
             () => codec.WriteFrameAsync(stream, new byte[] { 1, 2, 3 }));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Delimiter Codec Round Trips Payload Without Delimiter 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the delimiter codec round trips payload without delimiter operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Delimiter Codec Round Trips Payload Without Delimiter 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the delimiter codec round trips payload without delimiter operation.</para>
+    /// \endif
+    /// </returns>
     [Fact]
     public async Task DelimiterCodec_RoundTripsPayloadWithoutDelimiter()
     {
@@ -58,6 +130,22 @@ public sealed class FrameCodecTests
         Assert.Equal(payload, result);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Delimiter Codec Returns Buffered Payload When Stream Ends Without Delimiter 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the delimiter codec returns buffered payload when stream ends without delimiter operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Delimiter Codec Returns Buffered Payload When Stream Ends Without Delimiter 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the delimiter codec returns buffered payload when stream ends without delimiter operation.</para>
+    /// \endif
+    /// </returns>
     [Fact]
     public async Task DelimiterCodec_ReturnsBufferedPayloadWhenStreamEndsWithoutDelimiter()
     {
@@ -69,6 +157,22 @@ public sealed class FrameCodecTests
         Assert.Equal("partial", Encoding.UTF8.GetString(result!));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Delimiter Codec Preserves Bytes After Delimiter For Next Frame 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the delimiter codec preserves bytes after delimiter for next frame operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Delimiter Codec Preserves Bytes After Delimiter For Next Frame 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the delimiter codec preserves bytes after delimiter for next frame operation.</para>
+    /// \endif
+    /// </returns>
     [Fact]
     public async Task DelimiterCodec_PreservesBytesAfterDelimiterForNextFrame()
     {
@@ -82,6 +186,22 @@ public sealed class FrameCodecTests
         Assert.Equal("second", Encoding.UTF8.GetString(second!));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Delimiter Codec Rejects Frames Larger Than Limit 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the delimiter codec rejects frames larger than limit operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Delimiter Codec Rejects Frames Larger Than Limit 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the delimiter codec rejects frames larger than limit operation.</para>
+    /// \endif
+    /// </returns>
     [Fact]
     public async Task DelimiterCodec_RejectsFramesLargerThanLimit()
     {

@@ -4,8 +4,40 @@ using DreamineWeb.Models;
 
 namespace DreamineWeb.Services;
 
+/// <summary>
+/// \if KO
+/// <para>Xml Doc Parser 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates xml doc parser functionality and related state.</para>
+/// \endif
+/// </summary>
 public static class XmlDocParser
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Parse 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the parse operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="xmlPath">
+    /// \if KO
+    /// <para>xml Path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for xml path.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Parse 작업에서 생성한 <c>List&lt;DocMember&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;DocMember&gt;</c> result produced by the parse operation.</para>
+    /// \endif
+    /// </returns>
     public static List<DocMember> Parse(string xmlPath)
     {
         if (!File.Exists(xmlPath)) return [];
@@ -46,6 +78,30 @@ public static class XmlDocParser
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Parse Kind 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the parse kind operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="name">
+    /// \if KO
+    /// <para>name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Parse Kind 작업에서 생성한 <c>DocMemberKind</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>DocMemberKind</c> result produced by the parse kind operation.</para>
+    /// \endif
+    /// </returns>
     private static DocMemberKind ParseKind(string name) => name.Length > 1 ? name[0] switch
     {
         'T' => DocMemberKind.Type,
@@ -56,6 +112,30 @@ public static class XmlDocParser
         _   => DocMemberKind.Type
     } : DocMemberKind.Type;
 
+    /// <summary>
+    /// \if KO
+    /// <para>Extract Short Name 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the extract short name operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="name">
+    /// \if KO
+    /// <para>name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Extract Short Name 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the extract short name operation.</para>
+    /// \endif
+    /// </returns>
     private static string ExtractShortName(string name)
     {
         var dotName = name.Length > 2 ? name[2..] : name;
@@ -65,6 +145,30 @@ public static class XmlDocParser
         return last >= 0 ? dotName[(last + 1)..] : dotName;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Extract Type Name 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the extract type name operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="name">
+    /// \if KO
+    /// <para>name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for name.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Extract Type Name 작업에서 생성한 <c>string?</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> result produced by the extract type name operation.</para>
+    /// \endif
+    /// </returns>
     private static string? ExtractTypeName(string name)
     {
         if (name.Length < 3) return null;
@@ -78,6 +182,30 @@ public static class XmlDocParser
         return typeLast >= 0 ? typePart[(typeLast + 1)..] : typePart;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Clean Text 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the clean text operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="raw">
+    /// \if KO
+    /// <para>raw에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for raw.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Clean Text 작업에서 생성한 <c>string?</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> result produced by the clean text operation.</para>
+    /// \endif
+    /// </returns>
     private static string? CleanText(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw)) return null;

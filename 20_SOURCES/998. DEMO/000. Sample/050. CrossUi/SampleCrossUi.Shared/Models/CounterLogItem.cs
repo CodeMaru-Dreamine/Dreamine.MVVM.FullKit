@@ -1,10 +1,13 @@
 namespace SampleCrossUi.Shared.Models;
 
 /// <summary>
-/// Represents a counter operation log item.
+/// \if KO
+/// <para>Counter Log Item 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Represents a counter operation log item.</para>
+/// \endif
 /// </summary>
-/// <param name="CreatedAt">The time when the log item was created.</param>
-/// <param name="Message">The log message.</param>
 public sealed record CounterLogItem(
     DateTime CreatedAt,
     string Message);

@@ -1,0 +1,172 @@
+{
+  "title": "Dreamine.MVVM.FullKit 지식 허브",
+  "subtitle": "처음 쓰는 사람은 레시피로 시작하고, 익숙한 사람은 API와 전체 관계 그래프로 바로 이동하세요.",
+  "quickStart": {
+    "title": "5분 안에 첫 WPF 화면 연결하기",
+    "description": "앱 초기화 → ViewModel 작성 → View 자동 연결의 세 단계만 먼저 익힙니다.",
+    "recipeId": "wpf-first-screen"
+  },
+  "recipes": [
+    {
+      "id": "wpf-first-screen",
+      "title": "WPF MVVM 첫 화면",
+      "icon": "01",
+      "summary": "Dreamine 런타임을 초기화하고 View와 ViewModel을 자동으로 연결합니다.",
+      "difficulty": "입문",
+      "time": "5분",
+      "platforms": ["WPF", ".NET 8+", "Windows"],
+      "packages": ["Dreamine.MVVM.Wpf", "Dreamine.MVVM.Attributes", "Dreamine.MVVM.ViewModels"],
+      "prerequisites": ["WPF 프로젝트", "FullKit NuGet 패키지 참조"],
+      "steps": [
+        {"title": "앱 시작 시 런타임 초기화", "description": "App.OnStartup에서 현재 어셈블리를 등록합니다.", "language": "csharp", "code": "protected override void OnStartup(StartupEventArgs e)\n{\n    base.OnStartup(e);\n    DreamineAppBuilder.Initialize(Assembly.GetExecutingAssembly());\n}"},
+        {"title": "ViewModel 상태와 명령 작성", "description": "partial 클래스와 특성으로 반복 코드를 생성합니다.", "language": "csharp", "code": "public partial class MainWindowViewModel : ViewModelBase\n{\n    [DreamineProperty]\n    private string _title = \"Dreamine FullKit\";\n\n    [RelayCommand]\n    private void ChangeTitle() => Title = \"Updated\";\n}"},
+        {"title": "View 자동 연결", "description": "AutoWireViewModel을 켜고 생성된 속성과 명령에 바인딩합니다.", "language": "xml", "code": "<Window xmlns:locator=\"clr-namespace:Dreamine.MVVM.Locators.Wpf;assembly=Dreamine.MVVM.Locators.Wpf\"\n        locator:ViewModelBinder.AutoWireViewModel=\"True\">\n  <StackPanel>\n    <TextBlock Text=\"{Binding Title}\" />\n    <Button Content=\"Change\" Command=\"{Binding ChangeTitleCommand}\" />\n  </StackPanel>\n</Window>"}
+      ],
+      "expectedResult": "창이 열릴 때 MainWindowViewModel이 DataContext에 연결되고 버튼을 누르면 제목이 Updated로 바뀝니다.",
+      "commonErrors": ["App 초기화를 호출하지 않음", "ViewModel 이름과 View 이름의 규칙이 다름", "ViewModel 클래스를 partial로 선언하지 않음"],
+      "relatedTerms": ["ViewModel", "Source Generator", "AutoWire"],
+      "relatedNodeNames": ["DreamineAppBuilder", "ViewModelBase", "ViewModelBinder"]
+    },
+    {
+      "id": "generated-property-command",
+      "title": "속성과 명령 자동 생성",
+      "icon": "02",
+      "summary": "DreamineProperty와 RelayCommand로 알림 속성과 ICommand 보일러플레이트를 줄입니다.",
+      "difficulty": "입문",
+      "time": "8분",
+      "platforms": ["WPF", "WinForms", "MAUI"],
+      "packages": ["Dreamine.MVVM.Attributes", "Dreamine.MVVM.SourceGenerators"],
+      "prerequisites": ["partial ViewModel 클래스"],
+      "steps": [
+        {"title": "필드에 DreamineProperty 적용", "description": "생성기는 _title 필드로부터 Title 속성과 변경 알림 코드를 만듭니다.", "language": "csharp", "code": "[DreamineProperty]\nprivate string _title = string.Empty;"},
+        {"title": "메서드에 RelayCommand 적용", "description": "메서드 이름을 기준으로 실행 가능한 Command 속성이 만들어집니다.", "language": "csharp", "code": "[RelayCommand]\nprivate void Save()\n{\n    // 저장 로직\n}"}
+      ],
+      "expectedResult": "직접 속성 setter나 ICommand 구현을 작성하지 않고 Title과 SaveCommand를 바인딩할 수 있습니다.",
+      "commonErrors": ["클래스 또는 메서드가 partial 생성 조건을 충족하지 않음", "생성된 이름과 XAML 바인딩 이름이 다름", "분석기 패키지가 빌드에서 제외됨"],
+      "relatedTerms": ["Source Generator", "INotifyPropertyChanged", "Command"],
+      "relatedNodeNames": ["DreaminePropertyAttribute", "RelayCommandAttribute", "ViewModelBase"]
+    },
+    {
+      "id": "viewmodel-autowire",
+      "title": "View와 ViewModel 자동 연결",
+      "icon": "03",
+      "summary": "이름 규칙과 Locator를 이용해 DataContext 연결 코드를 없앱니다.",
+      "difficulty": "입문",
+      "time": "10분",
+      "platforms": ["WPF"],
+      "packages": ["Dreamine.MVVM.Locators.Wpf"],
+      "prerequisites": ["Views와 ViewModels 이름 규칙 결정", "DI 등록 또는 생성 가능한 ViewModel"],
+      "steps": [
+        {"title": "이름 규칙 맞추기", "description": "MainWindow View에는 MainWindowViewModel처럼 대응되는 이름을 사용합니다.", "language": "text", "code": "Views/MainWindow.xaml\nViewModels/MainWindowViewModel.cs"},
+        {"title": "AutoWire 활성화", "description": "연결된 속성 하나로 DataContext 검색을 시작합니다.", "language": "xml", "code": "locator:ViewModelBinder.AutoWireViewModel=\"True\""}
+      ],
+      "expectedResult": "View 생성 시 대응 ViewModel이 자동으로 찾아져 DataContext에 설정됩니다.",
+      "commonErrors": ["어셈블리 또는 네임스페이스 규칙 불일치", "ViewModel 생성자 의존성이 DI에 등록되지 않음", "AutoWire 속성을 잘못된 루트 요소에 지정"],
+      "relatedTerms": ["Locator", "Convention", "DataContext", "DI"],
+      "relatedNodeNames": ["ViewModelBinder", "ViewModelLocator"]
+    },
+    {
+      "id": "hybrid-wpf-blazor",
+      "title": "WPF + Blazor Hybrid",
+      "icon": "04",
+      "summary": "데스크톱 셸 안에서 Blazor UI를 호스팅하고 두 UI 계층의 책임을 나눕니다.",
+      "difficulty": "중급",
+      "time": "25분",
+      "platforms": ["WPF", "Blazor", "Windows"],
+      "packages": ["Dreamine.Hybrid", "Dreamine.Hybrid.Wpf"],
+      "prerequisites": ["WPF 부트스트랩 이해", "Blazor 컴포넌트 기초"],
+      "steps": [
+        {"title": "Hybrid 패키지 선택", "description": "필요한 앱에만 Hybrid 계층을 추가합니다.", "language": "xml", "code": "<PackageReference Include=\"Dreamine.Hybrid\" Version=\"*\" />\n<PackageReference Include=\"Dreamine.Hybrid.Wpf\" Version=\"*\" />"},
+        {"title": "호스트와 웹 UI 책임 분리", "description": "윈도우 수명주기와 네이티브 기능은 WPF, 화면 컴포넌트는 Blazor에 둡니다.", "language": "text", "code": "WPF Shell → Hybrid Host → Blazor Components"}
+      ],
+      "expectedResult": "WPF 창 내부에 Blazor UI가 표시되고 공용 서비스는 DI를 통해 공유됩니다.",
+      "commonErrors": ["웹 정적 자산 경로 누락", "WPF와 Blazor에 서비스를 중복 등록", "UI 스레드 경계를 무시"],
+      "relatedTerms": ["Hybrid", "Host", "DI", "Lifecycle"],
+      "relatedNodeNames": ["BlazorWebView", "Hybrid"]
+    },
+    {
+      "id": "communication-client",
+      "title": "통신 클라이언트 연결",
+      "icon": "05",
+      "summary": "전송 계층과 프로토콜을 분리해 Socket·RabbitMQ 통신을 화면 로직에서 격리합니다.",
+      "difficulty": "중급",
+      "time": "30분",
+      "platforms": [".NET", "WPF"],
+      "packages": ["Communication.FullKit"],
+      "prerequisites": ["사용할 transport와 서버 주소", "취소·재연결 정책"],
+      "steps": [
+        {"title": "전송 방식 선택", "description": "Socket 또는 RabbitMQ 구현을 선택하고 UI에는 인터페이스만 노출합니다.", "language": "text", "code": "ViewModel → Communication Service → Transport → Remote endpoint"},
+        {"title": "수명주기와 취소 연결", "description": "화면 종료 시 CancellationToken과 Dispose 흐름이 닫히도록 구성합니다.", "language": "csharp", "code": "await client.ConnectAsync(cancellationToken);\n// 화면 종료 시 cancellationToken 취소 및 리소스 정리"}
+      ],
+      "expectedResult": "ViewModel은 연결 구현을 몰라도 상태와 메시지를 비동기로 주고받습니다.",
+      "commonErrors": ["재연결 루프가 중복 실행됨", "이벤트 구독 해제로 누수 방지하지 않음", "UI 스레드에 결과를 전달하지 않음"],
+      "relatedTerms": ["Transport", "Protocol", "CancellationToken", "Lifecycle"],
+      "relatedNodeNames": ["RabbitMq", "Socket", "ConnectAsync"]
+    },
+    {
+      "id": "industrial-io-plc",
+      "title": "PLC·산업 I/O 시작",
+      "icon": "06",
+      "summary": "실장비 연결 전에 메모리 시뮬레이터로 주소·읽기·쓰기 흐름을 검증합니다.",
+      "difficulty": "중급",
+      "time": "35분",
+      "platforms": ["WPF", "Windows", "PLC"],
+      "packages": ["Industrial I/O modules"],
+      "prerequisites": ["PLC 주소 맵", "통신 방식", "SampleSmart 샘플"],
+      "steps": [
+        {"title": "시뮬레이터부터 실행", "description": "실장비 없이 InMemory PLC 탭에서 동일한 읽기·쓰기 계약을 확인합니다.", "language": "text", "code": "SampleSmart → PLC → InMemory simulator"},
+        {"title": "실제 transport로 교체", "description": "시뮬레이터에서 확인한 프로토콜을 실제 PLC 전송 구현에 연결합니다.", "language": "text", "code": "UI → PLC service → Protocol → Transport → PLC"}
+      ],
+      "expectedResult": "동일한 화면과 서비스 계약을 유지하면서 시뮬레이터와 실장비를 교체할 수 있습니다.",
+      "commonErrors": ["주소 단위(bit/word) 혼동", "엔디언과 데이터 타입 불일치", "폴링 주기와 UI 갱신 주기를 동일하게 묶음"],
+      "relatedTerms": ["PLC", "Protocol", "Transport", "Simulator"],
+      "relatedNodeNames": ["PlcSampleRuntime", "InMemoryPlc", "Fastech"]
+    },
+    {
+      "id": "database-repository",
+      "title": "SQLite·MySQL 데이터 연결",
+      "icon": "07",
+      "summary": "Repository 경계를 두어 ViewModel이 DB 공급자와 연결 문자열을 직접 알지 않게 합니다.",
+      "difficulty": "중급",
+      "time": "25분",
+      "platforms": [".NET", "SQLite", "MySQL"],
+      "packages": ["Database modules"],
+      "prerequisites": ["데이터 모델", "마이그레이션 또는 스키마", "로컬 비밀 설정"],
+      "steps": [
+        {"title": "Repository 계약 정의", "description": "화면이 필요한 조회·저장 동작만 인터페이스로 노출합니다.", "language": "csharp", "code": "public interface IItemRepository\n{\n    Task<IReadOnlyList<Item>> GetAllAsync(CancellationToken ct);\n    Task SaveAsync(Item item, CancellationToken ct);\n}"},
+        {"title": "공급자 구현과 설정 분리", "description": "SQLite/MySQL 구현과 연결 문자열은 앱 구성 계층에 둡니다.", "language": "text", "code": "ViewModel → IItemRepository → SQLite/MySQL implementation"}
+      ],
+      "expectedResult": "UI 코드를 바꾸지 않고 DB 공급자나 테스트용 저장소를 교체할 수 있습니다.",
+      "commonErrors": ["연결 문자열을 소스에 커밋", "DbContext/Connection 수명주기 혼동", "취소 토큰과 비동기 호출을 누락"],
+      "relatedTerms": ["Repository", "Provider", "DI", "CancellationToken"],
+      "relatedNodeNames": ["Repository", "Sqlite", "MySql"]
+    }
+  ],
+  "glossary": [
+    {"term": "MVVM", "description": "View는 표시와 입력, ViewModel은 UI 상태와 명령, Model은 도메인 데이터를 담당하는 UI 구조입니다."},
+    {"term": "DI", "description": "객체가 필요한 구현을 직접 만들지 않고 외부에서 전달받아 결합도를 낮추는 방식입니다."},
+    {"term": "ViewModel", "description": "View가 바인딩하는 상태·명령을 제공하며 화면 컨트롤 자체를 직접 다루지 않는 계층입니다."},
+    {"term": "Locator", "description": "View 이름이나 등록 정보를 이용해 대응하는 ViewModel을 찾고 연결합니다."},
+    {"term": "Source Generator", "description": "컴파일 중 속성·명령 같은 반복 코드를 생성해 런타임 비용 없이 생산성을 높입니다."},
+    {"term": "Behavior", "description": "컨트롤을 상속하지 않고 재사용 가능한 UI 상호작용을 붙이는 구성요소입니다."},
+    {"term": "Transport", "description": "Socket·RabbitMQ·PLC 드라이버처럼 데이터를 실제로 운반하는 계층입니다."},
+    {"term": "Protocol", "description": "전송된 바이트나 메시지의 주소·구조·의미를 해석하는 규칙입니다."},
+    {"term": "Provider", "description": "SQLite·MySQL처럼 같은 계약을 서로 다른 기술로 구현하는 교체 가능한 구성요소입니다."},
+    {"term": "Hybrid", "description": "WPF 네이티브 셸과 Blazor 웹 UI처럼 서로 다른 UI 기술을 한 앱에서 함께 사용하는 구성입니다."},
+    {"term": "Lifecycle", "description": "생성·시작·중지·해제 순서와 객체가 살아 있는 범위를 뜻합니다."},
+    {"term": "CancellationToken", "description": "비동기 작업에 중단 요청을 전달해 화면 종료와 타임아웃을 안전하게 처리합니다."}
+  ],
+  "troubleshooting": [
+    {"symptom": "View가 열리지만 DataContext가 null입니다", "checks": ["DreamineAppBuilder.Initialize 호출 여부", "View/ViewModel 이름 규칙", "ViewModel 생성자 의존성 DI 등록", "AutoWireViewModel=True 위치"], "related": ["DreamineAppBuilder", "ViewModelBinder"]},
+    {"symptom": "DreamineProperty 또는 RelayCommand 결과가 생성되지 않습니다", "checks": ["클래스의 partial 선언", "특성 네임스페이스", "SourceGenerators 분석기 참조", "빌드 오류 목록의 generator 진단"], "related": ["DreaminePropertyAttribute", "RelayCommandAttribute"]},
+    {"symptom": "비동기 통신 후 화면이 갱신되지 않습니다", "checks": ["INotifyPropertyChanged 발생", "UI dispatcher 경계", "취소 토큰이 이미 취소되지 않았는지", "이벤트 구독 수명주기"], "related": ["Dispatcher", "CancellationToken"]},
+    {"symptom": "소스 코드 미리보기가 보이지 않습니다", "checks": ["보안 검사에서 설정·비밀 파일이 제외된 것은 정상", "지원되는 텍스트 확장자인지", "배포 스크립트로 source 미러를 다시 생성했는지"], "related": []},
+    {"symptom": "API 설명이 코드와 다르게 보입니다", "checks": ["XML 문서와 실제 시그니처 확인", "지식 그래프 재생성 후 enrichment 실행", "페이지의 근거 배지(XML/코드 추론/AI)를 확인"], "related": []}
+  ],
+  "compatibility": [
+    {"area": "Core / ViewModels / Interfaces", "wpf": "지원", "winforms": "지원", "blazor": "지원", "maui": "지원", "notes": "플랫폼 중립 계층"},
+    {"area": "WPF Runtime / Locator / Behavior", "wpf": "지원", "winforms": "-", "blazor": "-", "maui": "-", "notes": "Windows 전용"},
+    {"area": "Hybrid.Wpf", "wpf": "지원", "winforms": "-", "blazor": "호스팅", "maui": "-", "notes": "WPF + Blazor"},
+    {"area": "Cross UI samples", "wpf": "샘플", "winforms": "샘플", "blazor": "샘플", "maui": "일부", "notes": "실제 프로젝트 설정 확인"}
+  ]
+}

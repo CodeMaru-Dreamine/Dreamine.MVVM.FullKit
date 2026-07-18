@@ -4,8 +4,24 @@ using SampleCrossUi.Shared.ViewModels;
 
 namespace SampleCrossUi.WinForms;
 
+/// <summary>
+/// \if KO
+/// <para>Program 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates program functionality and related state.</para>
+/// \endif
+/// </summary>
 internal static class Program
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Main 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the main operation.</para>
+    /// \endif
+    /// </summary>
     [STAThread]
     private static void Main()
     {

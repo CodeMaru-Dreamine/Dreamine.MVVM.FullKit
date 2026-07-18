@@ -7,15 +7,50 @@ using System.Runtime.Versioning;
 namespace ShopPlatform.Services;
 
 /// <summary>
-/// 샵별 OG 미리보기 이미지(1200×630 PNG)를 동적으로 생성합니다.
-/// 이미 파일이 있으면 건너뜁니다.
+/// \if KO
+/// <para>샵별 OG 미리보기 이미지(1200×630 PNG)를 동적으로 생성합니다. 이미 파일이 있으면 건너뜁니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates og image generator functionality and related state.</para>
+/// \endif
 /// </summary>
 public static class OgImageGenerator
 {
+    /// <summary>
+    /// \if KO
+    /// <para>W 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the w value.</para>
+    /// \endif
+    /// </summary>
     private const int W = 1200;
+    /// <summary>
+    /// \if KO
+    /// <para>H 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the h value.</para>
+    /// \endif
+    /// </summary>
     private const int H = 630;
 
-    /// <summary>기본 플랫폼 OG 이미지 생성 (shop-og-default.png).</summary>
+    /// <summary>
+    /// \if KO
+    /// <para>기본 플랫폼 OG 이미지 생성 (shop-og-default.png).</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure default operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="wwwrootPath">
+    /// \if KO
+    /// <para>wwwroot Path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for wwwroot path.</para>
+    /// \endif
+    /// </param>
     public static void EnsureDefault(string wwwrootPath)
     {
         if (!OperatingSystem.IsWindowsVersionAtLeast(6, 1)) return; // Linux는 건너뜀
@@ -74,7 +109,62 @@ public static class OgImageGenerator
         bmp.Save(path, ImageFormat.Png);
     }
 
-    /// <summary>샵별 OG 이미지 생성 (og-{slug}.png) — 샵 이름/설명 포함.</summary>
+    /// <summary>
+    /// \if KO
+    /// <para>샵별 OG 이미지 생성 (og-{slug}.png) — 샵 이름/설명 포함.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure shop og operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="wwwrootPath">
+    /// \if KO
+    /// <para>wwwroot Path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for wwwroot path.</para>
+    /// \endif
+    /// </param>
+    /// <param name="slug">
+    /// \if KO
+    /// <para>slug에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for slug.</para>
+    /// \endif
+    /// </param>
+    /// <param name="shopName">
+    /// \if KO
+    /// <para>shop Name에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for shop name.</para>
+    /// \endif
+    /// </param>
+    /// <param name="description">
+    /// \if KO
+    /// <para>description에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for description.</para>
+    /// \endif
+    /// </param>
+    /// <param name="baseUrl">
+    /// \if KO
+    /// <para>base Url에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for base url.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Ensure Shop Og 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the ensure shop og operation.</para>
+    /// \endif
+    /// </returns>
     public static string EnsureShopOg(string wwwrootPath, string slug, string shopName, string description, string baseUrl)
     {
         if (!OperatingSystem.IsWindowsVersionAtLeast(6, 1))
@@ -133,6 +223,46 @@ public static class OgImageGenerator
         return $"/img/og/{fileName}";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Draw Round Rect 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the draw round rect operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="g">
+    /// \if KO
+    /// <para>g에 사용할 <c>Graphics</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Graphics</c> value used for g.</para>
+    /// \endif
+    /// </param>
+    /// <param name="brush">
+    /// \if KO
+    /// <para>brush에 사용할 <c>Brush</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Brush</c> value used for brush.</para>
+    /// \endif
+    /// </param>
+    /// <param name="rect">
+    /// \if KO
+    /// <para>rect에 사용할 <c>Rectangle</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Rectangle</c> value used for rect.</para>
+    /// \endif
+    /// </param>
+    /// <param name="radius">
+    /// \if KO
+    /// <para>radius에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for radius.</para>
+    /// \endif
+    /// </param>
     [SupportedOSPlatform("windows6.1")]
     private static void DrawRoundRect(Graphics g, Brush brush, Rectangle rect, int radius)
     {

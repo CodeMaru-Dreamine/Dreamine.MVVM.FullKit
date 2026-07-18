@@ -293,6 +293,41 @@ app.MapRazorComponents<AppShell>()
 
 app.Run();
 
+#pragma warning disable CS1587
+/// \cond LOCAL_FUNCTION_DOCUMENTATION
+/// <summary>
+/// \if KO
+/// <para>구성된 경로를 절대 경로로 확인하고, 값이 없으면 기본 경로를 반환합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Resolves the configured path to an absolute path, or returns the fallback when absent.</para>
+/// \endif
+/// </summary>
+/// <param name="configuredPath">
+/// \if KO
+/// <para>구성에서 읽은 선택적 경로입니다.</para>
+/// \endif
+/// \if EN
+/// <para>The optional path read from configuration.</para>
+/// \endif
+/// </param>
+/// <param name="fallback">
+/// \if KO
+/// <para>구성 경로가 없을 때 사용할 기본 경로입니다.</para>
+/// \endif
+/// \if EN
+/// <para>The fallback path used when no configured path is provided.</para>
+/// \endif
+/// </param>
+/// <returns>
+/// \if KO
+/// <para>해석된 절대 경로입니다.</para>
+/// \endif
+/// \if EN
+/// <para>The resolved absolute path.</para>
+/// \endif
+/// </returns>
+/// \endcond
 static string ResolvePath(string? configuredPath, string fallback)
 {
     if (string.IsNullOrWhiteSpace(configuredPath))
@@ -304,8 +339,41 @@ static string ResolvePath(string? configuredPath, string fallback)
         ? configuredPath
         : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
 }
+#pragma warning restore CS1587
 
+/// <summary>
+/// \if KO
+/// <para>Agent Login Request 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates agent login request functionality and related state.</para>
+/// \endif
+/// </summary>
 record AgentLoginRequest(string Email, string Password);
+/// <summary>
+/// \if KO
+/// <para>Agent Camera Dto 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates agent camera dto functionality and related state.</para>
+/// \endif
+/// </summary>
 record AgentCameraDto(string Id, string Name, string Host, string RtspUrl, bool AutoReconnect, bool IsPublic);
+/// <summary>
+/// \if KO
+/// <para>Agent Login Response 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates agent login response functionality and related state.</para>
+/// \endif
+/// </summary>
 record AgentLoginResponse(string Token, string TenantId, List<AgentCameraDto> Cameras);
+/// <summary>
+/// \if KO
+/// <para>Agent Sync Request 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates agent sync request functionality and related state.</para>
+/// \endif
+/// </summary>
 record AgentSyncRequest(string Token, List<AgentCameraDto> Cameras);

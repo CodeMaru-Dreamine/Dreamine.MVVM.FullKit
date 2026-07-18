@@ -1,4 +1,5 @@
 @page "/{Slug}/register"
+@using Dreamine.Identity
 @inject TenantContext Tenant
 @inject IShopTenantStore TenantStore
 @inject TenantDbContextFactory DbFactory
@@ -88,9 +89,9 @@
             _error = "비밀번호가 일치하지 않습니다.";
             return;
         }
-        if (_password.Length < 6)
+        if (_password.Length < 8)
         {
-            _error = "비밀번호는 6자 이상이어야 합니다.";
+            _error = "비밀번호는 8자 이상이어야 합니다.";
             return;
         }
         _loading = true;
@@ -105,7 +106,7 @@
         var user = new ShopUser
         {
             Email = emailLower,
-            PasswordHash = SimpleHash(_password),
+            PasswordHash = DreaminePasswordHasher.HashPassword(_password),
             Name = _name.Trim(),
             Phone = _phone.Trim(),
             Address = _address.Trim()
@@ -115,8 +116,4 @@
         Session.Login(user);
         Nav.NavigateTo($"/{Slug}");
     }
-
-    private static string SimpleHash(string plain) =>
-        Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(
-            System.Text.Encoding.UTF8.GetBytes(plain + "ShopPlatformSalt2025")));
 }

@@ -3,8 +3,24 @@ using System.Threading;
 
 namespace Dreamine.FullKit.Tests.Hybrid;
 
+/// <summary>
+/// \if KO
+/// <para>Hybrid State Store Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates hybrid state store tests functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class HybridStateStoreTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>State Updates State And Fires Event 값을 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Sets the state updates state and fires event value.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void SetState_UpdatesStateAndFiresEvent()
     {
@@ -19,6 +35,14 @@ public sealed class HybridStateStoreTests
         Assert.Equal(new[] { 1, 2 }, received);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Update Applies Transform And Fires Event 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the update applies transform and fires event operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void Update_AppliesTransformAndFiresEvent()
     {
@@ -33,6 +57,14 @@ public sealed class HybridStateStoreTests
         Assert.Equal(15, received[0]);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Subscribe Returns Disposable That Unsubscribes 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the subscribe returns disposable that unsubscribes operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void Subscribe_ReturnsDisposableThatUnsubscribes()
     {
@@ -47,6 +79,14 @@ public sealed class HybridStateStoreTests
         Assert.Equal(1, count);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>이 인스턴스가 소유한 리소스를 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Releases resources owned by this instance.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void Dispose_IsIdempotent()
     {
@@ -61,6 +101,22 @@ public sealed class HybridStateStoreTests
         Assert.Equal(0, count);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>State Concurrent Calls All Events Delivered 값을 설정합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Sets the state concurrent calls all events delivered value.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Set State Concurrent Calls All Events Delivered 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the set state concurrent calls all events delivered operation.</para>
+    /// \endif
+    /// </returns>
     [Fact]
     public async Task SetState_ConcurrentCalls_AllEventsDelivered()
     {
@@ -79,6 +135,22 @@ public sealed class HybridStateStoreTests
         Assert.Equal(iterations, eventCount);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Update Concurrent Calls State Remains Consistent 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the update concurrent calls state remains consistent operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Update Concurrent Calls State Remains Consistent 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the update concurrent calls state remains consistent operation.</para>
+    /// \endif
+    /// </returns>
     [Fact]
     public async Task Update_ConcurrentCalls_StateRemainsConsistent()
     {

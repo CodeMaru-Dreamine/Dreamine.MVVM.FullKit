@@ -34,6 +34,7 @@
     <ProjectReference Include="..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
     <ProjectReference Include="..\..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\Identity\Dreamine.Identity.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Locators.Wpf\Dreamine.MVVM.Locators.Wpf.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Locators\Dreamine.MVVM.Locators.csproj" />

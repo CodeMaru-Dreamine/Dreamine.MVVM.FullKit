@@ -8,8 +8,24 @@ using Dreamine.Database.Sqlite;
 
 namespace Dreamine.FullKit.Tests.Database;
 
+/// <summary>
+/// \if KO
+/// <para>Database Provider Dialect Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates database provider dialect tests functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class DatabaseProviderDialectTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Sqlite Provider Builds Sqlite Create Table Sql 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the sqlite provider builds sqlite create table sql operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void SqliteProvider_BuildsSqliteCreateTableSql()
     {
@@ -20,6 +36,14 @@ public sealed class DatabaseProviderDialectTests
         Assert.Contains("\"Name\" TEXT", sql);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>My Sql Provider Builds My Sql Create Table Sql 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the my sql provider builds my sql create table sql operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void MySqlProvider_BuildsMySqlCreateTableSql()
     {
@@ -30,6 +54,14 @@ public sealed class DatabaseProviderDialectTests
         Assert.Contains("`Name` TEXT", sql);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Oracle Provider Builds Oracle Create Table Sql 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the oracle provider builds oracle create table sql operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void OracleProvider_BuildsOracleCreateTableSql()
     {
@@ -40,6 +72,14 @@ public sealed class DatabaseProviderDialectTests
         Assert.Contains("\"NAME\" NVARCHAR2(2000)", sql);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Sql Server Provider Builds Sql Server Create Table Sql 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the sql server provider builds sql server create table sql operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void SqlServerProvider_BuildsSqlServerCreateTableSql()
     {
@@ -51,6 +91,14 @@ public sealed class DatabaseProviderDialectTests
         Assert.Contains("[Name] NVARCHAR(MAX)", sql);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Database Entity Map Caches Maps Per Entity Type 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the database entity map caches maps per entity type operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void DatabaseEntityMap_CachesMapsPerEntityType()
     {
@@ -62,6 +110,22 @@ public sealed class DatabaseProviderDialectTests
         Assert.Same(first.UpdatableProperties, second.UpdatableProperties);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Database Provider Base Sql Cache Returns Same String Reference On Subsequent Calls 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the database provider base sql cache returns same string reference on subsequent calls operation.</para>
+    /// \endif
+    /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// \if KO
+    /// <para>현재 객체 상태에서 Database Provider Base Sql Cache Returns Same String Reference On Subsequent Calls 작업을 수행할 수 없는 경우 발생합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Thrown when the database provider base sql cache returns same string reference on subsequent calls operation is not valid for the current object state.</para>
+    /// \endif
+    /// </exception>
     [Fact]
     public void DatabaseProviderBase_SqlCache_ReturnsSameStringReferenceOnSubsequentCalls()
     {
@@ -88,6 +152,38 @@ public sealed class DatabaseProviderDialectTests
         Assert.Same(first, second);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Create Table Sql 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the create table sql value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="provider">
+    /// \if KO
+    /// <para>provider에 사용할 <c>object</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>object</c> value used for provider.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Create Table Sql 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build create table sql operation.</para>
+    /// \endif
+    /// </returns>
+    /// <exception cref="InvalidOperationException">
+    /// \if KO
+    /// <para>현재 객체 상태에서 Build Create Table Sql 작업을 수행할 수 없는 경우 발생합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Thrown when the build create table sql operation is not valid for the current object state.</para>
+    /// \endif
+    /// </exception>
     private static string BuildCreateTableSql(object provider)
     {
         var method = provider
@@ -99,15 +195,47 @@ public sealed class DatabaseProviderDialectTests
         return (string)method.Invoke(provider, [map])!;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Dialect Sample 기능과 관련 상태를 캡슐화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Encapsulates dialect sample functionality and related state.</para>
+    /// \endif
+    /// </summary>
     [DatabaseTable("DialectSamples")]
     private sealed class DialectSample
     {
+        /// <summary>
+        /// \if KO
+        /// <para>Id 값을 가져오거나 설정합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Gets or sets the id value.</para>
+        /// \endif
+        /// </summary>
         [DatabaseKey]
         [DatabaseGenerated]
         public int Id { get; set; }
 
+        /// <summary>
+        /// \if KO
+        /// <para>Name 값을 가져오거나 설정합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Gets or sets the name value.</para>
+        /// \endif
+        /// </summary>
         public string Name { get; set; } = string.Empty;
 
+        /// <summary>
+        /// \if KO
+        /// <para>Created At 값을 가져오거나 설정합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Gets or sets the created at value.</para>
+        /// \endif
+        /// </summary>
         public DateTime CreatedAt { get; set; }
     }
 }

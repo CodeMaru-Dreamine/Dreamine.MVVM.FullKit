@@ -5,104 +5,751 @@ using SampleCrossUi.Shared.ViewModels;
 
 namespace SampleCrossUi.WinForms.Pages;
 
+/// <summary>
+/// \if KO
+/// <para>Controls Page 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates controls page functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class ControlsPage : UserControl
 {
     // ── top-level ─────────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>title 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the title value.</para>
+    /// \endif
+    /// </summary>
     private Label              _title       = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>tabs 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tabs value.</para>
+    /// \endif
+    /// </summary>
     private DreamineTabControl _tabs        = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>status Label 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the status label value.</para>
+    /// \endif
+    /// </summary>
     private Label              _statusLabel = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>layout 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the layout value.</para>
+    /// \endif
+    /// </summary>
     private Panel              _layout      = null!;
 
     // ── Button tab ────────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>tab Button 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab button value.</para>
+    /// \endif
+    /// </summary>
     private TabPage         _tabButton     = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>tab Button Flow 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab button flow value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _tabButtonFlow = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Button Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl button card value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblButtonCard = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Click Me 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn click me value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton  _btnClickMe    = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Click Count 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl click count value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblClickCount = null!;
 
     // ── CheckBox/Radio tab ────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>tab Check Radio 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab check radio value.</para>
+    /// \endif
+    /// </summary>
     private TabPage           _tabCheckRadio     = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>tab Check Radio Flow 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab check radio flow value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel   _tabCheckRadioFlow = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Cb Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl cb card value.</para>
+    /// \endif
+    /// </summary>
     private Label             _lblCbCard         = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>cb1 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the cb1 value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckBox  _cb1               = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>cb2 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the cb2 value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckBox  _cb2               = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>cb3 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the cb3 value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckBox  _cb3               = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Rb Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl rb card value.</para>
+    /// \endif
+    /// </summary>
     private Label             _lblRbCard         = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>radio Panel 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the radio panel value.</para>
+    /// \endif
+    /// </summary>
     private Panel             _radioPanel        = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>rb1 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the rb1 value.</para>
+    /// \endif
+    /// </summary>
     private DreamineRadioButton _rb1             = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>rb2 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the rb2 value.</para>
+    /// \endif
+    /// </summary>
     private DreamineRadioButton _rb2             = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>rb3 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the rb3 value.</para>
+    /// \endif
+    /// </summary>
     private DreamineRadioButton _rb3             = null!;
 
     // ── CheckLed tab ──────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>tab Led 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab led value.</para>
+    /// \endif
+    /// </summary>
     private TabPage         _tabLed      = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>tab Led Flow 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab led flow value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _tabLedFlow  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Led Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl led card value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblLedCard  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>led 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the led value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckLed _led        = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>led Btn Row 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the led btn row value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel  _ledBtnRow  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Toggle 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn toggle value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton   _btnToggle  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Pulse 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn pulse value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton   _btnPulse   = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Corner Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl corner card value.</para>
+    /// \endif
+    /// </summary>
     private Label            _lblCornerCard = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>corner Row 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the corner row value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel  _cornerRow     = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>led Top Left 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the led top left value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckLed _ledTopLeft     = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>led Top Right 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the led top right value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckLed _ledTopRight    = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>led Bottom Left 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the led bottom left value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckLed _ledBottomLeft  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>led Bottom Right 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the led bottom right value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckLed _ledBottomRight = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Diameter Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl diameter card value.</para>
+    /// \endif
+    /// </summary>
     private Label            _lblDiameterCard = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>diameter Row 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the diameter row value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel  _diameterRow     = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>led D10 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the led d10 value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckLed _ledD10 = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>led D16 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the led d16 value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckLed _ledD16 = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>led D22 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the led d22 value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckLed _ledD22 = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>led D30 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the led d30 value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckLed _ledD30 = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>led D42 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the led d42 value.</para>
+    /// \endif
+    /// </summary>
     private DreamineCheckLed _ledD42 = null!;
 
     // ── TextBox tab ───────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>tab Text 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab text value.</para>
+    /// \endif
+    /// </summary>
     private TabPage         _tabText     = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>tab Text Flow 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab text flow value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _tabTextFlow = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Tb Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl tb card value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblTbCard   = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>tb Row 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tb row value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _tbRow       = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>tb 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tb value.</para>
+    /// \endif
+    /// </summary>
     private DreamineTextBox _tb          = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Clear Tb 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn clear tb value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton  _btnClearTb  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Tb Read Only Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl tb read only card value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblTbReadOnlyCard = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>tb Read Only 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tb read only value.</para>
+    /// \endif
+    /// </summary>
     private DreamineTextBox _tbReadOnly        = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Pb Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl pb card value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblPbCard   = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>pb Row 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the pb row value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _pbRow       = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>pb 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the pb value.</para>
+    /// \endif
+    /// </summary>
     private DreaminePasswordBox _pb      = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Clear Pb 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn clear pb value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton  _btnClearPb  = null!;
 
     // ── ComboBox tab ──────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>tab Combo 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab combo value.</para>
+    /// \endif
+    /// </summary>
     private TabPage         _tabCombo     = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>tab Combo Flow 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab combo flow value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _tabComboFlow = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Combo Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl combo card value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblComboCard = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>combo 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the combo value.</para>
+    /// \endif
+    /// </summary>
     private DreamineComboBox _combo       = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Selected 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl selected value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblSelected  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Combo Disabled Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl combo disabled card value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblComboDisabledCard = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>combo Disabled 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the combo disabled value.</para>
+    /// \endif
+    /// </summary>
     private DreamineComboBox _comboDisabled = null!;
 
     // ── DataGrid / ListBox tab ─────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>tab Grid 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab grid value.</para>
+    /// \endif
+    /// </summary>
     private TabPage         _tabGrid      = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>tab Grid Flow 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab grid flow value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _tabGridFlow  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Grid Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl grid card value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblGridCard  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>grid 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the grid value.</para>
+    /// \endif
+    /// </summary>
     private DreamineDataGrid _grid        = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl List Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl list card value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblListCard  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>list 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the list value.</para>
+    /// \endif
+    /// </summary>
     private DreamineListBox _list         = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Log Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl log card value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblLogCard   = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Log Click 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn log click value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton  _btnLogClick  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>log List 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the log list value.</para>
+    /// \endif
+    /// </summary>
     private DreamineListBox _logList      = null!;
 
     // ── Misc tab ──────────────────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>tab Misc 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab misc value.</para>
+    /// \endif
+    /// </summary>
     private TabPage         _tabMisc     = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>tab Misc Flow 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the tab misc flow value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _tabMiscFlow = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Exp Card 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl exp card value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblExpCard  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>expander 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the expander value.</para>
+    /// \endif
+    /// </summary>
     private DreamineExpander _expander   = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>lbl Exp Inner 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lbl exp inner value.</para>
+    /// \endif
+    /// </summary>
     private Label           _lblExpInner = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>data Grid View Text Box Column1 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the data grid view text box column1 value.</para>
+    /// \endif
+    /// </summary>
     private DataGridViewTextBoxColumn dataGridViewTextBoxColumn1 = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>data Grid View Text Box Column2 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the data grid view text box column2 value.</para>
+    /// \endif
+    /// </summary>
     private DataGridViewTextBoxColumn dataGridViewTextBoxColumn2 = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>data Grid View Text Box Column3 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the data grid view text box column3 value.</para>
+    /// \endif
+    /// </summary>
     private DataGridViewTextBoxColumn dataGridViewTextBoxColumn3 = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>vm 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the vm value.</para>
+    /// \endif
+    /// </summary>
     private readonly ControlsViewModel _vm;
 
-    /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>
+    /// <summary>
+    /// \if KO
+    /// <para>VS WinForms 디자이너용 기본 생성자.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="ControlsPage"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
     public ControlsPage() : this(new ControlsViewModel(new ControlsEvent())) { }
 
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="ControlsPage"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="ControlsPage"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="vm">
+    /// \if KO
+    /// <para>vm에 사용할 <c>ControlsViewModel</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ControlsViewModel</c> value used for vm.</para>
+    /// \endif
+    /// </param>
     public ControlsPage(ControlsViewModel vm)
     {
         _vm = vm;
@@ -189,9 +836,12 @@ public sealed class ControlsPage : UserControl
     }
 
     /// <summary>
-    /// WPF Button 탭(색상/ShineColor/크기/비활성+그림자 변형)과 동등한 데모 줄을 동적으로 만든다.
-    /// 개별 버튼마다 디자이너 필드를 두지 않고 코드로 생성한다(WinForms 디자이너가
-    /// InitializeComponent를 재생성할 때 비표준 코드를 지워버리는 문제를 피하기 위함).
+    /// \if KO
+    /// <para>WPF Button 탭(색상/ShineColor/크기/비활성+그림자 변형)과 동등한 데모 줄을 동적으로 만든다. 개별 버튼마다 디자이너 필드를 두지 않고 코드로 생성한다(WinForms 디자이너가 InitializeComponent를 재생성할 때 비표준 코드를 지워버리는 문제를 피하기 위함).</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the button showcase rows value.</para>
+    /// \endif
     /// </summary>
     private void BuildButtonShowcaseRows()
     {
@@ -232,6 +882,30 @@ public sealed class ControlsPage : UserControl
         _tabButtonFlow.Controls.Add(stateRow);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Make Card Label 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the make card label operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Make Card Label 작업에서 생성한 <c>Label</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Label</c> result produced by the make card label operation.</para>
+    /// \endif
+    /// </returns>
     private static Label MakeCardLabel(string text) => new()
     {
         AutoSize = true,
@@ -241,6 +915,46 @@ public sealed class ControlsPage : UserControl
         Text = text
     };
 
+    /// <summary>
+    /// \if KO
+    /// <para>Color Button 항목을 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Adds the color button item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="row">
+    /// \if KO
+    /// <para>row에 사용할 <c>FlowLayoutPanel</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>FlowLayoutPanel</c> value used for row.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="background">
+    /// \if KO
+    /// <para>background에 사용할 <c>Color</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Color</c> value used for background.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Add Color Button 작업에서 생성한 <c>DreamineButton</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>DreamineButton</c> result produced by the add color button operation.</para>
+    /// \endif
+    /// </returns>
     private DreamineButton AddColorButton(FlowLayoutPanel row, string text, Color background)
     {
         var btn = new DreamineButton
@@ -258,6 +972,46 @@ public sealed class ControlsPage : UserControl
         return btn;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Shine Button 항목을 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Adds the shine button item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="row">
+    /// \if KO
+    /// <para>row에 사용할 <c>FlowLayoutPanel</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>FlowLayoutPanel</c> value used for row.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="background">
+    /// \if KO
+    /// <para>background에 사용할 <c>Color</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Color</c> value used for background.</para>
+    /// \endif
+    /// </param>
+    /// <param name="shine">
+    /// \if KO
+    /// <para>shine에 사용할 <c>Color</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Color</c> value used for shine.</para>
+    /// \endif
+    /// </param>
     private void AddShineButton(FlowLayoutPanel row, string text, Color background, Color shine)
     {
         var btn = new DreamineButton
@@ -275,8 +1029,64 @@ public sealed class ControlsPage : UserControl
         row.Controls.Add(btn);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Max Showcase Button Height 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the max showcase button height value.</para>
+    /// \endif
+    /// </summary>
     private const int MaxShowcaseButtonHeight = 42;
 
+    /// <summary>
+    /// \if KO
+    /// <para>Size Button 항목을 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Adds the size button item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="row">
+    /// \if KO
+    /// <para>row에 사용할 <c>FlowLayoutPanel</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>FlowLayoutPanel</c> value used for row.</para>
+    /// \endif
+    /// </param>
+    /// <param name="text">
+    /// \if KO
+    /// <para>text에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="width">
+    /// \if KO
+    /// <para>width에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for width.</para>
+    /// \endif
+    /// </param>
+    /// <param name="height">
+    /// \if KO
+    /// <para>height에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for height.</para>
+    /// \endif
+    /// </param>
+    /// <param name="fontSize">
+    /// \if KO
+    /// <para>font Size에 사용할 <c>float</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>float</c> value used for font size.</para>
+    /// \endif
+    /// </param>
     private void AddSizeButton(FlowLayoutPanel row, string text, int width, int height, float fontSize)
     {
         // FlowLayoutPanel은 기본적으로 위쪽 정렬이라, 높이가 다른 버튼들을 그대로 두면
@@ -297,12 +1107,44 @@ public sealed class ControlsPage : UserControl
         row.Controls.Add(btn);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Property Changed 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the property changed event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private void OnPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ControlsViewModel.StatusMessage))
             _statusLabel.Text = _vm.StatusMessage;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Initialize Component 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the initialize component operation.</para>
+    /// \endif
+    /// </summary>
     private void InitializeComponent()
     {
         DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
@@ -1448,6 +2290,22 @@ public sealed class ControlsPage : UserControl
         PerformLayout();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>이 인스턴스가 소유한 리소스를 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Releases resources owned by this instance.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="disposing">
+    /// \if KO
+    /// <para>disposing에 사용할 <c>bool</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for disposing.</para>
+    /// \endif
+    /// </param>
     protected override void Dispose(bool disposing)
     {
         if (disposing) _vm.PropertyChanged -= OnPropertyChanged;

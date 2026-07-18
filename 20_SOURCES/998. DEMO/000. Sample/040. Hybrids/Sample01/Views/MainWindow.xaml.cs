@@ -17,9 +17,24 @@ using System.Windows;
 
 namespace Sample01.Views
 {
-    /// <summary>메인 윈도우입니다.</summary>
+    /// <summary>
+    /// \if KO
+    /// <para>메인 윈도우입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Encapsulates main window functionality and related state.</para>
+    /// \endif
+    /// </summary>
     public partial class MainWindow : Window
     {
+        /// <summary>
+        /// \if KO
+        /// <para>지정한 설정으로 <see cref="MainWindow"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Initializes a new instance of the <see cref="MainWindow"/> class with the specified settings.</para>
+        /// \endif
+        /// </summary>
         public MainWindow()
         {
             InitializeComponent();
@@ -27,6 +42,30 @@ namespace Sample01.Views
             Loaded += OnLoaded;
         }
 
+        /// <summary>
+        /// \if KO
+        /// <para>Loaded 이벤트 또는 상태 변경을 처리합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Handles the loaded event or state change.</para>
+        /// \endif
+        /// </summary>
+        /// <param name="sender">
+        /// \if KO
+        /// <para>이벤트를 발생시킨 객체입니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>The object that raised the event.</para>
+        /// \endif
+        /// </param>
+        /// <param name="e">
+        /// \if KO
+        /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Contains data associated with the event.</para>
+        /// \endif
+        /// </param>
         private async void OnLoaded(object sender, RoutedEventArgs e)
         {
             var hybrid = new HybridHostControl
@@ -44,6 +83,54 @@ namespace Sample01.Views
             await NavigateServerAsync(webView, "http://localhost:5000");
         }
 
+        /// <summary>
+        /// \if KO
+        /// <para>Navigate Server Async 작업을 수행합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Performs the navigate server async operation.</para>
+        /// \endif
+        /// </summary>
+        /// <param name="webView">
+        /// \if KO
+        /// <para>web View에 사용할 <c>WebView2</c> 값입니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>The <c>WebView2</c> value used for web view.</para>
+        /// \endif
+        /// </param>
+        /// <param name="url">
+        /// \if KO
+        /// <para>url에 사용할 <c>string</c> 값입니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>The <c>string</c> value used for url.</para>
+        /// \endif
+        /// </param>
+        /// <param name="timeoutMs">
+        /// \if KO
+        /// <para>timeout Ms에 사용할 <c>int</c> 값입니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>The <c>int</c> value used for timeout ms.</para>
+        /// \endif
+        /// </param>
+        /// <param name="intervalMs">
+        /// \if KO
+        /// <para>interval Ms에 사용할 <c>int</c> 값입니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>The <c>int</c> value used for interval ms.</para>
+        /// \endif
+        /// </param>
+        /// <returns>
+        /// \if KO
+        /// <para>Navigate Server Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>The <c>Task</c> result produced by the navigate server async operation.</para>
+        /// \endif
+        /// </returns>
         private static async Task NavigateServerAsync(WebView2 webView, string url, int timeoutMs = 15000, int intervalMs = 500)
         {
             try

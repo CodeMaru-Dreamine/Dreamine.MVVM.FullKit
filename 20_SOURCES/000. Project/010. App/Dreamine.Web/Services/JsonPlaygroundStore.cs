@@ -5,21 +5,73 @@ using DreamineWeb.Models;
 namespace DreamineWeb.Services;
 
 /// <summary>
-/// Stores and manages playground demo content as JSON.
-/// Creates the file from seed data on first run and backfills newly added seed items.
+/// \if KO
+/// <para>Json Playground Store 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Stores and manages playground demo content as JSON. Creates the file from seed data on first run and backfills newly added seed items.</para>
+/// \endif
 /// </summary>
 public sealed class JsonPlaygroundStore : IPlaygroundStore
 {
+    /// <summary>
+    /// \if KO
+    /// <para>path 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the path value.</para>
+    /// \endif
+    /// </summary>
     private readonly string _path;
+    /// <summary>
+    /// \if KO
+    /// <para>cache 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the cache value.</para>
+    /// \endif
+    /// </summary>
     private List<PlaygroundDemo>? _cache;
+    /// <summary>
+    /// \if KO
+    /// <para>lock 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the lock value.</para>
+    /// \endif
+    /// </summary>
     private static readonly SemaphoreSlim _lock = new(1, 1);
 
+    /// <summary>
+    /// \if KO
+    /// <para>json 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the json value.</para>
+    /// \endif
+    /// </summary>
     private static readonly JsonSerializerOptions _json = new()
     {
         WriteIndented = true,
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="JsonPlaygroundStore"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="JsonPlaygroundStore"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="opts">
+    /// \if KO
+    /// <para>opts에 사용할 <c>DreamineOptions</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>DreamineOptions</c> value used for opts.</para>
+    /// \endif
+    /// </param>
     public JsonPlaygroundStore(DreamineOptions opts)
     {
         var dir = opts.ResolvedDataPath;
@@ -27,6 +79,22 @@ public sealed class JsonPlaygroundStore : IPlaygroundStore
         _path = Path.Combine(dir, "playground.json");
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>All Async 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the all async value.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Get All Async 작업에서 생성한 <c>Task&lt;List&lt;PlaygroundDemo&gt;&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task&lt;List&lt;PlaygroundDemo&gt;&gt;</c> result produced by the get all async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task<List<PlaygroundDemo>> GetAllAsync()
     {
         if (_cache is not null) return _cache;
@@ -65,12 +133,60 @@ public sealed class JsonPlaygroundStore : IPlaygroundStore
         finally { _lock.Release(); }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Async 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the async value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="id">
+    /// \if KO
+    /// <para>id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for id.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Async 작업에서 생성한 <c>Task&lt;PlaygroundDemo?&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task&lt;PlaygroundDemo?&gt;</c> result produced by the get async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task<PlaygroundDemo?> GetAsync(string id)
     {
         var all = await GetAllAsync();
         return all.FirstOrDefault(x => x.Id == id);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Async 데이터를 저장합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Saves async data.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="demo">
+    /// \if KO
+    /// <para>demo에 사용할 <c>PlaygroundDemo</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>PlaygroundDemo</c> value used for demo.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Save Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the save async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task SaveAsync(PlaygroundDemo demo)
     {
         await _lock.WaitAsync();
@@ -87,6 +203,30 @@ public sealed class JsonPlaygroundStore : IPlaygroundStore
         finally { _lock.Release(); }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Delete Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the delete async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="id">
+    /// \if KO
+    /// <para>id에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for id.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Delete Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the delete async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task DeleteAsync(string id)
     {
         await _lock.WaitAsync();
@@ -100,12 +240,68 @@ public sealed class JsonPlaygroundStore : IPlaygroundStore
         finally { _lock.Release(); }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Persist Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the persist async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="list">
+    /// \if KO
+    /// <para>list에 사용할 <c>List&lt;PlaygroundDemo&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;PlaygroundDemo&gt;</c> value used for list.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Persist Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the persist async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task PersistAsync(List<PlaygroundDemo> list)
     {
         var json = JsonSerializer.Serialize(list, _json);
         await File.WriteAllTextAsync(_path, json);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Repair Seed Code Fields 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the repair seed code fields operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="demos">
+    /// \if KO
+    /// <para>demos에 사용할 <c>List&lt;PlaygroundDemo&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;PlaygroundDemo&gt;</c> value used for demos.</para>
+    /// \endif
+    /// </param>
+    /// <param name="seed">
+    /// \if KO
+    /// <para>seed에 사용할 <c>List&lt;PlaygroundDemo&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;PlaygroundDemo&gt;</c> value used for seed.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Repair Seed Code Fields 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the repair seed code fields condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private static bool RepairSeedCodeFields(List<PlaygroundDemo> demos, List<PlaygroundDemo> seed)
     {
         var changed = false;
@@ -141,7 +337,46 @@ public sealed class JsonPlaygroundStore : IPlaygroundStore
         return changed;
     }
 
-    /// <summary>\uC2DC\uB4DC \uAC12\uC774 \uC788\uACE0 \uD604\uC7AC \uAC12\uACFC \uB2E4\uB974\uBA74 \uC2DC\uB4DC \uAC12\uC73C\uB85C \uB36E\uC5B4\uC4F4\uB2E4.</summary>
+    /// <summary>
+    /// \if KO
+    /// <para>Sync Code Field 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Overwrites the current value with the seed value when the seed exists and the values differ.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="seedValue">
+    /// \if KO
+    /// <para>seed Value에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for seed value.</para>
+    /// \endif
+    /// </param>
+    /// <param name="current">
+    /// \if KO
+    /// <para>current에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for current.</para>
+    /// \endif
+    /// </param>
+    /// <param name="apply">
+    /// \if KO
+    /// <para>apply에 사용할 <c>Action&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Action&lt;string&gt;</c> value used for apply.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Sync Code Field 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the sync code field condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private static bool SyncCodeField(string seedValue, string current, Action<string> apply)
     {
         if (!string.IsNullOrWhiteSpace(seedValue) && !string.Equals(seedValue, current, StringComparison.Ordinal))
@@ -155,6 +390,22 @@ public sealed class JsonPlaygroundStore : IPlaygroundStore
     // ══════════════════════════════════════════════════════════
     //  Seed data - currently hard-coded control demos
     // ══════════════════════════════════════════════════════════
+    /// <summary>
+    /// \if KO
+    /// <para>Seed Defaults 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the seed defaults operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Seed Defaults 작업에서 생성한 <c>List&lt;PlaygroundDemo&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>List&lt;PlaygroundDemo&gt;</c> result produced by the seed defaults operation.</para>
+    /// \endif
+    /// </returns>
     private static List<PlaygroundDemo> SeedDefaults() =>
     [
         new()

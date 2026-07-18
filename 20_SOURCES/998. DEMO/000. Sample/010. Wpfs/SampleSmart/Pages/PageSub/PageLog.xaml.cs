@@ -16,10 +16,23 @@ using System.Windows.Shapes;
 namespace SampleSmart.Pages.PageSub
 {
     /// <summary>
-    /// PageLog.xaml에 대한 상호 작용 논리
+    /// \if KO
+    /// <para>PageLog.xaml에 대한 상호 작용 논리</para>
+    /// \endif
+    /// \if EN
+    /// <para>Encapsulates page log functionality and related state.</para>
+    /// \endif
     /// </summary>
     public partial class PageLog : UserControl
     {
+        /// <summary>
+        /// \if KO
+        /// <para>지정한 설정으로 <see cref="PageLog"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Initializes a new instance of the <see cref="PageLog"/> class with the specified settings.</para>
+        /// \endif
+        /// </summary>
         public PageLog()
         {
             InitializeComponent();

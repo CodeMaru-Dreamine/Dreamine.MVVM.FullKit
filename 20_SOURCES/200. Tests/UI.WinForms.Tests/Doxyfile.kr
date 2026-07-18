@@ -1,0 +1,62 @@
+# Generated from project metadata by 10_DOCUMENTS/Doxygen/Generate-DoxygenConfigs.ps1
+DOXYFILE_ENCODING       = UTF-8
+PROJECT_NAME            = "Dreamine.UI.WinForms.Tests"
+PROJECT_NUMBER          = "1.0.0.0"
+PROJECT_BRIEF           = "Dreamine.UI.WinForms.Tests 기능을 검증하는 자동화 테스트 프로젝트입니다."
+OUTPUT_DIRECTORY        = "../../../10_DOCUMENTS/Doxygen/200. Tests/Dreamine.UI.WinForms.Tests/KR"
+OUTPUT_LANGUAGE         = Korean
+ENABLED_SECTIONS        = KO
+
+INPUT                    = "." "README_KO.md"
+USE_MDFILE_AS_MAINPAGE   = "README_KO.md"
+FILE_PATTERNS            = *.cs *.md
+RECURSIVE                = YES
+EXCLUDE                  = bin obj .git .vs node_modules TestResults wwwroot "README.md"
+EXCLUDE_PATTERNS         = */bin/* */obj/* */.git/* */.vs/* */node_modules/* */TestResults/* */wwwroot/* */Generated/* */generated/* *.g.cs *.g.i.cs *.Designer.cs *.AssemblyInfo.cs *.AssemblyAttributes.cs
+
+EXTRACT_ALL              = YES
+EXTRACT_PRIVATE          = YES
+EXTRACT_STATIC           = YES
+EXTRACT_LOCAL_CLASSES    = YES
+EXTRACT_LOCAL_METHODS    = YES
+HIDE_UNDOC_MEMBERS       = NO
+HIDE_UNDOC_CLASSES       = NO
+FULL_PATH_NAMES          = NO
+SHORT_NAMES              = YES
+
+MARKDOWN_SUPPORT         = YES
+AUTOLINK_SUPPORT         = YES
+SOURCE_BROWSER           = YES
+INLINE_SOURCES           = YES
+REFERENCED_BY_RELATION   = YES
+REFERENCES_RELATION      = YES
+GENERATE_TREEVIEW        = YES
+SEARCHENGINE             = YES
+
+GENERATE_HTML            = YES
+GENERATE_LATEX           = NO
+GENERATE_XML             = YES
+HTML_COLORSTYLE          = TOGGLE
+HTML_DYNAMIC_MENUS       = YES
+DISABLE_INDEX            = NO
+
+HAVE_DOT                 = YES
+DOT_PATH                 = "C:/Program Files (x86)/Graphviz/bin"
+CLASS_GRAPH              = YES
+COLLABORATION_GRAPH      = YES
+GROUP_GRAPHS             = YES
+GRAPHICAL_HIERARCHY      = YES
+DIRECTORY_GRAPH          = YES
+CALL_GRAPH               = YES
+CALLER_GRAPH             = YES
+DOT_IMAGE_FORMAT         = png
+INTERACTIVE_SVG          = NO
+DOT_GRAPH_MAX_NODES      = 100
+MAX_DOT_GRAPH_DEPTH      = 4
+DOT_CLEANUP              = YES
+
+QUIET                    = NO
+WARNINGS                 = YES
+WARN_IF_UNDOCUMENTED     = YES
+WARN_IF_DOC_ERROR        = YES
+WARN_LOGFILE             = "doxygen-ko.warnings.log"

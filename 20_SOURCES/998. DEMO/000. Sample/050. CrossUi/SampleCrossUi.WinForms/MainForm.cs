@@ -7,30 +7,173 @@ using SampleCrossUi.WinForms.Pages;
 
 namespace SampleCrossUi.WinForms;
 
+/// <summary>
+/// \if KO
+/// <para>Main Form 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates main form functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class MainForm : Form
 {
     // ── Designer-visible fields ──────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>page Host 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the page host value.</para>
+    /// \endif
+    /// </summary>
     private Panel _pageHost = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>nav Panel 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the nav panel value.</para>
+    /// \endif
+    /// </summary>
     private Panel _navPanel = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>nav Flow 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the nav flow value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _navFlow = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Counter 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn counter value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton _btnCounter = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Light Bulb 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn light bulb value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton _btnLightBulb = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Controls 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn controls value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton _btnControls = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Popup 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn popup value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton _btnPopup = null!;
 
     // ── Runtime-only fields ──────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>nav Buttons 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the nav buttons value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton[] _navButtons = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>current Page 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the current page value.</para>
+    /// \endif
+    /// </summary>
     private UserControl? _currentPage;
+    /// <summary>
+    /// \if KO
+    /// <para>counter Page 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the counter page value.</para>
+    /// \endif
+    /// </summary>
     private CounterPage _counterPage = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>light Bulb Page 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the light bulb page value.</para>
+    /// \endif
+    /// </summary>
     private LightBulbPage _lightBulbPage = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>controls Page 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the controls page value.</para>
+    /// \endif
+    /// </summary>
     private ControlsPage _controlsPage = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>popup Page 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the popup page value.</para>
+    /// \endif
+    /// </summary>
     private PopupPage _popupPage = null!;
 
-    /// <summary>VS WinForms 디자이너용 기본 생성자.</summary>
+    /// <summary>
+    /// \if KO
+    /// <para>VS WinForms 디자이너용 기본 생성자.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="MainForm"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
     public MainForm() : this(
         new CounterViewModel(new CounterEvent(new SampleCrossUi.Shared.Services.CounterService())),
         new LightBulbViewModel(new LightBulbEvent(new LightBulbModel()))) { }
 
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="MainForm"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="MainForm"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="counterVm">
+    /// \if KO
+    /// <para>counter Vm에 사용할 <c>CounterViewModel</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CounterViewModel</c> value used for counter vm.</para>
+    /// \endif
+    /// </param>
+    /// <param name="lightBulbVm">
+    /// \if KO
+    /// <para>light Bulb Vm에 사용할 <c>LightBulbViewModel</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>LightBulbViewModel</c> value used for light bulb vm.</para>
+    /// \endif
+    /// </param>
     public MainForm(CounterViewModel counterVm, LightBulbViewModel lightBulbVm)
     {
         InitializeComponent();
@@ -56,6 +199,22 @@ public sealed class MainForm : Form
         Navigate(0);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Navigate 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the navigate operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="index">
+    /// \if KO
+    /// <para>index에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for index.</para>
+    /// \endif
+    /// </param>
     private void Navigate(int index)
     {
         for (int i = 0; i < _navButtons.Length; i++)
@@ -81,6 +240,14 @@ public sealed class MainForm : Form
         _currentPage.BringToFront();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Initialize Component 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the initialize component operation.</para>
+    /// \endif
+    /// </summary>
     private void InitializeComponent()
     {
         _btnCounter  = new DreamineButton();
@@ -160,8 +327,14 @@ public sealed class MainForm : Form
         ResumeLayout(false);
     }
 
-    /// <summary>네비게이션 바 버튼들을 가운데로 정렬한다(WPF DreamineNavigationBar는 자체적으로 처리하지만,
-    /// WinForms FlowLayoutPanel은 가운데 정렬을 직접 지원하지 않아 패딩으로 흉내낸다).</summary>
+    /// <summary>
+    /// \if KO
+    /// <para>네비게이션 바 버튼들을 가운데로 정렬한다(WPF DreamineNavigationBar는 자체적으로 처리하지만, WinForms FlowLayoutPanel은 가운데 정렬을 직접 지원하지 않아 패딩으로 흉내낸다).</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the center nav flow operation.</para>
+    /// \endif
+    /// </summary>
     private void CenterNavFlow()
     {
         var totalWidth = _navFlow.Controls.Cast<Control>().Sum(c => c.Width + c.Margin.Horizontal);
@@ -169,6 +342,22 @@ public sealed class MainForm : Form
         _navFlow.Padding = new Padding(offset, 0, 0, 0);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>이 인스턴스가 소유한 리소스를 해제합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Releases resources owned by this instance.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="disposing">
+    /// \if KO
+    /// <para>disposing에 사용할 <c>bool</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for disposing.</para>
+    /// \endif
+    /// </param>
     protected override void Dispose(bool disposing)
     {
         if (disposing)

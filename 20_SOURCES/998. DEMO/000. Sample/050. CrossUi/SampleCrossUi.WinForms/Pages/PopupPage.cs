@@ -5,15 +5,79 @@ using Dreamine.UI.WinForms.Popup;
 
 namespace SampleCrossUi.WinForms.Pages;
 
+/// <summary>
+/// \if KO
+/// <para>Popup Page 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates popup page functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class PopupPage : UserControl
 {
+    /// <summary>
+    /// \if KO
+    /// <para>title 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the title value.</para>
+    /// \endif
+    /// </summary>
     private Label         _title       = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>result Label 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the result label value.</para>
+    /// \endif
+    /// </summary>
     private Label         _resultLabel = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Msg Box 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn msg box value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton _btnMsgBox  = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Blink Ok 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn blink ok value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton _btnBlinkOk = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>btn Blink Alarm 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the btn blink alarm value.</para>
+    /// \endif
+    /// </summary>
     private DreamineButton _btnBlinkAlarm = null!;
+    /// <summary>
+    /// \if KO
+    /// <para>layout 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the layout value.</para>
+    /// \endif
+    /// </summary>
     private FlowLayoutPanel _layout    = null!;
 
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 설정으로 <see cref="PopupPage"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="PopupPage"/> class with the specified settings.</para>
+    /// \endif
+    /// </summary>
     public PopupPage()
     {
         InitializeComponent();
@@ -68,6 +132,14 @@ public sealed class PopupPage : UserControl
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Initialize Component 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the initialize component operation.</para>
+    /// \endif
+    /// </summary>
     private void InitializeComponent()
     {
         _title = new Label();

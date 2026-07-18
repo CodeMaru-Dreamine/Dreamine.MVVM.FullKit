@@ -5,16 +5,49 @@ using SampleSmart.Pages.PageSub.CommunicationTabs;
 namespace SampleSmart.Pages.PageSub.CommunicationTabs.Tcp;
 
 /// <summary>
-/// \brief TCP Server 테스트 이벤트 처리 클래스입니다.
+/// \if KO
+/// <para>\brief TCP Server 테스트 이벤트 처리 클래스입니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates tcp server test view event functionality and related state.</para>
+/// \endif
 /// </summary>
 public sealed class TcpServerTestViewEvent
 {
+    /// <summary>
+    /// \if KO
+    /// <para>runtime 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the runtime value.</para>
+    /// \endif
+    /// </summary>
     private readonly CommunicationSampleRuntime _runtime;
 
     /// <summary>
-    /// \brief TcpServerTestViewEvent 클래스의 새 인스턴스를 초기화합니다.
+    /// \if KO
+    /// <para>\brief TcpServerTestViewEvent 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="TcpServerTestViewEvent"/> class with the specified settings.</para>
+    /// \endif
     /// </summary>
-    /// <param name="runtime">Communication 샘플 공유 Runtime입니다.</param>
+    /// <param name="runtime">
+    /// \if KO
+    /// <para>Communication 샘플 공유 Runtime입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CommunicationSampleRuntime</c> value used for runtime.</para>
+    /// \endif
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// \if KO
+    /// <para>필수 입력 인자 중 하나가 <see langword="null"/>인 경우 발생합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Thrown when a required input argument is <see langword="null"/>.</para>
+    /// \endif
+    /// </exception>
     public TcpServerTestViewEvent(CommunicationSampleRuntime runtime)
     {
         _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
@@ -27,47 +60,92 @@ public sealed class TcpServerTestViewEvent
     }
 
     /// <summary>
-    /// \brief 선택 가능한 TCP Server 프로토콜 목록입니다.
+    /// \if KO
+    /// <para>\brief 선택 가능한 TCP Server 프로토콜 목록입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the tcp server protocols value.</para>
+    /// \endif
     /// </summary>
     public IReadOnlyList<string> TcpServerProtocols => _runtime.TcpProtocols;
 
     /// <summary>
-    /// \brief 선택 가능한 TCP Server 문자열 인코딩 목록입니다.
+    /// \if KO
+    /// <para>\brief 선택 가능한 TCP Server 문자열 인코딩 목록입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the tcp server encodings value.</para>
+    /// \endif
     /// </summary>
     public IReadOnlyList<string> TcpServerEncodings => _runtime.TextEncodings;
 
     /// <summary>
-    /// \brief 선택 가능한 TCP Server 송신 대상 정책 목록입니다.
+    /// \if KO
+    /// <para>\brief 선택 가능한 TCP Server 송신 대상 정책 목록입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the tcp server send target modes value.</para>
+    /// \endif
     /// </summary>
     public IReadOnlyList<string> TcpServerSendTargetModes => _runtime.TcpServerSendTargetModes;
 
     /// <summary>
-    /// \brief 선택된 TCP Server 프로토콜입니다.
+    /// \if KO
+    /// <para>\brief 선택된 TCP Server 프로토콜입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the selected tcp server protocol value.</para>
+    /// \endif
     /// </summary>
     public string SelectedTcpServerProtocol { get; set; }
 
     /// <summary>
-    /// \brief 선택된 TCP Server 문자열 인코딩입니다.
+    /// \if KO
+    /// <para>\brief 선택된 TCP Server 문자열 인코딩입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the selected tcp server encoding value.</para>
+    /// \endif
     /// </summary>
     public string SelectedTcpServerEncoding { get; set; }
 
     /// <summary>
-    /// \brief 선택된 TCP Server 송신 대상 정책입니다.
+    /// \if KO
+    /// <para>\brief 선택된 TCP Server 송신 대상 정책입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the selected tcp server send target mode value.</para>
+    /// \endif
     /// </summary>
     public string SelectedTcpServerSendTargetMode { get; set; }
 
     /// <summary>
-    /// \brief TCP Server Echo 응답 사용 여부입니다.
+    /// \if KO
+    /// <para>\brief TCP Server Echo 응답 사용 여부입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the is tcp server echo enabled value.</para>
+    /// \endif
     /// </summary>
     public bool IsTcpServerEchoEnabled { get; set; }
 
     /// <summary>
-    /// \brief TCP Server 송신 문자열입니다.
+    /// \if KO
+    /// <para>\brief TCP Server 송신 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the tcp server send text value.</para>
+    /// \endif
     /// </summary>
     public string TcpServerSendText { get; set; }
 
     /// <summary>
-    /// \brief 선택된 프로토콜로 TCP Server를 시작합니다.
+    /// \if KO
+    /// <para>\brief 선택된 프로토콜로 TCP Server를 시작합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start server operation.</para>
+    /// \endif
     /// </summary>
     public void StartServer()
     {
@@ -79,7 +157,12 @@ public sealed class TcpServerTestViewEvent
     }
 
     /// <summary>
-    /// \brief TCP Server를 종료합니다.
+    /// \if KO
+    /// <para>\brief TCP Server를 종료합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop server operation.</para>
+    /// \endif
     /// </summary>
     public void StopServer()
     {
@@ -87,7 +170,12 @@ public sealed class TcpServerTestViewEvent
     }
 
     /// <summary>
-    /// \brief 현재 TCP Server 옵션을 Runtime에 반영합니다.
+    /// \if KO
+    /// <para>\brief 현재 TCP Server 옵션을 Runtime에 반영합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the apply server options operation.</para>
+    /// \endif
     /// </summary>
     public void ApplyServerOptions()
     {
@@ -99,7 +187,12 @@ public sealed class TcpServerTestViewEvent
     }
 
     /// <summary>
-    /// \brief 선택된 프로토콜로 TCP Server에서 메시지를 송신합니다.
+    /// \if KO
+    /// <para>\brief 선택된 프로토콜로 TCP Server에서 메시지를 송신합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the send server operation.</para>
+    /// \endif
     /// </summary>
     public void SendServer()
     {

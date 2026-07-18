@@ -10,9 +10,25 @@ using Dreamine.FullKit.Tests.Core;
 
 namespace Dreamine.FullKit.Tests.Logging;
 
+/// <summary>
+/// \if KO
+/// <para>Logging Service Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates logging service tests functionality and related state.</para>
+/// \endif
+/// </summary>
 [Collection(DMContainerCollection.Name)]
 public sealed class LoggingServiceTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>In Memory Log Store Enforces Capacity And Raises Event 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the in memory log store enforces capacity and raises event operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void InMemoryLogStore_EnforcesCapacityAndRaisesEvent()
     {
@@ -28,6 +44,14 @@ public sealed class LoggingServiceTests
         Assert.Equal(new[] { "two", "three" }, store.GetEntries().Select(entry => entry.Message));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Dreamine Logger Filters Below Minimum And Suppresses Sink Failures 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the dreamine logger filters below minimum and suppresses sink failures operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void DreamineLogger_FiltersBelowMinimumAndSuppressesSinkFailures()
     {
@@ -44,6 +68,14 @@ public sealed class LoggingServiceTests
         Assert.Equal("kept", entry.Message);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Composite Log Sink Writes To All Sinks And Suppresses Failures 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the composite log sink writes to all sinks and suppresses failures operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void CompositeLogSink_WritesToAllSinksAndSuppressesFailures()
     {
@@ -62,6 +94,14 @@ public sealed class LoggingServiceTests
         Assert.Single(second.Entries);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Text File Log Sink Writes Formatted Entry To Daily File 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the text file log sink writes formatted entry to daily file operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void TextFileLogSink_WritesFormattedEntryToDailyFile()
     {
@@ -87,6 +127,22 @@ public sealed class LoggingServiceTests
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Dreamine Logging Registration Returns Shutdown Handle Without Concrete Sink Coupling 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the dreamine logging registration returns shutdown handle without concrete sink coupling operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Dreamine Logging Registration Returns Shutdown Handle Without Concrete Sink Coupling 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the dreamine logging registration returns shutdown handle without concrete sink coupling operation.</para>
+    /// \endif
+    /// </returns>
     [Fact]
     public async Task DreamineLoggingRegistration_ReturnsShutdownHandleWithoutConcreteSinkCoupling()
     {
@@ -120,6 +176,30 @@ public sealed class LoggingServiceTests
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Entry 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the entry operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="message">
+    /// \if KO
+    /// <para>처리할 메시지입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The message to process.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Entry 작업에서 생성한 <c>DreamineLogEntry</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>DreamineLogEntry</c> result produced by the entry operation.</para>
+    /// \endif
+    /// </returns>
     private static DreamineLogEntry Entry(string message)
     {
         return new DreamineLogEntry(
@@ -131,18 +211,82 @@ public sealed class LoggingServiceTests
             threadId: 1);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Recording Sink 기능과 관련 상태를 캡슐화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Encapsulates recording sink functionality and related state.</para>
+    /// \endif
+    /// </summary>
     private sealed class RecordingSink : IDreamineLogSink
     {
+        /// <summary>
+        /// \if KO
+        /// <para>Entries 값을 가져옵니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Gets the entries value.</para>
+        /// \endif
+        /// </summary>
         public List<DreamineLogEntry> Entries { get; } = new();
 
+        /// <summary>
+        /// \if KO
+        /// <para>데이터를 씁니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Writes data.</para>
+        /// \endif
+        /// </summary>
+        /// <param name="entry">
+        /// \if KO
+        /// <para>entry에 사용할 <c>DreamineLogEntry</c> 값입니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>The <c>DreamineLogEntry</c> value used for entry.</para>
+        /// \endif
+        /// </param>
         public void Write(DreamineLogEntry entry)
         {
             Entries.Add(entry);
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Throwing Sink 기능과 관련 상태를 캡슐화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Encapsulates throwing sink functionality and related state.</para>
+    /// \endif
+    /// </summary>
     private sealed class ThrowingSink : IDreamineLogSink
     {
+        /// <summary>
+        /// \if KO
+        /// <para>데이터를 씁니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Writes data.</para>
+        /// \endif
+        /// </summary>
+        /// <param name="entry">
+        /// \if KO
+        /// <para>entry에 사용할 <c>DreamineLogEntry</c> 값입니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>The <c>DreamineLogEntry</c> value used for entry.</para>
+        /// \endif
+        /// </param>
+        /// <exception cref="InvalidOperationException">
+        /// \if KO
+        /// <para>현재 객체 상태에서 Write 작업을 수행할 수 없는 경우 발생합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>Thrown when the write operation is not valid for the current object state.</para>
+        /// \endif
+        /// </exception>
         public void Write(DreamineLogEntry entry)
         {
             throw new InvalidOperationException("sink failed");

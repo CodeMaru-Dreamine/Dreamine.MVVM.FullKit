@@ -5,8 +5,56 @@ using System.Xml.Linq;
 
 namespace Codemaru.Services;
 
+/// <summary>
+/// \if KO
+/// <para>Landing Page Exporter 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates landing page exporter functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class LandingPageExporter
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Card Side Svg 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the card side svg value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>profile에 사용할 <c>CardProfile</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <param name="qrSvg">
+    /// \if KO
+    /// <para>qr Svg에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for qr svg.</para>
+    /// \endif
+    /// </param>
+    /// <param name="front">
+    /// \if KO
+    /// <para>front에 사용할 <c>bool</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for front.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Card Side Svg 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build card side svg operation.</para>
+    /// \endif
+    /// </returns>
     public string BuildCardSideSvg(CardProfile profile, string qrSvg, bool front)
     {
         if (front && !string.IsNullOrWhiteSpace(profile.ImportedFrontImageDataUrl))
@@ -22,6 +70,46 @@ public sealed class LandingPageExporter
         return front ? BuildFrontCardSvg(profile, qrSvg) : BuildBackCardSvg(profile);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Card Side Html 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the card side html value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>profile에 사용할 <c>CardProfile</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <param name="qrSvg">
+    /// \if KO
+    /// <para>qr Svg에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for qr svg.</para>
+    /// \endif
+    /// </param>
+    /// <param name="front">
+    /// \if KO
+    /// <para>front에 사용할 <c>bool</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for front.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Card Side Html 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build card side html operation.</para>
+    /// \endif
+    /// </returns>
     public string BuildCardSideHtml(CardProfile profile, string qrSvg, bool front)
     {
         var card = front
@@ -48,6 +136,38 @@ public sealed class LandingPageExporter
         return html.ToString();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Html 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the html value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>profile에 사용할 <c>CardProfile</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <param name="qrPayload">
+    /// \if KO
+    /// <para>qr Payload에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for qr payload.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Html 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build html operation.</para>
+    /// \endif
+    /// </returns>
     public string BuildHtml(CardProfile profile, string qrPayload)
     {
         var palette = GetThemePalette(profile.LandingTheme);
@@ -145,6 +265,38 @@ public sealed class LandingPageExporter
         return html.ToString();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Front Card 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the front card value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>profile에 사용할 <c>CardProfile</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <param name="qrSvg">
+    /// \if KO
+    /// <para>qr Svg에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for qr svg.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Front Card 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build front card operation.</para>
+    /// \endif
+    /// </returns>
     private static string BuildFrontCard(CardProfile profile, string qrSvg)
     {
         return $"""
@@ -162,6 +314,30 @@ public sealed class LandingPageExporter
         """;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Back Card 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the back card value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>profile에 사용할 <c>CardProfile</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Back Card 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build back card operation.</para>
+    /// \endif
+    /// </returns>
     private static string BuildBackCard(CardProfile profile)
     {
         var logo = string.IsNullOrWhiteSpace(profile.LogoImageDataUrl)
@@ -181,6 +357,30 @@ public sealed class LandingPageExporter
         """;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Card Css 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the card css value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>profile에 사용할 <c>CardProfile</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Card Css 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build card css operation.</para>
+    /// \endif
+    /// </returns>
     private static string BuildCardCss(CardProfile profile)
     {
         var width = Math.Clamp(profile.CardWidthMm, 40, 140);
@@ -208,11 +408,29 @@ public sealed class LandingPageExporter
     }
 
     /// <summary>
-    /// 모바일/iPhone/Android/Gmail용 표준 vCard 3.0 문자열을 생성합니다.
-    /// URL은 랜딩 슬러그가 아닌 기본 웹 사이트 주소만 사용합니다.
+    /// \if KO
+    /// <para>모바일/iPhone/Android/Gmail용 표준 vCard 3.0 문자열을 생성합니다. URL은 랜딩 슬러그가 아닌 기본 웹 사이트 주소만 사용합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the v card value.</para>
+    /// \endif
     /// </summary>
-    /// <param name="profile">명함 프로필입니다.</param>
-    /// <returns>UTF-8 vCard 3.0 문자열입니다.</returns>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>명함 프로필입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>UTF-8 vCard 3.0 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build v card operation.</para>
+    /// \endif
+    /// </returns>
     public string BuildVCard(CardProfile profile)
     {
         var name = profile.Name.Trim();
@@ -249,11 +467,29 @@ public sealed class LandingPageExporter
     }
 
     /// <summary>
-    /// Windows Contacts(wab.exe)용 vCard 2.1 문자열을 생성합니다.
-    /// 한글 필드는 Windows Contacts 호환을 위해 CP949 quoted-printable로 저장합니다.
+    /// \if KO
+    /// <para>Windows Contacts(wab.exe)용 vCard 2.1 문자열을 생성합니다. 한글 필드는 Windows Contacts 호환을 위해 CP949 quoted-printable로 저장합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the windows v card value.</para>
+    /// \endif
     /// </summary>
-    /// <param name="profile">명함 프로필입니다.</param>
-    /// <returns>ASCII quoted-printable 기반 vCard 2.1 문자열입니다.</returns>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>명함 프로필입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>ASCII quoted-printable 기반 vCard 2.1 문자열입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build windows v card operation.</para>
+    /// \endif
+    /// </returns>
     public string BuildWindowsVCard(CardProfile profile)
     {
         var name = profile.Name.Trim();
@@ -287,6 +523,38 @@ public sealed class LandingPageExporter
         return string.Join("\r\n", lines.Select(FoldQuotedPrintableVCardLine)) + "\r\n";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Front Card Svg 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the front card svg value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>profile에 사용할 <c>CardProfile</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <param name="qrSvg">
+    /// \if KO
+    /// <para>qr Svg에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for qr svg.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Front Card Svg 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build front card svg operation.</para>
+    /// \endif
+    /// </returns>
     private static string BuildFrontCardSvg(CardProfile profile, string qrSvg)
     {
         const double scale = 10;
@@ -327,6 +595,38 @@ public sealed class LandingPageExporter
         """;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Imported Image Card Svg 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the imported image card svg value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>profile에 사용할 <c>CardProfile</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <param name="imageDataUrl">
+    /// \if KO
+    /// <para>image Data Url에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for image data url.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Imported Image Card Svg 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build imported image card svg operation.</para>
+    /// \endif
+    /// </returns>
     private static string BuildImportedImageCardSvg(CardProfile profile, string imageDataUrl)
     {
         const double scale = 10;
@@ -341,6 +641,30 @@ public sealed class LandingPageExporter
         """;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Back Card Svg 값을 구성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Builds the back card svg value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>profile에 사용할 <c>CardProfile</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Build Back Card Svg 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the build back card svg operation.</para>
+    /// \endif
+    /// </returns>
     private static string BuildBackCardSvg(CardProfile profile)
     {
         const double scale = 10;
@@ -366,6 +690,30 @@ public sealed class LandingPageExporter
         """;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Theme Palette 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the theme palette value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="theme">
+    /// \if KO
+    /// <para>theme에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for theme.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Theme Palette 작업에서 생성한 <c>(string Background, string Panel, string Text, string Muted)</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>(string Background, string Panel, string Text, string Muted)</c> result produced by the get theme palette operation.</para>
+    /// \endif
+    /// </returns>
     private static (string Background, string Panel, string Text, string Muted) GetThemePalette(string theme)
     {
         return theme switch
@@ -377,11 +725,67 @@ public sealed class LandingPageExporter
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Display Value 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the display value operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Display Value 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the display value operation.</para>
+    /// \endif
+    /// </returns>
     private static string DisplayValue(string value)
     {
         return string.IsNullOrWhiteSpace(value) ? "-" : value;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Utf8 Value 항목을 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Adds the utf8 value item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="lines">
+    /// \if KO
+    /// <para>lines에 사용할 <c>ICollection&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ICollection&lt;string&gt;</c> value used for lines.</para>
+    /// \endif
+    /// </param>
+    /// <param name="key">
+    /// \if KO
+    /// <para>key에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for key.</para>
+    /// \endif
+    /// </param>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
     private static void AddUtf8Value(ICollection<string> lines, string key, string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -392,6 +796,38 @@ public sealed class LandingPageExporter
         lines.Add($"{key};CHARSET=UTF-8:{EscapeVCard(value)}");
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Plain Value 항목을 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Adds the plain value item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="lines">
+    /// \if KO
+    /// <para>lines에 사용할 <c>ICollection&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ICollection&lt;string&gt;</c> value used for lines.</para>
+    /// \endif
+    /// </param>
+    /// <param name="key">
+    /// \if KO
+    /// <para>key에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for key.</para>
+    /// \endif
+    /// </param>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
     private static void AddPlainValue(ICollection<string> lines, string key, string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -402,6 +838,38 @@ public sealed class LandingPageExporter
         lines.Add($"{key}:{EscapeVCard(value)}");
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Plain Values 항목을 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Adds the plain values item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="lines">
+    /// \if KO
+    /// <para>lines에 사용할 <c>ICollection&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ICollection&lt;string&gt;</c> value used for lines.</para>
+    /// \endif
+    /// </param>
+    /// <param name="key">
+    /// \if KO
+    /// <para>key에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for key.</para>
+    /// \endif
+    /// </param>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
     private static void AddPlainValues(ICollection<string> lines, string key, string value)
     {
         foreach (var item in SplitMultiValue(value))
@@ -410,6 +878,38 @@ public sealed class LandingPageExporter
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Korean Quoted Printable Value 항목을 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Adds the korean quoted printable value item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="lines">
+    /// \if KO
+    /// <para>lines에 사용할 <c>ICollection&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ICollection&lt;string&gt;</c> value used for lines.</para>
+    /// \endif
+    /// </param>
+    /// <param name="key">
+    /// \if KO
+    /// <para>key에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for key.</para>
+    /// \endif
+    /// </param>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
     private static void AddKoreanQuotedPrintableValue(ICollection<string> lines, string key, string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -420,6 +920,30 @@ public sealed class LandingPageExporter
         lines.Add($"{key};CHARSET=ks_c_5601-1987;ENCODING=QUOTED-PRINTABLE:{ToKoreanQuotedPrintable(value)}");
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>V Card Contact Url 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the v card contact url value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="profile">
+    /// \if KO
+    /// <para>profile에 사용할 <c>CardProfile</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>CardProfile</c> value used for profile.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get V Card Contact Url 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the get v card contact url operation.</para>
+    /// \endif
+    /// </returns>
     private static string GetVCardContactUrl(CardProfile profile)
     {
         return string.IsNullOrWhiteSpace(profile.Website)
@@ -427,17 +951,89 @@ public sealed class LandingPageExporter
             : profile.Website.Trim().TrimEnd('/');
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>To Korean Quoted Printable 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the to korean quoted printable operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>To Korean Quoted Printable 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the to korean quoted printable operation.</para>
+    /// \endif
+    /// </returns>
     private static string ToKoreanQuotedPrintable(string value)
     {
         return ToQuotedPrintable(value, GetKoreanEncoding());
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Korean Encoding 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the korean encoding value.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Korean Encoding 작업에서 생성한 <c>Encoding</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Encoding</c> result produced by the get korean encoding operation.</para>
+    /// \endif
+    /// </returns>
     private static Encoding GetKoreanEncoding()
     {
         Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
         return Encoding.GetEncoding(949);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>To Quoted Printable 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the to quoted printable operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <param name="encoding">
+    /// \if KO
+    /// <para>encoding에 사용할 <c>Encoding</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Encoding</c> value used for encoding.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>To Quoted Printable 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the to quoted printable operation.</para>
+    /// \endif
+    /// </returns>
     private static string ToQuotedPrintable(string value, Encoding encoding)
     {
         if (string.IsNullOrEmpty(value))
@@ -468,6 +1064,30 @@ public sealed class LandingPageExporter
         return builder.ToString();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Photo 항목을 추가합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Adds the photo item.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="lines">
+    /// \if KO
+    /// <para>lines에 사용할 <c>ICollection&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>ICollection&lt;string&gt;</c> value used for lines.</para>
+    /// \endif
+    /// </param>
+    /// <param name="dataUrl">
+    /// \if KO
+    /// <para>data Url에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for data url.</para>
+    /// \endif
+    /// </param>
     private static void AddPhoto(ICollection<string> lines, string? dataUrl)
     {
         if (string.IsNullOrWhiteSpace(dataUrl) || !TryReadDataUrl(dataUrl, out var contentType, out var base64))
@@ -493,6 +1113,46 @@ public sealed class LandingPageExporter
         lines.Add($"PHOTO;TYPE={type};ENCODING=BASE64:{cleanBase64}");
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Read Data Url 작업을 시도하고 성공 여부를 반환합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Attempts to read data url and returns whether the operation succeeds.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="dataUrl">
+    /// \if KO
+    /// <para>data Url에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for data url.</para>
+    /// \endif
+    /// </param>
+    /// <param name="contentType">
+    /// \if KO
+    /// <para>content Type에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for content type.</para>
+    /// \endif
+    /// </param>
+    /// <param name="base64">
+    /// \if KO
+    /// <para>base64에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for base64.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Try Read Data Url 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the try read data url condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private static bool TryReadDataUrl(string dataUrl, out string contentType, out string base64)
     {
         contentType = string.Empty;
@@ -510,6 +1170,30 @@ public sealed class LandingPageExporter
         return base64.Length > 0;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Fold V Card Line By Utf8 Bytes 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the fold v card line by utf8 bytes operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="line">
+    /// \if KO
+    /// <para>line에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for line.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Fold V Card Line By Utf8 Bytes 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the fold v card line by utf8 bytes operation.</para>
+    /// \endif
+    /// </returns>
     private static string FoldVCardLineByUtf8Bytes(string line)
     {
         const int maxBytes = 75;
@@ -539,6 +1223,30 @@ public sealed class LandingPageExporter
         return builder.ToString();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Fold Quoted Printable V Card Line 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the fold quoted printable v card line operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="line">
+    /// \if KO
+    /// <para>line에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for line.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Fold Quoted Printable V Card Line 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the fold quoted printable v card line operation.</para>
+    /// \endif
+    /// </returns>
     private static string FoldQuotedPrintableVCardLine(string line)
     {
         const int maxLength = 73;
@@ -580,21 +1288,117 @@ public sealed class LandingPageExporter
         return builder.ToString();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Html 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the html operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Html 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the html operation.</para>
+    /// \endif
+    /// </returns>
     private static string Html(string? value)
     {
         return WebUtility.HtmlEncode(value ?? string.Empty);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Svg 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the svg operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Svg 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the svg operation.</para>
+    /// \endif
+    /// </returns>
     private static string Svg(string? value)
     {
         return WebUtility.HtmlEncode(value ?? string.Empty);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Css 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the css operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Css 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the css operation.</para>
+    /// \endif
+    /// </returns>
     private static string Css(string? value)
     {
         return (value ?? string.Empty).Replace("'", string.Empty, StringComparison.Ordinal);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Split Lines 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the split lines operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Split Lines 작업에서 생성한 <c>string[]</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string[]</c> result produced by the split lines operation.</para>
+    /// \endif
+    /// </returns>
     private static string[] SplitLines(string value)
     {
         return value
@@ -603,6 +1407,30 @@ public sealed class LandingPageExporter
             .Split('\n', StringSplitOptions.None);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Split Multi Value 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the split multi value operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Split Multi Value 작업에서 생성한 <c>IEnumerable&lt;string&gt;</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IEnumerable&lt;string&gt;</c> result produced by the split multi value operation.</para>
+    /// \endif
+    /// </returns>
     private static IEnumerable<string> SplitMultiValue(string value)
     {
         return (value ?? string.Empty)
@@ -612,6 +1440,70 @@ public sealed class LandingPageExporter
             .Where(static item => !string.IsNullOrWhiteSpace(item));
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Svg Text Lines 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the svg text lines operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="lines">
+    /// \if KO
+    /// <para>lines에 사용할 <c>IReadOnlyList&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IReadOnlyList&lt;string&gt;</c> value used for lines.</para>
+    /// \endif
+    /// </param>
+    /// <param name="x">
+    /// \if KO
+    /// <para>x에 사용할 <c>double</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>double</c> value used for x.</para>
+    /// \endif
+    /// </param>
+    /// <param name="y">
+    /// \if KO
+    /// <para>y에 사용할 <c>double</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>double</c> value used for y.</para>
+    /// \endif
+    /// </param>
+    /// <param name="fontSize">
+    /// \if KO
+    /// <para>font Size에 사용할 <c>double</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>double</c> value used for font size.</para>
+    /// \endif
+    /// </param>
+    /// <param name="lineHeight">
+    /// \if KO
+    /// <para>line Height에 사용할 <c>double</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>double</c> value used for line height.</para>
+    /// \endif
+    /// </param>
+    /// <param name="attributes">
+    /// \if KO
+    /// <para>attributes에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for attributes.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Svg Text Lines 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the svg text lines operation.</para>
+    /// \endif
+    /// </returns>
     private static string SvgTextLines(IReadOnlyList<string> lines, double x, double y, double fontSize, double lineHeight, string attributes)
     {
         var builder = new StringBuilder();
@@ -627,6 +1519,62 @@ public sealed class LandingPageExporter
         return builder.ToString();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Embed Svg 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the embed svg operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="svg">
+    /// \if KO
+    /// <para>svg에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for svg.</para>
+    /// \endif
+    /// </param>
+    /// <param name="x">
+    /// \if KO
+    /// <para>x에 사용할 <c>double</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>double</c> value used for x.</para>
+    /// \endif
+    /// </param>
+    /// <param name="y">
+    /// \if KO
+    /// <para>y에 사용할 <c>double</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>double</c> value used for y.</para>
+    /// \endif
+    /// </param>
+    /// <param name="width">
+    /// \if KO
+    /// <para>width에 사용할 <c>double</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>double</c> value used for width.</para>
+    /// \endif
+    /// </param>
+    /// <param name="height">
+    /// \if KO
+    /// <para>height에 사용할 <c>double</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>double</c> value used for height.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Embed Svg 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the embed svg operation.</para>
+    /// \endif
+    /// </returns>
     private static string EmbedSvg(string svg, double x, double y, double width, double height)
     {
         try
@@ -647,6 +1595,30 @@ public sealed class LandingPageExporter
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Escape V Card 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the escape v card operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="value">
+    /// \if KO
+    /// <para>적용할 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The value to apply.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Escape V Card 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the escape v card operation.</para>
+    /// \endif
+    /// </returns>
     private static string EscapeVCard(string value)
     {
         return value

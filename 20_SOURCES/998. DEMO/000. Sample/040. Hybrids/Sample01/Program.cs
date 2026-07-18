@@ -12,12 +12,22 @@ using Sample01.Views;
 namespace Sample01
 {
     /// <summary>
-    /// \brief Application entry point.
+    /// \if KO
+    /// <para>Program 기능과 관련 상태를 캡슐화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>\brief Application entry point.</para>
+    /// \endif
     /// </summary>
     public static class Program
     {
         /// <summary>
-        /// \brief Starts the WPF hybrid sample application.
+        /// \if KO
+        /// <para>Main 작업을 수행합니다.</para>
+        /// \endif
+        /// \if EN
+        /// <para>\brief Starts the WPF hybrid sample application.</para>
+        /// \endif
         /// </summary>
         [STAThread]
         public static void Main()

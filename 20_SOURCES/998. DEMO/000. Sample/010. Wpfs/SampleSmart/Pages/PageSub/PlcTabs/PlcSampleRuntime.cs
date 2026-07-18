@@ -18,27 +18,149 @@ using Dreamine.PLC.Wpf.ViewModels;
 namespace SampleSmart.Pages.PageSub.PlcTabs;
 
 /// <summary>
-/// \brief PLC 샘플 전체에서 공유되는 Runtime 컨텍스트입니다.
+/// \if KO
+/// <para>\brief PLC 샘플 전체에서 공유되는 Runtime 컨텍스트입니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates plc sample runtime functionality and related state.</para>
+/// \endif
 /// </summary>
 public sealed class PlcSampleRuntime
 {
+    /// <summary>
+    /// \if KO
+    /// <para>in Memory Client 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the in memory client value.</para>
+    /// \endif
+    /// </summary>
     private readonly InMemoryPlcClient _inMemoryClient = new();
+    /// <summary>
+    /// \if KO
+    /// <para>address Parser 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the address parser value.</para>
+    /// \endif
+    /// </summary>
     private readonly DefaultPlcAddressParser _addressParser = new();
+    /// <summary>
+    /// \if KO
+    /// <para>active Client 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the active client value.</para>
+    /// \endif
+    /// </summary>
     private IPlcClient _activeClient;
+    /// <summary>
+    /// \if KO
+    /// <para>simulator Server 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the simulator server value.</para>
+    /// \endif
+    /// </summary>
     private PlcSimulatorServer? _simulatorServer;
+    /// <summary>
+    /// \if KO
+    /// <para>mc Tcp Simulator Server 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the mc tcp simulator server value.</para>
+    /// \endif
+    /// </summary>
     private MitsubishiMcTcpSimulatorServer? _mcTcpSimulatorServer;
+    /// <summary>
+    /// \if KO
+    /// <para>mc Udp Simulator Server 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the mc udp simulator server value.</para>
+    /// \endif
+    /// </summary>
     private MitsubishiMcUdpSimulatorServer? _mcUdpSimulatorServer;
+    /// <summary>
+    /// \if KO
+    /// <para>fins Tcp Simulator Server 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the fins tcp simulator server value.</para>
+    /// \endif
+    /// </summary>
     private OmronFinsTcpSimulatorServer? _finsTcpSimulatorServer;
+    /// <summary>
+    /// \if KO
+    /// <para>fins Udp Simulator Server 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the fins udp simulator server value.</para>
+    /// \endif
+    /// </summary>
     private OmronFinsUdpSimulatorServer? _finsUdpSimulatorServer;
+    /// <summary>
+    /// \if KO
+    /// <para>simulator Client 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the simulator client value.</para>
+    /// \endif
+    /// </summary>
     private PlcSimulatorTcpClient? _simulatorClient;
+    /// <summary>
+    /// \if KO
+    /// <para>mitsubishi Mc Client 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the mitsubishi mc client value.</para>
+    /// \endif
+    /// </summary>
     private MitsubishiMcPlcClient? _mitsubishiMcClient;
+    /// <summary>
+    /// \if KO
+    /// <para>mitsubishi Mx Component Client 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the mitsubishi mx component client value.</para>
+    /// \endif
+    /// </summary>
     private MitsubishiMxComponentPlcClient? _mitsubishiMxComponentClient;
+    /// <summary>
+    /// \if KO
+    /// <para>omron Fins Client 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the omron fins client value.</para>
+    /// \endif
+    /// </summary>
     private OmronFinsPlcClient? _omronFinsClient;
+    /// <summary>
+    /// \if KO
+    /// <para>omron Cx Component Client 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the omron cx component client value.</para>
+    /// \endif
+    /// </summary>
     private OmronCxComponentPlcClient? _omronCxComponentClient;
+    /// <summary>
+    /// \if KO
+    /// <para>active Server Mode 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the active server mode value.</para>
+    /// \endif
+    /// </summary>
     private string _activeServerMode = string.Empty;
 
     /// <summary>
-    /// \brief PlcSampleRuntime 클래스의 새 인스턴스를 초기화합니다.
+    /// \if KO
+    /// <para>\brief PlcSampleRuntime 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="PlcSampleRuntime"/> class with the specified settings.</para>
+    /// \endif
     /// </summary>
     public PlcSampleRuntime()
     {
@@ -47,17 +169,32 @@ public sealed class PlcSampleRuntime
     }
 
     /// <summary>
-    /// \brief PLC Monitor ViewModel입니다.
+    /// \if KO
+    /// <para>\brief PLC Monitor ViewModel입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the monitor value.</para>
+    /// \endif
     /// </summary>
     public PlcMonitorViewModel Monitor { get; }
 
     /// <summary>
-    /// \brief PLC Simulator 서버 상태 메시지입니다.
+    /// \if KO
+    /// <para>\brief PLC Simulator 서버 상태 메시지입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the server status value.</para>
+    /// \endif
     /// </summary>
     public string ServerStatus { get; private set; } = "Server stopped.";
 
     /// <summary>
-    /// \brief InMemory PLC Client를 모니터에 연결합니다.
+    /// \if KO
+    /// <para>\brief InMemory PLC Client를 모니터에 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the use in memory client operation.</para>
+    /// \endif
     /// </summary>
     public void UseInMemoryClient()
     {
@@ -67,10 +204,29 @@ public sealed class PlcSampleRuntime
     }
 
     /// <summary>
-    /// \brief TCP Simulator Client를 모니터에 연결합니다.
+    /// \if KO
+    /// <para>\brief TCP Simulator Client를 모니터에 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the use simulator tcp client operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="host">서버 Host입니다.</param>
-    /// <param name="port">서버 Port입니다.</param>
+    /// <param name="host">
+    /// \if KO
+    /// <para>서버 Host입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for host.</para>
+    /// \endif
+    /// </param>
+    /// <param name="port">
+    /// \if KO
+    /// <para>서버 Port입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for port.</para>
+    /// \endif
+    /// </param>
     public void UseSimulatorTcpClient(string host, int port)
     {
         _simulatorClient = new PlcSimulatorTcpClient(new PlcSimulatorClientOptions
@@ -86,12 +242,45 @@ public sealed class PlcSampleRuntime
 
 
     /// <summary>
-    /// \brief Mitsubishi MC Client를 모니터에 연결합니다.
+    /// \if KO
+    /// <para>\brief Mitsubishi MC Client를 모니터에 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the use mitsubishi mc client operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="host">PLC Host입니다.</param>
-    /// <param name="port">PLC Port입니다.</param>
-    /// <param name="transportText">Transport 문자열입니다. Tcp 또는 Udp를 사용합니다.</param>
-    /// <param name="retryCount">송수신 재시도 횟수입니다.</param>
+    /// <param name="host">
+    /// \if KO
+    /// <para>PLC Host입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for host.</para>
+    /// \endif
+    /// </param>
+    /// <param name="port">
+    /// \if KO
+    /// <para>PLC Port입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for port.</para>
+    /// \endif
+    /// </param>
+    /// <param name="transportText">
+    /// \if KO
+    /// <para>Transport 문자열입니다. Tcp 또는 Udp를 사용합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for transport text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="retryCount">
+    /// \if KO
+    /// <para>송수신 재시도 횟수입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for retry count.</para>
+    /// \endif
+    /// </param>
     public void UseMitsubishiMcClient(string host, int port, string transportText, int retryCount)
     {
         if (!Enum.TryParse<MitsubishiMcTransportType>(transportText, ignoreCase: true, out var transportType))
@@ -118,12 +307,45 @@ public sealed class PlcSampleRuntime
 
 
     /// <summary>
-    /// \brief Omron FINS Client를 모니터에 연결합니다.
+    /// \if KO
+    /// <para>\brief Omron FINS Client를 모니터에 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the use omron fins client operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="host">PLC Host입니다.</param>
-    /// <param name="port">PLC Port입니다.</param>
-    /// <param name="transportText">Transport 문자열입니다. Tcp 또는 Udp를 사용합니다.</param>
-    /// <param name="retryCount">송수신 재시도 횟수입니다.</param>
+    /// <param name="host">
+    /// \if KO
+    /// <para>PLC Host입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for host.</para>
+    /// \endif
+    /// </param>
+    /// <param name="port">
+    /// \if KO
+    /// <para>PLC Port입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for port.</para>
+    /// \endif
+    /// </param>
+    /// <param name="transportText">
+    /// \if KO
+    /// <para>Transport 문자열입니다. Tcp 또는 Udp를 사용합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for transport text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="retryCount">
+    /// \if KO
+    /// <para>송수신 재시도 횟수입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for retry count.</para>
+    /// \endif
+    /// </param>
     public void UseOmronFinsClient(string host, int port, string transportText, int retryCount)
     {
         if (!Enum.TryParse<OmronFinsTransportType>(transportText, ignoreCase: true, out var transportType))
@@ -150,10 +372,29 @@ public sealed class PlcSampleRuntime
     }
 
     /// <summary>
-    /// \brief Mitsubishi MX Component Client를 모니터에 연결합니다.
+    /// \if KO
+    /// <para>\brief Mitsubishi MX Component Client를 모니터에 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the use mitsubishi mx component client operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="progId">MX Component ProgID입니다.</param>
-    /// <param name="logicalStationNumber">MX Component logical station number입니다.</param>
+    /// <param name="progId">
+    /// \if KO
+    /// <para>MX Component ProgID입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for prog id.</para>
+    /// \endif
+    /// </param>
+    /// <param name="logicalStationNumber">
+    /// \if KO
+    /// <para>MX Component logical station number입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for logical station number.</para>
+    /// \endif
+    /// </param>
     public void UseMitsubishiMxComponentClient(string progId, int logicalStationNumber)
     {
         _mitsubishiMxComponentClient = new MitsubishiMxComponentPlcClient(new MitsubishiMxComponentOptions
@@ -168,10 +409,29 @@ public sealed class PlcSampleRuntime
     }
 
     /// <summary>
-    /// \brief Omron CX-Compolet Client를 모니터에 연결합니다.
+    /// \if KO
+    /// <para>\brief Omron CX-Compolet Client를 모니터에 연결합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the use omron cx component client operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="progId">CX-Compolet ProgID입니다.</param>
-    /// <param name="peerAddress">PLC peer address입니다.</param>
+    /// <param name="progId">
+    /// \if KO
+    /// <para>CX-Compolet ProgID입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for prog id.</para>
+    /// \endif
+    /// </param>
+    /// <param name="peerAddress">
+    /// \if KO
+    /// <para>PLC peer address입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for peer address.</para>
+    /// \endif
+    /// </param>
     public void UseOmronCxComponentClient(string progId, string peerAddress)
     {
         _omronCxComponentClient = new OmronCxComponentPlcClient(new OmronCxComponentOptions
@@ -186,11 +446,45 @@ public sealed class PlcSampleRuntime
     }
 
     /// <summary>
-    /// \brief 선택된 모드에 맞는 PLC Protocol Simulator Server를 시작합니다.
+    /// \if KO
+    /// <para>\brief 선택된 모드에 맞는 PLC Protocol Simulator Server를 시작합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start protocol server async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="modeText">서버 모드입니다. SimulatorTcp, McTcp, McUdp를 사용합니다.</param>
-    /// <param name="host">Bind Host입니다.</param>
-    /// <param name="port">Bind Port입니다.</param>
+    /// <param name="modeText">
+    /// \if KO
+    /// <para>서버 모드입니다. SimulatorTcp, McTcp, McUdp를 사용합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for mode text.</para>
+    /// \endif
+    /// </param>
+    /// <param name="host">
+    /// \if KO
+    /// <para>Bind Host입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for host.</para>
+    /// \endif
+    /// </param>
+    /// <param name="port">
+    /// \if KO
+    /// <para>Bind Port입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for port.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Start Protocol Server Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the start protocol server async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StartProtocolServerAsync(string modeText, string host, int port)
     {
         var mode = NormalizeMode(modeText);
@@ -257,8 +551,21 @@ public sealed class PlcSampleRuntime
     }
 
     /// <summary>
-    /// \brief 실행 중인 PLC Protocol Simulator Server를 중지합니다.
+    /// \if KO
+    /// <para>\brief 실행 중인 PLC Protocol Simulator Server를 중지합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop protocol server async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Stop Protocol Server Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the stop protocol server async operation.</para>
+    /// \endif
+    /// </returns>
     public async Task StopProtocolServerAsync()
     {
         if (!IsAnyServerRunning())
@@ -309,31 +616,111 @@ public sealed class PlcSampleRuntime
     }
 
     /// <summary>
-    /// \brief 이전 호환성을 위해 SimulatorTcp 서버를 시작합니다.
+    /// \if KO
+    /// <para>\brief 이전 호환성을 위해 SimulatorTcp 서버를 시작합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the start simulator server async operation.</para>
+    /// \endif
     /// </summary>
-    /// <param name="host">Bind Host입니다.</param>
-    /// <param name="port">Bind Port입니다.</param>
+    /// <param name="host">
+    /// \if KO
+    /// <para>Bind Host입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for host.</para>
+    /// \endif
+    /// </param>
+    /// <param name="port">
+    /// \if KO
+    /// <para>Bind Port입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for port.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Start Simulator Server Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the start simulator server async operation.</para>
+    /// \endif
+    /// </returns>
     public Task StartSimulatorServerAsync(string host, int port)
     {
         return StartProtocolServerAsync("SimulatorTcp", host, port);
     }
 
     /// <summary>
-    /// \brief 이전 호환성을 위해 실행 중인 서버를 중지합니다.
+    /// \if KO
+    /// <para>\brief 이전 호환성을 위해 실행 중인 서버를 중지합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the stop simulator server async operation.</para>
+    /// \endif
     /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Stop Simulator Server Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the stop simulator server async operation.</para>
+    /// \endif
+    /// </returns>
     public Task StopSimulatorServerAsync()
     {
         return StopProtocolServerAsync();
     }
 
     /// <summary>
-    /// \brief Runs a client-server auto-response handshake test using D100 as client write and D101 as server response.
+    /// \if KO
+    /// <para>Run Handshake Test Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>\brief Runs a client-server auto-response handshake test using D100 as client write and D101 as server response.</para>
+    /// \endif
     /// </summary>
-    /// <param name="startValue">The first client value.</param>
-    /// <param name="iterations">The number of handshake iterations.</param>
-    /// <param name="delayMs">The delay between iterations in milliseconds.</param>
-    /// <param name="cancellationToken">The cancellation token.</param>
-    /// <returns>A task that represents the asynchronous operation.</returns>
+    /// <param name="startValue">
+    /// \if KO
+    /// <para>start Value에 사용할 <c>short</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The first client value.</para>
+    /// \endif
+    /// </param>
+    /// <param name="iterations">
+    /// \if KO
+    /// <para>iterations에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The number of handshake iterations.</para>
+    /// \endif
+    /// </param>
+    /// <param name="delayMs">
+    /// \if KO
+    /// <para>delay Ms에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The delay between iterations in milliseconds.</para>
+    /// \endif
+    /// </param>
+    /// <param name="cancellationToken">
+    /// \if KO
+    /// <para>취소 요청을 감시하는 토큰입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The cancellation token.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Run Handshake Test Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>A task that represents the asynchronous operation.</para>
+    /// \endif
+    /// </returns>
     public async Task RunHandshakeTestAsync(
         short startValue,
         int iterations,
@@ -402,6 +789,38 @@ public sealed class PlcSampleRuntime
     }
 
 
+    /// <summary>
+    /// \if KO
+    /// <para>Mc Simulator Options 값을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the mc simulator options value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="host">
+    /// \if KO
+    /// <para>host에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for host.</para>
+    /// \endif
+    /// </param>
+    /// <param name="port">
+    /// \if KO
+    /// <para>port에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for port.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Create Mc Simulator Options 작업에서 생성한 <c>MitsubishiMcSimulatorServerOptions</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>MitsubishiMcSimulatorServerOptions</c> result produced by the create mc simulator options operation.</para>
+    /// \endif
+    /// </returns>
     private static MitsubishiMcSimulatorServerOptions CreateMcSimulatorOptions(string host, int port)
     {
         return new MitsubishiMcSimulatorServerOptions
@@ -417,6 +836,38 @@ public sealed class PlcSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Fins Simulator Options 값을 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Creates the fins simulator options value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="host">
+    /// \if KO
+    /// <para>host에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for host.</para>
+    /// \endif
+    /// </param>
+    /// <param name="port">
+    /// \if KO
+    /// <para>port에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for port.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Create Fins Simulator Options 작업에서 생성한 <c>OmronFinsSimulatorServerOptions</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>OmronFinsSimulatorServerOptions</c> result produced by the create fins simulator options operation.</para>
+    /// \endif
+    /// </returns>
     private static OmronFinsSimulatorServerOptions CreateFinsSimulatorOptions(string host, int port)
     {
         return new OmronFinsSimulatorServerOptions
@@ -430,6 +881,22 @@ public sealed class PlcSampleRuntime
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Is Any Server Running 조건을 확인합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Determines whether is any server running.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Is Any Server Running 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the is any server running condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private bool IsAnyServerRunning()
     {
         return _simulatorServer is not null
@@ -439,6 +906,30 @@ public sealed class PlcSampleRuntime
             || _finsUdpSimulatorServer is not null;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Normalize Mode 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the normalize mode operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="modeText">
+    /// \if KO
+    /// <para>mode Text에 사용할 <c>string?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string?</c> value used for mode text.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Normalize Mode 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the normalize mode operation.</para>
+    /// \endif
+    /// </returns>
     private static string NormalizeMode(string? modeText)
     {
         return string.IsNullOrWhiteSpace(modeText)
@@ -446,6 +937,30 @@ public sealed class PlcSampleRuntime
             : modeText.Trim().ToUpperInvariant();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Simulator Server Status Changed 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the simulator server status changed event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private void OnSimulatorServerStatusChanged(object? sender, string e)
     {
         ServerStatus = e;

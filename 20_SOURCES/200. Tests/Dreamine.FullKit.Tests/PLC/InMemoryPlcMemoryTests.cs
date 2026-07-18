@@ -3,8 +3,24 @@ using Dreamine.PLC.Core.Memory;
 
 namespace Dreamine.FullKit.Tests.PLC;
 
+/// <summary>
+/// \if KO
+/// <para>In Memory Plc Memory Tests 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates in memory plc memory tests functionality and related state.</para>
+/// \endif
+/// </summary>
 public sealed class InMemoryPlcMemoryTests
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Words Then Read Words Returns Values From Requested Offset 데이터를 씁니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Writes words then read words returns values from requested offset data.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void WriteWordsThenReadWords_ReturnsValuesFromRequestedOffset()
     {
@@ -19,6 +35,14 @@ public sealed class InMemoryPlcMemoryTests
         Assert.Equal(new short[] { 20, 30 }, read.Value);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Bits Then Read Bits Returns Values From Requested Offset 데이터를 씁니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Writes bits then read bits returns values from requested offset data.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void WriteBitsThenReadBits_ReturnsValuesFromRequestedOffset()
     {
@@ -33,6 +57,14 @@ public sealed class InMemoryPlcMemoryTests
         Assert.Equal(new[] { true, false, true, false }, read.Value);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Clear Removes Stored Bit And Word Values 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the clear removes stored bit and word values operation.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void Clear_RemovesStoredBitAndWordValues()
     {
@@ -47,6 +79,14 @@ public sealed class InMemoryPlcMemoryTests
         Assert.Equal(new[] { false }, memory.ReadBits(new PlcAddress(PlcDeviceType.M, 0), 1).Value);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>And Write Return Failure For Invalid Counts 데이터를 읽습니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Reads and write return failure for invalid counts data.</para>
+    /// \endif
+    /// </summary>
     [Fact]
     public void ReadAndWrite_ReturnFailureForInvalidCounts()
     {

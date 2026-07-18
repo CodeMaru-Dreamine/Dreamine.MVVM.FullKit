@@ -17,21 +17,94 @@ using System.Windows;
 namespace DreamineVMS.Views;
 
 /// <summary>
-/// \brief DreamineVMS 메인 윈도우입니다.
+/// \if KO
+/// <para>\brief DreamineVMS 메인 윈도우입니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates main window functionality and related state.</para>
+/// \endif
 /// </summary>
 public partial class MainWindow : Window
 {
+    /// <summary>
+    /// \if KO
+    /// <para>server Options 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the server options value.</para>
+    /// \endif
+    /// </summary>
     private readonly VmsServerOptions _serverOptions;
+    /// <summary>
+    /// \if KO
+    /// <para>attached View Model 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the attached view model value.</para>
+    /// \endif
+    /// </summary>
     private MainWindowViewModel? _attachedViewModel;
+    /// <summary>
+    /// \if KO
+    /// <para>wpf Live Web View 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the wpf live web view value.</para>
+    /// \endif
+    /// </summary>
     private WebView2? _wpfLiveWebView;
+    /// <summary>
+    /// \if KO
+    /// <para>cameras Web View 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the cameras web view value.</para>
+    /// \endif
+    /// </summary>
     private WebView2? _camerasWebView;
+    /// <summary>
+    /// \if KO
+    /// <para>wpf Live Initialized 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the wpf live initialized value.</para>
+    /// \endif
+    /// </summary>
     private bool _wpfLiveInitialized;
+    /// <summary>
+    /// \if KO
+    /// <para>cameras Initialized 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the cameras initialized value.</para>
+    /// \endif
+    /// </summary>
     private bool _camerasInitialized;
 
     /// <summary>
-    /// \brief MainWindow 인스턴스를 초기화합니다.
+    /// \if KO
+    /// <para>\brief MainWindow 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new instance of the <see cref="MainWindow"/> class with the specified settings.</para>
+    /// \endif
     /// </summary>
-    /// <param name="serverOptions">VMS 서버 옵션입니다.</param>
+    /// <param name="serverOptions">
+    /// \if KO
+    /// <para>VMS 서버 옵션입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IOptions&lt;VmsServerOptions&gt;</c> value used for server options.</para>
+    /// \endif
+    /// </param>
+    /// <exception cref="ArgumentNullException">
+    /// \if KO
+    /// <para>필수 입력 인자 중 하나가 <see langword="null"/>인 경우 발생합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Thrown when a required input argument is <see langword="null"/>.</para>
+    /// \endif
+    /// </exception>
     public MainWindow(IOptions<VmsServerOptions> serverOptions)
     {
         _serverOptions = serverOptions?.Value ?? throw new ArgumentNullException(nameof(serverOptions));
@@ -48,6 +121,30 @@ public partial class MainWindow : Window
         MainTabControl.SelectionChanged += OnMainTabSelectionChanged;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Data Context Changed 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the data context changed event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
         if (_attachedViewModel is not null)
@@ -63,6 +160,30 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Open Live Tab Requested 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the open live tab requested event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private void OnOpenLiveTabRequested(object? sender, EventArgs e)
     {
         // 레거시 메시지 호환용입니다. Blazor Server의 첫 화면은 Live View이며, 탭 전환은 수행하지 않습니다.
@@ -75,6 +196,30 @@ public partial class MainWindow : Window
         });
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Loaded 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the loaded event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private async void OnLoaded(object sender, RoutedEventArgs e)
     {
         HybridHostControl embeddedDashboard = new()
@@ -93,6 +238,30 @@ public partial class MainWindow : Window
         await EnsureSelectedLiveWebViewAsync().ConfigureAwait(true);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Closed 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the closed event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private void OnClosed(object? sender, EventArgs e)
     {
         if (_attachedViewModel is not null)
@@ -111,6 +280,30 @@ public partial class MainWindow : Window
         Application.Current?.Shutdown();
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Main Tab Selection Changed 이벤트 또는 상태 변경을 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Handles the main tab selection changed event or state change.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private async void OnMainTabSelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
     {
         if (!IsLoaded) return;
@@ -128,12 +321,52 @@ public partial class MainWindow : Window
         await EnsureSelectedLiveWebViewAsync().ConfigureAwait(true);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Agent Password Box Password Changed 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the agent password box password changed operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="sender">
+    /// \if KO
+    /// <para>이벤트를 발생시킨 객체입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The object that raised the event.</para>
+    /// \endif
+    /// </param>
+    /// <param name="e">
+    /// \if KO
+    /// <para>이벤트와 관련된 데이터를 포함합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Contains data associated with the event.</para>
+    /// \endif
+    /// </param>
     private void AgentPasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
     {
         if (DataContext is MainWindowViewModel vm)
             vm.AgentSettings.Password = AgentPasswordBox.Password;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Ensure Selected Live Web View Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure selected live web view async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Ensure Selected Live Web View Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the ensure selected live web view async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task EnsureSelectedLiveWebViewAsync()
     {
         if (MainTabControl.SelectedItem == WpfLiveTab)
@@ -148,6 +381,22 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Ensure Wpf Live Web View Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure wpf live web view async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Ensure Wpf Live Web View Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the ensure wpf live web view async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task EnsureWpfLiveWebViewAsync()
     {
         if (_wpfLiveInitialized)
@@ -165,6 +414,22 @@ public partial class MainWindow : Window
         _wpfLiveInitialized = true;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Ensure Cameras Web View Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the ensure cameras web view async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Ensure Cameras Web View Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the ensure cameras web view async operation.</para>
+    /// \endif
+    /// </returns>
     private async Task EnsureCamerasWebViewAsync()
     {
         if (_camerasInitialized)
@@ -182,11 +447,51 @@ public partial class MainWindow : Window
         _camerasInitialized = true;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Live Url 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the live url value.</para>
+    /// \endif
+    /// </summary>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Live Url 작업에서 생성한 <c>string</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> result produced by the get live url operation.</para>
+    /// \endif
+    /// </returns>
     private string GetLiveUrl()
     {
         return $"http://localhost:{_serverOptions.Port}/live";
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Register Web View Recovery 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the register web view recovery operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="webView">
+    /// \if KO
+    /// <para>web View에 사용할 <c>WebView2</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>WebView2</c> value used for web view.</para>
+    /// \endif
+    /// </param>
+    /// <param name="urlFactory">
+    /// \if KO
+    /// <para>url Factory에 사용할 <c>Func&lt;string&gt;</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Func&lt;string&gt;</c> value used for url factory.</para>
+    /// \endif
+    /// </param>
     private void RegisterWebViewRecovery(WebView2 webView, Func<string> urlFactory)
     {
         webView.CoreWebView2InitializationCompleted += (_, e) =>
@@ -225,6 +530,30 @@ public partial class MainWindow : Window
         };
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Navigate Web View 작업을 시도하고 성공 여부를 반환합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Attempts to navigate web view and returns whether the operation succeeds.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="webView">
+    /// \if KO
+    /// <para>web View에 사용할 <c>WebView2</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>WebView2</c> value used for web view.</para>
+    /// \endif
+    /// </param>
+    /// <param name="url">
+    /// \if KO
+    /// <para>url에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for url.</para>
+    /// \endif
+    /// </param>
     private static void TryNavigateWebView(WebView2 webView, string url)
     {
         try
@@ -237,6 +566,22 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Dispose Web View 작업을 시도하고 성공 여부를 반환합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Attempts to dispose web view and returns whether the operation succeeds.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="webView">
+    /// \if KO
+    /// <para>web View에 사용할 <c>WebView2?</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>WebView2?</c> value used for web view.</para>
+    /// \endif
+    /// </param>
     private static void TryDisposeWebView(ref WebView2? webView)
     {
         if (webView is null)
@@ -256,6 +601,54 @@ public partial class MainWindow : Window
         webView = null;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Navigate Server Async 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the navigate server async operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="webView">
+    /// \if KO
+    /// <para>web View에 사용할 <c>WebView2</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>WebView2</c> value used for web view.</para>
+    /// \endif
+    /// </param>
+    /// <param name="url">
+    /// \if KO
+    /// <para>url에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for url.</para>
+    /// \endif
+    /// </param>
+    /// <param name="timeoutMs">
+    /// \if KO
+    /// <para>timeout Ms에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for timeout ms.</para>
+    /// \endif
+    /// </param>
+    /// <param name="intervalMs">
+    /// \if KO
+    /// <para>interval Ms에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for interval ms.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Navigate Server Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the navigate server async operation.</para>
+    /// \endif
+    /// </returns>
     private static async Task NavigateServerAsync(WebView2 webView, string url, int timeoutMs = 15000, int intervalMs = 500)
     {
         try

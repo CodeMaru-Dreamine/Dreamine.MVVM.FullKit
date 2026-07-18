@@ -19,8 +19,24 @@ using Microsoft.Extensions.Hosting;
 
 namespace Codemaru;
 
+/// <summary>
+/// \if KO
+/// <para>Program 기능과 관련 상태를 캡슐화합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Encapsulates program functionality and related state.</para>
+/// \endif
+/// </summary>
 public static class Program
 {
+    /// <summary>
+    /// \if KO
+    /// <para>Main 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the main operation.</para>
+    /// \endif
+    /// </summary>
     [STAThread]
     public static void Main()
     {
@@ -106,6 +122,14 @@ public static class Program
     }
 
     // 크롤러(카카오톡·네이버·구글 봇 등)가 접근하면 경로별 OG 태그가 포함된 최소 HTML을 반환합니다.
+    /// <summary>
+    /// \if KO
+    /// <para>Og Meta 값을 보관합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Stores the og meta value.</para>
+    /// \endif
+    /// </summary>
     private static readonly Dictionary<string, (string Title, string Desc, string Image, string Url)> OgMeta = new()
     {
         ["/"] = (
@@ -180,6 +204,38 @@ public static class Program
             "https://codemaru.co.kr/terms"),
     };
 
+    /// <summary>
+    /// \if KO
+    /// <para>Og Tag Middleware 작업을 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs the og tag middleware operation.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="context">
+    /// \if KO
+    /// <para>context에 사용할 <c>HttpContext</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HttpContext</c> value used for context.</para>
+    /// \endif
+    /// </param>
+    /// <param name="next">
+    /// \if KO
+    /// <para>next에 사용할 <c>RequestDelegate</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>RequestDelegate</c> value used for next.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Og Tag Middleware 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the og tag middleware operation.</para>
+    /// \endif
+    /// </returns>
     private static async Task OgTagMiddleware(HttpContext context, RequestDelegate next)
     {
         var ua = context.Request.Headers.UserAgent.ToString();
@@ -244,6 +300,30 @@ public static class Program
             """);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Should Return Bot Not Found 조건을 확인합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Determines whether should return bot not found.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="path">
+    /// \if KO
+    /// <para>path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for path.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Should Return Bot Not Found 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the should return bot not found condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private static bool ShouldReturnBotNotFound(string path)
     {
         if (string.IsNullOrWhiteSpace(path) || path == "/")
@@ -259,6 +339,38 @@ public static class Program
         return !path.StartsWith("/card/", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Bot Not Found Async 데이터를 씁니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Writes bot not found async data.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="context">
+    /// \if KO
+    /// <para>context에 사용할 <c>HttpContext</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>HttpContext</c> value used for context.</para>
+    /// \endif
+    /// </param>
+    /// <param name="path">
+    /// \if KO
+    /// <para>path에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for path.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Write Bot Not Found Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>Task</c> result produced by the write bot not found async operation.</para>
+    /// \endif
+    /// </returns>
     private static async Task WriteBotNotFoundAsync(HttpContext context, string path)
     {
         string encodedPath = HtmlEncoder.Default.Encode(path);
@@ -283,6 +395,46 @@ public static class Program
             """);
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Int 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the int value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="configuration">
+    /// \if KO
+    /// <para>configuration에 사용할 <c>IConfiguration</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IConfiguration</c> value used for configuration.</para>
+    /// \endif
+    /// </param>
+    /// <param name="key">
+    /// \if KO
+    /// <para>key에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for key.</para>
+    /// \endif
+    /// </param>
+    /// <param name="fallback">
+    /// \if KO
+    /// <para>fallback에 사용할 <c>int</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> value used for fallback.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Int 작업에서 생성한 <c>int</c> 결과입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>int</c> result produced by the get int operation.</para>
+    /// \endif
+    /// </returns>
     private static int GetInt(IConfiguration configuration, string key, int fallback)
     {
         string? value = configuration[key];
@@ -292,6 +444,46 @@ public static class Program
             : fallback;
     }
 
+    /// <summary>
+    /// \if KO
+    /// <para>Bool 값을 가져옵니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets the bool value.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="configuration">
+    /// \if KO
+    /// <para>configuration에 사용할 <c>IConfiguration</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>IConfiguration</c> value used for configuration.</para>
+    /// \endif
+    /// </param>
+    /// <param name="key">
+    /// \if KO
+    /// <para>key에 사용할 <c>string</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>string</c> value used for key.</para>
+    /// \endif
+    /// </param>
+    /// <param name="fallback">
+    /// \if KO
+    /// <para>fallback에 사용할 <c>bool</c> 값입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The <c>bool</c> value used for fallback.</para>
+    /// \endif
+    /// </param>
+    /// <returns>
+    /// \if KO
+    /// <para>Get Bool 조건이 충족되면 <see langword="true"/>이고, 그렇지 않으면 <see langword="false"/>입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para><see langword="true"/> when the get bool condition is satisfied; otherwise, <see langword="false"/>.</para>
+    /// \endif
+    /// </returns>
     private static bool GetBool(IConfiguration configuration, string key, bool fallback)
     {
         string? value = configuration[key];

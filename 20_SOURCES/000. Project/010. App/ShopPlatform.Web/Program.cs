@@ -141,6 +141,33 @@ await ShopPlatform.Data.ShopSeeder.SeedCodemaruAsync(
 app.Run();
 
 // 재고 차감 — 무한 재고 상품은 건드리지 않음
+#pragma warning disable CS1587
+/// \cond LOCAL_FUNCTION_DOCUMENTATION
+/// <summary>
+/// \if KO
+/// <para>주문 항목의 수량만큼 재고를 차감하며 무한 재고 상품은 건너뜁니다.</para>
+/// \endif
+/// \if EN
+/// <para>Deducts ordered quantities from stock while skipping unlimited-stock products.</para>
+/// \endif
+/// </summary>
+/// <param name="db">
+/// \if KO
+/// <para>상품 재고를 저장하는 테넌트 데이터베이스 컨텍스트입니다.</para>
+/// \endif
+/// \if EN
+/// <para>The tenant database context that stores product inventory.</para>
+/// \endif
+/// </param>
+/// <param name="lines">
+/// \if KO
+/// <para>재고에 반영할 주문 항목입니다.</para>
+/// \endif
+/// \if EN
+/// <para>The order lines to apply to inventory.</para>
+/// \endif
+/// </param>
+/// \endcond
 static void DeductStock(TenantDbContext db, IEnumerable<OrderLine> lines)
 {
     foreach (var line in lines)
@@ -150,8 +177,44 @@ static void DeductStock(TenantDbContext db, IEnumerable<OrderLine> lines)
         product.Stock = Math.Max(0, product.Stock - line.Quantity);
     }
 }
+#pragma warning restore CS1587
 
 // appsettings 경로가 상대 경로면 실행 파일 기준으로 절대 경로로 확장
+#pragma warning disable CS1587
+/// \cond LOCAL_FUNCTION_DOCUMENTATION
+/// <summary>
+/// \if KO
+/// <para>구성 경로를 실행 파일 기준의 절대 경로로 해석합니다.</para>
+/// \endif
+/// \if EN
+/// <para>Resolves a configured path to an absolute path relative to the executable.</para>
+/// \endif
+/// </summary>
+/// <param name="configuredPath">
+/// \if KO
+/// <para>구성에서 읽은 선택적 경로입니다.</para>
+/// \endif
+/// \if EN
+/// <para>The optional configured path.</para>
+/// \endif
+/// </param>
+/// <param name="fallback">
+/// \if KO
+/// <para>구성 경로가 없을 때 사용할 기본 경로입니다.</para>
+/// \endif
+/// \if EN
+/// <para>The fallback used when the configured path is absent.</para>
+/// \endif
+/// </param>
+/// <returns>
+/// \if KO
+/// <para>해석된 절대 경로입니다.</para>
+/// \endif
+/// \if EN
+/// <para>The resolved absolute path.</para>
+/// \endif
+/// </returns>
+/// \endcond
 static string ResolvePath(string? configuredPath, string fallback)
 {
     if (string.IsNullOrWhiteSpace(configuredPath))
@@ -163,3 +226,4 @@ static string ResolvePath(string? configuredPath, string fallback)
         ? configuredPath
         : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
 }
+#pragma warning restore CS1587
