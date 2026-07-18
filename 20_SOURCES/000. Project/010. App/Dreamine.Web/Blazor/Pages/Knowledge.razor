@@ -13,14 +13,42 @@
             <h1 class="dw-page__title">@(Ko ? "프로젝트 문서 허브" : "Project Documentation Hub")</h1>
             <p class="dw-page__copy">
                 @(Ko
-                    ? "프로젝트를 선택해 빌드 XML 문서, Doxygen API 문서, 프로젝트 전용 지식 그래프를 확인하세요. 상단 언어 버튼을 누르면 모든 문서 링크가 함께 전환됩니다."
-                    : "Choose a project to open its build XML, Doxygen API reference, or focused knowledge graph. The language button in the top navigation switches every localized link together.")
+                    ? "Dreamine FullKit의 앱, 재사용 라이브러리, 테스트, 학습용 샘플을 목적별로 나눠 살펴보세요. 각 카드에서 빌드 XML, 한글·영문 Doxygen API 문서, 프로젝트 전용 지식 그래프로 바로 이동할 수 있습니다."
+                    : "Explore Dreamine FullKit by purpose: applications, reusable libraries, tests, and learning samples. Every card links directly to its build XML, bilingual Doxygen API reference, and focused knowledge graph.")
             </p>
         </div>
         <a class="dw-btn dw-btn--outline" href="@FullGraphUrl" target="_blank" rel="noopener">
             @(Ko ? "전체 그래프(고급) ↗" : "Full graph (advanced) ↗")
         </a>
     </div>
+
+    <nav class="dw-knowledge__filters" aria-label="@(Ko ? "프로젝트 분류" : "Project categories")">
+        <button type="button"
+                class="dw-knowledge-filter @(string.IsNullOrEmpty(SelectedCategory) ? "is-active" : null)"
+                aria-pressed="@(string.IsNullOrEmpty(SelectedCategory))"
+                @onclick="() => SelectCategory(string.Empty)">
+            <span class="dw-knowledge-filter__icon">ALL</span>
+            <span class="dw-knowledge-filter__body">
+                <strong>@(Ko ? "전체" : "All")</strong>
+                <small>@(Ko ? "모든 문서 모아보기" : "Browse every project")</small>
+            </span>
+            <span class="dw-knowledge-filter__count">@Projects.Count</span>
+        </button>
+        @foreach (string category in Categories)
+        {
+            <button type="button"
+                    class="dw-knowledge-filter @CategoryCss(category) @(SelectedCategory == category ? "is-active" : null)"
+                    aria-pressed="@(SelectedCategory == category)"
+                    @onclick="() => SelectCategory(category)">
+                <span class="dw-knowledge-filter__icon">@CategoryCode(category)</span>
+                <span class="dw-knowledge-filter__body">
+                    <strong>@CategoryLabel(category)</strong>
+                    <small>@CategoryDescription(category)</small>
+                </span>
+                <span class="dw-knowledge-filter__count">@Projects.Count(project => project.Category == category)</span>
+            </button>
+        }
+    </nav>
 
     <div class="dw-knowledge__toolbar">
         <label class="dw-knowledge__search">
@@ -29,13 +57,6 @@
                    placeholder="@(Ko ? "프로젝트 이름·설명·프레임워크 검색..." : "Search name, description, or framework...")"
                    @bind="SearchText" @bind:event="oninput" />
         </label>
-        <select class="dw-input dw-knowledge__category" @bind="SelectedCategory">
-            <option value="">@(Ko ? "모든 분류" : "All categories")</option>
-            @foreach (string category in Categories)
-            {
-                <option value="@category">@CategoryLabel(category)</option>
-            }
-        </select>
         <span class="dw-knowledge__count">
             <strong>@FilteredProjects.Count()</strong> @(Ko ? "개 프로젝트" : "projects")
         </span>
@@ -58,16 +79,25 @@
         {
             <section class="dw-knowledge__group">
                 <div class="dw-knowledge__group-head">
-                    <h2>@CategoryLabel(group.Key)</h2>
-                    <span>@group.Count()</span>
+                    <div class="dw-knowledge__group-title">
+                        <span class="dw-knowledge__group-code @CategoryCss(group.Key)">@CategoryCode(group.Key)</span>
+                        <div>
+                            <h2>@CategoryLabel(group.Key)</h2>
+                            <p>@CategoryDescription(group.Key)</p>
+                        </div>
+                    </div>
+                    <span class="dw-knowledge__group-count">@group.Count()</span>
                 </div>
                 <div class="dw-knowledge__grid">
                     @foreach (DocumentationProjectInfo project in group)
                     {
-                        <article class="dw-knowledge-card">
+                        <article class="dw-knowledge-card @CategoryCss(project.Category)">
                             <div class="dw-knowledge-card__top">
-                                <span class="dw-knowledge-card__category">@CategoryLabel(project.Category)</span>
-                                <span class="dw-knowledge-card__version">v@project.Version</span>
+                                <span class="dw-knowledge-card__category">@CategoryCode(project.Category) · @CategoryLabel(project.Category)</span>
+                                @if (!string.IsNullOrWhiteSpace(project.Version))
+                                {
+                                    <span class="dw-knowledge-card__version">@($"v{project.Version}")</span>
+                                }
                             </div>
                             <h3 title="@project.Name">@project.Name</h3>
                             <p>@project.GetDescription(Language)</p>
@@ -76,6 +106,11 @@
                                 {
                                     <span>@framework</span>
                                 }
+                            </div>
+                            <div class="dw-knowledge-card__availability">
+                                <span class="@AvailabilityCss(!string.IsNullOrWhiteSpace(project.BuildDocumentUrl))">XML</span>
+                                <span class="@AvailabilityCss(!string.IsNullOrWhiteSpace(project.GetDoxygenUrl(Language)))">DOXYGEN</span>
+                                <span class="@AvailabilityCss(!string.IsNullOrWhiteSpace(project.GetGraphUrl(Language)))">GRAPH</span>
                             </div>
                             <div class="dw-knowledge-card__actions">
                                 @if (!string.IsNullOrWhiteSpace(project.BuildDocumentUrl))
@@ -88,10 +123,16 @@
                                         @(Ko ? "빌드 XML 없음" : "No build XML")
                                     </span>
                                 }
-                                <a href="@project.GetDoxygenUrl(Language)" target="_blank" rel="noopener">Doxygen ↗</a>
-                                <a class="is-primary" href="@project.GetGraphUrl(Language)" target="_blank" rel="noopener">
-                                    @(Ko ? "지식 그래프 ↗" : "Knowledge graph ↗")
-                                </a>
+                                @if (!string.IsNullOrWhiteSpace(project.GetDoxygenUrl(Language)))
+                                {
+                                    <a href="@project.GetDoxygenUrl(Language)" target="_blank" rel="noopener">Doxygen ↗</a>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(project.GetGraphUrl(Language)))
+                                {
+                                    <a class="is-primary" href="@project.GetGraphUrl(Language)" target="_blank" rel="noopener">
+                                        @(Ko ? "지식 그래프 ↗" : "Knowledge graph ↗")
+                                    </a>
+                                }
                             </div>
                         </article>
                     }
@@ -164,6 +205,37 @@
         "998. DEMO" => 3,
         _ => 4
     };
+
+    private string CategoryDescription(string category) => category switch
+    {
+        "000. Project" => Ko ? "실행 앱과 웹 서비스" : "Apps and web services",
+        "100. Library" => Ko ? "재사용 가능한 FullKit 패키지" : "Reusable FullKit packages",
+        "200. Tests" => Ko ? "품질 검증과 회귀 테스트" : "Quality and regression tests",
+        "998. DEMO" => Ko ? "학습용 예제와 통합 데모" : "Learning samples and demos",
+        _ => Ko ? "기타 프로젝트" : "Other projects"
+    };
+
+    private static string CategoryCode(string category) => category switch
+    {
+        "000. Project" => "APP",
+        "100. Library" => "LIB",
+        "200. Tests" => "TEST",
+        "998. DEMO" => "DEMO",
+        _ => "ETC"
+    };
+
+    private static string CategoryCss(string category) => category switch
+    {
+        "000. Project" => "is-app",
+        "100. Library" => "is-library",
+        "200. Tests" => "is-test",
+        "998. DEMO" => "is-demo",
+        _ => "is-other"
+    };
+
+    private static string AvailabilityCss(bool available) => available ? "is-ready" : "is-missing";
+
+    private void SelectCategory(string category) => SelectedCategory = category;
 
     private void OnLanguageChanged() => InvokeAsync(StateHasChanged);
 

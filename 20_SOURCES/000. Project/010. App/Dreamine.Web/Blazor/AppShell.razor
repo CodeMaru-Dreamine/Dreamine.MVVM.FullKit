@@ -2,6 +2,7 @@
 @using Microsoft.AspNetCore.Components.Web
 @using DreamineWeb.Services
 @inject SiteSettingsService SiteSettings
+@inject NavigationManager Navigation
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -9,30 +10,47 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <title>@SiteSettings.Current.Title</title>
-    <meta name="description" content="@SiteSettings.Current.Description" />
-
     @{
-        var og     = SiteSettings.Current;
-        var ogTitle = string.IsNullOrEmpty(og.OgTitle) ? og.Title : og.OgTitle;
-        var ogDesc  = string.IsNullOrEmpty(og.OgDescription) ? og.Description : og.OgDescription;
-        var ogImg   = og.OgImageUrl.StartsWith("http") ? og.OgImageUrl : og.OgUrl.TrimEnd('/') + og.OgImageUrl;
+        var og = SiteSettings.Current;
+        var requestUri = new Uri(Navigation.Uri);
+        var requestPath = requestUri.AbsolutePath.TrimEnd('/');
+        var isKnowledgeHub = requestPath.Equals("/knowledge", StringComparison.OrdinalIgnoreCase);
+        var isEnglish = requestUri.Query.Contains("lang=en", StringComparison.OrdinalIgnoreCase);
+        var siteRoot = og.OgUrl.TrimEnd('/');
+        var ogTitle = isKnowledgeHub
+            ? (isEnglish ? "Dreamine FullKit Documentation Hub" : "Dreamine FullKit 프로젝트 문서 허브")
+            : (string.IsNullOrEmpty(og.OgTitle) ? og.Title : og.OgTitle);
+        var ogDesc = isKnowledgeHub
+            ? (isEnglish
+                ? "Explore 80 FullKit apps, reusable libraries, tests, and samples with bilingual Doxygen API docs and focused knowledge graphs."
+                : "FullKit의 80개 앱·라이브러리·테스트·샘플을 분류별로 탐색하고, 한글·영문 Doxygen API 문서와 프로젝트별 지식 그래프를 확인하세요.")
+            : (string.IsNullOrEmpty(og.OgDescription) ? og.Description : og.OgDescription);
+        var ogImg = isKnowledgeHub
+            ? $"{siteRoot}/img/og-documentation-hub.png"
+            : (og.OgImageUrl.StartsWith("http") ? og.OgImageUrl : siteRoot + og.OgImageUrl);
+        var ogUrl = isKnowledgeHub ? $"{siteRoot}/knowledge" : og.OgUrl;
     }
+    <title>@ogTitle</title>
+    <meta name="description" content="@ogDesc" />
+    <link rel="canonical" href="@ogUrl" />
     <meta property="og:type"        content="website" />
     <meta property="og:site_name"   content="@og.OgSiteName" />
-    <meta property="og:url"         content="@og.OgUrl" />
+    <meta property="og:url"         content="@ogUrl" />
     <meta property="og:title"       content="@ogTitle" />
     <meta property="og:description" content="@ogDesc" />
     <meta property="og:image"       content="@ogImg" />
+    <meta property="og:image:alt"   content="Dreamine FullKit Documentation Hub" />
     <meta property="og:image:width"  content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:locale"       content="@(isEnglish ? "en_US" : "ko_KR")" />
     <meta name="twitter:card"        content="@og.TwitterCard" />
     <meta name="twitter:title"       content="@ogTitle" />
     <meta name="twitter:description" content="@ogDesc" />
     <meta name="twitter:image"       content="@ogImg" />
+    <meta name="twitter:image:alt"   content="Dreamine FullKit Documentation Hub" />
 
     <link rel="icon" href="@(string.IsNullOrEmpty(og.IconUrl) ? "/img/icon.ico" : og.IconUrl)" />
-    <link rel="stylesheet" href="/css/dreamine.css?v=20260702" />
+    <link rel="stylesheet" href="/css/dreamine.css?v=20260718-knowledge" />
     @* Blazor scoped CSS 번들 — Dreamine.UI.Blazor 컴포넌트(.razor.css)를 이 안에서 @import 로 로드 *@
     <link rel="stylesheet" href="Dreamine.Web.styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
