@@ -1,0 +1,7 @@
+@prefix dreamine: <https://dreamine.kr/ontology/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+dreamine:positiveApp rdf:type dreamine:SoftwareElement ; dreamine:element_layer "application" .
+dreamine:positiveLibrary rdf:type dreamine:SoftwareElement ; dreamine:element_layer "library" .
+dreamine:positiveLayerRelation rdf:type dreamine:SemanticRelation ;
+  dreamine:relation_type "depends_on" ; dreamine:source dreamine:positiveApp ; dreamine:target dreamine:positiveLibrary .

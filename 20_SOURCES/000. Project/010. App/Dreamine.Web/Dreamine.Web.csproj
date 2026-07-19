@@ -12,6 +12,13 @@
     <StartupObject>DreamineWeb.Program</StartupObject>
   </PropertyGroup>
 
+  <!-- Keep C# debugging, but disable the Visual Studio XAML Hot Reload
+       diagnostics layer that causes frame/input stalls around hosted WebView2. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <EnableHotReload>false</EnableHotReload>
+    <XamlDebuggingInformation>false</XamlDebuggingInformation>
+  </PropertyGroup>
+
   <ItemGroup>
     <Content Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

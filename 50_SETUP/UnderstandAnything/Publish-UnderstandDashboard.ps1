@@ -20,13 +20,25 @@ $enricherPath = Join-Path $PSScriptRoot 'Enrich-UnderstandGraph.mjs'
 $generatorPath = Join-Path $PSScriptRoot 'Generate-UnderstandPortal.mjs'
 $projectGraphGeneratorPath = Join-Path $PSScriptRoot 'Generate-ProjectGraphs.mjs'
 $projectGraphValidatorPath = Join-Path $PSScriptRoot 'Validate-ProjectGraphs.mjs'
+$sourceMirrorGeneratorPath = Join-Path $PSScriptRoot 'Generate-SourceMirrors.mjs'
+$ontologyOverlayPublisherPath = Join-Path $repositoryPath '50_SETUP\Ontology\Apply-OntologyOverlay.mjs'
+$ontologySourcePath = Join-Path $repositoryPath '.ua\ontology'
+$ontologyArtifactNames = @(
+    'manifest.json',
+    'instances.json',
+    'dreamine.schema.json',
+    'architecture-validation.json',
+    'linkml-shacl-validation.json',
+    'source-audit.json'
+)
+$ontologyArtifactPaths = @($ontologyArtifactNames | ForEach-Object { Join-Path $ontologySourcePath $_ })
 
 if (-not $destinationPath.StartsWith($webRoot + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase) -or
     [System.IO.Path]::GetFileName($destinationPath) -ne 'understand') {
     throw "Unsafe destination: $destinationPath"
 }
 
-foreach ($requiredPath in @($buildPath, $scanPath, $graphPath, $portalPath, $contentPath, $enricherPath, $generatorPath, $projectGraphGeneratorPath, $projectGraphValidatorPath)) {
+foreach ($requiredPath in @($buildPath, $scanPath, $graphPath, $portalPath, $contentPath, $enricherPath, $generatorPath, $projectGraphGeneratorPath, $projectGraphValidatorPath, $ontologyOverlayPublisherPath) + $ontologyArtifactPaths) {
     if (-not (Test-Path -LiteralPath $requiredPath)) {
         throw "Required input not found: $requiredPath"
     }
@@ -48,6 +60,15 @@ foreach ($languageRun in @(
     }
 }
 Copy-Item -LiteralPath $koGraphPath -Destination $graphPath -Force
+& $NodeExecutable $ontologyOverlayPublisherPath $repositoryPath
+if ($LASTEXITCODE -ne 0) {
+    throw "Source-verified ontology overlay publishing failed with exit code $LASTEXITCODE."
+}
+$publishedKoGraphPath = Join-Path $repositoryPath '.ua\knowledge-graph.source-verified.ko.json'
+$publishedEnGraphPath = Join-Path $repositoryPath '.ua\knowledge-graph.source-verified.en.json'
+foreach ($verifiedGraphPath in @($publishedKoGraphPath, $publishedEnGraphPath)) {
+    if (-not (Test-Path -LiteralPath $verifiedGraphPath)) { throw "Verified graph not found: $verifiedGraphPath" }
+}
 
 if (Test-Path -LiteralPath $destinationPath) {
     $resolvedDestination = (Resolve-Path -LiteralPath $destinationPath).Path
@@ -61,6 +82,19 @@ New-Item -ItemType Directory -Path $destinationPath | Out-Null
 Copy-Item -Path (Join-Path $portalPath '*') -Destination $destinationPath -Recurse -Force
 Copy-Item -LiteralPath $contentPath -Destination (Join-Path $destinationPath 'onboarding.json') -Force
 
+# Publish only the bounded server-consumer artifacts. The raw Understand graph
+# and source-verified overlay remain unchanged; Dreamine.Web reads these files
+# server-side and never ships the complete RDF dataset to the browser.
+$ontologyDestination = Join-Path $destinationPath 'ontology'
+New-Item -ItemType Directory -Path $ontologyDestination -Force | Out-Null
+foreach ($artifactPath in $ontologyArtifactPaths) {
+    Copy-Item -LiteralPath $artifactPath -Destination (Join-Path $ontologyDestination ([System.IO.Path]::GetFileName($artifactPath))) -Force
+}
+$optionalConsumerPrecedence = Join-Path $ontologySourcePath 'consumer-precedence.json'
+if (Test-Path -LiteralPath $optionalConsumerPrecedence -PathType Leaf) {
+    Copy-Item -LiteralPath $optionalConsumerPrecedence -Destination (Join-Path $ontologyDestination 'consumer-precedence.json') -Force
+}
+
 $graphDestination = Join-Path $destinationPath 'graph'
 New-Item -ItemType Directory -Path $graphDestination | Out-Null
 Copy-Item -Path (Join-Path $buildPath '*') -Destination $graphDestination -Recurse -Force
@@ -68,6 +102,31 @@ $graphIndexPath = Join-Path $graphDestination 'index.html'
 $graphIndexHtml = Get-Content -LiteralPath $graphIndexPath -Raw
 $graphIndexHtml = $graphIndexHtml.Replace('<title>Understand Anything</title>', '<title>Dreamine 프로젝트 지식 그래프</title>')
 $graphSelectorScript = @'
+  <style>
+    #dreamine-docs-return {
+      display: inline-flex;
+      align-items: center;
+      flex: 0 0 auto;
+      position: fixed;
+      left: 52px;
+      bottom: 14px;
+      z-index: 2147483647;
+      min-height: 38px;
+      padding: 0 14px;
+      margin: 0;
+      border: 1px solid rgba(126, 240, 197, .45);
+      border-radius: 10px;
+      color: #dffcf1;
+      background: rgba(7, 16, 27, .92);
+      box-shadow: 0 8px 28px rgba(0, 0, 0, .28);
+      font: 600 13px/1.2 system-ui, sans-serif;
+      text-decoration: none;
+    }
+    #dreamine-docs-return:hover { border-color: #7ef0c5; background: #102a2b; }
+    @media (max-width: 720px) {
+      #dreamine-docs-return { left: 46px; bottom: 10px; min-height: 34px; padding-inline: 10px; }
+    }
+  </style>
   <script>
     (() => {
       const query = new URLSearchParams(location.search);
@@ -86,19 +145,27 @@ $graphSelectorScript = @'
         }
         return originalFetch(input, init);
       };
+      window.addEventListener('DOMContentLoaded', () => {
+        const returnLink = document.createElement('a');
+        returnLink.id = 'dreamine-docs-return';
+        returnLink.href = '/knowledge';
+        returnLink.textContent = language === 'en' ? '← Dreamine Docs Hub' : '← Dreamine 문서 허브';
+        returnLink.setAttribute('aria-label', returnLink.textContent);
+        document.body.appendChild(returnLink);
+      });
     })();
   </script>
 '@
 if (-not $graphIndexHtml.Contains('</head>')) { throw 'Dashboard index does not contain </head>.' }
 $graphIndexHtml = $graphIndexHtml.Replace('</head>', "$graphSelectorScript`n</head>")
 Set-Content -LiteralPath $graphIndexPath -Value $graphIndexHtml -NoNewline -Encoding utf8
-Copy-Item -LiteralPath $koGraphPath -Destination (Join-Path $destinationPath 'knowledge-graph.json') -Force
-Copy-Item -LiteralPath $koGraphPath -Destination (Join-Path $graphDestination 'knowledge-graph.json') -Force
+Copy-Item -LiteralPath $publishedKoGraphPath -Destination (Join-Path $destinationPath 'knowledge-graph.json') -Force
+Copy-Item -LiteralPath $publishedKoGraphPath -Destination (Join-Path $graphDestination 'knowledge-graph.json') -Force
 
 $fullGraphDestination = Join-Path $destinationPath 'full'
 foreach ($fullGraph in @(
-    @{ Language = 'ko'; Source = $koGraphPath },
-    @{ Language = 'en'; Source = $enGraphPath }
+    @{ Language = 'ko'; Source = $publishedKoGraphPath },
+    @{ Language = 'en'; Source = $publishedEnGraphPath }
 )) {
     $languageDestination = Join-Path $fullGraphDestination $fullGraph.Language
     New-Item -ItemType Directory -Path $languageDestination -Force | Out-Null
@@ -148,91 +215,17 @@ if ($guardMatches.Count -ne 1) {
 $viewerText = [regex]::Replace($viewerText, $demoGuardPattern, '', 1)
 Set-Content -LiteralPath $codeViewer[0].FullName -Value $viewerText -NoNewline -Encoding utf8
 
-$allowedExtensions = @(
-    '.bat', '.c', '.cc', '.cmd', '.cpp', '.cs', '.cshtml', '.csproj', '.css',
-    '.fs', '.fsproj', '.go', '.h', '.hpp', '.htm', '.html', '.java', '.js',
-    '.jsx', '.kt', '.kts', '.mjs', '.cjs', '.md', '.php', '.props', '.proto',
-    '.ps1', '.py', '.razor', '.rb', '.rs', '.scss', '.sh', '.sln', '.sql',
-    '.swift', '.targets', '.ts', '.tsx', '.vb', '.vbproj', '.xaml', '.yml', '.yaml'
-)
-$blockedFileNames = @(
-    '.env', 'appsettings.json', 'appsettings.development.json', 'launchsettings.json',
-    'secrets.json', 'settings.local.json'
-)
-$secretPatterns = @(
-    '-----BEGIN [A-Z ]*PRIVATE KEY-----',
-    '\bAKIA[0-9A-Z]{16}\b',
-    '\bgh[pousr]_[A-Za-z0-9]{20,}\b',
-    '\bsk-[A-Za-z0-9_-]{20,}\b',
-    '(?i)(password|passwd|pwd|secret|api[_-]?key|access[_-]?token|connectionstring)[A-Za-z0-9_]*[^\r\n]{0,120}=\s*["''][^"''\r\n]{4,}["'']'
-)
-
-$scan = Get-Content -LiteralPath $scanPath -Raw | ConvertFrom-Json
-$sourceRoot = Join-Path $destinationPath 'source'
-New-Item -ItemType Directory -Path $sourceRoot | Out-Null
-$published = 0
-$blocked = [System.Collections.Generic.List[string]]::new()
-
-foreach ($entry in $scan.files) {
-    $relativePath = [string]$entry.path
-    if (-not $relativePath.StartsWith('20_SOURCES/', [System.StringComparison]::OrdinalIgnoreCase)) {
-        continue
-    }
-
-    $extension = [System.IO.Path]::GetExtension($relativePath).ToLowerInvariant()
-    $fileName = [System.IO.Path]::GetFileName($relativePath).ToLowerInvariant()
-    if ($extension -notin $allowedExtensions -or $fileName -in $blockedFileNames) {
-        continue
-    }
-
-    $sourcePath = [System.IO.Path]::GetFullPath((Join-Path $repositoryPath ($relativePath.Replace('/', [System.IO.Path]::DirectorySeparatorChar))))
-    if (-not $sourcePath.StartsWith($repositoryPath + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase) -or
-        -not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
-        continue
-    }
-
-    $content = Get-Content -LiteralPath $sourcePath -Raw
-    $containsSecret = $false
-    foreach ($pattern in $secretPatterns) {
-        if ($content -match $pattern) {
-            $containsSecret = $true
-            break
-        }
-    }
-    if ($containsSecret) {
-        $blocked.Add($relativePath)
-        continue
-    }
-
-    $targetPath = Join-Path $sourceRoot ($relativePath.Replace('/', [System.IO.Path]::DirectorySeparatorChar) + '.json')
-    $targetDirectory = [System.IO.Path]::GetDirectoryName($targetPath)
-    New-Item -ItemType Directory -Path $targetDirectory -Force | Out-Null
-    $lineCount = if ($content.Length -eq 0) { 0 } else { ([regex]::Matches($content, "`n").Count + 1) }
-    $payload = [ordered]@{
-        path = $relativePath
-        language = [string]$entry.language
-        content = $content
-        sizeBytes = (Get-Item -LiteralPath $sourcePath).Length
-        lineCount = $lineCount
-    }
-    $payload | ConvertTo-Json -Depth 4 -Compress | Set-Content -LiteralPath $targetPath -Encoding utf8 -NoNewline
-    $published++
+& $NodeExecutable $sourceMirrorGeneratorPath $repositoryPath $destinationPath
+if ($LASTEXITCODE -ne 0) {
+    throw "Source mirror generation failed with exit code $LASTEXITCODE."
 }
-
-$manifest = [ordered]@{
-    generatedAt = [DateTimeOffset]::Now.ToString('o')
-    sourceFiles = $published
-    blockedBySecretScan = @($blocked)
-    policy = 'Only allow-listed source/document extensions under 20_SOURCES are mirrored; runtime settings and known secret files are excluded.'
-}
-$manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $destinationPath 'source-manifest.json') -Encoding utf8
 
 & $NodeExecutable $generatorPath $graphPath $destinationPath
 if ($LASTEXITCODE -ne 0) {
     throw "Portal/API page generation failed with exit code $LASTEXITCODE."
 }
 
-& $NodeExecutable $projectGraphGeneratorPath $repositoryPath $destinationPath $koGraphPath $enGraphPath
+& $NodeExecutable $projectGraphGeneratorPath $repositoryPath $destinationPath $publishedKoGraphPath $publishedEnGraphPath
 if ($LASTEXITCODE -ne 0) {
     throw "Project graph generation failed with exit code $LASTEXITCODE."
 }
@@ -244,6 +237,6 @@ if ($LASTEXITCODE -ne 0) {
 
 Write-Output "Published knowledge hub: $destinationPath"
 Write-Output "Published advanced graph: $graphDestination"
-Write-Output "Published source previews: $published"
-Write-Output "Blocked by secret scan: $($blocked.Count)"
+Write-Output "Published source previews from scan and source-verified Overlay."
 Write-Output "Published project graphs: 160"
+Write-Output "Published ontology consumer artifacts: $($ontologyArtifactPaths.Count)"

@@ -15,20 +15,27 @@
         var requestUri = new Uri(Navigation.Uri);
         var requestPath = requestUri.AbsolutePath.TrimEnd('/');
         var isKnowledgeHub = requestPath.Equals("/knowledge", StringComparison.OrdinalIgnoreCase);
+        var isOntology = requestPath.Equals("/ontology", StringComparison.OrdinalIgnoreCase);
         var isEnglish = requestUri.Query.Contains("lang=en", StringComparison.OrdinalIgnoreCase);
         var siteRoot = og.OgUrl.TrimEnd('/');
-        var ogTitle = isKnowledgeHub
+        var ogTitle = isOntology
+            ? (isEnglish ? "Dreamine Source-Verified Ontology" : "Dreamine Source-Verified 온톨로지")
+            : isKnowledgeHub
             ? (isEnglish ? "Dreamine FullKit Documentation Hub" : "Dreamine FullKit 프로젝트 문서 허브")
             : (string.IsNullOrEmpty(og.OgTitle) ? og.Title : og.OgTitle);
-        var ogDesc = isKnowledgeHub
+        var ogDesc = isOntology
+            ? (isEnglish
+                ? "Search the LinkML TBox, source-verified ABox individuals, original Dreamine relations, SourceAudit, and SHACL validation results."
+                : "LinkML TBox, source-verified ABox 개체, 원래 Dreamine 관계와 SourceAudit·SHACL 검증 결과를 검색하고 탐색하세요.")
+            : isKnowledgeHub
             ? (isEnglish
                 ? "Explore 80 FullKit apps, reusable libraries, tests, and samples with bilingual Doxygen API docs and focused knowledge graphs."
                 : "FullKit의 80개 앱·라이브러리·테스트·샘플을 분류별로 탐색하고, 한글·영문 Doxygen API 문서와 프로젝트별 지식 그래프를 확인하세요.")
             : (string.IsNullOrEmpty(og.OgDescription) ? og.Description : og.OgDescription);
-        var ogImg = isKnowledgeHub
+        var ogImg = isKnowledgeHub || isOntology
             ? $"{siteRoot}/img/og-documentation-hub.png"
             : (og.OgImageUrl.StartsWith("http") ? og.OgImageUrl : siteRoot + og.OgImageUrl);
-        var ogUrl = isKnowledgeHub ? $"{siteRoot}/knowledge" : og.OgUrl;
+        var ogUrl = isOntology ? $"{siteRoot}/ontology" : isKnowledgeHub ? $"{siteRoot}/knowledge" : og.OgUrl;
     }
     <title>@ogTitle</title>
     <meta name="description" content="@ogDesc" />
@@ -50,7 +57,7 @@
     <meta name="twitter:image:alt"   content="Dreamine FullKit Documentation Hub" />
 
     <link rel="icon" href="@(string.IsNullOrEmpty(og.IconUrl) ? "/img/icon.ico" : og.IconUrl)" />
-    <link rel="stylesheet" href="/css/dreamine.css?v=20260718-knowledge" />
+    <link rel="stylesheet" href="/css/dreamine.css?v=20260719-performance" />
     @* Blazor scoped CSS 번들 — Dreamine.UI.Blazor 컴포넌트(.razor.css)를 이 안에서 @import 로 로드 *@
     <link rel="stylesheet" href="Dreamine.Web.styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -60,33 +67,54 @@
 </head>
 <body>
     <DreamineWeb.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
     <script>
-        mermaid.initialize({
-            startOnLoad: false,
-            theme: 'base',
-            themeVariables: {
-                darkMode: true,
-                background: '#030913',
-                primaryColor: '#07111f',
-                primaryTextColor: '#e8eaf0',
-                primaryBorderColor: 'rgba(73,178,255,0.35)',
-                lineColor: '#49b2ff',
-                secondaryColor: '#0a1829',
-                tertiaryColor: '#0d1f36',
-                edgeLabelBackground: '#07111f',
-                clusterBkg: '#07111f',
-                titleColor: '#49b2ff',
-                attributeBackgroundColorEven: '#07111f',
-                attributeBackgroundColorOdd: '#0a1829',
-                classText: '#e8eaf0',
-                nodeBorder: 'rgba(73,178,255,0.35)',
-                nodeTextColor: '#e8eaf0',
-                mainBkg: '#07111f'
-            }
-        });
-        window.renderMermaid = function () {
-            mermaid.run({ querySelector: '.mermaid:not([data-processed])' });
+        window.dwMermaidLoader = window.dwMermaidLoader || null;
+        window.loadDreamineMermaid = function () {
+            if (window.mermaid) return Promise.resolve(window.mermaid);
+            if (window.dwMermaidLoader) return window.dwMermaidLoader;
+
+            window.dwMermaidLoader = new Promise(function (resolve, reject) {
+                var script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+                script.async = true;
+                script.onload = function () {
+                    window.mermaid.initialize({
+                        startOnLoad: false,
+                        theme: 'base',
+                        themeVariables: {
+                            darkMode: true,
+                            background: '#030913',
+                            primaryColor: '#07111f',
+                            primaryTextColor: '#e8eaf0',
+                            primaryBorderColor: 'rgba(73,178,255,0.35)',
+                            lineColor: '#49b2ff',
+                            secondaryColor: '#0a1829',
+                            tertiaryColor: '#0d1f36',
+                            edgeLabelBackground: '#07111f',
+                            clusterBkg: '#07111f',
+                            titleColor: '#49b2ff',
+                            attributeBackgroundColorEven: '#07111f',
+                            attributeBackgroundColorOdd: '#0a1829',
+                            classText: '#e8eaf0',
+                            nodeBorder: 'rgba(73,178,255,0.35)',
+                            nodeTextColor: '#e8eaf0',
+                            mainBkg: '#07111f'
+                        }
+                    });
+                    resolve(window.mermaid);
+                };
+                script.onerror = function () {
+                    window.dwMermaidLoader = null;
+                    reject(new Error('Mermaid script could not be loaded.'));
+                };
+                document.head.appendChild(script);
+            });
+
+            return window.dwMermaidLoader;
+        };
+        window.renderMermaid = async function () {
+            var mermaid = await window.loadDreamineMermaid();
+            await mermaid.run({ querySelector: '.mermaid:not([data-processed])' });
         };
         window.dwScrollToId = function (id) {
             var el = document.getElementById(id);

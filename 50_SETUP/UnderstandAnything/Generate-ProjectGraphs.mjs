@@ -9,9 +9,15 @@ const repositoryRoot = path.resolve(process.argv[2] ?? path.join(scriptDir, ".."
 const destinationRoot = path.resolve(process.argv[3] ?? path.join(repositoryRoot, "20_SOURCES", "000. Project", "010. App", "Dreamine.Web", "wwwroot", "understand"));
 const sourcesRoot = path.join(repositoryRoot, "20_SOURCES");
 const doxygenRoot = path.join(repositoryRoot, "10_DOCUMENTS", "Doxygen");
+const webProjectRoot = path.join(repositoryRoot, "20_SOURCES", "000. Project", "010. App", "Dreamine.Web");
+const libraryStorePath = path.join(webProjectRoot, "Services", "JsonLibraryStore.cs");
+const preferredGraphPath = (language) => {
+  const verified = path.join(repositoryRoot, ".ua", `knowledge-graph.source-verified.${language}.json`);
+  return fs.existsSync(verified) ? verified : path.join(repositoryRoot, ".ua", `knowledge-graph.${language}.json`);
+};
 const graphPaths = {
-  ko: path.resolve(process.argv[4] ?? path.join(repositoryRoot, ".ua", "knowledge-graph.ko.json")),
-  en: path.resolve(process.argv[5] ?? path.join(repositoryRoot, ".ua", "knowledge-graph.en.json")),
+  ko: path.resolve(process.argv[4] ?? preferredGraphPath("ko")),
+  en: path.resolve(process.argv[5] ?? preferredGraphPath("en")),
 };
 
 const slash = (value) => String(value ?? "").replaceAll("\\", "/");
@@ -19,9 +25,11 @@ const compact = (value) => String(value ?? "").replace(/\s+/g, " ").trim();
 const unique = (values) => [...new Set(values.filter(Boolean))];
 const clone = (value) => JSON.parse(JSON.stringify(value));
 const slugify = (value) => compact(value).normalize("NFKD").replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-|-$/g, "").toLowerCase() || "project";
+const dreamineDocSlug = (value) => slugify(String(value).replace(/^Dreamine\./i, ""));
 const encodePath = (...segments) => `/${segments.map((segment) => encodeURIComponent(segment)).join("/")}`;
+const isNonEmptyFile = (filePath, minimumBytes = 32) => fs.existsSync(filePath) && fs.statSync(filePath).isFile() && fs.statSync(filePath).size >= minimumBytes;
 
-for (const required of [sourcesRoot, doxygenRoot, graphPaths.ko, graphPaths.en]) {
+for (const required of [sourcesRoot, doxygenRoot, graphPaths.ko, graphPaths.en, libraryStorePath]) {
   if (!fs.existsSync(required)) throw new Error(`Required input not found: ${required}`);
 }
 if (!destinationRoot.startsWith(path.join(sourcesRoot, "000. Project") + path.sep)) {
@@ -49,6 +57,10 @@ function readSummary(filePath, fallback) {
 }
 
 const rootProps = fs.readFileSync(path.join(sourcesRoot, "Directory.Build.props"), "utf8");
+const libraryStoreSource = fs.readFileSync(libraryStorePath, "utf8");
+const documentationEntries = new Map(
+  [...libraryStoreSource.matchAll(/Id\s*=\s*"([^"]+)"\s*,\s*Name\s*=\s*"([^"]+)"/g)]
+    .map((match) => [match[2], match[1]]));
 const defaultVersion = tag(rootProps, "AppVersion") || tag(rootProps, "Version") || "1.0.0";
 const projectFiles = walk(sourcesRoot).sort((a, b) => slash(a).localeCompare(slash(b)));
 const projects = projectFiles.map((projectFile) => {
@@ -71,8 +83,16 @@ const projects = projectFiles.map((projectFile) => {
   const slug = slugify(displayName);
   const summaryEn = readSummary(path.join(directory, "README.md"), `${displayName} provides APIs and components for Dreamine.MVVM.FullKit.`);
   const summaryKo = readSummary(path.join(directory, "README_KO.md"), `${displayName} 프로젝트의 API와 구성 요소를 제공합니다.`);
-  const xmlDocPath = path.join(repositoryRoot, "20_SOURCES", "000. Project", "010. App", "Dreamine.Web", "wwwroot", "xmldocs", assemblyName, `${assemblyName}.xml`);
-  return { projectFile, relativeProjectFile, directory, relativeDirectory, baseName, displayName, assemblyName, category, version, targetFrameworks, references, linkedFiles, slug, summaryEn, summaryKo, hasBuildDocument: fs.existsSync(xmlDocPath) };
+  const documentationDirectory = path.join(webProjectRoot, "wwwroot", "xmldocs", assemblyName);
+  const xmlDocPath = path.join(documentationDirectory, `${assemblyName}.xml`);
+  const readmeEnPath = path.join(documentationDirectory, "README.md");
+  const readmeKoPath = path.join(documentationDirectory, "README_KO.md");
+  const documentationId = documentationEntries.get(displayName) ?? null;
+  const hasApiMembers = isNonEmptyFile(xmlDocPath) && /<member\s+name=/i.test(fs.readFileSync(xmlDocPath, "utf8"));
+  const hasEnglishReadme = isNonEmptyFile(readmeEnPath, 80) && compact(fs.readFileSync(readmeEnPath, "utf8")).length >= 40;
+  const hasKoreanReadme = isNonEmptyFile(readmeKoPath, 80) && compact(fs.readFileSync(readmeKoPath, "utf8")).length >= 40;
+  const documentationAvailable = category === "100. Library" && documentationId !== null && (hasApiMembers || hasEnglishReadme || hasKoreanReadme);
+  return { projectFile, relativeProjectFile, directory, relativeDirectory, baseName, displayName, assemblyName, category, version, targetFrameworks, references, linkedFiles, slug, summaryEn, summaryKo, documentationId, documentationAvailable, hasEnglishReadme, hasKoreanReadme };
 });
 
 const duplicateSlugs = [...new Set(projects.filter((project, index) => projects.findIndex((item) => item.slug === project.slug) !== index).map((project) => project.slug))];
@@ -106,6 +126,12 @@ function nodeProjects(node, projectByPath) {
   const metadataProject = projects.find((project) => project.baseName === metadataName || project.displayName === metadataName);
   if (metadataProject) memberships.push(metadataProject);
   return unique(memberships);
+}
+
+function visibleNodes(nodes) {
+  return nodes.filter((node) => node.defaultSearchVisible !== false
+    && node.sourceVerificationStatus !== "excluded_generated"
+    && node.sourceVerificationStatus !== "stale_quarantined");
 }
 
 function layerFor(node) {
@@ -142,7 +168,8 @@ for (const project of projects) {
   const counts = {};
   for (const language of ["ko", "en"]) {
     const sourceGraph = graphs[language];
-    const ownedNodes = sourceGraph.nodes.filter((node) => nodeProjects(node, projectByPath).some((membership) => membership.slug === project.slug));
+    const ownedNodes = visibleNodes(sourceGraph.nodes)
+      .filter((node) => nodeProjects(node, projectByPath).some((membership) => membership.slug === project.slug));
     const nodes = clone(ownedNodes);
     const nodeIds = new Set(nodes.map((node) => node.id));
     const rootId = `module:${project.slug}`;
@@ -223,7 +250,19 @@ for (const project of projects) {
   }
 
   const doxyPhysical = (language) => path.join(doxygenRoot, project.category, project.displayName, language === "ko" ? "KR" : "EN", "html", "index.html");
-  if (!fs.existsSync(doxyPhysical("ko")) || !fs.existsSync(doxyPhysical("en"))) throw new Error(`Doxygen index missing for ${project.displayName}.`);
+  const doxygenAvailability = { ko: isNonEmptyFile(doxyPhysical("ko"), 100), en: isNonEmptyFile(doxyPhysical("en"), 100) };
+  const graphAvailability = Object.fromEntries(["ko", "en"].map((language) => {
+    const directory = path.join(outputRoot, project.slug, language);
+    const available = counts[language].nodes > 1
+      && isNonEmptyFile(path.join(directory, "knowledge-graph.json"), 100)
+      && isNonEmptyFile(path.join(directory, "config.json"), 2)
+      && isNonEmptyFile(path.join(directory, "meta.json"), 20);
+    return [language, available];
+  }));
+  const localizedDocumentation = {
+    ko: project.documentationAvailable ? (project.hasKoreanReadme || project.hasEnglishReadme) : doxygenAvailability.ko,
+    en: project.documentationAvailable ? (project.hasEnglishReadme || project.hasKoreanReadme) : doxygenAvailability.en,
+  };
   catalog.push({
     slug: project.slug,
     name: project.displayName,
@@ -232,18 +271,23 @@ for (const project of projects) {
     targetFrameworks: project.targetFrameworks,
     projectFile: project.relativeProjectFile,
     descriptions: { ko: project.summaryKo, en: project.summaryEn },
-    buildDocumentUrl: project.hasBuildDocument ? `/xmldocs/${encodeURIComponent(project.assemblyName)}/${encodeURIComponent(project.assemblyName)}.xml` : null,
-    doxygenUrls: {
-      ko: encodePath("docs", "doxygen", project.category, project.displayName, "KR", "html", "index.html"),
-      en: encodePath("docs", "doxygen", project.category, project.displayName, "EN", "html", "index.html"),
-    },
-    graphUrls: {
-      ko: `/understand/graph/?project=${encodeURIComponent(project.slug)}&lang=ko`,
-      en: `/understand/graph/?project=${encodeURIComponent(project.slug)}&lang=en`,
-    },
+    documentationAvailable: project.documentationAvailable,
+    doxygenAvailable: doxygenAvailability.ko || doxygenAvailability.en,
+    knowledgeGraphAvailable: graphAvailability.ko || graphAvailability.en,
+    koreanDocumentationAvailable: localizedDocumentation.ko,
+    englishDocumentationAvailable: localizedDocumentation.en,
+    documentPageUrl: project.documentationAvailable ? `/docs/${encodeURIComponent(project.documentationId)}` : null,
+    doxygenUrls: Object.fromEntries(["ko", "en"].filter((language) => doxygenAvailability[language]).map((language) => [language, encodePath("docs", "doxygen", project.category, project.displayName, language === "ko" ? "KR" : "EN", "html", "index.html")])),
+    graphUrls: Object.fromEntries(["ko", "en"].filter((language) => graphAvailability[language]).map((language) => [language, `/understand/graph/?project=${encodeURIComponent(project.slug)}&lang=${language}`])),
+    availability: { doxygen: doxygenAvailability, knowledgeGraph: graphAvailability },
     counts,
   });
 }
 
-fs.writeFileSync(path.join(destinationRoot, "project-catalog.json"), JSON.stringify({ generatedAt: new Date().toISOString(), totalProjects: catalog.length, projects: catalog }, null, 2));
-process.stdout.write(`Projects=${catalog.length} Graphs=${catalog.length * 2} Destination=${outputRoot}\n`);
+const availabilitySummary = {
+  documentationProjects: catalog.filter((project) => project.documentationAvailable).length,
+  doxygenProjects: catalog.filter((project) => project.doxygenAvailable).length,
+  knowledgeGraphProjects: catalog.filter((project) => project.knowledgeGraphAvailable).length,
+};
+fs.writeFileSync(path.join(destinationRoot, "project-catalog.json"), JSON.stringify({ generatedAt: new Date().toISOString(), totalProjects: catalog.length, availabilitySummary, projects: catalog }, null, 2));
+process.stdout.write(`Projects=${catalog.length} Graphs=${catalog.length * 2} Docs=${availabilitySummary.documentationProjects} Doxygen=${availabilitySummary.doxygenProjects} AvailableGraphs=${availabilitySummary.knowledgeGraphProjects} Destination=${outputRoot}\n`);

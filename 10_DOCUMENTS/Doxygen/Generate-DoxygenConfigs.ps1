@@ -121,13 +121,15 @@ function New-DoxyfileContent {
         [string]$OutputDirectory,
         [string]$Readme,
         [string]$ExcludedReadme,
-        [string]$DotPath
+        [string]$DotPath,
+        [string]$LayoutFile
     )
 
     $escapedName = Escape-DoxyValue $ProjectName
     $escapedBrief = Escape-DoxyValue $Brief
     $escapedOutput = $OutputDirectory.Replace('\', '/')
     $escapedDotPath = $DotPath.Replace('\', '/')
+    $escapedLayoutFile = $LayoutFile.Replace('\', '/')
 
     return @"
 # Generated from project metadata by 10_DOCUMENTS/Doxygen/Generate-DoxygenConfigs.ps1
@@ -168,6 +170,7 @@ SEARCHENGINE             = YES
 GENERATE_HTML            = YES
 GENERATE_LATEX           = NO
 GENERATE_XML             = YES
+LAYOUT_FILE              = "$escapedLayoutFile"
 HTML_COLORSTYLE          = TOGGLE
 HTML_DYNAMIC_MENUS       = YES
 DISABLE_INDEX            = NO
@@ -200,6 +203,40 @@ $dotExecutable = @(
     'C:\Program Files\Graphviz\bin\dot.exe'
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 $dotPath = if ($dotExecutable) { Split-Path $dotExecutable } else { '' }
+
+$doxygenCommand = Get-Command doxygen -ErrorAction SilentlyContinue
+if (-not $doxygenCommand) {
+    throw 'Doxygen executable was not found. Install Doxygen before generating project configurations.'
+}
+
+function New-DoxygenLayout {
+    param(
+        [string]$Path,
+        [string]$Title,
+        [string]$Language
+    )
+
+    if (Test-Path -LiteralPath $Path) {
+        Remove-Item -LiteralPath $Path -Force
+    }
+    & $doxygenCommand.Source -l $Path
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $Path)) {
+        throw "Could not generate the Doxygen layout file: $Path"
+    }
+
+    $layout = [IO.File]::ReadAllText($Path)
+    $tab = "    <tab type=`"user`" visible=`"yes`" url=`"https://dreamine.kr/knowledge?lang=$Language`" title=`"$Title`"/>"
+    if (-not $layout.Contains('<navindex>')) {
+        throw "Doxygen layout does not contain a navigation index: $Path"
+    }
+    $layout = $layout.Replace('<navindex>', "<navindex>`r`n$tab")
+    [IO.File]::WriteAllText($Path, $layout, $utf8)
+}
+
+$layoutKoPath = Join-Path $outputRoot 'DoxygenLayout.kr.xml'
+$layoutEnPath = Join-Path $outputRoot 'DoxygenLayout.en.xml'
+New-DoxygenLayout $layoutKoPath '← Dreamine 문서 허브' 'ko'
+New-DoxygenLayout $layoutEnPath '← Dreamine Docs Hub' 'en'
 
 $defaultVersion = '1.0.0'
 $rootPropertiesPath = Join-Path $sourcesRoot 'Directory.Build.props'
@@ -250,8 +287,10 @@ foreach ($relativeOrAbsolutePath in $projectPaths) {
     if (New-Readme (Join-Path $projectDirectory 'README.md') $projectName $version $descriptionEn $targetFramework $false) { $createdReadmes++ }
     if (New-Readme (Join-Path $projectDirectory 'README_KO.md') $projectName $version $descriptionKo $targetFramework $true) { $createdReadmes++ }
 
-    $enConfig = New-DoxyfileContent $projectName $version $descriptionEn 'English' 'EN' $enOutput 'README.md' 'README_KO.md' $dotPath
-    $krConfig = New-DoxyfileContent $projectName $version $descriptionKo 'Korean' 'KO' $krOutput 'README_KO.md' 'README.md' $dotPath
+    $enLayout = [IO.Path]::GetRelativePath($projectDirectory, $layoutEnPath)
+    $krLayout = [IO.Path]::GetRelativePath($projectDirectory, $layoutKoPath)
+    $enConfig = New-DoxyfileContent $projectName $version $descriptionEn 'English' 'EN' $enOutput 'README.md' 'README_KO.md' $dotPath $enLayout
+    $krConfig = New-DoxyfileContent $projectName $version $descriptionKo 'Korean' 'KO' $krOutput 'README_KO.md' 'README.md' $dotPath $krLayout
     [IO.File]::WriteAllText((Join-Path $projectDirectory 'Doxyfile.en'), $enConfig, $utf8)
     [IO.File]::WriteAllText((Join-Path $projectDirectory 'Doxyfile.kr'), $krConfig, $utf8)
     $generatedConfigs += 2

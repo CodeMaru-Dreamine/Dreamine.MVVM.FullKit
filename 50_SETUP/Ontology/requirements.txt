@@ -1,0 +1,3 @@
+linkml==1.11.1
+pyshacl==0.40.0
+rdflib==7.6.0

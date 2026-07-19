@@ -443,6 +443,9 @@ FodyWeavers.xsd
 
 # Generated documentation and knowledge-graph outputs
 /.ua/
+/50_SETUP/Ontology/.venv/
+/50_SETUP/Ontology/.pystow/
+/50_SETUP/Ontology/generated/
 /10_DOCUMENTS/Doxygen/000. Project/
 /10_DOCUMENTS/Doxygen/100. Library/
 /10_DOCUMENTS/Doxygen/200. Tests/

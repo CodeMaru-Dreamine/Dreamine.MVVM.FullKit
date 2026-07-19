@@ -1,0 +1,10 @@
+@prefix dreamine: <https://dreamine.kr/ontology/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+dreamine:negativeEventViewModel rdf:type dreamine:ViewModel ;
+  dreamine:contains dreamine:negativeForwardSource ;
+  dreamine:hasEventComponent dreamine:negativeEventComponent .
+dreamine:negativeEventComponent rdf:type dreamine:DreamineEventComponent .
+dreamine:negativeForwardSource rdf:type dreamine:Method ; dreamine:forwardTargetName "MissingAction" .
+dreamine:negativeSourceOwner rdf:type dreamine:SemanticRelation ; dreamine:relation_type "contains" ; dreamine:source dreamine:negativeEventViewModel ; dreamine:target dreamine:negativeForwardSource .
+dreamine:negativeEventBinding rdf:type dreamine:SemanticRelation ; dreamine:relation_type "hasEventComponent" ; dreamine:source dreamine:negativeEventViewModel ; dreamine:target dreamine:negativeEventComponent .

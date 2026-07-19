@@ -1,0 +1,6 @@
+@prefix dreamine: <https://dreamine.kr/ontology/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+dreamine:negativeMethod rdf:type dreamine:Method, dreamine:CodeMember, dreamine:CodeElement .
+dreamine:negativeClass rdf:type dreamine:CodeClass, dreamine:CodeType, dreamine:CodeElement .
+dreamine:negativeImplements rdf:type dreamine:SemanticRelation ; dreamine:relation_type "implements" ; dreamine:source dreamine:negativeMethod ; dreamine:target dreamine:negativeClass .

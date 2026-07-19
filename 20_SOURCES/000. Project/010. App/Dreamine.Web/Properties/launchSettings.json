@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Dreamine.Web": {
+      "commandName": "Project",
+      "hotReloadEnabled": false
+    }
+  }
+}

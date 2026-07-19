@@ -1,0 +1,6 @@
+@prefix dreamine: <https://dreamine.kr/ontology/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+dreamine:positiveFile rdf:type dreamine:SourceFile .
+dreamine:positiveClass rdf:type dreamine:CodeClass, dreamine:CodeType, dreamine:CodeElement .
+dreamine:positiveContains rdf:type dreamine:SemanticRelation ; dreamine:relation_type "contains" ; dreamine:source dreamine:positiveFile ; dreamine:target dreamine:positiveClass .

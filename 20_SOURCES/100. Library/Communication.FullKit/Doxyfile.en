@@ -36,6 +36,7 @@ SEARCHENGINE             = YES
 GENERATE_HTML            = YES
 GENERATE_LATEX           = NO
 GENERATE_XML             = YES
+LAYOUT_FILE              = "../../../10_DOCUMENTS/Doxygen/DoxygenLayout.en.xml"
 HTML_COLORSTYLE          = TOGGLE
 HTML_DYNAMIC_MENUS       = YES
 DISABLE_INDEX            = NO

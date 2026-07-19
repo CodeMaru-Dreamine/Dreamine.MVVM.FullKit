@@ -72,13 +72,28 @@ public sealed class DocumentationProjectInfo
 
     /// <summary>
     /// \if KO
-    /// <para>컴파일러가 생성한 XML 문서 URL을 가져오거나 설정합니다.</para>
+    /// <para>Dreamine 내부 프로젝트 문서 페이지 URL을 가져오거나 설정합니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Gets or sets the compiler-generated XML documentation URL.</para>
+    /// <para>Gets or sets the Dreamine project documentation page URL.</para>
     /// \endif
     /// </summary>
-    public string? BuildDocumentUrl { get; set; }
+    public string? DocumentPageUrl { get; set; }
+
+    /// <summary>Gets or sets whether a non-empty Dreamine documentation entry is available.</summary>
+    public bool DocumentationAvailable { get; set; }
+
+    /// <summary>Gets or sets whether at least one non-empty Doxygen entry is available.</summary>
+    public bool DoxygenAvailable { get; set; }
+
+    /// <summary>Gets or sets whether at least one non-empty project knowledge graph is available.</summary>
+    public bool KnowledgeGraphAvailable { get; set; }
+
+    /// <summary>Gets or sets whether Korean documentation is available.</summary>
+    public bool KoreanDocumentationAvailable { get; set; }
+
+    /// <summary>Gets or sets whether English documentation is available.</summary>
+    public bool EnglishDocumentationAvailable { get; set; }
 
     /// <summary>
     /// \if KO
@@ -152,7 +167,7 @@ public sealed class DocumentationProjectInfo
     /// \endif
     /// </returns>
     public string GetDoxygenUrl(string language) =>
-        DoxygenUrls.TryGetValue(language, out string? value) ? value : string.Empty;
+        DoxygenAvailable && DoxygenUrls.TryGetValue(language, out string? value) ? value : string.Empty;
 
     /// <summary>
     /// \if KO
@@ -179,7 +194,13 @@ public sealed class DocumentationProjectInfo
     /// \endif
     /// </returns>
     public string GetGraphUrl(string language) =>
-        GraphUrls.TryGetValue(language, out string? value) ? value : string.Empty;
+        KnowledgeGraphAvailable && GraphUrls.TryGetValue(language, out string? value) ? value : string.Empty;
+
+    /// <summary>Returns whether localized documentation exists for the requested language.</summary>
+    public bool IsDocumentationAvailable(string language) =>
+        language.Equals("ko", StringComparison.OrdinalIgnoreCase)
+            ? KoreanDocumentationAvailable
+            : EnglishDocumentationAvailable;
 }
 
 /// <summary>

@@ -1,0 +1,386 @@
+@page "/ontology"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@using DreamineWeb.Ontology.Application
+@inject IOntologySearchService OntologySearch
+@inject IOntologyValidationService OntologyValidation
+@inject IOntologySourceService OntologySource
+@inject UserPreferencesService Prefs
+@implements IDisposable
+
+<PageTitle>@(Ko ? "Dreamine 온톨로지" : "Dreamine Ontology")</PageTitle>
+
+<div class="dw-page dw-ontology">
+    <header class="dw-ontology__hero">
+        <div>
+            <span class="dw-ontology__eyebrow">SOURCE-VERIFIED · LINKML · SHACL</span>
+            <h1>@(Ko ? "Dreamine 온톨로지 탐색기" : "Dreamine Ontology Explorer")</h1>
+            <p>@(Ko
+                ? "Roslyn으로 검증된 ABox 코드 요소, LinkML TBox, Dreamine 고유 관계와 SourceAudit·SHACL 결과를 서버 인덱스에서 검색합니다."
+                : "Search Roslyn-verified ABox code elements, the LinkML TBox, original Dreamine relations, and SourceAudit/SHACL results through a server-side index.")</p>
+        </div>
+        @if (Validation is not null)
+        {
+            <div class="dw-ontology-health @(Validation.IsHealthy ? "is-healthy" : "is-warning")">
+                <strong>@(Validation.IsHealthy ? (Ko ? "검증 정상" : "Validated") : (Ko ? "확인 필요" : "Attention"))</strong>
+                <span>v@(Validation.OntologyVersion) · @Validation.ContentHash[..Math.Min(12, Validation.ContentHash.Length)]</span>
+            </div>
+        }
+    </header>
+
+    <nav class="dw-ontology-tabs" aria-label="Ontology sections">
+        <button class="@(ActiveTab == "abox" ? "is-active" : null)" @onclick="ShowABox">ABox · @(Ko ? "개체" : "Individuals")</button>
+        <button class="@(ActiveTab == "tbox" ? "is-active" : null)" @onclick="ShowTBox">TBox · @(Ko ? "클래스" : "Classes")</button>
+        <button class="@(ActiveTab == "event" ? "is-active" : null)" @onclick="ShowEvent">Dreamine Event</button>
+        <button class="@(ActiveTab == "validation" ? "is-active" : null)" @onclick="ShowValidation">@(Ko ? "검증" : "Validation")</button>
+    </nav>
+
+    @if (IsLoading)
+    {
+        <div class="dw-ontology-state">@(Ko ? "온톨로지 서버 인덱스를 준비하는 중입니다…" : "Preparing the server-side ontology index…")</div>
+    }
+    else if (!string.IsNullOrWhiteSpace(ErrorMessage))
+    {
+        <div class="dw-ontology-state is-error"><strong>@(Ko ? "온톨로지를 불러오지 못했습니다." : "Ontology could not be loaded.")</strong><span>@ErrorMessage</span></div>
+    }
+    else if (ActiveTab == "abox")
+    {
+        <section class="dw-ontology-panel">
+            <form class="dw-ontology-search" @onsubmit="SubmitSearchAsync" @onsubmit:preventDefault>
+                <label class="dw-ontology-search__query">
+                    <span>@(Ko ? "전체 검색" : "Search")</span>
+                    <input class="dw-input" type="search" @bind="SearchText" placeholder="@(Ko ? "한글·영문 이름, qualified name, 경로, URI…" : "Korean/English name, qualified name, path, URI…")" />
+                </label>
+                <label><span>@(Ko ? "타입" : "Type")</span><select @bind="SelectedType"><option value="">@(Ko ? "모든 타입" : "All types")</option>@foreach (string type in Facets?.Types ?? []) { <option value="@type">@type</option> }</select></label>
+                <label><span>@(Ko ? "프로젝트" : "Project")</span><select @bind="SelectedProject"><option value="">@(Ko ? "모든 프로젝트" : "All projects")</option>@foreach (string project in Facets?.Projects ?? []) { <option value="@project">@project</option> }</select></label>
+                <label><span>@(Ko ? "관계" : "Relation")</span><select @bind="SelectedRelation"><option value="">@(Ko ? "모든 관계" : "All relations")</option>@foreach (string relation in Facets?.RelationTypes ?? []) { <option value="@relation">@relation</option> }</select></label>
+                <label class="dw-ontology-search__path"><span>@(Ko ? "소스 경로" : "Source path")</span><input class="dw-input" @bind="FilePath" placeholder="SampleSmart/Pages…" /></label>
+                <label class="dw-ontology-check"><input type="checkbox" @bind="IncludeExcluded" /><span>@(Ko ? "stale·제외 항목 포함" : "Include stale/excluded")</span></label>
+                <button class="dw-btn dw-btn--primary" type="submit">@(Ko ? "검색" : "Search")</button>
+            </form>
+
+            <div class="dw-ontology-quicktypes">
+                @foreach (string type in QuickTypes)
+                {
+                    <button class="@(SelectedType == type ? "is-active" : null)" @onclick="() => ApplyTypeAsync(type)">@type</button>
+                }
+            </div>
+
+            <div class="dw-ontology-results-head">
+                <div><strong>@(Results?.TotalCount ?? 0)</strong> @(Ko ? "개 ABox 개체" : "ABox individuals")</div>
+                @if (Facets is not null)
+                {
+                    <small>@(Ko ? $"기본 검색 {Facets.VisibleIndividualCount:N0} · 제외 {Facets.ExcludedIndividualCount:N0}" : $"Visible {Facets.VisibleIndividualCount:N0} · excluded {Facets.ExcludedIndividualCount:N0}")</small>
+                }
+            </div>
+
+            <div class="dw-ontology-workspace">
+                <div>
+                    @if (Results is null || Results.Items.Count == 0)
+                    {
+                        <div class="dw-ontology-empty">@(Ko ? "조건에 맞는 개체가 없습니다." : "No individuals match the current filters.")</div>
+                    }
+                    else
+                    {
+                        <div class="dw-ontology-list">
+                            @foreach (OntologyNodeItemViewModel item in Results.Items)
+                            {
+                                <button class="dw-ontology-node @(Details?.Node.StableUri == item.StableUri ? "is-selected" : null) @(item.IsDreamineEventComponent ? "is-event" : null)" @onclick="() => SelectNodeAsync(item.StableUri)">
+                                    <span class="dw-ontology-node__type">@item.EffectiveType</span>
+                                    <strong>@item.Name</strong>
+                                    <small>@item.QualifiedName</small>
+                                    <span class="dw-ontology-node__path">@item.SourcePath@if (item.LineStart.HasValue) { <text>:@item.LineStart</text> }</span>
+                                    <span class="dw-ontology-node__badges">
+                                        <em>@item.SourceVerificationStatus</em>
+                                        @if (item.HasTypeCorrection) { <em class="is-corrected">@item.RawType → @item.EffectiveType</em> }
+                                        @if (item.IsStale) { <em class="is-stale">stale/remapped</em> }
+                                        @if (item.IsExcluded) { <em class="is-excluded">excluded</em> }
+                                    </span>
+                                </button>
+                            }
+                        </div>
+                        <div class="dw-ontology-pagination">
+                            <button disabled="@(Results.Page <= 1)" @onclick="() => ChangePageAsync(Results.Page - 1)">← @(Ko ? "이전" : "Previous")</button>
+                            <span>@Results.Page / @Results.TotalPages</span>
+                            <button disabled="@(Results.Page >= Results.TotalPages)" @onclick="() => ChangePageAsync(Results.Page + 1)">@(Ko ? "다음" : "Next") →</button>
+                        </div>
+                    }
+                </div>
+                <aside class="dw-ontology-detail">
+                    @if (IsDetailLoading)
+                    {
+                        <div class="dw-ontology-empty">@(Ko ? "관계를 불러오는 중…" : "Loading relations…")</div>
+                    }
+                    else if (Details is null)
+                    {
+                        <div class="dw-ontology-empty">@(Ko ? "개체를 선택하면 타입, 소스와 원래 Dreamine 관계를 표시합니다." : "Select an individual to inspect its type, source, and original Dreamine relations.")</div>
+                    }
+                    else
+                    {
+                        @NodeDetails(Details)
+                    }
+                </aside>
+            </div>
+        </section>
+    }
+    else if (ActiveTab == "tbox")
+    {
+        <section class="dw-ontology-panel">
+            <div class="dw-ontology-section-head"><div><h2>TBox Classes</h2><p>@(Ko ? "LinkML 단일 원본에서 생성된 상위 개념입니다. 실제 코드 요소는 아래 클래스의 ABox 개체입니다." : "Top-level concepts generated from the LinkML source. Concrete code elements remain ABox individuals.")</p></div><span>@FilteredTBox.Count()</span></div>
+            <input class="dw-input dw-ontology-tbox-search" type="search" @bind="TBoxSearch" @bind:event="oninput" placeholder="@(Ko ? "TBox 클래스 검색…" : "Search TBox classes…")" />
+            <div class="dw-ontology-tbox-grid">
+                @foreach (OntologyTBoxClassViewModel item in FilteredTBox)
+                {
+                    <article><span>TBOX CLASS</span><h3>@item.Name</h3><p>@item.Description</p><small>@item.PropertyCount properties · required: @(item.RequiredProperties.Count == 0 ? "—" : string.Join(", ", item.RequiredProperties))</small></article>
+                }
+            </div>
+        </section>
+    }
+    else if (ActiveTab == "event")
+    {
+        <section class="dw-ontology-panel">
+            <div class="dw-ontology-section-head"><div><h2>Dreamine Event Pattern</h2><p>@(Ko ? "일반 C# event가 아니라 ViewModel Command를 전용 Event Component 동작으로 전달하는 Dreamine 패턴입니다." : "A Dreamine-specific pattern that forwards ViewModel commands to a dedicated Event Component—not a regular C# event.")</p></div><span>source-verified</span></div>
+            @if (EventFlow is null)
+            {
+                <div class="dw-ontology-empty">@(Ko ? "대표 Event 연결을 찾지 못했습니다." : "The representative Event chain was not found.")</div>
+            }
+            else
+            {
+                <div class="dw-event-flow">
+                    @EventNode(EventFlow.ViewModel, Ko ? "VIEWMODEL" : "VIEWMODEL")
+                    @EventArrow(EventFlow.ComponentRelation)
+                    @EventNode(EventFlow.EventComponent, "DREAMINE EVENT COMPONENT")
+                </div>
+                <div class="dw-event-flow">
+                    @EventNode(EventFlow.Command, Ko ? "VIEWMODEL COMMAND" : "VIEWMODEL COMMAND")
+                    @EventArrow(EventFlow.ForwardingRelation)
+                    @EventNode(EventFlow.TargetMethod, Ko ? "EVENT COMPONENT METHOD" : "EVENT COMPONENT METHOD")
+                </div>
+                <div class="dw-event-proof">
+                    <strong>MainWindowViewModel.Ok → MainWindowEvent.Ok</strong>
+                    <p>@(Ko ? "UI 호환 projection은 calls이지만 원래 의미 forwardsTo와 source_attribute 근거를 복원해 표시합니다." : "The compatible UI projection is calls, while the original forwardsTo meaning and source_attribute evidence are restored here.")</p>
+                    @foreach (OntologyEvidenceViewModel evidence in EventFlow.ForwardingRelation.Evidence)
+                    {
+                        <code>@evidence.Value</code>
+                    }
+                </div>
+            }
+        </section>
+    }
+    else if (ActiveTab == "validation" && Validation is not null)
+    {
+        <section class="dw-ontology-panel">
+            <div class="dw-validation-banner @(Validation.IsHealthy ? "is-healthy" : "is-warning")"><strong>@(Validation.IsHealthy ? (Ko ? "전체 검증 정상" : "All validations healthy") : (Ko ? "검증 상태 확인 필요" : "Validation requires attention"))</strong><span>@Validation.HealthReason</span></div>
+            <div class="dw-validation-grid">
+                @Metric("sourceVsOverlayMismatches", Validation.SourceVsOverlayMismatches)
+                @Metric(Ko ? "Overlay 선언 누락" : "Overlay declaration gaps", Validation.SourceDeclarationsMissingOverlay)
+                @Metric(Ko ? "원본 그래프 선언 누락" : "Raw graph declaration gaps", Validation.SourceDeclarationsMissingRawGraph, informational: true)
+                @Metric(Ko ? "partial 메서드 보강" : "Partial methods enriched", Validation.PartialMethodsEnriched, informational: true)
+                @Metric(Ko ? "미분류 partial" : "Unclassified partial", Validation.UnclassifiedPartialMethods)
+                @Metric(Ko ? "stale 경로 재매핑" : "Stale path remaps", Validation.StalePathRemaps, informational: true)
+                @Metric(Ko ? "raw/overlay dangling" : "Raw/overlay dangling", Validation.RawDanglingRelations + Validation.OverlayDanglingRelations)
+                @Metric(Ko ? "stable URI 중복·충돌" : "Stable URI duplicates/conflicts", Validation.DuplicateStableUris + Validation.StableUriTypeConflicts)
+                @Metric(Ko ? "타입 자동 보정" : "Auto-corrected types", Validation.AutoCorrectedTypes, informational: true)
+                @Metric(Ko ? "보정 불가 타입" : "Uncorrectable types", Validation.UncorrectableTypes)
+                @Metric(Ko ? "RDF Triple" : "RDF triples", Validation.RdfTripleCount, informational: true)
+                @Metric(Ko ? "제외된 생성 파일" : "Excluded generated files", Validation.ExcludedGeneratedFiles, informational: true)
+            </div>
+            <div class="dw-validation-columns">
+                <article><h3>SHACL Shapes</h3>@foreach (OntologyShapeValidationViewModel shape in Validation.Shapes) { <div class="dw-shape-row"><div><strong>@shape.Name</strong><small>targets @shape.TargetNodeCount.ToString("N0") · violations @shape.ViolationCount.ToString("N0")</small></div><span class="@(shape.FixtureTestPassed && shape.PositiveFixturePassed && shape.NegativeFixturePassed ? "is-ok" : "is-bad")">+ @(shape.PositiveFixturePassed ? "PASS" : "FAIL") / − @(shape.NegativeFixturePassed ? "PASS" : "FAIL")</span></div> }</article>
+                <article><h3>@(Ko ? "산출물 상태" : "Artifact status")</h3>@foreach (OntologyArtifactViewModel artifact in Validation.Artifacts) { <div class="dw-shape-row"><div><strong>@artifact.Name</strong><small>@(artifact.GeneratedAt?.ToLocalTime().ToString("yyyy-MM-dd HH:mm") ?? "no timestamp")</small></div><span class="@(artifact.Exists && artifact.IsValid && !artifact.IsStale ? "is-ok" : "is-bad")">@(artifact.Exists && artifact.IsValid && !artifact.IsStale ? "CURRENT" : "CHECK")</span></div> }</article>
+            </div>
+            <div class="dw-ontology-metrics">
+                <strong>@(Ko ? "서버 캐시 계측" : "Server cache metrics")</strong>
+                <span>@Validation.ElementCount.ToString("N0") nodes · @Validation.RelationCount.ToString("N0") relations</span>
+                <span>@Validation.LoadMetrics.LoadMilliseconds.ToString("N0") ms initial load</span>
+                <span>@Validation.LoadMetrics.ManagedMemoryDeltaMiB.ToString("N1") MiB managed · @Validation.LoadMetrics.WorkingSetDeltaMiB.ToString("N1") MiB working set</span>
+                <span>@Validation.LoadMetrics.CacheHits cache hits · @Validation.LoadMetrics.ReloadCount reloads</span>
+                <code>@Validation.ContentHash</code>
+            </div>
+        </section>
+    }
+</div>
+
+@if (SourceDocument is not null)
+{
+    <div class="dw-source-modal" role="dialog" aria-modal="true" aria-label="@(Ko ? "소스 코드 보기" : "Source code viewer")">
+        <button class="dw-source-modal__backdrop" aria-label="@(Ko ? "닫기" : "Close")" @onclick="CloseSource"></button>
+        <section class="dw-source-modal__dialog">
+            <header>
+                <div>
+                    <span>@(Ko ? "SOURCE-VERIFIED 소스" : "SOURCE-VERIFIED SOURCE")</span>
+                    <strong>@SourceDocument.Availability.DisplayPath</strong>
+                    @if (SourceDocument.HighlightStart.HasValue)
+                    {
+                        <small>@(Ko ? "선언 위치" : "Declaration"): @SourceDocument.HighlightStart-@SourceDocument.HighlightEnd</small>
+                    }
+                </div>
+                <button type="button" @onclick="CloseSource">×</button>
+            </header>
+            <div class="dw-source-code" tabindex="0">
+                @foreach (OntologySourceLineViewModel line in SourceDocument.Lines)
+                {
+                    <div class="dw-source-code__line @(line.IsHighlighted ? "is-highlighted" : null)" id="source-line-@line.Number">
+                        <span aria-hidden="true">@line.Number</span><code>@line.Text</code>
+                    </div>
+                }
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    private static readonly string[] QuickTypes = ["CodeClass", "CodeInterface", "CodeRecord", "CodeStruct", "CodeEnum", "CodeAttribute", "ViewModel", "View", "Service", "DreamineEventComponent"];
+    private readonly CancellationTokenSource _lifetime = new();
+    private CancellationTokenSource? _operation;
+    private string ActiveTab { get; set; } = "abox";
+    private string SearchText { get; set; } = string.Empty;
+    private string SelectedType { get; set; } = string.Empty;
+    private string SelectedProject { get; set; } = string.Empty;
+    private string SelectedRelation { get; set; } = string.Empty;
+    private string FilePath { get; set; } = string.Empty;
+    private string TBoxSearch { get; set; } = string.Empty;
+    private bool IncludeExcluded { get; set; }
+    private bool IsLoading { get; set; } = true;
+    private bool IsDetailLoading { get; set; }
+    private bool IsSourceLoading { get; set; }
+    private string ErrorMessage { get; set; } = string.Empty;
+    private int CurrentPage { get; set; } = 1;
+    private OntologySearchResultViewModel? Results { get; set; }
+    private OntologyNodeDetailsViewModel? Details { get; set; }
+    private OntologySourceAvailabilityViewModel? SourceAvailability { get; set; }
+    private OntologySourceDocumentViewModel? SourceDocument { get; set; }
+    private OntologyFacetsViewModel? Facets { get; set; }
+    private IReadOnlyList<OntologyTBoxClassViewModel> TBox { get; set; } = [];
+    private OntologyEventFlowViewModel? EventFlow { get; set; }
+    private OntologyValidationSummaryViewModel? Validation { get; set; }
+    private bool Ko => Prefs.IsKorean;
+    private IEnumerable<OntologyTBoxClassViewModel> FilteredTBox => string.IsNullOrWhiteSpace(TBoxSearch) ? TBox : TBox.Where(item => item.Name.Contains(TBoxSearch, StringComparison.OrdinalIgnoreCase) || item.Description.Contains(TBoxSearch, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        Prefs.Changed += OnLanguageChanged;
+        try
+        {
+            Facets = await OntologySearch.GetFacetsAsync(_lifetime.Token);
+            TBox = await OntologySearch.GetTBoxClassesAsync(_lifetime.Token);
+            EventFlow = await OntologySearch.GetDreamineEventSampleAsync(_lifetime.Token);
+            Validation = await OntologyValidation.GetSummaryAsync(_lifetime.Token);
+            await SearchAsync(1, _lifetime.Token);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            ErrorMessage = exception.Message;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task SubmitSearchAsync() => await SearchAsync(1, ReplaceOperationToken());
+    private async Task ChangePageAsync(int page) => await SearchAsync(page, ReplaceOperationToken());
+    private async Task ApplyTypeAsync(string type) { SelectedType = SelectedType == type ? string.Empty : type; await SearchAsync(1, ReplaceOperationToken()); }
+
+    private async Task SearchAsync(int page, CancellationToken cancellationToken)
+    {
+        CurrentPage = page;
+        Details = null;
+        SourceAvailability = null;
+        SourceDocument = null;
+        Results = await OntologySearch.SearchAsync(new OntologySearchRequest(SearchText, SelectedType, SelectedProject, FilePath, SelectedRelation, IncludeExcluded, Ko ? "ko" : "en"), page, 25, cancellationToken);
+    }
+
+    private async Task SelectNodeAsync(string stableUri)
+    {
+        IsDetailLoading = true;
+        SourceDocument = null;
+        try
+        {
+            CancellationToken token = ReplaceOperationToken();
+            Task<OntologyNodeDetailsViewModel?> detailsTask = OntologySearch.GetNodeAsync(stableUri, token);
+            Task<OntologySourceAvailabilityViewModel> sourceTask = OntologySource.GetAvailabilityAsync(stableUri, token);
+            await Task.WhenAll(detailsTask, sourceTask);
+            Details = await detailsTask;
+            SourceAvailability = await sourceTask;
+        }
+        catch (OperationCanceledException) { }
+        finally { IsDetailLoading = false; }
+    }
+
+    private async Task OpenSourceAsync(string stableUri)
+    {
+        IsSourceLoading = true;
+        try
+        {
+            OntologySourceDocumentViewModel document = await OntologySource.GetSourceAsync(stableUri, ReplaceOperationToken());
+            SourceAvailability = document.Availability;
+            SourceDocument = document.Availability.IsAvailable ? document : null;
+        }
+        catch (OperationCanceledException) { }
+        finally { IsSourceLoading = false; }
+    }
+
+    private void CloseSource() => SourceDocument = null;
+
+    private CancellationToken ReplaceOperationToken()
+    {
+        _operation?.Cancel();
+        _operation?.Dispose();
+        _operation = CancellationTokenSource.CreateLinkedTokenSource(_lifetime.Token);
+        return _operation.Token;
+    }
+
+    private RenderFragment NodeDetails(OntologyNodeDetailsViewModel details) => @<div>
+        <div class="dw-ontology-detail__head"><span>@details.Node.EffectiveType</span><h2>@details.Node.Name</h2><p>@details.Node.QualifiedName</p></div>
+        <dl class="dw-ontology-meta"><dt>source-verified rdf:type</dt><dd>@string.Join(", ", details.Types.Where(type => type != "owl:NamedIndividual"))</dd><dt>raw graph type</dt><dd>@(details.Node.RawType ?? "—")</dd><dt>stable URI</dt><dd><code>@details.Node.StableUri</code></dd><dt>@(Ko ? "소스" : "Source")</dt><dd>@details.Node.SourcePath:@details.Node.LineStart-@details.LineEnd</dd><dt>signature</dt><dd><code>@details.Signature</code></dd></dl>
+        <p class="dw-ontology-detail__summary">@details.Summary</p>
+        @if (SourceAvailability?.IsAvailable == true)
+        {
+            <button class="dw-btn dw-btn--outline" type="button" disabled="@IsSourceLoading" @onclick="() => OpenSourceAsync(details.Node.StableUri)">@(IsSourceLoading ? (Ko ? "소스 준비 중…" : "Loading source…") : (Ko ? "소스 보기" : "View source"))</button>
+        }
+        else if (SourceAvailability is not null)
+        {
+            <p class="dw-source-unavailable @(SourceAvailability.IsExcluded ? "is-excluded" : null)">@SourceReason(SourceAvailability)</p>
+        }
+        @RelationList(Ko ? "나가는 관계" : "Outgoing relations", details.Outgoing)
+        @RelationList(Ko ? "들어오는 관계" : "Incoming relations", details.Incoming)
+    </div>;
+
+    private RenderFragment RelationList(string title, IReadOnlyList<OntologyRelationViewModel> relations) => @<section class="dw-ontology-relations"><h3>@title <span>@relations.Count</span></h3>@if (relations.Count == 0) { <p>—</p> } else { @foreach (OntologyRelationViewModel relation in relations) { <button @onclick="() => SelectNodeAsync(relation.RelatedStableUri)"><strong>@relation.OriginalType</strong>@if (relation.WasProjected) { <small>@(Ko ? "표시용 표준 관계" : "Projection"): @relation.ProjectionType</small> }<span>@relation.RelatedName</span>@foreach (OntologyEvidenceViewModel evidence in relation.Evidence.Take(1)) { <em>@evidence.Source · confidence @evidence.Confidence.ToString("0.00")</em> }</button> } }</section>;
+
+    private RenderFragment EventNode(OntologyNodeItemViewModel item, string label) => @<button class="dw-event-node @(item.IsDreamineEventComponent ? "is-event" : null)" @onclick="() => SelectEventNodeAsync(item.StableUri)"><span>@label</span><strong>@item.QualifiedName</strong><small>@item.SourcePath:@item.LineStart</small></button>;
+    private RenderFragment EventArrow(OntologyRelationViewModel relation) => @<div class="dw-event-arrow"><strong>@relation.OriginalType</strong><small>@(Ko ? "표시용" : "projection"): @relation.ProjectionType</small><span>→</span></div>;
+    private RenderFragment Metric(string name, int value, bool informational = false) => @<article class="@(!informational && value > 0 ? "is-warning" : null)"><span>@name</span><strong>@value.ToString("N0")</strong></article>;
+
+    private string SourceReason(OntologySourceAvailabilityViewModel source) => source.ReasonCode switch
+    {
+        "generated-excluded" => Ko ? "자동 생성 코드 제외" : "Generated code excluded",
+        "stale-excluded" => Ko ? "stale 소스 격리" : "Stale source quarantined",
+        "source-unavailable" => Ko ? "소스 미제공" : "Source unavailable",
+        "invalid-artifact" => Ko ? "소스 산출물 손상" : "Source artifact is invalid",
+        _ => Ko ? "소스 미제공" : "Source unavailable"
+    };
+
+    private void ShowABox() => ActiveTab = "abox";
+    private void ShowTBox() => ActiveTab = "tbox";
+    private void ShowEvent() => ActiveTab = "event";
+    private void ShowValidation() => ActiveTab = "validation";
+
+    private async Task SelectEventNodeAsync(string stableUri)
+    {
+        ActiveTab = "abox";
+        await SelectNodeAsync(stableUri);
+    }
+
+    private void OnLanguageChanged() => _ = InvokeAsync(async () => { await SearchAsync(CurrentPage, ReplaceOperationToken()); StateHasChanged(); });
+
+    public void Dispose()
+    {
+        Prefs.Changed -= OnLanguageChanged;
+        _operation?.Cancel();
+        _operation?.Dispose();
+        _lifetime.Cancel();
+        _lifetime.Dispose();
+    }
+}

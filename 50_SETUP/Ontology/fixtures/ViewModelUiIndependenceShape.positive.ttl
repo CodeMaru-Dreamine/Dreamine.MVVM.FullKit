@@ -1,0 +1,10 @@
+@prefix dreamine: <https://dreamine.kr/ontology/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+dreamine:positiveViewModel rdf:type dreamine:ViewModel ; dreamine:contains dreamine:positiveViewModelMethod .
+dreamine:positiveViewModelMethod rdf:type dreamine:Method ; dreamine:containedBy dreamine:positiveViewModel .
+dreamine:positiveService rdf:type dreamine:Service ; dreamine:contains dreamine:positiveServiceMethod .
+dreamine:positiveServiceMethod rdf:type dreamine:Method ; dreamine:containedBy dreamine:positiveService .
+dreamine:positiveVmOwner rdf:type dreamine:SemanticRelation ; dreamine:relation_type "contains" ; dreamine:source dreamine:positiveViewModel ; dreamine:target dreamine:positiveViewModelMethod .
+dreamine:positiveServiceOwner rdf:type dreamine:SemanticRelation ; dreamine:relation_type "contains" ; dreamine:source dreamine:positiveService ; dreamine:target dreamine:positiveServiceMethod .
+dreamine:positiveVmCall rdf:type dreamine:SemanticRelation ; dreamine:relation_type "calls" ; dreamine:source dreamine:positiveViewModelMethod ; dreamine:target dreamine:positiveServiceMethod .

@@ -1,0 +1,13 @@
+@prefix dreamine: <https://dreamine.kr/ontology/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+dreamine:positiveEventViewModel rdf:type dreamine:ViewModel ;
+  dreamine:contains dreamine:positiveForwardSource ;
+  dreamine:hasEventComponent dreamine:positiveEventComponent .
+dreamine:positiveEventComponent rdf:type dreamine:DreamineEventComponent ;
+  dreamine:contains dreamine:positiveForwardTarget .
+dreamine:positiveForwardSource rdf:type dreamine:Method ; dreamine:forwardTargetName "Ok" ; dreamine:forwardsTo dreamine:positiveForwardTarget .
+dreamine:positiveForwardTarget rdf:type dreamine:Method ; dreamine:canonical_name "Ok" .
+dreamine:positiveSourceOwner rdf:type dreamine:SemanticRelation ; dreamine:relation_type "contains" ; dreamine:source dreamine:positiveEventViewModel ; dreamine:target dreamine:positiveForwardSource .
+dreamine:positiveTargetOwner rdf:type dreamine:SemanticRelation ; dreamine:relation_type "contains" ; dreamine:source dreamine:positiveEventComponent ; dreamine:target dreamine:positiveForwardTarget .
+dreamine:positiveEventBinding rdf:type dreamine:SemanticRelation ; dreamine:relation_type "hasEventComponent" ; dreamine:source dreamine:positiveEventViewModel ; dreamine:target dreamine:positiveEventComponent .

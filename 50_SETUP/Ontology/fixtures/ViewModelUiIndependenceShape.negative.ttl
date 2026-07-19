@@ -1,0 +1,10 @@
+@prefix dreamine: <https://dreamine.kr/ontology/> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+
+dreamine:negativeViewModel rdf:type dreamine:ViewModel ; dreamine:contains dreamine:negativeViewModelMethod .
+dreamine:negativeViewModelMethod rdf:type dreamine:Method ; dreamine:containedBy dreamine:negativeViewModel .
+dreamine:negativeView rdf:type dreamine:View ; dreamine:contains dreamine:negativeViewMethod .
+dreamine:negativeViewMethod rdf:type dreamine:Method ; dreamine:containedBy dreamine:negativeView .
+dreamine:negativeVmOwner rdf:type dreamine:SemanticRelation ; dreamine:relation_type "contains" ; dreamine:source dreamine:negativeViewModel ; dreamine:target dreamine:negativeViewModelMethod .
+dreamine:negativeViewOwner rdf:type dreamine:SemanticRelation ; dreamine:relation_type "contains" ; dreamine:source dreamine:negativeView ; dreamine:target dreamine:negativeViewMethod .
+dreamine:negativeVmCall rdf:type dreamine:SemanticRelation ; dreamine:relation_type "calls" ; dreamine:source dreamine:negativeViewModelMethod ; dreamine:target dreamine:negativeViewMethod .

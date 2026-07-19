@@ -1,0 +1,435 @@
+id: https://dreamine.kr/ontology/dreamine
+name: DreamineOntology
+title: Dreamine FullKit Software Ontology
+description: Canonical bilingual ontology for Dreamine projects, APIs, domains, flows, and evidence-backed relationships.
+license: MIT
+version: 1.0.0
+
+prefixes:
+  linkml: https://w3id.org/linkml/
+  dreamine: https://dreamine.kr/ontology/
+  resource: https://dreamine.kr/resource/
+  schema: http://schema.org/
+  prov: http://www.w3.org/ns/prov#
+
+default_prefix: dreamine
+default_range: string
+
+imports:
+  - linkml:types
+
+settings:
+  architecture_rules: >-
+    [
+      {"id":"AllowedLayerDependencyShape","kind":"allowed_layer_matrix","relation_types":["depends_on"],"allowed":{"application":["application","library"],"library":["library"],"test":["application","library","test"],"sample":["application","library","sample"],"tooling":["application","library","test","sample","tooling"]}},
+      {"id":"ViewModelUiIndependenceShape","kind":"viewmodel_ui_independence","relation_types":["depends_on","calls","uses"]},
+      {"id":"RelationTypeMatrixShape","kind":"relation_type_matrix","allowed":{"contains":[["SourceFile","CodeElement"],["CodeType","CodeMember"]],"exports":[["SourceFile","CodeElement"]],"implements":[["CodeType","CodeInterface"]],"inherits":[["CodeType","CodeType"]],"tested_by":[["CodeElement","SourceFile"],["CodeElement","TestCase"]],"calls":[["CodeMember","CodeMember"]]}},
+      {"id":"DreamineEventForwardTargetShape","kind":"event_forward_target_exists","relation_types":["forwardsTo"]}
+    ]
+
+enums:
+  LanguageCode:
+    permissible_values:
+      ko:
+      en:
+  Complexity:
+    permissible_values:
+      simple:
+      moderate:
+      complex:
+      unknown:
+  LayerKind:
+    permissible_values:
+      application:
+      library:
+      test:
+      sample:
+      tooling:
+  EvidenceSource:
+    permissible_values:
+      code:
+      code_inferred:
+      xml_documentation:
+      project_metadata:
+      generated_graph:
+      domain_analysis:
+      source_attribute:
+      source_declaration:
+      ai_enrichment:
+      unknown:
+  SourceVerificationStatus:
+    permissible_values:
+      raw:
+      source_verified:
+      source_remapped:
+      derived_source_verified:
+      excluded_generated:
+      stale_quarantined:
+  RelationType:
+    permissible_values:
+      contains:
+      contains_flow:
+      contains_step:
+      depends_on:
+      documents:
+      exports:
+      implements:
+      inherits:
+      tested_by:
+      calls:
+      related:
+      belongs_to_domain:
+      participates_in_flow:
+      precedes:
+      uses:
+      hasEventComponent:
+      forwardsTo:
+      declaredIn:
+      companionOf:
+      usesModel:
+      dependsOn:
+      invokesNavigation:
+      controlsView:
+
+slots:
+  stable_id:
+    identifier: true
+    range: uriorcurie
+    required: true
+  source_graph_id:
+    range: string
+  canonical_name:
+    range: string
+    required: true
+  labels:
+    range: LocalizedText
+    multivalued: true
+    inlined_as_list: true
+  summaries:
+    range: LocalizedText
+    multivalued: true
+    inlined_as_list: true
+  language:
+    range: LanguageCode
+    required: true
+  text:
+    range: string
+    required: true
+  element_type:
+    range: string
+    required: true
+  element_layer:
+    range: LayerKind
+  source_path:
+    range: string
+  raw_source_path:
+    range: string
+    description: Original source path retained when a source-verified overlay remaps a stale raw graph path.
+  raw_element_type:
+    range: string
+    description: Original graph type retained for provenance and diagnostics.
+  source_verification_status:
+    range: SourceVerificationStatus
+  default_search_visible:
+    range: boolean
+    description: Whether the element participates in default UI and chatbot retrieval.
+  line_start:
+    range: integer
+    minimum_value: 1
+  line_end:
+    range: integer
+    minimum_value: 1
+  project_name:
+    range: string
+  package_id:
+    range: string
+  project_version:
+    range: string
+  target_frameworks:
+    range: string
+    multivalued: true
+  namespace:
+    range: string
+  signature:
+    range: string
+  accessibility:
+    range: string
+  complexity:
+    range: Complexity
+  tags:
+    range: string
+    multivalued: true
+  confidence:
+    range: decimal
+    minimum_value: 0
+    maximum_value: 1
+  evidence:
+    range: Evidence
+    multivalued: true
+    inlined_as_list: true
+  evidence_source:
+    range: EvidenceSource
+    required: true
+  evidence_value:
+    range: string
+  source:
+    range: uriorcurie
+    required: true
+  target:
+    range: uriorcurie
+    required: true
+  relation_type:
+    range: RelationType
+    required: true
+  elements:
+    range: SoftwareElement
+    multivalued: true
+    inlined_as_list: true
+  relations:
+    range: SemanticRelation
+    multivalued: true
+    inlined_as_list: true
+  ontology_version:
+    range: string
+    required: true
+  generated_at:
+    range: datetime
+    required: true
+  forwardTargetName:
+    description: Target Event Component method name declared by a DreamineCommand Event forwarding attribute.
+    domain: Method
+    range: string
+  partialClassification:
+    description: Source-verified classification for a declaration-only partial method.
+    domain: Method
+    range: string
+  generatorAttribute:
+    description: Source generator attribute that owns the implementation of a declaration-only partial method.
+    domain: Method
+    range: string
+  contains:
+    description: Direct structural containment projection derived from an evidence-backed SemanticRelation.
+    domain: SoftwareElement
+    range: SoftwareElement
+    multivalued: true
+    slot_uri: dreamine:contains
+  containedBy:
+    description: Direct inverse structural containment projection derived from an evidence-backed SemanticRelation.
+    domain: SoftwareElement
+    range: SoftwareElement
+    multivalued: true
+    slot_uri: dreamine:containedBy
+  hasEventComponent:
+    description: Connects a ViewModel to its Dreamine Event Component.
+    domain: ViewModel
+    range: DreamineEventComponent
+    slot_uri: dreamine:hasEventComponent
+  forwardsTo:
+    description: Connects a ViewModel command declaration to the Event Component method it forwards to.
+    domain: Method
+    range: Method
+    slot_uri: dreamine:forwardsTo
+  declaredIn:
+    description: Identifies the source file declaring a code element.
+    domain: SoftwareElement
+    range: SourceFile
+    slot_uri: dreamine:declaredIn
+  companionOf:
+    description: Connects role-split source artifacts that implement one view feature.
+    domain: SourceArtifact
+    range: SourceArtifact
+    slot_uri: dreamine:companionOf
+  usesModel:
+    description: Connects a ViewModel or Event Component to its Dreamine model class.
+    domain: SoftwareElement
+    range: CodeClass
+    slot_uri: dreamine:usesModel
+  dependsOn:
+    description: Direct dependency projection derived from an evidence-backed SemanticRelation.
+    domain: SoftwareElement
+    range: SoftwareElement
+    slot_uri: dreamine:dependsOn
+  invokesNavigation:
+    description: Connects an Event Component method to the ViewModel it opens through IViewManager.
+    domain: Method
+    range: ViewModel
+    slot_uri: dreamine:invokesNavigation
+  controlsView:
+    description: Connects a Dreamine Event Component to its companion View.
+    domain: DreamineEventComponent
+    range: View
+    slot_uri: dreamine:controlsView
+
+classes:
+  LocalizedText:
+    description: A language-tagged human-readable value.
+    slots:
+      - language
+      - text
+
+  Evidence:
+    description: Provenance and confidence for an asserted fact or relationship.
+    slots:
+      - evidence_source
+      - evidence_value
+      - confidence
+
+  SoftwareElement:
+    description: Base class for every addressable software and business-domain concept.
+    abstract: true
+    slots:
+      - stable_id
+      - source_graph_id
+      - canonical_name
+      - labels
+      - summaries
+      - element_type
+      - element_layer
+      - source_path
+      - raw_source_path
+      - raw_element_type
+      - source_verification_status
+      - default_search_visible
+      - line_start
+      - line_end
+      - project_name
+      - package_id
+      - project_version
+      - target_frameworks
+      - namespace
+      - signature
+      - accessibility
+      - complexity
+      - tags
+      - evidence
+
+  Project:
+    is_a: SoftwareElement
+    description: A buildable Dreamine project or package boundary.
+  Module:
+    is_a: SoftwareElement
+    description: A logical namespace or deployable module within a project.
+  Layer:
+    is_a: SoftwareElement
+    description: An explicitly named architectural layer.
+
+  SourceArtifact:
+    is_a: SoftwareElement
+    abstract: true
+    description: A file-backed artifact from the source repository.
+  Pipeline:
+    is_a: SourceArtifact
+    description: An automation or continuous-integration pipeline.
+  Document:
+    is_a: SourceArtifact
+    description: A human-readable documentation artifact.
+  SourceFile:
+    is_a: SourceArtifact
+    description: A source file containing code or markup.
+  EventComponentFile:
+    is_a: SourceFile
+    description: A role-split *.xaml.Event.cs file declaring a Dreamine Event Component.
+  Configuration:
+    is_a: SourceArtifact
+    description: A machine-readable configuration artifact.
+
+  CodeElement:
+    is_a: SoftwareElement
+    abstract: true
+    description: A declared element in program source code.
+  CodeType:
+    is_a: CodeElement
+    abstract: true
+    description: A declared C-sharp type, distinct from an OWL class declaration.
+  CodeClass:
+    is_a: CodeType
+    description: A C-sharp class declaration represented as an ABox instance.
+  CodeInterface:
+    is_a: CodeType
+    description: A C-sharp interface declaration represented as an ABox instance.
+  CodeRecord:
+    is_a: CodeType
+    description: A C-sharp record declaration represented as an ABox instance.
+  CodeStruct:
+    is_a: CodeType
+    description: A C-sharp struct declaration represented as an ABox instance.
+  CodeEnum:
+    is_a: CodeType
+    description: A C-sharp enum declaration represented as an ABox instance.
+  View:
+    is_a: CodeClass
+    description: A platform presentation type such as a Window, Page, or UserControl.
+  ViewModel:
+    is_a: CodeClass
+    description: An MVVM presentation-state and command coordinator.
+  Service:
+    is_a: CodeClass
+    description: A class whose primary role is providing an application or infrastructure service.
+  Generator:
+    is_a: CodeClass
+    description: A class that generates source code, markup, identifiers, or other artifacts.
+  CodeAttribute:
+    is_a: CodeClass
+    description: A C-sharp attribute declaration used as declarative metadata.
+  CodeException:
+    is_a: CodeClass
+    description: A C-sharp exception type.
+  DreamineEventComponent:
+    is_a: CodeClass
+    description: A Dreamine-specific command action component connected to a ViewModel through DreamineEvent and invoked through Event.* command forwarding.
+
+  CodeMember:
+    is_a: CodeElement
+    abstract: true
+    description: A member declared by a C-sharp type.
+  Method:
+    is_a: CodeMember
+    description: A callable C-sharp method.
+    slots:
+      - forwardTargetName
+      - partialClassification
+      - generatorAttribute
+  Constructor:
+    is_a: CodeMember
+    description: A C-sharp instance or static constructor.
+  CodeProperty:
+    is_a: CodeMember
+    description: A C-sharp property declaration.
+  Event:
+    is_a: CodeMember
+    description: A C-sharp event declaration.
+  TestCase:
+    is_a: CodeMember
+    description: An executable automated test case.
+
+  Domain:
+    is_a: SoftwareElement
+    description: A major Dreamine business or technical capability domain.
+  Flow:
+    is_a: SoftwareElement
+    description: An ordered domain or application behavior flow.
+  Step:
+    is_a: SoftwareElement
+    description: One operation within a flow.
+  Scenario:
+    is_a: SoftwareElement
+    description: A user or system interaction scenario.
+
+  SemanticRelation:
+    description: A reified relationship with its own stable identity and provenance.
+    slots:
+      - stable_id
+      - source
+      - target
+      - relation_type
+      - labels
+      - evidence
+
+  KnowledgeGraph:
+    tree_root: true
+    description: Portable ontology instance document consumed by validators, graph stores, and the Dreamine dashboard.
+    slots:
+      - ontology_version
+      - generated_at
+      - elements
+      - relations

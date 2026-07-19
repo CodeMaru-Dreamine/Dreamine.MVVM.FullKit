@@ -17,8 +17,8 @@
                     : "Explore Dreamine FullKit by purpose: applications, reusable libraries, tests, and learning samples. Every card links directly to its build XML, bilingual Doxygen API reference, and focused knowledge graph.")
             </p>
         </div>
-        <a class="dw-btn dw-btn--outline" href="@FullGraphUrl" target="_blank" rel="noopener">
-            @(Ko ? "전체 그래프(고급) ↗" : "Full graph (advanced) ↗")
+        <a class="dw-btn dw-btn--outline" href="@FullGraphUrl">
+            @(Ko ? "전체 그래프(고급) →" : "Full graph (advanced) →")
         </a>
     </div>
 
@@ -108,29 +108,29 @@
                                 }
                             </div>
                             <div class="dw-knowledge-card__availability">
-                                <span class="@AvailabilityCss(!string.IsNullOrWhiteSpace(project.BuildDocumentUrl))">XML</span>
-                                <span class="@AvailabilityCss(!string.IsNullOrWhiteSpace(project.GetDoxygenUrl(Language)))">DOXYGEN</span>
-                                <span class="@AvailabilityCss(!string.IsNullOrWhiteSpace(project.GetGraphUrl(Language)))">GRAPH</span>
+                                <span class="@AvailabilityCss(project.DocumentationAvailable && project.IsDocumentationAvailable(Language))">DOCS</span>
+                                <span class="@AvailabilityCss(project.DoxygenAvailable && !string.IsNullOrWhiteSpace(project.GetDoxygenUrl(Language)))">DOXYGEN</span>
+                                <span class="@AvailabilityCss(project.KnowledgeGraphAvailable && !string.IsNullOrWhiteSpace(project.GetGraphUrl(Language)))">GRAPH</span>
                             </div>
                             <div class="dw-knowledge-card__actions">
-                                @if (!string.IsNullOrWhiteSpace(project.BuildDocumentUrl))
+                                @if (project.DocumentationAvailable && project.IsDocumentationAvailable(Language) && !string.IsNullOrWhiteSpace(project.DocumentPageUrl))
                                 {
-                                    <a href="@project.BuildDocumentUrl" target="_blank" rel="noopener">@(Ko ? "빌드 XML" : "Build XML")</a>
+                                    <a href="@project.DocumentPageUrl">@(Ko ? "Dreamine 문서" : "Dreamine docs")</a>
                                 }
                                 else
                                 {
-                                    <span class="is-disabled" title="@(Ko ? "이 프로젝트는 XML 문서 출력을 생성하지 않습니다." : "This project does not emit a build XML document.")">
-                                        @(Ko ? "빌드 XML 없음" : "No build XML")
+                                    <span class="is-disabled" title="@(Ko ? "이 프로젝트는 별도 Dreamine 문서 페이지를 제공하지 않습니다." : "This project does not have a separate Dreamine documentation page.")">
+                                        @(Ko ? "문서 페이지 없음" : "No docs page")
                                     </span>
                                 }
-                                @if (!string.IsNullOrWhiteSpace(project.GetDoxygenUrl(Language)))
+                                @if (project.DoxygenAvailable && !string.IsNullOrWhiteSpace(project.GetDoxygenUrl(Language)))
                                 {
-                                    <a href="@project.GetDoxygenUrl(Language)" target="_blank" rel="noopener">Doxygen ↗</a>
+                                    <a href="@project.GetDoxygenUrl(Language)">Doxygen →</a>
                                 }
-                                @if (!string.IsNullOrWhiteSpace(project.GetGraphUrl(Language)))
+                                @if (project.KnowledgeGraphAvailable && !string.IsNullOrWhiteSpace(project.GetGraphUrl(Language)))
                                 {
-                                    <a class="is-primary" href="@project.GetGraphUrl(Language)" target="_blank" rel="noopener">
-                                        @(Ko ? "지식 그래프 ↗" : "Knowledge graph ↗")
+                                    <a class="is-primary" href="@project.GetGraphUrl(Language)">
+                                        @(Ko ? "지식 그래프 →" : "Knowledge graph →")
                                     </a>
                                 }
                             </div>

@@ -17,6 +17,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="..\..\000. Project\010. App\Dreamine.Web\Dreamine.Web.csproj" />
 		<ProjectReference Include="..\..\100. Library\Attributes\Dreamine.MVVM.Attributes.csproj" />
 		<ProjectReference Include="..\..\100. Library\Communication.Abstractions\Dreamine.Communication.Abstractions.csproj" />
 		<ProjectReference Include="..\..\100. Library\Communication.Core\Dreamine.Communication.Core.csproj" />
