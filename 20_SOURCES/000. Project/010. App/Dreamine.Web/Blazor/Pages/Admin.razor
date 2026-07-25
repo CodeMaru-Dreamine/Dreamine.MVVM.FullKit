@@ -1,27 +1,36 @@
 @page "/admin"
+@page "/admin/libraries"
+@page "/admin/resources"
+@page "/admin/demos"
 @namespace DreamineWeb.Blazor.Pages
 @rendermode InteractiveServer
 @inject AdminViewModel Vm
 @inject NavigationManager Nav
 @inject PlaygroundMediaService Media
+@inject ResourceArchiveService ResourceArchive
+@inject IKnowledgeQaService KnowledgeQa
 
 <PageTitle>관리자 — Dreamine</PageTitle>
 
 <div class="dw-page dw-admin">
-    <div class="dw-page__head">
-        <h1 class="dw-page__title">⚙ 관리자</h1>
-        @if (Vm.IsAuthenticated)
-        {
-            <div style="display:flex;gap:10px">
-                <a href="/" class="dw-btn dw-btn--ghost dw-btn--sm">사이트 보기</a>
-                <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="OnRefresh">🔄 새로고침</button>
-            </div>
-        }
-    </div>
-
-    @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+    @if (!Vm.IsAuthenticated || Vm.IsEditing || Vm.IsSiteEditing || Vm.IsResourceEditing || Vm.IsDemoEditing)
     {
-        <p class="dw-status @(Vm.StatusMessage.StartsWith("✅") ? "dw-status--ok" : "dw-status--err")">
+        <div class="dw-page__head">
+            <h1 class="dw-page__title">관리자</h1>
+            @if (Vm.IsAuthenticated)
+            {
+                <div class="dw-admin-head-actions">
+                    <a href="/" class="dw-btn dw-btn--ghost dw-btn--sm">사이트 보기</a>
+                    <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="OnRefresh">새로고침</button>
+                </div>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage)
+        && (!Vm.IsAuthenticated || Vm.IsEditing || Vm.IsSiteEditing || Vm.IsResourceEditing || Vm.IsDemoEditing))
+    {
+        <p class="dw-status @(Vm.StatusMessage.StartsWith("❌") ? "dw-status--err" : "dw-status--ok")">
             @Vm.StatusMessage
         </p>
     }
@@ -200,6 +209,82 @@
             </div>
         </div>
     }
+    else if (Vm.IsResourceEditing)
+    {
+        <div class="dw-edit-form">
+            <h2>@(string.IsNullOrWhiteSpace(Vm.EditingResource!.Title) ? "새 영상 + 샘플" : Vm.EditingResource.Title)</h2>
+            <p class="dw-hint">한 항목에 YouTube 영상과 해당 영상에서 사용하는 샘플 ZIP을 함께 등록합니다.</p>
+
+            <div class="dw-form-grid">
+                <label class="dw-label">ID
+                    <input class="dw-input" readonly value="@Vm.EditingResource.Id" />
+                </label>
+                <label class="dw-label">정렬 순서
+                    <input class="dw-input" type="number" @bind="Vm.EditingResource.SortOrder" />
+                </label>
+                <label class="dw-label dw-label--full dw-label--check">
+                    <input type="checkbox" @bind="Vm.EditingResource.IsVisible" /> 공개 페이지에 표시
+                </label>
+                <label class="dw-label">제목 (한국어)
+                    <input class="dw-input" @bind="Vm.EditingResource.Title" placeholder="HelloDreamine 시작하기" />
+                </label>
+                <label class="dw-label">제목 (English)
+                    <input class="dw-input" @bind="Vm.EditingResource.TitleEn" placeholder="Getting started with HelloDreamine" />
+                </label>
+                <label class="dw-label">설명 (한국어)
+                    <textarea class="dw-input dw-textarea" @bind="Vm.EditingResource.Description" rows="3" />
+                </label>
+                <label class="dw-label">설명 (English)
+                    <textarea class="dw-input dw-textarea" @bind="Vm.EditingResource.DescriptionEn" rows="3" />
+                </label>
+            </div>
+
+            <h3 class="dw-form-section-title">YouTube 영상</h3>
+            <div class="dw-form-grid">
+                <label class="dw-label dw-label--full">YouTube 영상 URL
+                    <input class="dw-input" @bind="Vm.EditingResource.YouTubeUrl"
+                           @bind:event="oninput" placeholder="https://www.youtube.com/watch?v=..." />
+                    <span class="dw-hint">일반 영상, Shorts, youtu.be 링크를 지원합니다.</span>
+                </label>
+                <label class="dw-label dw-label--full">커스텀 썸네일 URL
+                    <input class="dw-input" @bind="Vm.EditingResource.ThumbnailUrl"
+                           @bind:event="oninput" placeholder="비워두면 YouTube 썸네일을 자동 사용합니다." />
+                    <InputFile OnChange="OnResourceThumbnailUpload" accept="image/jpeg,image/png,image/webp,image/gif" />
+                </label>
+                @if (!string.IsNullOrWhiteSpace(GetResourceThumbnail(Vm.EditingResource)))
+                {
+                    <div class="dw-label dw-label--full">
+                        썸네일 미리보기
+                        <div class="dw-resource-admin-preview">
+                            <img src="@GetResourceThumbnail(Vm.EditingResource)" alt="썸네일 미리보기" />
+                            <span>16:9 공개 카드 미리보기</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <h3 class="dw-form-section-title">매칭 샘플 프로젝트</h3>
+            <div class="dw-form-grid">
+                <label class="dw-label">샘플 프로젝트 이름
+                    <input class="dw-input" @bind="Vm.EditingResource.SampleName"
+                           placeholder="Dreamine.Sample.001.HelloDreamine" />
+                </label>
+                <label class="dw-label">샘플 ZIP URL
+                    <input class="dw-input" @bind="Vm.EditingResource.SampleDownloadUrl"
+                           placeholder="ZIP 업로드 시 자동 입력됩니다." />
+                </label>
+                <label class="dw-label dw-label--full">샘플 ZIP 교체 / 업로드
+                    <InputFile OnChange="OnResourceArchiveUpload" accept=".zip,application/zip" />
+                    <span class="dw-hint">최대 500MB · 유효한 ZIP 파일인지 검사한 뒤 이 항목에 연결합니다.</span>
+                </label>
+            </div>
+
+            <div class="dw-edit-actions">
+                <button class="dw-btn dw-btn--primary" @onclick="OnSaveResource">💾 영상 + 샘플 저장</button>
+                <button class="dw-btn dw-btn--ghost" @onclick="Vm.CancelResourceEdit">취소</button>
+            </div>
+        </div>
+    }
     else if (Vm.IsDemoEditing)
     {
         <div class="dw-edit-form">
@@ -278,69 +363,372 @@
     }
     else
     {
-        <!-- 툴바 -->
-        <div class="dw-admin-toolbar">
-            <span class="dw-admin__count">라이브러리 @(Vm.Libraries.Count)개</span>
-            <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="Vm.StartSiteEdit">🎨 사이트 설정</button>
-                <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="OnSyncCatalog">📦 프로젝트 동기화</button>
-                <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="OnSyncVersions">🔢 버전 동기화</button>
-                <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="OnAutoLink">🔍 XML 자동 연결</button>
-                <button class="dw-btn dw-btn--primary dw-btn--sm" @onclick="Vm.StartNew">+ 추가</button>
-            </div>
-        </div>
-
-        <div class="dw-lib-list">
-            @foreach (var lib in Vm.Libraries.OrderBy(x => x.SortOrder))
-            {
-                <div class="dw-lib-row dw-lib-row--admin">
-                    <span class="dw-lib-row__order">@lib.SortOrder</span>
-                    <span class="dw-lib-row__name" title="@lib.Name">@lib.Name</span>
-                    <span class="dw-badge dw-badge--@lib.Status">@lib.Status</span>
-                    <span class="dw-badge @(lib.IsVisible ? "dw-badge--visible" : "dw-badge--hidden")">
-                        @(lib.IsVisible ? "공개" : "비공개")
-                    </span>
-                    <span class="dw-lib-row__desc">@lib.Description</span>
-                    <span class="dw-lib-row__ver">v@(lib.Version)</span>
-                    <div class="dw-lib-row__actions">
-                        <a href="/docs/@lib.Id" target="_blank" class="dw-btn dw-btn--sm dw-btn--ghost">문서</a>
-                        <button class="dw-btn dw-btn--sm" @onclick="() => Vm.StartEdit(lib)">편집</button>
-                        <button class="dw-btn dw-btn--sm dw-btn--danger" @onclick="() => OnDelete(lib.Id)">삭제</button>
-                    </div>
+        <div class="dw-admin-dashboard">
+            <aside class="dw-admin-side">
+                <div class="dw-admin-side__brand">
+                    <span class="dw-admin-side__logo">D</span>
+                    <strong>Dreamine</strong>
+                    <small>ADMIN</small>
                 </div>
-            }
-        </div>
-
-        <div class="dw-admin-toolbar dw-admin-toolbar--section">
-            <span class="dw-admin__count">체험 데모 @(Vm.Demos.Count)개</span>
-            <button class="dw-btn dw-btn--primary dw-btn--sm" @onclick="Vm.StartNewDemo">+ 데모 추가</button>
-        </div>
-
-        <div class="dw-lib-list">
-            @foreach (var demo in Vm.Demos.OrderBy(x => x.SortOrder))
-            {
-                <div class="dw-lib-row dw-demo-row--admin">
-                    <span class="dw-lib-row__order">@demo.SortOrder</span>
-                    <span class="dw-lib-row__name" title="@demo.Id">@demo.Id</span>
-                    <span class="dw-badge @(demo.IsVisible ? "dw-badge--visible" : "dw-badge--hidden")">
-                        @(demo.IsVisible ? "공개" : "비공개")
-                    </span>
-                    <span class="dw-lib-row__desc">@demo.Title</span>
-                    <span class="dw-lib-row__xml @(HasAnyMedia(demo) ? "" : "dw-lib-row__xml--none")">
-                        @(HasAnyMedia(demo) ? "미디어 설정됨" : "미디어 없음")
-                    </span>
-                    <div class="dw-lib-row__actions">
-                        <a href="/playground#@demo.Id" target="_blank" class="dw-btn dw-btn--sm dw-btn--ghost">보기</a>
-                        <button class="dw-btn dw-btn--sm" @onclick="() => Vm.StartEditDemo(demo)">편집</button>
-                        <button class="dw-btn dw-btn--sm dw-btn--danger" @onclick="() => OnDeleteDemo(demo.Id)">삭제</button>
-                    </div>
+                <nav aria-label="관리자 메뉴">
+                    <button type="button" class="@GetAdminNavClass(AdminPanel.Overview)" @onclick="() => ActivatePanel(AdminPanel.Overview)"><svg><use href="#dw-icon-home" /></svg><span>대시보드</span></button>
+                    <button type="button" class="@GetAdminNavClass(AdminPanel.Libraries)" @onclick="() => ActivatePanel(AdminPanel.Libraries)"><svg><use href="#dw-icon-folder" /></svg><span>라이브러리</span><em>@Vm.Libraries.Count</em></button>
+                    <button type="button" class="@GetAdminNavClass(AdminPanel.Resources)" @onclick="() => ActivatePanel(AdminPanel.Resources)"><svg><use href="#dw-icon-play" /></svg><span>영상·샘플</span><em>@Vm.LearningResources.Count</em></button>
+                    <button type="button" class="@GetAdminNavClass(AdminPanel.Demos)" @onclick="() => ActivatePanel(AdminPanel.Demos)"><svg><use href="#dw-icon-cube" /></svg><span>체험 데모</span><em>@Vm.Demos.Count</em></button>
+                    <button type="button" class="@GetAdminNavClass(AdminPanel.Knowledge)" @onclick="OpenKnowledgePanelAsync"><svg><use href="#dw-icon-chat" /></svg><span>지식 Q&amp;A</span></button>
+                </nav>
+                <div class="dw-admin-side__utility">
+                    <button @onclick="OnSyncCatalog"><svg><use href="#dw-icon-sync" /></svg><span>프로젝트 동기화</span></button>
+                    <button @onclick="Vm.StartSiteEdit"><svg><use href="#dw-icon-settings" /></svg><span>사이트 설정</span></button>
                 </div>
-            }
+                <div class="dw-admin-health">
+                    <span><i></i> 시스템 상태</span>
+                    <p>모든 시스템이 정상적으로 운영 중입니다.</p>
+                    <button @onclick="OnRefresh">상태 새로고침 <b>→</b></button>
+                </div>
+            </aside>
+
+            <main class="dw-admin-main @GetAdminMainClass()">
+                <svg class="dw-admin-svg-defs" aria-hidden="true">
+                    <defs>
+                        <symbol id="dw-icon-home" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5v8a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></symbol>
+                        <symbol id="dw-icon-folder" viewBox="0 0 24 24"><path d="M3 6.5h7l2 2h9v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /></symbol>
+                        <symbol id="dw-icon-play" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="m10 9 5 3-5 3z" /></symbol>
+                        <symbol id="dw-icon-cube" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 12v9" /></symbol>
+                        <symbol id="dw-icon-chat" viewBox="0 0 24 24"><path d="M4 5h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-5 3v-3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" /></symbol>
+                        <symbol id="dw-icon-sync" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M6.1 8a7 7 0 0 1 11.2-1.9L20 12M4 12l2.7 5.9A7 7 0 0 0 17.9 16" /></symbol>
+                        <symbol id="dw-icon-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.6-2-3.4-2.5 1a8 8 0 0 0-1.7-1L14.3 3h-4.6L9.3 6a8 8 0 0 0-1.7 1L5.1 6l-2 3.4L5.1 11a7 7 0 0 0 0 2l-2 1.6 2 3.4 2.5-1a8 8 0 0 0 1.7 1l.4 3h4.6l.4-3a8 8 0 0 0 1.7-1l2.5 1 2-3.4-2-1.6a7 7 0 0 0 .1-1z" /></symbol>
+                    </defs>
+                </svg>
+
+                <header class="dw-admin-top">
+                    <div>
+                        <span class="dw-admin-mobile-brand">Dreamine Admin</span>
+                        <h1>관리자 대시보드</h1>
+                        <p>콘텐츠 현황과 필요한 작업을 한눈에 확인하세요.</p>
+                    </div>
+                    <div class="dw-admin-top__tools">
+                        <label class="dw-admin-search">
+                            <span>⌕</span>
+                            <input value="@_adminSearch" @oninput="OnAdminSearch" placeholder="현재 목록 검색" aria-label="관리자 콘텐츠 검색" />
+                            @if (!string.IsNullOrWhiteSpace(_adminSearch))
+                            {
+                                <button type="button" @onclick="ClearAdminSearch" aria-label="검색어 지우기">×</button>
+                            }
+                        </label>
+                        <a href="/" target="_blank" class="dw-admin-site-link">사이트 보기 <span>↗</span></a>
+                        <button class="dw-admin-refresh" @onclick="OnRefresh" title="새로고침" aria-label="새로고침">↻</button>
+                    </div>
+                </header>
+
+                @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+                {
+                    <div class="dw-admin-inline-status @(Vm.StatusMessage.StartsWith("❌") ? "is-error" : "is-ok")">
+                        @Vm.StatusMessage
+                    </div>
+                }
+
+                <nav class="dw-admin-mobile-tabs" aria-label="모바일 관리자 메뉴">
+                    <button type="button" class="@GetAdminNavClass(AdminPanel.Overview)" @onclick="() => ActivatePanel(AdminPanel.Overview)">대시보드</button>
+                    <button type="button" class="@GetAdminNavClass(AdminPanel.Libraries)" @onclick="() => ActivatePanel(AdminPanel.Libraries)">라이브러리</button>
+                    <button type="button" class="@GetAdminNavClass(AdminPanel.Resources)" @onclick="() => ActivatePanel(AdminPanel.Resources)">영상·샘플</button>
+                    <button type="button" class="@GetAdminNavClass(AdminPanel.Demos)" @onclick="() => ActivatePanel(AdminPanel.Demos)">체험 데모</button>
+                    <button type="button" class="@GetAdminNavClass(AdminPanel.Knowledge)" @onclick="OpenKnowledgePanelAsync">지식 Q&amp;A</button>
+                </nav>
+
+                <section class="dw-admin-stats" aria-label="콘텐츠 통계">
+                    <button type="button" class="dw-admin-stat is-blue" @onclick="() => ActivatePanel(AdminPanel.Libraries)">
+                        <span class="dw-admin-stat__icon"><svg><use href="#dw-icon-folder" /></svg></span>
+                        <div><small>라이브러리</small><strong>@Vm.Libraries.Count</strong><em>@Vm.Libraries.Count(x => x.IsVisible)개 공개</em></div>
+                    </button>
+                    <button type="button" class="dw-admin-stat is-violet" @onclick="() => ActivatePanel(AdminPanel.Resources)">
+                        <span class="dw-admin-stat__icon"><svg><use href="#dw-icon-play" /></svg></span>
+                        <div><small>영상·샘플</small><strong>@Vm.LearningResources.Count</strong><em>@Vm.LearningResources.Count(x => x.IsVisible)개 공개</em></div>
+                    </button>
+                    <button type="button" class="dw-admin-stat is-cyan" @onclick="() => ActivatePanel(AdminPanel.Demos)">
+                        <span class="dw-admin-stat__icon"><svg><use href="#dw-icon-cube" /></svg></span>
+                        <div><small>체험 데모</small><strong>@Vm.Demos.Count</strong><em>@Vm.Demos.Count(x => x.IsVisible)개 공개</em></div>
+                    </button>
+                    <button type="button" class="dw-admin-stat is-sky" @onclick="OpenKnowledgePanelAsync">
+                        <span class="dw-admin-stat__icon"><svg><use href="#dw-icon-chat" /></svg></span>
+                        <div><small>지식 Q&amp;A</small><strong>검토</strong><em>답변 품질 관리</em></div>
+                    </button>
+                </section>
+
+                <div class="dw-admin-overview-grid">
+                    <section class="dw-admin-card dw-admin-review">
+                        <header><div><span>REVIEW QUEUE</span><h2>검토 필요</h2></div><strong>@ReviewCount 건</strong></header>
+                        <button type="button" @onclick="() => ActivatePanel(AdminPanel.Resources)">
+                            <span class="is-warning">▧</span><div><strong>미디어 누락</strong><small>썸네일 또는 영상이 없는 자료</small></div><em>@MissingResourceMediaCount</em><b>›</b>
+                        </button>
+                        <button type="button" @onclick="() => ActivatePanel(AdminPanel.Libraries)">
+                            <span class="is-private">♙</span><div><strong>비공개 콘텐츠</strong><small>공개 전 검토가 필요한 항목</small></div><em>@PrivateContentCount</em><b>›</b>
+                        </button>
+                        <button type="button" @onclick="() => ActivatePanel(AdminPanel.Demos)">
+                            <span class="is-sync">↻</span><div><strong>데모 미디어 확인</strong><small>플랫폼 미디어가 등록되지 않은 데모</small></div><em>@MissingDemoMediaCount</em><b>›</b>
+                        </button>
+                    </section>
+
+                    <section class="dw-admin-card dw-admin-quick">
+                        <header><div><span>SHORTCUTS</span><h2>빠른 작업</h2></div></header>
+                        <div>
+                            <button @onclick="Vm.StartNew"><span class="is-blue"><svg><use href="#dw-icon-folder" /></svg><i>+</i></span><strong>라이브러리 추가</strong><small>새 패키지 등록</small></button>
+                            <button @onclick="Vm.StartNewResource"><span class="is-violet"><svg><use href="#dw-icon-play" /></svg><i>+</i></span><strong>자료 추가</strong><small>영상·샘플 업로드</small></button>
+                            <button type="button" @onclick="OpenKnowledgePanelAsync"><span class="is-cyan"><svg><use href="#dw-icon-chat" /></svg></span><strong>Q&amp;A 검토</strong><small>답변 및 게시물 검토</small></button>
+                            <button @onclick="OnSyncCatalog"><span class="is-sky"><svg><use href="#dw-icon-sync" /></svg></span><strong>동기화 실행</strong><small>프로젝트 데이터 갱신</small></button>
+                        </div>
+                    </section>
+                </div>
+
+                <section class="dw-admin-card dw-admin-content-card dw-admin-content-card--full dw-admin-content-card--libraries">
+                    @{
+                        var libraries = Vm.Libraries.Where(x => MatchesAdminSearch(x.Name, x.Description, x.Category)).OrderBy(x => x.SortOrder).ToList();
+                        var libraryPageCount = GetPageCount(libraries.Count);
+                        var libraryPage = Math.Min(_libraryPage, libraryPageCount);
+                    }
+                    <header>
+                        <div><span>CONTENT</span><h2>라이브러리</h2><p>@(libraries.Count)개 결과 · @libraryPage / @libraryPageCount 페이지</p></div>
+                        <div class="dw-admin-section-actions">
+                            <button @onclick="OnSyncVersions">버전 동기화</button><button @onclick="OnAutoLink">XML 연결</button><button class="is-primary" @onclick="Vm.StartNew">+ 추가</button>
+                        </div>
+                    </header>
+                    <div class="dw-admin-table">
+                        @foreach (var lib in GetPage(libraries, libraryPage))
+                        {
+                            <article>
+                                <span class="dw-admin-row-icon is-blue"><svg><use href="#dw-icon-folder" /></svg></span>
+                                <div class="dw-admin-row-copy"><strong>@lib.Name</strong><small>@lib.Description</small></div>
+                                <span class="dw-badge dw-badge--@lib.Status">@lib.Status</span>
+                                <span class="dw-badge @(lib.IsVisible ? "dw-badge--visible" : "dw-badge--hidden")">@(lib.IsVisible ? "공개" : "비공개")</span>
+                                <span class="dw-admin-row-version">v@lib.Version</span>
+                                <div class="dw-admin-row-actions"><a href="/docs/@lib.Id" target="_blank">보기</a><button @onclick="() => Vm.StartEdit(lib)">편집</button><button class="is-danger" @onclick="() => OnDelete(lib.Id)">삭제</button></div>
+                            </article>
+                        }
+                        @if (libraries.Count == 0)
+                        {
+                            <p class="dw-admin-empty">검색 결과가 없습니다.</p>
+                        }
+                    </div>
+                    @if (libraryPageCount > 1)
+                    {
+                        <nav class="dw-admin-pagination" aria-label="라이브러리 목록 페이지">
+                            <button type="button" disabled="@(libraryPage == 1)" @onclick="() => _libraryPage = libraryPage - 1">‹ 이전</button>
+                            @for (var i = 1; i <= libraryPageCount; i++)
+                            {
+                                var pageNumber = i;
+                                <button type="button" class="@(libraryPage == pageNumber ? "is-current" : null)" @onclick="() => _libraryPage = pageNumber">@pageNumber</button>
+                            }
+                            <button type="button" disabled="@(libraryPage == libraryPageCount)" @onclick="() => _libraryPage = libraryPage + 1">다음 ›</button>
+                        </nav>
+                    }
+                </section>
+
+                <section class="dw-admin-card dw-admin-content-card dw-admin-content-card--full dw-admin-content-card--resources">
+                    @{
+                        var resources = Vm.LearningResources.Where(x => MatchesAdminSearch(x.Title, x.SampleName, x.Description)).OrderBy(x => x.SortOrder).ToList();
+                        var resourcePageCount = GetPageCount(resources.Count);
+                        var resourcePage = Math.Min(_resourcePage, resourcePageCount);
+                    }
+                    <header>
+                        <div><span>CONTENT</span><h2>영상·샘플</h2><p>@(resources.Count)개 결과 · @resourcePage / @resourcePageCount 페이지</p></div>
+                        <div class="dw-admin-section-actions"><a href="/resources" target="_blank">공개 페이지</a><button class="is-primary" @onclick="Vm.StartNewResource">+ 자료 추가</button></div>
+                    </header>
+                    <div class="dw-admin-table">
+                        @foreach (var resource in GetPage(resources, resourcePage))
+                        {
+                            <article>
+                                <span class="dw-admin-row-icon is-violet"><svg><use href="#dw-icon-play" /></svg></span>
+                                <div class="dw-admin-row-copy"><strong>@resource.Title</strong><small>@resource.SampleName · 영상 @(string.IsNullOrWhiteSpace(resource.YouTubeUrl) ? "미등록" : "등록") · ZIP @(string.IsNullOrWhiteSpace(resource.SampleDownloadUrl) ? "미등록" : "등록")</small></div>
+                                <span class="dw-badge @(resource.IsVisible ? "dw-badge--visible" : "dw-badge--hidden")">@(resource.IsVisible ? "공개" : "비공개")</span>
+                                <div class="dw-admin-row-actions"><button @onclick="() => Vm.StartEditResource(resource)">편집</button><button class="is-danger" @onclick="() => OnDeleteResource(resource.Id)">삭제</button></div>
+                            </article>
+                        }
+                        @if (resources.Count == 0)
+                        {
+                            <p class="dw-admin-empty">검색 결과가 없습니다.</p>
+                        }
+                    </div>
+                    @if (resourcePageCount > 1)
+                    {
+                        <nav class="dw-admin-pagination" aria-label="영상·샘플 목록 페이지">
+                            <button type="button" disabled="@(resourcePage == 1)" @onclick="() => _resourcePage = resourcePage - 1">‹ 이전</button>
+                            @for (var i = 1; i <= resourcePageCount; i++)
+                            {
+                                var pageNumber = i;
+                                <button type="button" class="@(resourcePage == pageNumber ? "is-current" : null)" @onclick="() => _resourcePage = pageNumber">@pageNumber</button>
+                            }
+                            <button type="button" disabled="@(resourcePage == resourcePageCount)" @onclick="() => _resourcePage = resourcePage + 1">다음 ›</button>
+                        </nav>
+                    }
+                </section>
+
+                <section class="dw-admin-card dw-admin-content-card dw-admin-content-card--full dw-admin-content-card--demos">
+                    @{
+                        var demos = Vm.Demos.Where(x => MatchesAdminSearch(x.Id, x.Title, x.Description)).OrderBy(x => x.SortOrder).ToList();
+                        var demoPageCount = GetPageCount(demos.Count);
+                        var demoPage = Math.Min(_demoPage, demoPageCount);
+                    }
+                    <header>
+                        <div><span>CONTENT</span><h2>체험 데모</h2><p>@(demos.Count)개 결과 · @demoPage / @demoPageCount 페이지</p></div>
+                        <div class="dw-admin-section-actions"><button class="is-primary" @onclick="Vm.StartNewDemo">+ 데모 추가</button></div>
+                    </header>
+                    <div class="dw-admin-table">
+                        @foreach (var demo in GetPage(demos, demoPage))
+                        {
+                            <article>
+                                <span class="dw-admin-row-icon is-cyan"><svg><use href="#dw-icon-cube" /></svg></span>
+                                <div class="dw-admin-row-copy"><strong>@demo.Title</strong><small>@demo.Id · @(HasAnyMedia(demo) ? "미디어 설정됨" : "미디어 없음")</small></div>
+                                <span class="dw-badge @(demo.IsVisible ? "dw-badge--visible" : "dw-badge--hidden")">@(demo.IsVisible ? "공개" : "비공개")</span>
+                                <div class="dw-admin-row-actions"><a href="/playground#@demo.Id" target="_blank">보기</a><button @onclick="() => Vm.StartEditDemo(demo)">편집</button><button class="is-danger" @onclick="() => OnDeleteDemo(demo.Id)">삭제</button></div>
+                            </article>
+                        }
+                        @if (demos.Count == 0)
+                        {
+                            <p class="dw-admin-empty">검색 결과가 없습니다.</p>
+                        }
+                    </div>
+                    @if (demoPageCount > 1)
+                    {
+                        <nav class="dw-admin-pagination" aria-label="체험 데모 목록 페이지">
+                            <button type="button" disabled="@(demoPage == 1)" @onclick="() => _demoPage = demoPage - 1">‹ 이전</button>
+                            @for (var i = 1; i <= demoPageCount; i++)
+                            {
+                                var pageNumber = i;
+                                <button type="button" class="@(demoPage == pageNumber ? "is-current" : null)" @onclick="() => _demoPage = pageNumber">@pageNumber</button>
+                            }
+                            <button type="button" disabled="@(demoPage == demoPageCount)" @onclick="() => _demoPage = demoPage + 1">다음 ›</button>
+                        </nav>
+                    }
+                </section>
+
+                <section class="dw-admin-card dw-admin-content-card dw-admin-content-card--full dw-admin-content-card--knowledge">
+                    <header>
+                        <div><span>KNOWLEDGE Q&amp;A</span><h2>지식 Q&amp;A 검토</h2><p>대시보드 안에서 최근 검토 대상을 처리합니다.</p></div>
+                        <div class="dw-admin-section-actions"><a href="/admin/questions">전체 검토</a><button type="button" class="is-primary" @onclick="ReloadKnowledgePanelAsync">새로고침</button></div>
+                    </header>
+                    @if (_isKnowledgePanelLoading)
+                    {
+                        <div class="dw-admin-knowledge-state">검토 대상을 불러오는 중…</div>
+                    }
+                    else if (_knowledgeReview is null || _knowledgeReview.Items.Count == 0)
+                    {
+                        <div class="dw-admin-knowledge-state">현재 검토 대기 중인 질문이 없습니다.</div>
+                    }
+                    else
+                    {
+                        <div class="dw-admin-knowledge-list">
+                            @foreach (var item in _knowledgeReview.Items)
+                            {
+                                <article>
+                                    <div><small>@item.Category · @item.CreatedAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</small><strong>@item.Question</strong><p>@item.Summary</p></div>
+                                    <div class="dw-admin-row-actions"><a href="/questions/@item.Id/@item.Slug">분석 보기</a><button type="button" @onclick="() => ModerateKnowledgeQuestionAsync(item.Id, QuestionPublicationStatus.Published)">승인</button><button type="button" class="is-danger" @onclick="() => ModerateKnowledgeQuestionAsync(item.Id, QuestionPublicationStatus.Rejected)">거절</button></div>
+                                </article>
+                            }
+                        </div>
+                    }
+                </section>
+            </main>
+
         </div>
     }
 </div>
 
 @code {
+    private enum AdminPanel { Overview, Libraries, Resources, Demos, Knowledge }
+
+    private const int AdminPageSize = 5;
+    private AdminPanel _activePanel = AdminPanel.Overview;
+    private string _adminSearch = string.Empty;
+    private int _libraryPage = 1;
+    private int _resourcePage = 1;
+    private int _demoPage = 1;
+    private bool _isKnowledgePanelLoading;
+    private KnowledgeQuestionSearchViewModel? _knowledgeReview;
+
+    private int MissingResourceMediaCount => Vm.LearningResources.Count(x =>
+        string.IsNullOrWhiteSpace(x.YouTubeUrl) || string.IsNullOrWhiteSpace(GetResourceThumbnail(x)));
+    private int MissingDemoMediaCount => Vm.Demos.Count(x => !HasAnyMedia(x));
+    private int PrivateContentCount => Vm.Libraries.Count(x => !x.IsVisible)
+        + Vm.LearningResources.Count(x => !x.IsVisible)
+        + Vm.Demos.Count(x => !x.IsVisible);
+    private int ReviewCount => MissingResourceMediaCount + MissingDemoMediaCount + PrivateContentCount;
+
+    private bool MatchesAdminSearch(params string?[] values) =>
+        string.IsNullOrWhiteSpace(_adminSearch)
+        || values.Any(x => x?.Contains(_adminSearch, StringComparison.OrdinalIgnoreCase) == true);
+
+    private static int GetPageCount(int itemCount) => Math.Max(1, (int)Math.Ceiling(itemCount / (double)AdminPageSize));
+
+    private static IEnumerable<T> GetPage<T>(IEnumerable<T> items, int page) =>
+        items.Skip((page - 1) * AdminPageSize).Take(AdminPageSize);
+
+    private string GetAdminNavClass(AdminPanel panel) => _activePanel == panel ? "is-active" : string.Empty;
+
+    private string GetAdminMainClass() => _activePanel switch
+    {
+        AdminPanel.Libraries => "is-libraries",
+        AdminPanel.Resources => "is-resources",
+        AdminPanel.Demos => "is-demos",
+        AdminPanel.Knowledge => "is-knowledge",
+        _ => "is-overview"
+    };
+
+    private void ActivatePanel(AdminPanel panel)
+    {
+        _activePanel = panel;
+        _adminSearch = string.Empty;
+        _libraryPage = _resourcePage = _demoPage = 1;
+    }
+
+    private void OnAdminSearch(ChangeEventArgs e)
+    {
+        _adminSearch = e.Value?.ToString() ?? string.Empty;
+        _libraryPage = _resourcePage = _demoPage = 1;
+    }
+
+    private void ClearAdminSearch()
+    {
+        _adminSearch = string.Empty;
+        _libraryPage = _resourcePage = _demoPage = 1;
+    }
+
+    private async Task OpenKnowledgePanelAsync()
+    {
+        ActivatePanel(AdminPanel.Knowledge);
+        await ReloadKnowledgePanelAsync();
+    }
+
+    private async Task ReloadKnowledgePanelAsync()
+    {
+        _isKnowledgePanelLoading = true;
+        try
+        {
+            _knowledgeReview = await KnowledgeQa.SearchForReviewAsync(1, 3, CancellationToken.None);
+        }
+        finally
+        {
+            _isKnowledgePanelLoading = false;
+        }
+    }
+
+    private async Task ModerateKnowledgeQuestionAsync(long id, QuestionPublicationStatus status)
+    {
+        await KnowledgeQa.SetPublicationStatusAsync(id, status, CancellationToken.None);
+        await ReloadKnowledgePanelAsync();
+    }
+
+    protected override void OnParametersSet()
+    {
+        var path = new Uri(Nav.Uri).AbsolutePath.TrimEnd('/').ToLowerInvariant();
+        _activePanel = path switch
+        {
+            "/admin/libraries" => AdminPanel.Libraries,
+            "/admin/resources" => AdminPanel.Resources,
+            "/admin/demos" => AdminPanel.Demos,
+            _ => AdminPanel.Overview
+        };
+    }
+
     protected override async Task OnInitializedAsync()
     {
         if (Vm.IsAuthenticated) await Vm.LoadAsync();
@@ -446,4 +834,49 @@
             Vm.StatusMessage = $"❌ 업로드 실패: {ex.Message}";
         }
     }
+
+    private async Task OnSaveResource()
+    {
+        await Vm.SaveResourceAsync();
+        StateHasChanged();
+    }
+
+    private async Task OnDeleteResource(string id)
+    {
+        await Vm.DeleteResourceAsync(id);
+        StateHasChanged();
+    }
+
+    private async Task OnResourceArchiveUpload(InputFileChangeEventArgs e)
+    {
+        if (Vm.EditingResource is null) return;
+        try
+        {
+            Vm.EditingResource.SampleDownloadUrl = await ResourceArchive.SaveArchiveAsync(e.File, Vm.EditingResource.Id);
+            Vm.StatusMessage = "✅ ZIP이 업로드되어 이 영상과 연결됐습니다. 저장 버튼을 눌러주세요.";
+        }
+        catch (Exception ex)
+        {
+            Vm.StatusMessage = $"❌ ZIP 업로드 실패: {ex.Message}";
+        }
+    }
+
+    private async Task OnResourceThumbnailUpload(InputFileChangeEventArgs e)
+    {
+        if (Vm.EditingResource is null) return;
+        try
+        {
+            Vm.EditingResource.ThumbnailUrl = await ResourceArchive.SaveThumbnailAsync(e.File, Vm.EditingResource.Id);
+            Vm.StatusMessage = "✅ 썸네일이 업로드됐습니다. 저장 버튼을 눌러주세요.";
+        }
+        catch (Exception ex)
+        {
+            Vm.StatusMessage = $"❌ 썸네일 업로드 실패: {ex.Message}";
+        }
+    }
+
+    private static string? GetResourceThumbnail(LearningResource resource) =>
+        !string.IsNullOrWhiteSpace(resource.ThumbnailUrl)
+            ? resource.ThumbnailUrl
+            : YouTubeUrlHelper.GetThumbnailUrl(resource.YouTubeUrl);
 }

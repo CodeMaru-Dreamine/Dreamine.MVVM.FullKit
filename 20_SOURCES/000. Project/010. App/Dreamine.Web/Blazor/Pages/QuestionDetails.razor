@@ -1,0 +1,416 @@
+@page "/questions/{Id:long}/{Slug}"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@inject IKnowledgeQaService KnowledgeQa
+@inject IOntologySourceService OntologySource
+@inject UserPreferencesService Prefs
+@inject IJSRuntime JS
+@inject Microsoft.Extensions.Hosting.IHostEnvironment HostEnvironment
+@implements IDisposable
+
+<PageTitle>@(Details is null ? "Dreamine Code Q&A" : $"{Details.OriginalQuestion} — Dreamine")</PageTitle>
+
+<div class="dw-page dw-question-detail">
+    <a class="dw-qa-back" href="/questions">← @(Ko ? "지식 Q&A 목록" : "Knowledge Q&A")</a>
+
+    @if (IsLoading)
+    {
+        <div class="dw-qa-state">@(Ko ? "영구 분석 페이지를 불러오는 중…" : "Loading the permanent analysis page…")</div>
+    }
+    else if (Details is null)
+    {
+        <div class="dw-qa-state">@(Ko ? "질문을 찾을 수 없거나 공개되지 않은 질문입니다." : "The question does not exist or is not public.")</div>
+    }
+    else
+    {
+        AnswerRevision revision = Details.Revision;
+        KnowledgeAnswerViewModel answer = Details.Answer;
+        KnowledgeExecutionDiagnostics diagnostics = revision.ExecutionDiagnostics;
+        <header class="dw-question-head">
+            <span>@Details.Category · @Details.PublicationStatus</span>
+            <h1>@Details.OriginalQuestion</h1>
+            <div class="dw-question-head__meta">
+                <span>@(Ko ? "요청 판정" : "Request disposition") @Details.RequestDisposition</span>
+                <span>@(Ko ? "개정" : "Revision") @revision.Revision / @Details.RevisionCount</span>
+                <span>@(Ko ? "조회" : "Views") @Details.Metric.ViewCount.ToString("N0")</span>
+                @if (AnswerElapsedMilliseconds(diagnostics) > 0)
+                {
+                    <span>@FormatAnswerElapsed(AnswerElapsedMilliseconds(diagnostics))</span>
+                }
+                <span>@revision.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+            </div>
+            @if (Details.NeedsRevalidation)
+            {
+                <div class="dw-question-version-warning">@(Ko ? "현재 그래프·온톨로지 버전과 생성 당시 버전이 달라 재검증이 필요합니다." : "The current graph or ontology differs from the generation snapshot. Revalidation is required.")</div>
+            }
+        </header>
+
+        <section class="dw-analysis-card dw-analysis-summary">
+            <span>@(Ko ? "직접 답변" : "Direct answer")</span>
+            <h2>@answer.DirectAnswer</h2>
+        </section>
+
+        @if (revision.EvidenceBundle.Coverage.Required)
+        {
+            KnowledgeEvidenceCoverage coverage = revision.EvidenceBundle.Coverage;
+            <section class="dw-analysis-card dw-evidence-coverage @(coverage.IsComplete ? "is-complete" : "is-partial")">
+                <div class="dw-evidence-coverage__head">
+                    <div>
+                        <span>EVIDENCE COVERAGE</span>
+                        <h2>@(Ko ? "실행 경로 검증" : "Execution path verification")</h2>
+                    </div>
+                    <strong>@(coverage.IsComplete ? (Ko ? "완전 검증" : "Complete") : (Ko ? "부분 검증" : "Partial"))</strong>
+                </div>
+                <p><code>@coverage.Chain</code></p>
+                <ol class="dw-evidence-coverage__steps">
+                    @foreach (KnowledgeEvidenceCoverageStep step in coverage.Steps)
+                    {
+                        <li class="@(step.Covered ? "is-covered" : "is-missing")">
+                            <span aria-hidden="true">@(step.Covered ? "✓" : "!")</span>
+                            <div><strong>@CoverageLabel(step.Key, step.Label)</strong>
+                                @if (!step.Covered) { <small>@(Ko ? "검증된 소스 근거 없음" : step.Detail)</small> }
+                            </div>
+                        </li>
+                    }
+                </ol>
+            </section>
+        }
+
+        @if (!answer.ShowEvidenceSections)
+        {
+            <section class="dw-analysis-card">
+                <h2>@(Ko ? "판정 안내" : "Request guidance")</h2>
+                <p>@answer.ScopeGuidance</p>
+            </section>
+        }
+        else
+        {
+            @if (answer.Flow.Count > 0)
+            {
+                <section class="dw-analysis-card">
+                    <h2>@(Ko ? "호출·전달 흐름" : "Call and forwarding flow")</h2>
+                    <div class="dw-answer-flow">
+                        @for (int index = 0; index < answer.Flow.Count; index++)
+                        {
+                            @if (index > 0) { <span aria-hidden="true">→</span> }
+                            <strong>@answer.Flow[index]</strong>
+                        }
+                    </div>
+                </section>
+            }
+
+            @if (answer.CoreEvidence.Count > 0)
+            {
+                <section class="dw-analysis-card">
+                    <h2>@(Ko ? "핵심 코드 근거" : "Core code evidence")</h2>
+                    <div class="dw-reference-list">
+                        @foreach (KnowledgeEvidenceCardViewModel card in answer.CoreEvidence)
+                        {
+                            <article id="@CardAnchor(card)">
+                                <div><span>@OriginLabel(card.Origin)</span><h3>@card.Title</h3></div>
+                                @if (!string.IsNullOrWhiteSpace(card.Summary)) { <p>@card.Summary</p> }
+                                @if (!string.IsNullOrWhiteSpace(card.Declaration)) { <code>@card.Declaration</code> }
+                                @if (!string.IsNullOrWhiteSpace(card.CodeExcerpt)) { <pre><code>@card.CodeExcerpt</code></pre> }
+                                @if (!string.IsNullOrWhiteSpace(card.SourcePath))
+                                {
+                                    <small>@card.SourcePath@if (card.LineStart.HasValue) { <text>:@card.LineStart-@card.LineEnd</text> }</small>
+                                }
+                                <div class="dw-evidence-actions">
+                                    @if (!string.IsNullOrWhiteSpace(card.StableUri) && AvailableSourceUris.Contains(card.StableUri))
+                                    {
+                                        <button class="dw-btn dw-btn--outline" type="button" @onclick="() => OpenSourceAsync(card.StableUri)">@(Ko ? "코드 보기" : "View source")</button>
+                                    }
+                                    else if (!string.IsNullOrWhiteSpace(card.StableUri))
+                                    {
+                                        <small>@(Ko ? "소스 미제공" : "Source unavailable")</small>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(card.DoxygenUrl))
+                                    {
+                                        <a class="dw-btn dw-btn--outline" href="@card.DoxygenUrl" data-enhance-nav="false">Doxygen →</a>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                </section>
+            }
+
+            @if (answer.AdditionalSections.Count > 0)
+            {
+                <section class="dw-analysis-card">
+                    <h2>@(Ko ? "추가 설명" : "Additional explanation")</h2>
+                    @foreach (KnowledgeAnswerSection answerSection in answer.AdditionalSections)
+                    {
+                        <article class="dw-answer-section">
+                            <h3>@answerSection.Heading</h3><p>@answerSection.Body</p>
+                            <div class="dw-answer-citations">
+                                @foreach (string evidenceId in answerSection.EvidenceIds)
+                                {
+                                    <button type="button" @onclick="() => ScrollEvidenceAsync(evidenceId)">[@evidenceId]</button>
+                                }
+                            </div>
+                        </article>
+                    }
+                </section>
+            }
+
+            @if (answer.UnverifiedStatements.Count > 0)
+            {
+                <section class="dw-analysis-card dw-analysis-unverified">
+                    <h2>@(Ko ? "확인되지 않은 내용" : "Unverified statements")</h2>
+                    <ul>@foreach (string item in answer.UnverifiedStatements) { <li>@item</li> }</ul>
+                </section>
+            }
+
+            <details class="dw-analysis-card dw-technical-details">
+                <summary>@(Ko ? "기술 세부정보" : "Technical details")</summary>
+                <p><strong>@(Ko ? "정규화된 질문" : "Normalized question"):</strong> @Details.NormalizedQuestion</p>
+                @if (HostEnvironment.EnvironmentName.Equals(
+                    Microsoft.Extensions.Hosting.Environments.Development,
+                    StringComparison.OrdinalIgnoreCase))
+                {
+                    long codexElapsed = diagnostics.Retrieval.Planner.Codex.ElapsedMilliseconds
+                        + diagnostics.AnswerGenerator.Codex.ElapsedMilliseconds;
+                    <dl class="dw-execution-diagnostics">
+                        <dt>Scope</dt><dd>@diagnostics.ScopeEvaluator → @diagnostics.ScopeDisposition</dd>
+                        <dt>Planner</dt><dd>@diagnostics.Retrieval.Planner.Provider</dd>
+                        <dt>AnswerGenerator</dt><dd>@diagnostics.AnswerGenerator.Provider</dd>
+                        <dt>StoredDirectAnswer</dt><dd>@diagnostics.StoredDirectAnswerProducer</dd>
+                        <dt>FallbackReason</dt><dd>@(string.IsNullOrWhiteSpace(diagnostics.FallbackReason) ? "—" : diagnostics.FallbackReason)</dd>
+                        <dt>CodexElapsedMs</dt><dd>@codexElapsed.ToString("N0")</dd>
+                        <dt>Intent</dt><dd>@diagnostics.Retrieval.Intent</dd>
+                        <dt>exactSymbols</dt><dd>@string.Join(", ", diagnostics.Retrieval.ExactSymbols)</dd>
+                        <dt>concepts</dt><dd>@string.Join(", ", diagnostics.Retrieval.Concepts)</dd>
+                        <dt>project</dt><dd>@(string.IsNullOrWhiteSpace(diagnostics.Retrieval.Project) ? "—" : diagnostics.Retrieval.Project)</dd>
+                        <dt>sourceKinds</dt><dd>@string.Join(", ", diagnostics.Retrieval.SourceKinds)</dd>
+                        <dt>searchTerms</dt><dd>@string.Join(", ", diagnostics.Retrieval.SearchTerms)</dd>
+                        <dt>requestedRelations</dt><dd>@string.Join(", ", diagnostics.Retrieval.RequestedRelations)</dd>
+                    </dl>
+                    @if (diagnostics.Retrieval.Searches.Count > 0)
+                    {
+                        <details class="dw-diagnostic-details"><summary>SearchPlan</summary>
+                            @foreach (KnowledgeSearchCandidateDiagnostics search in diagnostics.Retrieval.Searches)
+                            {
+                                <p><code>@search.Term</code> — candidates @search.CandidateCount.ToString("N0"), relevant @search.RelevantCount.ToString("N0")</p>
+                            }
+                        </details>
+                    }
+                    @if (diagnostics.Retrieval.ServerRequests.Count > 0)
+                    {
+                        <details class="dw-diagnostic-details"><summary>Server requests</summary>
+                            @foreach (KnowledgeServerSearchRequestDiagnostics request in diagnostics.Retrieval.ServerRequests)
+                            {
+                                <p><code>@request.Query</code> — @request.Purpose, priority @request.Priority, project @(request.Project ?? "—"), sourceKinds @string.Join(", ", request.SourceKinds), candidates @request.CandidateCount.ToString("N0"), relevant @request.RelevantCount.ToString("N0")</p>
+                            }
+                        </details>
+                    }
+                    @if (diagnostics.Retrieval.Selections.Count > 0)
+                    {
+                        <details class="dw-diagnostic-details"><summary>Evidence selections</summary>
+                            @foreach (KnowledgeEvidenceSelectionDiagnostics selection in diagnostics.Retrieval.Selections)
+                            {
+                                <p><strong>@selection.DisplayName</strong> — score @selection.Score: @selection.Reason<br /><code>@selection.StableUri</code></p>
+                            }
+                        </details>
+                    }
+                    <details class="dw-diagnostic-details"><summary>Codex planner process</summary>
+                        @CodexProcessDiagnostics(diagnostics.Retrieval.Planner.Codex)
+                    </details>
+                    <details class="dw-diagnostic-details"><summary>Codex answer process</summary>
+                        @CodexProcessDiagnostics(diagnostics.AnswerGenerator.Codex)
+                    </details>
+                }
+                <div class="dw-evidence-flow">
+                    @foreach (EvidenceReference evidence in revision.EvidenceBundle.Evidence)
+                    {
+                        <article id="@TechnicalAnchor(evidence.Id)" class="dw-flow-row @(evidence.Origin == EvidenceOrigin.Inferred ? "is-inferred" : null)">
+                            <span>@evidence.Kind · @evidence.RelationType</span>
+                            <strong>@evidence.Title</strong>
+                            <small>@evidence.Id · @OriginLabel(evidence.Origin) · confidence @evidence.Confidence.ToString("0.00")</small>
+                            @if (!string.IsNullOrWhiteSpace(evidence.StableUri)) { <code>@evidence.StableUri</code> }
+                        </article>
+                    }
+                </div>
+                @if (answer.OtherProjectCandidates.Count > 0)
+                {
+                    <details><summary>@(Ko ? "다른 프로젝트의 동일 이름" : "Same name in other projects")</summary>
+                        @foreach (KnowledgeEvidenceCardViewModel card in answer.OtherProjectCandidates) { <p>@card.Title</p> }
+                    </details>
+                }
+                <dl>
+                    @if (diagnostics.Retrieval.Intent.Equals("repository-search", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <dt>@(Ko ? "검색 원본" : "Search source")</dt><dd>@(Ko ? "서버 저장소 소스 코드" : "Server repository source code")</dd>
+                    }
+                    else
+                    {
+                        <dt>@(Ko ? "프로젝트 버전" : "Project versions")</dt><dd>@string.Join(", ", revision.Version.ProjectVersions)</dd>
+                        <dt>@(Ko ? "그래프 버전" : "Graph version")</dt><dd>@revision.Version.GraphVersion</dd>
+                        <dt>@(Ko ? "온톨로지 버전" : "Ontology version")</dt><dd>@revision.Version.OntologyVersion</dd>
+                        <dt>@(Ko ? "온톨로지 해시" : "Ontology hash")</dt><dd>@revision.Version.OntologyHash</dd>
+                    }
+                    <dt>@(Ko ? "생성 모델" : "Generation model")</dt><dd>@revision.ModelId</dd>
+                    <dt>@(Ko ? "생성 정책" : "Prompt policy")</dt><dd>@revision.PromptPolicyVersion</dd>
+                    <dt>@(Ko ? "마지막 검증" : "Last validated")</dt><dd>@revision.LastValidatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</dd>
+                </dl>
+            </details>
+        }
+
+        <div class="dw-question-feedback">
+            <span>@(Ko ? "이 답변이 유용했나요?" : "Was this useful?")</span>
+            <button @onclick="() => HelpfulAsync(true)">👍 @Details.Metric.HelpfulCount.ToString("N0")</button>
+            <button @onclick="() => HelpfulAsync(false)">👎 @Details.Metric.NotHelpfulCount.ToString("N0")</button>
+        </div>
+    }
+</div>
+
+@if (SourceDocument is not null)
+{
+    <div class="dw-source-modal" role="dialog" aria-modal="true" aria-label="@(Ko ? "소스 코드 보기" : "Source code viewer")">
+        <button class="dw-source-modal__backdrop" aria-label="@(Ko ? "닫기" : "Close")" @onclick="CloseSource"></button>
+        <section class="dw-source-modal__dialog">
+            <header>
+                <div>
+                    <span>SOURCE-VERIFIED</span><strong>@SourceDocument.Availability.DisplayPath</strong>
+                    @if (SourceDocument.HighlightStart.HasValue) { <small>@(Ko ? "선언 위치" : "Declaration"): @SourceDocument.HighlightStart-@SourceDocument.HighlightEnd</small> }
+                </div>
+                <button type="button" @onclick="CloseSource">×</button>
+            </header>
+            <div class="dw-source-code" tabindex="0">
+                @foreach (OntologySourceLineViewModel line in SourceDocument.Lines)
+                {
+                    <div class="dw-source-code__line @(line.IsHighlighted ? "is-highlighted" : null)"><span aria-hidden="true">@line.Number</span><code>@line.Text</code></div>
+                }
+            </div>
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter] public long Id { get; set; }
+    [Parameter] public string Slug { get; set; } = string.Empty;
+    [SupplyParameterFromQuery(Name = "access")] public string? AccessKey { get; set; }
+
+    private KnowledgeQuestionDetailsViewModel? Details { get; set; }
+    private OntologySourceDocumentViewModel? SourceDocument { get; set; }
+    private HashSet<string> AvailableSourceUris { get; } = new(StringComparer.Ordinal);
+    private bool IsLoading { get; set; }
+    private bool Ko => Prefs.IsKorean;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        Prefs.Changed -= OnLanguageChanged;
+        Prefs.Changed += OnLanguageChanged;
+        IsLoading = true;
+        try
+        {
+            Details = await KnowledgeQa.GetAsync(Id, AccessKey, false, CancellationToken.None);
+            if (Details is not null)
+            {
+                await KnowledgeQa.RecordViewAsync(Id, CancellationToken.None);
+                Details = await KnowledgeQa.GetAsync(Id, AccessKey, false, CancellationToken.None);
+                if (Details is not null)
+                    await LoadSourceAvailabilityAsync(Details.Answer.CoreEvidence);
+            }
+        }
+        finally { IsLoading = false; }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || Details is null || string.IsNullOrWhiteSpace(AccessKey))
+            return;
+        try
+        {
+            await JS.InvokeVoidAsync("dwQuestionAccess.save", new KnowledgeQuestionAccessReference(
+                Details.Id, Details.Slug, AccessKey));
+        }
+        catch (JSDisconnectedException) { }
+    }
+
+    private async Task HelpfulAsync(bool helpful)
+    {
+        await KnowledgeQa.RecordHelpfulAsync(Id, helpful, CancellationToken.None);
+        Details = await KnowledgeQa.GetAsync(Id, AccessKey, false, CancellationToken.None);
+    }
+
+    private async Task OpenSourceAsync(string stableUri)
+    {
+        OntologySourceDocumentViewModel document = await OntologySource.GetSourceAsync(stableUri, CancellationToken.None);
+        SourceDocument = document.Availability.IsAvailable ? document : null;
+    }
+
+    private async Task LoadSourceAvailabilityAsync(IReadOnlyList<KnowledgeEvidenceCardViewModel> cards)
+    {
+        AvailableSourceUris.Clear();
+        string[] uris = cards.Select(item => item.StableUri)
+            .Where(item => !string.IsNullOrWhiteSpace(item))
+            .Cast<string>()
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        OntologySourceAvailabilityViewModel[] availability = await Task.WhenAll(uris.Select(uri =>
+            OntologySource.GetAvailabilityAsync(uri, CancellationToken.None)));
+        for (int index = 0; index < uris.Length; index += 1)
+            if (availability[index].IsAvailable)
+                AvailableSourceUris.Add(uris[index]);
+    }
+
+    private void CloseSource() => SourceDocument = null;
+
+    private async Task ScrollEvidenceAsync(string evidenceId)
+    {
+        KnowledgeEvidenceCardViewModel? card = Details?.Answer.CoreEvidence.FirstOrDefault(item => item.EvidenceIds.Contains(evidenceId));
+        string anchor = card is null ? TechnicalAnchor(evidenceId) : CardAnchor(card);
+        await JS.InvokeVoidAsync("dwScrollToId", anchor);
+    }
+
+    private static string CardAnchor(KnowledgeEvidenceCardViewModel card) => "answer-card-" + SafeAnchor(card.Key);
+    private static string TechnicalAnchor(string id) => "technical-evidence-" + SafeAnchor(id);
+    private static string SafeAnchor(string value) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(value)))[..16].ToLowerInvariant();
+    private string CoverageLabel(string key, string fallback) => !Ko ? fallback : key switch
+    {
+        "xaml-command-binding" => "XAML Command 바인딩",
+        "generated-command" => "생성된 Command",
+        "viewmodel-dreamine-command" => "ViewModel DreamineCommand 메서드",
+        "forwards-to" => "forwardsTo 대상",
+        "event-target-method" => "Event 실제 메서드",
+        _ => fallback
+    };
+    private static long AnswerElapsedMilliseconds(KnowledgeExecutionDiagnostics diagnostics)
+    {
+        long planner = diagnostics.Retrieval.Planner.Codex.ElapsedMilliseconds;
+        long answer = diagnostics.AnswerGenerator.Codex.ElapsedMilliseconds;
+        return diagnostics.Retrieval.Intent.Equals("repository-search", StringComparison.OrdinalIgnoreCase)
+            ? Math.Max(planner, answer)
+            : planner + answer;
+    }
+    private string FormatAnswerElapsed(long milliseconds)
+    {
+        TimeSpan elapsed = TimeSpan.FromMilliseconds(milliseconds);
+        if (elapsed.TotalMinutes >= 1)
+            return Ko
+                ? $"{(int)elapsed.TotalMinutes}분 {elapsed.Seconds}초 동안 분석"
+                : $"Analyzed for {(int)elapsed.TotalMinutes}m {elapsed.Seconds}s";
+        return Ko
+            ? $"{Math.Max(1, elapsed.Seconds)}초 동안 분석"
+            : $"Analyzed for {Math.Max(1, elapsed.Seconds)}s";
+    }
+    private string OriginLabel(EvidenceOrigin origin) => origin switch
+    {
+        EvidenceOrigin.Direct => Ko ? "직접 근거" : "direct",
+        EvidenceOrigin.CompatibilityProjection => Ko ? "호환 projection에서 복원" : "restored projection",
+        _ => Ko ? "추론 근거" : "inferred"
+    };
+    private RenderFragment CodexProcessDiagnostics(CodexInvocationDiagnostics value) => builder =>
+    {
+        builder.OpenElement(0, "pre");
+        builder.OpenElement(1, "code");
+        builder.AddContent(2,
+            $"attempted={value.Attempted} succeeded={value.Succeeded} exitCode={value.ExitCode?.ToString() ?? "n/a"} timeout={value.TimedOut} jsonParsed={value.JsonParseSucceeded}\n" +
+            $"failure={value.FailureKind}\nstdout:\n{value.StandardOutput}\nstderr:\n{value.StandardError}\nrawOutput:\n{value.RawOutput}");
+        builder.CloseElement();
+        builder.CloseElement();
+    };
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Prefs.Changed -= OnLanguageChanged;
+}

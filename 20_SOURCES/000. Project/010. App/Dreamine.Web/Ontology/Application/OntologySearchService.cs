@@ -46,7 +46,10 @@ public sealed class OntologySearchService : IOntologySearchService
     }
 
     /// <inheritdoc />
-    public async Task<OntologyNodeDetailsViewModel?> GetNodeAsync(string stableUri, CancellationToken cancellationToken)
+    public async Task<OntologyNodeDetailsViewModel?> GetNodeAsync(
+        string stableUri,
+        string language,
+        CancellationToken cancellationToken)
     {
         OntologyNode? node = await _repository.GetNodeAsync(stableUri, cancellationToken).ConfigureAwait(false);
         if (node is null)
@@ -67,20 +70,24 @@ public sealed class OntologySearchService : IOntologySearchService
                 relation,
                 isOutgoing,
                 related.GetValueOrDefault(relatedUri),
-                meaning);
+                meaning,
+                language);
             (isOutgoing ? outgoing : incoming).Add(mapped);
         }
 
         return _mapper.ToNodeDetails(
             node,
             incoming.OrderBy(item => item.OriginalType).ThenBy(item => item.RelatedName).ToArray(),
-            outgoing.OrderBy(item => item.OriginalType).ThenBy(item => item.RelatedName).ToArray());
+            outgoing.OrderBy(item => item.OriginalType).ThenBy(item => item.RelatedName).ToArray(),
+            language);
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<OntologyTBoxClassViewModel>> GetTBoxClassesAsync(CancellationToken cancellationToken) =>
+    public async Task<IReadOnlyList<OntologyTBoxClassViewModel>> GetTBoxClassesAsync(
+        string language,
+        CancellationToken cancellationToken) =>
         (await _repository.GetTBoxClassesAsync(cancellationToken).ConfigureAwait(false))
-            .Select(_mapper.ToTBoxClass).ToArray();
+            .Select(item => _mapper.ToTBoxClass(item, language)).ToArray();
 
     /// <inheritdoc />
     public async Task<OntologyFacetsViewModel> GetFacetsAsync(CancellationToken cancellationToken)
@@ -95,7 +102,9 @@ public sealed class OntologySearchService : IOntologySearchService
     }
 
     /// <inheritdoc />
-    public async Task<OntologyEventFlowViewModel?> GetDreamineEventSampleAsync(CancellationToken cancellationToken)
+    public async Task<OntologyEventFlowViewModel?> GetDreamineEventSampleAsync(
+        string language,
+        CancellationToken cancellationToken)
     {
         OntologyNode? viewModel = await FindNodeAsync("MainWindowViewModel", "ViewModel", SampleSmartMainViewModelPath, cancellationToken)
             .ConfigureAwait(false);
@@ -120,12 +129,12 @@ public sealed class OntologySearchService : IOntologySearchService
             return null;
 
         return new OntologyEventFlowViewModel(
-            _mapper.ToNodeItem(viewModel),
-            _mapper.ToNodeItem(component),
-            _mapper.ToNodeItem(command),
-            _mapper.ToNodeItem(target),
-            _mapper.ToRelation(componentRelation, true, component, _relationResolver.Resolve(componentRelation.OriginalType)),
-            _mapper.ToRelation(forwardingRelation, true, target, _relationResolver.Resolve(forwardingRelation.OriginalType)));
+            _mapper.ToNodeItem(viewModel, language),
+            _mapper.ToNodeItem(component, language),
+            _mapper.ToNodeItem(command, language),
+            _mapper.ToNodeItem(target, language),
+            _mapper.ToRelation(componentRelation, true, component, _relationResolver.Resolve(componentRelation.OriginalType), language),
+            _mapper.ToRelation(forwardingRelation, true, target, _relationResolver.Resolve(forwardingRelation.OriginalType), language));
     }
 
     private async Task<OntologyNode?> FindNodeAsync(

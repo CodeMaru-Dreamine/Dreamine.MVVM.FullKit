@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="Dreamine.Web"
-        Width="1440" Height="900"
-        MinWidth="1024" MinHeight="680"
+        Width="1800" Height="1000"
+        MinWidth="1200" MinHeight="900"
         Background="#030913"
         WindowStartupLocation="CenterScreen">
     <Grid Background="#030913">

@@ -12,6 +12,82 @@ const readJson = async filePath => JSON.parse(await readFile(filePath, 'utf8'));
 const koGraph = await readJson(path.join(uaDirectory, 'knowledge-graph.ko.json'));
 const enGraph = await readJson(path.join(uaDirectory, 'knowledge-graph.en.json'));
 const domainGraph = await readJson(path.join(uaDirectory, 'domain-graph.json'));
+
+const externalInterfaceNamespaces = new Map([
+  ['INotifyPropertyChanged', 'System.ComponentModel'],
+  ['INotifyPropertyChanging', 'System.ComponentModel'],
+  ['IDisposable', 'System'],
+  ['IAsyncDisposable', 'System']
+]);
+const graphBaseName = value => String(value || '')
+  .replace(/^global::/, '')
+  .replace(/<.*>$/, '')
+  .replace(/\?$/, '')
+  .trim()
+  .split('.')
+  .at(-1);
+const enrichBaseTypeRelations = (graph, language) => {
+  const typeNodes = graph.nodes.filter(node => node.type === 'class');
+  const byName = new Map();
+  for (const node of typeNodes) {
+    if (!byName.has(node.name)) byName.set(node.name, []);
+    byName.get(node.name).push(node);
+  }
+  for (const source of [...typeNodes]) {
+    for (const rawBase of source.apiMeta?.baseTypes || []) {
+      const name = graphBaseName(rawBase);
+      if (!name) continue;
+      let targets = byName.get(name) || [];
+      if (targets.length === 0 && /^I[A-Z]/.test(name)) {
+        const namespace = externalInterfaceNamespaces.get(name)
+          || String(rawBase).replace(/^global::/, '').split('.').slice(0, -1).join('.');
+        const qualifiedName = namespace ? `${namespace}.${name}` : name;
+        const id = `external-interface:${qualifiedName}`;
+        const external = {
+          id,
+          type: 'class',
+          name,
+          filePath: '',
+          lineRange: [],
+          summary: language === 'ko'
+            ? `${qualifiedName} 외부 인터페이스 참조입니다.`
+            : `${qualifiedName} is an external interface referenced by source code.`,
+          tags: ['external-type', 'source-reference'],
+          complexity: 'simple',
+          apiMeta: {
+            kind: 'interface',
+            namespace,
+            accessibility: 'public',
+            modifiers: [],
+            signature: `public interface ${name}`,
+            baseTypes: [], properties: [], events: [], methods: [], typeParameters: {},
+            remarks: '', example: '', relatedSamples: [], relatedTests: [],
+            project: {}, lifecycle: { disposable: false, obsolete: false, obsoleteMessage: '' },
+            trust: { summary: 'code', signature: 'code', relationships: 'code' }
+          }
+        };
+        graph.nodes.push(external);
+        byName.set(name, targets = [external]);
+      }
+      if (targets.length !== 1) continue;
+      const target = targets[0];
+      const relationType = target.apiMeta?.kind === 'interface' ? 'implements' : 'inherits';
+      if (!graph.edges.some(edge => edge.source === source.id
+        && edge.target === target.id
+        && edge.type === relationType)) {
+        graph.edges.push({
+          source: source.id,
+          target: target.id,
+          type: relationType,
+          direction: 'forward',
+          weight: 1
+        });
+      }
+    }
+  }
+};
+enrichBaseTypeRelations(koGraph, 'ko');
+enrichBaseTypeRelations(enGraph, 'en');
 let sourceDeclarationAudit = { nodeTypeOverrides: {} };
 try {
   sourceDeclarationAudit = await readJson(path.join(outputDirectory, 'source-declarations.json'));
@@ -104,6 +180,20 @@ const relationTypes = new Set([
   'declaredIn', 'companionOf', 'usesModel', 'dependsOn', 'invokesNavigation', 'controlsView'
 ]);
 const clean = value => value === undefined || value === null || value === '' ? undefined : value;
+const containsHangul = value => /[\uac00-\ud7a3]/u.test(value || '');
+const usableEnglish = value => Boolean(value?.trim()) && !containsHangul(value);
+const englishSummaryFallback = (node, elementType, project) => {
+  const projectName = project.project || project.packageId || 'the Dreamine solution';
+  const kind = ({
+    SourceFile: 'source file', EventComponentFile: 'event component source file',
+    ViewModel: 'ViewModel', View: 'view', Service: 'service', Generator: 'generator',
+    DreamineEventComponent: 'Dreamine Event component', CodeClass: 'C# class',
+    CodeInterface: 'C# interface', CodeRecord: 'C# record', CodeStruct: 'C# struct',
+    CodeEnum: 'C# enum', CodeAttribute: 'C# attribute', CodeException: 'C# exception',
+    Method: 'method', Constructor: 'constructor', CodeProperty: 'property', Event: 'C# event'
+  })[elementType] || 'ontology element';
+  return `${node.name} is a source-verified ${kind} in ${projectName}.`;
+};
 const hash = value => createHash('sha256').update(value).digest('hex').slice(0, 24);
 const resourceUri = (kind, key) => `https://dreamine.kr/resource/${kind.toLowerCase()}/${hash(key)}`;
 const projectOf = node => node.apiMeta?.project || node.fileMeta?.project || {};
@@ -134,7 +224,8 @@ const convertNode = (node, source = 'generated_graph') => {
   else labels.push({ '@type': 'LocalizedText', language: 'en', text: node.name });
   const summaries = [];
   if (node.summary) summaries.push({ '@type': 'LocalizedText', language: 'ko', text: node.summary });
-  if (en?.summary) summaries.push({ '@type': 'LocalizedText', language: 'en', text: en.summary });
+  summaries.push({ '@type': 'LocalizedText', language: 'en',
+    text: usableEnglish(en?.summary) ? en.summary : englishSummaryFallback(node, elementType, project) });
   const lineRange = node.lineRange || [];
   return Object.fromEntries(Object.entries({
     '@type': [elementType, ...(ancestorTypes[elementType] || []), 'owl:NamedIndividual'],
@@ -169,7 +260,79 @@ const convertNode = (node, source = 'generated_graph') => {
 
 const codeElements = koGraph.nodes.map(node => convertNode(node));
 const domainElements = domainGraph.nodes.map(node => convertNode(node, 'domain_analysis'));
-const allElements = [...codeElements, ...domainElements];
+const typeGraphNodes = koGraph.nodes.filter(node => node.type === 'class');
+const typeNodesByName = new Map();
+for (const node of typeGraphNodes) {
+  if (!typeNodesByName.has(node.name)) typeNodesByName.set(node.name, []);
+  typeNodesByName.get(node.name).push(node);
+}
+const normalizeBaseType = value => String(value || '')
+  .replace(/^global::/, '')
+  .replace(/<.*>$/, '')
+  .replace(/\?$/, '')
+  .trim();
+const simpleTypeName = value => normalizeBaseType(value).split('.').at(-1);
+const isInterfaceReference = value => /^I[A-Z]/.test(simpleTypeName(value) || '');
+const knownExternalNamespaces = new Map([
+  ['INotifyPropertyChanged', 'System.ComponentModel'],
+  ['INotifyPropertyChanging', 'System.ComponentModel'],
+  ['IDisposable', 'System'],
+  ['IAsyncDisposable', 'System']
+]);
+const externalElementsByName = new Map();
+const pendingBaseRelations = [];
+for (const node of typeGraphNodes) {
+  const source = stableByGraphId.get(node.id);
+  for (const rawBase of node.apiMeta?.baseTypes || []) {
+    const name = simpleTypeName(rawBase);
+    if (!name) continue;
+    const internalTargets = typeNodesByName.get(name) || [];
+    const internalTarget = internalTargets.length === 1 ? stableByGraphId.get(internalTargets[0].id) : undefined;
+    const interfaceReference = internalTargets.length === 1
+      ? classifyType(internalTargets[0]) === 'CodeInterface'
+      : isInterfaceReference(rawBase);
+    let target = internalTarget;
+    if (!target && internalTargets.length === 0 && interfaceReference) {
+      if (!externalElementsByName.has(name)) {
+        const namespace = knownExternalNamespaces.get(name) || normalizeBaseType(rawBase).split('.').slice(0, -1).join('.');
+        const qualifiedName = namespace ? `${namespace}.${name}` : name;
+        externalElementsByName.set(name, {
+          '@type': ['CodeInterface', ...(ancestorTypes.CodeInterface || []), 'owl:NamedIndividual'],
+          stable_id: resourceUri('element', `external-interface|${qualifiedName}`),
+          source_graph_id: `external-interface:${qualifiedName}`,
+          canonical_name: name,
+          labels: [
+            { '@type': 'LocalizedText', language: 'ko', text: name },
+            { '@type': 'LocalizedText', language: 'en', text: name }
+          ],
+          summaries: [
+            { '@type': 'LocalizedText', language: 'ko', text: `${name} 외부 인터페이스 참조입니다.` },
+            { '@type': 'LocalizedText', language: 'en', text: `${name} is an external interface referenced by source code.` }
+          ],
+          element_type: 'CodeInterface',
+          element_layer: 'tooling',
+          raw_element_type: 'interface',
+          source_verification_status: 'raw',
+          default_search_visible: true,
+          namespace: namespace || undefined,
+          signature: `interface ${name}`,
+          tags: ['external-type', 'source-reference'],
+          evidence: [{ '@type': 'Evidence', evidence_source: 'code_signature', evidence_value: rawBase, confidence: 1 }]
+        });
+      }
+      target = externalElementsByName.get(name).stable_id;
+    }
+    if (source && target) {
+      pendingBaseRelations.push({
+        source,
+        target,
+        relationType: interfaceReference ? 'implements' : 'inherits',
+        evidenceValue: `${node.id} : ${rawBase}`
+      });
+    }
+  }
+}
+const allElements = [...codeElements, ...domainElements, ...externalElementsByName.values()];
 const elementByStableId = new Map(allElements.map(element => [element.stable_id, element]));
 const graphNodeById = new Map(koGraph.nodes.map(node => [node.id, node]));
 const directAssertions = new Map();
@@ -203,6 +366,9 @@ for (const relation of relations) {
 
 const addEvidenceRelation = (relationType, source, target, evidenceValue, evidenceKind = 'source_attribute') => {
   if (!source || !target) return;
+  if (relations.some(relation => relation.source === source
+    && relation.target === target
+    && relation.relation_type === relationType)) return;
   const stableId = resourceUri('relation', `${source}|${relationType}|${target}|${evidenceValue}`);
   if (relations.some(relation => relation.stable_id === stableId)) return;
   relations.push({
@@ -216,6 +382,15 @@ const addEvidenceRelation = (relationType, source, target, evidenceValue, eviden
   addDirectAssertion(source, relationType, target);
   if (relationType === 'contains') addDirectAssertion(target, 'containedBy', source);
 };
+
+for (const relation of pendingBaseRelations) {
+  addEvidenceRelation(
+    relation.relationType,
+    relation.source,
+    relation.target,
+    relation.evidenceValue,
+    'code_signature');
+}
 
 const sourceFileStableByPath = new Map();
 for (const node of koGraph.nodes.filter(node => node.type === 'file')) {
@@ -548,6 +723,8 @@ const manifest = {
 
 await mkdir(outputDirectory, { recursive: true });
 await Promise.all([
+  writeFile(path.join(uaDirectory, 'knowledge-graph.ko.json'), JSON.stringify(koGraph, null, 2)),
+  writeFile(path.join(uaDirectory, 'knowledge-graph.en.json'), JSON.stringify(enGraph, null, 2)),
   writeFile(path.join(outputDirectory, 'instances.json'), JSON.stringify(instance, null, 2)),
   writeFile(path.join(outputDirectory, 'instances.jsonld'), JSON.stringify(jsonld, null, 2)),
   writeFile(path.join(outputDirectory, 'validation-sample.jsonld'), JSON.stringify(validationSample, null, 2)),

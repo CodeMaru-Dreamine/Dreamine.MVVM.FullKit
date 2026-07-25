@@ -21,6 +21,7 @@ $generatorPath = Join-Path $PSScriptRoot 'Generate-UnderstandPortal.mjs'
 $projectGraphGeneratorPath = Join-Path $PSScriptRoot 'Generate-ProjectGraphs.mjs'
 $projectGraphValidatorPath = Join-Path $PSScriptRoot 'Validate-ProjectGraphs.mjs'
 $sourceMirrorGeneratorPath = Join-Path $PSScriptRoot 'Generate-SourceMirrors.mjs'
+$artifactAuditorPath = Join-Path $PSScriptRoot 'Audit-KnowledgeGraphArtifacts.mjs'
 $ontologyOverlayPublisherPath = Join-Path $repositoryPath '50_SETUP\Ontology\Apply-OntologyOverlay.mjs'
 $ontologySourcePath = Join-Path $repositoryPath '.ua\ontology'
 $ontologyArtifactNames = @(
@@ -38,7 +39,7 @@ if (-not $destinationPath.StartsWith($webRoot + [System.IO.Path]::DirectorySepar
     throw "Unsafe destination: $destinationPath"
 }
 
-foreach ($requiredPath in @($buildPath, $scanPath, $graphPath, $portalPath, $contentPath, $enricherPath, $generatorPath, $projectGraphGeneratorPath, $projectGraphValidatorPath, $ontologyOverlayPublisherPath) + $ontologyArtifactPaths) {
+foreach ($requiredPath in @($buildPath, $scanPath, $graphPath, $portalPath, $contentPath, $enricherPath, $generatorPath, $projectGraphGeneratorPath, $projectGraphValidatorPath, $sourceMirrorGeneratorPath, $artifactAuditorPath, $ontologyOverlayPublisherPath) + $ontologyArtifactPaths) {
     if (-not (Test-Path -LiteralPath $requiredPath)) {
         throw "Required input not found: $requiredPath"
     }
@@ -213,6 +214,19 @@ if ($guardMatches.Count -ne 1) {
     throw "Could not identify the official demo-mode source guard. Matches: $($guardMatches.Count)"
 }
 $viewerText = [regex]::Replace($viewerText, $demoGuardPattern, '', 1)
+
+# The official viewer parses every response as JSON before checking the status.
+# Replace that sequence so missing, empty, and malformed mirrors produce a safe
+# source-unavailable message instead of exposing a browser JSON exception.
+$sourceResponsePattern = '\.then\(async (?<response>\w+)=>\{const (?<payload>\w+)=await \k<response>\.json\(\);if\(!\k<response>\.ok\)throw new Error\("error"in \k<payload>&&\k<payload>\.error\?\k<payload>\.error:"Source unavailable"\);v\(\{status:"loaded",source:\k<payload>,error:null\}\)\}\)'
+$sourceResponseMatches = [regex]::Matches($viewerText, $sourceResponsePattern)
+if ($sourceResponseMatches.Count -ne 1) {
+    throw "Could not identify the official source response parser. Matches: $($sourceResponseMatches.Count)"
+}
+$responseName = $sourceResponseMatches[0].Groups['response'].Value
+$payloadName = $sourceResponseMatches[0].Groups['payload'].Value
+$sourceResponseReplacement = '.then(async ' + $responseName + '=>{if(!' + $responseName + '.ok)throw new Error(' + $responseName + '.status===404?"Source preview is not available for this file.":"Source preview request failed.");const T=await ' + $responseName + '.text();if(!T.trim())throw new Error("Source preview is empty.");let ' + $payloadName + ';try{' + $payloadName + '=JSON.parse(T)}catch{throw new Error("Source preview data is invalid.")}if(!' + $payloadName + '||typeof ' + $payloadName + '.content!=="string")throw new Error("Source preview data is incomplete.");v({status:"loaded",source:' + $payloadName + ',error:null})})'
+$viewerText = [regex]::Replace($viewerText, $sourceResponsePattern, $sourceResponseReplacement, 1)
 Set-Content -LiteralPath $codeViewer[0].FullName -Value $viewerText -NoNewline -Encoding utf8
 
 & $NodeExecutable $sourceMirrorGeneratorPath $repositoryPath $destinationPath
@@ -235,8 +249,14 @@ if ($LASTEXITCODE -ne 0) {
     throw "Project graph validation failed with exit code $LASTEXITCODE."
 }
 
+& $NodeExecutable $artifactAuditorPath $repositoryPath $destinationPath
+if ($LASTEXITCODE -ne 0) {
+    throw "Knowledge graph artifact audit failed with exit code $LASTEXITCODE."
+}
+
 Write-Output "Published knowledge hub: $destinationPath"
 Write-Output "Published advanced graph: $graphDestination"
 Write-Output "Published source previews from scan and source-verified Overlay."
 Write-Output "Published project graphs: 160"
+Write-Output "Audited every raw, localized, full, and per-project knowledge graph artifact."
 Write-Output "Published ontology consumer artifacts: $($ontologyArtifactPaths.Count)"

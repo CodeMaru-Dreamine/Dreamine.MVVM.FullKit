@@ -19,23 +19,39 @@
             }
             <span class="dw-brand__name">@SiteSettings.Current.Title</span>
         </a>
-        <nav class="dw-nav">
-            <NavLink href="/" Match="NavLinkMatch.All" class="dw-nav__link">
+        <button class="dw-nav-toggle"
+                type="button"
+                aria-label="@(_isMenuOpen
+                    ? (Prefs.IsKorean ? "메뉴 닫기" : "Close menu")
+                    : (Prefs.IsKorean ? "메뉴 열기" : "Open menu"))"
+                aria-controls="dw-primary-nav"
+                aria-expanded="@_isMenuOpen.ToString().ToLowerInvariant()"
+                @onclick="ToggleMenu">
+            <span></span><span></span><span></span>
+        </button>
+        <nav id="dw-primary-nav" class="dw-nav @(_isMenuOpen ? "dw-nav--open" : null)">
+            <NavLink href="/" Match="NavLinkMatch.All" class="dw-nav__link" @onclick="CloseMenu">
                 @(Prefs.IsKorean ? "홈" : "Home")
             </NavLink>
-            <NavLink href="/libraries" class="dw-nav__link">
+            <NavLink href="/libraries" class="dw-nav__link" @onclick="CloseMenu">
                 @(Prefs.IsKorean ? "라이브러리" : "Libraries")
             </NavLink>
-            <NavLink href="/guide" class="dw-nav__link">
+            <NavLink href="/guide" class="dw-nav__link" @onclick="CloseMenu">
                 @(Prefs.IsKorean ? "사용법" : "Guide")
             </NavLink>
-            <NavLink href="/playground" class="dw-nav__link">
+            <NavLink href="/playground" class="dw-nav__link" @onclick="CloseMenu">
                 @(Prefs.IsKorean ? "체험" : "Playground")
             </NavLink>
-            <NavLink href="/knowledge" class="dw-nav__link">
+            <NavLink href="/resources" class="dw-nav__link" @onclick="CloseMenu">
+                @(Prefs.IsKorean ? "영상 & 샘플" : "Videos & Samples")
+            </NavLink>
+            <NavLink href="/questions" class="dw-nav__link" @onclick="CloseMenu">
+                @(Prefs.IsKorean ? "지식 Q&A" : "Knowledge Q&A")
+            </NavLink>
+            <NavLink href="/knowledge" class="dw-nav__link" @onclick="CloseMenu">
                 @(Prefs.IsKorean ? "문서 허브" : "Docs Hub")
             </NavLink>
-            <NavLink href="/ontology" class="dw-nav__link">
+            <NavLink href="/ontology" class="dw-nav__link" @onclick="CloseMenu">
                 @(Prefs.IsKorean ? "온톨로지" : "Ontology")
             </NavLink>
             <button class="dw-lang-btn" @onclick="Prefs.Toggle" title="언어 전환">
@@ -52,10 +68,13 @@
         <span>© 2026 @SiteSettings.Current.Title. All rights reserved.</span>
         <a href="@SiteSettings.Current.GitHubUrl" target="_blank" rel="noopener">GitHub</a>
     </footer>
+    <KnowledgeQaJobMonitor />
 </div>
 </CascadingValue>
 
 @code {
+    private bool _isMenuOpen;
+
     protected override void OnInitialized()
     {
         ApplyLangFromQuery();
@@ -83,8 +102,14 @@
 
     private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
     {
+        _isMenuOpen = false;
         ApplyLangFromQuery();
+        _ = InvokeAsync(StateHasChanged);
     }
+
+    private void ToggleMenu() => _isMenuOpen = !_isMenuOpen;
+
+    private void CloseMenu() => _isMenuOpen = false;
 
     public void Dispose()
     {

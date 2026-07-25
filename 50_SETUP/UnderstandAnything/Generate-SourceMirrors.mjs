@@ -22,13 +22,15 @@ const blockedFileNames = new Set([
   ".env", "appsettings.json", "appsettings.development.json", "launchsettings.json",
   "secrets.json", "settings.local.json",
 ]);
-const secretPatterns = [
+const blockingSecretPatterns = [
   /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
   /\bAKIA[0-9A-Z]{16}\b/,
   /\bgh[pousr]_[A-Za-z0-9]{20,}\b/,
   /\bsk-[A-Za-z0-9_-]{20,}\b/,
-  /(password|passwd|pwd|secret|api[_-]?key|access[_-]?token|connectionstring)[A-Za-z0-9_]*[^\r\n]{0,120}=\s*["'][^"'\r\n]{4,}["']/i,
 ];
+const secretAssignmentPattern = /(?<![A-Za-z0-9_])(_?[A-Za-z0-9_]*(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|connectionstring)[A-Za-z0-9_]*)(?![A-Za-z0-9_])\s*=\s*(["'])([^"'\r\n]{4,})\2/gi;
+const safeExampleSecretValues = new Set(["true", "false", "guest", "password", "changeme", "dreamine", "localhost", "example", "sample"]);
+const secretValueNamePattern = /(?:password|passwd|pwd|secret|api[_-]?key|access[_-]?token|connectionstring|passwordhash|secrethash)$/i;
 
 const slash = (value) => String(value ?? "").replaceAll("\\", "/");
 const normalizeRelativePath = (value) => slash(value).replace(/^\/+/, "").split("/").filter(Boolean).join("/");
@@ -36,6 +38,21 @@ const languageFor = (relativePath, fallback) => {
   if (fallback) return String(fallback);
   const extension = path.extname(relativePath).toLowerCase();
   return extension === ".cs" ? "csharp" : extension.replace(/^\./, "") || "text";
+};
+const sanitizeSource = (content) => {
+  let redactionCount = 0;
+  const sanitized = content.replace(secretAssignmentPattern, (assignment, name, quote, value) => {
+    if (!secretValueNamePattern.test(String(name).replace(/^_+/, ""))) return assignment;
+    const normalized = String(value).trim();
+    const lower = normalized.toLowerCase();
+    const isBinding = /^\{(?:binding|staticresource|dynamicresource|x:static)\b/i.test(normalized);
+    const isPlaceholder = safeExampleSecretValues.has(lower)
+      || /^(?:<[^>]+>|\$\(|\$\{|%[^%]+%|\*+|x+|your[_ -]|demo[_ -]|test[_ -])/i.test(normalized);
+    if (isBinding || isPlaceholder) return assignment;
+    redactionCount += 1;
+    return assignment.slice(0, assignment.length - value.length - 1) + "[REDACTED]" + quote;
+  });
+  return { content: sanitized, redactionCount };
 };
 
 if (!fs.existsSync(scanPath)) throw new Error(`Scan result not found: ${scanPath}`);
@@ -64,6 +81,7 @@ for (const element of instances.elements ?? []) {
 
 fs.mkdirSync(sourceRoot, { recursive: true });
 const blockedBySecretScan = [];
+const redactedBySecretScan = [];
 const excludedByPolicy = [];
 const missingSourceVerifiedFiles = [];
 const missingScanFiles = [];
@@ -92,10 +110,15 @@ for (const candidate of [...candidates.values()].sort((left, right) => left.rela
     continue;
   }
 
-  const content = fs.readFileSync(sourcePath, "utf8");
-  if (secretPatterns.some((pattern) => pattern.test(content))) {
+  const originalContent = fs.readFileSync(sourcePath, "utf8");
+  if (blockingSecretPatterns.some((pattern) => pattern.test(originalContent))) {
     blockedBySecretScan.push(relativePath);
     continue;
+  }
+  const sanitized = sanitizeSource(originalContent);
+  const content = sanitized.content;
+  if (sanitized.redactionCount > 0) {
+    redactedBySecretScan.push({ path: relativePath, redactionCount: sanitized.redactionCount });
   }
 
   const targetPath = path.resolve(sourceRoot, ...relativePath.split("/")) + ".json";
@@ -117,11 +140,12 @@ const manifest = {
   generatedAt: new Date().toISOString(),
   sourceFiles: published,
   sourceVerifiedOverlayFiles: overlayPublished,
-  blockedBySecretScan,
+    blockedBySecretScan,
+  redactedBySecretScan,
   excludedByPolicy,
   missingSourceVerifiedFiles,
   missingScanFiles,
-  policy: "Only allow-listed source/document extensions under 20_SOURCES are mirrored; runtime settings, excluded generated code, quarantined stale nodes, and known secret files are excluded.",
+  policy: "Only allow-listed source/document extensions under 20_SOURCES are mirrored; runtime settings, excluded generated code, and quarantined stale nodes are excluded. High-confidence credentials are redacted and cryptographic keys or access tokens block the file.",
 };
 fs.writeFileSync(path.join(destinationRoot, "source-manifest.json"), JSON.stringify(manifest, null, 2));
 const visibleElements = (instances.elements ?? []).filter((element) => element.default_search_visible !== false);

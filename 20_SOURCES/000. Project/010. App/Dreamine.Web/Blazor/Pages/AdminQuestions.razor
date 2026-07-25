@@ -1,0 +1,96 @@
+@page "/admin/questions"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@inject IKnowledgeQaService KnowledgeQa
+@inject AdminViewModel Admin
+@inject IJSRuntime JS
+
+<PageTitle>지식 Q&amp;A 검토 — Dreamine</PageTitle>
+
+<div class="dw-page dw-admin dw-admin-questions">
+    <div class="dw-page__head">
+        <div><a class="dw-qa-back" href="/admin">← 관리자</a><h1 class="dw-page__title">지식 Q&amp;A 관리</h1></div>
+        @if (Admin.IsAuthenticated) { <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="LoadAsync">새로고침</button> }
+    </div>
+    @if (!Admin.IsAuthenticated)
+    {
+        <div class="dw-qa-error"><strong>관리자 인증이 필요합니다.</strong><a href="/admin">관리자 로그인으로 이동</a></div>
+    }
+    else if (IsLoading)
+    {
+        <div class="dw-qa-state">질문을 불러오는 중…</div>
+    }
+    else if (Pending is null || Pending.Items.Count == 0)
+    {
+        <div class="dw-qa-state">저장된 질문이 없습니다.</div>
+    }
+    else
+    {
+        <div class="dw-review-list">
+            @foreach (KnowledgeQuestionListItemViewModel item in Pending.Items)
+            {
+                <article>
+                    <span>@item.Category · @item.PublicationStatus · @item.CreatedAt.LocalDateTime.ToString("yyyy-MM-dd HH:mm")</span>
+                    <h2>@item.Question</h2>
+                    <p>@item.Summary</p>
+                    <div>
+                        <a class="dw-btn dw-btn--ghost dw-btn--sm" href="/questions/@item.Id/@item.Slug">분석 열기</a>
+                        @if (item.PublicationStatus != QuestionPublicationStatus.Published)
+                        {
+                            <button class="dw-btn dw-btn--primary dw-btn--sm" @onclick="() => ModerateAsync(item.Id, QuestionPublicationStatus.Published)">공개 승인</button>
+                        }
+                        @if (item.PublicationStatus != QuestionPublicationStatus.Rejected)
+                        {
+                            <button class="dw-btn dw-btn--ghost dw-btn--sm" @onclick="() => ModerateAsync(item.Id, QuestionPublicationStatus.Rejected)">거절</button>
+                        }
+                        <button class="dw-btn dw-btn--danger dw-btn--sm" disabled="@(DeletingId == item.Id)" @onclick="() => DeleteAsync(item.Id, item.Question)">@(DeletingId == item.Id ? "삭제 중…" : "영구 삭제")</button>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private KnowledgeQuestionSearchViewModel? Pending { get; set; }
+    private bool IsLoading { get; set; }
+    private long? DeletingId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Admin.IsAuthenticated)
+            await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        try { Pending = await KnowledgeQa.SearchForAdministrationAsync(1, 50, CancellationToken.None); }
+        finally { IsLoading = false; }
+    }
+
+    private async Task ModerateAsync(long id, QuestionPublicationStatus status)
+    {
+        await KnowledgeQa.SetPublicationStatusAsync(id, status, CancellationToken.None);
+        await LoadAsync();
+    }
+
+    private async Task DeleteAsync(long id, string question)
+    {
+        bool confirmed = await JS.InvokeAsync<bool>(
+            "confirm",
+            $"'{question}' 질문과 모든 답변 이력을 영구 삭제할까요? 이 작업은 되돌릴 수 없습니다.");
+        if (!confirmed)
+            return;
+        DeletingId = id;
+        try
+        {
+            await KnowledgeQa.DeleteAsync(id, CancellationToken.None);
+            await LoadAsync();
+        }
+        finally
+        {
+            DeletingId = null;
+        }
+    }
+}

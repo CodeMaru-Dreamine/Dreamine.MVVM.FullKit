@@ -1,6 +1,8 @@
 using Dreamine.Hybrid.Wpf.DependencyInjection;
 using Dreamine.Hybrid.Wpf.Hosting;
 using DreamineWeb.Blazor;
+using DreamineWeb.KnowledgeQa.Application;
+using DreamineWeb.KnowledgeQa.Infrastructure;
 using DreamineWeb.Models;
 using DreamineWeb.Ontology.Application;
 using DreamineWeb.Ontology.Infrastructure;
@@ -41,12 +43,16 @@ public static class Program
         string? doxygenRoot = DocumentationPathResolver.ResolveDoxygenRoot(builder.Configuration);
 
         var opts = builder.Configuration.GetSection("Dreamine").Get<DreamineOptions>() ?? new();
+        var knowledgeQaOptions = builder.Configuration.GetSection("KnowledgeQa").Get<KnowledgeQaOptions>() ?? new();
+        knowledgeQaOptions.IncludeDevelopmentDiagnostics = builder.Environment.IsDevelopment();
         builder.Services.AddSingleton(opts);
+        builder.Services.AddSingleton(knowledgeQaOptions);
 
         builder.Services.AddDreamineHybridWpf();
         builder.Services.AddSingleton<ILibraryStore, JsonLibraryStore>();
         builder.Services.AddSingleton<IPlaygroundStore, JsonPlaygroundStore>();
         builder.Services.AddSingleton<SiteSettingsService>();
+        builder.Services.AddSingleton<ILearningResourceStore, JsonLearningResourceStore>();
         builder.Services.AddSingleton<AdminAuthService>();
         builder.Services.AddSingleton<MainWindow>();
 
@@ -58,7 +64,9 @@ public static class Program
             options.SharedServiceTypes.Add(typeof(IPlaygroundStore));
             options.SharedServiceTypes.Add(typeof(DreamineOptions));
             options.SharedServiceTypes.Add(typeof(SiteSettingsService));
+            options.SharedServiceTypes.Add(typeof(ILearningResourceStore));
             options.SharedServiceTypes.Add(typeof(AdminAuthService));
+            options.SharedServiceTypes.Add(typeof(KnowledgeQaOptions));
             if (doxygenRoot is not null)
                 options.AddPhysicalStaticFiles(doxygenRoot, "/docs/doxygen");
             options.ConfigureServices = services =>
@@ -76,7 +84,27 @@ public static class Program
                 services.AddSingleton<IOntologySearchService, OntologySearchService>();
                 services.AddSingleton<IOntologyValidationService, OntologyValidationService>();
                 services.AddSingleton<IOntologySourceService, OntologySourceService>();
+                services.AddSingleton<IKnowledgeQuestionRepository, JsonKnowledgeQuestionRepository>();
+                services.AddSingleton<IDoxygenEvidenceProvider, DoxygenXmlEvidenceProvider>();
+                services.AddSingleton<KnowledgeEvidenceBundleBuilder>();
+                services.AddSingleton<IEvidenceBundleBuilder>(provider => provider.GetRequiredService<KnowledgeEvidenceBundleBuilder>());
+                services.AddSingleton<IKnowledgeEvidenceQueryService>(provider => provider.GetRequiredService<KnowledgeEvidenceBundleBuilder>());
+                services.AddSingleton<IKnowledgeSymbolScopeResolver, OntologySymbolScopeResolver>();
+                services.AddSingleton<IKnowledgeRequestScopePolicy, KnowledgeRequestScopePolicy>();
+                services.AddSingleton<IKnowledgeAnswerProjectionService, KnowledgeAnswerProjectionService>();
+                services.AddSingleton<IKnowledgePrivacyScanner, KnowledgePrivacyScanner>();
+                services.AddSingleton<CodexCliProcessRunner>();
+                services.AddSingleton<ICodexCliProcessRunner>(provider => provider.GetRequiredService<CodexCliProcessRunner>());
+                services.AddSingleton<IKnowledgeQuestionPlanner, CodexCliKnowledgeQuestionPlanner>();
+                services.AddSingleton<IKnowledgeAnswerGenerator, CodexCliKnowledgeAnswerGenerator>();
+                services.AddSingleton<IKnowledgeRepositoryAnswerGenerator, CodexRepositoryKnowledgeAnswerGenerator>();
+                services.AddSingleton<IKnowledgeQaService, KnowledgeQaService>();
+                services.AddSingleton<KnowledgeQuestionJobService>();
+                services.AddSingleton<IKnowledgeQuestionJobService>(provider =>
+                    provider.GetRequiredService<KnowledgeQuestionJobService>());
+                services.AddHostedService(provider => provider.GetRequiredService<KnowledgeQuestionJobService>());
                 services.AddScoped<PlaygroundMediaService>();
+                services.AddScoped<ResourceArchiveService>();
                 services.AddScoped<Dreamine.UI.Blazor.DreamineDialogService>();
                 services.AddScoped<HomeViewModel>();
                 services.AddScoped<DocViewModel>();

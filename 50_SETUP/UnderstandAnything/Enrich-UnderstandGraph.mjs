@@ -341,6 +341,46 @@ function addEdge(source, target, type, description, weight = 0.7) {
   generatedEdges.push({ source, target, type, direction: "forward", description: `dreamine-enricher:${description}`, weight });
 }
 
+const externalInterfaceNamespaces = new Map([
+  ["INotifyPropertyChanged", "System.ComponentModel"],
+  ["INotifyPropertyChanging", "System.ComponentModel"],
+  ["IDisposable", "System"],
+  ["IAsyncDisposable", "System"],
+]);
+function ensureExternalInterface(baseRaw, baseName) {
+  if (!/^I[A-Z]/.test(baseName)) return null;
+  const rawNamespace = String(baseRaw).replace(/^global::/, "").replace(/<.*>/, "")
+    .split(".").slice(0, -1).join(".");
+  const namespace = externalInterfaceNamespaces.get(baseName) || rawNamespace;
+  const qualifiedName = namespace ? `${namespace}.${baseName}` : baseName;
+  const id = `external-interface:${qualifiedName}`;
+  if (nodesById.has(id)) return nodesById.get(id);
+  const node = {
+    id,
+    type: "class",
+    name: baseName,
+    filePath: "",
+    lineRange: [],
+    summary: outputLanguage === "en"
+      ? `${qualifiedName} is an external interface referenced by source code.`
+      : `${qualifiedName} 외부 인터페이스 참조입니다.`,
+    tags: ["external-type", "source-reference"],
+    complexity: "simple",
+    apiMeta: {
+      kind: "interface", namespace, accessibility: "public", modifiers: [],
+      signature: `public interface ${baseName}`,
+      baseTypes: [], properties: [], events: [], methods: [], typeParameters: {},
+      remarks: "", example: "", relatedSamples: [], relatedTests: [], project: {},
+      lifecycle: { disposable: false, obsolete: false, obsoleteMessage: "" },
+      trust: { summary: "code", signature: "code", relationships: "code" },
+    },
+  };
+  graph.nodes.push(node);
+  nodesById.set(id, node);
+  classNameIndex.set(baseName, [node]);
+  return node;
+}
+
 for (const fn of functions) {
   const owner = fn.apiMeta?.containingType;
   if (owner) addEdge(owner, fn.id, "contains", "class-method", 1);
@@ -363,7 +403,11 @@ for (const cls of classes) {
   for (const samplePath of cls.apiMeta?.relatedSamples ?? []) addEdge(cls.id, fileNodesByPath.get(samplePath)?.id, "related", "used-by-sample", 0.6);
   for (const baseRaw of cls.apiMeta?.baseTypes ?? []) {
     const baseName = baseRaw.replace(/<.*>/, "").split(".").at(-1)?.trim();
-    const candidates = classNameIndex.get(baseName) ?? [];
+    let candidates = classNameIndex.get(baseName) ?? [];
+    if (candidates.length === 0) {
+      const external = ensureExternalInterface(baseRaw, baseName);
+      if (external) candidates = [external];
+    }
     if (candidates.length !== 1) continue;
     const target = candidates[0];
     const relationship = target.apiMeta?.kind === "interface" || /^I[A-Z]/.test(baseName) ? "implements" : "inherits";

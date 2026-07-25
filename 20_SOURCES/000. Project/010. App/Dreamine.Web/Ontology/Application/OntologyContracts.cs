@@ -19,10 +19,10 @@ public interface IOntologyRepository
 public interface IOntologySearchService
 {
     Task<OntologySearchResultViewModel> SearchAsync(OntologySearchRequest request, int page, int pageSize, CancellationToken cancellationToken);
-    Task<OntologyNodeDetailsViewModel?> GetNodeAsync(string stableUri, CancellationToken cancellationToken);
-    Task<IReadOnlyList<OntologyTBoxClassViewModel>> GetTBoxClassesAsync(CancellationToken cancellationToken);
+    Task<OntologyNodeDetailsViewModel?> GetNodeAsync(string stableUri, string language, CancellationToken cancellationToken);
+    Task<IReadOnlyList<OntologyTBoxClassViewModel>> GetTBoxClassesAsync(string language, CancellationToken cancellationToken);
     Task<OntologyFacetsViewModel> GetFacetsAsync(CancellationToken cancellationToken);
-    Task<OntologyEventFlowViewModel?> GetDreamineEventSampleAsync(CancellationToken cancellationToken);
+    Task<OntologyEventFlowViewModel?> GetDreamineEventSampleAsync(string language, CancellationToken cancellationToken);
 }
 
 /// <summary>Restores original Dreamine relation meaning from dashboard projections.</summary>
@@ -52,11 +52,12 @@ public interface IOntologyGraphMapper
         OntologyRelation relation,
         bool isOutgoing,
         OntologyNode? relatedNode,
-        OntologyRelationMeaning meaning);
+        OntologyRelationMeaning meaning,
+        string language = "ko");
     OntologyNodeDetailsViewModel ToNodeDetails(
         OntologyNode node,
         IReadOnlyList<OntologyRelationViewModel> incoming,
         IReadOnlyList<OntologyRelationViewModel> outgoing,
         string language = "ko");
-    OntologyTBoxClassViewModel ToTBoxClass(OntologyTBoxClass item);
+    OntologyTBoxClassViewModel ToTBoxClass(OntologyTBoxClass item, string language = "ko");
 }

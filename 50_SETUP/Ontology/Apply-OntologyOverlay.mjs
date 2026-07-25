@@ -30,10 +30,16 @@ const graphTypeFor = elementType => {
   if (['SourceFile', 'EventComponentFile'].includes(elementType)) return 'file';
   return String(elementType || 'concept').toLowerCase();
 };
-const localized = (values, language, fallback) =>
-  values?.find(value => value.language === language)?.text
-  || values?.find(value => value.language === 'en')?.text
-  || values?.[0]?.text || fallback;
+const containsHangul = value => /[\uac00-\ud7a3]/u.test(value || '');
+const localized = (values, language, fallback) => {
+  if (language === 'en') {
+    return values?.find(value => value.language === 'en' && !containsHangul(value.text))?.text || fallback;
+  }
+  return values?.find(value => value.language === 'ko')?.text
+    || values?.find(value => value.language === 'en' && !containsHangul(value.text))?.text
+    || values?.[0]?.text
+    || fallback;
+};
 const semanticTags = element => [...new Set([
   ...(element.tags || []),
   `ontology:${element.element_type}`,

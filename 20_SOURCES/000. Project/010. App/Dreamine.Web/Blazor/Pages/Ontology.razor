@@ -170,9 +170,9 @@
     else if (ActiveTab == "validation" && Validation is not null)
     {
         <section class="dw-ontology-panel">
-            <div class="dw-validation-banner @(Validation.IsHealthy ? "is-healthy" : "is-warning")"><strong>@(Validation.IsHealthy ? (Ko ? "전체 검증 정상" : "All validations healthy") : (Ko ? "검증 상태 확인 필요" : "Validation requires attention"))</strong><span>@Validation.HealthReason</span></div>
+            <div class="dw-validation-banner @(Validation.IsHealthy ? "is-healthy" : "is-warning")"><strong>@(Validation.IsHealthy ? (Ko ? "차단 오류 없음" : "No blocking issues") : (Ko ? "검증 상태 확인 필요" : "Validation requires attention"))</strong><span>@ValidationSummary(Validation)</span></div>
             <div class="dw-validation-grid">
-                @Metric("sourceVsOverlayMismatches", Validation.SourceVsOverlayMismatches)
+                @Metric(Ko ? "소스/오버레이 불일치" : "Source/overlay mismatches", Validation.SourceVsOverlayMismatches)
                 @Metric(Ko ? "Overlay 선언 누락" : "Overlay declaration gaps", Validation.SourceDeclarationsMissingOverlay)
                 @Metric(Ko ? "원본 그래프 선언 누락" : "Raw graph declaration gaps", Validation.SourceDeclarationsMissingRawGraph, informational: true)
                 @Metric(Ko ? "partial 메서드 보강" : "Partial methods enriched", Validation.PartialMethodsEnriched, informational: true)
@@ -181,7 +181,8 @@
                 @Metric(Ko ? "raw/overlay dangling" : "Raw/overlay dangling", Validation.RawDanglingRelations + Validation.OverlayDanglingRelations)
                 @Metric(Ko ? "stable URI 중복·충돌" : "Stable URI duplicates/conflicts", Validation.DuplicateStableUris + Validation.StableUriTypeConflicts)
                 @Metric(Ko ? "타입 자동 보정" : "Auto-corrected types", Validation.AutoCorrectedTypes, informational: true)
-                @Metric(Ko ? "보정 불가 타입" : "Uncorrectable types", Validation.UncorrectableTypes)
+                @Metric(Ko ? "보정 불가 소스 타입" : "Unresolved repository types", Validation.UncorrectableTypes)
+                @Metric(Ko ? "외부 프레임워크 참조" : "External framework references", Validation.ExternalReferenceTypes, informational: true)
                 @Metric(Ko ? "RDF Triple" : "RDF triples", Validation.RdfTripleCount, informational: true)
                 @Metric(Ko ? "제외된 생성 파일" : "Excluded generated files", Validation.ExcludedGeneratedFiles, informational: true)
             </div>
@@ -230,6 +231,7 @@
 }
 
 @code {
+    [SupplyParameterFromQuery(Name = "node")] public string? RequestedStableUri { get; set; }
     private static readonly string[] QuickTypes = ["CodeClass", "CodeInterface", "CodeRecord", "CodeStruct", "CodeEnum", "CodeAttribute", "ViewModel", "View", "Service", "DreamineEventComponent"];
     private readonly CancellationTokenSource _lifetime = new();
     private CancellationTokenSource? _operation;
@@ -263,10 +265,13 @@
         try
         {
             Facets = await OntologySearch.GetFacetsAsync(_lifetime.Token);
-            TBox = await OntologySearch.GetTBoxClassesAsync(_lifetime.Token);
-            EventFlow = await OntologySearch.GetDreamineEventSampleAsync(_lifetime.Token);
+            string language = CurrentLanguage;
+            TBox = await OntologySearch.GetTBoxClassesAsync(language, _lifetime.Token);
+            EventFlow = await OntologySearch.GetDreamineEventSampleAsync(language, _lifetime.Token);
             Validation = await OntologyValidation.GetSummaryAsync(_lifetime.Token);
             await SearchAsync(1, _lifetime.Token);
+            if (!string.IsNullOrWhiteSpace(RequestedStableUri))
+                await SelectNodeAsync(RequestedStableUri);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
@@ -288,7 +293,7 @@
         Details = null;
         SourceAvailability = null;
         SourceDocument = null;
-        Results = await OntologySearch.SearchAsync(new OntologySearchRequest(SearchText, SelectedType, SelectedProject, FilePath, SelectedRelation, IncludeExcluded, Ko ? "ko" : "en"), page, 25, cancellationToken);
+        Results = await OntologySearch.SearchAsync(new OntologySearchRequest(SearchText, SelectedType, SelectedProject, FilePath, SelectedRelation, IncludeExcluded, CurrentLanguage), page, 25, cancellationToken);
     }
 
     private async Task SelectNodeAsync(string stableUri)
@@ -298,7 +303,7 @@
         try
         {
             CancellationToken token = ReplaceOperationToken();
-            Task<OntologyNodeDetailsViewModel?> detailsTask = OntologySearch.GetNodeAsync(stableUri, token);
+            Task<OntologyNodeDetailsViewModel?> detailsTask = OntologySearch.GetNodeAsync(stableUri, CurrentLanguage, token);
             Task<OntologySourceAvailabilityViewModel> sourceTask = OntologySource.GetAvailabilityAsync(stableUri, token);
             await Task.WhenAll(detailsTask, sourceTask);
             Details = await detailsTask;
@@ -347,11 +352,45 @@
         @RelationList(Ko ? "들어오는 관계" : "Incoming relations", details.Incoming)
     </div>;
 
-    private RenderFragment RelationList(string title, IReadOnlyList<OntologyRelationViewModel> relations) => @<section class="dw-ontology-relations"><h3>@title <span>@relations.Count</span></h3>@if (relations.Count == 0) { <p>—</p> } else { @foreach (OntologyRelationViewModel relation in relations) { <button @onclick="() => SelectNodeAsync(relation.RelatedStableUri)"><strong>@relation.OriginalType</strong>@if (relation.WasProjected) { <small>@(Ko ? "표시용 표준 관계" : "Projection"): @relation.ProjectionType</small> }<span>@relation.RelatedName</span>@foreach (OntologyEvidenceViewModel evidence in relation.Evidence.Take(1)) { <em>@evidence.Source · confidence @evidence.Confidence.ToString("0.00")</em> }</button> } }</section>;
+    private RenderFragment RelationList(string title, IReadOnlyList<OntologyRelationViewModel> relations) => @<section class="dw-ontology-relations"><h3>@title <span>@relations.Count</span></h3>@if (relations.Count == 0) { <p>—</p> } else { @foreach (OntologyRelationViewModel relation in relations) { <button @onclick="() => SelectNodeAsync(relation.RelatedStableUri)"><strong>@relation.DisplayLabel</strong><small>@relation.OriginalType@if (relation.WasProjected) { <text> · @(Ko ? "표시용 표준 관계" : "Projection"): @relation.ProjectionType</text> }</small><span>@relation.RelatedName</span>@foreach (OntologyEvidenceViewModel evidence in relation.Evidence.Take(1)) { <em>@evidence.Source · confidence @evidence.Confidence.ToString("0.00")</em> }</button> } }</section>;
 
     private RenderFragment EventNode(OntologyNodeItemViewModel item, string label) => @<button class="dw-event-node @(item.IsDreamineEventComponent ? "is-event" : null)" @onclick="() => SelectEventNodeAsync(item.StableUri)"><span>@label</span><strong>@item.QualifiedName</strong><small>@item.SourcePath:@item.LineStart</small></button>;
     private RenderFragment EventArrow(OntologyRelationViewModel relation) => @<div class="dw-event-arrow"><strong>@relation.OriginalType</strong><small>@(Ko ? "표시용" : "projection"): @relation.ProjectionType</small><span>→</span></div>;
     private RenderFragment Metric(string name, int value, bool informational = false) => @<article class="@(!informational && value > 0 ? "is-warning" : null)"><span>@name</span><strong>@value.ToString("N0")</strong></article>;
+
+    private string ValidationSummary(OntologyValidationSummaryViewModel validation)
+    {
+        if (validation.IsHealthy)
+        {
+            return validation.ExternalReferenceTypes > 0
+                ? (Ko
+                    ? $"차단 오류는 없습니다. 외부 프레임워크 참조 {validation.ExternalReferenceTypes:N0}건은 Dreamine 소스 범위 밖이라 정보로만 표시합니다."
+                    : $"There are no blocking issues. {validation.ExternalReferenceTypes:N0} external framework references are informational because their source is outside the Dreamine repository.")
+                : (Ko
+                    ? "소스, 관계, URI, SHACL 검증이 모두 정상입니다."
+                    : "Source, relation, URI, and SHACL checks are all healthy.");
+        }
+
+        if (validation.Artifacts.Any(item => !item.Exists || !item.IsValid || item.IsStale))
+            return Ko ? "온톨로지 산출물이 없거나 오래되었습니다. 산출물을 다시 생성하세요." : "An ontology artifact is missing, invalid, or stale. Regenerate the artifacts.";
+        if (!validation.LinkmlShaclConforms || !validation.ArchitectureShaclConforms || validation.LinkmlShaclViolations > 0)
+            return Ko ? "SHACL 규칙 위반이 있습니다. 검증 보고서의 위반 항목을 확인하세요." : "A SHACL rule is violated. Review the validation report for the failing item.";
+        if (validation.Shapes.Any(item => !item.FixtureTestPassed || !item.PositiveFixturePassed || !item.NegativeFixturePassed || item.ViolationCount > 0))
+            return Ko ? "SHACL fixture 또는 shape 검증이 실패했습니다." : "A SHACL fixture or shape validation failed.";
+        if (validation.SourceVsOverlayMismatches > 0)
+            return Ko ? $"소스와 오버레이 타입이 {validation.SourceVsOverlayMismatches:N0}건 다릅니다." : $"{validation.SourceVsOverlayMismatches:N0} source and overlay types differ.";
+        if (validation.SourceDeclarationsMissingOverlay > 0)
+            return Ko ? $"소스 선언 {validation.SourceDeclarationsMissingOverlay:N0}건이 오버레이에 없습니다." : $"{validation.SourceDeclarationsMissingOverlay:N0} source declarations are missing from the overlay.";
+        if (validation.UnclassifiedPartialMethods > 0)
+            return Ko ? $"partial 메서드 {validation.UnclassifiedPartialMethods:N0}건이 분류되지 않았습니다." : $"{validation.UnclassifiedPartialMethods:N0} partial methods are unclassified.";
+        if (validation.RawDanglingRelations + validation.OverlayDanglingRelations > 0)
+            return Ko ? "끊어진 관계가 있습니다." : "A dangling relation was found.";
+        if (validation.DuplicateStableUris + validation.StableUriTypeConflicts > 0)
+            return Ko ? "stable URI 중복 또는 타입 충돌이 있습니다." : "A stable URI duplicate or type conflict was found.";
+        if (validation.UncorrectableTypes > 0)
+            return Ko ? $"저장소 안의 소스 타입 {validation.UncorrectableTypes:N0}건을 확인하지 못했습니다." : $"{validation.UncorrectableTypes:N0} repository source types could not be resolved.";
+        return validation.HealthReason;
+    }
 
     private string SourceReason(OntologySourceAvailabilityViewModel source) => source.ReasonCode switch
     {
@@ -373,7 +412,19 @@
         await SelectNodeAsync(stableUri);
     }
 
-    private void OnLanguageChanged() => _ = InvokeAsync(async () => { await SearchAsync(CurrentPage, ReplaceOperationToken()); StateHasChanged(); });
+    private string CurrentLanguage => Ko ? "ko" : "en";
+
+    private void OnLanguageChanged() => _ = InvokeAsync(async () =>
+    {
+        string? selectedStableUri = Details?.Node.StableUri;
+        CancellationToken token = ReplaceOperationToken();
+        TBox = await OntologySearch.GetTBoxClassesAsync(CurrentLanguage, token);
+        EventFlow = await OntologySearch.GetDreamineEventSampleAsync(CurrentLanguage, token);
+        await SearchAsync(CurrentPage, token);
+        if (!string.IsNullOrWhiteSpace(selectedStableUri))
+            await SelectNodeAsync(selectedStableUri);
+        StateHasChanged();
+    });
 
     public void Dispose()
     {

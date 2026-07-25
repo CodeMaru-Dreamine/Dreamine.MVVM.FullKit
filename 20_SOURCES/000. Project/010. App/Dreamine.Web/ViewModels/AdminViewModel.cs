@@ -32,6 +32,7 @@ public class AdminViewModel : ViewModelBase
     /// \endif
     /// </summary>
     private readonly IPlaygroundStore _playgroundStore;
+    private readonly ILearningResourceStore _learningResourceStore;
     /// <summary>
     /// \if KO
     /// <para>opts 값을 보관합니다.</para>
@@ -194,6 +195,11 @@ public class AdminViewModel : ViewModelBase
     /// </summary>
     public bool IsDemoEditing => EditingDemo is not null;
 
+    // 영상과 샘플이 한 항목으로 묶인 학습 자료
+    public List<LearningResource> LearningResources { get; private set; } = [];
+    public LearningResource? EditingResource { get; private set; }
+    public bool IsResourceEditing => EditingResource is not null;
+
     // 패스워드 변경
     /// <summary>
     /// \if KO
@@ -298,6 +304,7 @@ public class AdminViewModel : ViewModelBase
     public AdminViewModel(
         ILibraryStore store,
         IPlaygroundStore playgroundStore,
+        ILearningResourceStore learningResourceStore,
         DreamineOptions opts,
         XmlDocAutoLinker autoLinker,
         LibraryCatalogSyncService catalogSync,
@@ -307,6 +314,7 @@ public class AdminViewModel : ViewModelBase
     {
         _store = store;
         _playgroundStore = playgroundStore;
+        _learningResourceStore = learningResourceStore;
         _opts = opts;
         _autoLinker = autoLinker;
         _catalogSync = catalogSync;
@@ -393,6 +401,7 @@ public class AdminViewModel : ViewModelBase
     {
         Libraries = await _store.GetAllAsync();
         Demos = await _playgroundStore.GetAllAsync();
+        LearningResources = await _learningResourceStore.GetAllAsync();
         StatusMessage = string.Empty;
     }
 
@@ -411,6 +420,7 @@ public class AdminViewModel : ViewModelBase
         Editing = new LibraryInfo { Id = Guid.NewGuid().ToString("N")[..8] };
         IsSiteEditing = false;
         EditingDemo = null;
+        EditingResource = null;
     }
 
     /// <summary>
@@ -452,6 +462,7 @@ public class AdminViewModel : ViewModelBase
         };
         IsSiteEditing = false;
         EditingDemo = null;
+        EditingResource = null;
     }
 
     /// <summary>
@@ -642,6 +653,7 @@ public class AdminViewModel : ViewModelBase
         };
         Editing = null;
         IsSiteEditing = false;
+        EditingResource = null;
     }
 
     /// <summary>
@@ -683,6 +695,7 @@ public class AdminViewModel : ViewModelBase
         };
         Editing = null;
         IsSiteEditing = false;
+        EditingResource = null;
     }
 
     /// <summary>
@@ -751,6 +764,66 @@ public class AdminViewModel : ViewModelBase
         StatusMessage = "✅ 체험 데모가 삭제됐습니다.";
     }
 
+    // ── 영상 + 샘플 학습 자료 ───────────────────────────────────
+
+    public void StartNewResource()
+    {
+        EditingResource = new LearningResource
+        {
+            Id = Guid.NewGuid().ToString("N")[..8],
+            SortOrder = (LearningResources.Count == 0 ? 0 : LearningResources.Max(x => x.SortOrder)) + 10,
+            SampleName = "Dreamine.Sample.001.HelloDreamine"
+        };
+        Editing = null;
+        EditingDemo = null;
+        IsSiteEditing = false;
+    }
+
+    public void StartEditResource(LearningResource resource)
+    {
+        EditingResource = new LearningResource
+        {
+            Id = resource.Id,
+            Title = resource.Title,
+            TitleEn = resource.TitleEn,
+            Description = resource.Description,
+            DescriptionEn = resource.DescriptionEn,
+            YouTubeUrl = resource.YouTubeUrl,
+            ThumbnailUrl = resource.ThumbnailUrl,
+            SampleName = resource.SampleName,
+            SampleDownloadUrl = resource.SampleDownloadUrl,
+            SortOrder = resource.SortOrder,
+            IsVisible = resource.IsVisible
+        };
+        Editing = null;
+        EditingDemo = null;
+        IsSiteEditing = false;
+    }
+
+    public void CancelResourceEdit() => EditingResource = null;
+
+    public async Task SaveResourceAsync()
+    {
+        if (EditingResource is null) return;
+        if (string.IsNullOrWhiteSpace(EditingResource.Title))
+        {
+            StatusMessage = "❌ 자료 제목을 입력해주세요.";
+            return;
+        }
+
+        await _learningResourceStore.SaveAsync(EditingResource);
+        EditingResource = null;
+        await LoadAsync();
+        StatusMessage = "✅ 영상과 샘플 자료가 저장됐습니다.";
+    }
+
+    public async Task DeleteResourceAsync(string id)
+    {
+        await _learningResourceStore.DeleteAsync(id);
+        await LoadAsync();
+        StatusMessage = "✅ 영상과 샘플 자료가 삭제됐습니다.";
+    }
+
     // ── 사이트 설정 ──────────────────────────────────────────────
 
     /// <summary>
@@ -770,6 +843,9 @@ public class AdminViewModel : ViewModelBase
             Description = cur.Description,
             IconUrl     = cur.IconUrl,
             GitHubUrl   = cur.GitHubUrl,
+            YouTubeUrl = cur.YouTubeUrl,
+            SampleDownloadUrl = cur.SampleDownloadUrl,
+            SampleDisplayName = cur.SampleDisplayName,
             OgTitle       = cur.OgTitle,
             OgDescription = cur.OgDescription,
             OgImageUrl    = cur.OgImageUrl,
@@ -780,6 +856,7 @@ public class AdminViewModel : ViewModelBase
         IsSiteEditing = true;
         Editing = null;
         EditingDemo = null;
+        EditingResource = null;
     }
 
     /// <summary>

@@ -49,6 +49,7 @@ public sealed record OntologyRelationViewModel(
     string RelatedStableUri,
     string RelatedName,
     string OriginalType,
+    string DisplayLabel,
     string ProjectionType,
     bool WasProjected,
     IReadOnlyList<OntologyEvidenceViewModel> Evidence);
@@ -155,6 +156,7 @@ public sealed record OntologyValidationSummaryViewModel
     public int StableUriTypeConflicts { get; init; }
     public int AutoCorrectedTypes { get; init; }
     public int UncorrectableTypes { get; init; }
+    public int ExternalReferenceTypes { get; init; }
     public int ExcludedGeneratedFiles { get; init; }
     public int ExcludedGraphNodes { get; init; }
     public bool LinkmlShaclConforms { get; init; }

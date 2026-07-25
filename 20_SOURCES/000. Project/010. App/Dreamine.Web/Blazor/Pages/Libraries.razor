@@ -16,33 +16,54 @@
         </p>
     </div>
 
-    <div class="dw-search">
+    <div class="dw-search dw-library-search">
         <input class="dw-input" type="search"
                placeholder="@(Ko ? "이름·설명·태그 검색..." : "Search by name, description or tag...")"
+               aria-label="@(Ko ? "라이브러리 검색" : "Search libraries")"
                @bind="SearchText" @bind:event="oninput" />
+        <select class="dw-input" @bind="SelectedCategory" aria-label="@(Ko ? "라이브러리 카테고리" : "Library category")">
+            <option value="">@(Ko ? "모든 카테고리" : "All categories")</option>
+            @foreach (var category in Categories)
+            {
+                <option value="@category">@category (@CategoryItemCount(category))</option>
+            }
+        </select>
     </div>
 
     <div class="dw-catalog-summary">
         <span>@(Ko ? "공개 라이브러리" : "Visible libraries") <strong>@VisibleCount</strong></span>
         <span>@(Ko ? "카테고리" : "Categories") <strong>@CategoryCount</strong></span>
         <span>@(Ko ? "XML 문서 연결" : "XML docs linked") <strong>@XmlLinkedCount</strong></span>
+        @if (HasActiveFilter)
+        {
+            <span class="dw-catalog-summary__result" aria-live="polite">@(Ko ? "검색 결과" : "Results") <strong>@FilteredCount</strong></span>
+        }
     </div>
 
-    @foreach (var group in FilteredGroups)
+    @if (FilteredGroups.Any())
     {
-        <div class="dw-lib-group">
-            <h2 class="dw-lib-group__name">@group.Key</h2>
-            <div class="dw-lib-table">
-                @foreach (var lib in group)
-                {
-                    <a href="/docs/@lib.Id" class="dw-lib-row">
-                        <span class="dw-lib-row__name" title="@lib.Name">@lib.Name</span>
-                        <span class="dw-badge dw-badge--@lib.Status">@lib.Status</span>
-                        <span class="dw-lib-row__desc">@(Ko || string.IsNullOrEmpty(lib.DescriptionEn) ? lib.Description : lib.DescriptionEn)</span>
-                        <span class="dw-lib-row__ver">@(string.IsNullOrWhiteSpace(lib.TargetFramework) ? $"v{lib.Version}" : lib.TargetFramework)</span>
-                    </a>
-                }
+        @foreach (var group in FilteredGroups)
+        {
+            <div class="dw-lib-group">
+                <h2 class="dw-lib-group__name">@group.Key</h2>
+                <div class="dw-lib-table">
+                    @foreach (var lib in group)
+                    {
+                        <a href="/docs/@lib.Id" class="dw-lib-row">
+                            <span class="dw-lib-row__name" title="@lib.Name">@lib.Name</span>
+                            <span class="dw-badge dw-badge--@lib.Status">@lib.Status</span>
+                            <span class="dw-lib-row__desc">@(Ko || string.IsNullOrEmpty(lib.DescriptionEn) ? lib.Description : lib.DescriptionEn)</span>
+                            <span class="dw-lib-row__ver">@(string.IsNullOrWhiteSpace(lib.TargetFramework) ? $"v{lib.Version}" : lib.TargetFramework)</span>
+                        </a>
+                    }
+                </div>
             </div>
+        }
+    }
+    else
+    {
+        <div class="dw-empty dw-lib-empty" role="status">
+            @(Ko ? "선택한 검색 조건에 맞는 라이브러리가 없습니다." : "No libraries match the selected filters.")
         </div>
     }
 </div>
@@ -51,19 +72,40 @@
     [CascadingParameter] public UserPreferencesService Lang { get; set; } = default!;
     private bool Ko => Lang?.IsKorean ?? true;
     private string SearchText { get; set; } = string.Empty;
+    private string SelectedCategory { get; set; } = string.Empty;
+
+    private IEnumerable<LibraryInfo> VisibleLibraries => Vm.Libraries.Where(x => x.IsVisible);
+
+    private IEnumerable<string> Categories => VisibleLibraries
+        .Where(x => !string.IsNullOrWhiteSpace(x.Category))
+        .OrderBy(x => x.SortOrder)
+        .Select(x => x.Category)
+        .Distinct(StringComparer.OrdinalIgnoreCase);
+
+    private IEnumerable<LibraryInfo> FilteredLibraries => VisibleLibraries.Where(Matches);
 
     private IEnumerable<IGrouping<string, LibraryInfo>> FilteredGroups =>
-        Vm.Libraries
-          .Where(x => x.IsVisible && Matches(x))
+        FilteredLibraries
           .OrderBy(x => x.SortOrder)
           .GroupBy(x => x.Category);
 
-    private int VisibleCount => Vm.Libraries.Count(x => x.IsVisible);
-    private int CategoryCount => Vm.Libraries.Where(x => x.IsVisible).Select(x => x.Category).Distinct().Count();
-    private int XmlLinkedCount => Vm.Libraries.Count(x => x.IsVisible && !string.IsNullOrWhiteSpace(x.XmlDocPath));
+    private int VisibleCount => VisibleLibraries.Count();
+    private int CategoryCount => Categories.Count();
+    private int XmlLinkedCount => VisibleLibraries.Count(x => !string.IsNullOrWhiteSpace(x.XmlDocPath));
+    private int FilteredCount => FilteredLibraries.Count();
+    private bool HasActiveFilter => !string.IsNullOrWhiteSpace(SearchText) || !string.IsNullOrWhiteSpace(SelectedCategory);
+
+    private int CategoryItemCount(string category) =>
+        VisibleLibraries.Count(x => string.Equals(x.Category, category, StringComparison.OrdinalIgnoreCase));
 
     private bool Matches(LibraryInfo lib)
     {
+        if (!string.IsNullOrWhiteSpace(SelectedCategory)
+            && !string.Equals(lib.Category, SelectedCategory, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
         if (string.IsNullOrWhiteSpace(SearchText)) return true;
         var q = SearchText.Trim();
         return lib.Name.Contains(q, StringComparison.OrdinalIgnoreCase)

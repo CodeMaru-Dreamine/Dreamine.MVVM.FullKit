@@ -16,14 +16,22 @@
         var requestPath = requestUri.AbsolutePath.TrimEnd('/');
         var isKnowledgeHub = requestPath.Equals("/knowledge", StringComparison.OrdinalIgnoreCase);
         var isOntology = requestPath.Equals("/ontology", StringComparison.OrdinalIgnoreCase);
+        var isQuestions = requestPath.Equals("/questions", StringComparison.OrdinalIgnoreCase)
+            || requestPath.StartsWith("/questions/", StringComparison.OrdinalIgnoreCase);
         var isEnglish = requestUri.Query.Contains("lang=en", StringComparison.OrdinalIgnoreCase);
         var siteRoot = og.OgUrl.TrimEnd('/');
-        var ogTitle = isOntology
+        var ogTitle = isQuestions
+            ? (isEnglish ? "Dreamine Evidence-First Code Q&A" : "Dreamine 근거 기반 코드 Q&A")
+            : isOntology
             ? (isEnglish ? "Dreamine Source-Verified Ontology" : "Dreamine Source-Verified 온톨로지")
             : isKnowledgeHub
             ? (isEnglish ? "Dreamine FullKit Documentation Hub" : "Dreamine FullKit 프로젝트 문서 허브")
             : (string.IsNullOrEmpty(og.OgTitle) ? og.Title : og.OgTitle);
-        var ogDesc = isOntology
+        var ogDesc = isQuestions
+            ? (isEnglish
+                ? "Ask Dreamine code questions answered only from verified ontology, Doxygen, stable URI, and source evidence."
+                : "검증된 온톨로지·Doxygen·stable URI·소스 근거만으로 Dreamine 코드 질문에 답합니다.")
+            : isOntology
             ? (isEnglish
                 ? "Search the LinkML TBox, source-verified ABox individuals, original Dreamine relations, SourceAudit, and SHACL validation results."
                 : "LinkML TBox, source-verified ABox 개체, 원래 Dreamine 관계와 SourceAudit·SHACL 검증 결과를 검색하고 탐색하세요.")
@@ -32,10 +40,10 @@
                 ? "Explore 80 FullKit apps, reusable libraries, tests, and samples with bilingual Doxygen API docs and focused knowledge graphs."
                 : "FullKit의 80개 앱·라이브러리·테스트·샘플을 분류별로 탐색하고, 한글·영문 Doxygen API 문서와 프로젝트별 지식 그래프를 확인하세요.")
             : (string.IsNullOrEmpty(og.OgDescription) ? og.Description : og.OgDescription);
-        var ogImg = isKnowledgeHub || isOntology
+        var ogImg = isKnowledgeHub || isOntology || isQuestions
             ? $"{siteRoot}/img/og-documentation-hub.png"
             : (og.OgImageUrl.StartsWith("http") ? og.OgImageUrl : siteRoot + og.OgImageUrl);
-        var ogUrl = isOntology ? $"{siteRoot}/ontology" : isKnowledgeHub ? $"{siteRoot}/knowledge" : og.OgUrl;
+        var ogUrl = isQuestions ? $"{siteRoot}{requestPath}" : isOntology ? $"{siteRoot}/ontology" : isKnowledgeHub ? $"{siteRoot}/knowledge" : og.OgUrl;
     }
     <title>@ogTitle</title>
     <meta name="description" content="@ogDesc" />
@@ -57,7 +65,7 @@
     <meta name="twitter:image:alt"   content="Dreamine FullKit Documentation Hub" />
 
     <link rel="icon" href="@(string.IsNullOrEmpty(og.IconUrl) ? "/img/icon.ico" : og.IconUrl)" />
-    <link rel="stylesheet" href="/css/dreamine.css?v=20260719-performance" />
+    <link rel="stylesheet" href="/css/dreamine.css?v=20260720-knowledgeqa-background" />
     @* Blazor scoped CSS 번들 — Dreamine.UI.Blazor 컴포넌트(.razor.css)를 이 안에서 @import 로 로드 *@
     <link rel="stylesheet" href="Dreamine.Web.styles.css" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -119,6 +127,57 @@
         window.dwScrollToId = function (id) {
             var el = document.getElementById(id);
             if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
+        window.dwQuestionAccess = {
+            load: function () {
+                try {
+                    var value = JSON.parse(localStorage.getItem('dreamine.questionAccess.v1') || '[]');
+                    return Array.isArray(value) ? value : [];
+                } catch (_) { return []; }
+            },
+            save: function (reference) {
+                var items = this.load().filter(function (item) { return item.id !== reference.id; });
+                items.unshift(reference);
+                localStorage.setItem('dreamine.questionAccess.v1', JSON.stringify(items.slice(0, 100)));
+            }
+        };
+        window.dwQuestionJobs = {
+            load: function () {
+                try {
+                    var value = JSON.parse(localStorage.getItem('dreamine.questionJobs.v1') || '[]');
+                    return Array.isArray(value) ? value : [];
+                } catch (_) { return []; }
+            },
+            save: function (job) {
+                var id = String(job.submissionId || '').toLowerCase();
+                var items = this.load().filter(function (item) {
+                    return String(item.submissionId || '').toLowerCase() !== id;
+                });
+                items.unshift(job);
+                localStorage.setItem('dreamine.questionJobs.v1', JSON.stringify(items.slice(0, 20)));
+            },
+            remove: function (submissionId) {
+                var id = String(submissionId || '').toLowerCase();
+                var items = this.load().filter(function (item) {
+                    return String(item.submissionId || '').toLowerCase() !== id;
+                });
+                localStorage.setItem('dreamine.questionJobs.v1', JSON.stringify(items));
+            },
+            requestPermission: async function () {
+                if (!('Notification' in window) || Notification.permission !== 'default') return;
+                try { await Notification.requestPermission(); } catch (_) { }
+            },
+            notify: function (title, body, url) {
+                if (!('Notification' in window) || Notification.permission !== 'granted') return;
+                try {
+                    var notification = new Notification(title, { body: body, icon: '/img/icon.ico', tag: url || title });
+                    notification.onclick = function () {
+                        window.focus();
+                        if (url) window.location.href = url;
+                        notification.close();
+                    };
+                } catch (_) { }
+            }
         };
     </script>
     <script src="/_framework/blazor.web.js" autostart="false"></script>

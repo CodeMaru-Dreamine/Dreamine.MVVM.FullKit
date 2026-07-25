@@ -1,0 +1,130 @@
+@page "/resources"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@inject ILearningResourceStore ResourceStore
+@implements IDisposable
+
+<PageTitle>@(Lang.IsKorean ? "영상 & 샘플 — Dreamine" : "Videos & Samples — Dreamine")</PageTitle>
+
+<div class="dw-page dw-resources">
+    <header class="dw-resource-hero">
+        <span class="dw-resource-hero__eyebrow">LEARN · BUILD · SHARE</span>
+        <h1>@(Lang.IsKorean ? "영상으로 배우고, 같은 샘플로 바로 시작하세요." : "Learn by video. Start with the matching sample.")</h1>
+        <p>@(Lang.IsKorean
+            ? "각 영상에서 사용하는 Dreamine 샘플 프로젝트를 1:1로 연결해 제공합니다."
+            : "Every video is paired one-to-one with the exact Dreamine sample project it uses.")</p>
+    </header>
+
+    @if (!_loaded)
+    {
+        <div class="dw-empty">@(Lang.IsKorean ? "자료를 불러오는 중입니다…" : "Loading resources…")</div>
+    }
+    else if (VisibleResources.Count == 0)
+    {
+        <div class="dw-empty">@(Lang.IsKorean ? "등록된 영상과 샘플이 없습니다." : "No videos and samples have been published yet.")</div>
+    }
+    else
+    {
+        <section class="dw-learning-list">
+            @foreach (var resource in VisibleResources)
+            {
+                var thumbnail = GetThumbnail(resource);
+                <article class="dw-learning-card">
+                    <div class="dw-learning-card__media">
+                        @if (!string.IsNullOrWhiteSpace(thumbnail))
+                        {
+                            @if (!string.IsNullOrWhiteSpace(resource.YouTubeUrl))
+                            {
+                                <a href="@resource.YouTubeUrl" target="_blank" rel="noopener noreferrer" aria-label="@resource.Title">
+                                    <img src="@thumbnail" alt="@resource.Title" />
+                                    <span class="dw-learning-card__play" aria-hidden="true">▶</span>
+                                </a>
+                            }
+                            else
+                            {
+                                <img src="@thumbnail" alt="@resource.Title" />
+                            }
+                        }
+                        else
+                        {
+                            <div class="dw-learning-card__placeholder"><span>&lt;/&gt;</span></div>
+                        }
+                    </div>
+
+                    <div class="dw-learning-card__body">
+                        <span class="dw-learning-card__tag">VIDEO + MATCHING SAMPLE</span>
+                        <h2>@Local(resource.Title, resource.TitleEn)</h2>
+                        <p>@Local(resource.Description, resource.DescriptionEn)</p>
+
+                        <div class="dw-learning-card__sample">
+                            <span aria-hidden="true">⌘</span>
+                            <div>
+                                <small>@(Lang.IsKorean ? "이 영상의 샘플 프로젝트" : "Sample project for this video")</small>
+                                <strong>@resource.SampleName</strong>
+                            </div>
+                        </div>
+
+                        <div class="dw-learning-card__actions">
+                            @if (!string.IsNullOrWhiteSpace(resource.YouTubeUrl))
+                            {
+                                <a class="dw-btn dw-btn--youtube" href="@resource.YouTubeUrl" target="_blank" rel="noopener noreferrer">
+                                    ▶ @(Lang.IsKorean ? "영상 보기" : "Watch video")
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="dw-resource-card__pending">@(Lang.IsKorean ? "영상 준비 중" : "Video coming soon")</span>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(resource.SampleDownloadUrl))
+                            {
+                                <a class="dw-btn dw-btn--primary" href="@resource.SampleDownloadUrl" download>
+                                    ↓ @(Lang.IsKorean ? "샘플 ZIP" : "Sample ZIP")
+                                </a>
+                            }
+                            else
+                            {
+                                <span class="dw-resource-card__pending">@(Lang.IsKorean ? "ZIP 준비 중" : "ZIP coming soon")</span>
+                            }
+                        </div>
+                    </div>
+                </article>
+            }
+        </section>
+    }
+
+    <aside class="dw-resource-note">
+        <span aria-hidden="true">✦</span>
+        <p>@(Lang.IsKorean
+            ? "영상과 ZIP은 항상 한 쌍으로 관리됩니다. 영상 설명의 버전과 샘플 프로젝트 버전도 함께 확인해주세요."
+            : "Each video and ZIP is managed as a pair. Check that the video and sample project versions match.")</p>
+    </aside>
+</div>
+
+@code {
+    [CascadingParameter] public UserPreferencesService Lang { get; set; } = default!;
+    private List<LearningResource> _resources = [];
+    private bool _loaded;
+    private List<LearningResource> VisibleResources => _resources
+        .Where(x => x.IsVisible)
+        .OrderBy(x => x.SortOrder)
+        .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _resources = await ResourceStore.GetAllAsync();
+        _loaded = true;
+        Lang.Changed += OnLangChanged;
+    }
+
+    private string Local(string ko, string? en) =>
+        Lang.IsKorean || string.IsNullOrWhiteSpace(en) ? ko : en;
+
+    private static string? GetThumbnail(LearningResource resource) =>
+        !string.IsNullOrWhiteSpace(resource.ThumbnailUrl)
+            ? resource.ThumbnailUrl
+            : YouTubeUrlHelper.GetThumbnailUrl(resource.YouTubeUrl);
+
+    private void OnLangChanged() => InvokeAsync(StateHasChanged);
+    public void Dispose() => Lang.Changed -= OnLangChanged;
+}

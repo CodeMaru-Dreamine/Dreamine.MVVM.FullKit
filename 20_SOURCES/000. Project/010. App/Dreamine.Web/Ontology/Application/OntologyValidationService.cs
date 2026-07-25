@@ -40,6 +40,7 @@ public sealed class OntologyValidationService : IOntologyValidationService
             StableUriTypeConflicts = data.StableUriTypeConflicts,
             AutoCorrectedTypes = data.AutoCorrectedTypes,
             UncorrectableTypes = data.UncorrectableTypes,
+            ExternalReferenceTypes = data.ExternalReferenceTypes,
             ExcludedGeneratedFiles = data.ExcludedGeneratedFiles,
             ExcludedGraphNodes = data.ExcludedGraphNodes,
             LinkmlShaclConforms = data.LinkmlShaclConforms,

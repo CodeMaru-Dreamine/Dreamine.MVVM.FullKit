@@ -1,0 +1,203 @@
+@namespace DreamineWeb.Blazor.Components
+@inject IKnowledgeQuestionJobService Jobs
+@inject UserPreferencesService Prefs
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@implements IAsyncDisposable
+
+@if (RunningJobs.Count > 0 || Notifications.Count > 0)
+{
+    <aside class="dw-qa-job-center" aria-live="polite" aria-label="@(Prefs.IsKorean ? "답변 작업 알림" : "Answer job notifications")">
+        @if (RunningJobs.Count > 0)
+        {
+            <div class="dw-qa-job-running">
+                <span class="dw-qa-job-spinner" aria-hidden="true"></span>
+                <div>
+                    <strong>@(Prefs.IsKorean ? $"답변 {RunningJobs.Count}개를 백그라운드에서 만들고 있습니다" : $"Generating {RunningJobs.Count} answer(s) in the background")</strong>
+                    <small>@(Prefs.IsKorean ? "다른 페이지를 계속 보셔도 됩니다." : "You can keep browsing other pages.")</small>
+                </div>
+            </div>
+        }
+        @foreach (JobNotification notification in Notifications)
+        {
+            <div class="dw-qa-job-toast @(notification.IsError ? "is-error" : "is-complete")">
+                <div>
+                    <strong>@notification.Title</strong>
+                    <small>@notification.Message</small>
+                    @if (notification.UnverifiedDraft is not null)
+                    {
+                        <small class="dw-qa-unverified-question">@(Prefs.IsKorean ? "근거 없는 답변이라도 확인하시겠습니까?" : "Would you still like to view the unverified answer?")</small>
+                    }
+                </div>
+                @if (!string.IsNullOrWhiteSpace(notification.Url))
+                {
+                    <button class="dw-btn dw-btn--primary" type="button" @onclick="() => Open(notification)">@(Prefs.IsKorean ? "답변 보기" : "View answer")</button>
+                }
+                else if (notification.UnverifiedDraft is not null)
+                {
+                    <button class="dw-btn dw-btn--ghost" type="button" @onclick="() => Preview(notification)">@(Prefs.IsKorean ? "근거 없는 답변 보기" : "View unverified answer")</button>
+                }
+                <button type="button" class="dw-qa-job-close" title="@(Prefs.IsKorean ? "닫기" : "Dismiss")" @onclick="() => Dismiss(notification.Id)">×</button>
+            </div>
+        }
+    </aside>
+}
+
+@if (PreviewNotification?.UnverifiedDraft is { } draft)
+{
+    <div class="dw-qa-preview-backdrop" role="presentation" @onclick="ClosePreview">
+        <section class="dw-qa-preview" role="dialog" aria-modal="true" aria-labelledby="dw-qa-preview-title" @onclick:stopPropagation="true">
+            <header>
+                <div>
+                    <span>@(Prefs.IsKorean ? "검증되지 않은 답변" : "Unverified answer")</span>
+                    <h2 id="dw-qa-preview-title">@ShortQuestion(PreviewNotification.Question)</h2>
+                </div>
+                <button type="button" class="dw-qa-job-close" title="@(Prefs.IsKorean ? "닫기" : "Close")" @onclick="ClosePreview">×</button>
+            </header>
+            <div class="dw-qa-preview-warning">
+                <strong>@(Prefs.IsKorean ? "소스 근거를 확인하지 못했습니다." : "Source evidence could not be verified.")</strong>
+                <span>@(Prefs.IsKorean ? "아래 내용은 정확하지 않을 수 있으며 질문·답변 기록이나 공개 목록에 저장되지 않았습니다." : "The content below may be inaccurate and was not saved to question history or public listings.")</span>
+            </div>
+            <p class="dw-qa-preview-summary">@draft.Summary</p>
+            @foreach (KnowledgeAnswerSection answerSection in draft.Sections)
+            {
+                <article>
+                    <h3>@answerSection.Heading</h3>
+                    <p>@answerSection.Body</p>
+                </article>
+            }
+            <footer>
+                <button class="dw-btn dw-btn--primary" type="button" @onclick="ClosePreview">@(Prefs.IsKorean ? "확인했습니다" : "Close")</button>
+            </footer>
+        </section>
+    </div>
+}
+
+@code {
+    private readonly CancellationTokenSource _disposeCancellation = new();
+    private readonly Dictionary<Guid, KnowledgeQuestionJobViewModel> RunningJobs = [];
+    private readonly List<JobNotification> Notifications = [];
+    private JobNotification? PreviewNotification;
+    private Task? _pollingTask;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+            return;
+        await RefreshAsync();
+        await InvokeAsync(StateHasChanged);
+        _pollingTask = PollAsync(_disposeCancellation.Token);
+    }
+
+    private async Task PollAsync(CancellationToken cancellationToken)
+    {
+        using PeriodicTimer timer = new(TimeSpan.FromSeconds(2));
+        while (await timer.WaitForNextTickAsync(cancellationToken))
+        {
+            await RefreshAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task RefreshAsync()
+    {
+        KnowledgeQuestionJobReference[] references;
+        try
+        {
+            references = await JS.InvokeAsync<KnowledgeQuestionJobReference[]>("dwQuestionJobs.load");
+        }
+        catch (JSException)
+        {
+            return;
+        }
+
+        HashSet<Guid> active = [];
+        foreach (KnowledgeQuestionJobReference reference in references)
+        {
+            KnowledgeQuestionJobViewModel? job = Jobs.Get(reference.SubmissionId);
+            if (job is null)
+            {
+                await JS.InvokeVoidAsync("dwQuestionJobs.remove", reference.SubmissionId);
+                continue;
+            }
+            if (job.Status is KnowledgeQuestionJobStatus.Queued or KnowledgeQuestionJobStatus.Running)
+            {
+                active.Add(job.SubmissionId);
+                RunningJobs[job.SubmissionId] = job;
+                continue;
+            }
+
+            RunningJobs.Remove(job.SubmissionId);
+            if (Notifications.All(item => item.Id != job.SubmissionId))
+            {
+                if (job.Status == KnowledgeQuestionJobStatus.Completed && job.Result is not null)
+                {
+                    await JS.InvokeVoidAsync("dwQuestionAccess.save", new KnowledgeQuestionAccessReference(
+                        job.Result.Id, job.Result.Slug, job.Result.AccessKey));
+                    string title = Prefs.IsKorean ? "Dreamine 답변이 완성되었습니다" : "Your Dreamine answer is ready";
+                    Notifications.RemoveAll(item => item.Question.Equals(job.Question, StringComparison.OrdinalIgnoreCase));
+                    Notifications.Insert(0, new JobNotification(
+                        job.SubmissionId, job.Question, title, ShortQuestion(job.Question), job.Result.Url, false));
+                    await JS.InvokeVoidAsync("dwQuestionJobs.notify", title, ShortQuestion(job.Question), job.Result.Url);
+                }
+                else
+                {
+                    string title = job.UnverifiedDraft is not null
+                        ? Prefs.IsKorean ? "답변의 소스 근거를 확인하지 못했습니다." : "The answer's source evidence could not be verified."
+                        : Prefs.IsKorean ? "답변을 만들지 못했습니다" : "The answer could not be generated";
+                    Notifications.RemoveAll(item => item.Question.Equals(job.Question, StringComparison.OrdinalIgnoreCase));
+                    Notifications.Insert(0, new JobNotification(
+                        job.SubmissionId, job.Question, title, job.ErrorMessage, string.Empty, true, job.UnverifiedDraft));
+                    await JS.InvokeVoidAsync("dwQuestionJobs.notify", title, job.ErrorMessage, string.Empty);
+                }
+            }
+            await JS.InvokeVoidAsync("dwQuestionJobs.remove", job.SubmissionId);
+        }
+
+        foreach (Guid id in RunningJobs.Keys.Where(id => !active.Contains(id)).ToArray())
+            RunningJobs.Remove(id);
+        if (Notifications.Count > 4)
+            Notifications.RemoveRange(4, Notifications.Count - 4);
+    }
+
+    private static string ShortQuestion(string question) =>
+        question.Length <= 90 ? question : question[..87] + "…";
+
+    private void Dismiss(Guid id) => Notifications.RemoveAll(item => item.Id == id);
+
+    private void Open(JobNotification notification)
+    {
+        Dismiss(notification.Id);
+        Nav.NavigateTo(notification.Url);
+    }
+
+    private void Preview(JobNotification notification) => PreviewNotification = notification;
+
+    private void ClosePreview() => PreviewNotification = null;
+
+    public async ValueTask DisposeAsync()
+    {
+        _disposeCancellation.Cancel();
+        if (_pollingTask is not null)
+        {
+            try { await _pollingTask; }
+            catch (OperationCanceledException) { }
+        }
+        _disposeCancellation.Dispose();
+    }
+
+    private sealed record KnowledgeQuestionJobReference(
+        Guid SubmissionId,
+        string Question,
+        string Language,
+        DateTimeOffset CreatedAt);
+
+    private sealed record JobNotification(
+        Guid Id,
+        string Question,
+        string Title,
+        string Message,
+        string Url,
+        bool IsError,
+        KnowledgeAnswerContent? UnverifiedDraft = null);
+}

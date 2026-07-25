@@ -47,6 +47,15 @@ public class SiteSettings
     /// </summary>
     public string GitHubUrl   { get; set; } = "https://github.com/CodeMaru-Dreamine";
 
+    /// <summary>YouTube 영상 또는 재생목록 URL입니다.</summary>
+    public string YouTubeUrl { get; set; } = string.Empty;
+
+    /// <summary>공개할 샘플 프로젝트 ZIP의 URL입니다.</summary>
+    public string SampleDownloadUrl { get; set; } = string.Empty;
+
+    /// <summary>다운로드 카드에 표시할 샘플 프로젝트 이름입니다.</summary>
+    public string SampleDisplayName { get; set; } = "Dreamine.Sample.001.HelloDreamine";
+
     // Open Graph / SNS 공유
     /// <summary>
     /// \if KO

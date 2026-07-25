@@ -288,6 +288,10 @@ public sealed class JsonOntologyRepository : IOntologyRepository
                 .ToArray();
             int declaredPartial = GetInt(auditRoot, "partialMethods", "declarationOnlyPartialMethodCount");
             int missingOverlayPartial = GetInt(auditRoot, "partialMethods", "missingFromOverlayCount");
+            JsonElement typeAudit = GetObject(auditRoot, "typeAudit");
+            int externalReferenceTypes = CountExternalReferenceTypeIssues(typeAudit);
+            int unresolvedSourceTypes = Math.Max(0,
+                GetInt(typeAudit, "uncorrectableNodeCount") - externalReferenceTypes);
 
             OntologyValidationData data = new()
             {
@@ -309,7 +313,8 @@ public sealed class JsonOntologyRepository : IOntologyRepository
                 DuplicateStableUris = GetInt(auditRoot, "identity", "duplicateStableUriGroupCount"),
                 StableUriTypeConflicts = GetInt(auditRoot, "identity", "stableUriTypeConflictCount"),
                 AutoCorrectedTypes = GetInt(auditRoot, "typeAudit", "autoCorrectedNodeCount"),
-                UncorrectableTypes = GetInt(auditRoot, "typeAudit", "uncorrectableNodeCount"),
+                UncorrectableTypes = unresolvedSourceTypes,
+                ExternalReferenceTypes = externalReferenceTypes,
                 ExcludedGeneratedFiles = GetInt(auditRoot, "generatedSourcePolicy", "excludedGeneratedFileCount"),
                 ExcludedGraphNodes = GetInt(auditRoot, "generatedSourcePolicy", "excludedGraphNodeCount"),
                 LinkmlShaclConforms = GetBool(linkmlRoot, "conforms"),
@@ -531,8 +536,26 @@ public sealed class JsonOntologyRepository : IOntologyRepository
             return "One or more SHACL reports do not conform.";
         if (!fixturesClean)
             return "One or more SHACL positive/negative fixtures failed.";
-        return "SourceAudit contains unresolved mismatches, dangling relations, partial methods, or stable URI conflicts.";
+        if (data.SourceVsOverlayMismatches > 0)
+            return $"{data.SourceVsOverlayMismatches:N0} source/overlay type mismatches require attention.";
+        if (data.SourceDeclarationsMissingOverlay > 0)
+            return $"{data.SourceDeclarationsMissingOverlay:N0} source declarations are missing from the overlay.";
+        if (data.UnclassifiedPartialMethods > 0)
+            return $"{data.UnclassifiedPartialMethods:N0} partial methods are not classified.";
+        if (data.RawDanglingRelations + data.OverlayDanglingRelations > 0)
+            return $"{data.RawDanglingRelations + data.OverlayDanglingRelations:N0} dangling relations require attention.";
+        if (data.DuplicateStableUris + data.StableUriTypeConflicts > 0)
+            return "Stable URI duplicates or type conflicts require attention.";
+        if (data.UncorrectableTypes > 0)
+            return $"{data.UncorrectableTypes:N0} repository source types could not be resolved.";
+        return "SourceAudit contains an unresolved blocking issue.";
     }
+
+    private static int CountExternalReferenceTypeIssues(JsonElement typeAudit) =>
+        GetArray(typeAudit, "unmappedTypeNodes")
+            .Concat(GetArray(typeAudit, "ambiguousTypeNodes"))
+            .Count(issue => GetString(issue, "nodeId").StartsWith("external-", StringComparison.OrdinalIgnoreCase)
+                && string.IsNullOrWhiteSpace(GetString(issue, "path")));
 
     private static JsonElement GetObject(JsonElement root, string property) =>
         root.ValueKind == JsonValueKind.Object && root.TryGetProperty(property, out JsonElement value) ? value : default;

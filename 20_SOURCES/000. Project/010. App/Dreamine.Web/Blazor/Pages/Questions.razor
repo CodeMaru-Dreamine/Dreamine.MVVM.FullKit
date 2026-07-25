@@ -1,0 +1,243 @@
+@page "/questions"
+@namespace DreamineWeb.Blazor.Pages
+@rendermode InteractiveServer
+@inject IKnowledgeQaService KnowledgeQa
+@inject IKnowledgeQuestionJobService QuestionJobs
+@inject UserPreferencesService Prefs
+@inject IJSRuntime JS
+@implements IDisposable
+
+<PageTitle>@(Ko ? "코드 지식 Q&A — Dreamine" : "Code Knowledge Q&A — Dreamine")</PageTitle>
+
+<div class="dw-page dw-questions">
+    <header class="dw-qa-hero">
+        <span class="dw-qa-eyebrow">NATURAL LANGUAGE · CODEX · SERVER REPOSITORY</span>
+        <h1>@(Ko ? "서버 저장소를 직접 검색해 답합니다." : "Answers from a direct server-repository search.")</h1>
+        <p>@(Ko
+            ? "Codex가 서버의 소스 코드를 읽기 전용으로 검색하고, 실제 파일과 줄 번호가 확인된 답변을 저장합니다."
+            : "Codex searches the server source repository read-only and stores answers whose files and line ranges are verified.")</p>
+    </header>
+
+    <section class="dw-qa-section">
+        <div class="dw-qa-section__head">
+            <div><span>@(Ko ? "공개 지식" : "Public knowledge")</span><h2>@(Ko ? "기존 질문 검색" : "Search existing questions")</h2></div>
+            <strong>@(Results?.TotalCount ?? 0)</strong>
+        </div>
+        <form class="dw-qa-search" @onsubmit="SearchAsync" @onsubmit:preventDefault>
+            <input class="dw-input" type="search" @bind="SearchText" placeholder="@(Ko ? "질문·답변·태그 검색…" : "Search questions, answers, and tags…")" />
+            <select class="dw-input" @bind="Category">
+                <option value="">@(Ko ? "모든 카테고리" : "All categories")</option>
+                @foreach (string category in Categories)
+                {
+                    <option value="@category">@category</option>
+                }
+            </select>
+            <button class="dw-btn dw-btn--primary" type="submit">@(Ko ? "검색" : "Search")</button>
+        </form>
+
+        @if (IsLoading)
+        {
+            <div class="dw-qa-state">@(Ko ? "공개 질문을 불러오는 중…" : "Loading published questions…")</div>
+        }
+        else if (Results is null || Results.Items.Count == 0)
+        {
+            <div class="dw-qa-state">@(Ko ? "아직 공개된 질문이 없습니다. 아래에서 첫 질문을 만들어보세요." : "No published question matches yet. Create the first one below.")</div>
+        }
+        else
+        {
+            <div class="dw-qa-grid">
+                @foreach (KnowledgeQuestionListItemViewModel item in Results.Items)
+                {
+                    <a class="dw-qa-card" href="/questions/@item.Id/@item.Slug">
+                        <span class="dw-qa-card__category">@item.Category</span>
+                        <h3>@item.Question</h3>
+                        <p>@item.Summary</p>
+                        <footer>
+                            <span>@(Ko ? "근거" : "Evidence") @item.EvidenceCount</span>
+                            <span>@(Ko ? "관련 코드" : "Symbols") @item.RelatedCodeCount</span>
+                            <span>@(Ko ? "조회" : "Views") @item.ViewCount.ToString("N0")</span>
+                            @if (item.NeedsRevalidation) { <em>@(Ko ? "재검증 필요" : "Needs revalidation")</em> }
+                        </footer>
+                    </a>
+                }
+            </div>
+            @if (Results.TotalPages > 1)
+            {
+                <div class="dw-qa-pagination">
+                    <button disabled="@(Results.Page <= 1)" @onclick="() => LoadPageAsync(Results.Page - 1)">←</button>
+                    <span>@Results.Page / @Results.TotalPages</span>
+                    <button disabled="@(Results.Page >= Results.TotalPages)" @onclick="() => LoadPageAsync(Results.Page + 1)">→</button>
+                </div>
+            }
+        }
+    </section>
+
+    @if (MyQuestions.Count > 0)
+    {
+        <section class="dw-qa-section">
+            <div class="dw-qa-section__head">
+                <div><span>@(Ko ? "이 브라우저에 저장됨" : "Saved in this browser")</span><h2>@(Ko ? "내 저장된 질문" : "My saved questions")</h2></div>
+                <strong>@MyQuestions.Count</strong>
+            </div>
+            <div class="dw-qa-grid">
+                @foreach (KnowledgeAccessibleQuestionViewModel item in MyQuestions)
+                {
+                    <a class="dw-qa-card" href="/questions/@item.Id/@item.Slug?access=@Uri.EscapeDataString(item.AccessKey)">
+                        <span class="dw-qa-card__category">@item.Category · @item.PublicationStatus</span>
+                        <h3>@item.Question</h3>
+                        <p>@item.Summary</p>
+                        <footer><span>@item.RequestDisposition</span><span>@item.CreatedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span></footer>
+                    </a>
+                }
+            </div>
+        </section>
+    }
+
+    <section class="dw-qa-section dw-qa-ask">
+        <div class="dw-qa-section__head">
+            <div><span>@(Ko ? "답이 없나요?" : "No answer yet?")</span><h2>@(Ko ? "새 질문" : "Ask a new question")</h2></div>
+        </div>
+        <p>@(Ko
+            ? "코드 요소와 프로젝트 이름을 함께 적으면 더 정확히 검색합니다. 최대 10분 동안 백그라운드에서 저장소를 확인하며, 다른 페이지를 보는 동안 답변이 완성되면 알려드립니다."
+            : "Include a symbol and project name for a more precise search. Repository analysis continues in the background for up to 10 minutes, and you will be notified when the answer is ready.")</p>
+        <EditForm Model="@QuestionForm" OnValidSubmit="@AskAsync">
+            <InputTextArea class="dw-input dw-qa-question" @bind-Value="QuestionForm.Question" rows="4" maxlength="1000"
+                           placeholder="@(Ko ? "Dreamine 코드에 관해 질문하세요…" : "Ask about Dreamine code…")" />
+            <div class="dw-qa-ask__actions">
+                <small>@(IsSubmitting
+                    ? (Ko ? "질문을 백그라운드 작업으로 등록하고 있습니다…" : "Starting the background answer job…")
+                    : (Ko ? "새 답변은 먼저 비공개 또는 검토 대기 상태로 저장됩니다." : "New answers are stored privately or pending review first."))</small>
+                <button class="dw-btn dw-btn--primary" type="submit" disabled="@IsSubmitting">
+                    @(IsSubmitting
+                        ? (Ko ? "등록 중…" : "Starting…")
+                        : (Ko ? "저장소 검색 답변 만들기" : "Search repository and answer"))
+                </button>
+            </div>
+        </EditForm>
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage))
+        {
+            <div class="dw-qa-error"><strong>@(Ko ? "답변을 생성하지 못했습니다." : "Could not generate the answer.")</strong><span>@ErrorMessage</span></div>
+        }
+        @if (!string.IsNullOrWhiteSpace(QueuedMessage))
+        {
+            <div class="dw-qa-queued"><strong>@(Ko ? "백그라운드 작업을 시작했습니다." : "Background job started.")</strong><span>@QueuedMessage</span></div>
+        }
+    </section>
+</div>
+
+@code {
+    private static readonly string[] Categories =
+    [
+        "Dreamine 입문", "MVVM 구조", "ViewModel", "Model", "Event", "Command",
+        "호출 및 전달 흐름", "상속과 인터페이스 구현", "의존성", "오류 및 문제 해결",
+        "아직 충분히 답변되지 않은 질문"
+    ];
+    private KnowledgeQuestionSearchViewModel? Results { get; set; }
+    private string SearchText { get; set; } = string.Empty;
+    private string Category { get; set; } = string.Empty;
+    private QuestionFormModel QuestionForm { get; } = new();
+    private string ErrorMessage { get; set; } = string.Empty;
+    private bool IsLoading { get; set; }
+    private bool IsSubmitting { get; set; }
+    private string QueuedMessage { get; set; } = string.Empty;
+    private IReadOnlyList<KnowledgeAccessibleQuestionViewModel> MyQuestions { get; set; } = [];
+    private bool AccessLoaded { get; set; }
+    private bool Ko => Prefs.IsKorean;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Prefs.Changed += OnLanguageChanged;
+        await LoadPageAsync(1);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || AccessLoaded)
+            return;
+        AccessLoaded = true;
+        try
+        {
+            KnowledgeQuestionAccessReference[] references = await JS.InvokeAsync<KnowledgeQuestionAccessReference[]>(
+                "dwQuestionAccess.load");
+            MyQuestions = await KnowledgeQa.GetAccessibleAsync(references, CancellationToken.None);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (JSDisconnectedException) { }
+    }
+
+    private async Task SearchAsync() => await LoadPageAsync(1);
+
+    private async Task LoadPageAsync(int page)
+    {
+        IsLoading = true;
+        try
+        {
+            Results = await KnowledgeQa.SearchPublishedAsync(SearchText, Category, page, 12, CancellationToken.None);
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task AskAsync()
+    {
+        if (IsSubmitting)
+            return;
+
+        IsSubmitting = true;
+        ErrorMessage = string.Empty;
+        QueuedMessage = string.Empty;
+        try
+        {
+            string question = QuestionForm.Question.Trim();
+            if (question.Length == 0)
+            {
+                ErrorMessage = Ko ? "질문을 입력해 주세요." : "Enter a question.";
+                return;
+            }
+
+            await JS.InvokeVoidAsync("dwQuestionJobs.requestPermission");
+            KnowledgeQuestionJobViewModel job = QuestionJobs.Enqueue(
+                new KnowledgeQuestionRequest(question, Ko ? "ko" : "en", Guid.NewGuid()));
+            await JS.InvokeVoidAsync("dwQuestionJobs.save", new KnowledgeQuestionJobReference(
+                job.SubmissionId, job.Question, job.Language, job.CreatedAt));
+            QueuedMessage = Ko
+                ? "최대 10분 동안 서버에서 계속 처리합니다. 다른 페이지로 이동하셔도 완료 알림을 받을 수 있습니다."
+                : "The server will keep working for up to 10 minutes. You can navigate elsewhere and will be notified when it finishes.";
+            QuestionForm.Question = string.Empty;
+        }
+        catch (InvalidOperationException exception)
+        {
+            ErrorMessage = exception.Message;
+        }
+        catch (Exception)
+        {
+            ErrorMessage = Ko
+                ? "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요."
+                : "The request could not be completed. Please try again shortly.";
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Prefs.Changed -= OnLanguageChanged;
+    }
+
+    private sealed record KnowledgeQuestionJobReference(
+        Guid SubmissionId,
+        string Question,
+        string Language,
+        DateTimeOffset CreatedAt);
+
+    private sealed class QuestionFormModel
+    {
+        public string Question { get; set; } = string.Empty;
+    }
+}

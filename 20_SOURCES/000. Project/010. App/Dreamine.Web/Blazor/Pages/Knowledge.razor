@@ -125,7 +125,7 @@
                                 }
                                 @if (project.DoxygenAvailable && !string.IsNullOrWhiteSpace(project.GetDoxygenUrl(Language)))
                                 {
-                                    <a href="@project.GetDoxygenUrl(Language)">Doxygen →</a>
+                                    <a href="@project.GetDoxygenUrl(Language)" data-enhance-nav="false">Doxygen →</a>
                                 }
                                 @if (project.KnowledgeGraphAvailable && !string.IsNullOrWhiteSpace(project.GetGraphUrl(Language)))
                                 {
