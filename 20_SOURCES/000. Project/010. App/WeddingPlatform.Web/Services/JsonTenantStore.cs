@@ -1,4 +1,5 @@
 using System.IO;
+using System.Collections.Concurrent;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Wedding.Common;
@@ -34,6 +35,8 @@ public sealed class JsonTenantStore : ITenantStore
     /// \endif
     /// </summary>
     private static readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly ConcurrentDictionary<string, string> _readCache =
+        new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// \if KO
@@ -135,13 +138,7 @@ public sealed class JsonTenantStore : ITenantStore
     {
         var path = ConfigPath(slug);
         if (!File.Exists(path)) return null;
-
-        await _gate.WaitAsync(ct).ConfigureAwait(false);
-        try
-        {
-            return await ReadTenantAsync(path, ct).ConfigureAwait(false);
-        }
-        finally { _gate.Release(); }
+        return await ReadTenantAsync(path, ct).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -178,7 +175,6 @@ public sealed class JsonTenantStore : ITenantStore
             var cfg = Path.Combine(dir, "config.json");
             if (!File.Exists(cfg)) continue;
 
-            await _gate.WaitAsync(ct).ConfigureAwait(false);
             try
             {
                 var t = await ReadTenantAsync(cfg, ct).ConfigureAwait(false);
@@ -188,7 +184,6 @@ public sealed class JsonTenantStore : ITenantStore
             {
                 LogTenantReadError(cfg, ex);
             }
-            finally { _gate.Release(); }
         }
         return list;
     }
@@ -241,6 +236,7 @@ public sealed class JsonTenantStore : ITenantStore
 
             File.Copy(tmp, ConfigPath(config.Slug), overwrite: true);
             File.Delete(tmp);
+            _readCache.TryRemove(ConfigPath(config.Slug), out _);
         }
         finally { _gate.Release(); }
     }
@@ -315,6 +311,7 @@ public sealed class JsonTenantStore : ITenantStore
     public Task DeleteAsync(string slug, CancellationToken ct = default)
     {
         var dir = GetTenantDataPath(slug);
+        _readCache.TryRemove(ConfigPath(slug), out _);
         if (Directory.Exists(dir))
             Directory.Delete(dir, recursive: true);
         return Task.CompletedTask;
@@ -406,9 +403,13 @@ public sealed class JsonTenantStore : ITenantStore
     /// <para>The <c>Task&lt;TenantConfig?&gt;</c> result produced by the read tenant async operation.</para>
     /// \endif
     /// </returns>
-    private static async Task<TenantConfig?> ReadTenantAsync(string path, CancellationToken ct)
+    private async Task<TenantConfig?> ReadTenantAsync(string path, CancellationToken ct)
     {
-        var json = await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
+        if (!_readCache.TryGetValue(path, out var json))
+        {
+            json = await File.ReadAllTextAsync(path, ct).ConfigureAwait(false);
+            _readCache.TryAdd(path, json);
+        }
         LogLegacyLayoutModeFallback(path, json);
         return JsonSerializer.Deserialize<TenantConfig>(json, _jsonOpts);
     }

@@ -14,6 +14,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="load-tests\**\*.cs" />
+    <Content Remove="load-tests\**\*" />
+    <EmbeddedResource Remove="load-tests\**\*" />
+    <None Remove="load-tests\**\*" />
     <Content Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

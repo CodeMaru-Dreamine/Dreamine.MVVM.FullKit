@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO;
+using System.Collections.Concurrent;
 using System.Text;
 using WeddingPlatform.Models;
 
@@ -33,6 +34,8 @@ public sealed class CsvGuestbookStorage : IGuestbookStorage
     /// \endif
     /// </summary>
     private static readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly ConcurrentDictionary<string, IReadOnlyList<GuestbookEntry>> _readCache =
+        new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>
     /// \if KO
@@ -87,32 +90,35 @@ public sealed class CsvGuestbookStorage : IGuestbookStorage
     public async Task<IReadOnlyList<GuestbookEntry>> LoadAsync(string slug, CancellationToken ct = default)
     {
         var path = CsvPath(slug);
-        await _gate.WaitAsync(ct).ConfigureAwait(false);
-        try
+        if (_readCache.TryGetValue(path, out var cached)) return cached;
+
+        var result = new List<GuestbookEntry>();
+        if (!File.Exists(path))
         {
-            var result = new List<GuestbookEntry>();
-            if (!File.Exists(path)) return result;
-
-            using var sr = new StreamReader(path, Encoding.UTF8);
-            bool first = true;
-            string? line;
-            while ((line = await sr.ReadLineAsync().ConfigureAwait(false)) != null)
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                if (first && line.TrimStart().StartsWith("Name,")) { first = false; continue; }
-                first = false;
-
-                var f = ParseCsvLine(line);
-                if (f.Count < 4) continue;
-                if (!DateTime.TryParseExact(f[3], "yyyy-MM-dd HH:mm:ss",
-                        CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var when))
-                    when = DateTime.Now;
-
-                result.Add(new GuestbookEntry { Name = f[0], Contact = f[1], Message = f[2], CreatedLocal = when });
-            }
+            _readCache.TryAdd(path, result);
             return result;
         }
-        finally { _gate.Release(); }
+
+        using var sr = new StreamReader(path, Encoding.UTF8);
+        bool first = true;
+        string? line;
+        while ((line = await sr.ReadLineAsync(ct).ConfigureAwait(false)) != null)
+        {
+            if (string.IsNullOrWhiteSpace(line)) continue;
+            if (first && line.TrimStart().StartsWith("Name,")) { first = false; continue; }
+            first = false;
+
+            var f = ParseCsvLine(line);
+            if (f.Count < 4) continue;
+            if (!DateTime.TryParseExact(f[3], "yyyy-MM-dd HH:mm:ss",
+                    CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out var when))
+                when = DateTime.Now;
+
+            result.Add(new GuestbookEntry { Name = f[0], Contact = f[1], Message = f[2], CreatedLocal = when });
+        }
+
+        _readCache.TryAdd(path, result);
+        return result;
     }
 
     /// <summary>
@@ -177,6 +183,7 @@ public sealed class CsvGuestbookStorage : IGuestbookStorage
             }
             File.Copy(tmp, path, overwrite: true);
             File.Delete(tmp);
+            _readCache[path] = entries.ToArray();
         }
         finally { _gate.Release(); }
     }

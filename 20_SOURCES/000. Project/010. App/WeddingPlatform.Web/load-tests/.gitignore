@@ -1,0 +1,12 @@
+bin/
+obj/
+results/
+
+# Local Codex coordination artifacts are not product source.
+CLIENT-CODEX-RESPONSE-*.md
+FROM-CLIENT-CODEX-*.md
+PIPELINE-*.md
+PIPELINE-*.json
+SERVER-CODEX-*.md
+S*-*.md
+RESULTS-*.md
