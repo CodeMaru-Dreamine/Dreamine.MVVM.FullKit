@@ -1,0 +1,15 @@
+file 'D:/Work/Dreamine.MVVM.FullKit/video_work/wedding_ad_review/ad_slides/slide_01.png'
+duration 5.2
+file 'D:/Work/Dreamine.MVVM.FullKit/video_work/wedding_ad_review/ad_slides/slide_02.png'
+duration 5.2
+file 'D:/Work/Dreamine.MVVM.FullKit/video_work/wedding_ad_review/ad_slides/slide_03.png'
+duration 5.2
+file 'D:/Work/Dreamine.MVVM.FullKit/video_work/wedding_ad_review/ad_slides/slide_04.png'
+duration 5.2
+file 'D:/Work/Dreamine.MVVM.FullKit/video_work/wedding_ad_review/ad_slides/slide_05.png'
+duration 5.2
+file 'D:/Work/Dreamine.MVVM.FullKit/video_work/wedding_ad_review/ad_slides/slide_06.png'
+duration 5.2
+file 'D:/Work/Dreamine.MVVM.FullKit/video_work/wedding_ad_review/ad_slides/slide_07.png'
+duration 5.2
+file 'D:/Work/Dreamine.MVVM.FullKit/video_work/wedding_ad_review/ad_slides/slide_07.png'

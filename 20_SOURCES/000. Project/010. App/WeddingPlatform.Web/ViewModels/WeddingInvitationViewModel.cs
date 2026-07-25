@@ -319,6 +319,25 @@ public sealed class WeddingInvitationViewModel
     /// \endif
     /// </summary>
     public IReadOnlyList<StoryChapter> StoryChapters => DesignSettings.StoryChapters;
+
+    /// <summary>포토북 레이아웃 전용 페이지 목록입니다. PhotoBook 이 아니면 참조하지 않아도 됩니다.</summary>
+    public IReadOnlyList<PhotoBookPage> PhotoBookPages => DesignSettings.PhotoBookPages;
+
+    /// <summary>카드 레이아웃 전용 강조 카드 목록입니다. Card 가 아니면 참조하지 않아도 됩니다.</summary>
+    public IReadOnlyList<CardHighlight> CardHighlights => DesignSettings.CardHighlights;
+
+    /// <summary>
+    /// 지정한 섹션 키에 매핑된 카드 강조 오버라이드를 반환합니다. 매칭이 없으면 null 입니다.
+    /// 여러 항목이 같은 섹션에 매핑되어 있으면 Order 가 낮은 항목이 우선합니다.
+    /// </summary>
+    public CardHighlight? ResolveCardHighlight(string sectionKey)
+    {
+        if (string.IsNullOrWhiteSpace(sectionKey)) return null;
+        return DesignSettings.CardHighlights
+            .Where(x => string.Equals(x.SectionKey, sectionKey, StringComparison.OrdinalIgnoreCase))
+            .OrderBy(x => x.Order)
+            .FirstOrDefault();
+    }
     /// <summary>
     /// \if KO
     /// <para>Theme Name 값을 가져옵니다.</para>
@@ -374,8 +393,28 @@ public sealed class WeddingInvitationViewModel
     /// <para>Gets the ordered sections value.</para>
     /// \endif
     /// </summary>
-    public IReadOnlyList<string> OrderedSections =>
-        WeddingSectionOrderCatalog.NormalizeInvitationOrder(DesignSettings.SectionOrder, LayoutDescriptor.SupportedSections);
+    public IReadOnlyList<string> OrderedSections
+    {
+        get
+        {
+            var ordered = WeddingSectionOrderCatalog.NormalizeInvitationOrder(
+                DesignSettings.SectionOrder,
+                LayoutDescriptor.SupportedSections);
+            var visibility = DesignSettings.SectionVisibility;
+            if (visibility is null || visibility.Count == 0)
+            {
+                return ordered;
+            }
+
+            // hero 는 항상 노출 유지(각 레이아웃의 대표 영역). 그 외 섹션은 명시적으로 false 인 경우에만 숨김.
+            return ordered
+                .Where(section =>
+                    string.Equals(section, "hero", StringComparison.OrdinalIgnoreCase)
+                    || !visibility.TryGetValue(section, out var visible)
+                    || visible)
+                .ToList();
+        }
+    }
     /// <summary>
     /// \if KO
     /// <para>Ceremony Note Html 값을 가져옵니다.</para>

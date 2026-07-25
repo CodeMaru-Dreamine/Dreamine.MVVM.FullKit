@@ -265,6 +265,15 @@ public sealed class JsonMediaMigrationService : IMediaMigrationService
         status.State = MediaMigrationState.Pending;
         status.Message = "변환 대기";
         status.UpdatedAt = DateTime.Now;
+        // "이미지 최적화 실행"은 정책이 바뀐 뒤 다시 누를 수 있는 명시적인 전체
+        // 재최적화 명령이다. 이전 완료 상태를 유지하면 실제 파일은 전혀 다시
+        // 인코딩되지 않아 품질/해상도 정책을 강화해도 용량 변화가 없었다.
+        foreach (var file in status.Files)
+        {
+            file.State = MediaMigrationState.Pending;
+            file.Message = "재최적화 대기";
+            file.UpdatedAt = DateTime.Now;
+        }
         await SaveAsync(all, ct).ConfigureAwait(false);
         StartBackground(slug);
     }
@@ -304,18 +313,24 @@ public sealed class JsonMediaMigrationService : IMediaMigrationService
     public async Task RetryTenantAsync(string slug, CancellationToken ct = default)
     {
         var all = await LoadAsync(ct).ConfigureAwait(false);
-        if (all.TryGetValue(slug, out var status))
+        if (!all.TryGetValue(slug, out var status))
         {
-            foreach (var file in status.Files.Where(x => x.State == MediaMigrationState.Failed))
-            {
-                file.State = MediaMigrationState.Pending;
-                file.Message = "재시도 대기";
-                file.UpdatedAt = DateTime.Now;
-            }
+            await QueueTenantAsync(slug, ct).ConfigureAwait(false);
+            return;
         }
 
+        foreach (var file in status.Files.Where(x => x.State == MediaMigrationState.Failed))
+        {
+            file.State = MediaMigrationState.Pending;
+            file.Message = "재시도 대기";
+            file.UpdatedAt = DateTime.Now;
+        }
+
+        status.State = MediaMigrationState.Pending;
+        status.Message = "실패 항목 재시도 대기";
+        status.UpdatedAt = DateTime.Now;
         await SaveAsync(all, ct).ConfigureAwait(false);
-        await QueueTenantAsync(slug, ct).ConfigureAwait(false);
+        StartBackground(slug);
     }
 
     /// <summary>
@@ -495,7 +510,22 @@ public sealed class JsonMediaMigrationService : IMediaMigrationService
                 }
 
                 File.Move(tempPath, finalPath, overwrite: true);
-                File.Copy(finalPath, Path.Combine(thumbDir, targetName), overwrite: true);
+
+                // 썸네일 폴더에 최적화 원본을 그대로 복사하면 이미지 저장량이
+                // 정확히 두 배 가까이 늘어난다. 목록 표시에 충분한 작은 썸네일을
+                // 별도로 인코딩해 전체 저장량을 실질적으로 줄인다.
+                var thumbPath = Path.Combine(thumbDir, targetName);
+                var tempThumbPath = Path.Combine(thumbDir, $"{Path.GetFileNameWithoutExtension(targetName)}.thumb.tmp.{outputFormat}");
+                var thumbPolicy = CreateThumbnailPolicy(policy);
+                var thumbResult = await _imageOptimization
+                    .OptimizeAsync(finalPath, tempThumbPath, thumbPolicy, ct)
+                    .ConfigureAwait(false);
+                if (!thumbResult.Succeeded || !File.Exists(tempThumbPath) || new FileInfo(tempThumbPath).Length == 0)
+                {
+                    if (File.Exists(tempThumbPath)) File.Delete(tempThumbPath);
+                    throw new InvalidOperationException($"썸네일 생성 실패: {thumbResult.Message}");
+                }
+                File.Move(tempThumbPath, thumbPath, overwrite: true);
 
                 var index = config.GalleryFileNames.FindIndex(x => string.Equals(x, fileName, StringComparison.OrdinalIgnoreCase));
                 if (index >= 0)
@@ -509,6 +539,14 @@ public sealed class JsonMediaMigrationService : IMediaMigrationService
                     File.Delete(sourcePath);
                     var oldThumb = Path.Combine(thumbDir, fileName);
                     if (File.Exists(oldThumb)) File.Delete(oldThumb);
+                }
+
+                // 보관 정책을 끈 뒤 재실행하면 과거 정책으로 남아 있던 원본도
+                // 제거해야 관리자 화면의 실제 저장 용량이 줄어든다.
+                if (!policy.KeepOriginalImages)
+                {
+                    var retainedOriginal = Path.Combine(originalDir, fileName);
+                    if (File.Exists(retainedOriginal)) File.Delete(retainedOriginal);
                 }
 
                 fileStatus.TargetFileName = targetName;
@@ -548,6 +586,22 @@ public sealed class JsonMediaMigrationService : IMediaMigrationService
         status.UpdatedAt = DateTime.Now;
         await SaveAsync(all, ct).ConfigureAwait(false);
     }
+
+    private static EffectiveMediaPolicy CreateThumbnailPolicy(EffectiveMediaPolicy policy) => new()
+    {
+        ImageMaxCount = policy.ImageMaxCount,
+        ImageOptimizedMaxStorageMb = policy.ImageOptimizedMaxStorageMb,
+        ImageOriginalMaxStorageMb = policy.ImageOriginalMaxStorageMb,
+        ImageMaxLongSidePx = Math.Min(policy.ImageMaxLongSidePx <= 0 ? 1920 : policy.ImageMaxLongSidePx, 480),
+        ImageOutputFormat = policy.ImageOutputFormat,
+        ImageQuality = Math.Min(policy.ImageQuality <= 0 ? 80 : policy.ImageQuality, 68),
+        StripExif = true,
+        KeepOriginalImages = false,
+        VideoMaxFileSizeMb = policy.VideoMaxFileSizeMb,
+        VideoMaxCount = policy.VideoMaxCount,
+        VideoMaxStorageMb = policy.VideoMaxStorageMb,
+        KeepOriginalVideos = policy.KeepOriginalVideos
+    };
 
     /// <summary>
     /// \if KO

@@ -1,0 +1,350 @@
+@namespace WeddingPlatform.Blazor.Components
+@using Wedding.Common
+@using WeddingPlatform.Models
+@using WeddingPlatform.ViewModels
+@implements IAsyncDisposable
+
+@*
+    포토북 레이아웃 — 앨범을 넘겨보는 감각을 세로 스크롤로 옮긴 프리미엄 레이아웃.
+    Gallery/Story 와 달리 사진 한 장 = 페이지 한 장 단위로 크게 표시한다.
+    Gallery/Story 섹션은 자체 페이지로 커스텀 렌더링하고, Video/Guestbook 는 InvitationSections 에 위임한다.
+*@
+<section class="wedding-layout-photobook @Vm.LayoutDescriptor.CssClass">
+    <section class="wedding-photobook-cover" role="banner">
+        @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
+        {
+            <img class="wedding-photobook-cover__image" src="@Vm.HeroImageUrl" alt="@Vm.CoupleName 대표 사진" />
+        }
+        else
+        {
+            <div class="wedding-photobook-cover__image wedding-photobook-cover__image--empty"></div>
+        }
+        <div class="wedding-photobook-cover__panel">
+            <p class="wedding-layout-kicker">@Vm.HeroTitle</p>
+            <h1>@Vm.CoupleName</h1>
+            <p>@Vm.WeddingDate.ToString("yyyy년 MM월 dd일")</p>
+            @if (!string.IsNullOrWhiteSpace(Vm.WeddingTime))
+            {
+                <p class="wedding-layout-muted">@Vm.WeddingTime</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(Vm.VenueName))
+            {
+                <p class="wedding-layout-muted">@Vm.VenueName</p>
+            }
+        </div>
+    </section>
+
+    @foreach (var activeSection in Vm.OrderedSections.Where(x => x != "hero"))
+    {
+        if (activeSection == "gallery")
+        {
+            <section class="wedding-photobook-pages" id="gallery">
+                <div class="wedding-layout-heading wedding-photobook-heading">
+                    <p class="wedding-layout-kicker">Album</p>
+                    <h2>사진첩</h2>
+                    @if (VisibleCount > 0)
+                    {
+                        <span>@VisibleCount / @TotalCount 페이지</span>
+                    }
+                </div>
+
+                @if (TotalCount == 0 && Vm.PhotoBookPages.All(p => string.IsNullOrWhiteSpace(p.PhotoFileName)))
+                {
+                    <div class="wedding-photobook-empty">아직 등록된 사진이 없습니다. 사진을 업로드하거나 포토북 페이지에서 사진을 지정해 주세요.</div>
+                }
+                else
+                {
+                    if (TotalCount > 0)
+                    {
+                        <div class="w-gallery__controls">
+                            <button class="w-btn" type="button" @onclick="ToggleAutoPlay">
+                                @(_autoPlaying ? "⏸ 정지" : "▶ 자동재생")
+                            </button>
+                        </div>
+                    }
+                    <div class="wedding-photobook-scroller">
+                        @* 관리자에서 지정한 페이지를 우선 표시. 사진이 비면 갤러리 순서에서 자동 보충한다. *@
+                        @{
+                            var featuredPages = ResolveFeaturedPages();
+                        }
+                        @for (var i = 0; i < featuredPages.Count; i++)
+                        {
+                            var featured = featuredPages[i];
+                            <figure class="wedding-photobook-page wedding-photobook-page--featured">
+                                @if (featured.Photo is not null)
+                                {
+                                    var featuredIndex = featured.PhotoIndex;
+                                    <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPhoto(featuredIndex)" aria-label="@featured.Page.Caption 페이지 크게 보기">
+                                        <img src="@featured.Photo.ThumbUrl" alt="@featured.Page.Caption" loading="@(i == 0 ? "eager" : "lazy")" />
+                                    </button>
+                                }
+                                else
+                                {
+                                    <div class="wedding-photobook-page__placeholder">사진을 지정하거나 갤러리에 사진을 업로드하세요.</div>
+                                }
+                                <figcaption class="wedding-photobook-page__caption">@featured.Page.Caption</figcaption>
+                                @if (!string.IsNullOrWhiteSpace(featured.Page.Body))
+                                {
+                                    <p class="wedding-photobook-page__body">@featured.Page.Body</p>
+                                }
+                            </figure>
+                        }
+
+                        @* 지정 페이지에서 이미 노출한 사진은 아래 목록에서 제외한다. *@
+                        @{
+                            var featuredIndexSet = featuredPages
+                                .Where(x => x.PhotoIndex >= 0)
+                                .Select(x => x.PhotoIndex)
+                                .ToHashSet();
+                            var extraPageBudget = Math.Max(0, VisibleCount - featuredPages.Count);
+                            var extras = 0;
+                        }
+                        @for (var i = 0; i < TotalCount && extras < extraPageBudget; i++)
+                        {
+                            if (featuredIndexSet.Contains(i)) continue;
+                            var pageIndex = i;
+                            var photo = Vm.AllPhotos[pageIndex];
+                            <figure class="wedding-photobook-page">
+                                <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPhoto(pageIndex)" aria-label="사진 @(pageIndex + 1) 크게 보기">
+                                    <img src="@photo.ThumbUrl" alt="사진 @(pageIndex + 1)" loading="lazy" />
+                                </button>
+                                <figcaption class="wedding-photobook-page__caption">Page @(pageIndex + 1)</figcaption>
+                            </figure>
+                            extras++;
+                        }
+                    </div>
+                    @if (VisibleCount < TotalCount)
+                    {
+                        <div class="wedding-layout-more">
+                            <button type="button" class="w-btn w-btn--primary" @onclick="LoadMore">
+                                페이지 더 보기 (+@Math.Min(PageSize, TotalCount - VisibleCount))
+                            </button>
+                        </div>
+                    }
+                }
+            </section>
+        }
+        else
+        {
+            @* story 등 기타 섹션은 모든 레이아웃 공통 InvitationSections 로 위임한다. 포토북 챕터 개념은 PhotoBookPages 로 이동했다. *@
+            <div class="wedding-photobook-generic">
+                <InvitationSections Slug="@Slug"
+                                    Vm="@Vm"
+                                    VmGuest="@VmGuest"
+                                    IsTabbed="true"
+                                    ActiveSection="@activeSection"
+                                    PauseMusicRequested="@PauseMusicRequested" />
+            </div>
+        }
+    }
+    <PhotoLightbox Photos="@Vm.AllPhotos"
+                   IsOpen="@_photoLightboxOpen"
+                   CurrentIndex="@_photoLightboxIndex"
+                   CurrentIndexChanged="OnPhotoIndexChanged"
+                   Closed="ClosePhoto" />
+</section>
+
+@code {
+    /// <summary>
+    /// \if KO
+    /// <para>청첩장 슬러그 값을 나타냅니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Represents the invitation slug.</para>
+    /// \endif
+    /// </summary>
+    [Parameter, EditorRequired] public string Slug { get; set; } = "";
+
+    /// <summary>
+    /// \if KO
+    /// <para>청첩장 표시용 뷰 모델입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The invitation view model used for rendering.</para>
+    /// \endif
+    /// </summary>
+    [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
+
+    /// <summary>
+    /// \if KO
+    /// <para>방명록 뷰 모델입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The guestbook view model.</para>
+    /// \endif
+    /// </summary>
+    [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
+
+    /// <summary>
+    /// \if KO
+    /// <para>배경 음악 일시 정지 요청 콜백입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Callback that requests pausing the background music.</para>
+    /// \endif
+    /// </summary>
+    [Parameter] public EventCallback PauseMusicRequested { get; set; }
+
+    private const int InitialCount = 8;
+    private const int PageSize = 8;
+
+    /// <summary>렌더링용 페이지 뷰 모델. 관리자가 지정한 페이지와 매칭된 사진(있으면 갤러리에서의 인덱스 포함)을 담습니다.</summary>
+    private sealed record FeaturedPage(PhotoBookPage Page, PhotoInfo? Photo, int PhotoIndex);
+
+    private int _visibleCount = InitialCount;
+    private bool _photoLightboxOpen;
+    private int _photoLightboxIndex;
+    private bool _autoPlaying;
+    private CancellationTokenSource? _autoPlayCts;
+
+    private int TotalCount => Vm.AllPhotos.Count;
+    private int VisibleCount => Math.Min(_visibleCount, TotalCount);
+
+    private void LoadMore()
+        => _visibleCount = Math.Min(_visibleCount + PageSize, TotalCount);
+
+    /// <summary>
+    /// 관리자가 지정한 포토북 페이지를 렌더링 순서대로 해석합니다. 각 페이지의 PhotoFileName 이 갤러리에 존재하면 그 사진을 매칭하고,
+    /// 비어 있으면 아직 사용되지 않은 갤러리 사진을 순서대로 자동 보충합니다. 갤러리가 완전히 비면 사진 없이 캡션과 본문만 렌더링합니다.
+    /// </summary>
+    private List<FeaturedPage> ResolveFeaturedPages()
+    {
+        var pages = Vm.PhotoBookPages;
+        if (pages.Count == 0)
+        {
+            return new List<FeaturedPage>();
+        }
+
+        var photos = Vm.AllPhotos;
+        var used = new HashSet<int>();
+        var result = new List<FeaturedPage>(pages.Count);
+
+        foreach (var page in pages)
+        {
+            var matchedIndex = -1;
+
+            if (!string.IsNullOrWhiteSpace(page.PhotoFileName))
+            {
+                for (var i = 0; i < photos.Count; i++)
+                {
+                    if (string.Equals(photos[i].FileName, page.PhotoFileName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        matchedIndex = i;
+                        break;
+                    }
+                }
+            }
+
+            if (matchedIndex < 0)
+            {
+                for (var i = 0; i < photos.Count; i++)
+                {
+                    if (used.Contains(i)) continue;
+                    matchedIndex = i;
+                    break;
+                }
+            }
+
+            if (matchedIndex >= 0)
+            {
+                used.Add(matchedIndex);
+                result.Add(new FeaturedPage(page, photos[matchedIndex], matchedIndex));
+            }
+            else
+            {
+                result.Add(new FeaturedPage(page, null, -1));
+            }
+        }
+
+        return result;
+    }
+
+    private void OpenPhoto(PhotoInfo photo)
+    {
+        var index = Vm.AllPhotos.ToList().FindIndex(p => string.Equals(p.FileName, photo.FileName, StringComparison.OrdinalIgnoreCase));
+        OpenPhoto(index < 0 ? 0 : index);
+    }
+
+    private void OpenPhoto(int index)
+    {
+        _photoLightboxIndex = Math.Clamp(index, 0, Math.Max(0, TotalCount - 1));
+        _photoLightboxOpen = TotalCount > 0;
+    }
+
+    private async Task ClosePhoto()
+    {
+        await StopAutoPlay();
+        _photoLightboxOpen = false;
+    }
+
+    private void OnPhotoIndexChanged(int index) => _photoLightboxIndex = index;
+
+    private async Task ToggleAutoPlay()
+    {
+        if (_autoPlaying)
+        {
+            await StopAutoPlay();
+        }
+        else
+        {
+            await StartAutoPlay();
+        }
+    }
+
+    private Task StartAutoPlay()
+    {
+        if (TotalCount == 0 || _autoPlaying) return Task.CompletedTask;
+
+        if (!_photoLightboxOpen)
+        {
+            _photoLightboxIndex = 0;
+            _photoLightboxOpen = true;
+        }
+
+        _autoPlaying = true;
+        _autoPlayCts = new CancellationTokenSource();
+        var token = _autoPlayCts.Token;
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    await Task.Delay(Vm.GalleryAutoPlayMs, token).ConfigureAwait(false);
+                    await InvokeAsync(() =>
+                    {
+                        if (_photoLightboxOpen && TotalCount > 0)
+                        {
+                            _photoLightboxIndex = (_photoLightboxIndex + 1) % TotalCount;
+                            StateHasChanged();
+                        }
+                    });
+                }
+            }
+            catch (TaskCanceledException) { }
+        }, token);
+
+        return Task.CompletedTask;
+    }
+
+    private Task StopAutoPlay()
+    {
+        _autoPlaying = false;
+        _autoPlayCts?.Cancel();
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// \if KO
+    /// <para>비동기 자원 정리를 수행합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Performs asynchronous cleanup.</para>
+    /// \endif
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        await StopAutoPlay();
+        _autoPlayCts?.Dispose();
+    }
+}

@@ -1,0 +1,15 @@
+@page "/"
+
+<PageTitle>Dreamine Blazor</PageTitle>
+
+<main class="dreamine-page">
+    <section class="dreamine-card">
+        <div class="dreamine-product">DREAMINE BLAZOR</div>
+        <h1>@ViewModel.Message</h1>
+        <p>@ViewModel.StatusMessage</p>
+        <div class="dreamine-actions">
+            <button @onclick="OnOk">확인</button>
+            <button @onclick="OnCancel">취소</button>
+        </div>
+    </section>
+</main>

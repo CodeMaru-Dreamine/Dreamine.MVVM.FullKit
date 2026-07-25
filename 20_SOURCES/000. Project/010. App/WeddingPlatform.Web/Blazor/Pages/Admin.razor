@@ -238,7 +238,8 @@
                             <div class="w-section-order-list">
                                 @foreach (var section in OrderedDesignSections)
                                 {
-                                    <div class="w-section-order-item @(section == "hero" ? "is-fixed" : "")">
+                                    var isSectionVisible = IsSectionVisible(section);
+                                    <div class="w-section-order-item @(section == "hero" ? "is-fixed" : "") @(!isSectionVisible ? "is-hidden" : "")">
                                         <span class="w-section-order-item__icon">@WeddingSectionOrderCatalog.GetIcon(section)</span>
                                         <span class="w-section-order-item__label">@WeddingSectionOrderCatalog.GetLabel(section)</span>
                                         <div class="w-section-order-item__actions">
@@ -250,6 +251,12 @@
                                             {
                                                 <button type="button" class="w-btn w-btn--sm" @onclick="() => MoveSection(section, -1)">위</button>
                                                 <button type="button" class="w-btn w-btn--sm" @onclick="() => MoveSection(section, 1)">아래</button>
+                                                <button type="button"
+                                                        class="w-btn w-btn--sm @(isSectionVisible ? "" : "w-btn--muted")"
+                                                        title="@(isSectionVisible ? "이 섹션을 청첩장에서 숨깁니다" : "이 섹션을 청첩장에 다시 표시합니다")"
+                                                        @onclick="() => ToggleSectionVisibility(section)">
+                                                    @(isSectionVisible ? "숨김" : "표시")
+                                                </button>
                                             }
                                         </div>
                                     </div>
@@ -378,6 +385,140 @@
                                                     <span>@chapter.PhotoPath</span>
                                                 </div>
                                             }
+                                        </article>
+                                    }
+                                </div>
+                            </section>
+                        }
+                    }
+
+                    @* ─────────── 포토북 페이지 ─────────── *@
+                    else if (_selected == "photobook")
+                    {
+                        @if (!IsPhotoBookLayout)
+                        {
+                            <section class="w-admin__section">
+                                <h3 class="w-admin__section-h">포토북 페이지</h3>
+                                <p class="w-hint">PhotoBook 레이아웃을 선택하면 앨범 페이지별 사진과 문구를 관리할 수 있습니다.</p>
+                            </section>
+                        }
+                        else
+                        {
+                            <section class="w-admin__section">
+                                <div class="w-admin-section-title-row">
+                                    <div>
+                                        <h3 class="w-admin__section-h">포토북 페이지</h3>
+                                        <p class="w-hint">포토북 앨범 상단에 크게 표시할 페이지입니다. 사진을 지정하지 않으면 갤러리 순서대로 자동 보충됩니다. 기본 4개는 유지되고 필요하면 추가할 수 있습니다.</p>
+                                    </div>
+                                    <button type="button" class="w-btn w-btn--primary" @onclick="OnAddPhotoBookPage">페이지 추가</button>
+                                </div>
+                                <div class="w-story-admin-list">
+                                    @* Razor 는 '@page' 를 지시문으로 예약하므로 반복 변수 이름은 반드시 page 를 피해야 한다. *@
+                                    @foreach (var bookPage in Vm.Config!.DesignSettings.PhotoBookPages)
+                                    {
+                                        <article class="w-story-admin-card">
+                                            <div class="w-story-admin-card__head">
+                                                <strong>@bookPage.Caption</strong>
+                                                <div class="w-story-admin-card__actions">
+                                                    @if (bookPage.PageNumber <= 4)
+                                                    {
+                                                        <span class="w-layout-lock">기본</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeletePhotoBookPage(bookPage.PageNumber)">삭제</button>
+                                                    }
+                                                    <button type="button" class="w-btn w-btn--small" @onclick="() => OnSavePhotoBookPage(bookPage)">페이지 저장</button>
+                                                </div>
+                                            </div>
+                                            <label class="w-label">캡션 (짧은 한 줄)</label>
+                                            <input class="w-input" @bind="bookPage.Caption" placeholder="예: 첫 만남" />
+                                            <label class="w-label">본문 문구</label>
+                                            <textarea class="w-input w-textarea" rows="3" @bind="bookPage.Body" placeholder="사진 아래에 표시할 짧은 문구"></textarea>
+                                            <label class="w-label">사진 선택</label>
+                                            <select class="w-input" @bind="bookPage.PhotoFileName">
+                                                <option value="">자동 보충 (갤러리 순서)</option>
+                                                @foreach (var photo in Vm.Gallery)
+                                                {
+                                                    <option value="@photo.FileName">@photo.FileName</option>
+                                                }
+                                            </select>
+                                            @if (!string.IsNullOrWhiteSpace(bookPage.PhotoFileName))
+                                            {
+                                                <div class="w-story-admin-photo">
+                                                    <img src="@Vm.GetThumbUrl(Slug, bookPage.PhotoFileName)" alt="선택된 페이지 사진" />
+                                                    <span>@bookPage.PhotoFileName</span>
+                                                </div>
+                                            }
+                                        </article>
+                                    }
+                                </div>
+                            </section>
+                        }
+                    }
+
+                    @* ─────────── 카드 강조 ─────────── *@
+                    else if (_selected == "cards")
+                    {
+                        @if (!IsCardLayout)
+                        {
+                            <section class="w-admin__section">
+                                <h3 class="w-admin__section-h">카드 강조</h3>
+                                <p class="w-hint">Card 레이아웃을 선택하면 각 섹션 카드의 아이콘과 제목·부제를 커스터마이즈할 수 있습니다.</p>
+                            </section>
+                        }
+                        else
+                        {
+                            <section class="w-admin__section">
+                                <div class="w-admin-section-title-row">
+                                    <div>
+                                        <h3 class="w-admin__section-h">카드 강조</h3>
+                                        <p class="w-hint">카드 레이아웃에서 각 섹션 카드(예식 안내/오시는 길/계좌 안내 등) 위에 얹혀 표시될 아이콘·제목·부제입니다. 대상 섹션을 선택하면 그 섹션 카드 헤더가 대체됩니다. 제목을 비우면 섹션 기본 라벨이 표시됩니다.</p>
+                                    </div>
+                                    <button type="button" class="w-btn w-btn--primary" @onclick="OnAddCardHighlight">강조 카드 추가</button>
+                                </div>
+                                <div class="w-story-admin-list">
+                                    @{
+                                        var cardSupportedSections = WeddingLayoutCatalog.Instance
+                                            .Find(WeddingLayoutMode.Card)?
+                                            .SupportedSections
+                                            .Where(s => !string.Equals(s, "hero", StringComparison.OrdinalIgnoreCase))
+                                            .ToList() ?? new List<string>();
+                                    }
+                                    @foreach (var highlight in Vm.Config!.DesignSettings.CardHighlights)
+                                    {
+                                        var headTitle = string.IsNullOrWhiteSpace(highlight.Title)
+                                            ? (string.IsNullOrWhiteSpace(highlight.SectionKey) ? "(대상 섹션 미지정)" : WeddingSectionOrderCatalog.GetLabel(highlight.SectionKey))
+                                            : highlight.Title;
+                                        <article class="w-story-admin-card">
+                                            <div class="w-story-admin-card__head">
+                                                <strong>@(string.IsNullOrWhiteSpace(highlight.Icon) ? "✨" : highlight.Icon) @headTitle</strong>
+                                                <div class="w-story-admin-card__actions">
+                                                    @if (highlight.Order <= 3)
+                                                    {
+                                                        <span class="w-layout-lock">기본</span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeleteCardHighlight(highlight.Order)">삭제</button>
+                                                    }
+                                                    <button type="button" class="w-btn w-btn--small" @onclick="() => OnSaveCardHighlight(highlight)">카드 저장</button>
+                                                </div>
+                                            </div>
+                                            <label class="w-label">대상 섹션</label>
+                                            <select class="w-input" @bind="highlight.SectionKey">
+                                                <option value="">(사용 안 함)</option>
+                                                @foreach (var sectionKey in cardSupportedSections)
+                                                {
+                                                    <option value="@sectionKey">@WeddingSectionOrderCatalog.GetIcon(sectionKey) @WeddingSectionOrderCatalog.GetLabel(sectionKey)</option>
+                                                }
+                                            </select>
+                                            <label class="w-label">아이콘 · 이모지 <span class="w-label__hint">비우면 섹션 기본 아이콘</span></label>
+                                            <input class="w-input" @bind="highlight.Icon" placeholder="예: 💒 📍 💌" />
+                                            <label class="w-label">제목 오버라이드 <span class="w-label__hint">비우면 섹션 기본 라벨</span></label>
+                                            <input class="w-input" @bind="highlight.Title" placeholder="비워두면 섹션 라벨 그대로" />
+                                            <label class="w-label">부제 · 본문</label>
+                                            <textarea class="w-input w-textarea" rows="2" @bind="highlight.Body" placeholder="카드 헤더 아래에 얹을 부가 문구(선택)"></textarea>
                                         </article>
                                     }
                                 </div>
@@ -801,19 +942,26 @@
 
     private static readonly NavItem[] _navItems = new[]
     {
-        new NavItem("basic",   Icon("user"), "기본 정보"),
-        new NavItem("notice",  Icon("note"), "예식 안내"),
-        new NavItem("design",  Icon("palette"), "디자인"),
-        new NavItem("story",   Icon("note"), "스토리 챕터"),
-        new NavItem("content", Icon("media"), "사진·동영상"),
-        new NavItem("map",     Icon("pin"), "지도"),
-        new NavItem("account", Icon("card"), "계좌 안내"),
-        new NavItem("share",   Icon("share"), "공유 설정"),
+        new NavItem("basic",     Icon("user"), "기본 정보"),
+        new NavItem("notice",    Icon("note"), "예식 안내"),
+        new NavItem("design",    Icon("palette"), "디자인"),
+        new NavItem("story",     Icon("note"), "스토리 챕터"),
+        new NavItem("photobook", Icon("media"), "포토북 페이지"),
+        new NavItem("cards",     Icon("card"), "카드 강조"),
+        new NavItem("content",   Icon("media"), "사진·동영상"),
+        new NavItem("map",       Icon("pin"), "지도"),
+        new NavItem("account",   Icon("card"), "계좌 안내"),
+        new NavItem("share",     Icon("share"), "공유 설정"),
     };
 
     private bool IsStoryLayout => Vm.Config?.DesignSettings.LayoutMode == WeddingLayoutMode.Story;
+    private bool IsPhotoBookLayout => Vm.Config?.DesignSettings.LayoutMode == WeddingLayoutMode.PhotoBook;
+    private bool IsCardLayout => Vm.Config?.DesignSettings.LayoutMode == WeddingLayoutMode.Card;
     private bool UsesInviteHeroPlacement => Vm.Config?.DesignSettings.LayoutMode is WeddingLayoutMode.WebPage or WeddingLayoutMode.TabMenu;
-    private IEnumerable<NavItem> VisibleNavItems => _navItems.Where(i => i.Key != "story" || IsStoryLayout);
+    private IEnumerable<NavItem> VisibleNavItems => _navItems.Where(i =>
+        (i.Key != "story"     || IsStoryLayout) &&
+        (i.Key != "photobook" || IsPhotoBookLayout) &&
+        (i.Key != "cards"     || IsCardLayout));
     private NavItem CurrentNavItem => VisibleNavItems.FirstOrDefault(i => i.Key == _selected) ?? _navItems[0];
     private string PreviewUrl => $"/{Slug}?adminPreview=true";
     private string PreviewTitle => "청첩장 미리보기";
@@ -925,6 +1073,14 @@
         {
             _selected = "design";
         }
+        if (mode != WeddingLayoutMode.PhotoBook && _selected == "photobook")
+        {
+            _selected = "design";
+        }
+        if (mode != WeddingLayoutMode.Card && _selected == "cards")
+        {
+            _selected = "design";
+        }
     }
 
     private void SelectTheme(string themeKey)
@@ -955,6 +1111,20 @@
         if (string.Equals(_selected, key, StringComparison.OrdinalIgnoreCase)) return;
 
         if (key == "story" && !IsStoryLayout)
+        {
+            _selected = "design";
+            _navOpen = false;
+            return;
+        }
+
+        if (key == "photobook" && !IsPhotoBookLayout)
+        {
+            _selected = "design";
+            _navOpen = false;
+            return;
+        }
+
+        if (key == "cards" && !IsCardLayout)
         {
             _selected = "design";
             _navOpen = false;
@@ -1112,6 +1282,29 @@
             WeddingSectionOrderCatalog.NormalizeInvitationOrder(WeddingSectionOrderCatalog.InvitationRecommendedOrder, supported);
     }
 
+    /// <summary>
+    /// 지정한 섹션의 노출 여부를 반환합니다. 데이터에 항목이 없으면 기본값 true(노출)로 취급하며, hero 는 언제나 노출입니다.
+    /// </summary>
+    private bool IsSectionVisible(string section)
+    {
+        if (Vm.Config is null) return true;
+        if (string.Equals(section, "hero", StringComparison.OrdinalIgnoreCase)) return true;
+        return !Vm.Config.DesignSettings.SectionVisibility.TryGetValue(section, out var visible) || visible;
+    }
+
+    /// <summary>
+    /// 섹션 노출/숨김 상태를 토글합니다. hero 는 고정 섹션이므로 무시합니다.
+    /// </summary>
+    private void ToggleSectionVisibility(string section)
+    {
+        if (Vm.Config is null) return;
+        if (string.Equals(section, "hero", StringComparison.OrdinalIgnoreCase)) return;
+
+        var visibility = Vm.Config.DesignSettings.SectionVisibility;
+        var current = !visibility.TryGetValue(section, out var visible) || visible;
+        visibility[section] = !current;
+    }
+
     private async Task ResetMusicButtonPosition()
     {
         if (Vm.Config is null) return;
@@ -1251,6 +1444,48 @@
     private async Task OnDeleteStoryChapter(int chapterNumber)
     {
         await Vm.DeleteStoryChapterAsync(chapterNumber);
+        await ReloadPreview();
+        StateHasChanged();
+    }
+
+    private async Task OnSavePhotoBookPage(PhotoBookPage page)
+    {
+        await Vm.SavePhotoBookPageAsync(page);
+        await ReloadPreview();
+        StateHasChanged();
+    }
+
+    private async Task OnAddPhotoBookPage()
+    {
+        await Vm.AddPhotoBookPageAsync();
+        await ReloadPreview();
+        StateHasChanged();
+    }
+
+    private async Task OnDeletePhotoBookPage(int pageNumber)
+    {
+        await Vm.DeletePhotoBookPageAsync(pageNumber);
+        await ReloadPreview();
+        StateHasChanged();
+    }
+
+    private async Task OnSaveCardHighlight(CardHighlight highlight)
+    {
+        await Vm.SaveCardHighlightAsync(highlight);
+        await ReloadPreview();
+        StateHasChanged();
+    }
+
+    private async Task OnAddCardHighlight()
+    {
+        await Vm.AddCardHighlightAsync();
+        await ReloadPreview();
+        StateHasChanged();
+    }
+
+    private async Task OnDeleteCardHighlight(int order)
+    {
+        await Vm.DeleteCardHighlightAsync(order);
         await ReloadPreview();
         StateHasChanged();
     }

@@ -707,12 +707,28 @@
             await StoreSuperAdminTokenAsync();
             await Vm.LoadAsync();
             EnsureSelectedTenant();
+            // 대시보드에서도 실제 저장 용량이 표시되도록 백그라운드로 파일 시스템 스캔을 시작한다.
+            // UI 를 막지 않고 완료 시 자동 갱신되며, 실패는 조용히 무시(빠른 집계 값 유지).
+            _ = RefreshMediaUsageInBackgroundAsync();
         }
         else
         {
             await ClearSuperAdminTokenAsync();
         }
         StateHasChanged();
+    }
+
+    private async Task RefreshMediaUsageInBackgroundAsync()
+    {
+        try
+        {
+            await Vm.RefreshMediaUsageAsync();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch
+        {
+            // 스캔 실패는 사용자에게 노출하지 않는다. 새로고침 버튼으로 재시도 가능.
+        }
     }
 
     private async Task OnLoginKeyDown(KeyboardEventArgs e)
@@ -856,12 +872,11 @@
     private async Task OnRefresh()
     {
         await Vm.LoadAsync();
-        if (IsMediaMenu)
-        {
-            await Vm.RefreshMediaUsageAsync();
-        }
         EnsureSelectedTenant();
         StateHasChanged();
+        // 어느 메뉴에 있든 새로고침 버튼은 실제 파일 시스템 재집계까지 유도한다.
+        // 스캔은 백그라운드로 실행되어 응답성을 해치지 않고, 대시보드 카드도 갱신된다.
+        _ = RefreshMediaUsageInBackgroundAsync();
     }
 
     private void SelectTenant(TenantConfig tenant)

@@ -1,0 +1,113 @@
+@namespace WeddingPlatform.Blazor.Components
+@using Wedding.Common
+@using WeddingPlatform.ViewModels
+
+@*
+    카드 레이아웃 — 핵심 정보를 카드처럼 겹쳐 보여주는 미니멀 프리미엄 레이아웃.
+    Gallery/Story 와 시각적으로 구분되도록 세로 스택형 카드 프레임을 사용한다.
+    각 섹션 콘텐츠는 InvitationSections 에 위임하고, 이 레이아웃은 카드 프레임과 히어로만 담당한다.
+*@
+<section class="wedding-layout-card @Vm.LayoutDescriptor.CssClass">
+    <section class="wedding-card-hero" role="banner">
+        @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
+        {
+            <div class="wedding-card-hero__media">
+                <img src="@Vm.HeroImageUrl" alt="@Vm.CoupleName 대표 사진" loading="eager" />
+            </div>
+        }
+        <div class="wedding-card-hero__panel">
+            <p class="wedding-layout-kicker">@Vm.HeroTitle</p>
+            <h1>@Vm.CoupleName</h1>
+            <p class="wedding-card-hero__when">
+                @Vm.WeddingDate.ToString("yyyy년 MM월 dd일 (ddd)")
+                @if (!string.IsNullOrWhiteSpace(Vm.WeddingTime))
+                {
+                    <span> · @Vm.WeddingTime</span>
+                }
+            </p>
+            @if (!string.IsNullOrWhiteSpace(Vm.VenueName))
+            {
+                <p class="wedding-layout-muted">📍 @Vm.VenueName</p>
+            }
+        </div>
+    </section>
+
+    @* hero 아래 별도 강조 카드 리스트는 제거되었다. 강조 카드는 각 섹션 카드 프레임의 헤더로 매핑된다. *@
+    @foreach (var activeSection in Vm.OrderedSections.Where(x => x != "hero"))
+    {
+        var highlight = Vm.ResolveCardHighlight(activeSection);
+        var hasHeader = highlight is not null
+            && (!string.IsNullOrWhiteSpace(highlight.Icon)
+                || !string.IsNullOrWhiteSpace(highlight.Title)
+                || !string.IsNullOrWhiteSpace(highlight.Body));
+        <article class="wedding-card-frame wedding-card-frame--@activeSection @(hasHeader ? "wedding-card-frame--has-header" : "")">
+            @if (hasHeader)
+            {
+                var displayTitle = string.IsNullOrWhiteSpace(highlight!.Title)
+                    ? WeddingSectionOrderCatalog.GetLabel(activeSection)
+                    : highlight.Title;
+                var displayIcon = string.IsNullOrWhiteSpace(highlight.Icon)
+                    ? WeddingSectionOrderCatalog.GetIcon(activeSection)
+                    : highlight.Icon;
+                <header class="wedding-card-frame__head">
+                    <span class="wedding-card-frame__icon">@displayIcon</span>
+                    <div class="wedding-card-frame__title">
+                        <h3>@displayTitle</h3>
+                        @if (!string.IsNullOrWhiteSpace(highlight.Body))
+                        {
+                            <p>@highlight.Body</p>
+                        }
+                    </div>
+                </header>
+            }
+            <InvitationSections Slug="@Slug"
+                                Vm="@Vm"
+                                VmGuest="@VmGuest"
+                                IsTabbed="true"
+                                ActiveSection="@activeSection"
+                                PauseMusicRequested="@PauseMusicRequested" />
+        </article>
+    }
+</section>
+
+@code {
+    /// <summary>
+    /// \if KO
+    /// <para>청첩장 슬러그 값을 나타냅니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Represents the invitation slug.</para>
+    /// \endif
+    /// </summary>
+    [Parameter, EditorRequired] public string Slug { get; set; } = "";
+
+    /// <summary>
+    /// \if KO
+    /// <para>청첩장 표시용 뷰 모델입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The invitation view model used for rendering.</para>
+    /// \endif
+    /// </summary>
+    [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
+
+    /// <summary>
+    /// \if KO
+    /// <para>방명록 뷰 모델입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The guestbook view model.</para>
+    /// \endif
+    /// </summary>
+    [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
+
+    /// <summary>
+    /// \if KO
+    /// <para>배경 음악 일시 정지 요청 콜백입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Callback that requests pausing the background music.</para>
+    /// \endif
+    /// </summary>
+    [Parameter] public EventCallback PauseMusicRequested { get; set; }
+}

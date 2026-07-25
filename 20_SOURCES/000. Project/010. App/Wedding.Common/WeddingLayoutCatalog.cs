@@ -92,19 +92,19 @@ public sealed class WeddingLayoutCatalog : IWeddingLayoutCatalog
             "카드",
             "핵심 정보를 카드처럼 간결하게 보여주는 프리미엄 레이아웃입니다.",
             WeddingLayoutTier.Premium,
-            false,
+            true,
             "w-layout-card",
             true,
-            ["hero", "info", "details", "message", "gallery", "guestbook", "gift"]),
+            ["hero", "story", "info", "details", "message", "video", "gallery", "guestbook", "gift"]),
         new(
             WeddingLayoutMode.PhotoBook,
             "포토북",
             "앨범처럼 사진과 메시지를 넘겨보는 프리미엄 레이아웃입니다.",
             WeddingLayoutTier.Premium,
-            false,
+            true,
             "w-layout-photobook",
             true,
-            ["hero", "gallery", "story", "video", "guestbook"]),
+            ["hero", "info", "details", "message", "gallery", "story", "video", "guestbook", "gift"]),
     ];
 
     public WeddingLayoutOption? Find(WeddingLayoutMode mode) =>
