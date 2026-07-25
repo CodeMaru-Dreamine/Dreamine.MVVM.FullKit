@@ -28,6 +28,7 @@ public sealed class KnowledgeQaTests
     public KnowledgeQaTests(ITestOutputHelper output) => _output = output;
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task EvidenceQuery_FindsSourceVerifiedDreamineEventForwardingAndDoxygen()
     {
         string root = FindRepositoryRoot();
@@ -93,6 +94,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task RepositoryButtonQuestion_SuppliesCoherentXamlAndViewModelExamples()
     {
         string root = FindRepositoryRoot();
@@ -172,6 +174,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task RepositoryAnswer_InvalidSourceRetainsUnverifiedDraftWithoutEvidence()
     {
         string root = FindRepositoryRoot();
@@ -214,6 +217,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task EvidenceQuery_ExactViewModelBaseImplementsUsesOnlyOutgoingImplements()
     {
         const string question = "Dreamine.MVVM.ViewModels.ViewModelBase가 직접 구현하는 INotifyPropertyChanged와 INotifyPropertyChanging을 찾아주세요.";
@@ -258,6 +262,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task EvidenceQuery_TypesInheritingViewModelBaseUsesIncomingInherits()
     {
         const string question = "Dreamine.MVVM.ViewModels.ViewModelBase를 상속하는 타입을 찾아주세요.";
@@ -282,6 +287,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task RuntimeRepository_ViewModelBaseReturnsTwoOutgoingImplementsFromGeneratedArtifacts()
     {
         string root = FindRepositoryRoot();
@@ -327,6 +333,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task EvidenceQuery_NotifyPropertyChangedUsageReturnsAllIncomingImplements()
     {
         const string question = "INotifyPropertyChanged는 어떤 클래스에서 사용해요?";
@@ -360,6 +367,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task EvidenceQuery_WpfButtonQuestionExcludesUnrelatedActionSymbolsAndFlows()
     {
         string root = FindRepositoryRoot();
@@ -423,6 +431,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task EvidenceQuery_GeneralListSelectionUsesCoherentXamlAndViewModelEvidence()
     {
         KnowledgeEvidenceBundleBuilder query = CreateRealEvidenceQuery();
@@ -458,6 +467,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task EvidenceQuery_GeneralTextInputProvesPolicyIsNotOverfitToListSelection()
     {
         KnowledgeEvidenceBundleBuilder query = CreateRealEvidenceQuery();
@@ -482,6 +492,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task NaturalUsageQuestions_ProduceStructuredPlansAndAvoidGenericButtonTypes()
     {
         (string Question, string Intent, string Concept, string? Project, string? Symbol)[] cases =
@@ -540,6 +551,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task EvidenceQuery_AddChannelSpecificQuestionKeepsItsForwarding()
     {
         string root = FindRepositoryRoot();
@@ -1377,6 +1389,7 @@ public sealed class KnowledgeQaTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task CodexIntegration_ThreeRepresentativeQuestionsPersistDiagnosticsAndFinalAnswer()
     {
         if (!string.Equals(

@@ -44,6 +44,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task Repository_SearchesFiltersAndPagesWithoutSendingWholeDataset()
     {
         ActualContext context = await Actual.Value;
@@ -61,6 +62,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task Repository_ResolvesStableUri_AndHandlesMissingNode()
     {
         ActualContext context = await Actual.Value;
@@ -78,6 +80,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task LocalizedDescriptions_UseRequestedLanguage_AndRejectMislabeledEnglish()
     {
         ActualContext context = await Actual.Value;
@@ -111,6 +114,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task TBoxAndDreamineRelations_FollowEnglishDynamicTextPath()
     {
         ActualContext context = await Actual.Value;
@@ -128,6 +132,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task DreamineEventSample_ConnectsViewModelAndForwardedOkMethod()
     {
         ActualContext context = await Actual.Value;
@@ -147,6 +152,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task SourceViewer_DeserializesCodeAndPreservesLinesAndXmlComments()
     {
         ActualContext context = await Actual.Value;
@@ -166,6 +172,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task SourceViewer_UsesCurrentStaleOverrideForRemappedTestSource()
     {
         ActualContext context = await Actual.Value;
@@ -183,6 +190,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task SourceViewer_ReportsGeneratedCodeAsExcluded()
     {
         ActualContext context = await Actual.Value;
@@ -218,6 +226,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task SourceViewer_HonorsCancellation()
     {
         ActualContext context = await Actual.Value;
@@ -234,6 +243,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task SourceViewer_AllActiveStableUriEntriesResolveWithoutMissingArtifacts()
     {
         ActualContext context = await Actual.Value;
@@ -292,6 +302,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task Repository_HonorsCancellationDuringPagedSearch()
     {
         ActualContext context = await Actual.Value;
@@ -330,6 +341,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task ActualReports_RemainConformantAndCurrent()
     {
         ActualContext context = await Actual.Value;
@@ -355,6 +367,7 @@ public sealed class OntologyConsumptionTests
     }
 
     [Fact]
+    [Trait("Category", "GeneratedOntology")]
     public async Task LoadMetrics_AreBoundedAndCacheIsReused()
     {
         ActualContext context = await Actual.Value;
