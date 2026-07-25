@@ -114,6 +114,10 @@ public sealed class SystemDrawingImageOptimizationService : IImageOptimizationSe
         }
 
         using var source = Image.FromFile(sourcePath);
+        // 카메라(특히 스마트폰) JPEG는 픽셀 방향이 아니라 EXIF Orientation(0x0112) 태그로 회전을 표시한다.
+        // System.Drawing은 이 태그를 자동 해석하지 않고, 저장 시 EXIF도 함께 복사하지 않으므로
+        // 회전을 픽셀에 반영하지 않으면 최적화 후 이미지가 옆으로 눕거나 뒤집혀 보이는 문제가 발생한다.
+        NormalizeOrientation(source);
         using var output = CreateResizedBitmap(source, policy.ImageMaxLongSidePx);
 
         Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)!);
@@ -260,5 +264,69 @@ public sealed class SystemDrawingImageOptimizationService : IImageOptimizationSe
     {
         var normalized = outputFormat?.Trim().TrimStart('.').ToLowerInvariant();
         return string.IsNullOrWhiteSpace(normalized) ? "" : normalized;
+    }
+
+    /// <summary>
+    /// \if KO
+    /// <para>EXIF Orientation(0x0112) 값을 읽어 원본 이미지 픽셀을 정방향으로 회전합니다. System.Drawing 은 EXIF 를 자동 해석하지 않고, 저장 시 EXIF 도 복사하지 않기 때문에 최적화 이전에 픽셀 자체를 정회전해 두지 않으면 결과 이미지가 옆으로 눕는 문제가 발생합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Reads the EXIF Orientation tag (0x0112) and rotates the source pixels to the natural upright direction. System.Drawing does not honor EXIF orientation nor copy it on save, so the pixels must be pre-rotated to avoid mis-rotated output.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="image">
+    /// \if KO
+    /// <para>회전을 적용할 원본 <c>Image</c> 값입니다. in-place 로 방향이 변경됩니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>The source <c>Image</c> to rotate in place.</para>
+    /// \endif
+    /// </param>
+    private static void NormalizeOrientation(Image image)
+    {
+        const int ExifOrientationTagId = 0x0112;
+        try
+        {
+            if (!image.PropertyIdList.Contains(ExifOrientationTagId))
+            {
+                return;
+            }
+
+            var property = image.GetPropertyItem(ExifOrientationTagId);
+            if (property?.Value is null || property.Value.Length == 0)
+            {
+                return;
+            }
+
+            var orientation = property.Value[0];
+            var rotation = orientation switch
+            {
+                2 => RotateFlipType.RotateNoneFlipX,
+                3 => RotateFlipType.Rotate180FlipNone,
+                4 => RotateFlipType.Rotate180FlipX,
+                5 => RotateFlipType.Rotate90FlipX,
+                6 => RotateFlipType.Rotate90FlipNone,
+                7 => RotateFlipType.Rotate270FlipX,
+                8 => RotateFlipType.Rotate270FlipNone,
+                _ => RotateFlipType.RotateNoneFlipNone,
+            };
+
+            if (rotation == RotateFlipType.RotateNoneFlipNone)
+            {
+                return;
+            }
+
+            image.RotateFlip(rotation);
+            // 회전을 픽셀에 반영했으므로 EXIF 태그는 정방향(1)로 재기록한다.
+            // 저장 파이프라인에서 PropertyItems 를 복사하지는 않지만,
+            // 동일 인스턴스를 다시 참조할 가능성에 대비해 값을 정합화한다.
+            property.Value[0] = 1;
+            image.SetPropertyItem(property);
+        }
+        catch
+        {
+            // EXIF 파싱 실패는 방향 정보를 신뢰할 수 없는 원본이라는 뜻이므로
+            // 회전 없이 원본 픽셀을 그대로 사용한다.
+        }
     }
 }

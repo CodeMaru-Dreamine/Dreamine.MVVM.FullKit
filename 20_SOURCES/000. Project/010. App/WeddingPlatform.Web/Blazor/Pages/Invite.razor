@@ -77,6 +77,18 @@ else
                                    VmGuest="@VmGuest"
                                    PauseMusicRequested="@PauseMusicForVideo" />
             break;
+        case WeddingLayoutMode.Card:
+            <CardInvitationLayout Slug="@Slug"
+                                  Vm="@Vm"
+                                  VmGuest="@VmGuest"
+                                  PauseMusicRequested="@PauseMusicForVideo" />
+            break;
+        case WeddingLayoutMode.PhotoBook:
+            <PhotoBookInvitationLayout Slug="@Slug"
+                                       Vm="@Vm"
+                                       VmGuest="@VmGuest"
+                                       PauseMusicRequested="@PauseMusicForVideo" />
+            break;
         default:
             <OnePageInvitationLayout Slug="@Slug"
                                      Vm="@Vm"

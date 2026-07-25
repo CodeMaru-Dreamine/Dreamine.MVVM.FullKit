@@ -850,6 +850,183 @@ public sealed class WeddingAdminViewModel
         }
     }
 
+    /// <summary>포토북 페이지 한 장을 저장합니다. 신규 항목이면 리스트에 추가되고 정규화됩니다.</summary>
+    public async Task SavePhotoBookPageAsync(PhotoBookPage page, CancellationToken ct = default)
+    {
+        if (Config is null) return;
+        try
+        {
+            InvitationDesignCatalog.Normalize(Config);
+            var pages = Config.DesignSettings.PhotoBookPages;
+            var index = pages.FindIndex(x => x.PageNumber == page.PageNumber);
+            var normalized = WeddingPhotoBookPageDefaults.Clone(page);
+            normalized.Caption = string.IsNullOrWhiteSpace(normalized.Caption)
+                ? $"PAGE {Math.Max(1, normalized.PageNumber):00}"
+                : normalized.Caption.Trim();
+            normalized.PhotoFileName = normalized.PhotoFileName?.Trim() ?? "";
+            normalized.Body = normalized.Body?.TrimEnd() ?? "";
+
+            if (index >= 0)
+            {
+                pages[index] = normalized;
+            }
+            else
+            {
+                pages.Add(normalized);
+                Config.DesignSettings.PhotoBookPages = WeddingPhotoBookPageDefaults.Normalize(pages);
+            }
+
+            await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+            StatusMessage = $"{normalized.Caption} 페이지가 저장되었습니다.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"포토북 페이지 저장 오류: {ex.Message}";
+        }
+    }
+
+    /// <summary>포토북 페이지를 새로 추가합니다.</summary>
+    public async Task AddPhotoBookPageAsync(CancellationToken ct = default)
+    {
+        if (Config is null) return;
+        try
+        {
+            InvitationDesignCatalog.Normalize(Config);
+            var pages = Config.DesignSettings.PhotoBookPages;
+            var nextNumber = pages.Count == 0 ? 1 : pages.Max(x => x.PageNumber) + 1;
+            pages.Add(new PhotoBookPage
+            {
+                PageNumber = nextNumber,
+                Caption = $"PAGE {nextNumber:00}",
+                Body = "",
+            });
+
+            await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+            StatusMessage = $"PAGE {nextNumber:00} 페이지가 추가되었습니다.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"포토북 페이지 추가 오류: {ex.Message}";
+        }
+    }
+
+    /// <summary>포토북 페이지를 삭제합니다. 기본 4개 페이지는 유지됩니다.</summary>
+    public async Task DeletePhotoBookPageAsync(int pageNumber, CancellationToken ct = default)
+    {
+        if (Config is null) return;
+        try
+        {
+            InvitationDesignCatalog.Normalize(Config);
+            if (pageNumber <= 4)
+            {
+                StatusMessage = "기본 4개 페이지는 유지됩니다.";
+                return;
+            }
+
+            var removed = Config.DesignSettings.PhotoBookPages.RemoveAll(x => x.PageNumber == pageNumber);
+            if (removed == 0)
+            {
+                StatusMessage = "삭제할 페이지를 찾을 수 없습니다.";
+                return;
+            }
+
+            await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+            StatusMessage = $"PAGE {pageNumber:00} 페이지가 삭제되었습니다.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"포토북 페이지 삭제 오류: {ex.Message}";
+        }
+    }
+
+    /// <summary>카드 강조 항목 한 장을 저장합니다. 신규 항목이면 리스트에 추가되고 정규화됩니다.</summary>
+    public async Task SaveCardHighlightAsync(CardHighlight highlight, CancellationToken ct = default)
+    {
+        if (Config is null) return;
+        try
+        {
+            InvitationDesignCatalog.Normalize(Config);
+            var highlights = Config.DesignSettings.CardHighlights;
+            var index = highlights.FindIndex(x => x.Order == highlight.Order);
+            var normalized = WeddingCardHighlightDefaults.Clone(highlight);
+            normalized.Icon = string.IsNullOrWhiteSpace(normalized.Icon) ? "✨" : normalized.Icon.Trim();
+            normalized.Title = string.IsNullOrWhiteSpace(normalized.Title) ? "강조 카드" : normalized.Title.Trim();
+            normalized.Body = normalized.Body?.TrimEnd() ?? "";
+
+            if (index >= 0)
+            {
+                highlights[index] = normalized;
+            }
+            else
+            {
+                highlights.Add(normalized);
+                Config.DesignSettings.CardHighlights = WeddingCardHighlightDefaults.Normalize(highlights);
+            }
+
+            await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+            StatusMessage = $"{normalized.Title} 강조 카드가 저장되었습니다.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"강조 카드 저장 오류: {ex.Message}";
+        }
+    }
+
+    /// <summary>카드 강조 항목을 새로 추가합니다.</summary>
+    public async Task AddCardHighlightAsync(CancellationToken ct = default)
+    {
+        if (Config is null) return;
+        try
+        {
+            InvitationDesignCatalog.Normalize(Config);
+            var highlights = Config.DesignSettings.CardHighlights;
+            var nextOrder = highlights.Count == 0 ? 1 : highlights.Max(x => x.Order) + 1;
+            highlights.Add(new CardHighlight
+            {
+                Order = nextOrder,
+                Icon = "✨",
+                Title = "새 강조 카드",
+                Body = "",
+            });
+
+            await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+            StatusMessage = $"강조 카드 #{nextOrder} 가 추가되었습니다.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"강조 카드 추가 오류: {ex.Message}";
+        }
+    }
+
+    /// <summary>카드 강조 항목을 삭제합니다. 기본 3개는 유지됩니다.</summary>
+    public async Task DeleteCardHighlightAsync(int order, CancellationToken ct = default)
+    {
+        if (Config is null) return;
+        try
+        {
+            InvitationDesignCatalog.Normalize(Config);
+            if (order <= 3)
+            {
+                StatusMessage = "기본 3개 강조 카드는 유지됩니다.";
+                return;
+            }
+
+            var removed = Config.DesignSettings.CardHighlights.RemoveAll(x => x.Order == order);
+            if (removed == 0)
+            {
+                StatusMessage = "삭제할 강조 카드를 찾을 수 없습니다.";
+                return;
+            }
+
+            await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+            StatusMessage = $"강조 카드 #{order} 가 삭제되었습니다.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"강조 카드 삭제 오류: {ex.Message}";
+        }
+    }
+
     /// <summary>
     /// \if KO
     /// <para>Layout For Save 값의 유효성을 검사합니다.</para>

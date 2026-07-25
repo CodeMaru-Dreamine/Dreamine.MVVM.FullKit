@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Dreamine.Maui.Empty.MainPage"
+             BackgroundColor="#F6F7F9">
+    <Grid Padding="24">
+        <Border MaximumWidthRequest="520"
+                Padding="40"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                BackgroundColor="White"
+                Stroke="#D9DDE3"
+                StrokeShape="RoundRectangle 16">
+            <VerticalStackLayout Spacing="12">
+                <Label HorizontalOptions="Center" FontSize="14" FontAttributes="Bold" Opacity="0.7" Text="DREAMINE MAUI" />
+                <Label HorizontalOptions="Center" FontSize="30" FontAttributes="Bold" Text="{Binding Message}" />
+                <Label HorizontalOptions="Center" HorizontalTextAlignment="Center" Opacity="0.7" Text="{Binding StatusMessage}" />
+                <HorizontalStackLayout Margin="0,16,0,0" HorizontalOptions="Center" Spacing="12">
+                    <Button MinimumWidthRequest="110" Padding="20,8" Command="{Binding OkCommand}" Text="확인" />
+                    <Button MinimumWidthRequest="110" Padding="20,8" Command="{Binding CancelCommand}" Text="취소" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</ContentPage>

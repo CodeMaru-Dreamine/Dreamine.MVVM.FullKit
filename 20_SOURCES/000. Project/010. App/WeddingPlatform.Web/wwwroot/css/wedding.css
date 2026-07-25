@@ -2123,6 +2123,24 @@ body.w-theme-blush {
 .w-section-order-item.is-fixed {
     opacity: .72;
 }
+.w-section-order-item.is-hidden {
+    background: repeating-linear-gradient(
+        135deg,
+        rgba(200, 168, 130, 0.06) 0 8px,
+        rgba(255, 255, 255, 0.72) 8px 16px
+    );
+    opacity: .68;
+}
+.w-section-order-item.is-hidden .w-section-order-item__label {
+    text-decoration: line-through;
+    text-decoration-color: rgba(120, 90, 55, 0.45);
+    color: #8a7455;
+}
+.w-btn--muted {
+    background: #efe6d5 !important;
+    color: #8a6339 !important;
+    border-color: #d9c9ac !important;
+}
 .w-section-order-item__icon {
     width: 2.2rem;
     height: 2.2rem;
@@ -3087,6 +3105,65 @@ body.w-theme-blush {
     box-shadow: inset 0 -12px 0 #ddd, inset 0 -14px 0 #c8a882;
 }
 
+.w-style-card__preview--gallery::before {
+    content: "";
+    position: absolute;
+    inset: 15% 18%;
+    background:
+        linear-gradient(#c8a882, #c8a882) left top / 30% 45% no-repeat,
+        linear-gradient(#ddd, #ddd) center top / 30% 45% no-repeat,
+        linear-gradient(#c8a882, #c8a882) right top / 30% 45% no-repeat,
+        linear-gradient(#ddd, #ddd) left bottom / 30% 45% no-repeat,
+        linear-gradient(#c8a882, #c8a882) center bottom / 30% 45% no-repeat,
+        linear-gradient(#ddd, #ddd) right bottom / 30% 45% no-repeat;
+    border-radius: 4px;
+}
+
+.w-style-card__preview--story::before {
+    content: "";
+    position: absolute;
+    inset: 15% 20%;
+    background:
+        linear-gradient(#c8a882, #c8a882) left top / 45% 40% no-repeat,
+        linear-gradient(#ddd, #ddd) right top / 45% 12% no-repeat,
+        linear-gradient(#ddd, #ddd) right 0 top 22% / 45% 12% no-repeat,
+        linear-gradient(#ddd, #ddd) right bottom / 45% 40% no-repeat,
+        linear-gradient(#c8a882, #c8a882) left 0 bottom 22% / 45% 12% no-repeat,
+        linear-gradient(#c8a882, #c8a882) left bottom / 45% 12% no-repeat;
+    border-radius: 4px;
+}
+
+.w-style-card__preview--card::before {
+    content: "";
+    position: absolute;
+    inset: 12% 22%;
+    background: #fff;
+    border-radius: 6px;
+    box-shadow:
+        0 0 0 1px #e6d9c0,
+        6px 6px 0 -1px #f2e7d8,
+        12px 12px 0 -2px #eadfc9;
+}
+
+.w-style-card__preview--photobook::before {
+    content: "";
+    position: absolute;
+    inset: 18% 15%;
+    background:
+        linear-gradient(90deg, #c8a882 0 48%, #b28f6a 48% 52%, #ddd 52% 100%);
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+.w-style-card__preview--photobook::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 18%;
+    bottom: 18%;
+    width: 1px;
+    background: rgba(0, 0, 0, 0.15);
+}
+
 .w-style-card__meta strong {
     display: block;
     font-size: .95rem;
@@ -3421,4 +3498,414 @@ body.w-theme-blush {
         from { opacity: 0; }
         to { opacity: 1; }
     }
+}
+
+/* =========================================================
+   Card 레이아웃 — 세로 스택형 카드 프레임
+   ========================================================= */
+.wedding-layout-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0 0 3rem;
+    background: linear-gradient(180deg, #f8f4ec 0%, #fbf7f0 100%);
+}
+
+.wedding-card-hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    margin: 0 1rem;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 12px 32px rgba(90, 60, 20, 0.12);
+}
+
+.wedding-card-hero__media {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    background: #f0e8d8;
+}
+
+.wedding-card-hero__media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.wedding-card-hero__panel {
+    padding: 1.5rem 1.4rem 1.75rem;
+    text-align: center;
+}
+
+.wedding-card-hero__panel h1 {
+    font-size: 1.65rem;
+    margin: .35rem 0 .55rem;
+    letter-spacing: .04em;
+}
+
+.wedding-card-hero__when {
+    font-size: .95rem;
+    color: #6b5033;
+    margin: 0 0 .35rem;
+}
+
+.wedding-card-frame {
+    margin: 0 1rem;
+    padding: 1.4rem 1.2rem;
+    border-radius: 18px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(90, 60, 20, 0.08);
+}
+
+.wedding-card-frame > section {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+}
+
+.wedding-card-frame .w-section-title {
+    margin-top: 0;
+}
+
+@media (min-width: 720px) {
+    .wedding-layout-card {
+        max-width: 720px;
+        margin: 0 auto;
+        gap: 1.25rem;
+    }
+    .wedding-card-hero {
+        margin: 0;
+        flex-direction: row;
+    }
+    .wedding-card-hero__media {
+        width: 55%;
+        aspect-ratio: auto;
+    }
+    .wedding-card-hero__panel {
+        flex: 1 1 auto;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: left;
+        padding: 2rem 2rem;
+    }
+    .wedding-card-frame {
+        margin: 0;
+        padding: 1.75rem 1.75rem;
+    }
+}
+
+/* =========================================================
+   PhotoBook 레이아웃 — 앨범 페이지 스타일 세로 스크롤
+   ========================================================= */
+.wedding-layout-photobook {
+    background: #f3ece0;
+    padding: 0 0 4rem;
+}
+
+.wedding-photobook-cover {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    max-height: 88vh;
+    overflow: hidden;
+    background: #1b140a;
+}
+
+.wedding-photobook-cover__image {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: .78;
+}
+
+.wedding-photobook-cover__image--empty {
+    background: linear-gradient(135deg, #2b1e10, #4a331b);
+}
+
+.wedding-photobook-cover__panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 2rem 1.5rem 2.25rem;
+    color: #fff;
+    text-align: center;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.wedding-photobook-cover__panel .wedding-layout-kicker {
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: .3em;
+}
+
+.wedding-photobook-cover__panel h1 {
+    font-size: 2rem;
+    margin: .4rem 0 .5rem;
+    letter-spacing: .05em;
+}
+
+.wedding-photobook-cover__panel p {
+    margin: .15rem 0;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.wedding-photobook-cover__panel .wedding-layout-muted {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: .9rem;
+}
+
+.wedding-photobook-heading {
+    padding: 1.75rem 1.25rem .25rem;
+    text-align: center;
+}
+
+.wedding-photobook-pages {
+    padding: 0 0 1rem;
+}
+
+.wedding-photobook-empty {
+    text-align: center;
+    padding: 2rem 1rem;
+    color: #7b6144;
+    background: #fff;
+    margin: 0 1rem;
+    border-radius: 12px;
+}
+
+.wedding-photobook-scroller {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.wedding-photobook-page {
+    position: relative;
+    margin: 0;
+    background: #fff;
+    padding: .9rem;
+    border-radius: 4px;
+    box-shadow:
+        0 10px 24px rgba(60, 40, 15, 0.14),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.wedding-photobook-page img {
+    width: 100%;
+    max-height: 78vh;
+    object-fit: contain;
+    display: block;
+    background: #f8f4ec;
+    border-radius: 2px;
+}
+
+.wedding-photobook-page__caption {
+    text-align: right;
+    font-size: .78rem;
+    color: #8a6c4a;
+    letter-spacing: .12em;
+    padding: .55rem .25rem 0;
+    margin: 0;
+}
+
+.wedding-photobook-chapters {
+    padding: 0 0 1rem;
+}
+
+.wedding-photobook-chapter {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin: 1rem;
+    background: #fff;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(60, 40, 15, 0.12);
+}
+
+.wedding-photobook-chapter__photo {
+    margin: 0;
+    background: #f0e8d8;
+}
+
+.wedding-photobook-chapter__photo img {
+    width: 100%;
+    max-height: 60vh;
+    object-fit: cover;
+    display: block;
+}
+
+.wedding-photobook-chapter__body {
+    padding: 1.25rem 1.25rem 1.5rem;
+    text-align: center;
+}
+
+.wedding-photobook-chapter__label {
+    letter-spacing: .3em;
+    font-size: .75rem;
+    color: #a37c4b;
+    margin: 0 0 .35rem;
+}
+
+.wedding-photobook-chapter__body h3 {
+    margin: 0 0 .75rem;
+    font-size: 1.25rem;
+}
+
+.wedding-photobook-chapter__body p {
+    margin: 0;
+    color: #4a3720;
+    line-height: 1.7;
+}
+
+.wedding-photobook-generic {
+    margin: 1rem;
+    padding: 1.25rem 1.1rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 6px 18px rgba(60, 40, 15, 0.10);
+}
+
+.wedding-photobook-generic > section {
+    background: transparent !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+}
+
+@media (min-width: 720px) {
+    .wedding-layout-photobook {
+        max-width: 720px;
+        margin: 0 auto;
+    }
+}
+
+/* PhotoBook — 지정 페이지(featured) 전용 스타일 */
+.wedding-photobook-page--featured {
+    background: #fff;
+    padding: 1rem 1rem 1.25rem;
+    box-shadow:
+        0 14px 32px rgba(60, 40, 15, 0.16),
+        inset 0 0 0 1px rgba(0, 0, 0, 0.05);
+}
+
+.wedding-photobook-page__body {
+    margin: .75rem .25rem 0;
+    color: #4a3720;
+    line-height: 1.7;
+    text-align: center;
+    font-size: .95rem;
+}
+
+.wedding-photobook-page__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f4ec;
+    color: #a5896a;
+    font-size: .85rem;
+    padding: 3rem 1rem;
+    border-radius: 2px;
+}
+
+/* Card — 강조 카드 리스트 */
+.wedding-card-highlights {
+    display: flex;
+    flex-direction: column;
+    gap: .85rem;
+    margin: 0 1rem;
+}
+
+.wedding-card-highlight {
+    display: grid;
+    grid-template-columns: 3rem 1fr;
+    align-items: start;
+    gap: .9rem;
+    padding: 1.1rem 1.1rem;
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 6px 16px rgba(90, 60, 20, 0.08);
+}
+
+.wedding-card-highlight__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--w-primary, #c8a882) 16%, #fff);
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.wedding-card-highlight__text h3 {
+    margin: 0 0 .25rem;
+    font-size: 1.05rem;
+    color: var(--w-dark, #3a2c17);
+}
+
+.wedding-card-highlight__text p {
+    margin: 0;
+    color: #5a4326;
+    line-height: 1.6;
+    font-size: .92rem;
+}
+
+@media (min-width: 720px) {
+    .wedding-card-highlights {
+        margin: 0;
+    }
+}
+
+/* Card 레이아웃 — 각 섹션 카드 프레임 위의 오버라이드 헤더 */
+.wedding-card-frame__head {
+    display: grid;
+    grid-template-columns: 2.6rem 1fr;
+    align-items: center;
+    gap: .85rem;
+    padding: 0 0 .9rem;
+    margin: 0 0 .85rem;
+    border-bottom: 1px solid rgba(200, 168, 130, 0.18);
+}
+.wedding-card-frame__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.6rem;
+    height: 2.6rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--w-primary, #c8a882) 16%, #fff);
+    font-size: 1.2rem;
+    line-height: 1;
+}
+.wedding-card-frame__title h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--w-dark, #3a2c17);
+    letter-spacing: .01em;
+}
+.wedding-card-frame__title p {
+    margin: .2rem 0 0;
+    font-size: .88rem;
+    color: #6b5033;
+    line-height: 1.5;
+}
+
+/* 오버라이드 헤더가 그려질 때는 InvitationSections 내부 기본 제목을 숨겨 이중 헤더를 방지한다. */
+.wedding-card-frame--has-header .w-section-title {
+    display: none !important;
 }

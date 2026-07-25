@@ -37,6 +37,8 @@
     <Compile Include="..\Wedding.Common\WeddingFloatingPosition.cs" Link="Common\WeddingFloatingPosition.cs" />
     <Compile Include="..\Wedding.Common\WeddingSectionOrderCatalog.cs" Link="Common\WeddingSectionOrderCatalog.cs" />
     <Compile Include="..\Wedding.Common\WeddingStoryChapter.cs" Link="Common\WeddingStoryChapter.cs" />
+    <Compile Include="..\Wedding.Common\WeddingPhotoBookPage.cs" Link="Common\WeddingPhotoBookPage.cs" />
+    <Compile Include="..\Wedding.Common\WeddingCardHighlight.cs" Link="Common\WeddingCardHighlight.cs" />
     <Compile Include="..\Wedding.Common\WeddingThemeCatalog.cs" Link="Common\WeddingThemeCatalog.cs" />
   </ItemGroup>
 

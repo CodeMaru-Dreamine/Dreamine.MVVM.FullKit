@@ -58,6 +58,26 @@ public sealed class DesignSettings
     /// \endif
     /// </summary>
     public List<StoryChapter> StoryChapters { get; set; } = WeddingStoryChapterDefaults.Create();
+
+    /// <summary>
+    /// \if KO
+    /// <para>포토북 레이아웃 전용 페이지 목록입니다. 다른 레이아웃에서는 사용되지 않으며 데이터는 유지됩니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Photobook-only page list. Ignored by other layouts but the data is preserved.</para>
+    /// \endif
+    /// </summary>
+    public List<PhotoBookPage> PhotoBookPages { get; set; } = WeddingPhotoBookPageDefaults.Create();
+
+    /// <summary>
+    /// \if KO
+    /// <para>카드 레이아웃 전용 강조 카드 목록입니다. 다른 레이아웃에서는 사용되지 않으며 데이터는 유지됩니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Card-layout-only highlight list. Ignored by other layouts but the data is preserved.</para>
+    /// \endif
+    /// </summary>
+    public List<CardHighlight> CardHighlights { get; set; } = WeddingCardHighlightDefaults.Create();
     /// <summary>
     /// \if KO
     /// <para>Section Order 값을 가져오거나 설정합니다.</para>
@@ -390,6 +410,8 @@ public static class InvitationDesignCatalog
         config.DesignSettings.HeroPlacement.ThankYou ??= new HeroPanelPlacement();
         config.DesignSettings.MusicButtonPlacement ??= new WeddingFloatingPosition();
         config.DesignSettings.StoryChapters = WeddingStoryChapterDefaults.Normalize(config.DesignSettings.StoryChapters);
+        config.DesignSettings.PhotoBookPages = WeddingPhotoBookPageDefaults.Normalize(config.DesignSettings.PhotoBookPages);
+        config.DesignSettings.CardHighlights = WeddingCardHighlightDefaults.Normalize(config.DesignSettings.CardHighlights);
         config.UnlockedLayoutModes ??= new();
         config.UnlockedThemeKeys ??= new();
 
