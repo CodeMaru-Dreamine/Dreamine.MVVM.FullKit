@@ -448,7 +448,11 @@
             await proc.WaitForExitAsync();
 
             // "[dshow @ ...]  "장치이름" (video)" 패턴 파싱
-            var matches = Regex.Matches(output, @"""([^""]+)""\s+\(video\)");
+            var matches = Regex.Matches(
+                output,
+                @"""([^""]+)""\s+\(video\)",
+                RegexOptions.None,
+                TimeSpan.FromMilliseconds(250));
             _dshowDevices = matches.Select(m => m.Groups[1].Value).ToList();
 
             if (_dshowDevices.Count == 0)
@@ -465,6 +469,10 @@
         }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Security",
+        "S2068",
+        Justification = "The literal is a vendor-defined RTSP query parameter; its value comes from the administrator at runtime and no credential is embedded in source.")]
     private void GenerateRtspUrl()
     {
         if (string.IsNullOrEmpty(_brandKey) || string.IsNullOrWhiteSpace(_genIp)) return;

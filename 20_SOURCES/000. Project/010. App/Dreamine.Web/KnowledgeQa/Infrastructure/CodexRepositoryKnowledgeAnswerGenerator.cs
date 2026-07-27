@@ -15,6 +15,7 @@ public sealed class CodexRepositoryKnowledgeAnswerGenerator : IKnowledgeReposito
     public const string PromptPolicyVersion = "dreamine-repository-search-v4";
     private const int MaximumSources = 10;
     private const int MaximumSearchExcerpts = 20;
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromSeconds(1);
     private static readonly HashSet<string> AllowedSourceExtensions = new(StringComparer.OrdinalIgnoreCase)
     {
         ".cs", ".xaml", ".razor", ".csproj", ".props", ".targets", ".sln", ".md"
@@ -461,7 +462,8 @@ marked missing. State the missing step explicitly and limit the answer to the ve
                 foreach (Match match in Regex.Matches(
                              lines[index],
                              "\\bCommand\\s*=\\s*\"\\{Binding\\s+(?<command>[A-Za-z_][A-Za-z0-9_.]*)",
-                             RegexOptions.IgnoreCase))
+                             RegexOptions.IgnoreCase,
+                             RegexTimeout))
                 {
                     string command = match.Groups["command"].Value.Split('.').Last();
                     if (!command.EndsWith("Command", StringComparison.Ordinal) || command.Length <= 7)
@@ -525,19 +527,33 @@ marked missing. State the missing step explicitly and limit the answer to the ve
                     continue;
                 int end = Math.Min(lines.Length - 1, index + 8);
                 string window = string.Join('\n', lines[index..(end + 1)]);
-                if (!Regex.IsMatch(window, $@"\b{Regex.Escape(binding.MethodName)}\s*\("))
+                if (!Regex.IsMatch(
+                        window,
+                        $@"\b{Regex.Escape(binding.MethodName)}\s*\(",
+                        RegexOptions.None,
+                        RegexTimeout))
                     continue;
 
                 Match targetMatch = Regex.Match(
-                    lines[index], "DreamineCommand\\s*\\(\\s*\"(?<target>[^\"\\r\\n]+)\"");
+                    lines[index],
+                    "DreamineCommand\\s*\\(\\s*\"(?<target>[^\"\\r\\n]+)\"",
+                    RegexOptions.None,
+                    RegexTimeout);
                 string targetPath = targetMatch.Success ? targetMatch.Groups["target"].Value : string.Empty;
                 int methodLine = Enumerable.Range(index, end - index + 1)
                     .FirstOrDefault(line => Regex.IsMatch(
-                        lines[line], $@"\b{Regex.Escape(binding.MethodName)}\s*\("), index);
+                        lines[line],
+                        $@"\b{Regex.Escape(binding.MethodName)}\s*\(",
+                        RegexOptions.None,
+                        RegexTimeout), index);
                 string receiver = targetPath.Contains('.') ? targetPath[..targetPath.IndexOf('.')] : string.Empty;
                 string targetMethod = targetPath.Contains('.') ? targetPath[(targetPath.LastIndexOf('.') + 1)..] : string.Empty;
                 string? receiverType = ResolveReceiverType(lines, receiver);
-                string viewModelType = lines.Select(line => Regex.Match(line, @"\bclass\s+(?<type>[A-Za-z_][A-Za-z0-9_]*)"))
+                string viewModelType = lines.Select(line => Regex.Match(
+                        line,
+                        @"\bclass\s+(?<type>[A-Za-z_][A-Za-z0-9_]*)",
+                        RegexOptions.None,
+                        RegexTimeout))
                     .FirstOrDefault(match => match.Success)?.Groups["type"].Value ?? Path.GetFileNameWithoutExtension(file);
                 return new CommandDeclaration(
                     Path.GetRelativePath(repositoryRoot, file).Replace('\\', '/'),
@@ -562,8 +578,11 @@ marked missing. State the missing step explicitly and limit the answer to the ve
                 continue;
             int end = Math.Min(lines.Length - 1, index + 5);
             string window = string.Join(' ', lines[index..(end + 1)]);
-            Match field = Regex.Match(window,
-                @"\b(?<type>[A-Za-z_][A-Za-z0-9_.<>]*)\s+_(?<name>[A-Za-z_][A-Za-z0-9_]*)\s*;");
+            Match field = Regex.Match(
+                window,
+                @"\b(?<type>[A-Za-z_][A-Za-z0-9_.<>]*)\s+_(?<name>[A-Za-z_][A-Za-z0-9_]*)\s*;",
+                RegexOptions.None,
+                RegexTimeout);
             if (!field.Success)
                 continue;
             string property = char.ToUpperInvariant(field.Groups["name"].Value[0])
@@ -590,12 +609,19 @@ marked missing. State the missing step explicitly and limit the answer to the ve
             bool typeMatches = string.IsNullOrWhiteSpace(declaration.ReceiverType)
                 ? file.EndsWith("Event.cs", StringComparison.OrdinalIgnoreCase)
                 : lines.Any(line => Regex.IsMatch(
-                    line, $@"\bclass\s+{Regex.Escape(declaration.ReceiverType)}\b"));
+                    line,
+                    $@"\bclass\s+{Regex.Escape(declaration.ReceiverType)}\b",
+                    RegexOptions.None,
+                    RegexTimeout));
             if (!typeMatches)
                 continue;
             for (int index = 0; index < lines.Length; index += 1)
             {
-                if (!Regex.IsMatch(lines[index], $@"\b{Regex.Escape(declaration.TargetMethod)}\s*\("))
+                if (!Regex.IsMatch(
+                        lines[index],
+                        $@"\b{Regex.Escape(declaration.TargetMethod)}\s*\(",
+                        RegexOptions.None,
+                        RegexTimeout))
                     continue;
                 candidates.Add(new TargetMethod(
                     Path.GetRelativePath(repositoryRoot, file).Replace('\\', '/'),
@@ -864,7 +890,11 @@ marked missing. State the missing step explicitly and limit the answer to the ve
     private static string[] ExtractSearchTerms(string question)
     {
         HashSet<string> terms = new(StringComparer.OrdinalIgnoreCase);
-        foreach (Match match in Regex.Matches(question, @"[A-Za-z_][A-Za-z0-9_.]{2,}"))
+        foreach (Match match in Regex.Matches(
+                     question,
+                     @"[A-Za-z_][A-Za-z0-9_.]{2,}",
+                     RegexOptions.None,
+                     RegexTimeout))
         {
             string value = match.Value.Trim('.');
             if (value.Length < 3)
@@ -946,7 +976,11 @@ marked missing. State the missing step explicitly and limit the answer to the ve
             List<SearchHit> result = [];
             foreach (string line in output.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries))
             {
-                Match match = Regex.Match(line, @"^(.*?):(\d+):(.*)$");
+                Match match = Regex.Match(
+                    line,
+                    @"^(.*?):(\d+):(.*)$",
+                    RegexOptions.None,
+                    RegexTimeout);
                 if (match.Success && int.TryParse(match.Groups[2].Value, out int lineNumber))
                     result.Add(new SearchHit(match.Groups[1].Value, lineNumber, match.Groups[3].Value, 0));
             }

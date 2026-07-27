@@ -170,7 +170,12 @@ else
         _createError = string.Empty;
         var slug = _newSlug.Trim().ToLowerInvariant();
 
-        if (string.IsNullOrEmpty(slug) || !System.Text.RegularExpressions.Regex.IsMatch(slug, @"^[a-z0-9\-]+$"))
+        if (string.IsNullOrEmpty(slug) ||
+            !System.Text.RegularExpressions.Regex.IsMatch(
+                slug,
+                @"^[a-z0-9\-]+$",
+                System.Text.RegularExpressions.RegexOptions.None,
+                TimeSpan.FromMilliseconds(250)))
         {
             _createError = "슬러그는 소문자 영숫자와 하이픈만 사용 가능합니다.";
             return;

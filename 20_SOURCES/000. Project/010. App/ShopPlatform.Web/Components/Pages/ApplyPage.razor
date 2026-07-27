@@ -162,7 +162,12 @@
     {
         var raw = (e.Value?.ToString() ?? "").ToLowerInvariant().Trim();
         // 허용 문자 필터
-        _form.Slug = System.Text.RegularExpressions.Regex.Replace(raw, @"[^a-z0-9\-]", "");
+        _form.Slug = System.Text.RegularExpressions.Regex.Replace(
+            raw,
+            @"[^a-z0-9\-]",
+            "",
+            System.Text.RegularExpressions.RegexOptions.None,
+            TimeSpan.FromMilliseconds(250));
         _slugError = string.Empty;
         _slugOk    = false;
 

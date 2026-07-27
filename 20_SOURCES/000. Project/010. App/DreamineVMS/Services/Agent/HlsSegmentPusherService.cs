@@ -175,7 +175,7 @@ public sealed class HlsSegmentPusherService : BackgroundService
             // 제거된 카메라 루프 취소
             foreach (var id in runningCameras.Keys.Except(currentIds).ToList())
             {
-                runningCameras[id].Cancel();
+                await runningCameras[id].CancelAsync();
                 runningCameras.Remove(id);
                 _logger.LogInformation("[Agent] 카메라 루프 중지: {Id}", id);
             }
@@ -193,7 +193,8 @@ public sealed class HlsSegmentPusherService : BackgroundService
         }
 
         // 종료 시 모든 루프 취소
-        foreach (var cts in runningCameras.Values) cts.Cancel();
+        foreach (var cts in runningCameras.Values)
+            await cts.CancelAsync();
     }
 
     /// <summary>

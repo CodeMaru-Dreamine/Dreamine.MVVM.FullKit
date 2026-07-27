@@ -118,7 +118,7 @@ public sealed class JsonCardProfileStore : ICardProfileStore
         var snapshot = await JsonSerializer.DeserializeAsync<CardHybridSnapshot>(
             stream, SerializerOptions, cancellationToken).ConfigureAwait(false);
 
-        return snapshot?.UserId == userId ? snapshot : snapshot;
+        return snapshot?.UserId == userId ? snapshot : null;
     }
 
     /// <summary>

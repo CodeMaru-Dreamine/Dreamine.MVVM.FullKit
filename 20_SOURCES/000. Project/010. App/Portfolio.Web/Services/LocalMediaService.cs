@@ -13,6 +13,11 @@ namespace PortfolioApp.Services;
 /// </summary>
 public class LocalMediaService : IMediaService
 {
+    private static readonly HashSet<string> ImageExtensions =
+        new(StringComparer.OrdinalIgnoreCase) { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+    private static readonly HashSet<string> VideoExtensions =
+        new(StringComparer.OrdinalIgnoreCase) { ".mp4", ".webm", ".ogg" };
+
     /// <summary>
     /// \if KO
     /// <para>root 값을 보관합니다.</para>
@@ -101,6 +106,7 @@ public class LocalMediaService : IMediaService
     /// </returns>
     public async Task<string> SaveAsync(string slug, string projectId, IBrowserFile file)
     {
+        ValidateUpload(file, MaxImageBytes, ImageExtensions, "image");
         var dir = Path.Combine(_root, slug, "media", projectId);
         Directory.CreateDirectory(dir);
         var ext = Path.GetExtension(file.Name).ToLowerInvariant();
@@ -153,6 +159,7 @@ public class LocalMediaService : IMediaService
     /// </returns>
     public async Task<string> SaveVideoAsync(string slug, string projectId, IBrowserFile file)
     {
+        ValidateUpload(file, MaxVideoBytes, VideoExtensions, "video");
         var dir = Path.Combine(_root, slug, "media", projectId);
         Directory.CreateDirectory(dir);
         var ext = Path.GetExtension(file.Name).ToLowerInvariant();
@@ -244,6 +251,7 @@ public class LocalMediaService : IMediaService
     /// </returns>
     public async Task<string> SaveProfileImageAsync(string slug, IBrowserFile file)
     {
+        ValidateUpload(file, MaxImageBytes, ImageExtensions, "profile image");
         var dir = Path.Combine(_root, slug, "media", "_profile");
         Directory.CreateDirectory(dir);
         var ext = Path.GetExtension(file.Name).ToLowerInvariant();
@@ -252,6 +260,27 @@ public class LocalMediaService : IMediaService
         await using var fs = new FileStream(path, FileMode.Create);
         await file.OpenReadStream(MaxImageBytes).CopyToAsync(fs);
         return safe;
+    }
+
+    private static void ValidateUpload(
+        IBrowserFile file,
+        long maximumBytes,
+        IReadOnlySet<string> allowedExtensions,
+        string mediaKind)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+
+        if (file.Size <= 0 || file.Size > maximumBytes)
+        {
+            throw new InvalidOperationException(
+                $"The {mediaKind} file must be between 1 byte and {maximumBytes} bytes.");
+        }
+
+        var extension = Path.GetExtension(file.Name);
+        if (!allowedExtensions.Contains(extension))
+        {
+            throw new InvalidOperationException($"The {mediaKind} file type is not allowed.");
+        }
     }
 
     /// <summary>

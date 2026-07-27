@@ -694,18 +694,9 @@
     {
         if (string.IsNullOrWhiteSpace(imageUrlInput) || Vm.EditingProject == null) return;
         var url = imageUrlInput.Trim();
-        if (Vm.EditingProject.Category == ProjectCategory.Work)
-        {
-            if (!Vm.EditingProject.WorkImages.Contains(url))
-                Vm.EditingProject.WorkImages = [.. Vm.EditingProject.WorkImages, url];
-            Vm.EditingProject.ImageFileName ??= url;
-        }
-        else
-        {
-            if (!Vm.EditingProject.WorkImages.Contains(url))
-                Vm.EditingProject.WorkImages = [.. Vm.EditingProject.WorkImages, url];
-            Vm.EditingProject.ImageFileName ??= url;
-        }
+        if (!Vm.EditingProject.WorkImages.Contains(url))
+            Vm.EditingProject.WorkImages = [.. Vm.EditingProject.WorkImages, url];
+        Vm.EditingProject.ImageFileName ??= url;
         imageUrlInput = "";
     }
 

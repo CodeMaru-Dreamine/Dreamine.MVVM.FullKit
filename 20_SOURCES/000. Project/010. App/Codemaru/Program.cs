@@ -306,7 +306,7 @@ public static class Program
             </head>
             <body></body>
             </html>
-            """);
+            """, context.RequestAborted);
     }
 
     /// <summary>
@@ -401,7 +401,7 @@ public static class Program
               <p><a href="https://codemaru.co.kr/">CodeMaru 홈</a></p>
             </body>
             </html>
-            """);
+            """, context.RequestAborted);
     }
 
     /// <summary>

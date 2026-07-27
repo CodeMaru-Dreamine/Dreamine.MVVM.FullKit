@@ -1,5 +1,6 @@
 using Dreamine.Identity;
 using Dreamine.Identity.Options;
+using DreamineVMS.Web;
 using DreamineVMS.Web.Blazor;
 using DreamineVMS.Web.Services.Agent;
 using DreamineVMS.Web.Services.Auth;
@@ -291,7 +292,7 @@ app.MapPost("/api/upload/og-image",
 app.MapRazorComponents<AppShell>()
    .AddInteractiveServerRenderMode();
 
-app.Run();
+await app.RunAsync();
 
 #pragma warning disable CS1587
 /// \cond LOCAL_FUNCTION_DOCUMENTATION
@@ -340,40 +341,3 @@ static string ResolvePath(string? configuredPath, string fallback)
         : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
 }
 #pragma warning restore CS1587
-
-/// <summary>
-/// \if KO
-/// <para>Agent Login Request 기능과 관련 상태를 캡슐화합니다.</para>
-/// \endif
-/// \if EN
-/// <para>Encapsulates agent login request functionality and related state.</para>
-/// \endif
-/// </summary>
-record AgentLoginRequest(string Email, string Password);
-/// <summary>
-/// \if KO
-/// <para>Agent Camera Dto 기능과 관련 상태를 캡슐화합니다.</para>
-/// \endif
-/// \if EN
-/// <para>Encapsulates agent camera dto functionality and related state.</para>
-/// \endif
-/// </summary>
-record AgentCameraDto(string Id, string Name, string Host, string RtspUrl, bool AutoReconnect, bool IsPublic);
-/// <summary>
-/// \if KO
-/// <para>Agent Login Response 기능과 관련 상태를 캡슐화합니다.</para>
-/// \endif
-/// \if EN
-/// <para>Encapsulates agent login response functionality and related state.</para>
-/// \endif
-/// </summary>
-record AgentLoginResponse(string Token, string TenantId, List<AgentCameraDto> Cameras);
-/// <summary>
-/// \if KO
-/// <para>Agent Sync Request 기능과 관련 상태를 캡슐화합니다.</para>
-/// \endif
-/// \if EN
-/// <para>Encapsulates agent sync request functionality and related state.</para>
-/// \endif
-/// </summary>
-record AgentSyncRequest(string Token, List<AgentCameraDto> Cameras);

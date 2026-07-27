@@ -147,14 +147,14 @@
             else
             {
                 <div class="dw-event-flow">
-                    @EventNode(EventFlow.ViewModel, Ko ? "VIEWMODEL" : "VIEWMODEL")
+                    @EventNode(EventFlow.ViewModel, "VIEWMODEL")
                     @EventArrow(EventFlow.ComponentRelation)
                     @EventNode(EventFlow.EventComponent, "DREAMINE EVENT COMPONENT")
                 </div>
                 <div class="dw-event-flow">
-                    @EventNode(EventFlow.Command, Ko ? "VIEWMODEL COMMAND" : "VIEWMODEL COMMAND")
+                    @EventNode(EventFlow.Command, "VIEWMODEL COMMAND")
                     @EventArrow(EventFlow.ForwardingRelation)
-                    @EventNode(EventFlow.TargetMethod, Ko ? "EVENT COMPONENT METHOD" : "EVENT COMPONENT METHOD")
+                    @EventNode(EventFlow.TargetMethod, "EVENT COMPONENT METHOD")
                 </div>
                 <div class="dw-event-proof">
                     <strong>MainWindowViewModel.Ok → MainWindowEvent.Ok</strong>

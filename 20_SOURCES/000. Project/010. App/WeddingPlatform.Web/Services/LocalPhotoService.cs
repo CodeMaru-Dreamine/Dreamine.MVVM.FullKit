@@ -594,6 +594,7 @@ public sealed class LocalPhotoService : IPhotoService
     /// <para>Thrown when the upload music async operation is not valid for the current object state.</para>
     /// \endif
     /// </exception>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "S5693", Justification = "The declared browser file size and OpenReadStream are both capped at 30 MB before data is persisted.")]
     public async Task<string> UploadMusicAsync(string slug, IBrowserFile file, CancellationToken ct = default)
     {
         var ext = Path.GetExtension(file.Name).ToLowerInvariant();
@@ -1122,6 +1123,7 @@ public sealed class LocalPhotoService : IPhotoService
     /// <para>The <c>Task&lt;string&gt;</c> result produced by the save image file async operation.</para>
     /// \endif
     /// </returns>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "S5693", Justification = "Callers validate the file size and OpenReadStream enforces MaxImageUploadBytes before copying.")]
     private async Task<string> SaveImageFileAsync(string slug, IBrowserFile file, string destinationDirectory, string baseName, EffectiveMediaPolicy policy, CancellationToken ct)
     {
         var root = _tenants.GetTenantDataPath(slug);

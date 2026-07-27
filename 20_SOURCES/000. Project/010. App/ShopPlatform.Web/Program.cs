@@ -91,7 +91,8 @@ app.MapGet("/pay/{slug}/return", async (
     IShopTenantStore store,
     PaymentKeyProtector protector,
     IHttpClientFactory httpFactory,
-    TenantDbContextFactory dbFactory) =>
+    TenantDbContextFactory dbFactory,
+    CancellationToken cancellationToken) =>
 {
     var config = await store.GetAsync(slug);
     if (config == null) return Results.NotFound();
@@ -107,15 +108,15 @@ app.MapGet("/pay/{slug}/return", async (
 
     // 주문 상태 업데이트 + 재고 차감
     using var db = dbFactory.Create(slug);
-    var order = db.Orders
+    var order = await db.Orders
         .Include(o => o.Lines)
-        .FirstOrDefault(o => o.OrderNo == orderId);
+        .FirstOrDefaultAsync(o => o.OrderNo == orderId, cancellationToken);
     if (order != null)
     {
         order.Status = "paid";
         order.TransactionId = result.TransactionId;
-        DeductStock(db, order.Lines);
-        await db.SaveChangesAsync();
+        await DeductStockAsync(db, order.Lines, cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
     }
 
     return Results.Redirect($"/{slug}/order/{orderId}?paid=1");
@@ -134,11 +135,9 @@ ShopPlatform.Services.OgImageGenerator.EnsureDefault(wwwroot);
 
 // ── 샘플 데이터 시드 ──────────────────────────────────────
 await ShopPlatform.Data.ShopSeeder.SeedCodemaruAsync(
-    app.Services.GetRequiredService<TenantDbContextFactory>(),
-    app.Services.GetRequiredService<IShopTenantStore>(),
-    app.Services.GetRequiredService<PaymentKeyProtector>());
+    app.Services.GetRequiredService<TenantDbContextFactory>());
 
-app.Run();
+await app.RunAsync();
 
 // 재고 차감 — 무한 재고 상품은 건드리지 않음
 #pragma warning disable CS1587
@@ -168,11 +167,14 @@ app.Run();
 /// \endif
 /// </param>
 /// \endcond
-static void DeductStock(TenantDbContext db, IEnumerable<OrderLine> lines)
+static async Task DeductStockAsync(
+    TenantDbContext db,
+    IEnumerable<OrderLine> lines,
+    CancellationToken cancellationToken)
 {
     foreach (var line in lines)
     {
-        var product = db.Products.Find(line.ProductId);
+        var product = await db.Products.FindAsync([line.ProductId], cancellationToken);
         if (product == null || product.IsUnlimitedStock) continue;
         product.Stock = Math.Max(0, product.Stock - line.Quantity);
     }

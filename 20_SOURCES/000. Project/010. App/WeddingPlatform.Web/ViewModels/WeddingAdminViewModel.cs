@@ -1861,7 +1861,7 @@ public sealed class WeddingAdminViewModel
 
         // 아틀란
         if (!string.IsNullOrWhiteSpace(_opts.AtlanAuthKey) && hasCoords)
-            Config.MapLinkAtlan = $"http://m.atlan.co.kr/searchPlus/linkAtlan.do?shareType=kakao&coordX={lng.ToString(System.Globalization.CultureInfo.InvariantCulture)}&coordY={lat.ToString(System.Globalization.CultureInfo.InvariantCulture)}&title={name}&AuthKey={_opts.AtlanAuthKey}";
+            Config.MapLinkAtlan = $"https://m.atlan.co.kr/searchPlus/linkAtlan.do?shareType=kakao&coordX={lng.ToString(System.Globalization.CultureInfo.InvariantCulture)}&coordY={lat.ToString(System.Globalization.CultureInfo.InvariantCulture)}&title={name}&AuthKey={_opts.AtlanAuthKey}";
 
         // T맵
         if (!string.IsNullOrWhiteSpace(_opts.TmapAppKey) && hasCoords)

@@ -1496,7 +1496,7 @@ namespace WeddingThankYou.ViewModels
 
 			// 아틀란
 			if (!string.IsNullOrWhiteSpace(_opts.AtlanAuthKey) && hasCoords)
-				Config.MapLinkAtlan = $"http://m.atlan.co.kr/searchPlus/linkAtlan.do?shareType=kakao&coordX={lngS}&coordY={latS}&title={name}&AuthKey={_opts.AtlanAuthKey}";
+				Config.MapLinkAtlan = $"https://m.atlan.co.kr/searchPlus/linkAtlan.do?shareType=kakao&coordX={lngS}&coordY={latS}&title={name}&AuthKey={_opts.AtlanAuthKey}";
 
 			// T맵
 			if (!string.IsNullOrWhiteSpace(_opts.TmapAppKey) && hasCoords)

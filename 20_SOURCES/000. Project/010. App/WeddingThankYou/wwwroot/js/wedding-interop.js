@@ -91,8 +91,8 @@ window.weddingInterop = {
                 return;
             }
             if (el._leaflet_id) return;
-            var lat = parseFloat(el.dataset.lat);
-            var lng = parseFloat(el.dataset.lng);
+            var lat = Number.parseFloat(el.dataset.lat);
+            var lng = Number.parseFloat(el.dataset.lng);
             var name = el.dataset.name || '';
             var map = L.map(el, { zoomControl: true, scrollWheelZoom: false })
                        .setView([lat, lng], 16);
@@ -123,8 +123,8 @@ window.weddingInterop = {
 
         // 저장된 폭 복원
         try {
-            var saved = parseInt(localStorage.getItem(STORAGE_KEY), 10);
-            if (!isNaN(saved) && saved >= MIN) {
+            var saved = Number.parseInt(localStorage.getItem(STORAGE_KEY), 10);
+            if (!Number.isNaN(saved) && saved >= MIN) {
                 shell.style.setProperty('--w-preview-width', saved + 'px');
             }
         } catch (e) { }
@@ -137,7 +137,7 @@ window.weddingInterop = {
             dragging = true;
             startX = (e.touches ? e.touches[0].clientX : e.clientX);
             var current = getComputedStyle(shell).getPropertyValue('--w-preview-width');
-            startWidth = parseInt(current, 10) || 420;
+            startWidth = Number.parseInt(current, 10) || 420;
             document.body.style.cursor = 'col-resize';
             document.body.style.userSelect = 'none';
             e.preventDefault();
@@ -161,7 +161,7 @@ window.weddingInterop = {
             document.body.style.userSelect = '';
             try {
                 var current = getComputedStyle(shell).getPropertyValue('--w-preview-width');
-                var w = parseInt(current, 10);
+                var w = Number.parseInt(current, 10);
                 if (w) localStorage.setItem(STORAGE_KEY, w);
             } catch (e) { }
         }
@@ -184,7 +184,10 @@ window.weddingInterop = {
     reloadPreviewIframe: function () {
         var f = document.getElementById('w-preview-iframe');
         if (f && f.contentWindow) {
-            try { f.contentWindow.location.reload(); } catch (e) { f.src = f.src; }
+            try { f.contentWindow.location.reload(); } catch (e) {
+                var src = f.getAttribute('src');
+                if (src) f.setAttribute('src', src);
+            }
         }
     },
 
@@ -467,8 +470,8 @@ window.weddingInterop = {
             if (moved) {
                 try {
                     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-                        x: parseFloat(fab.style.left) || 0,
-                        y: parseFloat(fab.style.top) || 0
+                        x: Number.parseFloat(fab.style.left) || 0,
+                        y: Number.parseFloat(fab.style.top) || 0
                     }));
                 } catch (e) { }
                 // 드래그였으므로 뒤이어 발생할 click 이벤트 억제

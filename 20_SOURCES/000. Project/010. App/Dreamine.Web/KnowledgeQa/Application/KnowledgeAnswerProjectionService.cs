@@ -332,11 +332,10 @@ public sealed partial class KnowledgeAnswerProjectionService : IKnowledgeAnswerP
         string[] values = names.Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
         if (values.Length <= 1)
             return values.FirstOrDefault() ?? string.Empty;
-        string separator = korean ? ", " : ", ";
         string conjunction = korean ? " 및 " : " and ";
         return values.Length == 2
             ? values[0] + conjunction + values[1]
-            : string.Join(separator, values[..^1]) + conjunction + values[^1];
+            : string.Join(", ", values[..^1]) + conjunction + values[^1];
     }
 
     private static string RelationVerb(string? relation, bool korean) => (relation ?? string.Empty).ToLowerInvariant() switch

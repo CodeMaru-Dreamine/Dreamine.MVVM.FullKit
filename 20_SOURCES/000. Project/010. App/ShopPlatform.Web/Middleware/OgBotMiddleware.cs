@@ -268,7 +268,7 @@ public sealed class OgBotMiddleware(RequestDelegate next)
 
         ctx.Response.ContentType = "text/html; charset=utf-8";
         ctx.Response.StatusCode  = 200;
-        await ctx.Response.WriteAsync(html);
+        await ctx.Response.WriteAsync(html, ctx.RequestAborted);
     }
 
     /// <summary>

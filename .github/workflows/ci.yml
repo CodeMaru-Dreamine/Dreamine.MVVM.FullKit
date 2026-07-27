@@ -17,6 +17,9 @@ jobs:
       SONAR_PROJECT_KEY: CodeMaru-Dreamine_Dreamine.MVVM.FullKit
       SONAR_ORGANIZATION: codemaru-dreamine
       SONAR_SCANNER_VERSION: 11.2.1
+      # Advance this only when starting a new quality/release cycle. Sonar's
+      # "Previous version" baseline intentionally depends on a stable version.
+      SONAR_PROJECT_VERSION: 1.0.1
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
@@ -119,15 +122,21 @@ jobs:
         shell: pwsh
         run: |
           $scanner = Join-Path $env:RUNNER_TEMP "sonar-scanner\dotnet-sonarscanner.exe"
-          $projectVersion = (git describe --tags --abbrev=0 2>$null)
-          if ([string]::IsNullOrWhiteSpace($projectVersion)) {
-            $projectVersion = "0.0.0"
-          }
-          else {
-            $projectVersion = $projectVersion.Trim().TrimStart("v")
+          $releaseTag = git tag --points-at HEAD |
+            Where-Object { $_ -match '^v\d+\.\d+\.\d+(?:[-+].+)?$' } |
+            Select-Object -First 1
+
+          if ([string]::IsNullOrWhiteSpace($releaseTag)) {
+            $projectVersion = $env:SONAR_PROJECT_VERSION
+          } else {
+            $projectVersion = $releaseTag.Trim().TrimStart("v")
           }
 
-          Write-Host "SonarCloud project version: $projectVersion"
+          if ([string]::IsNullOrWhiteSpace($projectVersion)) {
+            throw "SONAR_PROJECT_VERSION must be configured for untagged analyses."
+          }
+
+          Write-Host "SonarCloud project version: $projectVersion (stable Previous-version baseline)"
           $exclusions = @(
             ".agents/**",
             ".claude/**",

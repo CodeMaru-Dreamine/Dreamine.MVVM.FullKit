@@ -177,7 +177,7 @@
 
     public async ValueTask DisposeAsync()
     {
-        _disposeCancellation.Cancel();
+        await _disposeCancellation.CancelAsync();
         if (_pollingTask is not null)
         {
             try { await _pollingTask; }
