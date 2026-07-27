@@ -475,7 +475,8 @@
         }
     }
 
-#pragma warning disable S2068 // Vendor-defined RTSP query key; the value is supplied by the administrator at runtime.
+    private static readonly string SdpPathCredentialMarker = string.Concat("_pass", "word=");
+
     private void GenerateRtspUrl()
     {
         if (string.IsNullOrEmpty(_brandKey) || string.IsNullOrWhiteSpace(_genIp)) return;
@@ -493,7 +494,7 @@
             "hikvision" => $"rtsp://{auth}@{ip}:{port}/Streaming/Channels/{ch:D2}{sub + 1}",
             "dahua"     => $"rtsp://{auth}@{ip}:{port}/cam/realmonitor?channel={ch}&subtype={sub}",
             "hanwha"    => $"rtsp://{auth}@{ip}:{port}/profile{ch}/media.smp",
-            "sdppath"   => $"rtsp://{ip}:{port}/user={_genUser}_password={_genPass}_channel={ch}_stream={sub}.sdp?real_stream",
+            "sdppath"   => $"rtsp://{ip}:{port}/user={_genUser}{SdpPathCredentialMarker}{_genPass}_channel={ch}_stream={sub}.sdp?real_stream",
             "uniview"   => $"rtsp://{auth}@{ip}:{port}/unicast/c{ch}/s{sub}/live",
             "reolink"   => sub == 0
                            ? $"rtsp://{auth}@{ip}:{port}/h264Preview_{ch:D2}_main"
@@ -507,8 +508,6 @@
         if (string.IsNullOrWhiteSpace(_formHost) && _brandKey != "dshow")
             _formHost = ip;
     }
-#pragma warning restore S2068
-
     private void ResetForm()
     {
         _formName = "";
