@@ -3125,7 +3125,7 @@
     private static bool IsPremiumActive(TenantConfig tenant) =>
         tenant.HasPremiumPlan;
 
-    private static int GetTotalPages(int count, int pageSize = 0)
+    private static int GetTotalPages(int count, int pageSize)
     {
         var size = pageSize <= 0 ? 10 : pageSize;
         return Math.Max(1, (int)Math.Ceiling(count / (double)size));

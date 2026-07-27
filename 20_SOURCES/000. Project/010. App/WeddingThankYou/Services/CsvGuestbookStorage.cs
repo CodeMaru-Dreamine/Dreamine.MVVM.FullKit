@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -85,8 +86,31 @@ namespace WeddingThankYou.Services
 		/// <para>The <c>string</c> result produced by the csv path operation.</para>
 		/// \endif
 		/// </returns>
-		private string CsvPath(string slug) =>
-			Path.Combine(_dataDir, $"{Sanitize(slug)}.csv");
+		private string CsvPath(string slug)
+		{
+			var hashedPath = Path.Combine(_dataDir, BuildStorageFileName(slug));
+			if (File.Exists(hashedPath))
+			{
+				return hashedPath;
+			}
+
+			var legacyStem = NormalizeSlug(slug);
+			foreach (var existingPath in Directory.EnumerateFiles(
+				_dataDir,
+				"*.csv",
+				SearchOption.TopDirectoryOnly))
+			{
+				if (string.Equals(
+					Path.GetFileNameWithoutExtension(existingPath),
+					legacyStem,
+					StringComparison.OrdinalIgnoreCase))
+				{
+					return existingPath;
+				}
+			}
+
+			return hashedPath;
+		}
 
 		/// <summary>
 		/// \if KO
@@ -112,8 +136,25 @@ namespace WeddingThankYou.Services
 		/// <para>The <c>string</c> result produced by the sanitize operation.</para>
 		/// \endif
 		/// </returns>
-		private static string Sanitize(string slug) =>
-			string.Concat((slug ?? string.Empty).ToLowerInvariant().Split(Path.GetInvalidFileNameChars()));
+		private static string BuildStorageFileName(string slug)
+		{
+			var digest = SHA256.HashData(Encoding.UTF8.GetBytes(NormalizeSlug(slug)));
+			return $"{Convert.ToHexString(digest)}.csv";
+		}
+
+		private static string NormalizeSlug(string slug)
+		{
+			var normalized = string.Concat(
+				(slug ?? string.Empty).ToLowerInvariant().Split(Path.GetInvalidFileNameChars()));
+			var safeLeaf = Path.GetFileName(normalized);
+			if (string.IsNullOrWhiteSpace(safeLeaf) ||
+				!string.Equals(safeLeaf, normalized, StringComparison.Ordinal))
+			{
+				throw new ArgumentException("The guestbook slug is invalid.", nameof(slug));
+			}
+
+			return safeLeaf;
+		}
 
 		/// <summary>
 		/// \if KO
