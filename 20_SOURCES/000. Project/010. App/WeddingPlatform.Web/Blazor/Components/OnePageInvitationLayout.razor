@@ -3,10 +3,16 @@
 @using WeddingPlatform.ViewModels
 @inject IJSRuntime JS
 
-<section class="w-hero w-hero--invite-positioned w-hero--style-@Vm.InvitationStyle @Vm.LayoutDescriptor.CssClass" role="banner">
+<section class="w-hero w-hero--invite-positioned w-hero--style-@Vm.InvitationStyle @Vm.LayoutDescriptor.CssClass"
+         role="banner"
+         data-hero-crop-container
+         style="@Vm.HeroImageStyle">
     @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
     {
-        <div class="w-hero__bg" style="background-image:url('@Vm.HeroImageUrl')"></div>
+        <div class="w-hero__bg"
+             data-hero-crop-background
+             data-hero-crop-source="@Vm.HeroImageUrl"
+             style="background-image:url('@Vm.HeroImageUrl')"></div>
     }
     else
     {

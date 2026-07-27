@@ -2,8 +2,10 @@
 @layout WeddingPlatform.Blazor.Layout.WeddingLayout
 @namespace WeddingPlatform.Blazor.Pages
 @rendermode InteractiveServer
+@implements IDisposable
 
 @using Wedding.Common
+@using Wedding.Layouts.Contracts
 @using WeddingPlatform.Models
 @using WeddingPlatform.Services
 @using Microsoft.JSInterop
@@ -12,11 +14,23 @@
 @inject ITenantStore TenantStore
 @inject IJSRuntime JS
 @inject NavigationManager Nav
+@inject IWeddingLayoutCatalogRegistry LayoutRegistry
+@inject IWeddingLayoutSubmissionService LayoutSubmissions
 
 <PageTitle>Wedding 통합 어드민</PageTitle>
+<HeadContent>
+    <meta name="robots" content="noindex, nofollow" />
+</HeadContent>
 
 <div class="w-admin @(Vm.IsAuthenticated ? "wedding-admin-shell" : "")">
-    @if (!Vm.IsAuthenticated)
+    @if (!_sessionRestoreChecked)
+    {
+        <div class="w-loading">
+            <div class="w-spinner"></div>
+            <p class="w-sa-hint">최고 관리자 세션을 확인하고 있습니다.</p>
+        </div>
+    }
+    else if (!Vm.IsAuthenticated)
     {
         <div class="w-admin__login w-panel">
             <h2>슈퍼 어드민 로그인</h2>
@@ -44,6 +58,8 @@
             .Skip((currentPage - 1) * _pageSize)
             .Take(_pageSize)
             .ToArray();
+        var layoutCatalog = LayoutRegistry.Current;
+        var publishedLayoutPackages = LayoutRegistry.PublishedPackages;
 
         <aside class="wedding-admin-sidebar">
             <div class="wedding-admin-brand">
@@ -59,6 +75,7 @@
                 <button class="@NavClass("invite")" type="button" @onclick='() => SetActiveMenu("invite")'>청첩장 관리</button>
                 <button class="@NavClass("account")" type="button" @onclick='() => SetActiveMenu("account")'>계정 관리</button>
                 <button class="@NavClass("media")" type="button" @onclick='() => SetActiveMenu("media")'>미디어 관리</button>
+                <button class="@NavClass("layouts")" type="button" @onclick='() => SetActiveMenu("layouts")'>레이아웃 카탈로그</button>
                 <button class="@NavClass("settings")" type="button" @onclick='() => SetActiveMenu("settings")'>설정</button>
             </nav>
 
@@ -78,14 +95,20 @@
                 </div>
 
                 <div class="wedding-admin-header__tools">
+                    @if (!ShowLayoutCatalog)
+                    {
                     <label class="wedding-admin-search">
                         <span>검색</span>
                         <input value="@_searchText"
                                @oninput="OnSearchInput"
                                placeholder="커플 이름, 슬러그, 이메일 검색" />
                     </label>
+                    }
                     <button class="wedding-admin-action-button is-compact" type="button" @onclick="OnRefresh" title="전체 목록 새로고침">
-                        새로고침
+                        @(ShowLayoutCatalog ? "카탈로그 다시 읽기" : "새로고침")
+                    </button>
+                    <button class="wedding-admin-action-button is-compact" type="button" @onclick="OnLogout" title="최고 관리자 로그아웃">
+                        로그아웃
                     </button>
                     <button class="wedding-admin-icon-button" type="button" title="알림">!</button>
                     <div class="wedding-admin-profile">
@@ -156,6 +179,1157 @@
                 <section class="wedding-admin-card wedding-admin-section-summary">
                     <h2>@ActiveTitle</h2>
                     <p>@ActiveDescription</p>
+                </section>
+            }
+
+            @if (ShowLayoutCatalog)
+            {
+                <section class="wedding-admin-card wedding-admin-layout-upload" aria-labelledby="layout-upload-title">
+                    <div class="wedding-admin-card__header">
+                        <div>
+                            <h2 id="layout-upload-title">JSON 레이아웃 추가</h2>
+                            <p>
+                                WPF 편집기가 만든 LayoutPackage JSON을 서버 검증 후 승인 대기열에 등록합니다.
+                                업로드만으로 공개되거나 활성화되지는 않습니다.
+                            </p>
+                        </div>
+                        <span class="wedding-admin-badge is-success">슈퍼관리자 전용</span>
+                    </div>
+
+                    @if (Vm.Tenants.Count == 0)
+                    {
+                        <p class="w-sa-empty">레이아웃 소유권을 기록할 청첩장 계정이 없습니다.</p>
+                    }
+                    else
+                    {
+                        <div class="wedding-admin-layout-upload__form">
+                            <label class="w-label">
+                                LayoutKey 소유 계정
+                                <select class="w-input"
+                                        disabled="@_isLayoutWorkflowBusy"
+                                        @bind="_layoutUploadTenantSlug"
+                                        @bind:after="OnLayoutUploadTenantChanged">
+                                    <option value="">계정을 선택하세요</option>
+                                    @foreach (var tenant in Vm.Tenants
+                                        .OrderBy(x => x.CoupleName, StringComparer.CurrentCulture)
+                                        .ThenBy(x => x.Slug, StringComparer.OrdinalIgnoreCase))
+                                    {
+                                        <option value="@tenant.Slug">@tenant.CoupleName · /@tenant.Slug</option>
+                                    }
+                                </select>
+                                <span class="w-hint">
+                                    새 LayoutKey의 영구 소유 계정입니다. 같은 키의 버전 업로드에도 최초 소유 계정을 선택하세요.
+                                </span>
+                            </label>
+
+                            <label class="w-label">
+                                WPF LayoutPackage JSON
+                                <InputFile @key="_layoutUploadInputVersion"
+                                           class="w-input"
+                                           accept=".json,application/json"
+                                           disabled="@(_isLayoutWorkflowBusy || string.IsNullOrWhiteSpace(_layoutUploadTenantSlug))"
+                                           OnChange="OnSuperAdminLayoutPackageUpload" />
+                                <span class="w-hint">
+                                    최대 384KB · Contracts 스키마 v1 · 기존 key/version은 덮어쓰지 않습니다.
+                                </span>
+                            </label>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(_layoutUploadStatus))
+                        {
+                            <p class="w-status @(_layoutUploadSucceeded ? "" : "w-status--error")"
+                               aria-live="polite">
+                                @_layoutUploadStatus
+                            </p>
+                        }
+                    }
+                </section>
+
+                <section class="wedding-admin-card wedding-admin-table-card" aria-labelledby="layout-catalog-title">
+                    <div class="wedding-admin-table-card__header">
+                        <div>
+                            <h2 id="layout-catalog-title">활성 레이아웃 <span>@layoutCatalog.Descriptors.Count</span></h2>
+                            <p>
+                                기본 제공 @(layoutCatalog.Descriptors.Count(x => x.IsBuiltIn))개 ·
+                                활성 업로드 @(layoutCatalog.Descriptors.Count(x => !x.IsBuiltIn))개 ·
+                                승인 업로드 릴리스 @(publishedLayoutPackages.Count)개 ·
+                                전체 불변 릴리스 @(WeddingLayoutCatalog.Instance.Releases.Count + publishedLayoutPackages.Count)개
+                            </p>
+                        </div>
+
+                        <div class="wedding-admin-table-tools">
+                            <span class="wedding-admin-badge is-success">실시간 감시 중</span>
+                            @if (_layoutCatalogChangedAt is { } changedAt)
+                            {
+                                <small>최근 자동 적용 @changedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</small>
+                            }
+                            <button class="wedding-admin-action-button"
+                                    type="button"
+                                    disabled="@_isLayoutCatalogReloading"
+                                    @onclick="OnReloadLayoutCatalog">
+                                @(_isLayoutCatalogReloading ? "확인 중..." : "지금 다시 읽기")
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_layoutCatalogStatus))
+                    {
+                        <p class="w-status @(_layoutCatalogReloadSucceeded ? "" : "w-status--error")">
+                            @_layoutCatalogStatus
+                        </p>
+                    }
+
+                    <div class="wedding-admin-table-wrap">
+                        <table class="wedding-admin-table">
+                            <thead>
+                                <tr>
+                                    <th>레이아웃</th>
+                                    <th>안정 키</th>
+                                    <th>등급</th>
+                                    <th>활성 버전</th>
+                                    <th>소스</th>
+                                    <th>런타임 상태</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var descriptor in layoutCatalog.Descriptors
+                                    .Where(x => x.IsBuiltIn)
+                                    .OrderBy(x => x.Label, StringComparer.OrdinalIgnoreCase))
+                                {
+                                    var activeRelease = layoutCatalog.FindRelease(descriptor.Key, descriptor.CurrentVersion);
+                                    <tr>
+                                        <td>
+                                            <strong>@descriptor.Label</strong>
+                                            <small style="display:block">@descriptor.Description</small>
+                                        </td>
+                                        <td><span class="w-sa-slug">@descriptor.Key</span></td>
+                                        <td>
+                                            <span class="wedding-admin-badge @(descriptor.Tier == WeddingLayoutTier.Premium ? "is-gold" : "is-muted")">
+                                                @TierLabel(descriptor.Tier)
+                                            </span>
+                                            <small style="display:block">내장 정책 확정 · 보호</small>
+                                        </td>
+                                        <td><strong>v@(descriptor.CurrentVersion)</strong></td>
+                                        <td>@SourceLabel(descriptor)</td>
+                                        <td>
+                                            <span class="wedding-admin-badge @(activeRelease?.IsImplemented == true ? "is-success" : "is-danger")">
+                                                @(activeRelease?.IsImplemented == true ? "서비스 중" : "사용 불가")
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="wedding-admin-card wedding-admin-table-card" aria-labelledby="layout-policy-title">
+                    <div class="wedding-admin-table-card__header">
+                        <div>
+                            <h2 id="layout-policy-title">
+                                LayoutKey 등급 정책
+                                <span>@_layoutDefinitionPolicies.Count</span>
+                            </h2>
+                            <p>
+                                서버가 소유하는 단일 등급 원장입니다. 한 정책은 해당 키의 모든 과거·현재·향후 버전과
+                                모든 사용자 접근 권한에 적용됩니다.
+                            </p>
+                        </div>
+                    </div>
+
+                    @if (UnclassifiedLayoutKeys.Count > 0)
+                    {
+                        <section class="wedding-admin-panel-section" aria-live="polite">
+                            <h3>등급 설정이 필요한 LayoutKey</h3>
+                            <p class="w-status w-status--error">
+                                아래 키는 아직 Free/Premium 서버 정책이 없습니다. 등급을 설정하기 전에는
+                                신규 버전을 승인할 수 없습니다.
+                            </p>
+                            <div class="wedding-admin-quick-actions">
+                                @foreach (var unclassifiedKey in UnclassifiedLayoutKeys)
+                                {
+                                    <button class="wedding-admin-action-button is-primary"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="() => OpenStandaloneLayoutDefinitionPolicyEditor(unclassifiedKey)">
+                                        @unclassifiedKey · 등급 설정
+                                    </button>
+                                }
+                            </div>
+                        </section>
+                    }
+
+                    @if (_layoutDefinitionPolicies.Count == 0)
+                    {
+                        <p class="w-sa-empty">등록된 LayoutKey 등급 정책이 없습니다.</p>
+                    }
+                    else
+                    {
+                        <div class="wedding-admin-table-wrap">
+                            <table class="wedding-admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>LayoutKey</th>
+                                        <th>등급</th>
+                                        <th>정책 구분</th>
+                                        <th>Revision</th>
+                                        <th>최근 분류</th>
+                                        <th>사유</th>
+                                        <th>작업</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var policy in _layoutDefinitionPolicies
+                                        .OrderByDescending(x => IsProtectedLayoutDefinitionPolicy(x))
+                                        .ThenBy(x => x.LayoutKey, StringComparer.OrdinalIgnoreCase))
+                                    {
+                                        var isProtectedPolicy = IsProtectedLayoutDefinitionPolicy(policy);
+                                        <tr>
+                                            <td><span class="w-sa-slug">@policy.LayoutKey</span></td>
+                                            <td>
+                                                <span class="wedding-admin-badge @(policy.Tier == LayoutTier.Premium ? "is-gold" : "is-muted")">
+                                                    @TierLabel(policy.Tier)
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="wedding-admin-badge @(isProtectedPolicy ? "is-muted" : "is-success")">
+                                                    @(isProtectedPolicy ? "기본 제공 · 확정" : "사용자 정책")
+                                                </span>
+                                            </td>
+                                            <td>@(isProtectedPolicy ? "보호" : policy.Revision.ToString())</td>
+                                            <td>
+                                                @if (isProtectedPolicy)
+                                                {
+                                                    <span>서버 내장</span>
+                                                    <small style="display:block">변경 불가</small>
+                                                }
+                                                else
+                                                {
+                                                    <span>@policy.ClassifiedBy</span>
+                                                    <small style="display:block">
+                                                        @policy.ClassifiedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                                    </small>
+                                                }
+                                            </td>
+                                            <td>@policy.Reason</td>
+                                            <td>
+                                                @if (isProtectedPolicy)
+                                                {
+                                                    <span class="wedding-admin-badge is-muted">보호됨</span>
+                                                }
+                                                else
+                                                {
+                                                    <button class="wedding-admin-action-button is-compact"
+                                                            type="button"
+                                                            disabled="@_isLayoutWorkflowBusy"
+                                                            @onclick="() => OpenStandaloneLayoutDefinitionPolicyEditor(policy.LayoutKey)">
+                                                        등급 정책 관리
+                                                    </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
+                    @if (SelectedLayoutSubmission is null
+                        && !string.IsNullOrWhiteSpace(_layoutDefinitionPolicyEditorKey))
+                    {
+                        var editorLayoutKey = _layoutDefinitionPolicyEditorKey!;
+                        var editorPolicy = FindLayoutDefinitionPolicy(editorLayoutKey);
+                        <section class="wedding-admin-panel-section" aria-labelledby="standalone-layout-policy-editor-title">
+                            <h3 id="standalone-layout-policy-editor-title">
+                                등급 정책 관리 · <span class="w-sa-slug">@editorLayoutKey</span>
+                            </h3>
+
+                            @if (editorPolicy is { } currentEditorPolicy)
+                            {
+                                <p class="w-hint">
+                                    현재 @TierLabel(currentEditorPolicy.Tier) · Revision @currentEditorPolicy.Revision ·
+                                    @currentEditorPolicy.ClassifiedBy ·
+                                    @currentEditorPolicy.ClassifiedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                </p>
+                            }
+
+                            <label class="w-label" for="standalone-layout-definition-policy-tier">적용 등급</label>
+                            <select id="standalone-layout-definition-policy-tier"
+                                    class="w-input"
+                                    disabled="@(_isLayoutWorkflowBusy || _layoutDefinitionPolicyConfirmationStep > 0)"
+                                    @bind="_layoutDefinitionPolicyTier">
+                                <option value="@LayoutTier.Free">Free</option>
+                                <option value="@LayoutTier.Premium">Premium</option>
+                            </select>
+
+                            <label class="w-label" for="standalone-layout-definition-policy-reason">
+                                @(editorPolicy is null ? "최초 분류 사유" : "재분류 사유")
+                            </label>
+                            <textarea id="standalone-layout-definition-policy-reason"
+                                      class="w-input"
+                                      rows="3"
+                                      maxlength="300"
+                                      disabled="@(_isLayoutWorkflowBusy || _layoutDefinitionPolicyConfirmationStep > 0)"
+                                      placeholder="감사 기록에 남길 등급 정책 사유를 입력합니다."
+                                      @bind="_layoutDefinitionPolicyReason"
+                                      @bind:event="oninput"></textarea>
+
+                            @if (_layoutDefinitionPolicyConfirmationStep == 0)
+                            {
+                                <div class="wedding-admin-quick-actions">
+                                    <button class="wedding-admin-action-button is-primary"
+                                            type="button"
+                                            disabled="@(_isLayoutWorkflowBusy
+                                                || string.IsNullOrWhiteSpace(_layoutDefinitionPolicyReason)
+                                                || editorPolicy?.Tier == _layoutDefinitionPolicyTier)"
+                                            @onclick="() => BeginLayoutDefinitionPolicyChange(editorLayoutKey)">
+                                        @(editorPolicy is null ? "등급 설정 준비" : "등급 재분류 준비")
+                                    </button>
+                                    <button class="wedding-admin-action-button"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="CloseLayoutDefinitionPolicyEditor">
+                                        닫기
+                                    </button>
+                                </div>
+                            }
+                            else if (_layoutDefinitionPolicyConfirmationStep == 1)
+                            {
+                                <p class="w-status w-status--error">
+                                    1단계 확인: 이 변경은 <strong>@editorLayoutKey</strong>의 모든 버전과
+                                    모든 사용자 접근 권한에 즉시 영향을 줍니다.
+                                </p>
+                                <div class="wedding-admin-quick-actions">
+                                    <button class="wedding-admin-action-button is-danger"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="() => AdvanceLayoutDefinitionPolicyConfirmation(editorLayoutKey)">
+                                        1단계 확인
+                                    </button>
+                                    <button class="wedding-admin-action-button"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="CancelLayoutDefinitionPolicyChange">
+                                        취소
+                                    </button>
+                                </div>
+                            }
+                            else if (_layoutDefinitionPolicyConfirmationStep == 2)
+                            {
+                                <p class="w-status w-status--error">
+                                    최종 확인: @(DefinitionPolicyChangeSummary(editorPolicy)).
+                                    기존 버전과 향후 버전 모두 같은 정책을 사용합니다.
+                                </p>
+                                <div class="wedding-admin-quick-actions">
+                                    <button class="wedding-admin-action-button is-danger"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="() => SetLayoutDefinitionPolicyAsync(editorLayoutKey)">
+                                        @(_isLayoutWorkflowBusy
+                                            ? "등급 정책 적용 중..."
+                                            : "2단계 확인 · 등급 정책 적용")
+                                    </button>
+                                    <button class="wedding-admin-action-button"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="CancelLayoutDefinitionPolicyChange">
+                                        취소
+                                    </button>
+                                </div>
+                            }
+                        </section>
+                    }
+                </section>
+
+                <section class="wedding-admin-card wedding-admin-table-card" aria-labelledby="layout-submission-title">
+                    <div class="wedding-admin-table-card__header">
+                        <div>
+                            <h2 id="layout-submission-title">
+                                업로드 검토
+                                <span>@_layoutSubmissions.Count(x => x.Status == WeddingLayoutSubmissionStatus.Pending)</span>
+                            </h2>
+                            <p>슈퍼관리자가 등록한 선언형 레이아웃을 검토하고, 승인 시 불변 릴리스로 게시합니다.</p>
+                        </div>
+
+                        <div class="wedding-admin-table-tools">
+                            @if (UnclassifiedLayoutKeys.Count > 0)
+                            {
+                                <button class="wedding-admin-action-button is-primary"
+                                        type="button"
+                                        disabled="@_isLayoutWorkflowBusy"
+                                        @onclick="() => OpenStandaloneLayoutDefinitionPolicyEditor(UnclassifiedLayoutKeys[0])">
+                                    미분류 등급 설정 (@UnclassifiedLayoutKeys.Count)
+                                </button>
+                            }
+                            <select class="w-input"
+                                    style="width:auto; min-width:130px; margin:0"
+                                    title="업로드 검토 표시 범위"
+                                    @bind="_layoutSubmissionFilter">
+                                <option value="pending">대기 중</option>
+                                <option value="completed">처리 완료</option>
+                                <option value="all">전체 이력</option>
+                            </select>
+                            <button class="wedding-admin-action-button"
+                                    type="button"
+                                    disabled="@_isLayoutWorkflowBusy"
+                                    @onclick="LoadLayoutSubmissionsAsync">
+                                @(_isLayoutWorkflowBusy ? "불러오는 중..." : "검토 목록 새로고침")
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(_layoutWorkflowStatus))
+                    {
+                        <p class="w-status @(_layoutWorkflowSucceeded ? "" : "w-status--error")">
+                            @_layoutWorkflowStatus
+                        </p>
+                    }
+
+                    @if (_layoutSubmissions.Count == 0)
+                    {
+                        <p class="w-sa-empty">검토할 레이아웃 업로드가 없습니다.</p>
+                    }
+                    else if (FilteredLayoutSubmissions.Count == 0)
+                    {
+                        <p class="w-sa-empty">선택한 범위에 표시할 업로드가 없습니다.</p>
+                    }
+                    else
+                    {
+                        <div class="wedding-admin-table-wrap">
+                            <table class="wedding-admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>제출 시각</th>
+                                        <th>제출 계정</th>
+                                        <th>레이아웃</th>
+                                        <th>버전</th>
+                                        <th>등급</th>
+                                        <th>상태</th>
+                                        <th>검토 결과</th>
+                                        <th>작업</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var submission in FilteredLayoutSubmissions)
+                                    {
+                                        var submissionPolicy = FindLayoutDefinitionPolicy(submission.LayoutKey);
+                                        <tr class="@(IsSelectedLayoutSubmission(submission) ? "is-selected" : "")">
+                                            <td>@submission.SubmittedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                            <td>
+                                                <strong>@submission.SubmittedByDisplayName</strong>
+                                                <small style="display:block">@submission.TenantSlug</small>
+                                            </td>
+                                            <td>
+                                                <strong>@submission.LayoutLabel</strong>
+                                                <small style="display:block">@submission.LayoutKey</small>
+                                            </td>
+                                            <td><span class="w-sa-slug">v@(submission.LayoutVersion)</span></td>
+                                            <td>
+                                                @if (submissionPolicy is { } classifiedSubmissionPolicy)
+                                                {
+                                                    <span class="wedding-admin-badge @(classifiedSubmissionPolicy.Tier == LayoutTier.Premium ? "is-gold" : "is-muted")">
+                                                        @TierLabel(classifiedSubmissionPolicy.Tier)
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="wedding-admin-badge is-danger">미분류</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="wedding-admin-badge @SubmissionStatusClass(submission.Status)">
+                                                    @SubmissionStatusLabel(submission.Status)
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (submission.ReviewedAtUtc is { } reviewedAt)
+                                                {
+                                                    <span>@submission.ReviewedBy</span>
+                                                    <small style="display:block">@reviewedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</small>
+                                                    @if (!string.IsNullOrWhiteSpace(submission.ReviewReason))
+                                                    {
+                                                        <small style="display:block">@submission.ReviewReason</small>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <span>-</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <div class="wedding-admin-quick-actions">
+                                                    @if (submission.Status == WeddingLayoutSubmissionStatus.Pending)
+                                                    {
+                                                        <button class="wedding-admin-action-button is-compact"
+                                                                type="button"
+                                                                disabled="@_isLayoutWorkflowBusy"
+                                                                @onclick="() => SelectLayoutSubmissionAsync(submission)">
+                                                            검토
+                                                        </button>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="wedding-admin-badge is-muted">처리 완료</span>
+                                                    }
+
+                                                    @if (submissionPolicy is null)
+                                                    {
+                                                        <button class="wedding-admin-action-button is-compact is-primary"
+                                                                type="button"
+                                                                disabled="@_isLayoutWorkflowBusy"
+                                                                @onclick="() => OpenStandaloneLayoutDefinitionPolicyEditor(submission.LayoutKey)">
+                                                            등급 설정
+                                                        </button>
+                                                    }
+
+                                                    <button class="wedding-admin-action-button is-compact is-danger"
+                                                            type="button"
+                                                            disabled="@_isLayoutWorkflowBusy"
+                                                            title="파일을 물리 삭제하지 않고 서버 보관함으로 이동합니다."
+                                                            @onclick="() => BeginLayoutSubmissionArchive(submission)">
+                                                        보관함 이동
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
+                    @if (LayoutSubmissionToArchive is { } archiveSubmission)
+                    {
+                        <section class="wedding-admin-panel-section" aria-live="polite">
+                            <h3>
+                                서버 보관함으로 이동:
+                                @archiveSubmission.LayoutLabel v@(archiveSubmission.LayoutVersion)
+                            </h3>
+                            <p class="w-hint">
+                                이 작업은 물리 삭제가 아닙니다. 제출 기록과 서버 파일을 운영 목록에서 분리해
+                                서버 관리 보관함으로 이동합니다.
+                            </p>
+                            @if (archiveSubmission.Status == WeddingLayoutSubmissionStatus.Approved)
+                            {
+                                <p class="w-status w-status--error">
+                                    승인 릴리스도 함께 보관을 시도합니다. 현재 활성 버전이라도 해당 키의
+                                    유일한 릴리스이고 참조 중인 청첩장이 0개이면 활성 포인터와 함께 보관할
+                                    수 있습니다. 다른 릴리스가 남아 있으면 아래 목록에서 먼저 다른 버전을
+                                    활성화하거나 롤백해야 하며, 청첩장이 이 버전을 참조 중이면 서버가
+                                    이동을 거부합니다.
+                                </p>
+                            }
+
+                            <label class="w-label" for="layout-archive-reason">보관함 이동 사유</label>
+                            <textarea id="layout-archive-reason"
+                                      class="w-input"
+                                      rows="3"
+                                      maxlength="300"
+                                      disabled="@(_layoutArchiveConfirmationStep == 2)"
+                                      placeholder="감사 기록에 남길 사유를 입력합니다."
+                                      @bind="_layoutArchiveReason"
+                                      @bind:event="oninput"></textarea>
+
+                            @if (_layoutArchiveConfirmationStep == 1)
+                            {
+                                <div class="wedding-admin-quick-actions">
+                                    <button class="wedding-admin-action-button is-danger"
+                                            type="button"
+                                            disabled="@(_isLayoutWorkflowBusy || string.IsNullOrWhiteSpace(_layoutArchiveReason))"
+                                            @onclick="() => AdvanceLayoutSubmissionArchiveConfirmation(archiveSubmission)">
+                                        1단계 확인
+                                    </button>
+                                    <button class="wedding-admin-action-button"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="CancelLayoutSubmissionArchive">
+                                        취소
+                                    </button>
+                                </div>
+                            }
+                            else if (_layoutArchiveConfirmationStep == 2)
+                            {
+                                <p class="w-status w-status--error">
+                                    최종 확인 단계입니다. 계속하면 이 제출은 검토 목록에서 사라지고 서버
+                                    보관함으로 이동합니다. 파일은 물리 삭제되지 않습니다.
+                                </p>
+                                <div class="wedding-admin-quick-actions">
+                                    <button class="wedding-admin-action-button is-danger"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="() => ArchiveLayoutSubmissionAsync(archiveSubmission)">
+                                        @(_isLayoutWorkflowBusy
+                                            ? "서버 보관함으로 이동 중..."
+                                            : "2단계 확인 · 서버 보관함으로 이동")
+                                    </button>
+                                    <button class="wedding-admin-action-button"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="CancelLayoutSubmissionArchive">
+                                        취소
+                                    </button>
+                                </div>
+                            }
+                        </section>
+                    }
+
+                    @if (SelectedLayoutSubmission is { } selectedSubmission
+                        && _layoutReviewPackage is { } reviewPackage)
+                    {
+                        var selectedDefinitionPolicy = FindLayoutDefinitionPolicy(selectedSubmission.LayoutKey);
+                        <section class="wedding-admin-panel-section">
+                            <h3>@selectedSubmission.LayoutLabel v@(selectedSubmission.LayoutVersion) 검토</h3>
+                            <dl class="wedding-admin-detail-list">
+                                <div>
+                                    <dt>제출자</dt>
+                                    <dd>@selectedSubmission.SubmittedByDisplayName · @selectedSubmission.TenantSlug</dd>
+                                </div>
+                                <div>
+                                    <dt>설명</dt>
+                                    <dd>@reviewPackage.Manifest.Description</dd>
+                                </div>
+                                <div>
+                                    <dt>선언 블록</dt>
+                                    <dd>@(CountLayoutBlocks(reviewPackage.Definition.Root))개</dd>
+                                </div>
+                                <div>
+                                    <dt>섹션 순서</dt>
+                                    <dd>@string.Join(", ", reviewPackage.Definition.SectionOrder)</dd>
+                                </div>
+                                <div>
+                                    <dt>패키지 지문</dt>
+                                    <dd><span class="w-sa-slug">@ShortHash(selectedSubmission.PackageSha256)</span></dd>
+                                </div>
+                            </dl>
+
+                            <section class="wedding-admin-panel-section" aria-labelledby="layout-definition-policy-title">
+                                <h3 id="layout-definition-policy-title">LayoutKey 등급 정책</h3>
+                                <p class="w-hint">
+                                    등급은 개별 업로드나 버전이 아니라
+                                    <span class="w-sa-slug">@selectedSubmission.LayoutKey</span>
+                                    키 전체에 적용됩니다.
+                                </p>
+
+                                @if (selectedDefinitionPolicy is { } currentPolicy)
+                                {
+                                    <dl class="wedding-admin-detail-list">
+                                        <div>
+                                            <dt>현재 정책</dt>
+                                            <dd>
+                                                <span class="wedding-admin-badge @(currentPolicy.Tier == LayoutTier.Premium ? "is-gold" : "is-muted")">
+                                                    @TierLabel(currentPolicy.Tier)
+                                                </span>
+                                                · Revision @currentPolicy.Revision
+                                            </dd>
+                                        </div>
+                                        <div>
+                                            <dt>최근 분류</dt>
+                                            <dd>
+                                                @currentPolicy.ClassifiedBy ·
+                                                @currentPolicy.ClassifiedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                            </dd>
+                                        </div>
+                                        <div>
+                                            <dt>최근 사유</dt>
+                                            <dd>@currentPolicy.Reason</dd>
+                                        </div>
+                                    </dl>
+                                }
+                                else
+                                {
+                                    <p class="w-status w-status--error">
+                                        미분류 상태입니다. 이 LayoutKey의 등급 정책을 먼저 설정해야 버전을 승인할 수 있습니다.
+                                    </p>
+                                }
+
+                                <label class="w-label" for="layout-definition-policy-tier">적용 등급</label>
+                                <select id="layout-definition-policy-tier"
+                                        class="w-input"
+                                        disabled="@(_isLayoutWorkflowBusy || _layoutDefinitionPolicyConfirmationStep > 0)"
+                                        @bind="_layoutDefinitionPolicyTier">
+                                    <option value="@LayoutTier.Free">Free</option>
+                                    <option value="@LayoutTier.Premium">Premium</option>
+                                </select>
+
+                                <label class="w-label" for="layout-definition-policy-reason">정책 설정 사유</label>
+                                <textarea id="layout-definition-policy-reason"
+                                          class="w-input"
+                                          rows="3"
+                                          maxlength="300"
+                                          disabled="@(_isLayoutWorkflowBusy || _layoutDefinitionPolicyConfirmationStep > 0)"
+                                          placeholder="감사 기록에 남길 분류 또는 재분류 사유를 입력합니다."
+                                          @bind="_layoutDefinitionPolicyReason"
+                                          @bind:event="oninput"></textarea>
+
+                                @if (_layoutDefinitionPolicyConfirmationStep == 0)
+                                {
+                                    <button class="wedding-admin-action-button is-primary"
+                                            type="button"
+                                            disabled="@(_isLayoutWorkflowBusy
+                                                || string.IsNullOrWhiteSpace(_layoutDefinitionPolicyReason)
+                                                || selectedDefinitionPolicy?.Tier == _layoutDefinitionPolicyTier)"
+                                            @onclick="() => BeginLayoutDefinitionPolicyChange(selectedSubmission.LayoutKey)">
+                                        @(selectedDefinitionPolicy is null ? "신규 정책 설정 준비" : "등급 재분류 준비")
+                                    </button>
+                                }
+                                else if (_layoutDefinitionPolicyConfirmationStep == 1)
+                                {
+                                    <p class="w-status w-status--error">
+                                        1단계 확인: 이 변경은
+                                        <strong>@selectedSubmission.LayoutKey</strong>의 모든 버전과 모든 사용자 접근 권한에
+                                        즉시 영향을 줍니다.
+                                    </p>
+                                    <div class="wedding-admin-quick-actions">
+                                        <button class="wedding-admin-action-button is-danger"
+                                                type="button"
+                                                disabled="@_isLayoutWorkflowBusy"
+                                                @onclick="() => AdvanceLayoutDefinitionPolicyConfirmation(selectedSubmission.LayoutKey)">
+                                            1단계 확인
+                                        </button>
+                                        <button class="wedding-admin-action-button"
+                                                type="button"
+                                                disabled="@_isLayoutWorkflowBusy"
+                                                @onclick="CancelLayoutDefinitionPolicyChange">
+                                            취소
+                                        </button>
+                                    </div>
+                                }
+                                else if (_layoutDefinitionPolicyConfirmationStep == 2)
+                                {
+                                    <p class="w-status w-status--error">
+                                        최종 확인: @(DefinitionPolicyChangeSummary(selectedDefinitionPolicy)).
+                                        적용 즉시 이 키의 기존 버전과 향후 버전 모두 같은 등급 정책을 사용합니다.
+                                    </p>
+                                    <div class="wedding-admin-quick-actions">
+                                        <button class="wedding-admin-action-button is-danger"
+                                                type="button"
+                                                disabled="@_isLayoutWorkflowBusy"
+                                                @onclick="() => SetLayoutDefinitionPolicyAsync(selectedSubmission.LayoutKey)">
+                                            @(_isLayoutWorkflowBusy
+                                                ? "등급 정책 적용 중..."
+                                                : "2단계 확인 · 등급 정책 적용")
+                                        </button>
+                                        <button class="wedding-admin-action-button"
+                                                type="button"
+                                                disabled="@_isLayoutWorkflowBusy"
+                                                @onclick="CancelLayoutDefinitionPolicyChange">
+                                            취소
+                                        </button>
+                                    </div>
+                                }
+                            </section>
+
+                            <label class="wedding-admin-checkline">
+                                <input type="checkbox" @bind="_approveAndActivate" />
+                                <span>승인과 동시에 이 버전을 활성화</span>
+                            </label>
+
+                            @if (selectedDefinitionPolicy is null)
+                            {
+                                <p class="w-status w-status--error">
+                                    승인할 수 없습니다. 위에서 LayoutKey 등급 정책을 먼저 설정해주세요.
+                                </p>
+                            }
+
+                            <label class="w-label" for="layout-reject-reason">반려 사유</label>
+                            <textarea id="layout-reject-reason"
+                                      class="w-input"
+                                      rows="3"
+                                      maxlength="500"
+                                      placeholder="반려할 때 필수로 입력합니다."
+                                      @bind="_layoutRejectReason"></textarea>
+
+                            <div class="wedding-admin-quick-actions">
+                                @if (_confirmLayoutSubmissionAction == $"approve:{selectedSubmission.SubmissionId}")
+                                {
+                                    <button class="wedding-admin-action-button is-primary"
+                                            type="button"
+                                            disabled="@(_isLayoutWorkflowBusy || selectedDefinitionPolicy is null)"
+                                            @onclick="() => ApproveLayoutSubmissionAsync(selectedSubmission)">
+                                        @(_approveAndActivate ? "승인 및 활성화 확인" : "승인 확인")
+                                    </button>
+                                    <button class="wedding-admin-action-button"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="CancelLayoutWorkflowConfirmation">
+                                        취소
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="wedding-admin-action-button is-primary"
+                                            type="button"
+                                            disabled="@(_isLayoutWorkflowBusy || selectedDefinitionPolicy is null)"
+                                            @onclick='() => BeginLayoutSubmissionAction("approve", selectedSubmission.SubmissionId)'>
+                                        @(_approveAndActivate ? "승인 및 활성화" : "승인")
+                                    </button>
+                                }
+
+                                @if (_confirmLayoutSubmissionAction == $"reject:{selectedSubmission.SubmissionId}")
+                                {
+                                    <button class="wedding-admin-action-button is-danger"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="() => RejectLayoutSubmissionAsync(selectedSubmission)">
+                                        반려 확인
+                                    </button>
+                                    <button class="wedding-admin-action-button"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="CancelLayoutWorkflowConfirmation">
+                                        취소
+                                    </button>
+                                }
+                                else
+                                {
+                                    <button class="wedding-admin-action-button is-danger"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick='() => BeginLayoutSubmissionAction("reject", selectedSubmission.SubmissionId)'>
+                                        반려
+                                    </button>
+                                }
+                            </div>
+                        </section>
+                    }
+                </section>
+
+                <section class="wedding-admin-card wedding-admin-table-card" aria-labelledby="layout-archive-title">
+                    <div class="wedding-admin-table-card__header">
+                        <div>
+                            <h2 id="layout-archive-title">
+                                서버 보관함
+                                <span>@_layoutArchives.Count</span>
+                            </h2>
+                            <p>
+                                운영 목록에서 분리한 업로드입니다. 여기에서만 원본 패키지와 승인 릴리스
+                                payload를 복구 불가능하게 영구 삭제할 수 있습니다.
+                            </p>
+                        </div>
+                    </div>
+
+                    @if (_layoutArchives.Count == 0)
+                    {
+                        <p class="w-sa-empty">영구 삭제할 수 있는 보관 항목이 없습니다.</p>
+                    }
+                    else
+                    {
+                        <div class="wedding-admin-table-wrap">
+                            <table class="wedding-admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>보관 시각</th>
+                                        <th>제출 계정</th>
+                                        <th>LayoutKey</th>
+                                        <th>버전</th>
+                                        <th>보관 범위</th>
+                                        <th>보관 정보</th>
+                                        <th>작업</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var archive in _layoutArchives)
+                                    {
+                                        <tr>
+                                            <td>@archive.ArchivedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</td>
+                                            <td><span class="w-sa-slug">@archive.TenantSlug</span></td>
+                                            <td><strong>@archive.LayoutKey</strong></td>
+                                            <td><span class="w-sa-slug">v@(archive.LayoutVersion)</span></td>
+                                            <td>
+                                                <span class="wedding-admin-badge @(archive.PublishedReleaseArchived ? "is-gold" : "is-muted")">
+                                                    @(archive.PublishedReleaseArchived ? "제출 + 승인 릴리스" : "제출 원본")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span>@archive.ArchivedBy</span>
+                                                <small style="display:block">@archive.Reason</small>
+                                            </td>
+                                            <td>
+                                                <button class="wedding-admin-action-button is-compact is-danger"
+                                                        type="button"
+                                                        disabled="@_isLayoutWorkflowBusy"
+                                                        @onclick="() => BeginArchivedLayoutPurge(archive)">
+                                                    영구 삭제
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+
+                    @if (LayoutArchiveToPurge is { } purgeArchive)
+                    {
+                        <section class="wedding-admin-panel-section" aria-live="assertive">
+                            <h3>
+                                복구 불가 영구 삭제:
+                                <span class="w-sa-slug">@PurgeConfirmationPhrase(purgeArchive)</span>
+                            </h3>
+                            <p class="w-status w-status--error">
+                                먼저 운영 목록에서 안전하게 보관된 항목만 삭제할 수 있습니다.
+                                계속하면 제출 원본·JSON 패키지·승인 릴리스 payload는 물리 삭제되어
+                                복구할 수 없습니다. 최소 소유권 기록과 감사 로그는 유지됩니다.
+                                LayoutKey 등급 정책은 다른 제출·릴리스·활성 포인터·복구 가능한
+                                보관 항목이 남아 있을 때만 유지되며, 이 키의 마지막 산출물이면
+                                함께 정리됩니다. 삭제가 끝나면 같은 소유자가 동일 버전을 다시
+                                제출할 수 있습니다.
+                            </p>
+
+                            <label class="w-label" for="layout-purge-reason">영구 삭제 사유</label>
+                            <textarea id="layout-purge-reason"
+                                      class="w-input"
+                                      rows="3"
+                                      maxlength="300"
+                                      disabled="@(_layoutPurgeConfirmationStep == 2)"
+                                      placeholder="감사 로그와 최소 소유권 기록에 남길 사유를 입력합니다."
+                                      @bind="_layoutPurgeReason"
+                                      @bind:event="oninput"></textarea>
+
+                            <label class="w-label" for="layout-purge-phrase">
+                                확인 문구를 그대로 입력:
+                                <span class="w-sa-slug">@PurgeConfirmationPhrase(purgeArchive)</span>
+                            </label>
+                            <input id="layout-purge-phrase"
+                                   class="w-input"
+                                   type="text"
+                                   autocomplete="off"
+                                   disabled="@(_layoutPurgeConfirmationStep == 2)"
+                                   @bind="_layoutPurgePhrase"
+                                   @bind:event="oninput" />
+
+                            @if (_layoutPurgeConfirmationStep == 1)
+                            {
+                                <div class="wedding-admin-quick-actions">
+                                    <button class="wedding-admin-action-button is-danger"
+                                            type="button"
+                                            disabled="@(_isLayoutWorkflowBusy
+                                                || string.IsNullOrWhiteSpace(_layoutPurgeReason)
+                                                || !string.Equals(
+                                                    _layoutPurgePhrase,
+                                                    PurgeConfirmationPhrase(purgeArchive),
+                                                    StringComparison.Ordinal))"
+                                            @onclick="() => AdvanceArchivedLayoutPurgeConfirmation(purgeArchive)">
+                                        1단계 확인
+                                    </button>
+                                    <button class="wedding-admin-action-button"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="CancelArchivedLayoutPurge">
+                                        취소
+                                    </button>
+                                </div>
+                            }
+                            else if (_layoutPurgeConfirmationStep == 2)
+                            {
+                                <label class="wedding-admin-checkline">
+                                    <input type="checkbox"
+                                           @bind="_layoutPurgeIrreversibleConfirmed" />
+                                    <span>원본 payload를 복구할 수 없다는 점과 사용자 참조 검사를 확인했습니다.</span>
+                                </label>
+                                <div class="wedding-admin-quick-actions">
+                                    <button class="wedding-admin-action-button is-danger"
+                                            type="button"
+                                            disabled="@(_isLayoutWorkflowBusy || !_layoutPurgeIrreversibleConfirmed)"
+                                            @onclick="() => PurgeArchivedLayoutAsync(purgeArchive)">
+                                        @(_isLayoutWorkflowBusy
+                                            ? "영구 삭제 중..."
+                                            : "2단계 확인 · 영구 삭제")
+                                    </button>
+                                    <button class="wedding-admin-action-button"
+                                            type="button"
+                                            disabled="@_isLayoutWorkflowBusy"
+                                            @onclick="CancelArchivedLayoutPurge">
+                                        취소
+                                    </button>
+                                </div>
+                            }
+                        </section>
+                    }
+                </section>
+
+                <section class="wedding-admin-card wedding-admin-table-card" aria-labelledby="layout-release-title">
+                    <div class="wedding-admin-table-card__header">
+                        <div>
+                            <h2 id="layout-release-title">
+                                버전 기록
+                                <span>@(WeddingLayoutCatalog.Instance.Releases.Count + publishedLayoutPackages.Count)</span>
+                            </h2>
+                            <p>각 버전은 덮어쓰지 않는 불변 릴리스이며, 현재 포인터와 이전 버전을 함께 보관합니다.</p>
+                        </div>
+                    </div>
+
+                    <div class="wedding-admin-table-wrap">
+                        <table class="wedding-admin-table">
+                            <thead>
+                                <tr>
+                                    <th>레이아웃</th>
+                                    <th>버전</th>
+                                    <th>상태</th>
+                                    <th>등급</th>
+                                    <th>소스</th>
+                                    <th>승인 정보</th>
+                                    <th>섹션</th>
+                                    <th>작업</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var descriptor in layoutCatalog.Descriptors
+                                    .Where(x => x.IsBuiltIn)
+                                    .OrderBy(x => x.Label, StringComparer.OrdinalIgnoreCase))
+                                {
+                                    @foreach (var release in layoutCatalog.Releases
+                                        .Where(x => string.Equals(x.LayoutKey, descriptor.Key, StringComparison.OrdinalIgnoreCase))
+                                        .OrderByDescending(x => string.Equals(x.Version, descriptor.CurrentVersion, StringComparison.Ordinal))
+                                        .ThenByDescending(x => x.Version, StringComparer.OrdinalIgnoreCase))
+                                    {
+                                        var isCurrent = string.Equals(
+                                            release.Version,
+                                            descriptor.CurrentVersion,
+                                            StringComparison.Ordinal);
+                                        <tr>
+                                            <td>
+                                                <strong>@descriptor.Label</strong>
+                                                <small style="display:block">@release.LayoutKey</small>
+                                            </td>
+                                            <td><span class="w-sa-slug">v@(release.Version)</span></td>
+                                            <td>
+                                                <span class="wedding-admin-badge @(isCurrent ? "is-success" : "is-muted")">
+                                                    @(isCurrent ? "현재 활성" : "보관 버전")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="wedding-admin-badge @(descriptor.Tier == WeddingLayoutTier.Premium ? "is-gold" : "is-muted")">
+                                                    @TierLabel(descriptor.Tier)
+                                                </span>
+                                                <small style="display:block">내장 정책 확정 · 보호</small>
+                                            </td>
+                                            <td>@SourceLabel(descriptor)</td>
+                                            <td><span>기본 릴리스 보호</span></td>
+                                            <td>@(release.SupportedSections.Count)개</td>
+                                            <td><span class="wedding-admin-badge is-muted">보호됨</span></td>
+                                        </tr>
+                                    }
+                                }
+
+                                @foreach (var releaseGroup in publishedLayoutPackages.Values
+                                    .GroupBy(x => x.Manifest.Key, StringComparer.OrdinalIgnoreCase)
+                                    .OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+                                {
+                                    var activeDescriptor = layoutCatalog.FindDescriptor(releaseGroup.Key);
+                                    @foreach (var publishedPackage in releaseGroup
+                                        .OrderByDescending(x => string.Equals(
+                                            x.Manifest.Version,
+                                            activeDescriptor?.CurrentVersion,
+                                            StringComparison.Ordinal))
+                                        .ThenByDescending(x => x.Manifest.Version, StringComparer.OrdinalIgnoreCase))
+                                    {
+                                        var releasePolicy = FindLayoutDefinitionPolicy(publishedPackage.Manifest.Key);
+                                        var isCurrent = string.Equals(
+                                            publishedPackage.Manifest.Version,
+                                            activeDescriptor?.CurrentVersion,
+                                            StringComparison.Ordinal);
+                                        var releaseId = publishedPackage.ReleaseId;
+                                        var isRollback = activeDescriptor is not null
+                                            && IsOlderLayoutVersion(
+                                                publishedPackage.Manifest.Version,
+                                                activeDescriptor.CurrentVersion);
+                                        <tr>
+                                            <td>
+                                                <strong>@publishedPackage.Manifest.Label</strong>
+                                                <small style="display:block">@publishedPackage.Manifest.Key</small>
+                                            </td>
+                                            <td><span class="w-sa-slug">v@(publishedPackage.Manifest.Version)</span></td>
+                                            <td>
+                                                <span class="wedding-admin-badge @(isCurrent ? "is-success" : "is-muted")">
+                                                    @(isCurrent ? "현재 활성" : activeDescriptor is null ? "승인됨 · 미활성" : "보관 버전")
+                                                </span>
+                                            </td>
+                                            <td>
+                                                @if (releasePolicy is { } classifiedReleasePolicy)
+                                                {
+                                                    <span class="wedding-admin-badge @(classifiedReleasePolicy.Tier == LayoutTier.Premium ? "is-gold" : "is-muted")">
+                                                        @TierLabel(classifiedReleasePolicy.Tier)
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="wedding-admin-badge is-danger">미분류</span>
+                                                }
+                                            </td>
+                                            <td>승인 업로드</td>
+                                            <td>
+                                                <span>@publishedPackage.Approval.ApprovedBy</span>
+                                                <small style="display:block">
+                                                    @publishedPackage.Approval.ApprovedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")
+                                                </small>
+                                                <small style="display:block">@publishedPackage.Approval.OwnerTenantSlug</small>
+                                            </td>
+                                            <td>@(publishedPackage.Definition.SectionOrder.Count)개</td>
+                                            <td>
+                                                @if (isCurrent)
+                                                {
+                                                    <span class="wedding-admin-badge is-success">서비스 중</span>
+                                                }
+                                                else
+                                                {
+                                                    <button class="wedding-admin-action-button is-compact"
+                                                            type="button"
+                                                            disabled="@_isLayoutWorkflowBusy"
+                                                            @onclick="() => BeginLayoutReleaseChange(releaseId, isRollback)">
+                                                        @(isRollback ? "롤백 준비" : "활성화 준비")
+                                                    </button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    @if (_confirmLayoutReleaseId is { } targetReleaseId
+                        && FindPublishedPackage(targetReleaseId) is { } targetPackage)
+                    {
+                        var activeDescriptor = layoutCatalog.FindDescriptor(targetReleaseId.LayoutKey);
+                        var isRollback = activeDescriptor is not null
+                            && IsOlderLayoutVersion(targetReleaseId.Version, activeDescriptor.CurrentVersion);
+                        <section class="wedding-admin-panel-section">
+                            <h3>
+                                @(isRollback ? "레이아웃 롤백" : "레이아웃 활성화"):
+                                @targetPackage.Manifest.Label v@(targetReleaseId.Version)
+                            </h3>
+                            <p class="w-hint">
+                                현재 버전:
+                                @(activeDescriptor is null ? "없음" : $"v{activeDescriptor.CurrentVersion}")
+                                → 대상 버전: v@(targetReleaseId.Version)
+                            </p>
+                            <label class="w-label" for="layout-release-reason">변경 사유</label>
+                            <input id="layout-release-reason"
+                                   class="w-input"
+                                   maxlength="300"
+                                   @bind="_layoutReleaseChangeReason" />
+                            <div class="wedding-admin-quick-actions">
+                                <button class="wedding-admin-action-button @(isRollback ? "is-danger" : "is-primary")"
+                                        type="button"
+                                        disabled="@_isLayoutWorkflowBusy"
+                                        @onclick="() => ChangeActiveLayoutReleaseAsync(targetReleaseId)">
+                                    @(isRollback ? "이 버전으로 롤백 확인" : "이 버전 활성화 확인")
+                                </button>
+                                <button class="wedding-admin-action-button"
+                                        type="button"
+                                        disabled="@_isLayoutWorkflowBusy"
+                                        @onclick="CancelLayoutWorkflowConfirmation">
+                                    취소
+                                </button>
+                            </div>
+                        </section>
+                    }
+
+                    <p class="w-hint">
+                        기본 제공 6종은 보호되며, 업로드 릴리스만 활성 버전 전환과 롤백이 가능합니다.
+                        변경은 원자적으로 적용되고 실패하면 마지막 정상 카탈로그가 계속 서비스됩니다.
+                    </p>
                 </section>
             }
 
@@ -352,7 +1526,7 @@
                                     else
                                     {
                                         <th>Premium 레이아웃</th>
-                                        <th>Premium 테마</th>
+                                        <th>테마</th>
                                         <th>저장 용량</th>
                                         <th>영상 개수</th>
                                     }
@@ -427,7 +1601,7 @@
             }
         </main>
 
-        <aside class="wedding-admin-detail-panel">
+        <aside class="wedding-admin-detail-panel" hidden="@ShowLayoutCatalog">
             @if (SelectedTenant is { } selected)
             {
                 <div class="wedding-admin-detail-panel__header">
@@ -469,6 +1643,17 @@
                         </dd>
                     </div>
                 </dl>
+
+                <section class="wedding-admin-panel-section">
+                    <h3>Premium 플랜</h3>
+                    <label class="wedding-admin-switch">
+                        <input type="checkbox"
+                               checked="@selected.HasPremiumPlan"
+                               @onchange="e => OnPremiumPlanChange(selected, e)" />
+                        <span>@(selected.HasPremiumPlan ? "활성" : "비활성")</span>
+                    </label>
+                    <p class="w-hint">Premium 사용자는 나만의 색상 테마를 만들 수 있으며 모든 Premium 레이아웃을 사용할 수 있습니다.</p>
+                </section>
 
                 <section class="wedding-admin-panel-section">
                     <h3>계정별 미디어 설정</h3>
@@ -531,41 +1716,8 @@
                 </section>
 
                 <section class="wedding-admin-panel-section">
-                    <h3>Premium 레이아웃 권한</h3>
-                    <div class="wedding-admin-permission-list">
-                        @foreach (var option in PremiumLayouts)
-                        {
-                            <label class="wedding-admin-permission">
-                                <input type="checkbox"
-                                       checked="@IsLayoutUnlocked(selected, option.Mode)"
-                                       @onchange="e => OnLayoutUnlockChange(selected, option.Mode, e)" />
-                                <span>
-                                    <strong>@option.Label</strong>
-                                    <small>@(option.IsImplemented ? option.Description : "준비 중")</small>
-                                </span>
-                            </label>
-                        }
-                    </div>
-                    <button class="wedding-admin-action-button is-primary" type="button" @onclick="() => OnSaveLayoutUnlocks(selected)">레이아웃 권한 저장</button>
-                </section>
-
-                <section class="wedding-admin-panel-section">
-                    <h3>Premium 테마 권한</h3>
-                    <div class="wedding-admin-permission-list">
-                        @foreach (var option in PremiumThemes)
-                        {
-                            <label class="wedding-admin-permission">
-                                <input type="checkbox"
-                                       checked="@IsThemeUnlocked(selected, option.Key)"
-                                       @onchange="e => OnThemeUnlockChange(selected, option.Key, e)" />
-                                <span>
-                                    <strong>@option.DisplayName</strong>
-                                    <small>@(option.IsImplemented ? option.Description : "준비 중")</small>
-                                </span>
-                            </label>
-                        }
-                    </div>
-                    <button class="wedding-admin-action-button is-primary" type="button" @onclick="() => OnSaveThemeUnlocks(selected)">테마 권한 저장</button>
+                    <h3>테마 정책</h3>
+                    <p class="w-hint">기본 색상 테마 5종은 모든 사용자에게 제공됩니다. 사용자 정의 색상 편집은 Premium 플랜에 포함됩니다.</p>
                 </section>
 
                 <section class="wedding-admin-panel-section">
@@ -573,7 +1725,7 @@
                     <div class="wedding-admin-quick-actions">
                         <a class="wedding-admin-action-button" href="@PublicPath(selected)" target="_blank">미리보기 열기</a>
                         <button class="wedding-admin-action-button" type="button" @onclick="() => CopyPublicLink(selected)">링크 복사</button>
-                        <a class="wedding-admin-action-button" href="/@selected.Slug/admin" target="_blank">계정 관리</a>
+                        <a class="wedding-admin-action-button" href="/@selected.Slug/admin" target="_blank" rel="noopener">계정 관리</a>
                         @if (_confirmSlug == selected.Slug)
                         {
                             <button class="wedding-admin-action-button is-danger" type="button" @onclick="() => OnDeleteConfirmed(selected.Slug)">삭제 확인</button>
@@ -605,9 +1757,49 @@
     private string _activeMenu = "dashboard";
     private int _pageSize = 10;
     private int _currentPage = 1;
+    private bool _isLayoutCatalogReloading;
+    private bool _layoutCatalogReloadSucceeded = true;
+    private string? _layoutCatalogStatus;
+    private DateTimeOffset? _layoutCatalogChangedAt;
+    private string _layoutUploadTenantSlug = "";
+    private int _layoutUploadInputVersion;
+    private bool _layoutUploadSucceeded = true;
+    private string? _layoutUploadStatus;
+    private IReadOnlyList<WeddingLayoutSubmissionRecord> _layoutSubmissions = [];
+    private string _layoutSubmissionFilter = "pending";
+    private IReadOnlyList<WeddingLayoutArchiveRecord> _layoutArchives = [];
+    private IReadOnlyList<LayoutDefinitionPolicy> _layoutDefinitionPolicies = [];
+    private LayoutPackage? _layoutReviewPackage;
+    private string? _selectedLayoutSubmissionId;
+    private string? _confirmLayoutSubmissionAction;
+    private WeddingLayoutReleaseId? _confirmLayoutReleaseId;
+    private string? _layoutSubmissionArchiveId;
+    private string? _layoutArchivePurgeSubmissionId;
+    private string? _layoutDefinitionPolicyEditorKey;
+    private string? _layoutDefinitionPolicyConfirmationKey;
+    private string _layoutRejectReason = "";
+    private string _layoutArchiveReason = "";
+    private string _layoutPurgeReason = "";
+    private string _layoutPurgePhrase = "";
+    private string _layoutReleaseChangeReason = "";
+    private string _layoutDefinitionPolicyReason = "";
+    private int _layoutArchiveConfirmationStep;
+    private int _layoutPurgeConfirmationStep;
+    private int _layoutDefinitionPolicyConfirmationStep;
+    private LayoutTier _layoutDefinitionPolicyTier = LayoutTier.Free;
+    private bool _approveAndActivate = true;
+    private bool _layoutPurgeIrreversibleConfirmed;
+    private bool _isLayoutWorkflowBusy;
+    private bool _layoutWorkflowSucceeded = true;
+    private string? _layoutWorkflowStatus;
 
-    private static IReadOnlyList<WeddingLayoutOption> PremiumLayouts =>
-        WeddingLayoutCatalog.Options.Where(x => x.Tier == WeddingLayoutTier.Premium).ToArray();
+    private const string SuperAdminWorkflowActor = "SuperAdmin";
+
+    private IReadOnlyList<WeddingLayoutOption> PremiumLayouts =>
+        LayoutRegistry.Current.Layouts
+            .Where(x => x.Tier == WeddingLayoutTier.Premium)
+            .OrderBy(x => x.Label, StringComparer.CurrentCulture)
+            .ToArray();
     private static IReadOnlyList<WeddingThemeOption> PremiumThemes =>
         WeddingThemeCatalog.Options.Where(x => x.Tier == WeddingThemeTier.Premium).ToArray();
 
@@ -616,16 +1808,70 @@
             ? Vm.Tenants.FirstOrDefault(x => string.Equals(x.Slug, _selectedSlug, StringComparison.OrdinalIgnoreCase))
             : Vm.Tenants.FirstOrDefault();
 
+    private WeddingLayoutSubmissionRecord? SelectedLayoutSubmission =>
+        !string.IsNullOrWhiteSpace(_selectedLayoutSubmissionId)
+            ? _layoutSubmissions.FirstOrDefault(x => string.Equals(
+                x.SubmissionId,
+                _selectedLayoutSubmissionId,
+                StringComparison.Ordinal))
+            : null;
+
+    private WeddingLayoutSubmissionRecord? LayoutSubmissionToArchive =>
+        !string.IsNullOrWhiteSpace(_layoutSubmissionArchiveId)
+            ? _layoutSubmissions.FirstOrDefault(x => string.Equals(
+                x.SubmissionId,
+                _layoutSubmissionArchiveId,
+                StringComparison.Ordinal))
+            : null;
+
+    private WeddingLayoutArchiveRecord? LayoutArchiveToPurge =>
+        !string.IsNullOrWhiteSpace(_layoutArchivePurgeSubmissionId)
+            ? _layoutArchives.FirstOrDefault(x => string.Equals(
+                x.SubmissionId,
+                _layoutArchivePurgeSubmissionId,
+                StringComparison.Ordinal))
+            : null;
+
+    private IReadOnlyList<WeddingLayoutSubmissionRecord> FilteredLayoutSubmissions =>
+        _layoutSubmissionFilter switch
+        {
+            "completed" => _layoutSubmissions
+                .Where(x => x.Status != WeddingLayoutSubmissionStatus.Pending)
+                .ToArray(),
+            "all" => _layoutSubmissions,
+            _ => _layoutSubmissions
+                .Where(x => x.Status == WeddingLayoutSubmissionStatus.Pending)
+                .ToArray(),
+        };
+
+    private IReadOnlyList<string> UnclassifiedLayoutKeys =>
+        _layoutSubmissions
+            .Select(x => x.LayoutKey)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Where(key =>
+                WeddingLayoutCatalog.Instance.FindDescriptor(key) is null
+                && FindLayoutDefinitionPolicy(key) is null)
+            .OrderBy(key => key, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+    private LayoutDefinitionPolicy? FindLayoutDefinitionPolicy(string layoutKey) =>
+        _layoutDefinitionPolicies.FirstOrDefault(x => string.Equals(
+            x.LayoutKey,
+            layoutKey,
+            StringComparison.OrdinalIgnoreCase));
+
     private bool ShowStats => _activeMenu == "dashboard";
     private bool IsMediaMenu => _activeMenu == "media";
+    private bool ShowLayoutCatalog => _activeMenu == "layouts";
     private bool ShowCreateCard => _activeMenu == "invite";
     private bool ShowSettingsCard => _activeMenu is "media" or "settings";
-    private bool ShowTenantTable => _activeMenu != "settings";
+    private bool ShowTenantTable => _activeMenu != "settings" && _activeMenu != "layouts";
     private string ActiveTitle => _activeMenu switch
     {
         "invite" => "청첩장 관리",
         "account" => "계정 관리",
         "media" => "미디어 관리",
+        "layouts" => "레이아웃 카탈로그",
         "settings" => "설정",
         _ => "Wedding 통합 어드민"
     };
@@ -634,6 +1880,7 @@
         "invite" => "청첩장 계정을 모아 보고 메인 노출과 링크를 관리합니다.",
         "account" => "계정을 선택해 업로드 제한, 권한, 삭제를 관리합니다.",
         "media" => "이미지와 영상 정책, 사용량, 최적화 마이그레이션을 관리합니다.",
+        "layouts" => "실시간 카탈로그의 활성 버전과 불변 릴리스 기록을 서버 재시작 없이 확인합니다.",
         "settings" => "전체 설정을 조정합니다.",
         _ => "등록된 커플 계정을 관리하고 새 청첩장을 만듭니다."
     };
@@ -696,12 +1943,46 @@
         ? $"{FormatBytes(bytes)} 남음"
         : "미디어 관리에서 갱신";
 
-    protected override void OnInitialized() { }
+    private bool _sessionRestoreChecked;
 
-    protected override void OnAfterRender(bool firstRender) { }
+    protected override void OnInitialized()
+    {
+        LayoutRegistry.Changed += OnLayoutCatalogChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender || _sessionRestoreChecked)
+        {
+            return;
+        }
+
+        _sessionRestoreChecked = true;
+        try
+        {
+            var token = await JS.InvokeAsync<string>("weddingInterop.getSuperAdminSessionToken");
+            if (Vm.RestoreSession(token))
+            {
+                await Vm.LoadAsync();
+                EnsureSelectedTenant();
+                _ = RefreshMediaUsageInBackgroundAsync();
+            }
+            else if (!string.IsNullOrWhiteSpace(token))
+            {
+                await ClearSuperAdminTokenAsync();
+            }
+        }
+        catch
+        {
+            await ClearSuperAdminTokenAsync();
+        }
+
+        StateHasChanged();
+    }
 
     private async Task OnLogin()
     {
+        _sessionRestoreChecked = true;
         if (await Vm.LoginAsync())
         {
             await StoreSuperAdminTokenAsync();
@@ -746,6 +2027,16 @@
     {
         try { await JS.InvokeVoidAsync("weddingInterop.setSuperAdminSessionToken", ""); }
         catch { }
+    }
+
+    private async Task OnLogout()
+    {
+        await ClearSuperAdminTokenAsync();
+        Vm.Logout();
+        _layoutUploadTenantSlug = "";
+        _layoutUploadStatus = null;
+        _sessionRestoreChecked = true;
+        StateHasChanged();
     }
 
     private async Task OnCreate()
@@ -821,26 +2112,9 @@
         StateHasChanged();
     }
 
-    private static bool IsLayoutUnlocked(TenantConfig tenant, WeddingLayoutMode mode)
+    private async Task OnPremiumPlanChange(TenantConfig tenant, ChangeEventArgs e)
     {
-        var key = WeddingLayoutCatalog.ToLegacyKey(mode);
-        return tenant.UnlockedLayoutModes.Any(x => string.Equals(x, key, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static void OnLayoutUnlockChange(TenantConfig tenant, WeddingLayoutMode mode, ChangeEventArgs e)
-    {
-        var key = WeddingLayoutCatalog.ToLegacyKey(mode);
-        tenant.UnlockedLayoutModes ??= new();
-        tenant.UnlockedLayoutModes.RemoveAll(x => string.Equals(x, key, StringComparison.OrdinalIgnoreCase));
-        if (e.Value is bool enabled && enabled)
-        {
-            tenant.UnlockedLayoutModes.Add(key);
-        }
-    }
-
-    private async Task OnSaveLayoutUnlocks(TenantConfig tenant)
-    {
-        await Vm.SetUnlockedLayoutsAsync(tenant.Slug, tenant.UnlockedLayoutModes);
+        await Vm.SetPremiumPlanAsync(tenant.Slug, ReadBool(e));
         EnsureSelectedTenant(tenant.Slug);
         StateHasChanged();
     }
@@ -871,12 +2145,877 @@
 
     private async Task OnRefresh()
     {
+        if (ShowLayoutCatalog)
+        {
+            await OnReloadLayoutCatalog();
+            return;
+        }
+
         await Vm.LoadAsync();
         EnsureSelectedTenant();
         StateHasChanged();
         // 어느 메뉴에 있든 새로고침 버튼은 실제 파일 시스템 재집계까지 유도한다.
         // 스캔은 백그라운드로 실행되어 응답성을 해치지 않고, 대시보드 카드도 갱신된다.
         _ = RefreshMediaUsageInBackgroundAsync();
+    }
+
+    private async Task OnReloadLayoutCatalog()
+    {
+        if (_isLayoutCatalogReloading)
+        {
+            return;
+        }
+
+        _isLayoutCatalogReloading = true;
+        _layoutCatalogStatus = null;
+        try
+        {
+            var result = await LayoutRegistry.ReloadAsync();
+            _layoutCatalogReloadSucceeded = result.Succeeded;
+            _layoutCatalogStatus = result.Succeeded
+                ? result.Changed
+                    ? $"✅ 새 카탈로그를 적용했습니다. 승인 릴리스 {result.PublishedReleaseCount}개가 서비스에 반영되었습니다."
+                    : $"✅ 현재 카탈로그가 최신입니다. 승인 릴리스 {result.PublishedReleaseCount}개를 확인했습니다."
+                : $"카탈로그를 적용하지 못했습니다. 마지막 정상 스냅샷을 유지합니다. {result.Error}";
+        }
+        catch (Exception ex)
+        {
+            _layoutCatalogReloadSucceeded = false;
+            _layoutCatalogStatus = $"카탈로그를 다시 읽지 못했습니다. 마지막 정상 스냅샷을 유지합니다. {ex.Message}";
+        }
+        finally
+        {
+            _isLayoutCatalogReloading = false;
+        }
+
+        await LoadLayoutSubmissionsAsync();
+    }
+
+    private async Task LoadLayoutSubmissionsAsync()
+    {
+        if (_isLayoutWorkflowBusy)
+        {
+            return;
+        }
+
+        _isLayoutWorkflowBusy = true;
+        try
+        {
+            await RefreshLayoutSubmissionsNoLockAsync();
+            _layoutWorkflowSucceeded = true;
+            _layoutWorkflowStatus =
+                $"✅ 레이아웃 작업 목록을 갱신했습니다. " +
+                $"대기 {_layoutSubmissions.Count(x => x.Status == WeddingLayoutSubmissionStatus.Pending)}건 · " +
+                $"보관 {_layoutArchives.Count}건";
+        }
+        catch (Exception ex)
+        {
+            await HandleLayoutWorkflowFailureAsync(ex);
+        }
+        finally
+        {
+            _isLayoutWorkflowBusy = false;
+            _layoutUploadInputVersion++;
+        }
+    }
+
+    private async Task OnSuperAdminLayoutPackageUpload(InputFileChangeEventArgs args)
+    {
+        if (_isLayoutWorkflowBusy || args.File is null)
+        {
+            return;
+        }
+
+        var tenantSlug = _layoutUploadTenantSlug.Trim();
+        if (!Vm.Tenants.Any(x => string.Equals(
+                x.Slug,
+                tenantSlug,
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            _layoutUploadSucceeded = false;
+            _layoutUploadStatus = "레이아웃 소유 계정을 먼저 선택하세요.";
+            return;
+        }
+
+        _isLayoutWorkflowBusy = true;
+        _layoutUploadSucceeded = true;
+        _layoutUploadStatus = "레이아웃 패키지를 검증하고 승인 대기열에 등록하는 중입니다.";
+        try
+        {
+            await using var stream = args.File.OpenReadStream(384 * 1024);
+            var submission = await LayoutSubmissions.SubmitAsSuperAdminAsync(
+                tenantSlug,
+                RequireSuperAdminSessionToken(),
+                SuperAdminWorkflowActor,
+                stream);
+
+            await RefreshLayoutSubmissionsNoLockAsync();
+            _layoutSubmissionFilter = "pending";
+            _layoutUploadSucceeded = true;
+            _layoutUploadStatus =
+                $"✅ {submission.LayoutLabel} v{submission.LayoutVersion}을(를) 승인 대기열에 등록했습니다. " +
+                "등급 정책을 확인한 뒤 아래 검토 목록에서 승인하세요.";
+        }
+        catch (Exception ex)
+        {
+            _layoutUploadSucceeded = false;
+            _layoutUploadStatus = $"레이아웃 JSON을 추가하지 못했습니다. {ex.Message}";
+            if (ex is UnauthorizedAccessException)
+            {
+                await HandleLayoutWorkflowFailureAsync(ex);
+            }
+        }
+        finally
+        {
+            _isLayoutWorkflowBusy = false;
+        }
+    }
+
+    private void OnLayoutUploadTenantChanged()
+    {
+        _layoutUploadStatus = null;
+        _layoutUploadInputVersion++;
+    }
+
+    private async Task RefreshLayoutSubmissionsNoLockAsync()
+    {
+        var token = RequireSuperAdminSessionToken();
+        _layoutSubmissions = await LayoutSubmissions.ListAllAsync(token);
+        _layoutArchives = await LayoutSubmissions.ListArchivedAsync(token);
+        _layoutDefinitionPolicies = await LayoutSubmissions.ListDefinitionPoliciesAsync(token);
+        if (_selectedLayoutSubmissionId is not null
+            && _layoutSubmissions.All(x => !string.Equals(
+                x.SubmissionId,
+                _selectedLayoutSubmissionId,
+                StringComparison.Ordinal)))
+        {
+            ClearSelectedLayoutSubmission();
+        }
+
+        if (_layoutSubmissionArchiveId is not null
+            && _layoutSubmissions.All(x => !string.Equals(
+                x.SubmissionId,
+                _layoutSubmissionArchiveId,
+                StringComparison.Ordinal)))
+        {
+            CancelLayoutSubmissionArchive();
+        }
+
+        if (_layoutArchivePurgeSubmissionId is not null
+            && _layoutArchives.All(x => !string.Equals(
+                x.SubmissionId,
+                _layoutArchivePurgeSubmissionId,
+                StringComparison.Ordinal)))
+        {
+            CancelArchivedLayoutPurge();
+        }
+    }
+
+    private async Task SelectLayoutSubmissionAsync(WeddingLayoutSubmissionRecord submission)
+    {
+        if (_isLayoutWorkflowBusy)
+        {
+            return;
+        }
+
+        _isLayoutWorkflowBusy = true;
+        CancelLayoutSubmissionArchive();
+        CancelArchivedLayoutPurge();
+        CloseLayoutDefinitionPolicyEditor();
+        _confirmLayoutSubmissionAction = null;
+        _confirmLayoutReleaseId = null;
+        _layoutRejectReason = "";
+        _layoutDefinitionPolicyReason = "";
+        try
+        {
+            _layoutReviewPackage = await LayoutSubmissions.GetPackageForReviewAsync(
+                submission.SubmissionId,
+                RequireSuperAdminSessionToken());
+            _selectedLayoutSubmissionId = submission.SubmissionId;
+            OpenLayoutDefinitionPolicyEditor(submission.LayoutKey);
+            _layoutWorkflowSucceeded = true;
+            _layoutWorkflowStatus =
+                $"✅ '{submission.LayoutLabel} v{submission.LayoutVersion}' 패키지를 검증해 불러왔습니다.";
+        }
+        catch (Exception ex)
+        {
+            _layoutReviewPackage = null;
+            _selectedLayoutSubmissionId = null;
+            await HandleLayoutWorkflowFailureAsync(ex);
+        }
+        finally
+        {
+            _isLayoutWorkflowBusy = false;
+        }
+    }
+
+    private void OpenLayoutDefinitionPolicyEditor(string layoutKey)
+    {
+        CancelLayoutDefinitionPolicyChange();
+        _layoutDefinitionPolicyEditorKey = layoutKey;
+        _layoutDefinitionPolicyTier =
+            FindLayoutDefinitionPolicy(layoutKey)?.Tier
+            ?? LayoutTier.Free;
+        _layoutDefinitionPolicyReason = "";
+    }
+
+    private async Task OpenStandaloneLayoutDefinitionPolicyEditor(string layoutKey)
+    {
+        if (_isLayoutWorkflowBusy)
+        {
+            return;
+        }
+
+        ClearSelectedLayoutSubmission();
+        CancelLayoutSubmissionArchive();
+        _confirmLayoutReleaseId = null;
+        _layoutReleaseChangeReason = "";
+        OpenLayoutDefinitionPolicyEditor(layoutKey);
+        _layoutWorkflowSucceeded = true;
+        _layoutWorkflowStatus = FindLayoutDefinitionPolicy(layoutKey) is null
+            ? $"'{layoutKey}'는 미분류 상태입니다. Free/Premium을 선택하고 분류 사유를 입력해주세요."
+            : $"'{layoutKey}'의 현재 등급 정책을 불러왔습니다. 재분류에는 사유와 2단계 확인이 필요합니다.";
+        await InvokeAsync(StateHasChanged);
+        try
+        {
+            await JS.InvokeVoidAsync(
+                "weddingInterop.scrollToElement",
+                "standalone-layout-policy-editor-title");
+        }
+        catch
+        {
+            // The editor remains usable even when smooth scrolling is unavailable.
+        }
+    }
+
+    private void BeginLayoutDefinitionPolicyChange(string layoutKey)
+    {
+        if (_isLayoutWorkflowBusy
+            || !string.Equals(
+                _layoutDefinitionPolicyEditorKey,
+                layoutKey,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var currentPolicy = FindLayoutDefinitionPolicy(layoutKey);
+        if (currentPolicy?.Revision == 0)
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "기본 제공 LayoutKey의 확정 등급 정책은 변경할 수 없습니다.";
+            return;
+        }
+
+        var reason = _layoutDefinitionPolicyReason.Trim();
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "LayoutKey 등급 정책을 설정하려면 사유를 입력해주세요.";
+            return;
+        }
+
+        if (currentPolicy?.Tier == _layoutDefinitionPolicyTier)
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "현재 등급과 다른 등급을 선택해야 재분류할 수 있습니다.";
+            return;
+        }
+
+        CancelLayoutSubmissionArchive();
+        _confirmLayoutSubmissionAction = null;
+        _confirmLayoutReleaseId = null;
+        _layoutReleaseChangeReason = "";
+        _layoutDefinitionPolicyReason = reason;
+        _layoutDefinitionPolicyConfirmationKey = layoutKey;
+        _layoutDefinitionPolicyConfirmationStep = 1;
+        _layoutWorkflowSucceeded = true;
+        _layoutWorkflowStatus =
+            $"'{layoutKey}' 등급 정책 변경을 준비했습니다. 영향 범위를 확인해주세요.";
+    }
+
+    private void AdvanceLayoutDefinitionPolicyConfirmation(string layoutKey)
+    {
+        if (_isLayoutWorkflowBusy
+            || _layoutDefinitionPolicyConfirmationStep != 1
+            || !string.Equals(
+                _layoutDefinitionPolicyConfirmationKey,
+                layoutKey,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _layoutDefinitionPolicyConfirmationStep = 2;
+        _layoutWorkflowSucceeded = true;
+        _layoutWorkflowStatus =
+            $"'{layoutKey}' 정책 변경의 1단계 확인을 마쳤습니다. 최종 확인 후 즉시 적용됩니다.";
+    }
+
+    private async Task SetLayoutDefinitionPolicyAsync(string layoutKey)
+    {
+        if (_isLayoutWorkflowBusy
+            || _layoutDefinitionPolicyConfirmationStep != 2
+            || !string.Equals(
+                _layoutDefinitionPolicyConfirmationKey,
+                layoutKey,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var reason = _layoutDefinitionPolicyReason.Trim();
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            CancelLayoutDefinitionPolicyChange();
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "LayoutKey 등급 정책 설정 사유는 필수입니다.";
+            return;
+        }
+
+        var previousPolicy = FindLayoutDefinitionPolicy(layoutKey);
+        if (previousPolicy?.Tier == _layoutDefinitionPolicyTier)
+        {
+            CancelLayoutDefinitionPolicyChange();
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "정책이 이미 선택한 등급으로 설정되어 있습니다.";
+            return;
+        }
+
+        _isLayoutWorkflowBusy = true;
+        try
+        {
+            var result = await LayoutSubmissions.SetDefinitionTierAsync(
+                layoutKey,
+                _layoutDefinitionPolicyTier,
+                RequireSuperAdminSessionToken(),
+                SuperAdminWorkflowActor,
+                reason);
+            _layoutDefinitionPolicies = await LayoutSubmissions.ListDefinitionPoliciesAsync(
+                RequireSuperAdminSessionToken());
+            _layoutDefinitionPolicyTier = result.Policy.Tier;
+            _layoutDefinitionPolicyReason = "";
+            CancelLayoutDefinitionPolicyChange();
+            _layoutWorkflowSucceeded = true;
+            _layoutWorkflowStatus = result.Reclassified
+                ? $"✅ '{result.Policy.LayoutKey}'를 {TierLabel(result.Policy.Tier)} 등급으로 재분류했습니다. " +
+                  $"Revision {result.Policy.Revision} 정책이 모든 버전과 사용자 접근에 즉시 적용됩니다."
+                : $"✅ '{result.Policy.LayoutKey}'의 신규 등급 정책을 {TierLabel(result.Policy.Tier)}로 설정했습니다. " +
+                  $"Revision {result.Policy.Revision} 정책이 모든 버전과 사용자 접근에 즉시 적용됩니다.";
+        }
+        catch (Exception ex)
+        {
+            await HandleLayoutWorkflowFailureAsync(ex);
+        }
+        finally
+        {
+            _isLayoutWorkflowBusy = false;
+        }
+    }
+
+    private void BeginLayoutSubmissionAction(string action, string submissionId)
+    {
+        if (action == "reject" && string.IsNullOrWhiteSpace(_layoutRejectReason))
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "반려하려면 반려 사유를 입력해주세요.";
+            return;
+        }
+
+        if (action == "approve"
+            && _layoutSubmissions.FirstOrDefault(x => string.Equals(
+                x.SubmissionId,
+                submissionId,
+                StringComparison.Ordinal)) is { } submission
+            && FindLayoutDefinitionPolicy(submission.LayoutKey) is null)
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "LayoutKey 등급 정책을 먼저 설정해야 승인할 수 있습니다.";
+            return;
+        }
+
+        CancelLayoutSubmissionArchive();
+        CancelLayoutDefinitionPolicyChange();
+        _confirmLayoutReleaseId = null;
+        _confirmLayoutSubmissionAction = $"{action}:{submissionId}";
+    }
+
+    private async Task ApproveLayoutSubmissionAsync(WeddingLayoutSubmissionRecord submission)
+    {
+        if (_isLayoutWorkflowBusy
+            || _confirmLayoutSubmissionAction != $"approve:{submission.SubmissionId}")
+        {
+            return;
+        }
+
+        if (FindLayoutDefinitionPolicy(submission.LayoutKey) is null)
+        {
+            _confirmLayoutSubmissionAction = null;
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "LayoutKey 등급 정책을 먼저 설정해야 승인할 수 있습니다.";
+            return;
+        }
+
+        _isLayoutWorkflowBusy = true;
+        try
+        {
+            var result = await LayoutSubmissions.ApproveAsync(
+                submission.SubmissionId,
+                RequireSuperAdminSessionToken(),
+                SuperAdminWorkflowActor,
+                _approveAndActivate);
+            _layoutWorkflowSucceeded = true;
+            _layoutWorkflowStatus = result.Activated
+                ? $"✅ '{submission.LayoutLabel} v{submission.LayoutVersion}'을 승인하고 활성화했습니다."
+                : $"✅ '{submission.LayoutLabel} v{submission.LayoutVersion}'을 불변 릴리스로 승인했습니다.";
+            ClearSelectedLayoutSubmission();
+            await RefreshLayoutSubmissionsNoLockAsync();
+        }
+        catch (Exception ex)
+        {
+            await HandleLayoutWorkflowFailureAsync(ex);
+        }
+        finally
+        {
+            _isLayoutWorkflowBusy = false;
+        }
+    }
+
+    private async Task RejectLayoutSubmissionAsync(WeddingLayoutSubmissionRecord submission)
+    {
+        if (_isLayoutWorkflowBusy
+            || _confirmLayoutSubmissionAction != $"reject:{submission.SubmissionId}")
+        {
+            return;
+        }
+
+        var reason = _layoutRejectReason.Trim();
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "반려 사유는 필수입니다.";
+            return;
+        }
+
+        _isLayoutWorkflowBusy = true;
+        try
+        {
+            await LayoutSubmissions.RejectAsync(
+                submission.SubmissionId,
+                RequireSuperAdminSessionToken(),
+                SuperAdminWorkflowActor,
+                reason);
+            _layoutWorkflowSucceeded = true;
+            _layoutWorkflowStatus =
+                $"✅ '{submission.LayoutLabel} v{submission.LayoutVersion}' 제출을 반려했습니다.";
+            ClearSelectedLayoutSubmission();
+            await RefreshLayoutSubmissionsNoLockAsync();
+        }
+        catch (Exception ex)
+        {
+            await HandleLayoutWorkflowFailureAsync(ex);
+        }
+        finally
+        {
+            _isLayoutWorkflowBusy = false;
+        }
+    }
+
+    private void BeginLayoutSubmissionArchive(WeddingLayoutSubmissionRecord submission)
+    {
+        if (_isLayoutWorkflowBusy)
+        {
+            return;
+        }
+
+        ClearSelectedLayoutSubmission();
+        _confirmLayoutReleaseId = null;
+        _layoutReleaseChangeReason = "";
+        _layoutSubmissionArchiveId = submission.SubmissionId;
+        _layoutArchiveReason = "";
+        _layoutArchiveConfirmationStep = 1;
+        _layoutWorkflowSucceeded = true;
+        _layoutWorkflowStatus =
+            $"'{submission.LayoutLabel} v{submission.LayoutVersion}' 서버 보관함 이동을 준비했습니다. " +
+            "파일은 물리 삭제되지 않습니다.";
+    }
+
+    private void AdvanceLayoutSubmissionArchiveConfirmation(
+        WeddingLayoutSubmissionRecord submission)
+    {
+        if (_isLayoutWorkflowBusy
+            || _layoutArchiveConfirmationStep != 1
+            || !string.Equals(
+                _layoutSubmissionArchiveId,
+                submission.SubmissionId,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var reason = _layoutArchiveReason.Trim();
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "서버 보관함으로 이동하려면 사유를 입력해주세요.";
+            return;
+        }
+
+        _layoutArchiveReason = reason;
+        _layoutArchiveConfirmationStep = 2;
+        _layoutWorkflowSucceeded = true;
+        _layoutWorkflowStatus =
+            $"'{submission.LayoutLabel} v{submission.LayoutVersion}' 보관함 이동의 1단계 확인을 마쳤습니다. " +
+            "최종 확인 후 서버 보관함으로 이동합니다.";
+    }
+
+    private async Task ArchiveLayoutSubmissionAsync(
+        WeddingLayoutSubmissionRecord submission)
+    {
+        if (_isLayoutWorkflowBusy
+            || _layoutArchiveConfirmationStep != 2
+            || !string.Equals(
+                _layoutSubmissionArchiveId,
+                submission.SubmissionId,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var reason = _layoutArchiveReason.Trim();
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            _layoutArchiveConfirmationStep = 1;
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "서버 보관함으로 이동할 사유는 필수입니다.";
+            return;
+        }
+
+        _isLayoutWorkflowBusy = true;
+        try
+        {
+            var result = await LayoutSubmissions.ArchiveAsync(
+                submission.SubmissionId,
+                RequireSuperAdminSessionToken(),
+                SuperAdminWorkflowActor,
+                reason);
+            var archivedScope = result.PublishedReleaseArchived
+                ? "제출 기록과 승인 릴리스를"
+                : "제출 기록을";
+            var pointerNote = result.ActivePointerRemoved
+                ? " 유일한 활성 릴리스의 포인터도 함께 보관했습니다."
+                : "";
+            _layoutWorkflowSucceeded = true;
+            _layoutWorkflowStatus =
+                $"✅ '{submission.LayoutLabel} v{submission.LayoutVersion}' {archivedScope} " +
+                $"물리 삭제하지 않고 서버 보관함으로 이동했습니다.{pointerNote}";
+            ClearSelectedLayoutSubmission();
+            await RefreshLayoutSubmissionsNoLockAsync();
+        }
+        catch (Exception ex) when (ex is not UnauthorizedAccessException)
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus =
+                $"'{submission.LayoutLabel} v{submission.LayoutVersion}' 서버 보관함 이동이 거부되었습니다. " +
+                "승인 릴리스는 청첩장에서 참조 중이면 이동할 수 없고, 활성 버전에 다른 릴리스가 " +
+                "남아 있으면 먼저 다른 버전을 활성화하거나 롤백해야 합니다. " +
+                $"서버 응답: {ex.Message}";
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            await HandleLayoutWorkflowFailureAsync(ex);
+        }
+        finally
+        {
+            _isLayoutWorkflowBusy = false;
+        }
+    }
+
+    private void BeginArchivedLayoutPurge(WeddingLayoutArchiveRecord archive)
+    {
+        if (_isLayoutWorkflowBusy)
+        {
+            return;
+        }
+
+        ClearSelectedLayoutSubmission();
+        CancelLayoutSubmissionArchive();
+        CancelLayoutDefinitionPolicyChange();
+        _confirmLayoutReleaseId = null;
+        _layoutReleaseChangeReason = "";
+        _layoutArchivePurgeSubmissionId = archive.SubmissionId;
+        _layoutPurgeReason = "";
+        _layoutPurgePhrase = "";
+        _layoutPurgeIrreversibleConfirmed = false;
+        _layoutPurgeConfirmationStep = 1;
+        _layoutWorkflowSucceeded = false;
+        _layoutWorkflowStatus =
+            $"'{PurgeConfirmationPhrase(archive)}'의 복구 불가 영구 삭제를 준비했습니다. " +
+            "사유와 확인 문구를 입력해주세요.";
+    }
+
+    private void AdvanceArchivedLayoutPurgeConfirmation(
+        WeddingLayoutArchiveRecord archive)
+    {
+        if (_isLayoutWorkflowBusy
+            || _layoutPurgeConfirmationStep != 1
+            || !string.Equals(
+                _layoutArchivePurgeSubmissionId,
+                archive.SubmissionId,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var reason = _layoutPurgeReason.Trim();
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "영구 삭제 사유를 입력해주세요.";
+            return;
+        }
+
+        var expectedPhrase = PurgeConfirmationPhrase(archive);
+        if (!string.Equals(
+                _layoutPurgePhrase,
+                expectedPhrase,
+                StringComparison.Ordinal))
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus =
+                $"확인 문구 '{expectedPhrase}'를 정확히 입력해주세요.";
+            return;
+        }
+
+        _layoutPurgeReason = reason;
+        _layoutPurgeConfirmationStep = 2;
+        _layoutPurgeIrreversibleConfirmed = false;
+        _layoutWorkflowSucceeded = false;
+        _layoutWorkflowStatus =
+            $"'{expectedPhrase}' 영구 삭제의 1단계 확인을 마쳤습니다. " +
+            "복구 불가 확인 후 최종 실행해주세요.";
+    }
+
+    private async Task PurgeArchivedLayoutAsync(
+        WeddingLayoutArchiveRecord archive)
+    {
+        if (_isLayoutWorkflowBusy
+            || _layoutPurgeConfirmationStep != 2
+            || !_layoutPurgeIrreversibleConfirmed
+            || !string.Equals(
+                _layoutArchivePurgeSubmissionId,
+                archive.SubmissionId,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var reason = _layoutPurgeReason.Trim();
+        if (string.IsNullOrWhiteSpace(reason)
+            || !string.Equals(
+                _layoutPurgePhrase,
+                PurgeConfirmationPhrase(archive),
+                StringComparison.Ordinal))
+        {
+            _layoutPurgeConfirmationStep = 1;
+            _layoutPurgeIrreversibleConfirmed = false;
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus =
+                "영구 삭제 사유와 확인 문구를 다시 확인해주세요.";
+            return;
+        }
+
+        _isLayoutWorkflowBusy = true;
+        try
+        {
+            var result = await LayoutSubmissions.PurgeArchivedAsync(
+                archive.SubmissionId,
+                RequireSuperAdminSessionToken(),
+                SuperAdminWorkflowActor,
+                reason);
+            _layoutWorkflowSucceeded = true;
+            _layoutWorkflowStatus =
+                $"✅ '{PurgeConfirmationPhrase(archive)}'의 제출·패키지" +
+                $"{(archive.PublishedReleaseArchived ? "·승인 릴리스" : "")} payload를 " +
+                "물리 삭제했습니다. 동일 LayoutKey 소유권 기록과 감사 로그는 유지됩니다. " +
+                (result.DefinitionPolicyPreserved
+                    ? "다른 산출물이 남아 있어 LayoutKey 등급 정책도 유지했습니다. "
+                    : "이 키의 마지막 산출물이어서 사용자 LayoutKey 등급 정책도 정리했습니다. ") +
+                "같은 소유자는 동일 버전을 다시 제출할 수 있습니다.";
+            CancelArchivedLayoutPurge();
+            await RefreshLayoutSubmissionsNoLockAsync();
+        }
+        catch (Exception ex) when (ex is not UnauthorizedAccessException)
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus =
+                $"'{PurgeConfirmationPhrase(archive)}' 영구 삭제가 거부되었습니다. " +
+                "현재 활성 포인터나 청첩장 참조가 남아 있는지 확인해주세요. " +
+                $"서버 응답: {ex.Message}";
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            await HandleLayoutWorkflowFailureAsync(ex);
+        }
+        finally
+        {
+            _isLayoutWorkflowBusy = false;
+        }
+    }
+
+    private static string PurgeConfirmationPhrase(
+        WeddingLayoutArchiveRecord archive) =>
+        $"{archive.LayoutKey}@{archive.LayoutVersion}";
+
+    private void BeginLayoutReleaseChange(WeddingLayoutReleaseId releaseId, bool isRollback)
+    {
+        CancelLayoutSubmissionArchive();
+        CancelArchivedLayoutPurge();
+        CancelLayoutDefinitionPolicyChange();
+        _confirmLayoutSubmissionAction = null;
+        _confirmLayoutReleaseId = releaseId;
+        _layoutReleaseChangeReason = isRollback
+            ? $"Rollback to {releaseId.Version}"
+            : $"Activate {releaseId.Version}";
+    }
+
+    private async Task ChangeActiveLayoutReleaseAsync(WeddingLayoutReleaseId releaseId)
+    {
+        if (_isLayoutWorkflowBusy || _confirmLayoutReleaseId != releaseId)
+        {
+            return;
+        }
+
+        var reason = _layoutReleaseChangeReason.Trim();
+        if (string.IsNullOrWhiteSpace(reason))
+        {
+            _layoutWorkflowSucceeded = false;
+            _layoutWorkflowStatus = "활성 버전 변경 사유는 필수입니다.";
+            return;
+        }
+
+        _isLayoutWorkflowBusy = true;
+        try
+        {
+            var currentVersion = LayoutRegistry.Current
+                .FindDescriptor(releaseId.LayoutKey)?
+                .CurrentVersion;
+            var isRollback = currentVersion is not null
+                && IsOlderLayoutVersion(releaseId.Version, currentVersion);
+            var result = isRollback
+                ? await LayoutSubmissions.RollbackAsync(
+                    releaseId.LayoutKey,
+                    releaseId.Version,
+                    RequireSuperAdminSessionToken(),
+                    SuperAdminWorkflowActor,
+                    reason)
+                : await LayoutSubmissions.ActivateAsync(
+                    releaseId.LayoutKey,
+                    releaseId.Version,
+                    RequireSuperAdminSessionToken(),
+                    SuperAdminWorkflowActor,
+                    reason);
+            _layoutWorkflowSucceeded = true;
+            _layoutWorkflowStatus =
+                $"✅ '{result.Active.Key}' 활성 버전을 " +
+                $"{(isRollback ? "롤백" : "변경")}했습니다: " +
+                $"{result.Previous?.Version ?? "없음"} → {result.Active.Version}";
+            _confirmLayoutReleaseId = null;
+            _layoutReleaseChangeReason = "";
+        }
+        catch (Exception ex)
+        {
+            await HandleLayoutWorkflowFailureAsync(ex);
+        }
+        finally
+        {
+            _isLayoutWorkflowBusy = false;
+        }
+    }
+
+    private void CancelLayoutWorkflowConfirmation()
+    {
+        CancelLayoutSubmissionArchive();
+        CancelArchivedLayoutPurge();
+        CancelLayoutDefinitionPolicyChange();
+        _confirmLayoutSubmissionAction = null;
+        _confirmLayoutReleaseId = null;
+        _layoutReleaseChangeReason = "";
+    }
+
+    private void CancelLayoutSubmissionArchive()
+    {
+        _layoutSubmissionArchiveId = null;
+        _layoutArchiveReason = "";
+        _layoutArchiveConfirmationStep = 0;
+    }
+
+    private void CancelArchivedLayoutPurge()
+    {
+        _layoutArchivePurgeSubmissionId = null;
+        _layoutPurgeReason = "";
+        _layoutPurgePhrase = "";
+        _layoutPurgeIrreversibleConfirmed = false;
+        _layoutPurgeConfirmationStep = 0;
+    }
+
+    private void CancelLayoutDefinitionPolicyChange()
+    {
+        _layoutDefinitionPolicyConfirmationKey = null;
+        _layoutDefinitionPolicyConfirmationStep = 0;
+    }
+
+    private void CloseLayoutDefinitionPolicyEditor()
+    {
+        CancelLayoutDefinitionPolicyChange();
+        _layoutDefinitionPolicyEditorKey = null;
+        _layoutDefinitionPolicyReason = "";
+        _layoutDefinitionPolicyTier = LayoutTier.Free;
+    }
+
+    private void ClearSelectedLayoutSubmission()
+    {
+        CancelLayoutSubmissionArchive();
+        CancelArchivedLayoutPurge();
+        CloseLayoutDefinitionPolicyEditor();
+        _selectedLayoutSubmissionId = null;
+        _layoutReviewPackage = null;
+        _layoutRejectReason = "";
+        _confirmLayoutSubmissionAction = null;
+    }
+
+    private string RequireSuperAdminSessionToken()
+    {
+        if (!Vm.IsAuthenticated || string.IsNullOrWhiteSpace(Vm.SuperAdminSessionToken))
+        {
+            throw new UnauthorizedAccessException("슈퍼 관리자 세션이 필요합니다.");
+        }
+
+        return Vm.SuperAdminSessionToken;
+    }
+
+    private async Task HandleLayoutWorkflowFailureAsync(Exception ex)
+    {
+        _layoutWorkflowSucceeded = false;
+        _layoutWorkflowStatus = $"레이아웃 작업을 완료하지 못했습니다. {ex.Message}";
+        if (ex is UnauthorizedAccessException)
+        {
+            await ClearSuperAdminTokenAsync();
+            Vm.Logout();
+            _layoutUploadTenantSlug = "";
+            _sessionRestoreChecked = true;
+        }
+    }
+
+    private void OnLayoutCatalogChanged(object? sender, WeddingLayoutCatalogChangedEventArgs e)
+    {
+        _layoutCatalogChangedAt = e.ChangedAtUtc;
+        _layoutCatalogReloadSucceeded = true;
+        _layoutCatalogStatus =
+            $"✅ 파일 변경을 감지해 새 카탈로그를 자동 적용했습니다. " +
+            $"{e.Current.Descriptors.Count}개 레이아웃 · {e.Current.Releases.Count}개 릴리스 · " +
+            $"{e.ChangedAtUtc.ToLocalTime():yyyy-MM-dd HH:mm:ss}";
+        _ = InvokeAsync(StateHasChanged);
     }
 
     private void SelectTenant(TenantConfig tenant)
@@ -917,7 +3056,11 @@
         _activeMenu = menu;
         _statusFilter = "all";
         _currentPage = 1;
-        if (IsMediaMenu && !Vm.IsMediaUsageAccurate)
+        if (ShowLayoutCatalog)
+        {
+            await LoadLayoutSubmissionsAsync();
+        }
+        else if (IsMediaMenu && !Vm.IsMediaUsageAccurate)
         {
             await Vm.RefreshMediaUsageAsync();
         }
@@ -980,9 +3123,7 @@
             : tenants;
 
     private static bool IsPremiumActive(TenantConfig tenant) =>
-        tenant.HasPremiumPlan
-        || tenant.UnlockedLayoutModes.Count > 0
-        || tenant.UnlockedThemeKeys.Count > 0;
+        tenant.HasPremiumPlan;
 
     private static int GetTotalPages(int count, int pageSize = 0)
     {
@@ -1093,20 +3234,20 @@
 
     private MarkupString RenderLayoutBadges(TenantConfig tenant)
     {
-        var labels = PremiumLayouts
-            .Where(x => IsLayoutUnlocked(tenant, x.Mode))
-            .Select(x => x.Label)
-            .ToArray();
+        var labels = tenant.HasPremiumPlan
+            ? PremiumLayouts.Select(x => x.Label).ToArray()
+            : [];
 
         return BuildBadgeMarkup(labels);
     }
 
     private MarkupString RenderThemeBadges(TenantConfig tenant)
     {
-        var labels = PremiumThemes
-            .Where(x => IsThemeUnlocked(tenant, x.Key))
-            .Select(x => x.DisplayName)
-            .ToArray();
+        var themeKey = tenant.DesignSettings?.ThemeKey ?? tenant.ThemeName;
+        var labels = string.Equals(themeKey, WeddingThemeCatalog.CustomThemeKey, StringComparison.OrdinalIgnoreCase)
+            && tenant.HasPremiumPlan
+                ? new[] { "나만의 테마" }
+                : new[] { WeddingThemeCatalog.Instance.Find(themeKey)?.DisplayName ?? "로즈 골드" };
 
         return BuildBadgeMarkup(labels);
     }
@@ -1121,5 +3262,115 @@
         var visible = labels.Take(2).Select(label => $"<span class=\"wedding-admin-badge\">{System.Net.WebUtility.HtmlEncode(label)}</span>");
         var extra = labels.Count > 2 ? $"<span class=\"wedding-admin-badge is-muted\">+{labels.Count - 2}</span>" : "";
         return new MarkupString(string.Join("", visible) + extra);
+    }
+
+    private bool IsSelectedLayoutSubmission(WeddingLayoutSubmissionRecord submission) =>
+        string.Equals(
+            submission.SubmissionId,
+            _selectedLayoutSubmissionId,
+            StringComparison.Ordinal);
+
+    private static string SubmissionStatusLabel(WeddingLayoutSubmissionStatus status) =>
+        status switch
+        {
+            WeddingLayoutSubmissionStatus.Approved => "승인",
+            WeddingLayoutSubmissionStatus.Rejected => "반려",
+            _ => "검토 대기",
+        };
+
+    private static string SubmissionStatusClass(WeddingLayoutSubmissionStatus status) =>
+        status switch
+        {
+            WeddingLayoutSubmissionStatus.Approved => "is-success",
+            WeddingLayoutSubmissionStatus.Rejected => "is-danger",
+            _ => "is-gold",
+        };
+
+    private static int CountLayoutBlocks(LayoutBlock block) =>
+        1 + block.Children.Sum(CountLayoutBlocks);
+
+    private static string ShortHash(string hash) =>
+        string.IsNullOrWhiteSpace(hash)
+            ? "-"
+            : hash.Length <= 16
+                ? hash
+                : $"{hash[..12]}…{hash[^4..]}";
+
+    private static bool IsOlderLayoutVersion(string candidate, string current)
+    {
+        var candidateCore = ParseLayoutVersionCore(candidate);
+        var currentCore = ParseLayoutVersionCore(current);
+        var coreComparison = candidateCore.CompareTo(currentCore);
+        if (coreComparison != 0)
+        {
+            return coreComparison < 0;
+        }
+
+        var candidatePrerelease = LayoutPrerelease(candidate);
+        var currentPrerelease = LayoutPrerelease(current);
+        if (candidatePrerelease.Length == 0)
+        {
+            return false;
+        }
+
+        if (currentPrerelease.Length == 0)
+        {
+            return true;
+        }
+
+        return string.Compare(
+            candidatePrerelease,
+            currentPrerelease,
+            StringComparison.OrdinalIgnoreCase) < 0;
+    }
+
+    private static Version ParseLayoutVersionCore(string version)
+    {
+        var core = version.Split(['-', '+'], 2)[0];
+        return Version.TryParse(core, out var parsed)
+            ? parsed
+            : new Version(0, 0, 0);
+    }
+
+    private static string LayoutPrerelease(string version)
+    {
+        var dash = version.IndexOf('-');
+        if (dash < 0)
+        {
+            return "";
+        }
+
+        var plus = version.IndexOf('+', dash + 1);
+        return plus < 0
+            ? version[(dash + 1)..]
+            : version[(dash + 1)..plus];
+    }
+
+    private WeddingLayoutPublishedPackage? FindPublishedPackage(WeddingLayoutReleaseId releaseId) =>
+        LayoutRegistry.PublishedPackages.TryGetValue(releaseId, out var package)
+            ? package
+            : null;
+
+    private static string TierLabel(WeddingLayoutTier tier) =>
+        tier == WeddingLayoutTier.Premium ? "Premium" : "Free";
+
+    private static string TierLabel(LayoutTier tier) =>
+        tier == LayoutTier.Premium ? "Premium" : "Free";
+
+    private string DefinitionPolicyChangeSummary(LayoutDefinitionPolicy? currentPolicy) =>
+        currentPolicy is null
+            ? $"미분류 → {TierLabel(_layoutDefinitionPolicyTier)} 신규 정책 설정"
+            : $"{TierLabel(currentPolicy.Tier)} → {TierLabel(_layoutDefinitionPolicyTier)} 재분류";
+
+    private static bool IsProtectedLayoutDefinitionPolicy(LayoutDefinitionPolicy policy) =>
+        policy.Revision == 0
+        || WeddingLayoutCatalog.Instance.FindDescriptor(policy.LayoutKey)?.IsBuiltIn == true;
+
+    private static string SourceLabel(WeddingLayoutDescriptor descriptor) =>
+        descriptor.IsBuiltIn ? "기본 제공" : "승인 업로드";
+
+    public void Dispose()
+    {
+        LayoutRegistry.Changed -= OnLayoutCatalogChanged;
     }
 }

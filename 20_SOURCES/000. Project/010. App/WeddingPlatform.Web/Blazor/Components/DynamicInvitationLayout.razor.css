@@ -1,0 +1,156 @@
+.w-dynamic-replica {
+    width: 100%;
+    min-height: 100%;
+    overflow: hidden;
+    color: var(--w-text);
+    background: var(--w-bg);
+    pointer-events: none;
+    user-select: none;
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__section-summary,
+.w-dynamic-replica ::deep .w-dynamic-replica__gallery,
+.w-dynamic-replica ::deep .w-dynamic-replica__map,
+.w-dynamic-replica ::deep .w-dynamic-replica__accounts,
+.w-dynamic-replica ::deep .w-dynamic-replica__contacts,
+.w-dynamic-replica ::deep .w-dynamic-replica__guestbook,
+.w-dynamic-replica ::deep .w-dynamic-replica__videos {
+    display: grid;
+    gap: .8rem;
+    width: 100%;
+    padding: clamp(1rem, 4vw, 2rem);
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__fact {
+    display: grid;
+    grid-template-columns: minmax(4rem, .35fr) minmax(0, 1fr);
+    gap: .75rem;
+    align-items: baseline;
+    padding-block: .45rem;
+    border-bottom: 1px solid var(--w-border);
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__photo-grid,
+.w-dynamic-replica ::deep .w-dynamic-replica__video-grid,
+.w-dynamic-replica ::deep .w-dynamic-replica__account-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .65rem;
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__photo-grid figure {
+    margin: 0;
+    overflow: hidden;
+    aspect-ratio: 1;
+    border-radius: calc(var(--w-radius) * .75);
+    background: color-mix(in srgb, var(--w-primary) 8%, var(--w-panel-bg));
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__photo-grid img,
+.w-dynamic-replica ::deep .w-dynamic-replica__roadmap {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__roadmap {
+    max-height: 20rem;
+    border-radius: var(--w-radius);
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__map-card {
+    display: grid;
+    min-height: 12rem;
+    place-content: center;
+    gap: .4rem;
+    padding: 1.5rem;
+    border: 1px solid var(--w-border);
+    border-radius: var(--w-radius);
+    text-align: center;
+    background:
+        radial-gradient(circle at 30% 25%, color-mix(in srgb, var(--w-primary) 18%, transparent), transparent 35%),
+        linear-gradient(145deg, var(--w-panel-bg), color-mix(in srgb, var(--w-bg) 78%, var(--w-primary)));
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__map-pin {
+    color: var(--w-primary);
+    font-size: 2.4rem;
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__account-card,
+.w-dynamic-replica ::deep .w-dynamic-replica__guest-entry {
+    display: grid;
+    gap: .35rem;
+    padding: .9rem;
+    border: 1px solid var(--w-border);
+    border-radius: var(--w-radius);
+    background: var(--w-panel-bg);
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__account-number {
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__guest-entry p,
+.w-dynamic-replica ::deep .w-dynamic-replica__message {
+    margin: 0;
+    color: var(--w-muted-text, var(--w-text));
+    line-height: 1.65;
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__video-card {
+    display: grid;
+    min-height: 7rem;
+    place-content: center;
+    gap: .35rem;
+    border-radius: var(--w-radius);
+    color: var(--w-button-text, #fff);
+    text-align: center;
+    background:
+        linear-gradient(145deg, rgba(0, 0, 0, .18), rgba(0, 0, 0, .62)),
+        color-mix(in srgb, var(--w-primary) 55%, var(--w-dark));
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__video-play {
+    font-size: 1.7rem;
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__navigation {
+    display: flex;
+    gap: .35rem;
+    overflow: hidden;
+    padding: .65rem;
+    border-top: 1px solid var(--w-border);
+    background: var(--w-nav-bg, var(--w-panel-bg));
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__navigation span {
+    flex: 1 0 auto;
+    padding: .45rem .65rem;
+    border-radius: 999px;
+    color: var(--w-nav-text, var(--w-text));
+    text-align: center;
+    background: color-mix(in srgb, var(--w-primary) 10%, transparent);
+}
+
+.w-dynamic-replica ::deep .w-dynamic-replica__button {
+    display: inline-flex;
+    min-height: 2.75rem;
+    width: fit-content;
+    align-items: center;
+    justify-content: center;
+    padding: .7rem 1.1rem;
+    border: 1px solid var(--w-button-bg, var(--w-primary));
+    border-radius: 999px;
+    color: var(--w-button-text, #fff);
+    background: var(--w-button-bg, var(--w-primary));
+}
+
+@media (min-width: 720px) {
+    .w-dynamic-replica ::deep .w-dynamic-replica__photo-grid,
+    .w-dynamic-replica ::deep .w-dynamic-replica__video-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}

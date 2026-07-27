@@ -1,142 +1,251 @@
 @namespace WeddingPlatform.Blazor.Components
 @using Wedding.Common
+@using Wedding.Layouts.Contracts
 @using WeddingPlatform.Models
 @using WeddingPlatform.ViewModels
 @implements IAsyncDisposable
 
 @*
-    포토북 레이아웃 — 앨범을 넘겨보는 감각을 세로 스크롤로 옮긴 프리미엄 레이아웃.
-    Gallery/Story 와 달리 사진 한 장 = 페이지 한 장 단위로 크게 표시한다.
-    Gallery/Story 섹션은 자체 페이지로 커스텀 렌더링하고, Video/Guestbook 는 InvitationSections 에 위임한다.
+    포토북은 갤러리만 꾸미는 스킨이 아니라 청첩장 전체를 한 권의 책으로
+    구성한다. 표지·초대글·예식 안내·사진·영상·지도·계좌·방명록이 모두
+    같은 PageTurn 프리미티브의 실제 페이지가 된다.
 *@
-<section class="wedding-layout-photobook @Vm.LayoutDescriptor.CssClass">
-    <section class="wedding-photobook-cover" role="banner">
-        @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
-        {
-            <img class="wedding-photobook-cover__image" src="@Vm.HeroImageUrl" alt="@Vm.CoupleName 대표 사진" />
-        }
-        else
-        {
-            <div class="wedding-photobook-cover__image wedding-photobook-cover__image--empty"></div>
-        }
-        <div class="wedding-photobook-cover__panel">
-            <p class="wedding-layout-kicker">@Vm.HeroTitle</p>
-            <h1>@Vm.CoupleName</h1>
-            <p>@Vm.WeddingDate.ToString("yyyy년 MM월 dd일")</p>
-            @if (!string.IsNullOrWhiteSpace(Vm.WeddingTime))
-            {
-                <p class="wedding-layout-muted">@Vm.WeddingTime</p>
-            }
-            @if (!string.IsNullOrWhiteSpace(Vm.VenueName))
-            {
-                <p class="wedding-layout-muted">@Vm.VenueName</p>
-            }
+<section class="wedding-layout-photobook @Vm.LayoutDescriptor.CssClass"
+         aria-label="포토북형 모바일 청첩장">
+    <div class="wedding-photobook-pages">
+        <div class="wedding-layout-heading wedding-photobook-heading">
+            <p class="wedding-layout-kicker">Premium Wedding Book</p>
+            <h2>우리의 결혼 이야기</h2>
+            <span>표지부터 방명록까지 총 @_bookPages.Count 페이지</span>
         </div>
-    </section>
 
-    @foreach (var activeSection in Vm.OrderedSections.Where(x => x != "hero"))
-    {
-        if (activeSection == "gallery")
-        {
-            <section class="wedding-photobook-pages" id="gallery">
-                <div class="wedding-layout-heading wedding-photobook-heading">
-                    <p class="wedding-layout-kicker">Album</p>
-                    <h2>사진첩</h2>
-                    @if (VisibleCount > 0)
-                    {
-                        <span>@VisibleCount / @TotalCount 페이지</span>
-                    }
-                </div>
+        <div class="wedding-photobook-reader">
+            <div class="wedding-photobook-toolbar">
+                <p class="wedding-photobook-toolbar__hint">
+                    <span aria-hidden="true">← →</span>
+                    PC는 두 쪽, 휴대폰은 한 쪽씩 같은 방향으로 넘겨집니다
+                </p>
+                <button class="w-btn wedding-photobook-autoplay"
+                        type="button"
+                        disabled="@(!CanAutoPlayPhotos)"
+                        @onclick="ToggleAutoPlay"
+                        aria-pressed="@_autoPlaying">
+                    @(_autoPlaying ? "⏸ 사진 자동 넘김 정지" : "▶ 사진 자동 넘김")
+                </button>
+            </div>
 
-                @if (TotalCount == 0 && Vm.PhotoBookPages.All(p => string.IsNullOrWhiteSpace(p.PhotoFileName)))
-                {
-                    <div class="wedding-photobook-empty">아직 등록된 사진이 없습니다. 사진을 업로드하거나 포토북 페이지에서 사진을 지정해 주세요.</div>
-                }
-                else
-                {
-                    if (TotalCount > 0)
-                    {
-                        <div class="w-gallery__controls">
-                            <button class="w-btn" type="button" @onclick="ToggleAutoPlay">
-                                @(_autoPlaying ? "⏸ 정지" : "▶ 자동재생")
-                            </button>
-                        </div>
+            <LayoutTransitionSurface Presentation="LayoutPresentationMode.PagedBook"
+                                     Transition="@PhotoBookTransition"
+                                     PageCount="@_bookPages.Count"
+                                     ActiveIndex="@_bookPageIndex"
+                                     ActiveIndexChanging="OnBookPageChanging"
+                                     ActiveIndexChanged="OnBookPageChanged"
+                                     @ref="_bookSurface"
+                                     PageLabel="GetPageLabel"
+                                     AriaLabel="@($"{Vm.CoupleName} 포토북 청첩장")">
+                <PageContent Context="pageIndex">
+                    @{
+                        var bookPage = ResolveSafePage(pageIndex);
+                        var protectPointerGestures = PageProtectsPointerGestures(bookPage);
                     }
-                    <div class="wedding-photobook-scroller">
-                        @* 관리자에서 지정한 페이지를 우선 표시. 사진이 비면 갤러리 순서에서 자동 보충한다. *@
-                        @{
-                            var featuredPages = ResolveFeaturedPages();
-                        }
-                        @for (var i = 0; i < featuredPages.Count; i++)
+                    <article class="@ResolvePageCssClass(bookPage)"
+                             aria-label="@bookPage.Title"
+                             @onpointerdown:stopPropagation="@protectPointerGestures"
+                             @onpointerup:stopPropagation="@protectPointerGestures">
+                        @if (bookPage.Kind == BookPageKind.Cover)
                         {
-                            var featured = featuredPages[i];
-                            <figure class="wedding-photobook-page wedding-photobook-page--featured">
-                                @if (featured.Photo is not null)
+                            <section class="wedding-photobook-cover w-hero--invite-positioned"
+                                     role="banner"
+                                     aria-label="@($"{Vm.CoupleName} 청첩장 표지")"
+                                     style="@Vm.HeroImageStyle"
+                                     data-drag-container
+                                     data-hero-crop-container>
+                                @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
                                 {
-                                    var featuredIndex = featured.PhotoIndex;
-                                    <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPhoto(featuredIndex)" aria-label="@featured.Page.Caption 페이지 크게 보기">
-                                        <img src="@featured.Photo.ThumbUrl" alt="@featured.Page.Caption" loading="@(i == 0 ? "eager" : "lazy")" />
+                                    <img class="wedding-photobook-cover__image wedding-photobook-cover__image--backdrop"
+                                         src="@Vm.HeroImageUrl"
+                                         alt=""
+                                         aria-hidden="true"
+                                         loading="eager"
+                                         fetchpriority="high" />
+                                    <img class="wedding-photobook-cover__image wedding-photobook-cover__image--foreground"
+                                         data-hero-crop-image
+                                         src="@Vm.HeroImageUrl"
+                                         alt="@Vm.CoupleName 대표 사진"
+                                         loading="eager"
+                                         fetchpriority="high" />
+                                }
+                                else
+                                {
+                                    <div class="wedding-photobook-cover__image wedding-photobook-cover__image--empty"></div>
+                                }
+                                <div class="wedding-photobook-cover__veil" aria-hidden="true"></div>
+                                <div class="wedding-photobook-cover__panel">
+                                    <div class="wedding-photobook-cover__copy wedding-photobook-cover__copy--top
+                                                w-panel w-hero__top
+                                                w-hero-panel--dv-@Vm.InviteHeroTopVerticalDesktop
+                                                w-hero-panel--dh-@Vm.InviteHeroTopHorizontalDesktop
+                                                w-hero-panel--mv-@Vm.InviteHeroTopVerticalMobile
+                                                w-hero-panel--mh-@Vm.InviteHeroTopHorizontalMobile
+                                                @(Vm.HasInviteHeroTopCustomPosition ? "w-draggable-positioned" : "")"
+                                         data-drag-target="heroTop"
+                                         @onpointerdown:stopPropagation
+                                         @onpointerup:stopPropagation
+                                         style="@Vm.InviteHeroTopStyle">
+                                        <p class="wedding-layout-kicker">@Vm.HeroTitle</p>
+                                        <h1>@Vm.CoupleName</h1>
+                                    </div>
+
+                                    <div class="wedding-photobook-cover__copy wedding-photobook-cover__copy--bottom
+                                                w-panel w-hero__bottom
+                                                w-hero-panel--dv-@Vm.InviteHeroBottomVerticalDesktop
+                                                w-hero-panel--dh-@Vm.InviteHeroBottomHorizontalDesktop
+                                                w-hero-panel--mv-@Vm.InviteHeroBottomVerticalMobile
+                                                w-hero-panel--mh-@Vm.InviteHeroBottomHorizontalMobile
+                                                @(Vm.HasInviteHeroBottomCustomPosition ? "w-draggable-positioned" : "")"
+                                         data-drag-target="heroBottom"
+                                         @onpointerdown:stopPropagation
+                                         @onpointerup:stopPropagation
+                                         style="@Vm.InviteHeroBottomStyle">
+                                        <p class="wedding-photobook-cover__date">
+                                            @Vm.WeddingDate.ToString("yyyy년 MM월 dd일")
+                                        </p>
+                                        @if (!string.IsNullOrWhiteSpace(Vm.WeddingTime))
+                                        {
+                                            <p class="wedding-layout-muted">@Vm.WeddingTime</p>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(Vm.VenueName))
+                                        {
+                                            <p class="wedding-layout-muted wedding-photobook-cover__venue">
+                                                @Vm.VenueName
+                                            </p>
+                                        }
+                                    </div>
+                                </div>
+                            </section>
+                        }
+                        else if (bookPage.Kind == BookPageKind.Photo)
+                        {
+                            <div class="wedding-photobook-sheet-content">
+                                @if (bookPage.Photo is not null)
+                                {
+                                    <button type="button"
+                                            class="wedding-photobook-sheet__photo"
+                                            @onclick="() => OpenPhoto(bookPage.PhotoIndex)"
+                                            aria-label="@($"{bookPage.Title} 사진 크게 보기")">
+                                        <img src="@bookPage.Photo.ThumbUrl"
+                                             alt="@bookPage.Title"
+                                             loading="eager"
+                                             decoding="async" />
                                     </button>
                                 }
                                 else
                                 {
-                                    <div class="wedding-photobook-page__placeholder">사진을 지정하거나 갤러리에 사진을 업로드하세요.</div>
+                                    <div class="wedding-photobook-sheet__placeholder">
+                                        사진을 지정하거나 갤러리에 사진을 업로드하세요.
+                                    </div>
                                 }
-                                <figcaption class="wedding-photobook-page__caption">@featured.Page.Caption</figcaption>
-                                @if (!string.IsNullOrWhiteSpace(featured.Page.Body))
-                                {
-                                    <p class="wedding-photobook-page__body">@featured.Page.Body</p>
-                                }
-                            </figure>
-                        }
 
-                        @* 지정 페이지에서 이미 노출한 사진은 아래 목록에서 제외한다. *@
-                        @{
-                            var featuredIndexSet = featuredPages
-                                .Where(x => x.PhotoIndex >= 0)
-                                .Select(x => x.PhotoIndex)
-                                .ToHashSet();
-                            var extraPageBudget = Math.Max(0, VisibleCount - featuredPages.Count);
-                            var extras = 0;
+                                <div class="wedding-photobook-sheet__copy">
+                                    <p class="wedding-photobook-sheet__caption">@bookPage.Title</p>
+                                    @if (!string.IsNullOrWhiteSpace(bookPage.Body))
+                                    {
+                                        <p class="wedding-photobook-sheet__body">@bookPage.Body</p>
+                                    }
+                                </div>
+                                <span class="wedding-photobook-sheet__number" aria-hidden="true">
+                                    @((pageIndex + 1).ToString("00"))
+                                </span>
+                            </div>
                         }
-                        @for (var i = 0; i < TotalCount && extras < extraPageBudget; i++)
+                        else
                         {
-                            if (featuredIndexSet.Contains(i)) continue;
-                            var pageIndex = i;
-                            var photo = Vm.AllPhotos[pageIndex];
-                            <figure class="wedding-photobook-page">
-                                <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPhoto(pageIndex)" aria-label="사진 @(pageIndex + 1) 크게 보기">
-                                    <img src="@photo.ThumbUrl" alt="사진 @(pageIndex + 1)" loading="lazy" />
-                                </button>
-                                <figcaption class="wedding-photobook-page__caption">Page @(pageIndex + 1)</figcaption>
-                            </figure>
-                            extras++;
+                            <header class="wedding-photobook-section__header">
+                                <span class="wedding-photobook-section__folio">
+                                    @((pageIndex + 1).ToString("00")) · WEDDING BOOK
+                                </span>
+                                <span class="wedding-photobook-section__icon" aria-hidden="true">
+                                    @WeddingSectionOrderCatalog.GetIcon(bookPage.SectionKey!)
+                                </span>
+                                <h2>@bookPage.Title</h2>
+                            </header>
+                            <div class="wedding-photobook-section__content"
+                                 role="region"
+                                 tabindex="0"
+                                 aria-label="@($"{bookPage.Title} 내용. 위아래로 스크롤할 수 있습니다.")">
+                                <InvitationSections Slug="@Slug"
+                                                    Vm="@Vm"
+                                                    VmGuest="@VmGuest"
+                                                    IsTabbed="true"
+                                                    ActiveSection="@bookPage.SectionKey"
+                                                    MediaDismissVersion="@_mediaDismissVersion"
+                                                    PauseMusicRequested="@PauseMusicRequested" />
+                            </div>
+                            <footer class="wedding-photobook-section__footer" aria-hidden="true">
+                                <span>@Vm.CoupleName</span>
+                                <span>↕ SCROLL</span>
+                                <span>@((pageIndex + 1).ToString("00"))</span>
+                            </footer>
                         }
-                    </div>
-                    @if (VisibleCount < TotalCount)
-                    {
-                        <div class="wedding-layout-more">
-                            <button type="button" class="w-btn w-btn--primary" @onclick="LoadMore">
-                                페이지 더 보기 (+@Math.Min(PageSize, TotalCount - VisibleCount))
-                            </button>
-                        </div>
+                    </article>
+                </PageContent>
+
+                @* 실제 페이지를 복제하면 지도 DOM id, 방명록 폼, 영상 상태가
+                   앞·뒷면에 중복 생성된다. 회전 면에는 비대화형 인쇄 미리보기만 둔다. *@
+                <ReplicaContent Context="pageIndex">
+                    @{
+                        var bookPage = ResolveSafePage(pageIndex);
                     }
-                }
-            </section>
-        }
-        else
-        {
-            @* story 등 기타 섹션은 모든 레이아웃 공통 InvitationSections 로 위임한다. 포토북 챕터 개념은 PhotoBookPages 로 이동했다. *@
-            <div class="wedding-photobook-generic">
-                <InvitationSections Slug="@Slug"
-                                    Vm="@Vm"
-                                    VmGuest="@VmGuest"
-                                    IsTabbed="true"
-                                    ActiveSection="@activeSection"
-                                    PauseMusicRequested="@PauseMusicRequested" />
-            </div>
-        }
-    }
+                    <article class="@($"{ResolvePageCssClass(bookPage)} wedding-photobook-page--replica")">
+                        @if (bookPage.Kind == BookPageKind.Cover)
+                        {
+                            <div class="wedding-photobook-replica-cover"
+                                 style="@ResolveReplicaCoverStyle()">
+                                <span>WEDDING INVITATION</span>
+                                <strong>@Vm.CoupleName</strong>
+                                <small>@Vm.WeddingDate.ToString("yyyy.MM.dd")</small>
+                            </div>
+                        }
+                        else if (bookPage.Kind == BookPageKind.Photo)
+                        {
+                            <div class="wedding-photobook-sheet-content">
+                                @if (bookPage.Photo is not null)
+                                {
+                                    <div class="wedding-photobook-sheet__photo wedding-photobook-sheet__photo--replica">
+                                        <img src="@bookPage.Photo.ThumbUrl"
+                                             alt=""
+                                             aria-hidden="true"
+                                             loading="eager"
+                                             decoding="async" />
+                                    </div>
+                                }
+                                <div class="wedding-photobook-sheet__copy">
+                                    <p class="wedding-photobook-sheet__caption">@bookPage.Title</p>
+                                    @if (!string.IsNullOrWhiteSpace(bookPage.Body))
+                                    {
+                                        <p class="wedding-photobook-sheet__body">@bookPage.Body</p>
+                                    }
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="wedding-photobook-replica-section">
+                                <span>@((pageIndex + 1).ToString("00")) · WEDDING BOOK</span>
+                                <b aria-hidden="true">@WeddingSectionOrderCatalog.GetIcon(bookPage.SectionKey!)</b>
+                                <h2>@bookPage.Title</h2>
+                                <p>@ResolveSectionSummary(bookPage.SectionKey!)</p>
+                                <i aria-hidden="true"></i>
+                                <i aria-hidden="true"></i>
+                                <i aria-hidden="true"></i>
+                            </div>
+                        }
+                    </article>
+                </ReplicaContent>
+            </LayoutTransitionSurface>
+        </div>
+    </div>
+
     <PhotoLightbox Photos="@Vm.AllPhotos"
                    IsOpen="@_photoLightboxOpen"
                    CurrentIndex="@_photoLightboxIndex"
@@ -145,130 +254,294 @@
 </section>
 
 @code {
-    /// <summary>
-    /// \if KO
-    /// <para>청첩장 슬러그 값을 나타냅니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Represents the invitation slug.</para>
-    /// \endif
-    /// </summary>
     [Parameter, EditorRequired] public string Slug { get; set; } = "";
-
-    /// <summary>
-    /// \if KO
-    /// <para>청첩장 표시용 뷰 모델입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The invitation view model used for rendering.</para>
-    /// \endif
-    /// </summary>
     [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
-
-    /// <summary>
-    /// \if KO
-    /// <para>방명록 뷰 모델입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The guestbook view model.</para>
-    /// \endif
-    /// </summary>
     [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
-
-    /// <summary>
-    /// \if KO
-    /// <para>배경 음악 일시 정지 요청 콜백입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Callback that requests pausing the background music.</para>
-    /// \endif
-    /// </summary>
     [Parameter] public EventCallback PauseMusicRequested { get; set; }
 
-    private const int InitialCount = 8;
-    private const int PageSize = 8;
+    private enum BookPageKind
+    {
+        Cover,
+        Section,
+        Photo,
+    }
 
-    /// <summary>렌더링용 페이지 뷰 모델. 관리자가 지정한 페이지와 매칭된 사진(있으면 갤러리에서의 인덱스 포함)을 담습니다.</summary>
-    private sealed record FeaturedPage(PhotoBookPage Page, PhotoInfo? Photo, int PhotoIndex);
+    private sealed record BookPage(
+        string Key,
+        BookPageKind Kind,
+        string Title,
+        string Body = "",
+        string? SectionKey = null,
+        PhotoInfo? Photo = null,
+        int PhotoIndex = -1);
 
-    private int _visibleCount = InitialCount;
+    private static LayoutTransitionDefinition PhotoBookTransition { get; } = new()
+    {
+        Kind = LayoutTransitionKind.PageTurn,
+        DurationMilliseconds = 680,
+        EnableSwipe = true,
+        EnableKeyboard = true,
+        ShowNavigation = true,
+    };
+
+    private readonly List<BookPage> _bookPages = [];
+    private int _bookPageIndex;
+    private int _mediaDismissVersion;
     private bool _photoLightboxOpen;
     private int _photoLightboxIndex;
     private bool _autoPlaying;
+    private bool _autoNavigationInProgress;
+    private string _layoutFingerprint = "";
+    private LayoutTransitionSurface? _bookSurface;
     private CancellationTokenSource? _autoPlayCts;
 
-    private int TotalCount => Vm.AllPhotos.Count;
-    private int VisibleCount => Math.Min(_visibleCount, TotalCount);
+    private bool CanAutoPlayPhotos =>
+        _bookPages.Count > 1
+        && ResolveSafePage(_bookPageIndex).Kind == BookPageKind.Photo;
 
-    private void LoadMore()
-        => _visibleCount = Math.Min(_visibleCount + PageSize, TotalCount);
-
-    /// <summary>
-    /// 관리자가 지정한 포토북 페이지를 렌더링 순서대로 해석합니다. 각 페이지의 PhotoFileName 이 갤러리에 존재하면 그 사진을 매칭하고,
-    /// 비어 있으면 아직 사용되지 않은 갤러리 사진을 순서대로 자동 보충합니다. 갤러리가 완전히 비면 사진 없이 캡션과 본문만 렌더링합니다.
-    /// </summary>
-    private List<FeaturedPage> ResolveFeaturedPages()
+    protected override void OnParametersSet()
     {
-        var pages = Vm.PhotoBookPages;
-        if (pages.Count == 0)
+        var fingerprint = $"{Vm.LayoutKey}|{Vm.LayoutVersion}";
+        var previousKey = _bookPages.Count > 0
+            ? ResolveSafePage(_bookPageIndex).Key
+            : null;
+
+        _bookPages.Clear();
+        _bookPages.AddRange(ResolveBookPages());
+
+        if (!string.Equals(_layoutFingerprint, fingerprint, StringComparison.Ordinal))
         {
-            return new List<FeaturedPage>();
+            _layoutFingerprint = fingerprint;
+            _bookPageIndex = 0;
+            _mediaDismissVersion++;
+            Vm.CloseLightbox();
+        }
+        else if (!string.IsNullOrWhiteSpace(previousKey))
+        {
+            var preservedIndex = _bookPages.FindIndex(page =>
+                string.Equals(page.Key, previousKey, StringComparison.Ordinal));
+            _bookPageIndex = preservedIndex >= 0
+                ? preservedIndex
+                : Math.Clamp(_bookPageIndex, 0, _bookPages.Count - 1);
+        }
+        else
+        {
+            _bookPageIndex = Math.Clamp(_bookPageIndex, 0, _bookPages.Count - 1);
         }
 
-        var photos = Vm.AllPhotos;
-        var used = new HashSet<int>();
-        var result = new List<FeaturedPage>(pages.Count);
-
-        foreach (var page in pages)
+        if (!CanAutoPlayPhotos)
         {
-            var matchedIndex = -1;
+            _autoPlaying = false;
+            _autoPlayCts?.Cancel();
+        }
+    }
 
-            if (!string.IsNullOrWhiteSpace(page.PhotoFileName))
+    private List<BookPage> ResolveBookPages()
+    {
+        var pages = new List<BookPage>
+        {
+            new("cover", BookPageKind.Cover, "표지"),
+        };
+
+        foreach (var section in Vm.OrderedSections.Where(section =>
+                     !string.Equals(section, "hero", StringComparison.OrdinalIgnoreCase)))
+        {
+            if (string.Equals(section, "gallery", StringComparison.OrdinalIgnoreCase))
             {
-                for (var i = 0; i < photos.Count; i++)
-                {
-                    if (string.Equals(photos[i].FileName, page.PhotoFileName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        matchedIndex = i;
-                        break;
-                    }
-                }
+                pages.AddRange(ResolvePhotoPages());
+                continue;
             }
 
+            if (!IsSectionRenderable(section))
+            {
+                continue;
+            }
+
+            pages.Add(new BookPage(
+                $"section:{section}",
+                BookPageKind.Section,
+                WeddingSectionOrderCatalog.GetLabel(section),
+                SectionKey: section));
+        }
+
+        return pages;
+    }
+
+    private IEnumerable<BookPage> ResolvePhotoPages()
+    {
+        var photos = Vm.AllPhotos;
+        var used = new HashSet<int>();
+        var result = new List<BookPage>(Math.Max(Vm.PhotoBookPages.Count, photos.Count));
+
+        foreach (var configuredPage in Vm.PhotoBookPages.OrderBy(page => page.PageNumber))
+        {
+            var matchedIndex = FindPhotoIndex(configuredPage.PhotoFileName, used);
             if (matchedIndex < 0)
             {
-                for (var i = 0; i < photos.Count; i++)
-                {
-                    if (used.Contains(i)) continue;
-                    matchedIndex = i;
-                    break;
-                }
+                matchedIndex = FindFirstUnusedPhotoIndex(used);
             }
 
             if (matchedIndex >= 0)
             {
                 used.Add(matchedIndex);
-                result.Add(new FeaturedPage(page, photos[matchedIndex], matchedIndex));
             }
-            else
+
+            var title = string.IsNullOrWhiteSpace(configuredPage.Caption)
+                ? $"우리의 사진 {configuredPage.PageNumber:00}"
+                : configuredPage.Caption;
+            result.Add(new BookPage(
+                $"photo:configured:{configuredPage.PageNumber}:{configuredPage.PhotoFileName}",
+                BookPageKind.Photo,
+                title,
+                configuredPage.Body ?? "",
+                Photo: matchedIndex >= 0 ? photos[matchedIndex] : null,
+                PhotoIndex: matchedIndex));
+        }
+
+        for (var i = 0; i < photos.Count; i++)
+        {
+            if (used.Contains(i))
             {
-                result.Add(new FeaturedPage(page, null, -1));
+                continue;
             }
+
+            result.Add(new BookPage(
+                $"photo:{photos[i].FileName}:{i}",
+                BookPageKind.Photo,
+                $"우리의 사진 {result.Count + 1:00}",
+                Photo: photos[i],
+                PhotoIndex: i));
         }
 
         return result;
     }
 
-    private void OpenPhoto(PhotoInfo photo)
+    private bool IsSectionRenderable(string section)
     {
-        var index = Vm.AllPhotos.ToList().FindIndex(p => string.Equals(p.FileName, photo.FileName, StringComparison.OrdinalIgnoreCase));
-        OpenPhoto(index < 0 ? 0 : index);
+        if (!Vm.LayoutDescriptor.SupportedSections.Contains(section)
+            || (Vm.DesignSettings.SectionVisibility.TryGetValue(section, out var visible) && !visible))
+        {
+            return false;
+        }
+
+        return section switch
+        {
+            "story" => !string.IsNullOrWhiteSpace(Vm.Story) || !string.IsNullOrWhiteSpace(Vm.Story2),
+            "info" => Vm.Mode != WeddingSiteMode.ThankYou || !string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml),
+            "details" => HasDetails,
+            "video" => Vm.VideoUrls.Count > 0,
+            "gift" => Vm.Accounts.Count > 0,
+            "guestbook" => true,
+            _ => false,
+        };
     }
 
-    private void OpenPhoto(int index)
+    private bool HasDetails =>
+        Vm.Mode != WeddingSiteMode.ThankYou
+        && (!string.IsNullOrWhiteSpace(Vm.VenueName)
+            || !string.IsNullOrWhiteSpace(Vm.VenueAddress)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkKakao)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkNaver)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkAtlan)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkTmap)
+            || Vm.HasVenueCoords
+            || !string.IsNullOrWhiteSpace(Vm.RoadMapUrl));
+
+    private BookPage ResolveSafePage(int pageIndex) =>
+        _bookPages[Math.Clamp(pageIndex, 0, _bookPages.Count - 1)];
+
+    private static bool PageProtectsPointerGestures(BookPage page) =>
+        page.Kind == BookPageKind.Photo
+        || page.SectionKey is "details" or "video" or "gift" or "guestbook";
+
+    private static string ResolvePageCssClass(BookPage page) =>
+        $"wedding-photobook-page wedding-photobook-page--{page.Kind.ToString().ToLowerInvariant()}";
+
+    private string GetPageLabel(int pageIndex)
     {
-        _photoLightboxIndex = Math.Clamp(index, 0, Math.Max(0, TotalCount - 1));
-        _photoLightboxOpen = TotalCount > 0;
+        var page = ResolveSafePage(pageIndex);
+        return $"{pageIndex + 1}페이지, {page.Title}";
+    }
+
+    private string ResolveSectionSummary(string section) => section switch
+    {
+        "story" => "두 사람이 함께 써 내려갈 이야기를 담았습니다.",
+        "info" => $"{Vm.WeddingDate:yyyy년 MM월 dd일} · {Vm.VenueName}",
+        "details" => string.IsNullOrWhiteSpace(Vm.VenueAddress) ? Vm.VenueName : Vm.VenueAddress,
+        "video" => "소중한 순간을 영상으로 만나보세요.",
+        "gift" => "축하의 마음을 전하실 곳을 안내합니다.",
+        "guestbook" => "두 사람에게 따뜻한 축하 메시지를 남겨주세요.",
+        _ => "우리의 결혼 이야기를 한 장씩 만나보세요.",
+    };
+
+    private string ResolveReplicaCoverStyle() =>
+        string.IsNullOrWhiteSpace(Vm.HeroImageUrl)
+            ? ""
+            : $"background-image:linear-gradient(rgba(18,11,6,.22),rgba(18,11,6,.58)),url('{Vm.HeroImageUrl}');";
+
+    private int FindPhotoIndex(string? fileName, HashSet<int> used)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return -1;
+        }
+
+        for (var i = 0; i < Vm.AllPhotos.Count; i++)
+        {
+            if (!used.Contains(i)
+                && string.Equals(Vm.AllPhotos[i].FileName, fileName, StringComparison.OrdinalIgnoreCase))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private int FindFirstUnusedPhotoIndex(HashSet<int> used)
+    {
+        for (var i = 0; i < Vm.AllPhotos.Count; i++)
+        {
+            if (!used.Contains(i))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private async Task OnBookPageChanging(int _)
+    {
+        if (!_autoNavigationInProgress)
+        {
+            await StopAutoPlay();
+        }
+
+        _mediaDismissVersion++;
+        _photoLightboxOpen = false;
+        Vm.CloseLightbox();
+    }
+
+    private async Task OnBookPageChanged(int nextIndex)
+    {
+        _bookPageIndex = Math.Clamp(nextIndex, 0, _bookPages.Count - 1);
+        if (ResolveSafePage(_bookPageIndex).Kind != BookPageKind.Photo)
+        {
+            await StopAutoPlay();
+        }
+    }
+
+    private async Task OpenPhoto(int index)
+    {
+        if (index < 0 || index >= Vm.AllPhotos.Count)
+        {
+            return;
+        }
+
+        await StopAutoPlay();
+        _photoLightboxIndex = index;
+        _photoLightboxOpen = true;
     }
 
     private async Task ClosePhoto()
@@ -284,47 +557,60 @@
         if (_autoPlaying)
         {
             await StopAutoPlay();
+            return;
         }
-        else
-        {
-            await StartAutoPlay();
-        }
-    }
 
-    private Task StartAutoPlay()
-    {
-        if (TotalCount == 0 || _autoPlaying) return Task.CompletedTask;
-
-        if (!_photoLightboxOpen)
+        if (!CanAutoPlayPhotos || _bookSurface is null)
         {
-            _photoLightboxIndex = 0;
-            _photoLightboxOpen = true;
+            return;
         }
 
         _autoPlaying = true;
+        _autoPlayCts?.Cancel();
+        _autoPlayCts?.Dispose();
         _autoPlayCts = new CancellationTokenSource();
-        var token = _autoPlayCts.Token;
-        _ = Task.Run(async () =>
-        {
-            try
-            {
-                while (!token.IsCancellationRequested)
-                {
-                    await Task.Delay(Vm.GalleryAutoPlayMs, token).ConfigureAwait(false);
-                    await InvokeAsync(() =>
-                    {
-                        if (_photoLightboxOpen && TotalCount > 0)
-                        {
-                            _photoLightboxIndex = (_photoLightboxIndex + 1) % TotalCount;
-                            StateHasChanged();
-                        }
-                    });
-                }
-            }
-            catch (TaskCanceledException) { }
-        }, token);
+        _ = RunAutoPlay(_autoPlayCts.Token);
+    }
 
-        return Task.CompletedTask;
+    private async Task RunAutoPlay(CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(Vm.GalleryAutoPlayMs, cancellationToken);
+                await InvokeAsync(async () =>
+                {
+                    if (_bookSurface is null || _bookSurface.IsTransitioning)
+                    {
+                        return;
+                    }
+
+                    var nextIndex = _bookPageIndex + _bookSurface.NavigationPageStep;
+                    if (nextIndex >= _bookPages.Count
+                        || _bookPages[nextIndex].Kind != BookPageKind.Photo)
+                    {
+                        await StopAutoPlay();
+                        StateHasChanged();
+                        return;
+                    }
+
+                    _autoNavigationInProgress = true;
+                    try
+                    {
+                        await _bookSurface.RequestNextAsync();
+                    }
+                    finally
+                    {
+                        _autoNavigationInProgress = false;
+                    }
+                });
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // 사용자가 멈추거나 사진 페이지를 벗어난 정상 경로입니다.
+        }
     }
 
     private Task StopAutoPlay()
@@ -334,17 +620,11 @@
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// \if KO
-    /// <para>비동기 자원 정리를 수행합니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Performs asynchronous cleanup.</para>
-    /// \endif
-    /// </summary>
-    public async ValueTask DisposeAsync()
+    public ValueTask DisposeAsync()
     {
-        await StopAutoPlay();
+        _autoPlaying = false;
+        _autoPlayCts?.Cancel();
         _autoPlayCts?.Dispose();
+        return ValueTask.CompletedTask;
     }
 }

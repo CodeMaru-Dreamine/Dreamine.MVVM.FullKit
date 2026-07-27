@@ -12,6 +12,7 @@
 <PageTitle>@Vm.CoupleName 감사 인사</PageTitle>
 
 <HeadContent>
+    <meta name="robots" content="noindex, nofollow" />
     <meta property="og:title" content="@Vm.ThankYouOgTitle" />
     <meta property="og:description" content="@Vm.ThankYouOgDescription" />
     <meta property="og:image" content="@(string.IsNullOrWhiteSpace(Vm.ThankYouOgImageUrl) ? "/img/og-platform.jpg" : Vm.ThankYouOgImageUrl)" />
@@ -197,6 +198,7 @@ else
     private ElementReference audioRef;
     private bool isMusicPlaying;
     private bool musicSyncInitialized;
+    private string appliedThemeFingerprint = "";
     private double? startX;
     private bool isAutoPlaying;
     private System.Threading.CancellationTokenSource? autoCts;
@@ -216,9 +218,11 @@ else
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        var themeFingerprint = $"{Vm.ThemeName}|{string.Join("|", Vm.ThemeCssVariables.Select(x => $"{x.Key}={x.Value}"))}";
+        if (!string.Equals(appliedThemeFingerprint, themeFingerprint, StringComparison.Ordinal))
         {
-            await JS.InvokeVoidAsync("weddingInterop.applyTheme", Vm.ThemeName);
+            appliedThemeFingerprint = themeFingerprint;
+            await JS.InvokeVoidAsync("weddingInterop.applyTheme", Vm.ThemeName, Vm.ThemeCssVariables);
         }
 
         if (Vm.IsLoaded && !string.IsNullOrWhiteSpace(Vm.MusicUrl) && !musicSyncInitialized)

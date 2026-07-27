@@ -1,0 +1,1111 @@
+@namespace WeddingPlatform.Blazor.Components
+@using Wedding.Layouts.Contracts
+@using WeddingPlatform.Models
+@using WeddingPlatform.ViewModels
+
+@*
+    신규 레이아웃의 유일한 렌더링 진입점입니다.
+    Flow는 기존 블록 트리를 그대로 렌더링하고, 전환 프레젠테이션은 Page 루트의
+    직접 자식을 공통 LayoutTransitionSurface에 전달합니다. 따라서 WPF JSON이
+    Presentation/Transition을 선택해도 Web Razor 코드를 추가할 필요가 없습니다.
+*@
+@{
+    var presentationBlocks = PresentationBlocks;
+}
+<main class="w-dynamic-layout"
+      data-layout-schema="@LayoutSchema.CurrentVersion"
+      data-layout-root="@Definition.Root.Id"
+      data-layout-presentation="@Definition.Presentation.ToString().ToLowerInvariant()"
+      data-layout-transition="@Definition.Transition.Kind.ToString().ToLowerInvariant()">
+    @if (Definition.Presentation == LayoutPresentationMode.Flow
+        || presentationBlocks.Count == 0)
+    {
+        <DynamicLayoutBlock Block="@Definition.Root"
+                            Definition="@Definition"
+                            Slug="@Slug"
+                            Vm="@Vm"
+                            VmGuest="@VmGuest"
+                            MediaDismissVersion="@_mediaDismissVersion"
+                            PauseMusicRequested="@PauseMusicRequested" />
+    }
+    else
+    {
+        <LayoutTransitionSurface Presentation="@Definition.Presentation"
+                                 Transition="@Definition.Transition"
+                                 PageCount="@presentationBlocks.Count"
+                                 ActiveIndex="@_activePageIndex"
+                                 ActiveIndexChanging="OnActivePageChanging"
+                                 ActiveIndexChanged="OnActivePageChanged"
+                                 PageLabel="@ResolvePageLabel"
+                                 AriaLabel="@($"{Vm.CoupleName} 동적 청첩장")">
+            <PageContent Context="pageIndex">
+                @{
+                    var block = presentationBlocks[
+                        Math.Clamp(pageIndex, 0, presentationBlocks.Count - 1)];
+                }
+                <DynamicLayoutBlock @key="block.Id"
+                                    Block="@block"
+                                    Definition="@Definition"
+                                    Slug="@Slug"
+                                    Vm="@Vm"
+                                    VmGuest="@VmGuest"
+                                    MediaDismissVersion="@_mediaDismissVersion"
+                                    PauseMusicRequested="@PauseMusicRequested" />
+            </PageContent>
+            <ReplicaContent Context="pageIndex">
+                @{
+                    var replicaBlock = presentationBlocks[
+                        Math.Clamp(pageIndex, 0, presentationBlocks.Count - 1)];
+                }
+                <div class="w-dynamic-replica" role="presentation">
+                    @RenderReplicaBlock(replicaBlock)
+                </div>
+            </ReplicaContent>
+        </LayoutTransitionSurface>
+    }
+</main>
+
+@code {
+    [Parameter, EditorRequired] public LayoutDefinition Definition { get; set; } = default!;
+    [Parameter, EditorRequired] public string Slug { get; set; } = "";
+    [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
+    [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
+    [Parameter] public EventCallback PauseMusicRequested { get; set; }
+
+    private int _activePageIndex;
+    private int _mediaDismissVersion;
+    private string _definitionFingerprint = "";
+
+    private IReadOnlyList<LayoutBlock> PresentationBlocks =>
+        Definition.Root.Children
+            .Where(HasRenderableContent)
+            .ToArray();
+
+    protected override void OnParametersSet()
+    {
+        var fingerprint = string.Join(
+            "|",
+            Definition.Root.Id,
+            Definition.Presentation,
+            Definition.Transition.Kind,
+            string.Join(",", Definition.Root.Children.Select(block => block.Id)));
+        if (!string.Equals(
+                fingerprint,
+                _definitionFingerprint,
+                StringComparison.Ordinal))
+        {
+            _definitionFingerprint = fingerprint;
+            _activePageIndex = 0;
+            _mediaDismissVersion++;
+            Vm.CloseLightbox();
+        }
+
+        _activePageIndex = Math.Clamp(
+            _activePageIndex,
+            0,
+            Math.Max(0, PresentationBlocks.Count - 1));
+    }
+
+    private Task OnActivePageChanging(int _)
+    {
+        _mediaDismissVersion++;
+        Vm.CloseLightbox();
+        return Task.CompletedTask;
+    }
+
+    private Task OnActivePageChanged(int nextIndex)
+    {
+        _activePageIndex = Math.Clamp(
+            nextIndex,
+            0,
+            Math.Max(0, PresentationBlocks.Count - 1));
+        return Task.CompletedTask;
+    }
+
+    private bool HasRenderableContent(LayoutBlock block)
+    {
+        if (SemanticSection(block) is { } semanticSection
+            && !IsSemanticSectionVisible(semanticSection))
+        {
+            return false;
+        }
+
+        return block.Kind switch
+        {
+            LayoutBlockKind.Page
+                or LayoutBlockKind.Container
+                or LayoutBlockKind.Stack
+                or LayoutBlockKind.Grid
+                or LayoutBlockKind.Card =>
+                block.Children.Any(HasRenderableContent),
+            LayoutBlockKind.Section =>
+                block.Binding == LayoutBindingKey.Invitation
+                    ? IsSemanticSectionVisible(LayoutSectionKey.Invitation)
+                    : block.Children.Any(HasRenderableContent),
+            LayoutBlockKind.Heading or LayoutBlockKind.Text =>
+                !string.IsNullOrWhiteSpace(ResolveText(block)),
+            LayoutBlockKind.Image =>
+                block.Binding == LayoutBindingKey.HeroImage
+                && !string.IsNullOrWhiteSpace(Vm.HeroImageUrl),
+            LayoutBlockKind.Navigation =>
+                Definition.SectionOrder.Any(IsSemanticSectionVisible),
+            _ => true,
+        };
+    }
+
+    private bool IsSemanticSectionVisible(LayoutSectionKey section)
+    {
+        if (!Definition.SectionOrder.Contains(section))
+        {
+            return false;
+        }
+
+        var storageKey = SectionStorageKey(section);
+        if (section != LayoutSectionKey.Hero
+            && Vm.DesignSettings.SectionVisibility.TryGetValue(
+                storageKey,
+                out var visible)
+            && !visible)
+        {
+            return false;
+        }
+
+        return section switch
+        {
+            LayoutSectionKey.Invitation =>
+                Vm.Mode != WeddingSiteMode.ThankYou
+                || !string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml),
+            LayoutSectionKey.Gallery => Vm.Gallery.Count > 0,
+            LayoutSectionKey.Story =>
+                !string.IsNullOrWhiteSpace(Vm.Story)
+                || !string.IsNullOrWhiteSpace(Vm.Story2),
+            LayoutSectionKey.Video => Vm.VideoUrls.Count > 0,
+            LayoutSectionKey.Location =>
+                Vm.Mode != WeddingSiteMode.ThankYou
+                && (!string.IsNullOrWhiteSpace(Vm.VenueName)
+                    || !string.IsNullOrWhiteSpace(Vm.VenueAddress)
+                    || !string.IsNullOrWhiteSpace(Vm.MapLinkKakao)
+                    || !string.IsNullOrWhiteSpace(Vm.MapLinkNaver)
+                    || !string.IsNullOrWhiteSpace(Vm.MapLinkAtlan)
+                    || !string.IsNullOrWhiteSpace(Vm.MapLinkTmap)
+                    || Vm.HasVenueCoords
+                    || !string.IsNullOrWhiteSpace(Vm.RoadMapUrl)),
+            LayoutSectionKey.Accounts => Vm.Accounts.Count > 0,
+            LayoutSectionKey.Guestbook => true,
+            LayoutSectionKey.Contact =>
+                Vm.Accounts.Any(account => !string.IsNullOrWhiteSpace(account.Phone)),
+            LayoutSectionKey.Hero or LayoutSectionKey.Calendar => true,
+            _ => false,
+        };
+    }
+
+    private string ResolveText(LayoutBlock block) => block.Binding switch
+    {
+        LayoutBindingKey.CoupleName => Vm.CoupleName,
+        LayoutBindingKey.HeroTitle => Vm.HeroTitle,
+        LayoutBindingKey.Subtitle => Vm.Subtitle,
+        LayoutBindingKey.WeddingDate => Vm.WeddingDate.ToString("yyyy년 MM월 dd일 (ddd)"),
+        LayoutBindingKey.WeddingTime => Vm.WeddingTime,
+        LayoutBindingKey.VenueName => Vm.VenueName,
+        LayoutBindingKey.VenueAddress => Vm.VenueAddress,
+        LayoutBindingKey.Story => Vm.Story,
+        LayoutBindingKey.Story2 => Vm.Story2,
+        _ => block.Text,
+    };
+
+    private string ResolvePageLabel(int index)
+    {
+        var blocks = PresentationBlocks;
+        if (index < 0 || index >= blocks.Count)
+        {
+            return $"페이지 {index + 1}";
+        }
+
+        var block = blocks[index];
+        var section = FindSemanticSection(block);
+        return section is null
+            ? block.Kind.ToString()
+            : SectionLabel(section.Value);
+    }
+
+    /// <summary>
+    /// PageTurn 앞·뒷면은 실제 페이지의 시각적 인상만 복제합니다.
+    /// 이벤트, 폼, 미디어 플레이어, 지도 DOM ID 및 JS 생명주기를 만들지
+    /// 않으므로 회전 중에도 실제 인터랙티브 페이지는 한 벌만 유지됩니다.
+    /// </summary>
+    private RenderFragment RenderReplicaBlock(LayoutBlock block) => builder =>
+    {
+        if (!HasRenderableContent(block))
+        {
+            return;
+        }
+
+        var sequence = 0;
+        switch (block.Kind)
+        {
+            case LayoutBlockKind.Page:
+            case LayoutBlockKind.Container:
+            case LayoutBlockKind.Stack:
+            case LayoutBlockKind.Grid:
+                OpenReplicaElement(
+                    builder,
+                    ref sequence,
+                    "div",
+                    block);
+                RenderReplicaChildren(builder, ref sequence, block);
+                builder.CloseElement();
+                break;
+
+            case LayoutBlockKind.Section:
+                OpenReplicaElement(
+                    builder,
+                    ref sequence,
+                    "section",
+                    block);
+                if (block.Binding == LayoutBindingKey.Invitation
+                    && IsSemanticSectionVisible(LayoutSectionKey.Invitation))
+                {
+                    RenderInvitationReplica(builder, ref sequence);
+                }
+                RenderReplicaChildren(builder, ref sequence, block);
+                builder.CloseElement();
+                break;
+
+            case LayoutBlockKind.Card:
+                OpenReplicaElement(
+                    builder,
+                    ref sequence,
+                    "article",
+                    block);
+                RenderReplicaChildren(builder, ref sequence, block);
+                builder.CloseElement();
+                break;
+
+            case LayoutBlockKind.Hero:
+                OpenReplicaElement(
+                    builder,
+                    ref sequence,
+                    "section",
+                    block,
+                    additionalStyle: Vm.HeroImageStyle);
+                if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
+                {
+                    builder.OpenElement(sequence++, "img");
+                    builder.AddAttribute(
+                        sequence++,
+                        "class",
+                        "w-db-hero__image");
+                    builder.AddAttribute(sequence++, "src", Vm.HeroImageUrl);
+                    builder.AddAttribute(
+                        sequence++,
+                        "alt",
+                        $"{Vm.CoupleName} 대표 사진");
+                    builder.CloseElement();
+                }
+
+                builder.OpenElement(sequence++, "div");
+                builder.AddAttribute(
+                    sequence++,
+                    "class",
+                    "w-db-hero__overlay");
+                builder.CloseElement();
+
+                builder.OpenElement(sequence++, "div");
+                builder.AddAttribute(
+                    sequence++,
+                    "class",
+                    "w-db-hero__content");
+                if (block.Children.Any(HasRenderableContent))
+                {
+                    RenderReplicaChildren(builder, ref sequence, block);
+                }
+                else
+                {
+                    AddTextElement(
+                        builder,
+                        ref sequence,
+                        "p",
+                        "w-db-kicker",
+                        Vm.HeroTitle);
+                    AddTextElement(
+                        builder,
+                        ref sequence,
+                        "h1",
+                        null,
+                        Vm.CoupleName);
+                    AddTextElement(
+                        builder,
+                        ref sequence,
+                        "p",
+                        null,
+                        $"{Vm.WeddingDate:yyyy년 MM월 dd일} {Vm.WeddingTime}");
+                    AddTextElement(
+                        builder,
+                        ref sequence,
+                        "p",
+                        null,
+                        Vm.VenueName);
+                }
+                builder.CloseElement();
+                builder.CloseElement();
+                break;
+
+            case LayoutBlockKind.Heading:
+                AddReplicaTextBlock(
+                    builder,
+                    ref sequence,
+                    "h2",
+                    block,
+                    ResolveText(block));
+                break;
+
+            case LayoutBlockKind.Text:
+                AddReplicaTextBlock(
+                    builder,
+                    ref sequence,
+                    "p",
+                    block,
+                    ResolveText(block));
+                break;
+
+            case LayoutBlockKind.Image:
+                OpenReplicaElement(
+                    builder,
+                    ref sequence,
+                    "figure",
+                    block);
+                builder.OpenElement(sequence++, "img");
+                builder.AddAttribute(
+                    sequence++,
+                    "src",
+                    ResolveReplicaImageUrl(block));
+                builder.AddAttribute(
+                    sequence++,
+                    "alt",
+                    block.ImageSettings?.AltText ?? "");
+                builder.CloseElement();
+                builder.CloseElement();
+                break;
+
+            case LayoutBlockKind.Gallery:
+                RenderGalleryReplica(builder, ref sequence, block);
+                break;
+
+            case LayoutBlockKind.Countdown:
+                OpenReplicaElement(
+                    builder,
+                    ref sequence,
+                    "section",
+                    block);
+                AddTextElement(
+                    builder,
+                    ref sequence,
+                    "strong",
+                    null,
+                    ResolveCountdownLabel());
+                AddTextElement(
+                    builder,
+                    ref sequence,
+                    "span",
+                    null,
+                    Vm.WeddingDate.ToString("yyyy.MM.dd"));
+                builder.CloseElement();
+                break;
+
+            case LayoutBlockKind.Calendar:
+                OpenReplicaElement(
+                    builder,
+                    ref sequence,
+                    "section",
+                    block);
+                AddTextElement(
+                    builder,
+                    ref sequence,
+                    "p",
+                    "w-db-kicker",
+                    "Wedding day");
+                AddTextElement(
+                    builder,
+                    ref sequence,
+                    "time",
+                    null,
+                    $"{Vm.WeddingDate:yyyy년 MM월 dd일 (ddd)} {Vm.WeddingTime}");
+                builder.CloseElement();
+                break;
+
+            case LayoutBlockKind.Map:
+                RenderMapReplica(builder, ref sequence, block);
+                break;
+
+            case LayoutBlockKind.AccountList:
+                RenderAccountsReplica(builder, ref sequence, block);
+                break;
+
+            case LayoutBlockKind.ContactList:
+                RenderContactsReplica(builder, ref sequence, block);
+                break;
+
+            case LayoutBlockKind.Guestbook:
+                RenderGuestbookReplica(builder, ref sequence, block);
+                break;
+
+            case LayoutBlockKind.VideoGallery:
+                RenderVideoReplica(builder, ref sequence, block);
+                break;
+
+            case LayoutBlockKind.Navigation:
+                RenderNavigationReplica(builder, ref sequence, block);
+                break;
+
+            case LayoutBlockKind.Button:
+                OpenReplicaElement(
+                    builder,
+                    ref sequence,
+                    "span",
+                    block,
+                    "w-dynamic-replica__button");
+                builder.AddContent(
+                    sequence++,
+                    string.IsNullOrWhiteSpace(ResolveText(block))
+                        ? ResolveReplicaActionLabel(block)
+                        : ResolveText(block));
+                builder.CloseElement();
+                break;
+
+            case LayoutBlockKind.Divider:
+                OpenReplicaElement(
+                    builder,
+                    ref sequence,
+                    "hr",
+                    block);
+                builder.CloseElement();
+                break;
+
+            case LayoutBlockKind.Spacer:
+                OpenReplicaElement(
+                    builder,
+                    ref sequence,
+                    "div",
+                    block);
+                builder.CloseElement();
+                break;
+        }
+    };
+
+    private void RenderReplicaChildren(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        LayoutBlock block)
+    {
+        foreach (var child in block.Children.Where(HasRenderableContent))
+        {
+            builder.AddContent(sequence++, RenderReplicaBlock(child));
+        }
+    }
+
+    private void OpenReplicaElement(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        string elementName,
+        LayoutBlock block,
+        string? additionalClass = null,
+        string? additionalStyle = null)
+    {
+        builder.OpenElement(sequence++, elementName);
+        builder.AddAttribute(
+            sequence++,
+            "class",
+            string.Join(
+                " ",
+                new[]
+                {
+                    ReplicaBlockCssClass(block),
+                    additionalClass ?? "",
+                }.Where(value => !string.IsNullOrWhiteSpace(value))));
+
+        var style = $"{ReplicaBlockStyle(block)}{additionalStyle}";
+        if (!string.IsNullOrWhiteSpace(style))
+        {
+            builder.AddAttribute(sequence++, "style", style);
+        }
+    }
+
+    private void AddReplicaTextBlock(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        string elementName,
+        LayoutBlock block,
+        string? text)
+    {
+        OpenReplicaElement(
+            builder,
+            ref sequence,
+            elementName,
+            block);
+        builder.AddContent(sequence++, text);
+        builder.CloseElement();
+    }
+
+    private static void AddTextElement(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        string elementName,
+        string? cssClass,
+        string? text)
+    {
+        if (string.IsNullOrWhiteSpace(text))
+        {
+            return;
+        }
+
+        builder.OpenElement(sequence++, elementName);
+        if (!string.IsNullOrWhiteSpace(cssClass))
+        {
+            builder.AddAttribute(sequence++, "class", cssClass);
+        }
+        builder.AddContent(sequence++, text);
+        builder.CloseElement();
+    }
+
+    private void RenderInvitationReplica(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence)
+    {
+        builder.OpenElement(sequence++, "div");
+        builder.AddAttribute(
+            sequence++,
+            "class",
+            "w-dynamic-replica__section-summary");
+        AddTextElement(
+            builder,
+            ref sequence,
+            "h2",
+            "w-section-title",
+            Vm.Mode == WeddingSiteMode.ThankYou ? "감사 인사" : "예식 안내");
+        if (Vm.Mode != WeddingSiteMode.ThankYou)
+        {
+            AddReplicaFact(
+                builder,
+                ref sequence,
+                "일시",
+                $"{Vm.WeddingDate:yyyy년 MM월 dd일 (ddd)} {Vm.WeddingTime}");
+            AddReplicaFact(builder, ref sequence, "장소", Vm.VenueName);
+            AddReplicaFact(builder, ref sequence, "주소", Vm.VenueAddress);
+        }
+        else if (!string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml))
+        {
+            AddTextElement(
+                builder,
+                ref sequence,
+                "p",
+                "w-dynamic-replica__message",
+                "소중한 마음을 전해 주셔서 감사합니다.");
+        }
+        builder.CloseElement();
+    }
+
+    private static void AddReplicaFact(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        string label,
+        string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return;
+        }
+
+        builder.OpenElement(sequence++, "div");
+        builder.AddAttribute(
+            sequence++,
+            "class",
+            "w-dynamic-replica__fact");
+        AddTextElement(builder, ref sequence, "strong", null, label);
+        AddTextElement(builder, ref sequence, "span", null, value);
+        builder.CloseElement();
+    }
+
+    private void RenderGalleryReplica(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        LayoutBlock block)
+    {
+        OpenReplicaElement(
+            builder,
+            ref sequence,
+            "section",
+            block,
+            "w-dynamic-replica__gallery");
+        AddTextElement(
+            builder,
+            ref sequence,
+            "h2",
+            "w-section-title",
+            "우리의 사진");
+        builder.OpenElement(sequence++, "div");
+        builder.AddAttribute(
+            sequence++,
+            "class",
+            "w-dynamic-replica__photo-grid");
+        foreach (var photo in Vm.Gallery.Take(6))
+        {
+            builder.OpenElement(sequence++, "figure");
+            builder.OpenElement(sequence++, "img");
+            builder.AddAttribute(sequence++, "src", photo.ThumbUrl);
+            builder.AddAttribute(sequence++, "alt", "");
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+        builder.CloseElement();
+        builder.CloseElement();
+    }
+
+    private void RenderMapReplica(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        LayoutBlock block)
+    {
+        OpenReplicaElement(
+            builder,
+            ref sequence,
+            "section",
+            block,
+            "w-dynamic-replica__map");
+        AddTextElement(
+            builder,
+            ref sequence,
+            "h2",
+            "w-section-title",
+            "오시는 길");
+        if (!string.IsNullOrWhiteSpace(Vm.RoadMapUrl))
+        {
+            builder.OpenElement(sequence++, "img");
+            builder.AddAttribute(
+                sequence++,
+                "class",
+                "w-dynamic-replica__roadmap");
+            builder.AddAttribute(sequence++, "src", Vm.RoadMapUrl);
+            builder.AddAttribute(sequence++, "alt", "");
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.OpenElement(sequence++, "div");
+            builder.AddAttribute(
+                sequence++,
+                "class",
+                "w-dynamic-replica__map-card");
+            AddTextElement(
+                builder,
+                ref sequence,
+                "span",
+                "w-dynamic-replica__map-pin",
+                "⌖");
+            AddTextElement(
+                builder,
+                ref sequence,
+                "strong",
+                null,
+                Vm.VenueName);
+            AddTextElement(
+                builder,
+                ref sequence,
+                "span",
+                null,
+                Vm.VenueAddress);
+            builder.CloseElement();
+        }
+        builder.CloseElement();
+    }
+
+    private void RenderAccountsReplica(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        LayoutBlock block)
+    {
+        OpenReplicaElement(
+            builder,
+            ref sequence,
+            "section",
+            block,
+            "w-dynamic-replica__accounts");
+        AddTextElement(
+            builder,
+            ref sequence,
+            "h2",
+            "w-section-title",
+            "마음 전하실 곳");
+        builder.OpenElement(sequence++, "div");
+        builder.AddAttribute(
+            sequence++,
+            "class",
+            "w-dynamic-replica__account-grid");
+        foreach (var account in Vm.Accounts.Take(4))
+        {
+            builder.OpenElement(sequence++, "article");
+            builder.AddAttribute(
+                sequence++,
+                "class",
+                "w-dynamic-replica__account-card");
+            AddTextElement(
+                builder,
+                ref sequence,
+                "strong",
+                null,
+                $"{account.Label} {account.Name}");
+            AddTextElement(
+                builder,
+                ref sequence,
+                "span",
+                null,
+                account.BankName);
+            AddTextElement(
+                builder,
+                ref sequence,
+                "span",
+                "w-dynamic-replica__account-number",
+                account.Account);
+            builder.CloseElement();
+        }
+        builder.CloseElement();
+        builder.CloseElement();
+    }
+
+    private void RenderContactsReplica(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        LayoutBlock block)
+    {
+        OpenReplicaElement(
+            builder,
+            ref sequence,
+            "section",
+            block,
+            "w-dynamic-replica__contacts");
+        AddTextElement(
+            builder,
+            ref sequence,
+            "h2",
+            "w-section-title",
+            "연락하기");
+        foreach (var account in Vm.Accounts
+                     .Where(item => !string.IsNullOrWhiteSpace(item.Phone))
+                     .Take(4))
+        {
+            AddReplicaFact(
+                builder,
+                ref sequence,
+                $"{account.Label} {account.Name}",
+                account.Phone);
+        }
+        builder.CloseElement();
+    }
+
+    private void RenderGuestbookReplica(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        LayoutBlock block)
+    {
+        OpenReplicaElement(
+            builder,
+            ref sequence,
+            "section",
+            block,
+            "w-dynamic-replica__guestbook");
+        AddTextElement(
+            builder,
+            ref sequence,
+            "h2",
+            "w-section-title",
+            "방명록");
+        var entries = VmGuest.EntriesView.Take(3).ToArray();
+        if (entries.Length == 0)
+        {
+            AddTextElement(
+                builder,
+                ref sequence,
+                "p",
+                "w-dynamic-replica__message",
+                "두 분의 앞날을 축복하는 마음을 남겨 주세요.");
+        }
+        else
+        {
+            foreach (var entry in entries)
+            {
+                builder.OpenElement(sequence++, "article");
+                builder.AddAttribute(
+                    sequence++,
+                    "class",
+                    "w-dynamic-replica__guest-entry");
+                AddTextElement(
+                    builder,
+                    ref sequence,
+                    "strong",
+                    null,
+                    entry.Name);
+                AddTextElement(
+                    builder,
+                    ref sequence,
+                    "p",
+                    null,
+                    entry.Message);
+                builder.CloseElement();
+            }
+        }
+        builder.CloseElement();
+    }
+
+    private void RenderVideoReplica(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        LayoutBlock block)
+    {
+        OpenReplicaElement(
+            builder,
+            ref sequence,
+            "section",
+            block,
+            "w-dynamic-replica__videos");
+        AddTextElement(
+            builder,
+            ref sequence,
+            "h2",
+            "w-section-title",
+            "우리의 영상");
+        builder.OpenElement(sequence++, "div");
+        builder.AddAttribute(
+            sequence++,
+            "class",
+            "w-dynamic-replica__video-grid");
+        for (var index = 0; index < Math.Min(4, Vm.VideoUrls.Count); index++)
+        {
+            builder.OpenElement(sequence++, "div");
+            builder.AddAttribute(
+                sequence++,
+                "class",
+                "w-dynamic-replica__video-card");
+            AddTextElement(
+                builder,
+                ref sequence,
+                "span",
+                "w-dynamic-replica__video-play",
+                "▶");
+            AddTextElement(
+                builder,
+                ref sequence,
+                "small",
+                null,
+                $"영상 {index + 1}");
+            builder.CloseElement();
+        }
+        builder.CloseElement();
+        builder.CloseElement();
+    }
+
+    private void RenderNavigationReplica(
+        Microsoft.AspNetCore.Components.Rendering.RenderTreeBuilder builder,
+        ref int sequence,
+        LayoutBlock block)
+    {
+        OpenReplicaElement(
+            builder,
+            ref sequence,
+            "nav",
+            block,
+            "w-dynamic-replica__navigation");
+        foreach (var section in Definition.SectionOrder
+                     .Where(IsSemanticSectionVisible)
+                     .Distinct()
+                     .Take(6))
+        {
+            AddTextElement(
+                builder,
+                ref sequence,
+                "span",
+                null,
+                SectionLabel(section));
+        }
+        builder.CloseElement();
+    }
+
+    private string ReplicaBlockCssClass(LayoutBlock block) =>
+        string.Join(
+            " ",
+            new[]
+            {
+                "w-db",
+                $"w-db--{block.Kind.ToString().ToLowerInvariant()}",
+                $"w-db--variant-{block.Variant.ToString().ToLowerInvariant()}",
+                $"w-db--mobile-align-{EffectiveReplicaAlignment(block, block.Responsive.Mobile).ToString().ToLowerInvariant()}",
+                $"w-db--tablet-align-{EffectiveReplicaAlignment(block, block.Responsive.Tablet).ToString().ToLowerInvariant()}",
+                $"w-db--desktop-align-{EffectiveReplicaAlignment(block, block.Responsive.Desktop).ToString().ToLowerInvariant()}",
+                block.Responsive.Mobile.Hidden ? "w-db--mobile-hidden" : "",
+                block.Responsive.Tablet.Hidden ? "w-db--tablet-hidden" : "",
+                block.Responsive.Desktop.Hidden ? "w-db--desktop-hidden" : "",
+                block.ContainerSettings is null
+                    ? ""
+                    : $"w-db--justify-{block.ContainerSettings.Justification.ToString().ToLowerInvariant()}",
+                block.ContainerSettings?.Wrap == true
+                    ? "w-db--wrap"
+                    : "",
+                block.TextSettings is null
+                    ? ""
+                    : $"w-db--text-{block.TextSettings.Size.ToString().ToLowerInvariant()} w-db--weight-{block.TextSettings.Weight.ToString().ToLowerInvariant()} w-db--text-align-{block.TextSettings.Alignment.ToString().ToLowerInvariant()}",
+                block.ImageSettings is null
+                    ? ""
+                    : $"w-db--aspect-{block.ImageSettings.AspectRatio.ToString().ToLowerInvariant()} w-db--fit-{block.ImageSettings.Fit.ToString().ToLowerInvariant()} w-db--radius-{block.ImageSettings.CornerRadius.ToString().ToLowerInvariant()}",
+            }.Where(value => !string.IsNullOrWhiteSpace(value)));
+
+    private string ReplicaBlockStyle(LayoutBlock block)
+    {
+        var mobile = block.Responsive.Mobile;
+        var tablet = block.Responsive.Tablet;
+        var desktop = block.Responsive.Desktop;
+        return string.Concat(
+            $"--w-db-columns-mobile:{EffectiveReplicaColumns(block, mobile)};",
+            $"--w-db-columns-tablet:{EffectiveReplicaColumns(block, tablet)};",
+            $"--w-db-columns-desktop:{EffectiveReplicaColumns(block, desktop)};",
+            $"--w-db-span-mobile:{ClampReplicaGrid(mobile.ColumnSpan)};",
+            $"--w-db-span-tablet:{ClampReplicaGrid(tablet.ColumnSpan)};",
+            $"--w-db-span-desktop:{ClampReplicaGrid(desktop.ColumnSpan)};",
+            $"--w-db-gap-mobile:{ReplicaGap(EffectiveReplicaGap(block, mobile))};",
+            $"--w-db-gap-tablet:{ReplicaGap(EffectiveReplicaGap(block, tablet))};",
+            $"--w-db-gap-desktop:{ReplicaGap(EffectiveReplicaGap(block, desktop))};");
+    }
+
+    private static int EffectiveReplicaColumns(
+        LayoutBlock block,
+        LayoutBreakpointSettings breakpoint) =>
+        block.ContainerSettings is { } container
+        && breakpoint.Columns == 1
+            ? ClampReplicaGrid(container.Columns)
+            : ClampReplicaGrid(breakpoint.Columns);
+
+    private static LayoutGap EffectiveReplicaGap(
+        LayoutBlock block,
+        LayoutBreakpointSettings breakpoint) =>
+        block.ContainerSettings is { } container
+        && breakpoint.Gap == LayoutGap.Medium
+            ? container.Gap
+            : breakpoint.Gap;
+
+    private static LayoutAlignment EffectiveReplicaAlignment(
+        LayoutBlock block,
+        LayoutBreakpointSettings breakpoint) =>
+        block.ContainerSettings is { } container
+        && breakpoint.Alignment == LayoutAlignment.Stretch
+            ? container.Alignment
+            : breakpoint.Alignment;
+
+    private static int ClampReplicaGrid(int value) =>
+        Math.Clamp(value, 1, 12);
+
+    private static string ReplicaGap(LayoutGap gap) => gap switch
+    {
+        LayoutGap.None => "0",
+        LayoutGap.ExtraSmall => ".25rem",
+        LayoutGap.Small => ".5rem",
+        LayoutGap.Large => "1.5rem",
+        LayoutGap.ExtraLarge => "2.5rem",
+        _ => "1rem",
+    };
+
+    private string ResolveReplicaImageUrl(LayoutBlock block) =>
+        block.Binding == LayoutBindingKey.HeroImage
+            ? Vm.HeroImageUrl
+            : "";
+
+    private string ResolveCountdownLabel()
+    {
+        var days = (Vm.WeddingDate.Date - DateTime.Today).Days;
+        return days switch
+        {
+            > 0 => $"D-{days}",
+            0 => "Wedding Day",
+            _ => $"D+{Math.Abs(days)}",
+        };
+    }
+
+    private static string ResolveReplicaActionLabel(LayoutBlock block) =>
+        block.ActionSettings?.Action switch
+        {
+            LayoutActionKind.ScrollToSection => "자세히 보기",
+            LayoutActionKind.OpenMap => "오시는 길",
+            LayoutActionKind.OpenRsvp => "방명록 쓰기",
+            LayoutActionKind.CopyAccount => "계좌번호 복사",
+            LayoutActionKind.CallGroom => "신랑에게 전화",
+            LayoutActionKind.CallBride => "신부에게 전화",
+            LayoutActionKind.ShareInvitation => "청첩장 공유",
+            _ => "버튼",
+        };
+
+    private static LayoutSectionKey? FindSemanticSection(LayoutBlock block)
+    {
+        if (SemanticSection(block) is { } ownSection)
+        {
+            return ownSection;
+        }
+
+        foreach (var child in block.Children)
+        {
+            if (FindSemanticSection(child) is { } childSection)
+            {
+                return childSection;
+            }
+        }
+
+        return null;
+    }
+
+    private static LayoutSectionKey? SemanticSection(LayoutBlock block) =>
+        block.Kind switch
+        {
+            LayoutBlockKind.Hero => LayoutSectionKey.Hero,
+            LayoutBlockKind.Gallery => LayoutSectionKey.Gallery,
+            LayoutBlockKind.Countdown or LayoutBlockKind.Calendar =>
+                LayoutSectionKey.Calendar,
+            LayoutBlockKind.Map => LayoutSectionKey.Location,
+            LayoutBlockKind.AccountList => LayoutSectionKey.Accounts,
+            LayoutBlockKind.ContactList => LayoutSectionKey.Contact,
+            LayoutBlockKind.Guestbook => LayoutSectionKey.Guestbook,
+            LayoutBlockKind.VideoGallery => LayoutSectionKey.Video,
+            LayoutBlockKind.Section
+                when block.Binding == LayoutBindingKey.Invitation =>
+                LayoutSectionKey.Invitation,
+            LayoutBlockKind.Text
+                when block.Binding is LayoutBindingKey.Story
+                    or LayoutBindingKey.Story2 =>
+                LayoutSectionKey.Story,
+            _ => null,
+        };
+
+    private static string SectionStorageKey(LayoutSectionKey section) => section switch
+    {
+        LayoutSectionKey.Hero => "hero",
+        LayoutSectionKey.Invitation => "info",
+        LayoutSectionKey.Calendar => "calendar",
+        LayoutSectionKey.Gallery => "gallery",
+        LayoutSectionKey.Story => "story",
+        LayoutSectionKey.Video => "video",
+        LayoutSectionKey.Location => "details",
+        LayoutSectionKey.Accounts => "gift",
+        LayoutSectionKey.Guestbook => "guestbook",
+        LayoutSectionKey.Contact => "contact",
+        _ => "",
+    };
+
+    private static string SectionLabel(LayoutSectionKey section) => section switch
+    {
+        LayoutSectionKey.Hero => "표지",
+        LayoutSectionKey.Invitation => "예식 안내",
+        LayoutSectionKey.Calendar => "날짜",
+        LayoutSectionKey.Gallery => "사진",
+        LayoutSectionKey.Story => "이야기",
+        LayoutSectionKey.Video => "영상",
+        LayoutSectionKey.Location => "오시는 길",
+        LayoutSectionKey.Accounts => "마음 전하기",
+        LayoutSectionKey.Guestbook => "방명록",
+        LayoutSectionKey.Contact => "연락하기",
+        _ => section.ToString(),
+    };
+}

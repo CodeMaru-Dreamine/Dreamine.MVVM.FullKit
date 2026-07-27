@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Wedding.Layouts.PipelineSmoke</RootNamespace>
+    <AssemblyName>Wedding.Layouts.PipelineSmoke</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\000. Project\010. App\Wedding.Layouts.Contracts\Wedding.Layouts.Contracts.csproj" />
+    <ProjectReference Include="..\..\000. Project\010. App\WeddingPlatform.Web\WeddingPlatform.Web.csproj" />
+  </ItemGroup>
+
+</Project>

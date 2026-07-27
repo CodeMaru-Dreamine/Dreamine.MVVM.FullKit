@@ -1,3 +1,5 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Wedding.Common;
 
 namespace WeddingThankYou.Models;
@@ -545,6 +547,12 @@ public sealed class TenantConfig
     /// \endif
     /// </summary>
     public List<string> UnlockedThemeKeys { get; set; } = new();
+
+    /// <summary>
+    /// WeddingPlatform.Web의 새 필드를 이 앱이 아직 알지 못하더라도 다시 저장할 때 보존합니다.
+    /// </summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
 }
 
 /// <summary>

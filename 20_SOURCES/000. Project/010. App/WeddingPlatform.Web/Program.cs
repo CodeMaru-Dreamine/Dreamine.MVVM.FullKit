@@ -93,7 +93,18 @@ public static class Program
         builder.Services.AddSingleton<IMediaMigrationService, JsonMediaMigrationService>();
         builder.Services.AddSingleton<IMediaUsageQueryService, FileSystemMediaUsageQueryService>();
         builder.Services.AddSingleton<ISuperAdminSessionTokenService, SuperAdminSessionTokenService>();
+        builder.Services.AddSingleton<ISuperAdminAuditLog, SuperAdminAuditLog>();
         builder.Services.AddSingleton<IPhotoService, LocalPhotoService>();
+        builder.Services.AddSingleton<FileSystemWeddingLayoutCatalogRegistry>();
+        builder.Services.AddSingleton<WeddingLayoutCatalogRegistryFacade>();
+        builder.Services.AddSingleton<IWeddingLayoutCatalogRegistry>(
+            services => services.GetRequiredService<WeddingLayoutCatalogRegistryFacade>());
+        builder.Services.AddSingleton<Microsoft.Extensions.Hosting.IHostedService>(
+            services => services.GetRequiredService<FileSystemWeddingLayoutCatalogRegistry>());
+        builder.Services.AddSingleton<FileSystemWeddingLayoutSubmissionService>();
+        builder.Services.AddSingleton<WeddingLayoutSubmissionServiceFacade>();
+        builder.Services.AddSingleton<IWeddingLayoutSubmissionService>(
+            services => services.GetRequiredService<WeddingLayoutSubmissionServiceFacade>());
 
         builder.Services.AddSingleton<Views.MainWindow>();
         builder.Services.AddHostedService<GhostAccountCleanupService>();
@@ -113,7 +124,10 @@ public static class Program
             options.SharedServiceTypes.Add(typeof(IMediaMigrationService));
             options.SharedServiceTypes.Add(typeof(IMediaUsageQueryService));
             options.SharedServiceTypes.Add(typeof(ISuperAdminSessionTokenService));
+            options.SharedServiceTypes.Add(typeof(ISuperAdminAuditLog));
             options.SharedServiceTypes.Add(typeof(IPhotoService));
+            options.SharedServiceTypes.Add(typeof(IWeddingLayoutCatalogRegistry));
+            options.SharedServiceTypes.Add(typeof(IWeddingLayoutSubmissionService));
             // 업로드된 사진을 /wedding-data/ URL로 제공
             options.AddPhysicalStaticFiles(weddingOpts.ResolvedDataPath, "/wedding-data");
 
@@ -152,6 +166,12 @@ public static class Program
                 });
 
                 services.AddScoped<WeddingUserContext>();
+                services.AddSingleton<
+                    Microsoft.AspNetCore.Hosting.IStartupFilter,
+                    WeddingSeoStartupFilter>();
+                services.AddSingleton<
+                    Microsoft.AspNetCore.Hosting.IStartupFilter,
+                    WeddingLayoutPolicyQueryStartupFilter>();
             };
 
             options.AddDreamineIdentity(authOptions, usersDbPath);

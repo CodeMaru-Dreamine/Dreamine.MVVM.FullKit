@@ -1,0 +1,464 @@
+{
+  "manifest": {
+    "schemaVersion": 1,
+    "key": "atelier-letter",
+    "version": "1.0.1",
+    "label": "아틀리에 레터",
+    "description": "아틀리에 레터의 정제판입니다. 날짜 카운트다운, 두 개의 스토리 카드, 공유 동작과 강화된 대비를 더한 반응형 플립 카드 청첩장입니다.",
+    "tier": "Free"
+  },
+  "definition": {
+    "root": {
+      "id": "page",
+      "kind": "Page",
+      "binding": "Invitation",
+      "variant": "Default",
+      "containerSettings": {
+        "columns": 1,
+        "gap": "Medium",
+        "alignment": "Stretch",
+        "justification": "Start",
+        "wrap": false
+      },
+      "responsive": {
+        "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+        "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+        "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+      },
+      "children": [
+        {
+          "id": "cover",
+          "kind": "Hero",
+          "binding": "Invitation",
+          "variant": "Hero",
+          "containerSettings": {
+            "columns": 1,
+            "gap": "Medium",
+            "alignment": "Center",
+            "justification": "Center",
+            "wrap": false
+          },
+          "responsive": {
+            "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" },
+            "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" },
+            "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" }
+          },
+          "children": []
+        },
+        {
+          "id": "invitation-page",
+          "kind": "Section",
+          "binding": "Invitation",
+          "variant": "Elevated",
+          "containerSettings": {
+            "columns": 1,
+            "gap": "Large",
+            "alignment": "Stretch",
+            "justification": "Start",
+            "wrap": false
+          },
+          "responsive": {
+            "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+          },
+          "children": []
+        },
+        {
+          "id": "date-page",
+          "kind": "Section",
+          "binding": "None",
+          "variant": "Elevated",
+          "containerSettings": {
+            "columns": 1,
+            "gap": "Large",
+            "alignment": "Stretch",
+            "justification": "Center",
+            "wrap": false
+          },
+          "responsive": {
+            "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+          },
+          "children": [
+            {
+              "id": "wedding-countdown",
+              "kind": "Countdown",
+              "binding": "WeddingDate",
+              "variant": "Accent",
+              "responsive": {
+                "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" },
+                "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" },
+                "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" }
+              },
+              "children": []
+            },
+            {
+              "id": "ceremony-calendar",
+              "kind": "Calendar",
+              "binding": "Calendar",
+              "variant": "Outlined",
+              "responsive": {
+                "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" },
+                "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" },
+                "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" }
+              },
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "story-page",
+          "kind": "Section",
+          "binding": "None",
+          "variant": "Default",
+          "containerSettings": {
+            "columns": 1,
+            "gap": "Large",
+            "alignment": "Stretch",
+            "justification": "Start",
+            "wrap": false
+          },
+          "responsive": {
+            "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+          },
+          "children": [
+            {
+              "id": "story-card-primary",
+              "kind": "Card",
+              "binding": "None",
+              "variant": "Elevated",
+              "containerSettings": {
+                "columns": 1,
+                "gap": "Medium",
+                "alignment": "Stretch",
+                "justification": "Start",
+                "wrap": false
+              },
+              "responsive": {
+                "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+              },
+              "children": [
+                {
+                  "id": "story-primary",
+                  "kind": "Text",
+                  "binding": "Story",
+                  "variant": "Default",
+                  "textSettings": {
+                    "size": "Lead",
+                    "weight": "Regular",
+                    "alignment": "Start",
+                    "maxLines": 0
+                  },
+                  "responsive": {
+                    "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                    "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                    "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+                  },
+                  "children": []
+                }
+              ]
+            },
+            {
+              "id": "story-card-secondary",
+              "kind": "Card",
+              "binding": "None",
+              "variant": "Outlined",
+              "containerSettings": {
+                "columns": 1,
+                "gap": "Medium",
+                "alignment": "Stretch",
+                "justification": "Start",
+                "wrap": false
+              },
+              "responsive": {
+                "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+              },
+              "children": [
+                {
+                  "id": "story-secondary",
+                  "kind": "Text",
+                  "binding": "Story2",
+                  "variant": "Default",
+                  "textSettings": {
+                    "size": "Body",
+                    "weight": "Regular",
+                    "alignment": "Start",
+                    "maxLines": 0
+                  },
+                  "responsive": {
+                    "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                    "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                    "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+                  },
+                  "children": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "gallery-page",
+          "kind": "Section",
+          "binding": "None",
+          "variant": "Elevated",
+          "containerSettings": {
+            "columns": 1,
+            "gap": "Medium",
+            "alignment": "Stretch",
+            "justification": "Start",
+            "wrap": false
+          },
+          "responsive": {
+            "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+          },
+          "children": [
+            {
+              "id": "wedding-gallery",
+              "kind": "Gallery",
+              "binding": "Gallery",
+              "variant": "Default",
+              "responsive": {
+                "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+              },
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "video-page",
+          "kind": "Section",
+          "binding": "None",
+          "variant": "Muted",
+          "containerSettings": {
+            "columns": 1,
+            "gap": "Medium",
+            "alignment": "Stretch",
+            "justification": "Start",
+            "wrap": false
+          },
+          "responsive": {
+            "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+          },
+          "children": [
+            {
+              "id": "wedding-videos",
+              "kind": "VideoGallery",
+              "binding": "Videos",
+              "variant": "Default",
+              "responsive": {
+                "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+              },
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "location-page",
+          "kind": "Section",
+          "binding": "None",
+          "variant": "Outlined",
+          "containerSettings": {
+            "columns": 1,
+            "gap": "Medium",
+            "alignment": "Stretch",
+            "justification": "Start",
+            "wrap": false
+          },
+          "responsive": {
+            "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+          },
+          "children": [
+            {
+              "id": "venue-map",
+              "kind": "Map",
+              "binding": "Map",
+              "variant": "Default",
+              "responsive": {
+                "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+              },
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "accounts-page",
+          "kind": "Section",
+          "binding": "None",
+          "variant": "Accent",
+          "containerSettings": {
+            "columns": 1,
+            "gap": "Large",
+            "alignment": "Stretch",
+            "justification": "Start",
+            "wrap": false
+          },
+          "responsive": {
+            "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+          },
+          "children": [
+            {
+              "id": "account-list",
+              "kind": "AccountList",
+              "binding": "Accounts",
+              "variant": "Default",
+              "responsive": {
+                "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+              },
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "guestbook-page",
+          "kind": "Section",
+          "binding": "None",
+          "variant": "Elevated",
+          "containerSettings": {
+            "columns": 1,
+            "gap": "Large",
+            "alignment": "Center",
+            "justification": "Start",
+            "wrap": false
+          },
+          "responsive": {
+            "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" },
+            "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" },
+            "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" }
+          },
+          "children": [
+            {
+              "id": "guestbook",
+              "kind": "Guestbook",
+              "binding": "Guestbook",
+              "variant": "Default",
+              "responsive": {
+                "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+              },
+              "children": []
+            },
+            {
+              "id": "share-invitation",
+              "kind": "Button",
+              "binding": "None",
+              "text": "청첩장 공유하기",
+              "variant": "Accent",
+              "textSettings": {
+                "size": "Body",
+                "weight": "Semibold",
+                "alignment": "Center",
+                "maxLines": 1
+              },
+              "actionSettings": {
+                "action": "ShareInvitation",
+                "targetSection": null
+              },
+              "responsive": {
+                "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" },
+                "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" },
+                "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Center", "gap": "Medium" }
+              },
+              "children": []
+            }
+          ]
+        },
+        {
+          "id": "contact-page",
+          "kind": "Section",
+          "binding": "None",
+          "variant": "Muted",
+          "containerSettings": {
+            "columns": 1,
+            "gap": "Medium",
+            "alignment": "Stretch",
+            "justification": "Start",
+            "wrap": false
+          },
+          "responsive": {
+            "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+            "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+          },
+          "children": [
+            {
+              "id": "contact-list",
+              "kind": "ContactList",
+              "binding": "Contacts",
+              "variant": "Default",
+              "responsive": {
+                "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+                "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+              },
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    "presentation": "FlipCard",
+    "transition": {
+      "kind": "FlipCard",
+      "durationMilliseconds": 720,
+      "enableSwipe": true,
+      "enableKeyboard": true,
+      "showNavigation": true
+    },
+    "sectionOrder": [
+      "Hero",
+      "Invitation",
+      "Calendar",
+      "Story",
+      "Gallery",
+      "Video",
+      "Location",
+      "Accounts",
+      "Guestbook",
+      "Contact"
+    ],
+    "styleTokens": [
+      { "token": "PrimaryColor", "value": "#745F48" },
+      { "token": "SecondaryColor", "value": "#617064" },
+      { "token": "AccentColor", "value": "#B9854B" },
+      { "token": "BackgroundColor", "value": "#F6F3EC" },
+      { "token": "SurfaceColor", "value": "#FFFFFC" },
+      { "token": "TextColor", "value": "#242824" },
+      { "token": "MutedTextColor", "value": "#616A64" },
+      { "token": "BorderColor", "value": "#CEC7BA" },
+      { "token": "ButtonBackgroundColor", "value": "#405347" },
+      { "token": "ButtonTextColor", "value": "#FFFFFF" },
+      { "token": "NavigationBackgroundColor", "value": "#E9E5DB" },
+      { "token": "NavigationTextColor", "value": "#242824" }
+    ],
+    "responsive": {
+      "mobile": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+      "tablet": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" },
+      "desktop": { "hidden": false, "columns": 1, "columnSpan": 1, "alignment": "Stretch", "gap": "Medium" }
+    }
+  }
+}

@@ -8,15 +8,26 @@
 @using WeddingPlatform.Models
 @inject WeddingInvitationViewModel Vm
 @inject WeddingGuestbookViewModel VmGuest
+@inject IWeddingLayoutCatalogRegistry LayoutRegistry
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<PageTitle>@Vm.CoupleName 청첩장</PageTitle>
+<PageTitle>@Vm.SearchTitle</PageTitle>
 
 <HeadContent>
+    <meta name="description" content="@Vm.SearchDescription" />
+    <meta name="robots" content="@RobotsDirective" />
+    @if (Vm.IsLoaded && !Vm.NotFound)
+    {
+        <link rel="canonical" href="@Vm.CanonicalUrl" />
+    }
     <meta property="og:type" content="website" />
     <meta property="og:title" content="@Vm.OgTitle" />
     <meta property="og:description" content="@Vm.OgDescription" />
+    @if (Vm.IsLoaded && !Vm.NotFound)
+    {
+        <meta property="og:url" content="@Vm.CanonicalUrl" />
+    }
     @if (!string.IsNullOrWhiteSpace(Vm.OgImageUrl))
     {
         <meta property="og:image" content="@Vm.OgImageUrl" />
@@ -57,45 +68,26 @@ else
         </div>
     }
 
-    @switch (Vm.LayoutMode)
-    {
-        case WeddingLayoutMode.TabMenu:
-            <TabsInvitationLayout Slug="@Slug"
-                                  Vm="@Vm"
-                                  VmGuest="@VmGuest"
-                                  PauseMusicRequested="@PauseMusicForVideo" />
-            break;
-        case WeddingLayoutMode.Gallery:
-            <GalleryInvitationLayout Slug="@Slug"
+    <div class="w-runtime-layout @Vm.LayoutDescriptor.CssClass"
+         style="@Vm.LayoutStyle"
+         data-layout-key="@Vm.LayoutKey"
+         data-layout-version="@Vm.LayoutVersion">
+        @if (Vm.DynamicLayoutDefinition is { } definition)
+        {
+            <DynamicInvitationLayout Definition="@definition"
+                                     Slug="@Slug"
                                      Vm="@Vm"
                                      VmGuest="@VmGuest"
                                      PauseMusicRequested="@PauseMusicForVideo" />
-            break;
-        case WeddingLayoutMode.Story:
-            <StoryInvitationLayout Slug="@Slug"
-                                   Vm="@Vm"
-                                   VmGuest="@VmGuest"
-                                   PauseMusicRequested="@PauseMusicForVideo" />
-            break;
-        case WeddingLayoutMode.Card:
-            <CardInvitationLayout Slug="@Slug"
-                                  Vm="@Vm"
-                                  VmGuest="@VmGuest"
-                                  PauseMusicRequested="@PauseMusicForVideo" />
-            break;
-        case WeddingLayoutMode.PhotoBook:
-            <PhotoBookInvitationLayout Slug="@Slug"
-                                       Vm="@Vm"
-                                       VmGuest="@VmGuest"
-                                       PauseMusicRequested="@PauseMusicForVideo" />
-            break;
-        default:
-            <OnePageInvitationLayout Slug="@Slug"
-                                     Vm="@Vm"
-                                     VmGuest="@VmGuest"
-                                     PauseMusicRequested="@PauseMusicForVideo" />
-            break;
-    }
+        }
+        else
+        {
+            <LegacyInvitationLayoutHost Slug="@Slug"
+                                        Vm="@Vm"
+                                        VmGuest="@VmGuest"
+                                        PauseMusicRequested="@PauseMusicForVideo" />
+        }
+    </div>
 
     <footer class="w-footer">
         <a href="/@Slug/admin" class="w-admin-link" title="관리자">·</a>
@@ -105,24 +97,137 @@ else
 @code {
     [Parameter] public string Slug { get; set; } = "";
     [SupplyParameterFromQuery(Name = "adminPreview")] public bool AdminPreview { get; set; }
+    [SupplyParameterFromQuery(Name = "previewLayoutKey")] public string? PreviewLayoutKey { get; set; }
+    [SupplyParameterFromQuery(Name = "previewLayoutVersion")] public string? PreviewLayoutVersion { get; set; }
+    [SupplyParameterFromQuery(Name = "previewFollowActive")] public bool? PreviewFollowActive { get; set; }
+    [SupplyParameterFromQuery(Name = "previewTheme")] public string? PreviewTheme { get; set; }
+    [SupplyParameterFromQuery(Name = "previewThemeBase")] public string? PreviewThemeBase { get; set; }
+    [SupplyParameterFromQuery(Name = "previewThemePrimary")] public string? PreviewThemePrimary { get; set; }
+    [SupplyParameterFromQuery(Name = "previewThemeDark")] public string? PreviewThemeDark { get; set; }
+    [SupplyParameterFromQuery(Name = "previewThemeAccent")] public string? PreviewThemeAccent { get; set; }
+    [SupplyParameterFromQuery(Name = "previewThemeText")] public string? PreviewThemeText { get; set; }
+    [SupplyParameterFromQuery(Name = "previewThemeMuted")] public string? PreviewThemeMuted { get; set; }
+    [SupplyParameterFromQuery(Name = "previewThemeBackground")] public string? PreviewThemeBackground { get; set; }
+    [SupplyParameterFromQuery(Name = "previewThemePanel")] public string? PreviewThemePanel { get; set; }
+    [SupplyParameterFromQuery(Name = "previewThemeButton")] public string? PreviewThemeButton { get; set; }
+    [SupplyParameterFromQuery(Name = "previewThemeButtonText")] public string? PreviewThemeButtonText { get; set; }
+    [SupplyParameterFromQuery(Name = "previewThemeBorder")] public string? PreviewThemeBorder { get; set; }
 
     private ElementReference audioRef;
     private bool isMusicPlaying;
     private bool musicSyncInitialized;
+    private bool previewDraftBridgeInitialized;
+    private string appliedThemeFingerprint = "";
+    private int catalogRefreshRunning;
+    private int catalogRefreshRequested;
     private DotNetObjectReference<Invite>? _selfRef;
+    private string RobotsDirective =>
+        !Vm.IsLoaded || Vm.NotFound || AdminPreview || !Vm.IsSearchIndexingEnabled
+            ? "noindex, nofollow"
+            : "index, follow, max-image-preview:large";
+
+    protected override void OnInitialized()
+    {
+        LayoutRegistry.Changed += OnLayoutCatalogChanged;
+    }
 
     protected override async Task OnParametersSetAsync()
     {
-        await Vm.LoadAsync(Slug);
+        await LoadInvitationAsync();
         await VmGuest.InitializeAsync(Slug);
+    }
+
+    private Task LoadInvitationAsync() =>
+        AdminPreview
+            ? Vm.LoadAsync(
+                Slug,
+                PreviewLayoutKey,
+                PreviewLayoutVersion,
+                PreviewFollowActive,
+                BuildPreviewThemeSelection())
+            : Vm.LoadAsync(Slug);
+
+    private WeddingThemePreviewSelection? BuildPreviewThemeSelection()
+    {
+        if (string.IsNullOrWhiteSpace(PreviewTheme))
+        {
+            return null;
+        }
+
+        if (!string.Equals(
+                PreviewTheme,
+                WeddingThemeCatalog.CustomThemeKey,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return new WeddingThemePreviewSelection(PreviewTheme, null);
+        }
+
+        return new WeddingThemePreviewSelection(
+            WeddingThemeCatalog.CustomThemeKey,
+            new WeddingThemePalette(
+                PreviewThemeBase ?? "",
+                PreviewThemePrimary ?? "",
+                PreviewThemeDark ?? "",
+                PreviewThemeAccent ?? "",
+                PreviewThemeText ?? "",
+                PreviewThemeMuted ?? "",
+                PreviewThemeBackground ?? "",
+                PreviewThemePanel ?? "",
+                PreviewThemeButton ?? "",
+                PreviewThemeButtonText ?? "",
+                PreviewThemeBorder ?? ""));
+    }
+
+    private void OnLayoutCatalogChanged(
+        object? sender,
+        WeddingLayoutCatalogChangedEventArgs args)
+    {
+        Interlocked.Exchange(ref catalogRefreshRequested, 1);
+        _ = InvokeAsync(ProcessLayoutCatalogChangesAsync);
+    }
+
+    private async Task ProcessLayoutCatalogChangesAsync()
+    {
+        if (Interlocked.CompareExchange(ref catalogRefreshRunning, 1, 0) != 0)
+        {
+            return;
+        }
+
+        try
+        {
+            do
+            {
+                Interlocked.Exchange(ref catalogRefreshRequested, 0);
+                await LoadInvitationAsync();
+                StateHasChanged();
+            }
+            while (Interlocked.Exchange(ref catalogRefreshRequested, 0) != 0);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref catalogRefreshRunning, 0);
+
+            // 활성화와 즉시 롤백처럼 변경이 연달아 발생해도 마지막 카탈로그
+            // 스냅샷을 놓치지 않습니다.
+            if (Interlocked.Exchange(ref catalogRefreshRequested, 0) != 0)
+            {
+                _ = InvokeAsync(ProcessLayoutCatalogChangesAsync);
+            }
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        var themeFingerprint = $"{Vm.ThemeName}|{string.Join("|", Vm.ThemeCssVariables.Select(x => $"{x.Key}={x.Value}"))}";
+        if (!string.Equals(appliedThemeFingerprint, themeFingerprint, StringComparison.Ordinal))
+        {
+            appliedThemeFingerprint = themeFingerprint;
+            await JS.InvokeVoidAsync("weddingInterop.applyTheme", Vm.ThemeName, Vm.ThemeCssVariables);
+        }
+
         if (firstRender)
         {
             VmGuest.ApplyDefaultMessage();
-            await JS.InvokeVoidAsync("weddingInterop.applyTheme", Vm.ThemeName);
         }
 
         if (Vm.IsLoaded && !string.IsNullOrWhiteSpace(Vm.MusicUrl) && !musicSyncInitialized)
@@ -135,9 +240,23 @@ else
             StateHasChanged();
         }
 
+        if (Vm.IsLoaded)
+        {
+            await JS.InvokeVoidAsync("weddingInterop.initHeroCropTargets");
+        }
+
         if (Vm.IsLoaded && AdminPreview)
         {
             await JS.InvokeVoidAsync("weddingInterop.initDesignDragTargets");
+
+            if (!previewDraftBridgeInitialized)
+            {
+                _selfRef ??= DotNetObjectReference.Create(this);
+                await JS.InvokeVoidAsync(
+                    "weddingInterop.initAdminPreviewDraftReceiver",
+                    _selfRef);
+                previewDraftBridgeInitialized = true;
+            }
         }
     }
 
@@ -169,8 +288,21 @@ else
         StateHasChanged();
     }
 
+    [JSInvokable]
+    public void OnAdminPreviewAccountsChanged(AccountInfo[]? accounts)
+    {
+        if (!AdminPreview)
+        {
+            return;
+        }
+
+        Vm.ApplyAdminPreviewAccounts(accounts ?? []);
+        StateHasChanged();
+    }
+
     public ValueTask DisposeAsync()
     {
+        LayoutRegistry.Changed -= OnLayoutCatalogChanged;
         _selfRef?.Dispose();
         return ValueTask.CompletedTask;
     }

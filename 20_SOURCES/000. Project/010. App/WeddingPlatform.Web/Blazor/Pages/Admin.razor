@@ -8,14 +8,25 @@
 @using WeddingPlatform.Models
 @using Microsoft.JSInterop
 @inject WeddingAdminViewModel Vm
+@inject IWeddingLayoutCatalogRegistry LayoutRegistry
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @implements IDisposable
 
 <PageTitle>어드민 — @Slug</PageTitle>
+<HeadContent>
+    <meta name="robots" content="noindex, nofollow" />
+</HeadContent>
 
 <div class="w-admin">
-    @if (!Vm.IsAuthenticated)
+    @if (!Vm.IsAuthenticated && !_superAdminAutoLoginChecked)
+    {
+        <div class="w-loading">
+            <div class="w-spinner"></div>
+            <p class="w-hint">관리 권한을 확인하고 있습니다.</p>
+        </div>
+    }
+    else if (!Vm.IsAuthenticated)
     {
         <h1 class="w-admin__title">⚙ 어드민 — <code>@Slug</code></h1>
         <div class="w-admin__login w-panel">
@@ -30,7 +41,11 @@
                 <p class="w-hint">CodeMaru/Dreamine 계정으로 먼저 로그인하면, 기존 비밀번호 확인 후 이 웨딩 사이트를 계정에 연결할 수 있습니다.</p>
                 <a class="w-btn" href="@LoginUrl">공용 로그인</a>
             }
-            <input class="w-input" type="password" placeholder="비밀번호" @bind="Vm.LoginPassword" />
+            <input class="w-input"
+                   type="password"
+                   placeholder="비밀번호"
+                   @bind="Vm.LoginPassword"
+                   @bind:event="oninput" />
             <button class="w-btn w-btn--primary" @onclick="OnLogin">로그인</button>
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
@@ -107,6 +122,12 @@
                     @if (Vm.IsSignedIn)
                     {
                         <p class="w-status w-status--compact">공용 로그인: @Vm.CurrentUserLabel · @(Vm.IsOwner ? "대표 관리자" : "관리자")</p>
+                    }
+                    @if (Vm.IsSuperAdminSession)
+                    {
+                        <p class="w-status w-status--compact">
+                            최고 관리자 권한으로 <code>@Slug</code> 청첩장을 관리하고 있습니다.
+                        </p>
                     }
 
                     @* ─────────── 기본 정보 ─────────── *@
@@ -197,32 +218,217 @@
                     @* ─────────── 디자인 ─────────── *@
                     else if (_selected == "design")
                     {
+                        var selectedLayout = SelectedLayoutOption;
+                        var matchingLayouts = FilteredLayoutOptions.ToArray();
+
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">청첩장 레이아웃</h3>
-                            <p class="w-hint">청첩장이 하객에게 어떻게 보이는지 결정하는 구조입니다.</p>
-                            <div class="w-style-picker">
-                                @foreach (var descriptor in WeddingLayoutCatalog.Options)
-                                {
-                                    var canUse = CanUseLayout(descriptor);
-                                    var canSelect = canUse && descriptor.IsImplemented;
-                                    <label class="w-style-card @(Vm.Config!.DesignSettings.LayoutMode == descriptor.Mode ? "active" : "") @(!canSelect ? "is-locked" : "")">
-                                        <input type="radio" name="w-layout" value="@descriptor.Key" checked="@(Vm.Config!.DesignSettings.LayoutMode == descriptor.Mode)"
-                                               disabled="@(!canSelect)"
-                                               @onchange="() => SelectLayout(descriptor.Mode)" />
-                                        <div class="w-style-card__preview w-style-card__preview--@descriptor.Key"></div>
-                                        <div class="w-style-card__meta">
-                                            <strong>@descriptor.Label @if (!descriptor.IsImplemented) { <span class="w-layout-lock">준비 중</span> } else if (!canUse) { <span class="w-layout-lock">잠금</span> }</strong>
-                                            <small>@descriptor.Description</small>
-                                            @if (!descriptor.IsImplemented)
-                                            {
-                                                <small class="w-layout-lock-hint">권한 부여는 가능하지만 아직 화면 렌더러가 준비되지 않았습니다.</small>
-                                            }
-                                            else if (!canUse)
-                                            {
-                                                <small class="w-layout-lock-hint">프리미엄 플랜 또는 개별 잠금 해제 후 사용할 수 있습니다.</small>
-                                            }
+                            <p class="w-hint">목록에서 레이아웃을 찾아 적용하면 오른쪽 미리보기에 즉시 반영됩니다. 설정 저장을 누르면 실제 공개 청첩장에 확정됩니다.</p>
+
+                            <div class="w-layout-picker">
+                                <div class="w-layout-combobox">
+                                    <button type="button"
+                                            class="w-layout-combobox__trigger"
+                                            aria-haspopup="listbox"
+                                            aria-expanded="@(_layoutPickerOpen ? "true" : "false")"
+                                            aria-controls="w-layout-options"
+                                            @onclick="ToggleLayoutPicker">
+                                        <span class="w-layout-combobox__value">
+                                            <small>레이아웃 선택</small>
+                                            <strong>@(selectedLayout?.Label ?? "선택 가능한 레이아웃 없음")</strong>
+                                        </span>
+                                        <span class="w-layout-combobox__chevron" aria-hidden="true">@(_layoutPickerOpen ? "▴" : "▾")</span>
+                                    </button>
+
+                                    @if (_layoutPickerOpen)
+                                    {
+                                        <div class="w-layout-combobox__popover">
+                                            <label class="w-layout-combobox__search-label" for="w-layout-search">레이아웃 검색</label>
+                                            <input id="w-layout-search"
+                                                   class="w-input w-layout-combobox__search"
+                                                   type="search"
+                                                   autocomplete="off"
+                                                   placeholder="이름, 설명, 등급으로 검색"
+                                                   @bind="_layoutSearch"
+                                                   @bind:event="oninput"
+                                                   @onkeydown="OnLayoutSearchKeyDown" />
+
+                                            <div id="w-layout-options" class="w-layout-options" role="listbox" aria-label="레이아웃 검색 결과">
+                                                @if (matchingLayouts.Length == 0)
+                                                {
+                                                    <p class="w-layout-options__empty">검색 결과가 없습니다.</p>
+                                                }
+                                                else
+                                                {
+                                                    @foreach (var descriptor in matchingLayouts)
+                                                    {
+                                                        var canUse = CanUseLayout(descriptor);
+                                                        var canApply = canUse && descriptor.IsImplemented;
+                                                        var isCandidate = selectedLayout is not null
+                                                            && string.Equals(selectedLayout.Key, descriptor.Key, StringComparison.OrdinalIgnoreCase)
+                                                            && string.Equals(selectedLayout.Version, descriptor.Version, StringComparison.Ordinal);
+                                                        var isApplied = IsAppliedLayout(descriptor);
+
+                                                        <button type="button"
+                                                                id="w-layout-option-@descriptor.Key"
+                                                                class="w-layout-option @(isCandidate ? "is-selected" : "") @(!canApply ? "is-locked" : "")"
+                                                                role="option"
+                                                                aria-selected="@(isCandidate ? "true" : "false")"
+                                                                @onclick="() => SelectLayoutCandidate(descriptor)">
+                                                            <span class="w-style-card__preview w-style-card__preview--@descriptor.Key" aria-hidden="true"></span>
+                                                            <span class="w-layout-option__meta">
+                                                                <strong>@descriptor.Label</strong>
+                                                                <small>@descriptor.Description</small>
+                                                            </span>
+                                                            <span class="w-layout-option__badges">
+                                                                @if (isApplied)
+                                                                {
+                                                                    <span class="w-layout-badge w-layout-badge--active">적용됨</span>
+                                                                }
+                                                                @if (!descriptor.IsImplemented)
+                                                                {
+                                                                    <span class="w-layout-badge">준비 중</span>
+                                                                }
+                                                                else if (!canUse)
+                                                                {
+                                                                    <span class="w-layout-badge">잠금</span>
+                                                                }
+                                                                else
+                                                                {
+                                                                    <span class="w-layout-badge">@LayoutTierLabel(descriptor)</span>
+                                                                }
+                                                            </span>
+                                                        </button>
+                                                    }
+                                                }
+                                            </div>
                                         </div>
-                                    </label>
+                                    }
+                                </div>
+
+                                @if (selectedLayout is not null)
+                                {
+                                    var canUseSelectedLayout = CanUseLayout(selectedLayout);
+                                    var canApplySelectedLayout = canUseSelectedLayout && selectedLayout.IsImplemented;
+                                    var isSelectedLayoutApplied = IsAppliedLayout(selectedLayout);
+                                    var availableVersions = GetLayoutVersionOptions(selectedLayout.Key);
+                                    var appliedLayout = AppliedLayoutOption;
+                                    var activeVersion = Vm.LayoutCatalog
+                                        .FindDescriptor(selectedLayout.Key)
+                                        ?.CurrentVersion;
+
+                                    <article class="w-layout-detail" aria-live="polite">
+                                        <div class="w-layout-detail__visual w-style-card__preview w-style-card__preview--@selectedLayout.Key"
+                                             role="img"
+                                             aria-label="@selectedLayout.Label 레이아웃 구성 미리보기"></div>
+
+                                        <div class="w-layout-detail__content">
+                                            <div class="w-layout-detail__badges">
+                                                <span class="w-layout-badge">@LayoutTierLabel(selectedLayout)</span>
+                                                <span class="w-layout-badge">@(Vm.IsBuiltInLayout(selectedLayout.Key) ? "기본 제공" : "승인 레이아웃")</span>
+                                                <span class="w-layout-badge">v@(selectedLayout.Version)</span>
+                                                @if (isSelectedLayoutApplied)
+                                                {
+                                                    <span class="w-layout-badge w-layout-badge--active">현재 적용됨</span>
+                                                }
+                                            </div>
+                                            <h4>@selectedLayout.Label</h4>
+                                            <p>@selectedLayout.Description</p>
+
+                                            <dl class="w-layout-detail__facts">
+                                                <div>
+                                                    <dt>화면 방식</dt>
+                                                    <dd>@(selectedLayout.UsesBottomNavigation ? "하단 메뉴 탐색" : "세로 스크롤")</dd>
+                                                </div>
+                                                <div>
+                                                    <dt>지원 섹션</dt>
+                                                    <dd>@(selectedLayout.SupportedSections.Count)개</dd>
+                                                </div>
+                                            </dl>
+
+                                            @if (availableVersions.Count > 1)
+                                            {
+                                                <label class="w-label">
+                                                    사용할 버전
+                                                    <select class="w-input"
+                                                            value="@selectedLayout.Version"
+                                                            @onchange="e => SelectLayoutVersion(selectedLayout.Key, e)">
+                                                        @foreach (var versionOption in availableVersions)
+                                                        {
+                                                            <option value="@versionOption.Version">
+                                                                @LayoutVersionOptionLabel(
+                                                                    versionOption,
+                                                                    appliedLayout,
+                                                                    activeVersion)
+                                                            </option>
+                                                        }
+                                                    </select>
+                                                </label>
+
+                                                @if (appliedLayout is not null
+                                                    && string.Equals(
+                                                        appliedLayout.Key,
+                                                        selectedLayout.Key,
+                                                        StringComparison.OrdinalIgnoreCase)
+                                                    && !string.Equals(
+                                                        appliedLayout.Version,
+                                                        activeVersion,
+                                                        StringComparison.Ordinal))
+                                                {
+                                                    <p class="w-layout-detail__notice">
+                                                        현재 청첩장은 v@(appliedLayout.Version)을 계속 사용합니다.
+                                                        사용 가능한 활성 버전 v@(activeVersion)이 있지만 자동으로
+                                                        바뀌지 않습니다. 위에서 새 버전을 선택한 뒤 업데이트하세요.
+                                                    </p>
+                                                }
+                                            }
+
+                                            @if (isSelectedLayoutApplied)
+                                            {
+                                                <label class="w-layout-version-policy">
+                                                    <input type="checkbox"
+                                                           @bind="Vm.Config!.DesignSettings.FollowActiveLayoutVersion" />
+                                                    <span>
+                                                        <strong>새 활성 버전 자동 적용</strong>
+                                                        <small>
+                                                            기본은 현재 v@(selectedLayout.Version)에 고정됩니다.
+                                                            이 옵션을 직접 켠 경우에만 이후 승인된 활성 버전과
+                                                            슈퍼관리자 롤백을 자동으로 따라갑니다.
+                                                        </small>
+                                                    </span>
+                                                </label>
+                                            }
+                                            else
+                                            {
+                                                <p class="w-layout-detail__notice">
+                                                    적용하면 v@(selectedLayout.Version)에 고정됩니다.
+                                                    새 버전 자동 적용은 적용 후 별도로 켤 수 있습니다.
+                                                </p>
+                                            }
+
+                                            @if (!selectedLayout.IsImplemented)
+                                            {
+                                                <p class="w-layout-detail__notice">이 레이아웃은 아직 화면 렌더러가 준비되지 않았습니다.</p>
+                                            }
+                                            else if (!canUseSelectedLayout)
+                                            {
+                                                <p class="w-layout-detail__notice">Premium 플랜을 활성화하면 모든 Premium 레이아웃을 사용할 수 있습니다.</p>
+                                            }
+                                            else if (!string.IsNullOrWhiteSpace(_layoutApplyMessage))
+                                            {
+                                                <p class="w-layout-detail__success">@_layoutApplyMessage</p>
+                                            }
+
+                                            <div class="w-layout-detail__actions">
+                                                <button type="button"
+                                                        class="w-btn w-btn--primary"
+                                                        disabled="@(!canApplySelectedLayout || isSelectedLayoutApplied)"
+                                                        @onclick="ApplySelectedLayout">
+                                                    @LayoutApplyButtonLabel(selectedLayout, appliedLayout)
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </article>
                                 }
                             </div>
                         </section>
@@ -290,38 +496,326 @@
                                     </button>
                                 }
                             </div>
+
+                            <div class="w-custom-theme @(Vm.Config!.DesignSettings.ThemeKey == WeddingThemeCatalog.CustomThemeKey ? "is-active" : "")">
+                                <div class="w-custom-theme__head">
+                                    <div>
+                                        <strong>나만의 색상 테마</strong>
+                                        <p class="w-hint">레이아웃과 별도로 저장되므로 레이아웃 버전을 변경해도 색상은 유지됩니다.</p>
+                                    </div>
+                                    <span class="w-layout-badge">Premium</span>
+                                </div>
+
+                                @if (Vm.Config.HasPremiumPlan)
+                                {
+                                    var customPalette = CurrentCustomPalette;
+
+                                    <label class="w-label">테마 이름</label>
+                                    <input class="w-input"
+                                           maxlength="40"
+                                           @bind="Vm.Config.DesignSettings.CustomTheme.Name" />
+
+                                    <div class="w-custom-theme__generator">
+                                        <div class="w-custom-theme__generator-copy">
+                                            <strong>대표 색상으로 자동 맞춤</strong>
+                                            <p class="w-hint">
+                                                색상 하나만 고르면 배경·본문·버튼·경계선을 읽기 편한 대비로 자동 보정합니다.
+                                                자동 보정 후에도 아래에서 원하는 색만 다시 바꿀 수 있습니다.
+                                            </p>
+                                        </div>
+                                        <label class="w-custom-theme__base">
+                                            <span>대표 색상</span>
+                                            <input type="color"
+                                                   value="@customPalette.BaseColor"
+                                                   @oninput="OnThemeBaseColorChanged" />
+                                            <code>@customPalette.BaseColor</code>
+                                        </label>
+                                        <button type="button"
+                                                class="w-btn w-btn--sm"
+                                                @onclick="ApplyAutomaticThemePalette">
+                                            자동 팔레트 다시 만들기
+                                        </button>
+                                    </div>
+
+                                    <div class="w-custom-theme__palette"
+                                         aria-label="현재 사용자 정의 색상 팔레트">
+                                        <span style="--w-custom-swatch:@customPalette.Primary" title="포인트"></span>
+                                        <span style="--w-custom-swatch:@customPalette.Accent" title="강조"></span>
+                                        <span style="--w-custom-swatch:@customPalette.Background" title="배경"></span>
+                                        <span style="--w-custom-swatch:@customPalette.PanelBackground" title="표면"></span>
+                                        <span style="--w-custom-swatch:@customPalette.Text" title="본문"></span>
+                                        <span style="--w-custom-swatch:@customPalette.MutedText" title="보조 본문"></span>
+                                    </div>
+
+                                    <div class="w-custom-theme__contrast" aria-live="polite">
+                                        <span class="@(TextContrastRatio >= 4.5 ? "is-good" : "is-warning")">
+                                            본문 대비 @TextContrastRatio.ToString("0.0"):1
+                                        </span>
+                                        <span class="@(MutedContrastRatio >= 4.5 ? "is-good" : "is-warning")">
+                                            보조 글자 @MutedContrastRatio.ToString("0.0"):1
+                                        </span>
+                                        <span class="@(ButtonContrastRatio >= 4.5 ? "is-good" : "is-warning")">
+                                            버튼 대비 @ButtonContrastRatio.ToString("0.0"):1
+                                        </span>
+                                    </div>
+
+                                    <details class="w-custom-theme__details">
+                                        <summary>세부 색상 직접 조정</summary>
+                                        <p class="w-hint">자동 결과가 마음에 들지 않는 항목만 바꿔도 됩니다. 변경 내용은 오른쪽 미리보기에 바로 반영됩니다.</p>
+                                        <div class="w-custom-theme__colors">
+                                            <label>
+                                                <span>포인트(보정)</span>
+                                                <input type="color" value="@customPalette.Primary"
+                                                       @oninput='e => UpdateCustomThemeColor("primary", e.Value?.ToString())' />
+                                                <code>@customPalette.Primary</code>
+                                            </label>
+                                            <label>
+                                                <span>강조</span>
+                                                <input type="color" value="@customPalette.Accent"
+                                                       @oninput='e => UpdateCustomThemeColor("accent", e.Value?.ToString())' />
+                                                <code>@customPalette.Accent</code>
+                                            </label>
+                                            <label>
+                                                <span>강조 텍스트</span>
+                                                <input type="color" value="@customPalette.Dark"
+                                                       @oninput='e => UpdateCustomThemeColor("dark", e.Value?.ToString())' />
+                                                <code>@customPalette.Dark</code>
+                                            </label>
+                                            <label>
+                                                <span>본문</span>
+                                                <input type="color" value="@customPalette.Text"
+                                                       @oninput='e => UpdateCustomThemeColor("text", e.Value?.ToString())' />
+                                                <code>@customPalette.Text</code>
+                                            </label>
+                                            <label>
+                                                <span>보조 본문</span>
+                                                <input type="color" value="@customPalette.MutedText"
+                                                       @oninput='e => UpdateCustomThemeColor("muted", e.Value?.ToString())' />
+                                                <code>@customPalette.MutedText</code>
+                                            </label>
+                                            <label>
+                                                <span>배경</span>
+                                                <input type="color" value="@customPalette.Background"
+                                                       @oninput='e => UpdateCustomThemeColor("background", e.Value?.ToString())' />
+                                                <code>@customPalette.Background</code>
+                                            </label>
+                                            <label>
+                                                <span>패널</span>
+                                                <input type="color" value="@customPalette.PanelBackground"
+                                                       @oninput='e => UpdateCustomThemeColor("panel", e.Value?.ToString())' />
+                                                <code>@customPalette.PanelBackground</code>
+                                            </label>
+                                            <label>
+                                                <span>버튼</span>
+                                                <input type="color" value="@customPalette.ButtonBackground"
+                                                       @oninput='e => UpdateCustomThemeColor("button", e.Value?.ToString())' />
+                                                <code>@customPalette.ButtonBackground</code>
+                                            </label>
+                                            <label>
+                                                <span>버튼 글자</span>
+                                                <input type="color" value="@customPalette.ButtonText"
+                                                       @oninput='e => UpdateCustomThemeColor("button-text", e.Value?.ToString())' />
+                                                <code>@customPalette.ButtonText</code>
+                                            </label>
+                                            <label>
+                                                <span>경계선</span>
+                                                <input type="color" value="@customPalette.Border"
+                                                       @oninput='e => UpdateCustomThemeColor("border", e.Value?.ToString())' />
+                                                <code>@customPalette.Border</code>
+                                            </label>
+                                        </div>
+                                    </details>
+
+                                    @if (!string.IsNullOrWhiteSpace(_themePreviewMessage))
+                                    {
+                                        <p class="w-layout-detail__success">@_themePreviewMessage</p>
+                                    }
+
+                                    <button type="button"
+                                            class="w-btn w-btn--primary"
+                                            @onclick="SelectCustomTheme">
+                                        @(Vm.Config.DesignSettings.ThemeKey == WeddingThemeCatalog.CustomThemeKey
+                                            ? "나만의 테마 선택됨"
+                                            : "나만의 테마 사용")
+                                    </button>
+                                }
+                                else
+                                {
+                                    @if (Vm.Config.DesignSettings.ThemeKey == WeddingThemeCatalog.CustomThemeKey)
+                                    {
+                                        <p class="w-layout-detail__notice">
+                                            저장된 나만의 테마 값은 보존되어 있습니다. 현재 공개 화면에는 로즈 골드 기본 테마가 적용되며,
+                                            Premium을 다시 활성화하면 기존 색상을 그대로 이어서 사용할 수 있습니다.
+                                        </p>
+                                    }
+                                    else
+                                    {
+                                        <p class="w-layout-detail__notice">Premium 플랜에서 직접 색상을 만들고 저장할 수 있습니다. 기본 테마 5종은 모두 무료입니다.</p>
+                                    }
+                                }
+                            </div>
                         </section>
 
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🖼 히어로 이미지</h3>
                             @if (!string.IsNullOrWhiteSpace(Vm.Config!.HeroImageFileName))
                             {
-                                <div class="w-admin__hero-preview">
+                                <button type="button"
+                                        class="w-admin__hero-preview w-admin__hero-preview--button"
+                                        title="전체 표시 또는 사용할 영역 편집"
+                                        @onclick="OpenHeroCropEditor">
                                     <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="히어로" />
-                                    <span>@Vm.Config.HeroImageFileName</span>
-                                </div>
+                                    <span>
+                                        <b>@Vm.Config.HeroImageFileName</b>
+                                        <small>사진을 눌러 PC·폰 표시 영역 편집</small>
+                                    </span>
+                                </button>
                             }
                             <InputFile class="w-file-input" OnChange="OnHeroUpload" accept="image/*" />
                             @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
+                            <p class="w-hint">
+                                권장 원본: 짧은 변 2,000px 이상, 여백이 있는 4:5 사진(예: 2000×2500 이상).
+                                PC는 16:9, 폰은 선택한 기기 비율로 영역을 따로 지정할 수 있습니다.
+                            </p>
+                            @if (!string.IsNullOrWhiteSpace(Vm.Config.HeroImageFileName))
+                            {
+                                <button type="button" class="w-btn w-btn--primary" @onclick="OpenHeroCropEditor">
+                                    전체 표시 · 사용할 영역 편집
+                                </button>
+                            }
                         </section>
+
+                        @if (_heroCropEditorOpen && !string.IsNullOrWhiteSpace(Vm.Config!.HeroImageFileName))
+                        {
+                            <div class="w-hero-crop-modal__backdrop" @onclick="CloseHeroCropEditor">
+                                <section class="w-hero-crop-modal"
+                                         role="dialog"
+                                         aria-modal="true"
+                                         aria-labelledby="hero-crop-title"
+                                         @onclick:stopPropagation>
+                                    <header class="w-hero-crop-modal__head">
+                                        <div>
+                                            <h3 id="hero-crop-title">히어로 이미지 표시 영역</h3>
+                                            <p>전체 사진을 쓰거나, 화면 비율이 고정된 사각형을 그리고 이동·확대해 사용할 영역을 고르세요.</p>
+                                        </div>
+                                        <button type="button" class="w-admin-preview__close" @onclick="CloseHeroCropEditor" aria-label="닫기">✕</button>
+                                    </header>
+
+                                    <div class="w-hero-crop-guide">
+                                        <strong>가장 선명하게 보이는 원본</strong>
+                                        <span>짧은 변 2,000px 이상 · 권장 2000×2500(4:5) 이상 · 인물과 글자가 사진 가장자리에서 떨어진 구도</span>
+                                        <small>PC 목표 1920×1080 · 폰 목표 1080×1920. 한 장을 함께 쓰므로 원본에 여백이 많을수록 두 화면 모두 자연스럽습니다.</small>
+                                    </div>
+
+                                    <div class="w-hero-crop-modal__tabs">
+                                        <button type="button"
+                                                class="@(_heroCropViewport == "desktop" ? "active" : "")"
+                                                @onclick='() => SetHeroCropViewport("desktop")'>
+                                            PC · 16:9
+                                        </button>
+                                        <button type="button"
+                                                class="@(_heroCropViewport == "mobile" ? "active" : "")"
+                                                @onclick='() => SetHeroCropViewport("mobile")'>
+                                            폰 · @CurrentPreviewDevice.Width×@CurrentPreviewDevice.Height
+                                        </button>
+                                    </div>
+
+                                    <div class="w-hero-crop-modal__modes">
+                                        <button type="button"
+                                                class="@(CurrentHeroCropUsesFullImage ? "active" : "")"
+                                                @onclick="() => SetHeroCropMode(true)">
+                                            전체 표시
+                                            <small>사진을 자르지 않고 여백 허용</small>
+                                        </button>
+                                        <button type="button"
+                                                class="@(!CurrentHeroCropUsesFullImage ? "active" : "")"
+                                                @onclick="() => SetHeroCropMode(false)">
+                                            사각형 영역 사용
+                                            <small>선택 영역으로 화면을 빈틈없이 채움</small>
+                                        </button>
+                                    </div>
+
+                                    @if (CurrentHeroCropUsesFullImage)
+                                    {
+                                        <div class="w-hero-crop-editor w-hero-crop-editor--full">
+                                            <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="히어로 원본 전체" />
+                                            <span>전체 이미지가 표시됩니다. 화면 비율이 다르면 위·아래 또는 좌·우에 여백이 생길 수 있습니다.</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div @key="HeroCropEditorKey"
+                                             class="w-hero-crop-editor"
+                                             data-hero-crop-editor-stage
+                                             data-viewport="@_heroCropViewport"
+                                             data-aspect="@CurrentHeroCropAspect.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                             data-crop-x="@CurrentHeroCropDraft.X.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                             data-crop-y="@CurrentHeroCropDraft.Y.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                             data-crop-width="@CurrentHeroCropDraft.Width.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                             data-crop-height="@CurrentHeroCropDraft.Height.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                                            <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="영역을 선택할 히어로 원본" />
+                                            <div class="w-hero-crop-editor__selection" data-crop-selection>
+                                                <span class="w-hero-crop-editor__label">@(_heroCropViewport == "desktop" ? "PC 16:9" : $"폰 {CurrentPreviewDevice.Width}:{CurrentPreviewDevice.Height}")</span>
+                                                <i data-crop-handle="nw"></i>
+                                                <i data-crop-handle="ne"></i>
+                                                <i data-crop-handle="sw"></i>
+                                                <i data-crop-handle="se"></i>
+                                            </div>
+                                        </div>
+                                        <p class="w-hint">빈 곳을 끌어 새 사각형을 그리고, 사각형 안쪽은 이동, 네 모서리는 크기 조절입니다. 화면 비율은 자동으로 유지됩니다.</p>
+                                    }
+
+                                    <footer class="w-hero-crop-modal__actions">
+                                        <button type="button" class="w-btn" @onclick="CloseHeroCropEditor">취소</button>
+                                        <button type="button" class="w-btn w-btn--primary" @onclick="ApplyHeroCropEditor">적용하고 미리보기</button>
+                                    </footer>
+                                </section>
+                            </div>
+                        }
 
                         @if (UsesInviteHeroPlacement)
                         {
                             <section class="w-admin__section">
                                 <h3 class="w-admin__section-h">히어로 문구 위치</h3>
-                                <p class="w-hint">오른쪽 미리보기에서 상단 문구와 하단 장소·방명록 박스를 마우스로 끌어 위치를 정합니다. 드래그를 놓으면 자동 저장됩니다.</p>
+                                <p class="w-hint">PC 또는 폰 미리보기를 먼저 선택한 뒤 문구 박스를 끌어 주세요. 두 위치는 따로 저장되며 드래그를 놓으면 즉시 반영됩니다.</p>
                                 <div class="w-drag-control-grid">
                                     <div class="w-drag-control-card">
                                         <strong>상단 문구</strong>
-                                        <span>@FormatPanelPosition(Vm.Config!.DesignSettings.HeroPlacement.InviteTop)</span>
-                                        <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroTop")'>가까운 정렬</button>
-                                        <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroTop")'>기본 위치</button>
+                                        <div class="w-drag-control-device">
+                                            <span><b>PC</b> @FormatPanelPosition(Vm.Config!.DesignSettings.HeroPlacement.InviteTop, false)</span>
+                                            <div>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("pc")'>끌어서 조정</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroTop", false)'>정렬</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroTop", false)'>초기화</button>
+                                            </div>
+                                        </div>
+                                        <div class="w-drag-control-device">
+                                            <span><b>폰</b> @FormatPanelPosition(Vm.Config.DesignSettings.HeroPlacement.InviteTop, true)</span>
+                                            <div>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("phone")'>끌어서 조정</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroTop", true)'>정렬</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroTop", true)'>초기화</button>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="w-drag-control-card">
                                         <strong>하단 장소·방명록</strong>
-                                        <span>@FormatPanelPosition(Vm.Config!.DesignSettings.HeroPlacement.InviteBottom)</span>
-                                        <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroBottom")'>가까운 정렬</button>
-                                        <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroBottom")'>기본 위치</button>
+                                        <div class="w-drag-control-device">
+                                            <span><b>PC</b> @FormatPanelPosition(Vm.Config!.DesignSettings.HeroPlacement.InviteBottom, false)</span>
+                                            <div>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("pc")'>끌어서 조정</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroBottom", false)'>정렬</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroBottom", false)'>초기화</button>
+                                            </div>
+                                        </div>
+                                        <div class="w-drag-control-device">
+                                            <span><b>폰</b> @FormatPanelPosition(Vm.Config.DesignSettings.HeroPlacement.InviteBottom, true)</span>
+                                            <div>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("phone")'>끌어서 조정</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroBottom", true)'>정렬</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroBottom", true)'>초기화</button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </section>
@@ -479,8 +973,7 @@
                                 </div>
                                 <div class="w-story-admin-list">
                                     @{
-                                        var cardSupportedSections = WeddingLayoutCatalog.Instance
-                                            .Find(WeddingLayoutMode.Card)?
+                                        var cardSupportedSections = AppliedLayoutOption?
                                             .SupportedSections
                                             .Where(s => !string.Equals(s, "hero", StringComparison.OrdinalIgnoreCase))
                                             .ToList() ?? new List<string>();
@@ -703,7 +1196,7 @@
                                     <div class="w-acc-editor__grid">
                                         <div>
                                             <label class="w-label">레이블 (표시 이름)</label>
-                                            <select class="w-input" value="@acc.Label" @onchange="e => acc.Label = e.Value?.ToString() ?? string.Empty">
+                                            <select class="w-input" value="@acc.Label" @onchange="e => OnAccountLabelChanged(acc, e)">
                                                 <option>신랑</option>
                                                 <option>신부</option>
                                                 <option>신랑 아버지</option>
@@ -714,32 +1207,32 @@
                                             </select>
                                             @if (acc.Label == "직접 입력" || !_defaultLabels.Contains(acc.Label))
                                             {
-                                                <input class="w-input" style="margin-top:.4rem" @bind="acc.Label" placeholder="레이블 직접 입력" />
+                                                <input class="w-input" style="margin-top:.4rem" @bind="acc.Label" @bind:after="PublishPreviewAccountDraftAsync" placeholder="레이블 직접 입력" />
                                             }
                                         </div>
                                         <div>
                                             <label class="w-label">이름</label>
-                                            <input class="w-input" @bind="acc.Name" placeholder="홍길동" />
+                                            <input class="w-input" @bind="acc.Name" @bind:after="PublishPreviewAccountDraftAsync" placeholder="홍길동" />
                                         </div>
                                         <div>
                                             <label class="w-label">연락처</label>
-                                            <input class="w-input" @bind="acc.Phone" placeholder="010-0000-0000" />
+                                            <input class="w-input" @bind="acc.Phone" @bind:after="PublishPreviewAccountDraftAsync" placeholder="010-0000-0000" />
                                         </div>
                                         <div>
                                             <label class="w-label">은행명</label>
-                                            <input class="w-input" @bind="acc.BankName" placeholder="국민은행" />
+                                            <input class="w-input" @bind="acc.BankName" @bind:after="PublishPreviewAccountDraftAsync" placeholder="국민은행" />
                                         </div>
                                         <div>
                                             <label class="w-label">계좌번호</label>
-                                            <input class="w-input" @bind="acc.Account" placeholder="000-000-000000" />
+                                            <input class="w-input" @bind="acc.Account" @bind:after="PublishPreviewAccountDraftAsync" placeholder="000-000-000000" />
                                         </div>
                                         <div>
                                             <label class="w-label">예금주</label>
-                                            <input class="w-input" @bind="acc.AccountHolder" placeholder="홍길동" />
+                                            <input class="w-input" @bind="acc.AccountHolder" @bind:after="PublishPreviewAccountDraftAsync" placeholder="홍길동" />
                                         </div>
                                         <div class="w-acc-editor__full">
                                             <label class="w-label">카카오페이 URL (선택)</label>
-                                            <input class="w-input" @bind="acc.KakaoPayUrl" placeholder="https://qr.kakaopay.com/..." />
+                                            <input class="w-input" @bind="acc.KakaoPayUrl" @bind:after="PublishPreviewAccountDraftAsync" placeholder="https://qr.kakaopay.com/..." />
                                         </div>
                                     </div>
                                 </div>
@@ -773,6 +1266,49 @@
                                 <span class="w-toggle__track"></span>
                                 <span class="w-toggle__label">@(Vm.Config.ShowOnHome ? "ON — 메인 페이지에 표시됨" : "OFF — 메인 페이지에 숨김")</span>
                             </label>
+                        </section>
+
+                        <section class="w-admin__section">
+                            <h3 class="w-admin__section-h">🔎 검색 사이트 외부 노출</h3>
+                            <p class="w-hint">
+                                허용하면 이 청첩장이 자동 사이트맵에 포함되고 Google·네이버 같은 검색 엔진에
+                                색인을 허용합니다. 검색 결과 반영과 제외에는 수일 이상 걸릴 수 있습니다.
+                            </p>
+
+                            <label class="w-label">검색 엔진 노출</label>
+                            <label class="w-toggle">
+                                <input type="checkbox"
+                                       checked="@EffectiveSearchIndexing"
+                                       @onchange="OnSearchIndexingChanged" />
+                                <span class="w-toggle__track"></span>
+                                <span class="w-toggle__label">
+                                    @(EffectiveSearchIndexing
+                                        ? "ON — 검색 결과 노출 및 사이트맵 포함"
+                                        : "OFF — noindex 적용 및 사이트맵 제외")
+                                </span>
+                            </label>
+
+                            @if (!Vm.Config!.IsPublished)
+                            {
+                                <p class="w-status w-status--compact">
+                                    현재 청첩장이 비공개 상태라 검색 노출을 켜도 색인되지 않습니다.
+                                </p>
+                            }
+
+                            <label class="w-label">검색 결과 제목</label>
+                            <input class="w-input"
+                                   maxlength="70"
+                                   @bind="Vm.Config.SearchTitle"
+                                   placeholder="@WeddingSeoService.ResolveSearchTitle(Vm.Config)" />
+                            <p class="w-hint">비워두면 커플 이름을 이용해 자동 생성합니다.</p>
+
+                            <label class="w-label">검색 결과 설명</label>
+                            <textarea class="w-input w-textarea"
+                                      rows="3"
+                                      maxlength="180"
+                                      @bind="Vm.Config.SearchDescription"
+                                      placeholder="@WeddingSeoService.ResolveSearchDescription(Vm.Config)"></textarea>
+                            <p class="w-hint">검색 사이트가 상황에 따라 페이지 내용에서 다른 문구를 선택할 수도 있습니다.</p>
                         </section>
 
                         <section class="w-admin__section">
@@ -850,7 +1386,7 @@
                                                 }
                                                 <small>@admin.Provider · @admin.AddedAt.ToString("yyyy-MM-dd HH:mm")</small>
                                             </div>
-                                            @if (Vm.IsOwner && !isOwner)
+                                            @if (Vm.CanManageAdministrators && !isOwner)
                                             {
                                                 <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => OnRemoveAdmin(admin.UserId)">삭제</button>
                                             }
@@ -897,7 +1433,7 @@
                 <div class="w-admin-preview__frame w-admin-preview__frame--@_previewMode" style="@PreviewFrameStyle">
                     <iframe id="w-preview-iframe" src="@PreviewUrl" title="@PreviewTitle"></iframe>
                 </div>
-                <p class="w-admin-preview__hint">저장 후 자동으로 새로고침됩니다.</p>
+                <p class="w-admin-preview__hint">레이아웃 적용·테마 변경·설정 저장 시 자동으로 새로고침됩니다.</p>
             </aside>
 
         </div>
@@ -918,6 +1454,22 @@
     private bool _superAdminAutoLoginChecked = false;
     private string _previewMode = "phone";
     private string _previewDeviceKey = "galaxyS26";
+    private bool _layoutPickerOpen = false;
+    private string _layoutSearch = "";
+    private WeddingLayoutReleaseId? _layoutCandidate;
+    private string _layoutApplyMessage = "";
+    private WeddingThemePreviewSelection? _themePreviewSelection;
+    private string _themePreviewMessage = "";
+    private System.Threading.CancellationTokenSource? _themePreviewDebounceCts;
+    private bool _heroCropEditorOpen;
+    private bool _heroCropEditorNeedsInit;
+    private string _heroCropViewport = "mobile";
+    private bool _heroCropDesktopFull = true;
+    private bool _heroCropMobileFull = true;
+    private HeroImageCropRegion _heroCropDesktopDraft = new();
+    private HeroImageCropRegion _heroCropMobileDraft = new();
+    private long _heroCropEditorRevision;
+    private long _previewRevision;
     private DotNetObjectReference<Admin>? _selfRef;
 
     private record NavItem(string Key, string Icon, string Label);
@@ -954,31 +1506,141 @@
         new NavItem("share",     Icon("share"), "공유 설정"),
     };
 
-    private bool IsStoryLayout => Vm.Config?.DesignSettings.LayoutMode == WeddingLayoutMode.Story;
-    private bool IsPhotoBookLayout => Vm.Config?.DesignSettings.LayoutMode == WeddingLayoutMode.PhotoBook;
-    private bool IsCardLayout => Vm.Config?.DesignSettings.LayoutMode == WeddingLayoutMode.Card;
-    private bool UsesInviteHeroPlacement => Vm.Config?.DesignSettings.LayoutMode is WeddingLayoutMode.WebPage or WeddingLayoutMode.TabMenu;
+    private WeddingLayoutMode EffectiveLegacyLayoutMode =>
+        AppliedLayoutOption?.Mode ?? WeddingLayoutMode.WebPage;
+    private bool IsStoryLayout => EffectiveLegacyLayoutMode == WeddingLayoutMode.Story;
+    private bool IsPhotoBookLayout => EffectiveLegacyLayoutMode == WeddingLayoutMode.PhotoBook;
+    private bool IsCardLayout => EffectiveLegacyLayoutMode == WeddingLayoutMode.Card;
+    private bool UsesInviteHeroPlacement =>
+        EffectiveLegacyLayoutMode is
+            WeddingLayoutMode.WebPage or
+            WeddingLayoutMode.TabMenu or
+            WeddingLayoutMode.Story or
+            WeddingLayoutMode.Card or
+            WeddingLayoutMode.PhotoBook;
     private IEnumerable<NavItem> VisibleNavItems => _navItems.Where(i =>
         (i.Key != "story"     || IsStoryLayout) &&
         (i.Key != "photobook" || IsPhotoBookLayout) &&
         (i.Key != "cards"     || IsCardLayout));
     private NavItem CurrentNavItem => VisibleNavItems.FirstOrDefault(i => i.Key == _selected) ?? _navItems[0];
-    private string PreviewUrl => $"/{Slug}?adminPreview=true";
+    private string PreviewUrl
+    {
+        get
+        {
+            var design = Vm.Config?.DesignSettings;
+            if (design is null)
+            {
+                return $"/{Uri.EscapeDataString(Slug)}?adminPreview=true";
+            }
+
+            var key = Uri.EscapeDataString(
+                WeddingLayoutKeys.Normalize(design.LayoutKey));
+            var version = Uri.EscapeDataString(
+                WeddingLayoutVersion.IsValid(design.LayoutVersion)
+                    ? design.LayoutVersion.Trim()
+                    : WeddingLayoutVersion.Initial);
+            var followActive = design.FollowActiveLayoutVersion
+                ? "true"
+                : "false";
+            var url = $"/{Uri.EscapeDataString(Slug)}"
+                + $"?adminPreview=true&previewLayoutKey={key}"
+                + $"&previewLayoutVersion={version}"
+                + $"&previewFollowActive={followActive}";
+
+            if (_themePreviewSelection is { } theme)
+            {
+                url += $"&previewTheme={Uri.EscapeDataString(theme.ThemeKey)}";
+                if (theme.Palette is { } palette)
+                {
+                    url += PreviewThemeQuery("previewThemeBase", palette.BaseColor)
+                        + PreviewThemeQuery("previewThemePrimary", palette.Primary)
+                        + PreviewThemeQuery("previewThemeDark", palette.Dark)
+                        + PreviewThemeQuery("previewThemeAccent", palette.Accent)
+                        + PreviewThemeQuery("previewThemeText", palette.Text)
+                        + PreviewThemeQuery("previewThemeMuted", palette.MutedText)
+                        + PreviewThemeQuery("previewThemeBackground", palette.Background)
+                        + PreviewThemeQuery("previewThemePanel", palette.PanelBackground)
+                        + PreviewThemeQuery("previewThemeButton", palette.ButtonBackground)
+                        + PreviewThemeQuery("previewThemeButtonText", palette.ButtonText)
+                        + PreviewThemeQuery("previewThemeBorder", palette.Border);
+                }
+            }
+
+            return url + $"&previewRevision={_previewRevision}";
+        }
+    }
+    private static string PreviewThemeQuery(string name, string value) =>
+        $"&{name}={Uri.EscapeDataString(value)}";
     private string PreviewTitle => "청첩장 미리보기";
+    private bool EffectiveSearchIndexing => WeddingSeoService.IsIndexingEnabled(Vm.Config);
+    private WeddingLayoutOption? AppliedLayoutOption =>
+        Vm.Config is null
+            ? null
+            : Vm.FindLayoutOption(
+                Vm.Config.DesignSettings.LayoutKey,
+                Vm.Config.DesignSettings.FollowActiveLayoutVersion
+                    ? null
+                    : Vm.Config.DesignSettings.LayoutVersion);
+    private WeddingLayoutOption? SelectedLayoutOption =>
+        _layoutCandidate is { } candidate
+            ? Vm.FindLayoutOption(candidate.LayoutKey, candidate.Version) ?? AppliedLayoutOption
+            : AppliedLayoutOption ?? Vm.LayoutCatalog.Layouts.FirstOrDefault();
+    private IEnumerable<WeddingLayoutOption> FilteredLayoutOptions
+    {
+        get
+        {
+            var query = _layoutSearch.Trim();
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return Vm.LayoutCatalog.Layouts;
+            }
+
+            return Vm.LayoutCatalog.Layouts.Where(option =>
+                option.Label.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || option.Description.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || option.Key.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || option.Version.Contains(query, StringComparison.OrdinalIgnoreCase)
+                || LayoutTierLabel(option).Contains(query, StringComparison.OrdinalIgnoreCase));
+        }
+    }
     private PreviewDevice CurrentPreviewDevice =>
         _previewDevices.FirstOrDefault(x => string.Equals(x.Key, _previewDeviceKey, StringComparison.OrdinalIgnoreCase))
         ?? _previewDevices[0];
+    private bool CurrentHeroCropUsesFullImage =>
+        _heroCropViewport == "mobile" ? _heroCropMobileFull : _heroCropDesktopFull;
+    private HeroImageCropRegion CurrentHeroCropDraft =>
+        _heroCropViewport == "mobile" ? _heroCropMobileDraft : _heroCropDesktopDraft;
+    private double CurrentHeroCropAspect =>
+        _heroCropViewport == "mobile"
+            ? (double)CurrentPreviewDevice.Width / CurrentPreviewDevice.Height
+            : 16d / 9d;
+    private string HeroCropEditorKey => $"{_heroCropViewport}:{_heroCropEditorRevision}";
     private string PreviewHeaderTitle =>
         _previewMode == "phone" ? $"폰 미리보기 · {CurrentPreviewDevice.Label}" : "PC 미리보기";
     private string PreviewFrameStyle =>
         _previewMode == "phone"
             ? $"--w-preview-device-width:{CurrentPreviewDevice.Width}px;--w-preview-device-height:{CurrentPreviewDevice.Height}px;"
             : "";
+    private WeddingThemePalette CurrentCustomPalette =>
+        WeddingThemePaletteGenerator.ResolveForEditing(
+            Vm.Config?.DesignSettings.CustomTheme);
+    private double TextContrastRatio =>
+        WeddingThemePaletteGenerator.ContrastRatio(
+            CurrentCustomPalette.Text,
+            CurrentCustomPalette.Background);
+    private double MutedContrastRatio =>
+        WeddingThemePaletteGenerator.ContrastRatio(
+            CurrentCustomPalette.MutedText,
+            CurrentCustomPalette.Background);
+    private double ButtonContrastRatio =>
+        WeddingThemePaletteGenerator.ContrastRatio(
+            CurrentCustomPalette.ButtonText,
+            CurrentCustomPalette.ButtonBackground);
     private IReadOnlyList<string> OrderedDesignSections => Vm.Config is null
         ? []
         : WeddingSectionOrderCatalog.NormalizeInvitationOrder(
             Vm.Config.DesignSettings.SectionOrder,
-            WeddingLayoutCatalog.Instance.Find(Vm.Config.DesignSettings.LayoutMode)?.SupportedSections ?? WeddingSectionOrderCatalog.InvitationRecommendedOrder);
+            AppliedLayoutOption?.SupportedSections ?? WeddingSectionOrderCatalog.InvitationRecommendedOrder);
     private string CeremonyNotePreviewHtml
     {
         get
@@ -1003,7 +1665,186 @@
         {
             _previewDeviceKey = key!;
             _previewMode = "phone";
+            if (_heroCropEditorOpen && _heroCropViewport == "mobile")
+            {
+                QueueHeroCropEditorInit();
+            }
         }
+    }
+
+    private static string LayoutTierLabel(WeddingLayoutOption option) =>
+        option.Tier == WeddingLayoutTier.Free ? "무료" : "프리미엄";
+
+    private bool IsAppliedLayout(WeddingLayoutOption option)
+    {
+        var applied = AppliedLayoutOption;
+        return applied is not null
+            && string.Equals(applied.Key, option.Key, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(applied.Version, option.Version, StringComparison.Ordinal);
+    }
+
+    private IReadOnlyList<WeddingLayoutOption> GetLayoutVersionOptions(string layoutKey) =>
+        Vm.LayoutCatalog.Releases
+            .Where(release => string.Equals(
+                release.LayoutKey,
+                layoutKey,
+                StringComparison.OrdinalIgnoreCase))
+            .Select(release => Vm.FindLayoutOption(release.LayoutKey, release.Version))
+            .Where(option => option is not null)
+            .Select(option => option!)
+            .OrderByDescending(
+                option => option.Version,
+                Comparer<string>.Create(CompareLayoutVersions))
+            .ToArray();
+
+    private void SelectLayoutVersion(string layoutKey, ChangeEventArgs args)
+    {
+        var version = args.Value?.ToString();
+        if (!WeddingLayoutVersion.IsValid(version))
+        {
+            return;
+        }
+
+        var option = Vm.FindLayoutOption(layoutKey, version);
+        if (option is not null)
+        {
+            SelectLayoutCandidate(option);
+        }
+    }
+
+    private static string LayoutVersionOptionLabel(
+        WeddingLayoutOption option,
+        WeddingLayoutOption? applied,
+        string? activeVersion)
+    {
+        var labels = new List<string> { $"v{option.Version}" };
+        if (applied is not null
+            && string.Equals(applied.Key, option.Key, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(applied.Version, option.Version, StringComparison.Ordinal))
+        {
+            labels.Add("현재 사용");
+        }
+
+        if (string.Equals(
+                activeVersion,
+                option.Version,
+                StringComparison.Ordinal))
+        {
+            labels.Add("현재 활성");
+        }
+
+        return string.Join(" · ", labels);
+    }
+
+    private string LayoutApplyButtonLabel(
+        WeddingLayoutOption selected,
+        WeddingLayoutOption? applied)
+    {
+        if (IsAppliedLayout(selected))
+        {
+            return "현재 적용 중";
+        }
+
+        if (applied is not null
+            && string.Equals(
+                applied.Key,
+                selected.Key,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return CompareLayoutVersions(selected.Version, applied.Version) > 0
+                ? $"v{selected.Version}로 업데이트"
+                : $"v{selected.Version} 사용";
+        }
+
+        return "이 레이아웃 적용";
+    }
+
+    private static int CompareLayoutVersions(string? left, string? right)
+    {
+        var leftParts = ParseLayoutVersion(left);
+        var rightParts = ParseLayoutVersion(right);
+        var coreComparison = leftParts.Core.CompareTo(rightParts.Core);
+        if (coreComparison != 0)
+        {
+            return coreComparison;
+        }
+
+        if (leftParts.PreRelease.Length == 0)
+        {
+            return rightParts.PreRelease.Length == 0 ? 0 : 1;
+        }
+
+        if (rightParts.PreRelease.Length == 0)
+        {
+            return -1;
+        }
+
+        return string.Compare(
+            leftParts.PreRelease,
+            rightParts.PreRelease,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static (Version Core, string PreRelease) ParseLayoutVersion(
+        string? version)
+    {
+        var normalized = version?.Trim() ?? WeddingLayoutVersion.Initial;
+        var withoutBuild = normalized.Split('+', 2)[0];
+        var parts = withoutBuild.Split('-', 2);
+        return (
+            Version.TryParse(parts[0], out var core)
+                ? core
+                : new Version(0, 0, 0),
+            parts.Length == 2 ? parts[1] : "");
+    }
+
+    private void ToggleLayoutPicker()
+    {
+        _layoutPickerOpen = !_layoutPickerOpen;
+        if (_layoutPickerOpen)
+        {
+            _layoutSearch = "";
+        }
+    }
+
+    private void OnLayoutSearchKeyDown(KeyboardEventArgs e)
+    {
+        if (string.Equals(e.Key, "Escape", StringComparison.OrdinalIgnoreCase))
+        {
+            _layoutPickerOpen = false;
+            return;
+        }
+
+        if (string.Equals(e.Key, "Enter", StringComparison.OrdinalIgnoreCase))
+        {
+            var first = FilteredLayoutOptions.FirstOrDefault();
+            if (first is not null)
+            {
+                SelectLayoutCandidate(first);
+            }
+        }
+    }
+
+    private void SelectLayoutCandidate(WeddingLayoutOption option)
+    {
+        if (Vm.FindLayoutOption(option.Key, option.Version) is null) return;
+        _layoutCandidate = option.ReleaseId;
+        _layoutPickerOpen = false;
+        _layoutSearch = "";
+        _layoutApplyMessage = "";
+    }
+
+    private async Task ApplySelectedLayout()
+    {
+        var option = SelectedLayoutOption;
+        if (option is null || !option.IsImplemented || !CanUseLayout(option)) return;
+
+        SelectLayout(option);
+        await PublishPreviewAccountDraftAsync();
+        _previewOpen = true;
+        _previewRevision++;
+        _layoutApplyMessage =
+            $"{option.Label} 레이아웃을 오른쪽 미리보기에 반영했습니다. 설정 저장을 누르면 공개 청첩장에 확정됩니다.";
     }
 
     private static string Icon(string name) => name switch
@@ -1036,10 +1877,6 @@
         return new WeddingLayoutAccessState
         {
             HasPremiumPlan = Vm.Config.HasPremiumPlan,
-            UnlockedLayouts = Vm.Config.UnlockedLayoutModes
-                .Select(WeddingLayoutCatalog.FromLegacyKey)
-                .Where(x => x != WeddingLayoutMode.Unknown)
-                .ToArray(),
         };
     }
 
@@ -1056,28 +1893,30 @@
         {
             HasPremiumPlan = Vm.Config.HasPremiumPlan,
             UnlockedThemeKeys = Vm.Config.UnlockedThemeKeys
+                .Where(WeddingThemeCatalog.IsPresetKey)
                 .Select(WeddingThemeCatalog.NormalizeKey)
-                .Where(WeddingThemeCatalog.IsKnownKey)
                 .ToArray(),
         };
     }
 
-    private void SelectLayout(WeddingLayoutMode mode)
+    private void SelectLayout(WeddingLayoutOption option)
     {
         if (Vm.Config is null) return;
-        var option = WeddingLayoutCatalog.Instance.Find(mode);
-        if (option is null || !option.IsImplemented || !CanUseLayout(option)) return;
-        Vm.Config.DesignSettings.LayoutMode = mode;
-        Vm.Config.InvitationStyle = InvitationDesignCatalog.ToLegacyLayoutKey(mode);
-        if (mode != WeddingLayoutMode.Story && _selected == "story")
+        if (!option.IsImplemented || !CanUseLayout(option)) return;
+
+        // 사용자가 명시적으로 적용한 버전은 항상 그 불변 릴리스에
+        // 고정합니다. 새 활성 버전 자동 적용은 적용 후 별도로 켭니다.
+        InvitationDesignCatalog.ApplyLayoutSelection(Vm.Config, option);
+
+        if (option.Mode != WeddingLayoutMode.Story && _selected == "story")
         {
             _selected = "design";
         }
-        if (mode != WeddingLayoutMode.PhotoBook && _selected == "photobook")
+        if (option.Mode != WeddingLayoutMode.PhotoBook && _selected == "photobook")
         {
             _selected = "design";
         }
-        if (mode != WeddingLayoutMode.Card && _selected == "cards")
+        if (option.Mode != WeddingLayoutMode.Card && _selected == "cards")
         {
             _selected = "design";
         }
@@ -1090,6 +1929,174 @@
         if (option is null || !option.IsImplemented || !CanUseTheme(option)) return;
         Vm.Config.DesignSettings.ThemeKey = option.Key;
         Vm.Config.ThemeName = Vm.Config.DesignSettings.ThemeKey;
+        _themePreviewMessage = $"{option.DisplayName} 테마를 오른쪽 미리보기에 반영했습니다.";
+        CaptureThemePreview();
+    }
+
+    private void SelectCustomTheme()
+    {
+        if (Vm.Config is null || !Vm.Config.HasPremiumPlan) return;
+        Vm.Config.DesignSettings.CustomTheme ??= new CustomWeddingThemeSettings();
+        Vm.Config.DesignSettings.ThemeKey = WeddingThemeCatalog.CustomThemeKey;
+        Vm.Config.ThemeName = WeddingThemeCatalog.CustomThemeKey;
+        _themePreviewMessage = "나만의 테마를 오른쪽 미리보기에 반영했습니다.";
+        CaptureThemePreview();
+    }
+
+    private void OnThemeBaseColorChanged(ChangeEventArgs e)
+    {
+        if (Vm.Config is null
+            || !Vm.Config.HasPremiumPlan
+            || !WeddingThemePaletteGenerator.TryNormalizeHexColor(
+                e.Value?.ToString(),
+                out var baseColor))
+        {
+            return;
+        }
+
+        var custom = Vm.Config.DesignSettings.CustomTheme
+            ??= new CustomWeddingThemeSettings();
+        WeddingThemePaletteGenerator.ApplyGenerated(custom, baseColor);
+        ActivateCustomTheme();
+        QueueThemePreview(
+            "대표 색상으로 읽기 편한 팔레트를 자동 생성해 미리보기에 반영했습니다.");
+    }
+
+    private void ApplyAutomaticThemePalette()
+    {
+        if (Vm.Config is null || !Vm.Config.HasPremiumPlan)
+        {
+            return;
+        }
+
+        var custom = Vm.Config.DesignSettings.CustomTheme
+            ??= new CustomWeddingThemeSettings();
+        var baseColor = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.BaseColor,
+            custom.Primary);
+        WeddingThemePaletteGenerator.ApplyGenerated(custom, baseColor);
+        ActivateCustomTheme();
+        _themePreviewMessage =
+            "대표 색상으로 읽기 편한 팔레트를 자동 생성해 미리보기에 반영했습니다.";
+        CaptureThemePreview();
+    }
+
+    private void UpdateCustomThemeColor(string token, string? value)
+    {
+        if (Vm.Config is null
+            || !Vm.Config.HasPremiumPlan
+            || !WeddingThemePaletteGenerator.TryNormalizeHexColor(
+                value,
+                out var normalized))
+        {
+            return;
+        }
+
+        var custom = Vm.Config.DesignSettings.CustomTheme
+            ??= new CustomWeddingThemeSettings();
+        switch (token)
+        {
+            case "primary":
+                custom.Primary = normalized;
+                break;
+            case "accent":
+                custom.Accent = normalized;
+                break;
+            case "dark":
+                custom.Dark = normalized;
+                break;
+            case "text":
+                custom.Text = normalized;
+                break;
+            case "muted":
+                custom.MutedText = normalized;
+                break;
+            case "background":
+                custom.Background = normalized;
+                break;
+            case "panel":
+                custom.PanelBackground = normalized;
+                break;
+            case "button":
+                custom.ButtonBackground = normalized;
+                break;
+            case "button-text":
+                custom.ButtonText = normalized;
+                break;
+            case "border":
+                custom.Border = normalized;
+                break;
+            default:
+                return;
+        }
+
+        ActivateCustomTheme();
+        QueueThemePreview(
+            "세부 색상 변경을 미리보기에 반영했습니다. 설정 저장 전까지 공개 화면에는 적용되지 않습니다.");
+    }
+
+    private void ActivateCustomTheme()
+    {
+        if (Vm.Config is null)
+        {
+            return;
+        }
+
+        Vm.Config.DesignSettings.ThemeKey = WeddingThemeCatalog.CustomThemeKey;
+        Vm.Config.ThemeName = WeddingThemeCatalog.CustomThemeKey;
+    }
+
+    private void QueueThemePreview(string message)
+    {
+        _themePreviewDebounceCts?.Cancel();
+        _themePreviewDebounceCts?.Dispose();
+        var cts = new System.Threading.CancellationTokenSource();
+        _themePreviewDebounceCts = cts;
+        _ = ApplyThemePreviewAfterDelayAsync(message, cts);
+    }
+
+    private async Task ApplyThemePreviewAfterDelayAsync(
+        string message,
+        System.Threading.CancellationTokenSource source)
+    {
+        try
+        {
+            await Task.Delay(160, source.Token);
+            await InvokeAsync(() =>
+            {
+                if (source.IsCancellationRequested)
+                {
+                    return;
+                }
+
+                _themePreviewMessage = message;
+                CaptureThemePreview();
+                StateHasChanged();
+            });
+        }
+        catch (TaskCanceledException)
+        {
+        }
+    }
+
+    private void CaptureThemePreview()
+    {
+        if (Vm.Config is null)
+        {
+            return;
+        }
+
+        var key = Vm.Config.DesignSettings.ThemeKey;
+        var palette = string.Equals(
+                key,
+                WeddingThemeCatalog.CustomThemeKey,
+                StringComparison.OrdinalIgnoreCase)
+            ? WeddingThemePaletteGenerator.ResolveForEditing(
+                Vm.Config.DesignSettings.CustomTheme)
+            : null;
+        _themePreviewSelection = new WeddingThemePreviewSelection(key, palette);
+        _previewOpen = true;
+        _previewRevision++;
     }
 
     private void ApplyCeremonyNoteExample(string tone)
@@ -1144,6 +2151,7 @@
     {
         try
         {
+            await PublishPreviewAccountDraftAsync();
             await JS.InvokeVoidAsync("weddingInterop.reloadPreviewIframe");
         }
         catch { }
@@ -1151,12 +2159,27 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            // 같은 브라우저에서 다른 테넌트의 공개 페이지를 본 뒤 관리 화면으로
+            // 이동해도 이전 테넌트의 사용자 정의 CSS 변수가 남지 않게 초기화합니다.
+            try
+            {
+                await JS.InvokeVoidAsync(
+                    "weddingInterop.applyTheme",
+                    WeddingThemeCatalog.DefaultThemeKey,
+                    (object?)null);
+            }
+            catch { }
+        }
+
         if (firstRender && !Vm.IsAuthenticated && !_superAdminAutoLoginChecked)
         {
             _superAdminAutoLoginChecked = true;
-            if (await TrySuperAdminAutoLoginAsync())
+            var restored = await TrySuperAdminAutoLoginAsync();
+            StateHasChanged();
+            if (restored)
             {
-                StateHasChanged();
                 return;
             }
         }
@@ -1172,6 +2195,7 @@
                 _selfRef ??= DotNetObjectReference.Create(this);
                 try { await JS.InvokeVoidAsync("weddingInterop.initAdminPreviewDesignBridge", _selfRef); }
                 catch { }
+                await PublishPreviewAccountDraftAsync();
             }
 
             if (!_initialStateLoaded)
@@ -1182,6 +2206,14 @@
                     _previewCollapsed = await JS.InvokeAsync<bool>("weddingInterop.getPreviewCollapsed");
                     StateHasChanged();
                 }
+                catch { }
+            }
+
+            if (_heroCropEditorOpen && _heroCropEditorNeedsInit)
+            {
+                _heroCropEditorNeedsInit = false;
+                _selfRef ??= DotNetObjectReference.Create(this);
+                try { await JS.InvokeVoidAsync("weddingInterop.initHeroCropEditor", _selfRef); }
                 catch { }
             }
         }
@@ -1232,7 +2264,25 @@
 
     protected override async Task OnInitializedAsync()
     {
+        LayoutRegistry.Changed += OnLayoutCatalogChanged;
         await Vm.InitializeAsync(Slug);
+    }
+
+    private void OnLayoutCatalogChanged(
+        object? sender,
+        WeddingLayoutCatalogChangedEventArgs args)
+    {
+        _ = InvokeAsync(() =>
+        {
+            if (_layoutCandidate is { } candidate
+                && args.Current.FindRelease(candidate) is null)
+            {
+                _layoutCandidate = null;
+                _layoutApplyMessage = "선택했던 레이아웃 버전이 게시 목록에서 내려가 현재 적용값으로 돌아왔습니다.";
+            }
+
+            StateHasChanged();
+        });
     }
 
     private async Task<bool> TrySuperAdminAutoLoginAsync()
@@ -1240,10 +2290,15 @@
         try
         {
             var token = await JS.InvokeAsync<string>("weddingInterop.getSuperAdminSessionToken");
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return false;
+            }
             return await Vm.LoginAsSuperAdminAsync(Slug, token);
         }
-        catch
+        catch (Exception ex)
         {
+            Vm.SetStatusMessage($"슈퍼관리자 자동 인증을 확인하지 못했습니다. 통합 어드민에서 다시 열어주세요. ({ex.GetType().Name})");
             return false;
         }
     }
@@ -1258,6 +2313,12 @@
     {
         await Vm.SaveConfigAsync();
         await ReloadPreview();
+    }
+
+    private void OnSearchIndexingChanged(ChangeEventArgs e)
+    {
+        if (Vm.Config is null) return;
+        Vm.Config.AllowSearchIndexing = e.Value is bool enabled && enabled;
     }
 
     private void MoveSection(string section, int offset)
@@ -1276,7 +2337,7 @@
     private void ResetSectionOrder()
     {
         if (Vm.Config is null) return;
-        var supported = WeddingLayoutCatalog.Instance.Find(Vm.Config.DesignSettings.LayoutMode)?.SupportedSections
+        var supported = AppliedLayoutOption?.SupportedSections
             ?? WeddingSectionOrderCatalog.InvitationRecommendedOrder;
         Vm.Config.DesignSettings.SectionOrder =
             WeddingSectionOrderCatalog.NormalizeInvitationOrder(WeddingSectionOrderCatalog.InvitationRecommendedOrder, supported);
@@ -1314,26 +2375,143 @@
         await ReloadPreview();
     }
 
-    private async Task ResetHeroPanel(string target)
+    private void OpenHeroCropEditor()
+    {
+        if (Vm.Config is null) return;
+        var presentation = Vm.Config.DesignSettings.HeroImagePresentation;
+        _heroCropDesktopFull = !string.Equals(
+            presentation.DesktopFit,
+            HeroImagePresentationSettings.Cover,
+            StringComparison.OrdinalIgnoreCase);
+        _heroCropMobileFull = !string.Equals(
+            presentation.MobileFit,
+            HeroImagePresentationSettings.Cover,
+            StringComparison.OrdinalIgnoreCase);
+        _heroCropDesktopDraft = CloneCrop(presentation.DesktopCrop);
+        _heroCropMobileDraft = CloneCrop(presentation.MobileCrop);
+        _heroCropViewport = _previewMode == "pc" ? "desktop" : "mobile";
+        _heroCropEditorOpen = true;
+        QueueHeroCropEditorInit();
+    }
+
+    private void CloseHeroCropEditor()
+    {
+        _heroCropEditorOpen = false;
+        _heroCropEditorNeedsInit = false;
+    }
+
+    private void SetHeroCropViewport(string viewport)
+    {
+        _heroCropViewport = viewport == "desktop" ? "desktop" : "mobile";
+        _previewMode = _heroCropViewport == "desktop" ? "pc" : "phone";
+        QueueHeroCropEditorInit();
+    }
+
+    private void SetHeroCropMode(bool useFullImage)
+    {
+        if (_heroCropViewport == "mobile") _heroCropMobileFull = useFullImage;
+        else _heroCropDesktopFull = useFullImage;
+        QueueHeroCropEditorInit();
+    }
+
+    private void QueueHeroCropEditorInit()
+    {
+        _heroCropEditorRevision++;
+        _heroCropEditorNeedsInit = _heroCropEditorOpen && !CurrentHeroCropUsesFullImage;
+    }
+
+    [JSInvokable]
+    public void OnHeroCropDraftChanged(
+        string viewport,
+        double x,
+        double y,
+        double width,
+        double height)
+    {
+        var draft = new HeroImageCropRegion
+        {
+            X = x,
+            Y = y,
+            Width = width,
+            Height = height,
+        };
+        NormalizeCropDraft(draft);
+        if (string.Equals(viewport, "mobile", StringComparison.OrdinalIgnoreCase))
+        {
+            _heroCropMobileDraft = draft;
+        }
+        else
+        {
+            _heroCropDesktopDraft = draft;
+        }
+    }
+
+    private async Task ApplyHeroCropEditor()
+    {
+        if (Vm.Config is null) return;
+        var presentation = Vm.Config.DesignSettings.HeroImagePresentation;
+        presentation.DesktopFit = _heroCropDesktopFull
+            ? HeroImagePresentationSettings.Contain
+            : HeroImagePresentationSettings.Cover;
+        presentation.MobileFit = _heroCropMobileFull
+            ? HeroImagePresentationSettings.Contain
+            : HeroImagePresentationSettings.Cover;
+        presentation.DesktopCrop = CloneCrop(_heroCropDesktopDraft);
+        presentation.MobileCrop = CloneCrop(_heroCropMobileDraft);
+        presentation.DesktopFocusX = presentation.DesktopCrop.X + presentation.DesktopCrop.Width / 2;
+        presentation.DesktopFocusY = presentation.DesktopCrop.Y + presentation.DesktopCrop.Height / 2;
+        presentation.MobileFocusX = presentation.MobileCrop.X + presentation.MobileCrop.Width / 2;
+        presentation.MobileFocusY = presentation.MobileCrop.Y + presentation.MobileCrop.Height / 2;
+
+        await Vm.SaveConfigAsync();
+        CloseHeroCropEditor();
+        await ReloadPreview();
+    }
+
+    private static HeroImageCropRegion CloneCrop(HeroImageCropRegion source) =>
+        new()
+        {
+            X = source.X,
+            Y = source.Y,
+            Width = source.Width,
+            Height = source.Height,
+        };
+
+    private static void NormalizeCropDraft(HeroImageCropRegion crop)
+    {
+        crop.X = Math.Clamp(double.IsFinite(crop.X) ? crop.X : 0, 0, 95);
+        crop.Y = Math.Clamp(double.IsFinite(crop.Y) ? crop.Y : 0, 0, 95);
+        crop.Width = Math.Clamp(double.IsFinite(crop.Width) ? crop.Width : 100, 5, 100 - crop.X);
+        crop.Height = Math.Clamp(double.IsFinite(crop.Height) ? crop.Height : 100, 5, 100 - crop.Y);
+    }
+
+    private async Task ResetHeroPanel(string target, bool mobile)
     {
         if (Vm.Config is null) return;
         var placement = target == "heroBottom"
             ? Vm.Config.DesignSettings.HeroPlacement.InviteBottom
             : Vm.Config.DesignSettings.HeroPlacement.InviteTop;
 
-        placement.DesktopX = placement.DesktopY = placement.MobileX = placement.MobileY = null;
+        if (mobile)
+        {
+            placement.MobileX = placement.MobileY = null;
+        }
+        else
+        {
+            placement.DesktopX = placement.DesktopY = null;
+        }
         await Vm.SaveConfigAsync();
         await ReloadPreview();
     }
 
-    private async Task AlignHeroPanel(string target)
+    private async Task AlignHeroPanel(string target, bool mobile)
     {
         if (Vm.Config is null) return;
         var placement = target == "heroBottom"
             ? Vm.Config.DesignSettings.HeroPlacement.InviteBottom
             : Vm.Config.DesignSettings.HeroPlacement.InviteTop;
 
-        SnapPanelPlacement(placement);
+        SnapPanelPlacement(placement, mobile);
         await Vm.SaveConfigAsync();
         await ReloadPreview();
     }
@@ -1391,17 +2569,17 @@
         }
     }
 
-    private static void SnapPanelPlacement(HeroPanelPlacement placement)
+    private static void SnapPanelPlacement(HeroPanelPlacement placement, bool mobile)
     {
-        if (placement.HasDesktopCustomPosition)
-        {
-            placement.DesktopX = SnapPercent(placement.DesktopX!.Value);
-            placement.DesktopY = SnapPercent(placement.DesktopY!.Value);
-        }
-        if (placement.HasMobileCustomPosition)
+        if (mobile && placement.HasMobileCustomPosition)
         {
             placement.MobileX = SnapPercent(placement.MobileX!.Value);
             placement.MobileY = SnapPercent(placement.MobileY!.Value);
+        }
+        else if (!mobile && placement.HasDesktopCustomPosition)
+        {
+            placement.DesktopX = SnapPercent(placement.DesktopX!.Value);
+            placement.DesktopY = SnapPercent(placement.DesktopY!.Value);
         }
     }
 
@@ -1413,12 +2591,14 @@
 
     private static double ClampPercent(double value) => Math.Clamp(value, 0, 100);
 
-    private static string FormatPanelPosition(HeroPanelPlacement placement)
-    {
-        var mobile = placement.HasMobileCustomPosition ? $"모바일 {placement.MobileX:0.#}%, {placement.MobileY:0.#}%" : "모바일 기본";
-        var desktop = placement.HasDesktopCustomPosition ? $"PC {placement.DesktopX:0.#}%, {placement.DesktopY:0.#}%" : "PC 기본";
-        return $"{desktop} · {mobile}";
-    }
+    private static string FormatPanelPosition(HeroPanelPlacement placement, bool mobile) =>
+        mobile
+            ? placement.HasMobileCustomPosition
+                ? $"{placement.MobileX:0.#}%, {placement.MobileY:0.#}%"
+                : "기본 위치"
+            : placement.HasDesktopCustomPosition
+                ? $"{placement.DesktopX:0.#}%, {placement.DesktopY:0.#}%"
+                : "기본 위치";
 
     private static string FormatFloatingPosition(WeddingFloatingPosition position)
     {
@@ -1503,17 +2683,46 @@
         StateHasChanged();
     }
 
-    private void AddAccount()
+    private async Task OnAccountLabelChanged(
+        AccountInfo account,
+        ChangeEventArgs args)
+    {
+        account.Label = args.Value?.ToString() ?? string.Empty;
+        await PublishPreviewAccountDraftAsync();
+    }
+
+    private async Task PublishPreviewAccountDraftAsync()
+    {
+        if (!_adminInteropInitialized || Vm.Config is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await JS.InvokeVoidAsync(
+                "weddingInterop.updateAdminPreviewAccountDraft",
+                Vm.Config.Accounts);
+        }
+        catch
+        {
+            // 프리뷰 iframe이 아직 연결되기 전이면 ready 핸드셰이크에서 다시 전송됩니다.
+        }
+    }
+
+    private async Task AddAccount()
     {
         Vm.Config?.Accounts.Add(new AccountInfo { Label = "신랑" });
+        await PublishPreviewAccountDraftAsync();
         StateHasChanged();
     }
 
-    private void RemoveAccount(int idx)
+    private async Task RemoveAccount(int idx)
     {
         if (idx >= 0 && idx < Vm.Config?.Accounts.Count)
         {
             Vm.Config.Accounts.RemoveAt(idx);
+            await PublishPreviewAccountDraftAsync();
             StateHasChanged();
         }
     }
@@ -1617,6 +2826,11 @@
 
     public void Dispose()
     {
+        LayoutRegistry.Changed -= OnLayoutCatalogChanged;
+        _uploadTickCts?.Cancel();
+        _uploadTickCts?.Dispose();
+        _themePreviewDebounceCts?.Cancel();
+        _themePreviewDebounceCts?.Dispose();
         _selfRef?.Dispose();
     }
 }

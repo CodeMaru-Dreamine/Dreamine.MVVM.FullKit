@@ -71,16 +71,25 @@ jobs:
           dotnet restore "20_SOURCES/200. Tests/Dreamine.FullKit.Tests/Dreamine.FullKit.Tests.csproj"
           dotnet restore "20_SOURCES/200. Tests/Dreamine.FullKit.Wpf.Tests/Dreamine.FullKit.Wpf.Tests.csproj"
           dotnet restore "20_SOURCES/200. Tests/UI.WinForms.Tests/Dreamine.UI.WinForms.Tests.csproj"
+          dotnet restore "20_SOURCES/200. Tests/Wedding.Layouts.Contracts.Tests/Wedding.Layouts.Contracts.Tests.csproj"
+          dotnet restore "20_SOURCES/200. Tests/WeddingPlatform.LayoutWorkflow.Tests/WeddingPlatform.LayoutWorkflow.Tests.csproj"
+          dotnet restore "20_SOURCES/200. Tests/Wedding.Layouts.PipelineSmoke/Wedding.Layouts.PipelineSmoke.csproj"
           dotnet restore "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/SampleCore/SampleCore.csproj"
           dotnet restore "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Wpf/SampleCrossUi.Wpf.csproj"
           dotnet restore "20_SOURCES/000. Project/010. App/Dreamine.Web/Dreamine.Web.csproj"
           dotnet restore "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/WeddingPlatform.Web.csproj"
+          dotnet restore "20_SOURCES/000. Project/010. App/Wedding.Layouts.Editor.Wpf/Wedding.Layouts.Editor.Wpf.csproj"
 
       - name: Run tests
         run: |
           dotnet test "20_SOURCES/200. Tests/Dreamine.FullKit.Tests/Dreamine.FullKit.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --filter "Category!=GeneratedOntology"
           dotnet test "20_SOURCES/200. Tests/Dreamine.FullKit.Wpf.Tests/Dreamine.FullKit.Wpf.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
           dotnet test "20_SOURCES/200. Tests/UI.WinForms.Tests/Dreamine.UI.WinForms.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+          dotnet test "20_SOURCES/200. Tests/Wedding.Layouts.Contracts.Tests/Wedding.Layouts.Contracts.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+          dotnet test "20_SOURCES/200. Tests/WeddingPlatform.LayoutWorkflow.Tests/WeddingPlatform.LayoutWorkflow.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+
+      - name: Run wedding layout pipeline smoke test
+        run: dotnet run --project "20_SOURCES/200. Tests/Wedding.Layouts.PipelineSmoke/Wedding.Layouts.PipelineSmoke.csproj" --no-restore --configuration Release
 
       - name: Build representative samples
         run: |
@@ -88,6 +97,7 @@ jobs:
           dotnet build "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Wpf/SampleCrossUi.Wpf.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
           dotnet build "20_SOURCES/000. Project/010. App/Dreamine.Web/Dreamine.Web.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
           dotnet build "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/WeddingPlatform.Web.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+          dotnet build "20_SOURCES/000. Project/010. App/Wedding.Layouts.Editor.Wpf/Wedding.Layouts.Editor.Wpf.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
 
   publish-nuget:
     name: Publish NuGet packages

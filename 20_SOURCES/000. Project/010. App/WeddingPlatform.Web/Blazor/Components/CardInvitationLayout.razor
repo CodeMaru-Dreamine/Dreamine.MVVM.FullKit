@@ -1,113 +1,299 @@
 @namespace WeddingPlatform.Blazor.Components
 @using Wedding.Common
+@using Wedding.Layouts.Contracts
+@using WeddingPlatform.Models
 @using WeddingPlatform.ViewModels
 
 @*
-    카드 레이아웃 — 핵심 정보를 카드처럼 겹쳐 보여주는 미니멀 프리미엄 레이아웃.
-    Gallery/Story 와 시각적으로 구분되도록 세로 스택형 카드 프레임을 사용한다.
-    각 섹션 콘텐츠는 InvitationSections 에 위임하고, 이 레이아웃은 카드 프레임과 히어로만 담당한다.
+    기존 Card 레이아웃도 JSON 동적 레이아웃과 동일한 공통 전환
+    LayoutTransitionSurface를 사용한다. 이 파일은 카드별 콘텐츠 구성만 담당한다.
 *@
-<section class="wedding-layout-card @Vm.LayoutDescriptor.CssClass">
-    <section class="wedding-card-hero" role="banner">
-        @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
-        {
-            <div class="wedding-card-hero__media">
-                <img src="@Vm.HeroImageUrl" alt="@Vm.CoupleName 대표 사진" loading="eager" />
-            </div>
-        }
-        <div class="wedding-card-hero__panel">
-            <p class="wedding-layout-kicker">@Vm.HeroTitle</p>
-            <h1>@Vm.CoupleName</h1>
-            <p class="wedding-card-hero__when">
-                @Vm.WeddingDate.ToString("yyyy년 MM월 dd일 (ddd)")
-                @if (!string.IsNullOrWhiteSpace(Vm.WeddingTime))
+@{
+    var pages = VisiblePages;
+}
+<section class="wedding-card-experience @Vm.LayoutDescriptor.CssClass"
+         aria-label="카드형 모바일 청첩장">
+    <LayoutTransitionSurface Presentation="LayoutPresentationMode.FlipCard"
+                             Transition="@CardTransition"
+                             PageCount="@pages.Count"
+                             ActiveIndex="@_activePageIndex"
+                             ActiveIndexChanging="OnActivePageChanging"
+                             ActiveIndexChanged="OnActivePageChanged"
+                             PageLabel="@ResolvePageLabel"
+                             AriaLabel="@($"{Vm.CoupleName} 카드 청첩장")">
+        <PageContent Context="pageIndex">
+            @{
+                var safeIndex = Math.Clamp(pageIndex, 0, pages.Count - 1);
+                var activePage = pages[safeIndex];
+                var activeHighlight = activePage.SectionKey is null
+                    ? null
+                    : Vm.ResolveCardHighlight(activePage.SectionKey);
+                var activeTitle = ResolvePageTitle(activePage, activeHighlight);
+                var activeIcon = ResolvePageIcon(activePage, activeHighlight);
+                var protectPointerGestures = PageProtectsPointerGestures(activePage);
+            }
+            <article class="wedding-card-face"
+                     aria-label="@activeTitle"
+                     @onpointerdown:stopPropagation="@protectPointerGestures"
+                     @onpointerup:stopPropagation="@protectPointerGestures">
+                @if (activePage.SectionKey is null)
                 {
-                    <span> · @Vm.WeddingTime</span>
-                }
-            </p>
-            @if (!string.IsNullOrWhiteSpace(Vm.VenueName))
-            {
-                <p class="wedding-layout-muted">📍 @Vm.VenueName</p>
-            }
-        </div>
-    </section>
-
-    @* hero 아래 별도 강조 카드 리스트는 제거되었다. 강조 카드는 각 섹션 카드 프레임의 헤더로 매핑된다. *@
-    @foreach (var activeSection in Vm.OrderedSections.Where(x => x != "hero"))
-    {
-        var highlight = Vm.ResolveCardHighlight(activeSection);
-        var hasHeader = highlight is not null
-            && (!string.IsNullOrWhiteSpace(highlight.Icon)
-                || !string.IsNullOrWhiteSpace(highlight.Title)
-                || !string.IsNullOrWhiteSpace(highlight.Body));
-        <article class="wedding-card-frame wedding-card-frame--@activeSection @(hasHeader ? "wedding-card-frame--has-header" : "")">
-            @if (hasHeader)
-            {
-                var displayTitle = string.IsNullOrWhiteSpace(highlight!.Title)
-                    ? WeddingSectionOrderCatalog.GetLabel(activeSection)
-                    : highlight.Title;
-                var displayIcon = string.IsNullOrWhiteSpace(highlight.Icon)
-                    ? WeddingSectionOrderCatalog.GetIcon(activeSection)
-                    : highlight.Icon;
-                <header class="wedding-card-frame__head">
-                    <span class="wedding-card-frame__icon">@displayIcon</span>
-                    <div class="wedding-card-frame__title">
-                        <h3>@displayTitle</h3>
-                        @if (!string.IsNullOrWhiteSpace(highlight.Body))
+                    <section class="wedding-card-cover"
+                             role="banner"
+                             data-drag-container
+                             data-hero-crop-container
+                             style="@Vm.HeroImageStyle">
+                        @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
                         {
-                            <p>@highlight.Body</p>
+                            <img class="wedding-card-cover__image wedding-card-cover__image--backdrop"
+                                 src="@Vm.HeroImageUrl"
+                                 alt=""
+                                 aria-hidden="true"
+                                 loading="eager" />
+                            <img class="wedding-card-cover__image"
+                                 data-hero-crop-image
+                                 src="@Vm.HeroImageUrl"
+                                 alt="@Vm.CoupleName 대표 사진"
+                                 loading="eager" />
                         }
-                    </div>
-                </header>
-            }
-            <InvitationSections Slug="@Slug"
-                                Vm="@Vm"
-                                VmGuest="@VmGuest"
-                                IsTabbed="true"
-                                ActiveSection="@activeSection"
-                                PauseMusicRequested="@PauseMusicRequested" />
-        </article>
-    }
+                        else
+                        {
+                            <div class="wedding-card-cover__image wedding-card-cover__image--empty"></div>
+                        }
+                        <div class="wedding-card-cover__veil"></div>
+                        <span class="wedding-card-cover__seal" aria-hidden="true">W</span>
+
+                        <div class="wedding-card-cover__panel wedding-card-cover__panel--top w-panel w-hero__top
+                                    w-hero-panel--dv-@Vm.InviteHeroTopVerticalDesktop
+                                    w-hero-panel--dh-@Vm.InviteHeroTopHorizontalDesktop
+                                    w-hero-panel--mv-@Vm.InviteHeroTopVerticalMobile
+                                    w-hero-panel--mh-@Vm.InviteHeroTopHorizontalMobile
+                                    @(Vm.HasInviteHeroTopCustomPosition ? "w-draggable-positioned" : "")"
+                             data-drag-target="heroTop"
+                             @onpointerdown:stopPropagation
+                             @onpointerup:stopPropagation
+                             style="@Vm.InviteHeroTopStyle">
+                            <p class="wedding-card-cover__kicker">@Vm.HeroTitle</p>
+                            <h1>@Vm.CoupleName</h1>
+                        </div>
+
+                        <div class="wedding-card-cover__panel wedding-card-cover__panel--bottom w-panel w-hero__bottom
+                                    w-hero-panel--dv-@Vm.InviteHeroBottomVerticalDesktop
+                                    w-hero-panel--dh-@Vm.InviteHeroBottomHorizontalDesktop
+                                    w-hero-panel--mv-@Vm.InviteHeroBottomVerticalMobile
+                                    w-hero-panel--mh-@Vm.InviteHeroBottomHorizontalMobile
+                                    @(Vm.HasInviteHeroBottomCustomPosition ? "w-draggable-positioned" : "")"
+                             data-drag-target="heroBottom"
+                             @onpointerdown:stopPropagation
+                             @onpointerup:stopPropagation
+                             style="@Vm.InviteHeroBottomStyle">
+                            <p class="wedding-card-cover__date">
+                                @Vm.WeddingDate.ToString("yyyy년 MM월 dd일 (ddd)")
+                                @if (!string.IsNullOrWhiteSpace(Vm.WeddingTime))
+                                {
+                                    <span>@Vm.WeddingTime</span>
+                                }
+                            </p>
+                            @if (!string.IsNullOrWhiteSpace(Vm.VenueName))
+                            {
+                                <p class="wedding-card-cover__venue">@Vm.VenueName</p>
+                            }
+                        </div>
+                    </section>
+                }
+                else
+                {
+                    var hasHighlightCopy = activeHighlight is not null
+                        && !string.IsNullOrWhiteSpace(activeHighlight.Body);
+                    <section class="wedding-card-sheet wedding-card-sheet--@activePage.SectionKey">
+                        <header class="wedding-card-sheet__header">
+                            <span class="wedding-card-sheet__folio">@(safeIndex + 1). CARD</span>
+                            <span class="wedding-card-sheet__icon" aria-hidden="true">@activeIcon</span>
+                            <h2>@activeTitle</h2>
+                            @if (hasHighlightCopy)
+                            {
+                                <p>@activeHighlight!.Body</p>
+                            }
+                        </header>
+                        <div class="wedding-card-sheet__content"
+                             role="region"
+                             tabindex="0"
+                             aria-label="@($"{activeTitle} 내용. 위아래로 스크롤할 수 있습니다.")">
+                            <InvitationSections Slug="@Slug"
+                                                Vm="@Vm"
+                                                VmGuest="@VmGuest"
+                                                MediaDismissVersion="@_mediaDismissVersion"
+                                                IsTabbed="true"
+                                                ActiveSection="@activePage.SectionKey"
+                                                PauseMusicRequested="@PauseMusicRequested" />
+                        </div>
+                        <footer class="wedding-card-sheet__footer" aria-hidden="true">
+                            <span>@Vm.CoupleName</span>
+                            <span class="wedding-card-sheet__scroll-hint">
+                                <span class="wedding-card-sheet__scroll-arrow">↕</span>
+                                @ResolveScrollHint(activePage)
+                            </span>
+                            <span>WEDDING INVITATION</span>
+                        </footer>
+                    </section>
+                }
+            </article>
+        </PageContent>
+    </LayoutTransitionSurface>
+
+    <p class="wedding-card-navigation__hint">
+        버튼이나 키보드 좌우 방향키를 사용하고, 콘텐츠가 없는 영역에서는 좌우로 밀어 카드를 넘겨보세요.
+    </p>
 </section>
 
 @code {
-    /// <summary>
-    /// \if KO
-    /// <para>청첩장 슬러그 값을 나타냅니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Represents the invitation slug.</para>
-    /// \endif
-    /// </summary>
     [Parameter, EditorRequired] public string Slug { get; set; } = "";
-
-    /// <summary>
-    /// \if KO
-    /// <para>청첩장 표시용 뷰 모델입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The invitation view model used for rendering.</para>
-    /// \endif
-    /// </summary>
     [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
-
-    /// <summary>
-    /// \if KO
-    /// <para>방명록 뷰 모델입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The guestbook view model.</para>
-    /// \endif
-    /// </summary>
     [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
-
-    /// <summary>
-    /// \if KO
-    /// <para>배경 음악 일시 정지 요청 콜백입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Callback that requests pausing the background music.</para>
-    /// \endif
-    /// </summary>
     [Parameter] public EventCallback PauseMusicRequested { get; set; }
+
+    private static readonly LayoutTransitionDefinition CardTransition = new()
+    {
+        Kind = LayoutTransitionKind.FlipCard,
+        DurationMilliseconds = 720,
+        EnableSwipe = true,
+        EnableKeyboard = true,
+        ShowNavigation = true,
+    };
+
+    private sealed record CardPage(string Key, string? SectionKey);
+
+    private int _activePageIndex;
+    private int _mediaDismissVersion;
+    private string _layoutFingerprint = "";
+
+    private IReadOnlyList<CardPage> VisiblePages
+    {
+        get
+        {
+            var pages = new List<CardPage> { new("cover", null) };
+            pages.AddRange(
+                Vm.OrderedSections
+                    .Where(section => !string.Equals(section, "hero", StringComparison.OrdinalIgnoreCase))
+                    .Where(IsSectionRenderable)
+                    .Select(section => new CardPage(section, section)));
+            return pages;
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        var fingerprint = $"{Vm.LayoutKey}|{Vm.LayoutVersion}";
+        if (!string.Equals(_layoutFingerprint, fingerprint, StringComparison.Ordinal))
+        {
+            _layoutFingerprint = fingerprint;
+            _activePageIndex = 0;
+            _mediaDismissVersion++;
+            Vm.CloseLightbox();
+        }
+
+        _activePageIndex = Math.Clamp(
+            _activePageIndex,
+            0,
+            Math.Max(0, VisiblePages.Count - 1));
+    }
+
+    private Task OnActivePageChanging(int _)
+    {
+        // 현재 카드의 사진·영상·자동재생을 먼저 정리하라는 선언적 신호입니다.
+        // 새 카드가 같은 InvitationSections 인스턴스를 재사용하더라도
+        // MediaDismissVersion 변경을 확인하고 임시 미디어 상태를 비웁니다.
+        _mediaDismissVersion++;
+        Vm.CloseLightbox();
+        return Task.CompletedTask;
+    }
+
+    private Task OnActivePageChanged(int nextIndex)
+    {
+        _activePageIndex = Math.Clamp(
+            nextIndex,
+            0,
+            Math.Max(0, VisiblePages.Count - 1));
+        return Task.CompletedTask;
+    }
+
+    private string ResolvePageLabel(int index)
+    {
+        var pages = VisiblePages;
+        if (index < 0 || index >= pages.Count)
+        {
+            return $"카드 {index + 1}";
+        }
+
+        var page = pages[index];
+        return ResolvePageTitle(
+            page,
+            page.SectionKey is null
+                ? null
+                : Vm.ResolveCardHighlight(page.SectionKey));
+    }
+
+    private bool IsSectionRenderable(string section)
+    {
+        if (!Vm.LayoutDescriptor.SupportedSections.Contains(section))
+        {
+            return false;
+        }
+
+        return section switch
+        {
+            "story" => !string.IsNullOrWhiteSpace(Vm.Story) || !string.IsNullOrWhiteSpace(Vm.Story2),
+            "info" => Vm.Mode != WeddingSiteMode.ThankYou || !string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml),
+            "details" => HasDetails,
+            "gallery" => Vm.Gallery.Count > 0,
+            "video" => Vm.VideoUrls.Count > 0,
+            "gift" => Vm.Accounts.Count > 0,
+            "guestbook" => true,
+            _ => false,
+        };
+    }
+
+    private bool HasDetails =>
+        Vm.Mode != WeddingSiteMode.ThankYou
+        && (!string.IsNullOrWhiteSpace(Vm.VenueName)
+            || !string.IsNullOrWhiteSpace(Vm.VenueAddress)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkKakao)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkNaver)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkAtlan)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkTmap)
+            || Vm.HasVenueCoords
+            || !string.IsNullOrWhiteSpace(Vm.RoadMapUrl));
+
+    private static bool PageProtectsPointerGestures(CardPage page) =>
+        page.SectionKey is "details" or "gallery" or "video" or "gift" or "guestbook";
+
+    private static string ResolvePageTitle(CardPage page, CardHighlight? highlight)
+    {
+        if (page.SectionKey is null)
+        {
+            return "표지";
+        }
+
+        return !string.IsNullOrWhiteSpace(highlight?.Title)
+            ? highlight.Title
+            : WeddingSectionOrderCatalog.GetLabel(page.SectionKey);
+    }
+
+    private static string ResolvePageIcon(CardPage page, CardHighlight? highlight)
+    {
+        if (page.SectionKey is null)
+        {
+            return "♡";
+        }
+
+        return !string.IsNullOrWhiteSpace(highlight?.Icon)
+            ? highlight.Icon
+            : WeddingSectionOrderCatalog.GetIcon(page.SectionKey);
+    }
+
+    private string ResolveScrollHint(CardPage page) =>
+        string.Equals(page.SectionKey, "gift", StringComparison.OrdinalIgnoreCase)
+        && Vm.Accounts.Count > 1
+            ? $"계좌 {Vm.Accounts.Count}개 · SCROLL"
+            : "SCROLL";
 }
