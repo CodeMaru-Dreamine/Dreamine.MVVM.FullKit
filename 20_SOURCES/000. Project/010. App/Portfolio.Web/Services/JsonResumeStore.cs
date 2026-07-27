@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using Dreamine.AppSecurity;
 using PortfolioApp.Models;
 
 namespace PortfolioApp.Services;
@@ -75,7 +76,11 @@ public class JsonResumeStore : IResumeStore
     /// <para>The <c>string</c> result produced by the path operation.</para>
     /// \endif
     /// </returns>
-    private string Path_(string slug) => Path.Combine(_root, slug, "resume.json");
+    private string Path_(string slug)
+    {
+        var tenantDir = StoragePathGuard.ResolveIdentifierDirectory(_root, slug, nameof(slug));
+        return StoragePathGuard.ResolveUnderRoot(tenantDir, "resume.json");
+    }
 
     /// <summary>
     /// \if KO

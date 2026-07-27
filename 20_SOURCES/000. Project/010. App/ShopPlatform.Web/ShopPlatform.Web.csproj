@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Shared\Dreamine.AppSecurity.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Identity\Dreamine.Identity.csproj" SetTargetFramework="TargetFramework=net8.0" />
   </ItemGroup>
 

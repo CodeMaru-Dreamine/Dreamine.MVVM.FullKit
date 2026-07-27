@@ -12,6 +12,27 @@
 
     protected override void OnInitialized()
     {
-        Nav.NavigateTo($"/{Slug}/thankyou", replace: true);
+        Nav.NavigateTo(GetCanonicalRedirectPath(Slug), replace: true);
+    }
+
+    private static string GetCanonicalRedirectPath(string slug)
+    {
+        if (!IsValidSlug(slug))
+            return "/";
+
+        return $"/{Uri.EscapeDataString(slug)}/thankyou";
+    }
+
+    private static bool IsValidSlug(string slug)
+    {
+        if (slug.Length is < 2 or > 64 ||
+            slug[0] == '-' ||
+            slug[^1] == '-' ||
+            slug is "admin" or "superadmin")
+        {
+            return false;
+        }
+
+        return slug.All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-');
     }
 }

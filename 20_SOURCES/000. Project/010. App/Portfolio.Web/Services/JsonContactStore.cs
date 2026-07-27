@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using Dreamine.AppSecurity;
 using PortfolioApp.Models;
 
 namespace PortfolioApp.Services;
@@ -75,7 +76,8 @@ public class JsonContactStore : IContactStore
     /// <para>The <c>string</c> result produced by the dir operation.</para>
     /// \endif
     /// </returns>
-    private string Dir(string slug) => Path.Combine(_root, slug, "contacts");
+    private string Dir(string slug) =>
+        StoragePathGuard.ResolveUnderRoot(TenantDir(slug), "contacts");
     /// <summary>
     /// \if KO
     /// <para>Path 작업을 수행합니다.</para>
@@ -108,7 +110,11 @@ public class JsonContactStore : IContactStore
     /// <para>The <c>string</c> result produced by the path operation.</para>
     /// \endif
     /// </returns>
-    private string Path_(string slug, string id) => Path.Combine(Dir(slug), $"{id}.json");
+    private string Path_(string slug, string id) =>
+        StoragePathGuard.ResolveIdentifierFile(Dir(slug), id, ".json", nameof(id));
+
+    private string TenantDir(string slug) =>
+        StoragePathGuard.ResolveIdentifierDirectory(_root, slug, nameof(slug));
 
     /// <summary>
     /// \if KO

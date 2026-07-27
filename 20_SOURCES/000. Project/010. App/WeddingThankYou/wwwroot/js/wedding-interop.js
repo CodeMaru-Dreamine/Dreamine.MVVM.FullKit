@@ -193,16 +193,28 @@ window.weddingInterop = {
         if (window.__wAdminPreviewDesignBridgeBound) return;
         window.__wAdminPreviewDesignBridgeBound = true;
         window.addEventListener('message', function (event) {
-            var data = event.data || {};
+            var previewFrame = document.getElementById('w-preview-iframe');
+            if (!previewFrame || !previewFrame.contentWindow) return;
+            if (event.origin !== window.location.origin || event.source !== previewFrame.contentWindow) return;
+
+            var data = event.data;
+            if (!data || typeof data !== 'object' || Array.isArray(data)) return;
             if (data.type !== 'wedding-design-drag') return;
+            if (data.target !== 'music' && data.target !== 'heroThankYou') return;
+            if (typeof data.xPercent !== 'number' || !Number.isFinite(data.xPercent)
+                || data.xPercent < 0 || data.xPercent > 100) return;
+            if (typeof data.yPercent !== 'number' || !Number.isFinite(data.yPercent)
+                || data.yPercent < 0 || data.yPercent > 100) return;
+            if (data.viewport !== 'mobile' && data.viewport !== 'desktop') return;
+
             var ref = window.__wAdminPreviewDesignBridgeRef;
-            if (!ref) return;
+            if (!ref || typeof ref.invokeMethodAsync !== 'function') return;
             ref.invokeMethodAsync(
                 'OnPreviewElementMoved',
-                data.target || '',
-                Number(data.xPercent) || 0,
-                Number(data.yPercent) || 0,
-                data.viewport || 'desktop'
+                data.target,
+                data.xPercent,
+                data.yPercent,
+                data.viewport
             ).catch(function () { });
         });
     },
@@ -346,7 +358,7 @@ window.weddingInterop = {
                         xPercent: pos.xPercent,
                         yPercent: pos.yPercent,
                         viewport: dragViewport
-                    }, '*');
+                    }, window.location.origin);
                 }
             }
 
