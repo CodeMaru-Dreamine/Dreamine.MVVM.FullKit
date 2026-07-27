@@ -186,7 +186,10 @@ public sealed class HybridTests
     [Fact]
     public void DesignTimeGuard_IsInDesignModeCanBeRead()
     {
-        _ = Dreamine.Hybrid.Wpf.Utility.DesignTimeGuard.IsInDesignMode;
+        Exception? exception = Record.Exception(
+            () => _ = Dreamine.Hybrid.Wpf.Utility.DesignTimeGuard.IsInDesignMode);
+
+        Assert.Null(exception);
     }
 
     /// <summary>
