@@ -216,7 +216,7 @@
                     <button class="secondary" @onclick="CancelEdit">취소</button>
                 }
                 <button class="primary" @onclick="SubmitAsync" disabled="@_busy">
-                    @(_busy ? "처리 중..." : (_editingId is null ? "추가" : "저장"))
+                    @SubmitButtonLabel
                 </button>
             </div>
         </div>
@@ -229,6 +229,12 @@
     private bool _busy;
     private string _message = "";
     private bool _isError;
+    private string SubmitButtonLabel => (_busy, _editingId) switch
+    {
+        (true, _) => "처리 중...",
+        (false, null) => "추가",
+        _ => "저장"
+    };
 
     // form fields
     private string _formName = "";
@@ -469,10 +475,7 @@
         }
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage(
-        "Security",
-        "S2068",
-        Justification = "The literal is a vendor-defined RTSP query parameter; its value comes from the administrator at runtime and no credential is embedded in source.")]
+#pragma warning disable S2068 // Vendor-defined RTSP query key; the value is supplied by the administrator at runtime.
     private void GenerateRtspUrl()
     {
         if (string.IsNullOrEmpty(_brandKey) || string.IsNullOrWhiteSpace(_genIp)) return;
@@ -504,6 +507,7 @@
         if (string.IsNullOrWhiteSpace(_formHost) && _brandKey != "dshow")
             _formHost = ip;
     }
+#pragma warning restore S2068
 
     private void ResetForm()
     {

@@ -1,6 +1,5 @@
 @page "/{Slug}"
 @namespace WeddingThankYou.Blazor.Pages
-@using System.Diagnostics.CodeAnalysis
 @inject NavigationManager Nav
 
 @*!
@@ -11,11 +10,12 @@
 @code {
     [Parameter] public string Slug { get; set; } = "";
 
-    [SuppressMessage("Security", "S5146", Justification = "The redirect target is a same-origin relative path built only after strict lowercase slug validation and URI escaping.")]
+#pragma warning disable S5146 // Same-origin redirect after strict lowercase slug validation and URI escaping.
     protected override void OnInitialized()
     {
         Nav.NavigateTo(GetCanonicalRedirectPath(Slug), replace: true);
     }
+#pragma warning restore S5146
 
     private static string GetCanonicalRedirectPath(string slug)
     {

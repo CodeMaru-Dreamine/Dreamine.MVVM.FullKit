@@ -19,7 +19,7 @@ jobs:
       SONAR_SCANNER_VERSION: 11.2.1
       # Advance this only when starting a new quality/release cycle. Sonar's
       # "Previous version" baseline intentionally depends on a stable version.
-      SONAR_PROJECT_VERSION: 1.0.1
+      SONAR_PROJECT_VERSION: 1.0.2
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
