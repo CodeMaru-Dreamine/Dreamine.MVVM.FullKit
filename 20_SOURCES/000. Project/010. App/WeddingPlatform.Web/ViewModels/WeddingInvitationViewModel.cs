@@ -1351,18 +1351,21 @@ public sealed class WeddingInvitationViewModel
         var tier = descriptor.Tier;
         if (!descriptor.IsBuiltIn)
         {
-            if (!_layoutRegistry.PublishedPackages.TryGetValue(release.Id, out package)
-                || package is null)
+            if (!_layoutRegistry.PublishedPackages.TryGetValue(
+                    release.Id,
+                    out var publishedPackage))
             {
                 ApplyBuiltInLayoutFallback();
                 return;
             }
 
+            package = publishedPackage;
+
             // 신규 등록 경로는 기존 Razor 레이아웃을 베이스로 삼지 않습니다.
             // Unknown은 아래 DynamicInvitationLayout 진입을 뜻하는 호환 경계 값입니다.
             renderMode = WeddingLayoutMode.Unknown;
-            label = package.Manifest.Label;
-            description = package.Manifest.Description;
+            label = publishedPackage.Manifest.Label;
+            description = publishedPackage.Manifest.Description;
         }
 
         // 등급은 개별 릴리스 manifest가 아니라 LayoutKey 단위의 서버 정책을
