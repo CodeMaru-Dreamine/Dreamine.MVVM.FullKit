@@ -1023,7 +1023,7 @@ window.weddingInterop = {
      */
     initHeroCropTargets: function () {
         function numberVar(style, name, fallback) {
-            var value = parseFloat(style.getPropertyValue(name));
+            var value = Number.parseFloat(style.getPropertyValue(name));
             return Number.isFinite(value) ? value : fallback;
         }
 

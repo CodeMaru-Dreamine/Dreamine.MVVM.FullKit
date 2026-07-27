@@ -72,7 +72,9 @@ public sealed class SuperAdminAuditLog : ISuperAdminAuditLog
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            Console.Error.WriteLine($"[SuperAdminAuditLog] Failed to write audit record: {ex.Message}");
+            await Console.Error.WriteLineAsync(
+                    $"[SuperAdminAuditLog] Failed to write audit record: {ex.Message}")
+                .ConfigureAwait(false);
         }
     }
 }

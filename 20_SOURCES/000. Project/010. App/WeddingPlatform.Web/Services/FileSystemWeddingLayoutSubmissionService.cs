@@ -2656,13 +2656,10 @@ public sealed class FileSystemWeddingLayoutSubmissionService :
         foreach (var tenant in tenants)
         {
             cancellationToken.ThrowIfCancellationRequested();
-            var design = tenant.DesignSettings;
-            var tenantLayoutKey = string.IsNullOrWhiteSpace(design?.LayoutKey)
-                ? WeddingLayoutCatalog.ToLegacyKey(
-                    InvitationDesignCatalog.ResolveLayoutMode(
-                        design?.LayoutMode ?? WeddingLayoutMode.Unknown,
-                        tenant.InvitationStyle))
-                : WeddingLayoutKeys.Normalize(design.LayoutKey);
+            var (tenantLayoutKey, pinnedVersion) =
+                ResolveTenantLayoutSelection(
+                    tenant.DesignSettings,
+                    tenant.InvitationStyle);
             if (!string.Equals(
                     tenantLayoutKey,
                     layoutKey,
@@ -2671,12 +2668,7 @@ public sealed class FileSystemWeddingLayoutSubmissionService :
                 continue;
             }
 
-            var hasPinnedVersion = design is not null
-                && !design.FollowActiveLayoutVersion
-                && WeddingLayoutVersion.IsValid(design.LayoutVersion);
-            var pinnedVersion = hasPinnedVersion
-                ? design?.LayoutVersion.Trim() ?? ""
-                : "";
+            var hasPinnedVersion = pinnedVersion.Length > 0;
             references.Add(new TenantLayoutReference(
                 tenant.Slug,
                 hasPinnedVersion
@@ -2688,6 +2680,29 @@ public sealed class FileSystemWeddingLayoutSubmissionService :
         }
 
         return references;
+    }
+
+    private static (string LayoutKey, string PinnedVersion)
+        ResolveTenantLayoutSelection(
+            DesignSettings? design,
+            string invitationStyle)
+    {
+        var layoutKey = design is null
+            || string.IsNullOrWhiteSpace(design.LayoutKey)
+                ? WeddingLayoutCatalog.ToLegacyKey(
+                    InvitationDesignCatalog.ResolveLayoutMode(
+                        design?.LayoutMode ?? WeddingLayoutMode.Unknown,
+                        invitationStyle))
+                : WeddingLayoutKeys.Normalize(design.LayoutKey);
+        var pinnedVersion = design is
+            {
+                FollowActiveLayoutVersion: false,
+                LayoutVersion: var layoutVersion,
+            }
+            && WeddingLayoutVersion.IsValid(layoutVersion)
+                ? layoutVersion.Trim()
+                : "";
+        return (layoutKey, pinnedVersion);
     }
 
     private static void ThrowIfRemovalHasTenantReferences(
@@ -3424,7 +3439,9 @@ public sealed class FileSystemWeddingLayoutSubmissionService :
                     $"The layout package exceeds the {maximumBytes}-byte limit.");
             }
 
-            destination.Write(buffer, 0, read);
+            await destination
+                .WriteAsync(buffer.AsMemory(0, read), cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 

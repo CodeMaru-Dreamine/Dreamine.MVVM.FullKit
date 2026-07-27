@@ -29,8 +29,8 @@ internal static class Program
         }
         catch (Exception exception)
         {
-            Console.Error.WriteLine();
-            Console.Error.WriteLine("PIPELINE SMOKE FAILED");
+            await Console.Error.WriteLineAsync();
+            await Console.Error.WriteLineAsync("PIPELINE SMOKE FAILED");
             Console.Error.WriteLine(exception);
             return 1;
         }
@@ -44,11 +44,12 @@ internal static class Program
     {
         var publicWeddingRoot = Path.Combine(tempRoot, "App_Data", "Wedding");
         Directory.CreateDirectory(publicWeddingRoot);
+        var testSigningMaterial = Convert.ToHexString(Guid.NewGuid().ToByteArray());
 
         var options = new WeddingOptions
         {
             DataPath = publicWeddingRoot,
-            SuperAdminPassword = "pipeline-smoke-super-admin-secret",
+            SuperAdminPassword = testSigningMaterial,
         };
         var actor = new WeddingCurrentUser(
             "oauth-pipeline-owner",

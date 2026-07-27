@@ -566,8 +566,12 @@
         }
 
         _autoPlaying = true;
-        _autoPlayCts?.Cancel();
-        _autoPlayCts?.Dispose();
+        if (_autoPlayCts is not null)
+        {
+            await _autoPlayCts.CancelAsync();
+            _autoPlayCts.Dispose();
+        }
+
         _autoPlayCts = new CancellationTokenSource();
         _ = RunAutoPlay(_autoPlayCts.Token);
     }

@@ -1351,8 +1351,7 @@ public sealed class WeddingInvitationViewModel
         var tier = descriptor.Tier;
         if (!descriptor.IsBuiltIn)
         {
-            _layoutRegistry.PublishedPackages.TryGetValue(release.Id, out package);
-            if (package is null)
+            if (!_layoutRegistry.PublishedPackages.TryGetValue(release.Id, out package))
             {
                 ApplyBuiltInLayoutFallback();
                 return;

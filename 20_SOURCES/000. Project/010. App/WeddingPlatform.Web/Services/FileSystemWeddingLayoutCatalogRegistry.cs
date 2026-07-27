@@ -843,7 +843,10 @@ public sealed class FileSystemWeddingLayoutCatalogRegistry :
                     $"File '{Path.GetFileName(path)}' exceeds the {maximumBytes}-byte limit.");
             }
 
-            destination.Write(buffer, 0, read);
+            await destination.WriteAsync(
+                    buffer.AsMemory(0, read),
+                    cancellationToken)
+                .ConfigureAwait(false);
         }
     }
 
