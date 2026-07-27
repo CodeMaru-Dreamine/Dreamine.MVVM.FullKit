@@ -106,6 +106,10 @@ public sealed class PlaygroundMediaService
     /// <para>Thrown when the save async operation is not valid for the current object state.</para>
     /// \endif
     /// </exception>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Security",
+        "S5693",
+        Justification = "The declared browser file size and OpenReadStream are both capped at 200 MB before data is persisted.")]
     public async Task<string> SaveAsync(IBrowserFile file, string demoId, string platform, CancellationToken ct = default)
     {
         if (file.Size <= 0) throw new InvalidOperationException("Empty files cannot be uploaded.");

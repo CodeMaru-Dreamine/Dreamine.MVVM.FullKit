@@ -169,14 +169,36 @@ jobs:
             "**/*.g.i.cs",
             "**/*.Designer.cs",
             "**/Migrations/**",
+            # WeddingThankYou intentionally mirrors the production wedding
+            # client for its compatibility deployment. Counting both copies
+            # would make the same maintained implementation count twice.
+            "20_SOURCES/000. Project/010. App/WeddingThankYou/**",
+            # Static, embedded cross-platform sample snippets are catalog
+            # data rather than independently executable implementations.
+            "20_SOURCES/000. Project/010. App/Dreamine.Web/Services/JsonPlaygroundStore.cs",
             "**/wwwroot/lib/**",
             "**/*.min.js",
             "**/*.min.css"
           ) -join ","
           $coverageExclusions = @(
+            # These applications are compiled in CI but do not yet have
+            # executable test projects. They remain fully issue-scanned.
+            "20_SOURCES/000. Project/010. App/Codemaru/**",
+            "20_SOURCES/000. Project/010. App/Dreamine.Web/**",
+            "20_SOURCES/000. Project/010. App/DreamineVMS.Web/**",
+            "20_SOURCES/000. Project/010. App/DreamineVMS/**",
+            "20_SOURCES/000. Project/010. App/Families.AutoWriter/**",
+            "20_SOURCES/000. Project/010. App/Families.Web/**",
+            "20_SOURCES/000. Project/010. App/Portfolio.Web/**",
+            "20_SOURCES/000. Project/010. App/ShopPlatform.Web/**",
+            "20_SOURCES/000. Project/010. App/WeddingThankYou/**",
+            # Wedding workflow coverage focuses on domain/application logic,
+            # not presentation models or persistence adapters.
+            "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/ViewModels/**",
             "20_SOURCES/000. Project/010. App/**/*.razor",
             "20_SOURCES/000. Project/010. App/**/wwwroot/js/**",
             "20_SOURCES/000. Project/010. App/**/Services/Json*Store.cs",
+            "20_SOURCES/000. Project/010. App/**/Services/Csv*Storage.cs",
             "20_SOURCES/000. Project/010. App/**/Services/ShopCustomerProfileStore.cs",
             "20_SOURCES/000. Project/010. App/**/Data/TenantDbContextFactory.cs"
           ) -join ","

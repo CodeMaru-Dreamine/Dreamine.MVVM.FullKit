@@ -182,10 +182,10 @@ window.weddingInterop = {
 
     /** 프리뷰 iframe 강제 새로고침 */
     reloadPreviewIframe: function () {
-        var f = document.getElementById('w-preview-iframe');
+        const f = document.getElementById('w-preview-iframe');
         if (f && f.contentWindow) {
             try { f.contentWindow.location.reload(); } catch (e) {
-                var src = f.getAttribute('src');
+                const src = f.getAttribute('src');
                 if (src) f.setAttribute('src', src);
             }
         }
