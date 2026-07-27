@@ -45,6 +45,32 @@ public sealed class StoragePathGuardTests
     }
 
     [Fact]
+    public void ResolveIdentifierDirectory_NormalizesCaseWhenRequested()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "dreamine-path-guard");
+
+        var actual = StoragePathGuard.ResolveIdentifierDirectory(
+            root,
+            "Tenant_ABC",
+            "identifier",
+            normalizeToLower: true);
+
+        Assert.Equal(
+            Path.GetFullPath(Path.Combine(root, "tenant_abc")),
+            actual);
+    }
+
+    [Fact]
+    public void ResolveIdentifierDirectory_RejectsNonNormalizedUnicode()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "dreamine-path-guard");
+        var decomposed = "e\u0301";
+
+        Assert.Throws<ArgumentException>(
+            () => StoragePathGuard.ResolveIdentifierDirectory(root, decomposed, "identifier"));
+    }
+
+    [Fact]
     public void ResolveUnderRoot_RejectsSiblingPrefixEscape()
     {
         var root = Path.Combine(Path.GetTempPath(), "dreamine-root");
@@ -65,6 +91,15 @@ public sealed class StoragePathGuardTests
     }
 
     [Fact]
+    public void ResolveUnderRoot_RejectsEmptySegments()
+    {
+        var root = Path.Combine(Path.GetTempPath(), "dreamine-root");
+
+        Assert.Throws<ArgumentException>(
+            () => StoragePathGuard.ResolveUnderRoot(root, " "));
+    }
+
+    [Fact]
     public void ResolveIdentifierFile_ProducesAContainedFilePath()
     {
         var root = Path.Combine(Path.GetTempPath(), "dreamine-root");
@@ -73,5 +108,17 @@ public sealed class StoragePathGuardTests
         var relative = Path.GetRelativePath(Path.GetFullPath(root), actual);
 
         Assert.Equal("a1b2_c3-d4.json", relative);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("json")]
+    [InlineData(".json/escape")]
+    public void ResolveIdentifierFile_RejectsInvalidExtensions(string extension)
+    {
+        var root = Path.Combine(Path.GetTempPath(), "dreamine-root");
+
+        Assert.Throws<ArgumentException>(
+            () => StoragePathGuard.ResolveIdentifierFile(root, "safe-id", extension, "id"));
     }
 }

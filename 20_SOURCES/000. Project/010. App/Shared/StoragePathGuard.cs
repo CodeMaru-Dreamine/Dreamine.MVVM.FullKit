@@ -7,14 +7,14 @@ namespace Dreamine.AppSecurity;
 /// <summary>
 /// Resolves application data paths from validated, single-segment identifiers.
 /// </summary>
-internal static class StoragePathGuard
+public static class StoragePathGuard
 {
-    internal const int MaxIdentifierLength = 128;
+    public const int MaxIdentifierLength = 128;
 
     /// <summary>
     /// Resolves a directory named by an untrusted identifier beneath <paramref name="root"/>.
     /// </summary>
-    internal static string ResolveIdentifierDirectory(
+    public static string ResolveIdentifierDirectory(
         string root,
         string identifier,
         string parameterName,
@@ -32,7 +32,7 @@ internal static class StoragePathGuard
     /// <summary>
     /// Resolves a file named by an untrusted identifier beneath <paramref name="root"/>.
     /// </summary>
-    internal static string ResolveIdentifierFile(
+    public static string ResolveIdentifierFile(
         string root,
         string identifier,
         string extension,
@@ -54,7 +54,7 @@ internal static class StoragePathGuard
     /// <paramref name="root"/>. This method deliberately uses relative-path comparison
     /// instead of a string prefix check so sibling-prefix paths cannot pass.
     /// </summary>
-    internal static string ResolveUnderRoot(string root, params string[] relativeSegments)
+    public static string ResolveUnderRoot(string root, params string[] relativeSegments)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(root);
         ArgumentNullException.ThrowIfNull(relativeSegments);

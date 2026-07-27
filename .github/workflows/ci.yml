@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           submodules: false
           fetch-depth: 0
@@ -68,7 +68,7 @@ jobs:
           }
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: |
             8.0.x
@@ -164,6 +164,13 @@ jobs:
             "**/*.min.js",
             "**/*.min.css"
           ) -join ","
+          $coverageExclusions = @(
+            "20_SOURCES/000. Project/010. App/**/*.razor",
+            "20_SOURCES/000. Project/010. App/**/wwwroot/js/**",
+            "20_SOURCES/000. Project/010. App/**/Services/Json*Store.cs",
+            "20_SOURCES/000. Project/010. App/**/Services/ShopCustomerProfileStore.cs",
+            "20_SOURCES/000. Project/010. App/**/Data/TenantDbContextFactory.cs"
+          ) -join ","
 
           & $scanner begin `
             "/k:$env:SONAR_PROJECT_KEY" `
@@ -175,6 +182,7 @@ jobs:
             "/d:sonar.cs.opencover.reportsPaths=$env:RUNNER_TEMP\TestResults\**\coverage.opencover.xml" `
             "/d:sonar.cs.vstest.reportsPaths=$env:RUNNER_TEMP\TestResults\**\*.trx" `
             "/d:sonar.exclusions=$exclusions" `
+            "/d:sonar.coverage.exclusions=$coverageExclusions" `
             "/d:sonar.cpd.exclusions=$cpdExclusions"
 
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -236,7 +244,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           submodules: false
 
@@ -282,7 +290,7 @@ jobs:
           }
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           dotnet-version: |
             8.0.x

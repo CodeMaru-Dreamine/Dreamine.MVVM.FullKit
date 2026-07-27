@@ -17,7 +17,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<Compile Include="..\..\000. Project\010. App\Shared\StoragePathGuard.cs" Link="Security\StoragePathGuard.cs" />
+		<ProjectReference Include="..\..\000. Project\010. App\Shared\Dreamine.AppSecurity.csproj" />
 		<ProjectReference Include="..\..\000. Project\010. App\Codemaru\Codemaru.csproj" />
 		<ProjectReference Include="..\..\000. Project\010. App\Dreamine.Web\Dreamine.Web.csproj" />
 		<ProjectReference Include="..\..\100. Library\Attributes\Dreamine.MVVM.Attributes.csproj" />

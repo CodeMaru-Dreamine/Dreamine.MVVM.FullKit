@@ -968,10 +968,9 @@
     private async Task RunUploadTickerAsync(
         System.Threading.CancellationToken token)
     {
-        while (true)
+        while (!token.IsCancellationRequested)
         {
             await Task.Delay(1000, token);
-            token.ThrowIfCancellationRequested();
             _uploadElapsedSec++;
             await InvokeAsync(StateHasChanged);
         }
