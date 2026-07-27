@@ -331,7 +331,7 @@
             _ => true,
         };
 
-    protected override void OnParametersSet()
+    protected override async Task OnParametersSetAsync()
     {
         if (!hasObservedMediaDismissVersion)
         {
@@ -346,7 +346,7 @@
         }
 
         observedMediaDismissVersion = MediaDismissVersion;
-        DismissOpenMedia();
+        await DismissOpenMediaAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -451,17 +451,18 @@
         await Task.CompletedTask;
     }
 
-    private Task StopAutoPlay()
+    private async Task StopAutoPlay()
     {
         isAutoPlaying = false;
-        autoCts?.Cancel();
-        return Task.CompletedTask;
+        if (autoCts is not null)
+            await autoCts.CancelAsync();
     }
 
-    private void DismissOpenMedia()
+    private async Task DismissOpenMediaAsync()
     {
         isAutoPlaying = false;
-        autoCts?.Cancel();
+        if (autoCts is not null)
+            await autoCts.CancelAsync();
         Vm.CloseLightbox();
         videoLightboxOpen = false;
         shouldFocusLightbox = false;
@@ -480,7 +481,8 @@
         try
         {
             await JS.InvokeVoidAsync("weddingInterop.copyToClipboard", text);
-            feedbackCts?.Cancel();
+            if (feedbackCts is not null)
+                await feedbackCts.CancelAsync();
             feedbackCts = new();
             copyFeedback = "✅ 복사되었습니다!";
             StateHasChanged();

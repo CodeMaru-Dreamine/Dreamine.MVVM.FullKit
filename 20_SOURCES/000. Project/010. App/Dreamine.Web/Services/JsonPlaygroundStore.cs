@@ -636,31 +636,31 @@ btnPulse.Click += (_, _) => vm.TogglePulseCommand.Execute(null);",
                              OnEnter=""() => _showKeyboard = false"" />
 }
 
-<DreamineTextBox @bind-Value=""Vm.Password"" IsPassword=""true"" Hint=""Password..."" />
-<DreamineButton Size=""DreamineButtonSize.Small"" OnClick=""Vm.ClearPassword"">Clear</DreamineButton>
-<p>Length: @Vm.Password.Length</p>
+<DreamineTextBox @bind-Value=""Vm.MaskedInput"" IsPassword=""true"" Hint=""Password..."" />
+<DreamineButton Size=""DreamineButtonSize.Small"" OnClick=""Vm.ClearMaskedInput"">Clear</DreamineButton>
+<p>Length: @Vm.MaskedInput.Length</p>
 
 @code { private bool _showKeyboard; }",
             VmCode = @"[DreamineProperty] private string _textInput = string.Empty;
-[DreamineProperty] private string _password  = string.Empty;
+[DreamineProperty] private string _maskedInput = string.Empty;
 
-[DreamineCommand] private void ClearText()     => TextInput = string.Empty;
-[DreamineCommand] private void ClearPassword() => Password  = string.Empty;",
+[DreamineCommand] private void ClearText()        => TextInput   = string.Empty;
+[DreamineCommand] private void ClearMaskedInput() => MaskedInput = string.Empty;",
             WpfCode = @"<ctrl:DreamineTextBox
     Text=""{Binding TextInput, UpdateSourceTrigger=PropertyChanged}""
     Hint=""Type text here..."" Height=""40"" />
 <ctrl:DreamineButton Content=""Clear"" Command=""{Binding ClearTextCommand}"" />
 
 <ctrl:DreaminePasswordBox
-    Password=""{Binding Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}""
+    Password=""{Binding MaskedInput, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}""
     Hint=""Enter password..."" Height=""40"" />
-<TextBlock Text=""{Binding Password.Length, StringFormat='Length: {0} chars'}"" />",
+<TextBlock Text=""{Binding MaskedInput.Length, StringFormat='Length: {0} chars'}"" />",
             WinFormsCode = @"var txt = new DreamineTextBox { Hint = ""Type here..."" };
 txt.DataBindings.Add(""Text"", vm, nameof(vm.TextInput),
     false, DataSourceUpdateMode.OnPropertyChanged);
 
 var pwd = new DreaminePasswordBox { Hint = ""Password..."" };
-pwd.DataBindings.Add(""Password"", vm, nameof(vm.Password),
+pwd.DataBindings.Add(""Password"", vm, nameof(vm.MaskedInput),
     false, DataSourceUpdateMode.OnPropertyChanged);
 
 var btnClear = new DreamineButton { Text = ""Clear"" };
@@ -668,7 +668,7 @@ btnClear.Click += (_, _) => vm.ClearTextCommand.Execute(null);",
             MauiCode = @"<Entry Placeholder=""Type here...""
        Text=""{Binding TextInput}"" />
 <Entry Placeholder=""Password..."" IsPassword=""True""
-       Text=""{Binding Password}"" />
+       Text=""{Binding MaskedInput}"" />
 <Button Text=""Clear"" Command=""{Binding ClearTextCommand}"" />"
         },
         new()

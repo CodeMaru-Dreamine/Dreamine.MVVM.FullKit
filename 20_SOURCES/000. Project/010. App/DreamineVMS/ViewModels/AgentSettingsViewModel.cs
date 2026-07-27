@@ -119,7 +119,7 @@ public sealed class AgentSettingsViewModel : INotifyPropertyChanged
         _writer = writer;
 
         // 현재 설정값으로 초기화
-        _serverUrl = config["Agent:ServerUrl"] ?? "http://cctvviewer.codemaru.co.kr";
+        _serverUrl = config["Agent:ServerUrl"] ?? "https://cctvviewer.codemaru.co.kr";
         _email     = config["Agent:Email"]     ?? "";
         _password  = config["Agent:Password"]  ?? "";
 

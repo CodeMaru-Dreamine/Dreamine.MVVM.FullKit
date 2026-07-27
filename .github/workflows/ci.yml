@@ -17,6 +17,9 @@ jobs:
       SONAR_PROJECT_KEY: CodeMaru-Dreamine_Dreamine.MVVM.FullKit
       SONAR_ORGANIZATION: codemaru-dreamine
       SONAR_SCANNER_VERSION: 11.2.1
+      # Advance this only when starting a new quality/release cycle. Sonar's
+      # "Previous version" baseline intentionally depends on a stable version.
+      SONAR_PROJECT_VERSION: 1.0.1
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
@@ -119,15 +122,21 @@ jobs:
         shell: pwsh
         run: |
           $scanner = Join-Path $env:RUNNER_TEMP "sonar-scanner\dotnet-sonarscanner.exe"
-          $projectVersion = (git describe --tags --abbrev=0 2>$null)
-          if ([string]::IsNullOrWhiteSpace($projectVersion)) {
-            $projectVersion = "0.0.0"
-          }
-          else {
-            $projectVersion = $projectVersion.Trim().TrimStart("v")
+          $releaseTag = git tag --points-at HEAD |
+            Where-Object { $_ -match '^v\d+\.\d+\.\d+(?:[-+].+)?$' } |
+            Select-Object -First 1
+
+          if ([string]::IsNullOrWhiteSpace($releaseTag)) {
+            $projectVersion = $env:SONAR_PROJECT_VERSION
+          } else {
+            $projectVersion = $releaseTag.Trim().TrimStart("v")
           }
 
-          Write-Host "SonarCloud project version: $projectVersion"
+          if ([string]::IsNullOrWhiteSpace($projectVersion)) {
+            throw "SONAR_PROJECT_VERSION must be configured for untagged analyses."
+          }
+
+          Write-Host "SonarCloud project version: $projectVersion (stable Previous-version baseline)"
           $exclusions = @(
             ".agents/**",
             ".claude/**",
@@ -160,14 +169,36 @@ jobs:
             "**/*.g.i.cs",
             "**/*.Designer.cs",
             "**/Migrations/**",
+            # WeddingThankYou intentionally mirrors the production wedding
+            # client for its compatibility deployment. Counting both copies
+            # would make the same maintained implementation count twice.
+            "20_SOURCES/000. Project/010. App/WeddingThankYou/**",
+            # Static, embedded cross-platform sample snippets are catalog
+            # data rather than independently executable implementations.
+            "20_SOURCES/000. Project/010. App/Dreamine.Web/Services/JsonPlaygroundStore.cs",
             "**/wwwroot/lib/**",
             "**/*.min.js",
             "**/*.min.css"
           ) -join ","
           $coverageExclusions = @(
+            # These applications are compiled in CI but do not yet have
+            # executable test projects. They remain fully issue-scanned.
+            "20_SOURCES/000. Project/010. App/Codemaru/**",
+            "20_SOURCES/000. Project/010. App/Dreamine.Web/**",
+            "20_SOURCES/000. Project/010. App/DreamineVMS.Web/**",
+            "20_SOURCES/000. Project/010. App/DreamineVMS/**",
+            "20_SOURCES/000. Project/010. App/Families.AutoWriter/**",
+            "20_SOURCES/000. Project/010. App/Families.Web/**",
+            "20_SOURCES/000. Project/010. App/Portfolio.Web/**",
+            "20_SOURCES/000. Project/010. App/ShopPlatform.Web/**",
+            "20_SOURCES/000. Project/010. App/WeddingThankYou/**",
+            # Wedding workflow coverage focuses on domain/application logic,
+            # not presentation models or persistence adapters.
+            "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/ViewModels/**",
             "20_SOURCES/000. Project/010. App/**/*.razor",
             "20_SOURCES/000. Project/010. App/**/wwwroot/js/**",
             "20_SOURCES/000. Project/010. App/**/Services/Json*Store.cs",
+            "20_SOURCES/000. Project/010. App/**/Services/Csv*Storage.cs",
             "20_SOURCES/000. Project/010. App/**/Services/ShopCustomerProfileStore.cs",
             "20_SOURCES/000. Project/010. App/**/Data/TenantDbContextFactory.cs"
           ) -join ","

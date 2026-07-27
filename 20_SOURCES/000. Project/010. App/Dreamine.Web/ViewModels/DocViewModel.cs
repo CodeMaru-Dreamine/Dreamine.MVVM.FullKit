@@ -205,13 +205,13 @@ public class DocViewModel : ViewModelBase
             Members = XmlDocParser.Parse(Library.XmlDocPath);
 
         // README
-        LoadReadme(docDir);
+        await LoadReadmeAsync(docDir);
 
         // Mermaid 다이어그램 (우선)
         var mermaidPath = Path.Combine(docDir, "diagram.mermaid");
         if (File.Exists(mermaidPath))
         {
-            MermaidDiagram = File.ReadAllText(mermaidPath).Trim();
+            MermaidDiagram = (await File.ReadAllTextAsync(mermaidPath)).Trim();
             HasDiagram = true;
         }
         else
@@ -234,10 +234,10 @@ public class DocViewModel : ViewModelBase
     /// <para>Performs the refresh readme operation.</para>
     /// \endif
     /// </summary>
-    public void RefreshReadme()
+    public async Task RefreshReadme()
     {
         if (Library is not null)
-            LoadReadme(Path.Combine(_xmlDocRoot, Library.Name));
+            await LoadReadmeAsync(Path.Combine(_xmlDocRoot, Library.Name));
     }
 
     /// <summary>
@@ -256,7 +256,7 @@ public class DocViewModel : ViewModelBase
     /// <para>The <c>string</c> value used for doc dir.</para>
     /// \endif
     /// </param>
-    private void LoadReadme(string docDir)
+    private async Task LoadReadmeAsync(string docDir)
     {
         string? mdPath = null;
 
@@ -275,7 +275,7 @@ public class DocViewModel : ViewModelBase
         }
 
         ReadmeHtml = mdPath is not null
-            ? Markdown.ToHtml(File.ReadAllText(mdPath), _pipeline)
+            ? Markdown.ToHtml(await File.ReadAllTextAsync(mdPath), _pipeline)
             : null;
     }
 }

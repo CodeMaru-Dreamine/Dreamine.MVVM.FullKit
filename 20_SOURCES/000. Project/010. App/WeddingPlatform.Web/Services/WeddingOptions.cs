@@ -30,7 +30,7 @@ public sealed class WeddingOptions
     /// <para>Gets or sets the super admin password value.</para>
     /// \endif
     /// </summary>
-    public string SuperAdminPassword { get; set; } = "v1.600000.1oy6GjdnZFCRZpxUY6R4tQ==.1r45CdqBw/2U22r0bF9KwzdIfyCVkkRt/VcoAg19LrQ=";
+    public string SuperAdminPassword { get; set; } = string.Empty;
     /// <summary>
     /// \if KO
     /// <para>Atlan Auth Key 값을 가져오거나 설정합니다.</para>

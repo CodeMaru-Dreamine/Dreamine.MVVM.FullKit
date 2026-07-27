@@ -85,7 +85,7 @@ public sealed class SuperAdminSessionTokenService : ISuperAdminSessionTokenServi
     /// <para>Stores the options value.</para>
     /// \endif
     /// </summary>
-    private readonly WeddingOptions _options;
+    private readonly byte[] _signingKey;
 
     /// <summary>
     /// \if KO
@@ -105,7 +105,10 @@ public sealed class SuperAdminSessionTokenService : ISuperAdminSessionTokenServi
     /// </param>
     public SuperAdminSessionTokenService(WeddingOptions options)
     {
-        _options = options;
+        ArgumentNullException.ThrowIfNull(options);
+        _signingKey = string.IsNullOrWhiteSpace(options.SuperAdminPassword)
+            ? RandomNumberGenerator.GetBytes(32)
+            : SHA256.HashData(Encoding.UTF8.GetBytes(options.SuperAdminPassword));
     }
 
     /// <summary>
@@ -217,10 +220,7 @@ public sealed class SuperAdminSessionTokenService : ISuperAdminSessionTokenServi
     /// </returns>
     private byte[] Sign(string payload)
     {
-        var secret = string.IsNullOrWhiteSpace(_options.SuperAdminPassword)
-            ? "WeddingThankYou.SuperAdminSession.EmptySecret"
-            : _options.SuperAdminPassword;
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes("WeddingThankYou.SuperAdminSession:" + secret));
+        using var hmac = new HMACSHA256(_signingKey);
         return hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
     }
 

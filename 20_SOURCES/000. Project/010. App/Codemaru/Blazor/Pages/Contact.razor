@@ -231,6 +231,13 @@
             return;
         }
 
+        if (!cfg.EnableSsl)
+        {
+            ok = false;
+            error = "보안을 위해 TLS가 활성화된 SMTP 서버만 사용할 수 있습니다.";
+            return;
+        }
+
         sending = true;
         ok = null;
         error = null;
@@ -264,7 +271,7 @@
 
             using var client = new SmtpClient(cfg.Host, cfg.Port)
             {
-                EnableSsl = cfg.EnableSsl,
+                EnableSsl = true,
                 DeliveryMethod = SmtpDeliveryMethod.Network,
                 UseDefaultCredentials = false,
                 Credentials = new NetworkCredential(cfg.User, cfg.Password),

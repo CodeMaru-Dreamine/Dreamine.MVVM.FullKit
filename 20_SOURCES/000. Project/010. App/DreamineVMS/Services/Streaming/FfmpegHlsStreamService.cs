@@ -30,7 +30,10 @@ public sealed class FfmpegHlsStreamService : BackgroundService, ICameraStreamSer
     /// <para>Stores the media seq regex value.</para>
     /// \endif
     /// </summary>
-    private static readonly Regex MediaSeqRegex = new(@"#EXT-X-MEDIA-SEQUENCE:(\d+)", RegexOptions.Compiled);
+    private static readonly Regex MediaSeqRegex = new(
+        @"#EXT-X-MEDIA-SEQUENCE:(\d+)",
+        RegexOptions.Compiled,
+        TimeSpan.FromMilliseconds(250));
 
     /// <summary>
     /// \if KO

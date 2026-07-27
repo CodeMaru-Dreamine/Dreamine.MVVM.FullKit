@@ -18,7 +18,7 @@ mkdir -p "$DATA_DIR"
 chown "$APP_USER":"$APP_USER" "$DATA_DIR"
 
 # 1. 앱 압축 해제
-if [ -f "wedding-deploy.zip" ]; then
+if [[ -f "wedding-deploy.zip" ]]; then
     echo "▶ 앱 패키지 압축 해제..."
     unzip -o wedding-deploy.zip -d "$INSTALL_DIR"
     chmod +x "$INSTALL_DIR/WeddingPlatform.Web"
@@ -28,7 +28,7 @@ fi
 
 # 2. App_Data/Wedding → /var/wedding-data 자동 이전 (사진·config 포함)
 APP_DATA_SRC="$INSTALL_DIR/App_Data/Wedding"
-if [ -d "$APP_DATA_SRC" ]; then
+if [[ -d "$APP_DATA_SRC" ]]; then
     echo "▶ 테넌트 데이터 이전: $APP_DATA_SRC → $DATA_DIR"
     # 기존 데이터는 덮어쓰지 않음 (--ignore-existing)
     # 새 슬러그만 추가하고 기존 사진은 보존
@@ -41,7 +41,7 @@ fi
 
 # 3. appsettings.Production.json 생성 (없는 경우)
 SETTINGS_FILE="$INSTALL_DIR/appsettings.Production.json"
-if [ ! -f "$SETTINGS_FILE" ]; then
+if [[ ! -f "$SETTINGS_FILE" ]]; then
     echo "▶ appsettings.Production.json 생성..."
     cat > "$SETTINGS_FILE" << 'EOF'
 {
@@ -51,11 +51,11 @@ if [ ! -f "$SETTINGS_FILE" ]; then
   },
   "Wedding": {
     "DataPath": "/var/wedding-data",
-    "SuperAdminPassword": "여기를-강력한-비번으로-바꾸세요"
+    "SuperAdminPassword": ""
   }
 }
 EOF
-    echo "⚠ $SETTINGS_FILE 의 SuperAdminPassword 를 반드시 변경하세요!"
+    echo "⚠ Wedding__SuperAdminPassword 환경 변수를 안전한 비밀 저장소에서 설정하세요."
 fi
 
 # 4. systemd 서비스 등록

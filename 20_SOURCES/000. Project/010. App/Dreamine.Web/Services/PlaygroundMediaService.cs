@@ -22,7 +22,11 @@ public sealed class PlaygroundMediaService
     /// <para>Stores the unsafe name value.</para>
     /// \endif
     /// </summary>
-    private static readonly Regex UnsafeName = new(@"[^a-zA-Z0-9._-]+", RegexOptions.Compiled);
+    private static readonly Regex UnsafeName = new(
+        @"[^a-zA-Z0-9._-]+",
+        RegexOptions.Compiled,
+        TimeSpan.FromMilliseconds(250));
+    private const long MaxUploadBytes = 200L * 1024 * 1024;
     /// <summary>
     /// \if KO
     /// <para>upload Root 값을 보관합니다.</para>
@@ -102,9 +106,15 @@ public sealed class PlaygroundMediaService
     /// <para>Thrown when the save async operation is not valid for the current object state.</para>
     /// \endif
     /// </exception>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Security",
+        "S5693",
+        Justification = "The declared browser file size and OpenReadStream are both capped at 200 MB before data is persisted.")]
     public async Task<string> SaveAsync(IBrowserFile file, string demoId, string platform, CancellationToken ct = default)
     {
         if (file.Size <= 0) throw new InvalidOperationException("Empty files cannot be uploaded.");
+        if (file.Size > MaxUploadBytes)
+            throw new InvalidOperationException("Playground media files must be 200 MB or smaller.");
 
         var safeDemoId = SafeSegment(demoId, "demo");
         var safePlatform = SafeSegment(platform, "platform");
@@ -117,7 +127,7 @@ public sealed class PlaygroundMediaService
         var fileName = $"{safePlatform}-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString("N")[..8]}{extension.ToLowerInvariant()}";
         var path = Path.Combine(targetDir, fileName);
 
-        await using var input = file.OpenReadStream(maxAllowedSize: 200 * 1024 * 1024, cancellationToken: ct);
+        await using var input = file.OpenReadStream(maxAllowedSize: MaxUploadBytes, cancellationToken: ct);
         await using var output = File.Create(path);
         await input.CopyToAsync(output, ct);
 

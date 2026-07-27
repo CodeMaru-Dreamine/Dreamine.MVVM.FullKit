@@ -42,7 +42,10 @@ public class VersionSyncService
     /// \endif
     /// </summary>
     private static readonly Regex _versionRx =
-        new(@"<Version>\s*([^<\s]+)\s*</Version>", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        new(
+            @"<Version>\s*([^<\s]+)\s*</Version>",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled,
+            TimeSpan.FromMilliseconds(250));
 
     /// <summary>
     /// \if KO

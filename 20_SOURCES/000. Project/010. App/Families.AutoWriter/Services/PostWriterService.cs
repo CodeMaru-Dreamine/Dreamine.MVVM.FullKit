@@ -367,7 +367,11 @@ public sealed class PostWriterService
     /// </returns>
     private static int ExtractCookingNumber(string title)
     {
-        var match = Regex.Match(title, @"#(?<n>\d+)");
+        var match = Regex.Match(
+            title,
+            @"#(?<n>\d+)",
+            RegexOptions.None,
+            TimeSpan.FromMilliseconds(250));
         return match.Success && int.TryParse(match.Groups["n"].Value, out var n) ? n : 0;
     }
 

@@ -30,7 +30,7 @@ public sealed class FamilyOptions
     /// <para>Gets or sets the super admin password value.</para>
     /// \endif
     /// </summary>
-    public string SuperAdminPassword { get; set; } = "v1.600000.1oy6GjdnZFCRZpxUY6R4tQ==.1r45CdqBw/2U22r0bF9KwzdIfyCVkkRt/VcoAg19LrQ=";
+    public string SuperAdminPassword { get; set; } = string.Empty;
 
     /// <summary>
     /// \if KO

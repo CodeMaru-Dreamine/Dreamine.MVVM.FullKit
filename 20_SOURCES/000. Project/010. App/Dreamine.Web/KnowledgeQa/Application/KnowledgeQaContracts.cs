@@ -324,7 +324,7 @@ public sealed class KnowledgeQaOptions
     public string CodexModel { get; set; } = string.Empty;
     public string RepositoryRoot { get; set; } = string.Empty;
     public int CodexMaxConcurrency { get; set; } = 1;
-    public string Endpoint { get; set; } = "http://192.168.0.100:1234/v1/";
+    public string Endpoint { get; set; } = string.Empty;
     public string Model { get; set; } = "gemma-3-4b-it";
     public string ApiKey { get; set; } = string.Empty;
     public int RequestTimeoutSeconds { get; set; } = 600;

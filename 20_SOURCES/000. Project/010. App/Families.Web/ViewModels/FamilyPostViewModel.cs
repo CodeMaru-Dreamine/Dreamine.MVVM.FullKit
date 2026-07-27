@@ -387,12 +387,19 @@ public sealed class FamilyPostViewModel
 
         // youtube.com/shorts/ID
         var shortsMatch = System.Text.RegularExpressions.Regex.Match(
-            url, @"youtube\.com/shorts/([^?&#/]+)", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            url,
+            @"youtube\.com/shorts/([^?&#/]+)",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase,
+            TimeSpan.FromMilliseconds(250));
         if (shortsMatch.Success)
             return $"https://www.youtube.com/embed/{shortsMatch.Groups[1].Value}";
 
         // youtube.com/watch?v=ID (또는 &v=ID)
-        var watchMatch = System.Text.RegularExpressions.Regex.Match(url, @"[?&]v=([^?&#]+)");
+        var watchMatch = System.Text.RegularExpressions.Regex.Match(
+            url,
+            @"[?&]v=([^?&#]+)",
+            System.Text.RegularExpressions.RegexOptions.None,
+            TimeSpan.FromMilliseconds(250));
         if (watchMatch.Success)
             return $"https://www.youtube.com/embed/{watchMatch.Groups[1].Value}";
 

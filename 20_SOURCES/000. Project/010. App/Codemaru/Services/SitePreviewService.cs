@@ -46,7 +46,8 @@ public sealed class SitePreviewService : BackgroundService
     /// </summary>
     private static readonly Regex OgImageRegex = new(
         @"<meta[^>]+property=[""']og:image[""'][^>]+content=[""']([^""']+)[""']",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        RegexOptions.IgnoreCase | RegexOptions.Compiled,
+        TimeSpan.FromMilliseconds(250));
 
     /// <summary>
     /// \if KO
@@ -58,7 +59,8 @@ public sealed class SitePreviewService : BackgroundService
     /// </summary>
     private static readonly Regex OgImageRegex2 = new(
         @"<meta[^>]+content=[""']([^""']+)[""'][^>]+property=[""']og:image[""']",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        RegexOptions.IgnoreCase | RegexOptions.Compiled,
+        TimeSpan.FromMilliseconds(250));
 
     /// <summary>
     /// \if KO

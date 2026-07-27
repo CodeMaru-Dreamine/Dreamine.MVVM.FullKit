@@ -51,7 +51,10 @@ public sealed class LibraryCatalogSyncService
     /// <para>Stores the whitespace value.</para>
     /// \endif
     /// </summary>
-    private static readonly Regex Whitespace = new(@"\s+", RegexOptions.Compiled);
+    private static readonly Regex Whitespace = new(
+        @"\s+",
+        RegexOptions.Compiled,
+        TimeSpan.FromMilliseconds(250));
 
     /// <summary>
     /// \if KO
@@ -456,7 +459,12 @@ public sealed class LibraryCatalogSyncService
             ? packageId["Dreamine.".Length..]
             : packageId;
 
-        return Regex.Replace(id.ToLowerInvariant(), @"[^a-z0-9]+", "-").Trim('-');
+        return Regex.Replace(
+            id.ToLowerInvariant(),
+            @"[^a-z0-9]+",
+            "-",
+            RegexOptions.None,
+            TimeSpan.FromMilliseconds(250)).Trim('-');
     }
 
     /// <summary>

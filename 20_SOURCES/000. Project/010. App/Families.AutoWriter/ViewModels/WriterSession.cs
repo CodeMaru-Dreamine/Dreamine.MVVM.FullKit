@@ -111,6 +111,8 @@ public sealed record WaitOption(int Seconds, string Label)
 /// </summary>
 public sealed partial class WriterSession : ViewModelBase
 {
+    private static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(250);
+
     /// <summary>
     /// \if KO
     /// <para>writer 값을 보관합니다.</para>
@@ -698,7 +700,7 @@ public sealed partial class WriterSession : ViewModelBase
         _loopCts = new CancellationTokenSource();
         _nextLoopAt = DateTime.Now.AddMinutes(IntervalMinutes);
         var ct = _loopCts.Token;
-        _loopTask = Task.Run(() => LoopWorkerAsync(ct));
+        _loopTask = Task.Run(() => LoopWorkerAsync(ct), ct);
         var nc = NewChatEveryN > 0 ? $" | 🔄{NewChatEveryN}개" : "";
         LoopStatus = $"✅ {SelectedInterval?.Label} | AI대기 {AiWaitOption?.Label}{nc}";
     }
@@ -1158,7 +1160,9 @@ public sealed partial class WriterSession : ViewModelBase
                         }
 
                         ExtractStatus = $"⏳ AI 응답 불완전 - {ExtractionRetryDelaySeconds}초 후 재추출 ({extractAttempt}/{ExtractionRetryMaxAttempts})";
-                        await Task.Delay(TimeSpan.FromSeconds(ExtractionRetryDelaySeconds));
+                        await Task.Delay(
+                            TimeSpan.FromSeconds(ExtractionRetryDelaySeconds),
+                            CancellationToken.None);
                         raw = await ExecuteScriptAsync(ResponseExtractor.BuildExtractScript());
                         continue;
                     }
@@ -1190,7 +1194,9 @@ public sealed partial class WriterSession : ViewModelBase
                         }
 
                         ExtractStatus = $"⏳ AI 응답 불완전 - {ExtractionRetryDelaySeconds}초 후 재추출 ({extractAttempt}/{ExtractionRetryMaxAttempts})";
-                        await Task.Delay(TimeSpan.FromSeconds(ExtractionRetryDelaySeconds));
+                        await Task.Delay(
+                            TimeSpan.FromSeconds(ExtractionRetryDelaySeconds),
+                            CancellationToken.None);
                         raw = await ExecuteScriptAsync(ResponseExtractor.BuildExtractScript());
                         continue;
                     }
@@ -1383,7 +1389,8 @@ public sealed partial class WriterSession : ViewModelBase
             result,
             @"<img\s[^>]*src=""[^""]*\[IMAGES[^\]]*\][^""]*""[^>]*/?>",
             "",
-            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase,
+            RegexTimeout);
 
         return result;
     }
@@ -1671,19 +1678,24 @@ public sealed partial class WriterSession : ViewModelBase
             ? $"[1983 집밥육아 #{number}] {mealName} 집밥 기록"
             : title.Trim();
 
-        normalized = Regex.Replace(normalized, @"#\d+|#번호\d+|#새숫자", $"#{number}", RegexOptions.IgnoreCase);
+        normalized = Regex.Replace(
+            normalized,
+            @"#\d+|#번호\d+|#새숫자",
+            $"#{number}",
+            RegexOptions.IgnoreCase,
+            RegexTimeout);
         normalized = normalized
             .Replace("[번호1]", number.ToString(), StringComparison.OrdinalIgnoreCase)
             .Replace("[번호2]", number.ToString(), StringComparison.OrdinalIgnoreCase)
             .Replace("[번호3]", number.ToString(), StringComparison.OrdinalIgnoreCase)
             .Replace("[새숫자]", number.ToString(), StringComparison.OrdinalIgnoreCase);
 
-        if (!Regex.IsMatch(normalized, @"#\d+"))
+        if (!Regex.IsMatch(normalized, @"#\d+", RegexOptions.None, RegexTimeout))
             normalized = $"[1983 집밥육아 #{number}] {normalized}";
 
-        normalized = Regex.IsMatch(normalized, @"아침|점심|저녁")
-            ? Regex.Replace(normalized, @"아침|점심|저녁", mealName, RegexOptions.None, TimeSpan.FromMilliseconds(100))
-            : Regex.Replace(normalized, @"(\]\s*)", "$1" + mealName + " ", RegexOptions.None, TimeSpan.FromMilliseconds(100));
+        normalized = Regex.IsMatch(normalized, @"아침|점심|저녁", RegexOptions.None, RegexTimeout)
+            ? Regex.Replace(normalized, @"아침|점심|저녁", mealName, RegexOptions.None, RegexTimeout)
+            : Regex.Replace(normalized, @"(\]\s*)", "$1" + mealName + " ", RegexOptions.None, RegexTimeout);
 
         return normalized;
     }
@@ -1714,7 +1726,11 @@ public sealed partial class WriterSession : ViewModelBase
     /// </returns>
     private static int ExtractCookingNumberFromTitle(string title)
     {
-        var match = Regex.Match(title ?? "", @"#(?<n>\d+)");
+        var match = Regex.Match(
+            title ?? "",
+            @"#(?<n>\d+)",
+            RegexOptions.None,
+            RegexTimeout);
         return match.Success && int.TryParse(match.Groups["n"].Value, out var number) ? number : 0;
     }
 
@@ -1743,7 +1759,11 @@ public sealed partial class WriterSession : ViewModelBase
     /// \endif
     /// </returns>
     private static List<string> ExtractImageUrls(string content) =>
-        Regex.Matches(content, @"<img\b[^>]*\bsrc\s*=\s*[""'](?<url>https?://[^""']+)[""'][^>]*>", RegexOptions.IgnoreCase)
+        Regex.Matches(
+                content,
+                @"<img\b[^>]*\bsrc\s*=\s*[""'](?<url>https?://[^""']+)[""'][^>]*>",
+                RegexOptions.IgnoreCase,
+                RegexTimeout)
             .Select(m => System.Net.WebUtility.HtmlDecode(m.Groups["url"].Value.Trim()))
             .Where(u => u.StartsWith("http", StringComparison.OrdinalIgnoreCase))
             .ToList();
@@ -1795,14 +1815,19 @@ public sealed partial class WriterSession : ViewModelBase
             @"<img\b[^>]*>",
             match =>
             {
-                var src = Regex.Match(match.Value, @"\bsrc\s*=\s*[""'](?<url>https?://[^""']+)[""']", RegexOptions.IgnoreCase);
+                var src = Regex.Match(
+                    match.Value,
+                    @"\bsrc\s*=\s*[""'](?<url>https?://[^""']+)[""']",
+                    RegexOptions.IgnoreCase,
+                    RegexTimeout);
                 if (!src.Success)
                     return "";
 
                 var url = System.Net.WebUtility.HtmlDecode(src.Groups["url"].Value.Trim());
                 return allowed.Contains(url) ? match.Value : "";  // 검증 통과 URL만 유지
             },
-            RegexOptions.IgnoreCase);
+            RegexOptions.IgnoreCase,
+            RegexTimeout);
     }
 
     /// <summary>
@@ -1958,7 +1983,8 @@ public sealed partial class WriterSession : ViewModelBase
             content,
             @"<img\b[^>]*>",
             "",
-            RegexOptions.IgnoreCase);
+            RegexOptions.IgnoreCase,
+            RegexTimeout);
 
         text = NormalizeKnownHeadings(text, new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
@@ -2132,7 +2158,8 @@ public sealed partial class WriterSession : ViewModelBase
             content.Replace("\r\n", "\n"),
             @"[ \t]*(<img\b)",
             "\n$1",
-            RegexOptions.IgnoreCase);
+            RegexOptions.IgnoreCase,
+            RegexTimeout);
         var lines = text.Split('\n');
         var normalized = new List<string>();
         var needsBlankBeforeNextContent = false;
@@ -2281,7 +2308,7 @@ public sealed partial class WriterSession : ViewModelBase
     private static List<string> SplitTableLine(string line) =>
         line.Contains('\t')
             ? line.Split('\t', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).ToList()
-            : Regex.Split(line.Trim(), @"\s{2,}")
+            : Regex.Split(line.Trim(), @"\s{2,}", RegexOptions.None, RegexTimeout)
                 .Where(c => !string.IsNullOrWhiteSpace(c))
                 .Select(c => c.Trim())
                 .ToList();
@@ -2334,7 +2361,11 @@ public sealed partial class WriterSession : ViewModelBase
             if (inIngredients &&
                 trimmed.Length > 0 &&
                 !trimmed.StartsWith("-", StringComparison.Ordinal) &&
-                Regex.IsMatch(trimmed, @"\d+(\.\d+)?\s*(g|kg|ml|l|개|큰술|작은술|컵|cm)\b", RegexOptions.IgnoreCase))
+                Regex.IsMatch(
+                    trimmed,
+                    @"\d+(\.\d+)?\s*(g|kg|ml|l|개|큰술|작은술|컵|cm)\b",
+                    RegexOptions.IgnoreCase,
+                    RegexTimeout))
             {
                 line = "- " + trimmed;
             }
@@ -2447,7 +2478,11 @@ public sealed partial class WriterSession : ViewModelBase
             return false;
 
         var path = uri.AbsolutePath;
-        if (Regex.IsMatch(path, @"\.(jpe?g|png|webp|gif|bmp)(/)?$", RegexOptions.IgnoreCase))
+        if (Regex.IsMatch(
+                path,
+                @"\.(jpe?g|png|webp|gif|bmp)(/)?$",
+                RegexOptions.IgnoreCase,
+                RegexTimeout))
             return true;
 
         var host = uri.Host.ToLowerInvariant();
@@ -2515,7 +2550,11 @@ public sealed partial class WriterSession : ViewModelBase
                     var host = uri.Host.ToLowerInvariant();
                     var path = uri.AbsolutePath;
                     bool trustedHost = _trustedImageHosts.Any(h => host.Contains(h, StringComparison.Ordinal));
-                    bool imageExt   = Regex.IsMatch(path, @"\.(jpe?g|png|webp|gif|bmp)$", RegexOptions.IgnoreCase);
+                    bool imageExt = Regex.IsMatch(
+                        path,
+                        @"\.(jpe?g|png|webp|gif|bmp)$",
+                        RegexOptions.IgnoreCase,
+                        RegexTimeout);
                     if (trustedHost && imageExt)
                     {
                         valid.Add(url);

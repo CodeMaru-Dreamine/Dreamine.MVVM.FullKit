@@ -1,5 +1,6 @@
 using System.IO;
 using System.IO.Compression;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Components.Forms;
 
 namespace DreamineWeb.Services;
@@ -12,6 +13,7 @@ public sealed class ResourceArchiveService
     private readonly string _uploadRoot = Path.Combine(
         AppContext.BaseDirectory, "wwwroot", "uploads", "resources");
 
+    [SuppressMessage("Security", "S5693", Justification = "The file size is checked and OpenReadStream enforces MaxArchiveSize before any data is copied.")]
     public async Task<string> SaveArchiveAsync(IBrowserFile file, string resourceId, CancellationToken cancellationToken = default)
     {
         if (file.Size <= 0)
@@ -46,6 +48,7 @@ public sealed class ResourceArchiveService
         return $"/uploads/resources/{folder}/{fileName}";
     }
 
+    [SuppressMessage("Security", "S5693", Justification = "The file size is checked and OpenReadStream enforces MaxThumbnailSize before any data is copied.")]
     public async Task<string> SaveThumbnailAsync(IBrowserFile file, string resourceId, CancellationToken cancellationToken = default)
     {
         var allowed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)

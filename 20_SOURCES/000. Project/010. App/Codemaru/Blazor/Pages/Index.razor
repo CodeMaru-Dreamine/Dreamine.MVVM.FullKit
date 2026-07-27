@@ -694,7 +694,7 @@
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"[CardHybrid] guest snapshot restore failed: {ex.Message}");
+            await Console.Error.WriteLineAsync($"[CardHybrid] guest snapshot restore failed: {ex.Message}");
         }
     }
 
@@ -736,7 +736,7 @@
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"[CardHybrid] guest snapshot persist failed: {ex.Message}");
+            await Console.Error.WriteLineAsync($"[CardHybrid] guest snapshot persist failed: {ex.Message}");
         }
     }
 

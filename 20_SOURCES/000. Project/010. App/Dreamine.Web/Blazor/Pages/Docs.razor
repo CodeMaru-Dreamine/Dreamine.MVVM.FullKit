@@ -204,18 +204,21 @@
 
     private void OnLangChanged()
     {
-        // 전역 언어 변경 시 README도 함께 전환
-        Vm.IsKorean = Lang.IsKorean;
-        Vm.RefreshReadme();
-        InvokeAsync(StateHasChanged);
+        _ = RefreshReadmeAndRenderAsync(Lang.IsKorean);
     }
 
-    private void SetLang(bool isKorean)
+    private async Task SetLang(bool isKorean)
     {
-        Vm.IsKorean = isKorean;
-        Vm.RefreshReadme();
+        await RefreshReadmeAndRenderAsync(isKorean);
         // 로컬 탭 조작도 전역 설정에 반영
         Lang.Set(isKorean ? "ko" : "en");
+    }
+
+    private async Task RefreshReadmeAndRenderAsync(bool isKorean)
+    {
+        Vm.IsKorean = isKorean;
+        await Vm.RefreshReadme();
+        await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose() => Lang.Changed -= OnLangChanged;

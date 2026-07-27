@@ -2,6 +2,7 @@ using System.Globalization;
 using System.IO;
 using System.Collections.Concurrent;
 using System.Text;
+using Dreamine.AppSecurity;
 using WeddingPlatform.Models;
 
 namespace WeddingPlatform.Services;
@@ -213,7 +214,9 @@ public sealed class CsvGuestbookStorage : IGuestbookStorage
     /// \endif
     /// </returns>
     private string CsvPath(string slug) =>
-        Path.Combine(_tenants.GetTenantDataPath(slug), "guestbook.csv");
+        StoragePathGuard.ResolveUnderRoot(
+            _tenants.GetTenantDataPath(slug),
+            "guestbook.csv");
 
     /// <summary>
     /// \if KO

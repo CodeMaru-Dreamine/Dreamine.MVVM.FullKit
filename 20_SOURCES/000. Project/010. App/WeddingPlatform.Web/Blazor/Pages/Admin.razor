@@ -2262,8 +2262,6 @@
                     return;
                 }
 
-                _uploadTickCts?.Cancel();
-                _uploadTickCts?.Dispose();
                 source = new System.Threading.CancellationTokenSource();
                 _uploadTickCts = source;
                 _uploadElapsedSec = 0;
@@ -2279,10 +2277,7 @@
             }
             finally
             {
-                lock (_uploadTickerSync)
-                {
-                    source.Cancel();
-                }
+                await source.CancelAsync();
 
                 try
                 {

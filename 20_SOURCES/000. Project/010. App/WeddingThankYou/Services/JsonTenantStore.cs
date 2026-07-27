@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using Dreamine.AppSecurity;
 using Wedding.Common;
 using WeddingThankYou.Models;
 
@@ -101,7 +102,11 @@ public sealed class JsonTenantStore : ITenantStore
     /// \endif
     /// </returns>
     public string GetTenantDataPath(string slug) =>
-        Path.Combine(_dataRoot, Sanitize(slug));
+        StoragePathGuard.ResolveIdentifierDirectory(
+            _dataRoot,
+            slug,
+            nameof(slug),
+            normalizeToLower: true);
 
     /// <summary>
     /// \if KO
@@ -375,9 +380,6 @@ public sealed class JsonTenantStore : ITenantStore
     /// <para>The <c>string</c> result produced by the sanitize operation.</para>
     /// \endif
     /// </returns>
-    private static string Sanitize(string slug) =>
-        string.Concat(slug.ToLowerInvariant().Split(Path.GetInvalidFileNameChars()));
-
     /// <summary>
     /// \if KO
     /// <para>Tenant Async 데이터를 읽습니다.</para>

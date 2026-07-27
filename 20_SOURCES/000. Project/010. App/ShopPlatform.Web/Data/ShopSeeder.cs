@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using ShopPlatform.Models;
 using ShopPlatform.Services;
 
@@ -15,25 +16,6 @@ public static class ShopSeeder
 {
     /// <summary>
     /// \if KO
-    /// <para>Demo Client Key 값을 보관합니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Stores the demo client key value.</para>
-    /// \endif
-    /// </summary>
-    private const string DemoClientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
-    /// <summary>
-    /// \if KO
-    /// <para>Demo Secret Key 값을 보관합니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Stores the demo secret key value.</para>
-    /// \endif
-    /// </summary>
-    private const string DemoSecretKey = "test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6";
-
-    /// <summary>
-    /// \if KO
     /// <para>Seed Codemaru Async 작업을 수행합니다.</para>
     /// \endif
     /// \if EN
@@ -48,22 +30,6 @@ public static class ShopSeeder
     /// <para>The <c>TenantDbContextFactory</c> value used for db factory.</para>
     /// \endif
     /// </param>
-    /// <param name="tenantStore">
-    /// \if KO
-    /// <para>tenant Store에 사용할 <c>IShopTenantStore</c> 값입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>IShopTenantStore</c> value used for tenant store.</para>
-    /// \endif
-    /// </param>
-    /// <param name="keyProtector">
-    /// \if KO
-    /// <para>key Protector에 사용할 <c>PaymentKeyProtector</c> 값입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>PaymentKeyProtector</c> value used for key protector.</para>
-    /// \endif
-    /// </param>
     /// <returns>
     /// \if KO
     /// <para>Seed Codemaru Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
@@ -74,25 +40,14 @@ public static class ShopSeeder
     /// </returns>
     public static async Task SeedCodemaruAsync(
         TenantDbContextFactory dbFactory,
-        IShopTenantStore tenantStore,
-        PaymentKeyProtector keyProtector)
+        CancellationToken cancellationToken = default)
     {
-        // 결제 키 설정 (config.json 업데이트)
-        var config = await tenantStore.GetAsync("codemaru");
-        if (config != null && !config.Payment.IsEnabled)
-        {
-            config.Payment.IsEnabled              = true;
-            config.Payment.IsTestMode             = true;
-            config.Payment.TossClientKey          = DemoClientKey;
-            config.Payment.TossSecretKeyEncrypted = keyProtector.Protect(DemoSecretKey);
-            config.Payment.SuccessReturnUrl       = string.Empty; // CheckoutPage에서 동적 생성
-            config.Payment.FailReturnUrl          = string.Empty;
-            await tenantStore.SaveAsync(config);
-        }
-
         // 상품 시드
         using var db = dbFactory.Create("codemaru");
-        if (db.Products.Any()) return;
+        if (await db.Products.AnyAsync(cancellationToken).ConfigureAwait(false))
+        {
+            return;
+        }
 
         db.Products.AddRange(
             new Product
@@ -123,6 +78,6 @@ public static class ShopSeeder
                 ImagePath   = null
             }
         );
-        db.SaveChanges();
+        await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 }

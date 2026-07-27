@@ -15,7 +15,7 @@
             const s = document.createElement("script");
             s.src = url;
             s.onload = () => resolve();
-            s.onerror = (e) => reject(e);
+            s.onerror = () => reject(new Error(`Failed to load payment script: ${url}`));
             document.head.appendChild(s);
         });
     }
@@ -24,7 +24,7 @@
         let base = (raw ?? "").toString().trim();
         if (!base) base = "guest";
         base = base
-            .replace(/@/g, "_at_")
+            .replaceAll("@", "_at_")
             .normalize("NFKD")
             .replace(/[^\w\-\.~]/g, "_");
         if (base.length < 2) base = (base + "_x").slice(0, 2);

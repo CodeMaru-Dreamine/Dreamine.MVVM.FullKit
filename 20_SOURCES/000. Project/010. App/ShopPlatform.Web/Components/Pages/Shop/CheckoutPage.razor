@@ -329,7 +329,7 @@ else
         // 재고 차감 (무한 재고 제외)
         foreach (var item in Cart.Items)
         {
-            var product = db.Products.Find(item.ProductId);
+            var product = await db.Products.FindAsync(item.ProductId);
             if (product == null || product.IsUnlimitedStock) continue;
             product.Stock = Math.Max(0, product.Stock - item.Quantity);
         }

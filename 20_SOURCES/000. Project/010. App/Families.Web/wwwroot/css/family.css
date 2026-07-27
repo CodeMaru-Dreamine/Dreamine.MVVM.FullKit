@@ -707,7 +707,6 @@ a { color: inherit; text-decoration: none; }
     align-items: center;
     gap: 14px;
     flex-wrap: wrap;
-    padding-top: 10px;
     border-top: 1px dashed var(--fa-border);
     background: #fafafa;
     margin: 0 -16px -14px;

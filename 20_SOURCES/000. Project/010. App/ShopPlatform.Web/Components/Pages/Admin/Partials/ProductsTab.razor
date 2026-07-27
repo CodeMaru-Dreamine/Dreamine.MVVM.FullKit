@@ -275,7 +275,7 @@
     private async Task ToggleFeatured(Product p)
     {
         using var db = DbFactory.Create(Slug);
-        var existing = db.Products.Find(p.Id);
+        var existing = await db.Products.FindAsync(p.Id);
         if (existing == null) return;
         existing.IsFeatured = !existing.IsFeatured;
         await db.SaveChangesAsync();
@@ -287,7 +287,7 @@
     {
         if (!int.TryParse(e.Value?.ToString(), out var val)) return;
         using var db = DbFactory.Create(Slug);
-        var existing = db.Products.Find(p.Id);
+        var existing = await db.Products.FindAsync(p.Id);
         if (existing == null) return;
         existing.SortOrder = val;
         await db.SaveChangesAsync();
@@ -325,7 +325,7 @@
         using var db = DbFactory.Create(Slug);
         if (_form.Id > 0)
         {
-            var existing = db.Products.Find(_form.Id);
+            var existing = await db.Products.FindAsync(_form.Id);
             if (existing != null)
             {
                 existing.Name = _form.Name; existing.Description = _form.Description;
@@ -353,7 +353,7 @@
     private async Task DeleteProduct(int id)
     {
         using var db = DbFactory.Create(Slug);
-        var p = db.Products.Find(id);
+        var p = await db.Products.FindAsync(id);
         if (p != null) db.Products.Remove(p);
         await db.SaveChangesAsync();
         LoadProducts();
@@ -369,6 +369,7 @@
         _videoUploadError = string.Empty;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "S5693", Justification = "The declared browser file size and OpenReadStream are both capped at 200 MB before data is persisted.")]
     private async Task OnVideoSelected(InputFileChangeEventArgs e)
     {
         _videoUploadError = string.Empty;
@@ -395,6 +396,7 @@
         finally { _uploading = false; }
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Security", "S5693", Justification = "At most ten images are accepted, and each file is independently capped at 5 MB before data is persisted.")]
     private async Task OnDetailImagesSelected(InputFileChangeEventArgs e)
     {
         foreach (var file in e.GetMultipleFiles(10))
