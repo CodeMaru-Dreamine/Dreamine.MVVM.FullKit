@@ -10,13 +10,21 @@ on:
 jobs:
   build-and-test:
     name: Windows build and tests
-    runs-on: windows-latest
+    runs-on: windows-2025
+    permissions:
+      contents: read
+    env:
+      SONAR_PROJECT_KEY: CodeMaru-Dreamine_Dreamine.MVVM.FullKit
+      SONAR_ORGANIZATION: codemaru-dreamine
+      SONAR_SCANNER_VERSION: 11.2.1
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           submodules: false
+          fetch-depth: 0
 
       - name: Enable Git long paths
         run: git config --global core.longpaths true
@@ -60,33 +68,129 @@ jobs:
           }
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: |
             8.0.x
             9.0.x
+
+      - name: Install SonarScanner for .NET
+        if: >-
+          env.SONAR_TOKEN != '' &&
+          (github.ref == 'refs/heads/main' ||
+           (github.event_name == 'pull_request' &&
+            github.actor != 'dependabot[bot]' &&
+            github.event.pull_request.head.repo.full_name == github.repository))
+        shell: pwsh
+        run: |
+          dotnet tool install dotnet-sonarscanner `
+            --tool-path "$env:RUNNER_TEMP\sonar-scanner" `
+            --version "$env:SONAR_SCANNER_VERSION"
 
       - name: Restore test projects
         run: |
           dotnet restore "20_SOURCES/200. Tests/Dreamine.FullKit.Tests/Dreamine.FullKit.Tests.csproj"
           dotnet restore "20_SOURCES/200. Tests/Dreamine.FullKit.Wpf.Tests/Dreamine.FullKit.Wpf.Tests.csproj"
           dotnet restore "20_SOURCES/200. Tests/UI.WinForms.Tests/Dreamine.UI.WinForms.Tests.csproj"
+          dotnet restore "20_SOURCES/200. Tests/UI.Blazor.Tests/Dreamine.UI.Blazor.Tests.csproj"
           dotnet restore "20_SOURCES/200. Tests/Wedding.Layouts.Contracts.Tests/Wedding.Layouts.Contracts.Tests.csproj"
           dotnet restore "20_SOURCES/200. Tests/WeddingPlatform.LayoutWorkflow.Tests/WeddingPlatform.LayoutWorkflow.Tests.csproj"
           dotnet restore "20_SOURCES/200. Tests/Wedding.Layouts.PipelineSmoke/Wedding.Layouts.PipelineSmoke.csproj"
           dotnet restore "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/SampleCore/SampleCore.csproj"
           dotnet restore "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Wpf/SampleCrossUi.Wpf.csproj"
           dotnet restore "20_SOURCES/000. Project/010. App/Dreamine.Web/Dreamine.Web.csproj"
+          dotnet restore "20_SOURCES/000. Project/010. App/DreamineVMS.Web/DreamineVMS.Web.csproj"
+          dotnet restore "20_SOURCES/000. Project/010. App/DreamineVMS/DreamineVMS.csproj"
+          dotnet restore "20_SOURCES/000. Project/010. App/Families.AutoWriter/Families.AutoWriter.csproj"
+          dotnet restore "20_SOURCES/000. Project/010. App/Families.Web/Families.Web.csproj"
+          dotnet restore "20_SOURCES/000. Project/010. App/Portfolio.Web/Portfolio.Web.csproj"
+          dotnet restore "20_SOURCES/000. Project/010. App/ShopPlatform.Web/ShopPlatform.Web.csproj"
           dotnet restore "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/WeddingPlatform.Web.csproj"
+          dotnet restore "20_SOURCES/000. Project/010. App/WeddingThankYou/WeddingThankYou.csproj"
           dotnet restore "20_SOURCES/000. Project/010. App/Wedding.Layouts.Editor.Wpf/Wedding.Layouts.Editor.Wpf.csproj"
 
-      - name: Run tests
+      - name: Begin SonarCloud analysis
+        if: >-
+          env.SONAR_TOKEN != '' &&
+          (github.ref == 'refs/heads/main' ||
+           (github.event_name == 'pull_request' &&
+            github.actor != 'dependabot[bot]' &&
+            github.event.pull_request.head.repo.full_name == github.repository))
+        shell: pwsh
         run: |
-          dotnet test "20_SOURCES/200. Tests/Dreamine.FullKit.Tests/Dreamine.FullKit.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --filter "Category!=GeneratedOntology"
-          dotnet test "20_SOURCES/200. Tests/Dreamine.FullKit.Wpf.Tests/Dreamine.FullKit.Wpf.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
-          dotnet test "20_SOURCES/200. Tests/UI.WinForms.Tests/Dreamine.UI.WinForms.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
-          dotnet test "20_SOURCES/200. Tests/Wedding.Layouts.Contracts.Tests/Wedding.Layouts.Contracts.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
-          dotnet test "20_SOURCES/200. Tests/WeddingPlatform.LayoutWorkflow.Tests/WeddingPlatform.LayoutWorkflow.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+          $scanner = Join-Path $env:RUNNER_TEMP "sonar-scanner\dotnet-sonarscanner.exe"
+          $projectVersion = (git describe --tags --abbrev=0 2>$null)
+          if ([string]::IsNullOrWhiteSpace($projectVersion)) {
+            $projectVersion = "0.0.0"
+          }
+          else {
+            $projectVersion = $projectVersion.Trim().TrimStart("v")
+          }
+
+          Write-Host "SonarCloud project version: $projectVersion"
+          $exclusions = @(
+            ".agents/**",
+            ".claude/**",
+            ".codex/**",
+            ".codex-*/**",
+            ".encoding-recovery/**",
+            ".screen-update/**",
+            ".tmp/**",
+            ".ua/**",
+            ".sonarqube/**",
+            "artifacts/**",
+            "video_work/**",
+            "10_DOCUMENTS/**",
+            "50_SETUP/**",
+            "GenOg/**",
+            "20_SOURCES/998. DEMO/**",
+            "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/load-tests/**",
+            "hf_wan22_*.py",
+            "pollinations_ltx_test.py",
+            "**/bin/**",
+            "**/obj/**",
+            "**/publish/**",
+            "**/TestResults/**",
+            "**/wwwroot/lib/**",
+            "**/*.min.js",
+            "**/*.min.css"
+          ) -join ","
+          $cpdExclusions = @(
+            "**/*.g.cs",
+            "**/*.g.i.cs",
+            "**/*.Designer.cs",
+            "**/Migrations/**",
+            "**/wwwroot/lib/**",
+            "**/*.min.js",
+            "**/*.min.css"
+          ) -join ","
+
+          & $scanner begin `
+            "/k:$env:SONAR_PROJECT_KEY" `
+            "/o:$env:SONAR_ORGANIZATION" `
+            "/v:$projectVersion" `
+            "/d:sonar.token=$env:SONAR_TOKEN" `
+            "/d:sonar.scanner.scanAll=true" `
+            "/d:sonar.sourceEncoding=UTF-8" `
+            "/d:sonar.cs.opencover.reportsPaths=$env:RUNNER_TEMP\TestResults\**\coverage.opencover.xml" `
+            "/d:sonar.cs.vstest.reportsPaths=$env:RUNNER_TEMP\TestResults\**\*.trx" `
+            "/d:sonar.exclusions=$exclusions" `
+            "/d:sonar.cpd.exclusions=$cpdExclusions"
+
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Run tests
+        shell: pwsh
+        run: |
+          $settings = ".github/coverlet.runsettings"
+          $results = Join-Path $env:RUNNER_TEMP "TestResults"
+
+          dotnet test "20_SOURCES/200. Tests/Dreamine.FullKit.Tests/Dreamine.FullKit.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --filter "Category!=GeneratedOntology" --collect:"XPlat Code Coverage" --settings $settings --results-directory "$results\fullkit" --logger "trx;LogFileName=fullkit.trx"
+          dotnet test "20_SOURCES/200. Tests/Dreamine.FullKit.Wpf.Tests/Dreamine.FullKit.Wpf.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --collect:"XPlat Code Coverage" --settings $settings --results-directory "$results\fullkit-wpf" --logger "trx;LogFileName=fullkit-wpf.trx"
+          dotnet test "20_SOURCES/200. Tests/UI.WinForms.Tests/Dreamine.UI.WinForms.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --collect:"XPlat Code Coverage" --settings $settings --results-directory "$results\ui-winforms" --logger "trx;LogFileName=ui-winforms.trx"
+          dotnet test "20_SOURCES/200. Tests/UI.Blazor.Tests/Dreamine.UI.Blazor.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --collect:"XPlat Code Coverage" --settings $settings --results-directory "$results\ui-blazor" --logger "trx;LogFileName=ui-blazor.trx"
+          dotnet test "20_SOURCES/200. Tests/Wedding.Layouts.Contracts.Tests/Wedding.Layouts.Contracts.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --collect:"XPlat Code Coverage" --settings $settings --results-directory "$results\wedding-contracts" --logger "trx;LogFileName=wedding-contracts.trx"
+          dotnet test "20_SOURCES/200. Tests/WeddingPlatform.LayoutWorkflow.Tests/WeddingPlatform.LayoutWorkflow.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --collect:"XPlat Code Coverage" --settings $settings --results-directory "$results\wedding-workflow" --logger "trx;LogFileName=wedding-workflow.trx"
 
       - name: Run wedding layout pipeline smoke test
         run: dotnet run --project "20_SOURCES/200. Tests/Wedding.Layouts.PipelineSmoke/Wedding.Layouts.PipelineSmoke.csproj" --no-restore --configuration Release
@@ -96,12 +200,33 @@ jobs:
           dotnet build "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/SampleCore/SampleCore.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
           dotnet build "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Wpf/SampleCrossUi.Wpf.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
           dotnet build "20_SOURCES/000. Project/010. App/Dreamine.Web/Dreamine.Web.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+          dotnet build "20_SOURCES/000. Project/010. App/DreamineVMS.Web/DreamineVMS.Web.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+          dotnet build "20_SOURCES/000. Project/010. App/DreamineVMS/DreamineVMS.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+          dotnet build "20_SOURCES/000. Project/010. App/Families.AutoWriter/Families.AutoWriter.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+          dotnet build "20_SOURCES/000. Project/010. App/Families.Web/Families.Web.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+          dotnet build "20_SOURCES/000. Project/010. App/Portfolio.Web/Portfolio.Web.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+          dotnet build "20_SOURCES/000. Project/010. App/ShopPlatform.Web/ShopPlatform.Web.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
           dotnet build "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/WeddingPlatform.Web.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+          dotnet build "20_SOURCES/000. Project/010. App/WeddingThankYou/WeddingThankYou.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
           dotnet build "20_SOURCES/000. Project/010. App/Wedding.Layouts.Editor.Wpf/Wedding.Layouts.Editor.Wpf.csproj" --no-restore --configuration Release -m:1 --verbosity minimal
+
+      - name: End SonarCloud analysis
+        if: >-
+          success() &&
+          env.SONAR_TOKEN != '' &&
+          (github.ref == 'refs/heads/main' ||
+           (github.event_name == 'pull_request' &&
+            github.actor != 'dependabot[bot]' &&
+            github.event.pull_request.head.repo.full_name == github.repository))
+        shell: pwsh
+        run: |
+          $scanner = Join-Path $env:RUNNER_TEMP "sonar-scanner\dotnet-sonarscanner.exe"
+          & $scanner end "/d:sonar.token=$env:SONAR_TOKEN"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   publish-nuget:
     name: Publish NuGet packages
-    runs-on: windows-latest
+    runs-on: windows-2025
     needs: build-and-test
     if: startsWith(github.ref, 'refs/tags/v')
 
@@ -111,7 +236,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           submodules: false
 
@@ -157,7 +282,7 @@ jobs:
           }
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4.3.1
         with:
           dotnet-version: |
             8.0.x
@@ -165,7 +290,7 @@ jobs:
 
       - name: Login to NuGet.org (Trusted Publishing)
         id: nuget-login
-        uses: NuGet/login@v1
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
         with:
           user: minsujang
 

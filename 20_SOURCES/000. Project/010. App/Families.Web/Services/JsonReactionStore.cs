@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using Dreamine.AppSecurity;
 using FamiliesApp.Models;
 
 namespace FamiliesApp.Services;
@@ -90,7 +91,7 @@ public sealed class JsonReactionStore : IReactionStore
     /// \endif
     /// </returns>
     private string ReactionsDir(string slug) =>
-        Path.Combine(_tenants.GetTenantDataPath(slug), "reactions");
+        StoragePathGuard.ResolveUnderRoot(_tenants.GetTenantDataPath(slug), "reactions");
 
     /// <summary>
     /// \if KO
@@ -125,7 +126,7 @@ public sealed class JsonReactionStore : IReactionStore
     /// \endif
     /// </returns>
     private string ReactionPath(string slug, string postId) =>
-        Path.Combine(ReactionsDir(slug), $"{Sanitize(postId)}.json");
+        StoragePathGuard.ResolveIdentifierFile(ReactionsDir(slug), postId, ".json", nameof(postId));
 
     /// <summary>
     /// \if KO
@@ -395,7 +396,9 @@ public sealed class JsonReactionStore : IReactionStore
         Directory.CreateDirectory(dir);
 
         var path = ReactionPath(slug, summary.PostId);
-        var tmp = path + ".tmp";
+        var tmp = StoragePathGuard.ResolveUnderRoot(
+            Path.GetDirectoryName(path)!,
+            $"{Path.GetFileName(path)}.tmp");
 
         await _gate.WaitAsync(ct).ConfigureAwait(false);
         try
@@ -409,30 +412,4 @@ public sealed class JsonReactionStore : IReactionStore
         finally { _gate.Release(); }
     }
 
-    /// <summary>
-    /// \if KO
-    /// <para>Sanitize 작업을 수행합니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Performs the sanitize operation.</para>
-    /// \endif
-    /// </summary>
-    /// <param name="id">
-    /// \if KO
-    /// <para>id에 사용할 <c>string</c> 값입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>string</c> value used for id.</para>
-    /// \endif
-    /// </param>
-    /// <returns>
-    /// \if KO
-    /// <para>Sanitize 작업에서 생성한 <c>string</c> 결과입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>string</c> result produced by the sanitize operation.</para>
-    /// \endif
-    /// </returns>
-    private static string Sanitize(string id) =>
-        string.Concat(id.Split(Path.GetInvalidFileNameChars()));
 }

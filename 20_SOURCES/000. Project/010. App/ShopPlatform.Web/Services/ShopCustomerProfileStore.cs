@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Dreamine.AppSecurity;
 using ShopPlatform.Models;
 
 namespace ShopPlatform.Services;
@@ -50,7 +51,7 @@ public sealed class ShopCustomerProfileStore
     /// </param>
     public ShopCustomerProfileStore(ShopOptions options)
     {
-        _root = options.ResolvedDataPath;
+        _root = Path.GetFullPath(options.ResolvedDataPath);
     }
 
     /// <summary>
@@ -202,7 +203,8 @@ public sealed class ShopCustomerProfileStore
     /// <para>The <c>string</c> result produced by the shop dir operation.</para>
     /// \endif
     /// </returns>
-    private string ShopDir(string slug) => Path.Combine(_root, slug);
+    private string ShopDir(string slug) =>
+        StoragePathGuard.ResolveIdentifierDirectory(_root, slug, nameof(slug));
     /// <summary>
     /// \if KO
     /// <para>Profile Path 작업을 수행합니다.</para>
@@ -227,5 +229,6 @@ public sealed class ShopCustomerProfileStore
     /// <para>The <c>string</c> result produced by the profile path operation.</para>
     /// \endif
     /// </returns>
-    private string ProfilePath(string slug) => Path.Combine(ShopDir(slug), "customers.json");
+    private string ProfilePath(string slug) =>
+        StoragePathGuard.ResolveUnderRoot(ShopDir(slug), "customers.json");
 }

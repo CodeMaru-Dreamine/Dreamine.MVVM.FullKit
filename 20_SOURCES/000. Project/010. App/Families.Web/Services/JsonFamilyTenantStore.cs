@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Dreamine.AppSecurity;
 using FamiliesApp.Models;
 
 namespace FamiliesApp.Services;
@@ -67,7 +68,7 @@ public sealed class JsonFamilyTenantStore : IFamilyTenantStore
     /// </param>
     public JsonFamilyTenantStore(FamilyOptions opts)
     {
-        _dataRoot = opts.ResolvedDataPath;
+        _dataRoot = Path.GetFullPath(opts.ResolvedDataPath);
         Directory.CreateDirectory(_dataRoot);
     }
 
@@ -96,7 +97,11 @@ public sealed class JsonFamilyTenantStore : IFamilyTenantStore
     /// \endif
     /// </returns>
     public string GetTenantDataPath(string slug) =>
-        Path.Combine(_dataRoot, Sanitize(slug));
+        StoragePathGuard.ResolveIdentifierDirectory(
+            _dataRoot,
+            slug,
+            nameof(slug),
+            normalizeToLower: true);
 
     /// <summary>
     /// \if KO
@@ -175,7 +180,7 @@ public sealed class JsonFamilyTenantStore : IFamilyTenantStore
 
         foreach (var dir in Directory.GetDirectories(_dataRoot))
         {
-            var cfg = Path.Combine(dir, "config.json");
+            var cfg = StoragePathGuard.ResolveUnderRoot(dir, "config.json");
             if (!File.Exists(cfg)) continue;
 
             await _gate.WaitAsync(ct).ConfigureAwait(false);
@@ -226,19 +231,20 @@ public sealed class JsonFamilyTenantStore : IFamilyTenantStore
     {
         var dir = GetTenantDataPath(config.Slug);
         Directory.CreateDirectory(dir);
-        Directory.CreateDirectory(Path.Combine(dir, "posts"));
-        Directory.CreateDirectory(Path.Combine(dir, "albums"));
-        Directory.CreateDirectory(Path.Combine(dir, "reactions"));
-        Directory.CreateDirectory(Path.Combine(dir, "media"));
+        Directory.CreateDirectory(StoragePathGuard.ResolveUnderRoot(dir, "posts"));
+        Directory.CreateDirectory(StoragePathGuard.ResolveUnderRoot(dir, "albums"));
+        Directory.CreateDirectory(StoragePathGuard.ResolveUnderRoot(dir, "reactions"));
+        Directory.CreateDirectory(StoragePathGuard.ResolveUnderRoot(dir, "media"));
 
-        var tmp = ConfigPath(config.Slug) + ".tmp";
+        var configPath = ConfigPath(config.Slug);
+        var tmp = StoragePathGuard.ResolveUnderRoot(dir, $"{Path.GetFileName(configPath)}.tmp");
         await _gate.WaitAsync(ct).ConfigureAwait(false);
         try
         {
             await using (var fs = File.Create(tmp))
                 await JsonSerializer.SerializeAsync(fs, config, _jsonOpts, ct).ConfigureAwait(false);
 
-            File.Copy(tmp, ConfigPath(config.Slug), overwrite: true);
+            File.Copy(tmp, configPath, overwrite: true);
             File.Delete(tmp);
         }
         finally { _gate.Release(); }
@@ -344,32 +350,5 @@ public sealed class JsonFamilyTenantStore : IFamilyTenantStore
     /// \endif
     /// </returns>
     private string ConfigPath(string slug) =>
-        Path.Combine(GetTenantDataPath(slug), "config.json");
-
-    /// <summary>
-    /// \if KO
-    /// <para>Sanitize 작업을 수행합니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Performs the sanitize operation.</para>
-    /// \endif
-    /// </summary>
-    /// <param name="slug">
-    /// \if KO
-    /// <para>slug에 사용할 <c>string</c> 값입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>string</c> value used for slug.</para>
-    /// \endif
-    /// </param>
-    /// <returns>
-    /// \if KO
-    /// <para>Sanitize 작업에서 생성한 <c>string</c> 결과입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>string</c> result produced by the sanitize operation.</para>
-    /// \endif
-    /// </returns>
-    private static string Sanitize(string slug) =>
-        string.Concat(slug.ToLowerInvariant().Split(Path.GetInvalidFileNameChars()));
+        StoragePathGuard.ResolveUnderRoot(GetTenantDataPath(slug), "config.json");
 }

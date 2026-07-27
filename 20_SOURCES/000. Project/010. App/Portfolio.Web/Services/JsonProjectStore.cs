@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Dreamine.AppSecurity;
 using PortfolioApp.Models;
 
 namespace PortfolioApp.Services;
@@ -80,7 +81,8 @@ public class JsonProjectStore : IProjectStore
     /// <para>The <c>string</c> result produced by the dir operation.</para>
     /// \endif
     /// </returns>
-    private string Dir(string slug) => Path.Combine(_root, slug, "projects");
+    private string Dir(string slug) =>
+        StoragePathGuard.ResolveUnderRoot(TenantDir(slug), "projects");
     /// <summary>
     /// \if KO
     /// <para>Path 작업을 수행합니다.</para>
@@ -113,7 +115,17 @@ public class JsonProjectStore : IProjectStore
     /// <para>The <c>string</c> result produced by the path operation.</para>
     /// \endif
     /// </returns>
-    private string Path_(string slug, string id) => Path.Combine(Dir(slug), $"{id}.json");
+    private string Path_(string slug, string id) =>
+        StoragePathGuard.ResolveIdentifierFile(Dir(slug), id, ".json", nameof(id));
+
+    private string TenantDir(string slug) =>
+        StoragePathGuard.ResolveIdentifierDirectory(_root, slug, nameof(slug));
+
+    private string MediaDir(string slug, string projectId)
+    {
+        var mediaRoot = StoragePathGuard.ResolveUnderRoot(TenantDir(slug), "media");
+        return StoragePathGuard.ResolveIdentifierDirectory(mediaRoot, projectId, nameof(projectId));
+    }
 
     /// <summary>
     /// \if KO
@@ -273,7 +285,7 @@ public class JsonProjectStore : IProjectStore
     {
         var path = Path_(slug, projectId);
         if (File.Exists(path)) File.Delete(path);
-        var mediaDir = System.IO.Path.Combine(_root, slug, "media", projectId);
+        var mediaDir = MediaDir(slug, projectId);
         if (Directory.Exists(mediaDir)) Directory.Delete(mediaDir, true);
         return Task.CompletedTask;
     }

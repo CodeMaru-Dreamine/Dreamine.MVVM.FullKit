@@ -1,3 +1,4 @@
+using Dreamine.AppSecurity;
 using Microsoft.EntityFrameworkCore;
 using ShopPlatform.Models;
 
@@ -192,5 +193,11 @@ public sealed class TenantDbContextFactory
     /// \endif
     /// </returns>
     public string GetDbPath(string slug)
-        => Path.Combine(_opts.ResolvedDataPath, slug, "shop.db");
+    {
+        var tenantDir = StoragePathGuard.ResolveIdentifierDirectory(
+            _opts.ResolvedDataPath,
+            slug,
+            nameof(slug));
+        return StoragePathGuard.ResolveUnderRoot(tenantDir, "shop.db");
+    }
 }

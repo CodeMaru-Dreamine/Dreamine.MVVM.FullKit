@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using Dreamine.AppSecurity;
 using PortfolioApp.Models;
 
 namespace PortfolioApp.Services;
@@ -51,7 +52,7 @@ public class JsonPortfolioTenantStore : IPortfolioTenantStore
     /// </param>
     public JsonPortfolioTenantStore(PortfolioOptions opts)
     {
-        _root = opts.ResolvedDataPath;
+        _root = Path.GetFullPath(opts.ResolvedDataPath);
         Directory.CreateDirectory(_root);
     }
 
@@ -79,7 +80,11 @@ public class JsonPortfolioTenantStore : IPortfolioTenantStore
     /// <para>The <c>string</c> result produced by the config path operation.</para>
     /// \endif
     /// </returns>
-    private string ConfigPath(string slug) => Path.Combine(_root, slug, "config.json");
+    private string ConfigPath(string slug) =>
+        StoragePathGuard.ResolveUnderRoot(TenantDir(slug), "config.json");
+
+    private string TenantDir(string slug) =>
+        StoragePathGuard.ResolveIdentifierDirectory(_root, slug, nameof(slug));
 
     /// <summary>
     /// \if KO
@@ -103,7 +108,7 @@ public class JsonPortfolioTenantStore : IPortfolioTenantStore
         if (!Directory.Exists(_root)) return list;
         foreach (var dir in Directory.GetDirectories(_root))
         {
-            var cfg = Path.Combine(dir, "config.json");
+            var cfg = StoragePathGuard.ResolveUnderRoot(dir, "config.json");
             if (!File.Exists(cfg)) continue;
             try
             {
@@ -174,10 +179,10 @@ public class JsonPortfolioTenantStore : IPortfolioTenantStore
     /// </returns>
     public async Task SaveAsync(PortfolioConfig config)
     {
-        var dir = Path.Combine(_root, config.Slug);
-        Directory.CreateDirectory(Path.Combine(dir, "projects"));
-        Directory.CreateDirectory(Path.Combine(dir, "media"));
-        Directory.CreateDirectory(Path.Combine(dir, "contacts"));
+        var dir = TenantDir(config.Slug);
+        Directory.CreateDirectory(StoragePathGuard.ResolveUnderRoot(dir, "projects"));
+        Directory.CreateDirectory(StoragePathGuard.ResolveUnderRoot(dir, "media"));
+        Directory.CreateDirectory(StoragePathGuard.ResolveUnderRoot(dir, "contacts"));
         var json = JsonSerializer.Serialize(config, _json);
         await File.WriteAllTextAsync(ConfigPath(config.Slug), json);
     }
@@ -208,7 +213,7 @@ public class JsonPortfolioTenantStore : IPortfolioTenantStore
     /// </returns>
     public Task DeleteAsync(string slug)
     {
-        var dir = Path.Combine(_root, slug);
+        var dir = TenantDir(slug);
         if (Directory.Exists(dir))
             Directory.Delete(dir, recursive: true);
         return Task.CompletedTask;

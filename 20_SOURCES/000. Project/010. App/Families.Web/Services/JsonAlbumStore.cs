@@ -1,5 +1,6 @@
 using System.IO;
 using System.Text.Json;
+using Dreamine.AppSecurity;
 using FamiliesApp.Models;
 
 namespace FamiliesApp.Services;
@@ -90,7 +91,7 @@ public sealed class JsonAlbumStore : IAlbumStore
     /// \endif
     /// </returns>
     private string AlbumsDir(string slug) =>
-        Path.Combine(_tenants.GetTenantDataPath(slug), "albums");
+        StoragePathGuard.ResolveUnderRoot(_tenants.GetTenantDataPath(slug), "albums");
 
     /// <summary>
     /// \if KO
@@ -125,7 +126,7 @@ public sealed class JsonAlbumStore : IAlbumStore
     /// \endif
     /// </returns>
     private string AlbumPath(string slug, string albumId) =>
-        Path.Combine(AlbumsDir(slug), $"{Sanitize(albumId)}.json");
+        StoragePathGuard.ResolveIdentifierFile(AlbumsDir(slug), albumId, ".json", nameof(albumId));
 
     /// <summary>
     /// \if KO
@@ -281,7 +282,9 @@ public sealed class JsonAlbumStore : IAlbumStore
         Directory.CreateDirectory(dir);
 
         var path = AlbumPath(slug, album.Id);
-        var tmp = path + ".tmp";
+        var tmp = StoragePathGuard.ResolveUnderRoot(
+            Path.GetDirectoryName(path)!,
+            $"{Path.GetFileName(path)}.tmp");
 
         await _gate.WaitAsync(ct).ConfigureAwait(false);
         try
@@ -342,30 +345,4 @@ public sealed class JsonAlbumStore : IAlbumStore
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    /// \if KO
-    /// <para>Sanitize 작업을 수행합니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Performs the sanitize operation.</para>
-    /// \endif
-    /// </summary>
-    /// <param name="id">
-    /// \if KO
-    /// <para>id에 사용할 <c>string</c> 값입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>string</c> value used for id.</para>
-    /// \endif
-    /// </param>
-    /// <returns>
-    /// \if KO
-    /// <para>Sanitize 작업에서 생성한 <c>string</c> 결과입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>string</c> result produced by the sanitize operation.</para>
-    /// \endif
-    /// </returns>
-    private static string Sanitize(string id) =>
-        string.Concat(id.Split(Path.GetInvalidFileNameChars()));
 }

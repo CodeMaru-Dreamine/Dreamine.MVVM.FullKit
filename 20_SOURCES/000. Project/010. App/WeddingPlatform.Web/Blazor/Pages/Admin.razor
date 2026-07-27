@@ -1861,7 +1861,10 @@
     private static readonly HashSet<string> _defaultLabels =
         ["신랑", "신부", "신랑 아버지", "신랑 어머니", "신부 아버지", "신부 어머니"];
 
+    private readonly object _uploadTickerSync = new();
     private int _uploadElapsedSec;
+    private int _uploadRunActive;
+    private bool _disposed;
     private System.Threading.CancellationTokenSource? _uploadTickCts;
 
     private bool CanUseLayout(WeddingLayoutOption option)
@@ -2241,25 +2244,84 @@
     /// <summary>업로드 중 1초마다 경과 시간을 갱신합니다. "업로드 중..."이 멈춘 건지 실제로 느린 건지 구분하기 위함.</summary>
     private async Task RunUploadAsync(Func<Task> action)
     {
-        _uploadElapsedSec = 0;
-        _uploadTickCts = new System.Threading.CancellationTokenSource();
-        var token = _uploadTickCts.Token;
-        _ = Task.Run(async () =>
+        if (System.Threading.Interlocked.CompareExchange(
+                ref _uploadRunActive,
+                1,
+                0) != 0)
         {
+            return;
+        }
+
+        try
+        {
+            System.Threading.CancellationTokenSource source;
+            lock (_uploadTickerSync)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _uploadTickCts?.Cancel();
+                _uploadTickCts?.Dispose();
+                source = new System.Threading.CancellationTokenSource();
+                _uploadTickCts = source;
+                _uploadElapsedSec = 0;
+            }
+
+            var ticker = RunUploadTickerAsync(source.Token);
             try
             {
-                while (!token.IsCancellationRequested)
+                if (!source.IsCancellationRequested)
                 {
-                    await Task.Delay(1000, token);
-                    _uploadElapsedSec++;
-                    await InvokeAsync(StateHasChanged);
+                    await action();
                 }
             }
-            catch (TaskCanceledException) { }
-        });
+            finally
+            {
+                lock (_uploadTickerSync)
+                {
+                    source.Cancel();
+                }
 
-        try { await action(); }
-        finally { _uploadTickCts.Cancel(); }
+                try
+                {
+                    await ticker;
+                }
+                catch (OperationCanceledException)
+                    when (source.IsCancellationRequested)
+                {
+                }
+                finally
+                {
+                    lock (_uploadTickerSync)
+                    {
+                        if (ReferenceEquals(_uploadTickCts, source))
+                        {
+                            _uploadTickCts = null;
+                        }
+                    }
+
+                    source.Dispose();
+                }
+            }
+        }
+        finally
+        {
+            System.Threading.Volatile.Write(ref _uploadRunActive, 0);
+        }
+    }
+
+    private async Task RunUploadTickerAsync(
+        System.Threading.CancellationToken token)
+    {
+        while (true)
+        {
+            await Task.Delay(1000, token);
+            token.ThrowIfCancellationRequested();
+            _uploadElapsedSec++;
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     protected override async Task OnInitializedAsync()
@@ -2827,8 +2889,20 @@
     public void Dispose()
     {
         LayoutRegistry.Changed -= OnLayoutCatalogChanged;
-        _uploadTickCts?.Cancel();
-        _uploadTickCts?.Dispose();
+        lock (_uploadTickerSync)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            _uploadTickCts?.Cancel();
+            _uploadTickCts = null;
+        }
+
+        // RunUploadAsync owns and disposes the active source after its ticker
+        // has observed cancellation.
         _themePreviewDebounceCts?.Cancel();
         _themePreviewDebounceCts?.Dispose();
         _selfRef?.Dispose();

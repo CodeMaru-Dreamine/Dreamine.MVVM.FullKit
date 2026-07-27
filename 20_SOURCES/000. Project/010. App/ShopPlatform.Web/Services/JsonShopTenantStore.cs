@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Dreamine.AppSecurity;
 using ShopPlatform.Models;
 
 namespace ShopPlatform.Services;
@@ -48,7 +49,7 @@ public sealed class JsonShopTenantStore : IShopTenantStore
     /// <para>The <c>ShopOptions</c> value used for opts.</para>
     /// \endif
     /// </param>
-    public JsonShopTenantStore(ShopOptions opts) => _root = opts.ResolvedDataPath;
+    public JsonShopTenantStore(ShopOptions opts) => _root = Path.GetFullPath(opts.ResolvedDataPath);
 
     /// <summary>
     /// \if KO
@@ -104,7 +105,7 @@ public sealed class JsonShopTenantStore : IShopTenantStore
         var list = new List<ShopConfig>();
         foreach (var dir in Directory.EnumerateDirectories(_root))
         {
-            var path = Path.Combine(dir, "config.json");
+            var path = StoragePathGuard.ResolveUnderRoot(dir, "config.json");
             if (!File.Exists(path)) continue;
             await using var stream = File.OpenRead(path);
             var cfg = await JsonSerializer.DeserializeAsync<ShopConfig>(stream, _json);
@@ -227,7 +228,8 @@ public sealed class JsonShopTenantStore : IShopTenantStore
     /// <para>The <c>string</c> result produced by the shop dir operation.</para>
     /// \endif
     /// </returns>
-    private string ShopDir(string slug) => Path.Combine(_root, slug);
+    private string ShopDir(string slug) =>
+        StoragePathGuard.ResolveIdentifierDirectory(_root, slug, nameof(slug));
     /// <summary>
     /// \if KO
     /// <para>Config Path 작업을 수행합니다.</para>
@@ -252,5 +254,6 @@ public sealed class JsonShopTenantStore : IShopTenantStore
     /// <para>The <c>string</c> result produced by the config path operation.</para>
     /// \endif
     /// </returns>
-    private string ConfigPath(string slug) => Path.Combine(ShopDir(slug), "config.json");
+    private string ConfigPath(string slug) =>
+        StoragePathGuard.ResolveUnderRoot(ShopDir(slug), "config.json");
 }

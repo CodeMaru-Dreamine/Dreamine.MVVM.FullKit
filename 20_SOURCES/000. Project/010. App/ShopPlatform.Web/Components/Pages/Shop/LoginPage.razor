@@ -54,6 +54,7 @@
     private string _password = string.Empty;
     private string _error = string.Empty;
     private bool _loading;
+    private string SafeReturnPath => GetSafeReturnPath(ReturnUrl, Slug);
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,11 +65,11 @@
         }
         await CustomerLogin.SyncAsync(Slug);
         if (Session.IsLoggedIn)
-            Nav.NavigateTo(ReturnUrl ?? $"/{Slug}");
+            Nav.NavigateTo(SafeReturnPath);
     }
 
     private string CommonLoginUrl =>
-        $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.ToAbsoluteUri(ReturnUrl ?? $"/{Slug}").ToString())}";
+        $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.ToAbsoluteUri(SafeReturnPath).ToString())}";
 
     private void Login()
     {
@@ -110,7 +111,7 @@
         }
 
         Session.Login(user);
-        Nav.NavigateTo(ReturnUrl ?? $"/{Slug}");
+        Nav.NavigateTo(SafeReturnPath);
     }
 
     private Task OnKey(KeyboardEventArgs e)
@@ -124,5 +125,85 @@
         var actual = Convert.ToBase64String(System.Security.Cryptography.SHA256.HashData(
             System.Text.Encoding.UTF8.GetBytes(plain + "ShopPlatformSalt2025")));
         return string.Equals(actual, hash, StringComparison.Ordinal);
+    }
+
+    private static string GetSafeReturnPath(string? requestedPath, string tenantSlug)
+    {
+        if (!IsValidTenantSlug(tenantSlug))
+            return "/";
+
+        var tenantRoot = $"/{tenantSlug}";
+        if (string.IsNullOrWhiteSpace(requestedPath))
+            return tenantRoot;
+
+        if (requestedPath.Length > 2048 ||
+            requestedPath[0] != '/' ||
+            requestedPath.StartsWith("//", StringComparison.Ordinal) ||
+            requestedPath.Contains('\\') ||
+            requestedPath.Any(char.IsControl))
+        {
+            return tenantRoot;
+        }
+
+        var decoded = requestedPath;
+        try
+        {
+            while (true)
+            {
+                var next = Uri.UnescapeDataString(decoded);
+                if (string.Equals(next, decoded, StringComparison.Ordinal))
+                    break;
+
+                decoded = next;
+            }
+        }
+        catch (UriFormatException)
+        {
+            return tenantRoot;
+        }
+
+        if (decoded.StartsWith("//", StringComparison.Ordinal) ||
+            decoded.Contains('\\') ||
+            decoded.Contains("://", StringComparison.Ordinal) ||
+            decoded.Any(char.IsControl))
+        {
+            return tenantRoot;
+        }
+
+        var localOrigin = new Uri("https://local.invalid/", UriKind.Absolute);
+        if (!Uri.TryCreate(localOrigin, decoded, out var resolved) ||
+            !string.Equals(resolved.Scheme, localOrigin.Scheme, StringComparison.Ordinal) ||
+            !string.Equals(resolved.Host, localOrigin.Host, StringComparison.Ordinal) ||
+            resolved.Port != localOrigin.Port ||
+            !string.IsNullOrEmpty(resolved.UserInfo))
+        {
+            return tenantRoot;
+        }
+
+        string normalizedPath;
+        try
+        {
+            normalizedPath = Uri.UnescapeDataString(resolved.AbsolutePath);
+        }
+        catch (UriFormatException)
+        {
+            return tenantRoot;
+        }
+
+        if (!string.Equals(normalizedPath, tenantRoot, StringComparison.Ordinal) &&
+            !normalizedPath.StartsWith($"{tenantRoot}/", StringComparison.Ordinal))
+        {
+            return tenantRoot;
+        }
+
+        return resolved.AbsolutePath + resolved.Query + resolved.Fragment;
+    }
+
+    private static bool IsValidTenantSlug(string slug)
+    {
+        if (slug.Length is < 2 or > 30 || slug[0] == '-' || slug[^1] == '-')
+            return false;
+
+        return slug.All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-');
     }
 }

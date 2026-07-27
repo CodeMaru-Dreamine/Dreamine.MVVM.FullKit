@@ -22,6 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\Shared\StoragePathGuard.cs" Link="Security\StoragePathGuard.cs" />
     <ProjectReference Include="..\..\..\100. Library\Identity\Dreamine.Identity.csproj" SetTargetFramework="TargetFramework=net8.0" />
   </ItemGroup>
 
