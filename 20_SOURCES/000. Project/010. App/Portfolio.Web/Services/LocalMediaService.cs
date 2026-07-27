@@ -265,7 +265,7 @@ public class LocalMediaService : IMediaService
     private static void ValidateUpload(
         IBrowserFile file,
         long maximumBytes,
-        IReadOnlySet<string> allowedExtensions,
+        HashSet<string> allowedExtensions,
         string mediaKind)
     {
         ArgumentNullException.ThrowIfNull(file);
