@@ -1,0 +1,705 @@
+.wedding-layout-photobook {
+    --book-ink: #342719;
+    --book-muted: #8d7456;
+    --book-leather: #5c3e27;
+    --book-leather-dark: #2c1c12;
+    --book-paper: #fffdf7;
+    max-width: 1080px !important;
+    margin-inline: auto;
+    background:
+        radial-gradient(circle at 20% 8%, rgba(255, 255, 255, .55), transparent 34rem),
+        linear-gradient(145deg, #f2eadc, #e7dac5);
+}
+
+.wedding-photobook-cover {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 100%;
+    max-height: none;
+    overflow: hidden;
+    isolation: isolate;
+    aspect-ratio: auto;
+    background: color-mix(in srgb, var(--w-primary, #b28a60) 24%, #21170e);
+}
+
+.wedding-photobook-cover__image {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+.wedding-photobook-cover__image--backdrop {
+    z-index: 0;
+    object-fit: cover;
+    object-position: var(--w-hero-image-position-desktop, 50% 50%);
+    filter: blur(22px) saturate(.82) brightness(.72);
+    opacity: .68;
+    transform: scale(1.1);
+}
+
+.wedding-photobook-cover__image--foreground {
+    z-index: 1;
+    object-fit: var(--w-hero-image-fit-desktop, contain);
+    object-position: var(--w-hero-image-position-desktop, 50% 50%);
+    opacity: 1;
+    filter: saturate(1.02) contrast(1.015);
+}
+
+.wedding-photobook-cover__image--empty {
+    z-index: 0;
+    opacity: 1;
+    background:
+        radial-gradient(circle at 50% 28%, rgba(255, 255, 255, .24), transparent 24%),
+        linear-gradient(145deg, #2b1e10, #5a3c22);
+}
+
+.wedding-photobook-cover__veil {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    background:
+        linear-gradient(180deg, rgba(18, 11, 6, .36), transparent 31%, transparent 55%, rgba(18, 11, 6, .68)),
+        linear-gradient(90deg, rgba(20, 12, 7, .12), transparent 22%, transparent 78%, rgba(20, 12, 7, .12));
+}
+
+.wedding-photobook-cover__panel {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    padding: 0;
+    pointer-events: none;
+    background: transparent;
+}
+
+.wedding-photobook-cover__copy {
+    z-index: 4;
+    width: min(84%, 30rem);
+    max-width: calc(100% - 2rem);
+    margin: 0;
+    box-sizing: border-box;
+    pointer-events: auto;
+    color: #fff;
+    border-color: rgba(255, 255, 255, .16);
+    background: rgba(24, 15, 9, .38);
+    box-shadow:
+        0 12px 32px rgba(0, 0, 0, .2),
+        inset 0 1px 0 rgba(255, 255, 255, .08);
+    text-shadow: 0 1px 9px rgba(0, 0, 0, .48);
+    backdrop-filter: blur(8px) saturate(1.08);
+    -webkit-backdrop-filter: blur(8px) saturate(1.08);
+}
+
+.wedding-photobook-cover__copy--top {
+    padding-block: .8rem;
+}
+
+.wedding-photobook-cover__copy--bottom {
+    padding-block: .75rem;
+}
+
+.wedding-photobook-cover__copy.w-draggable-positioned {
+    left: var(--w-drag-x, 50%);
+    top: var(--w-drag-y, 50%);
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+.wedding-photobook-cover__copy.w-design-draggable {
+    z-index: 6;
+    cursor: move;
+    touch-action: none;
+    user-select: none;
+}
+
+.wedding-photobook-cover__copy h1 {
+    margin: .28rem 0 0;
+    color: #fff;
+    font-family: "Noto Serif KR", Georgia, serif;
+    font-size: clamp(1.55rem, 5vw, 2.3rem);
+    font-weight: 600;
+    letter-spacing: .08em;
+    line-height: 1.28;
+    text-wrap: balance;
+}
+
+.wedding-photobook-cover__copy .wedding-layout-kicker {
+    margin: 0;
+    color: rgba(255, 255, 255, .88);
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .2em;
+}
+
+.wedding-photobook-cover__copy p,
+.wedding-photobook-cover__copy .wedding-layout-muted {
+    color: rgba(255, 255, 255, .9);
+}
+
+.wedding-photobook-cover__date {
+    margin: 0;
+    font-family: "Noto Serif KR", Georgia, serif;
+    font-size: clamp(.88rem, 2vw, 1.02rem);
+    font-weight: 650;
+    letter-spacing: .04em;
+}
+
+.wedding-photobook-cover__venue {
+    overflow-wrap: anywhere;
+}
+
+.wedding-photobook-pages {
+    padding: clamp(1rem, 3vw, 2rem) clamp(.65rem, 3vw, 2rem) 3.5rem;
+}
+
+.wedding-photobook-heading {
+    padding-bottom: 1.25rem;
+}
+
+.wedding-photobook-reader {
+    width: min(100%, 980px);
+    margin-inline: auto;
+}
+
+.wedding-photobook-page {
+    position: relative;
+    width: 100%;
+    min-height: 100%;
+    height: 100%;
+    color: var(--book-ink);
+    background:
+        linear-gradient(115deg, rgba(196, 174, 140, .1), transparent 28%),
+        var(--book-paper);
+}
+
+.wedding-photobook-page--section {
+    display: flex;
+    min-height: 100%;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.wedding-photobook-section__header {
+    flex: none;
+    padding: clamp(1rem, 2.4vw, 1.65rem) clamp(1rem, 3vw, 2rem) .65rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(92, 62, 39, .13);
+}
+
+.wedding-photobook-section__folio {
+    display: block;
+    margin-bottom: .45rem;
+    color: var(--book-muted);
+    font-size: .61rem;
+    font-weight: 800;
+    letter-spacing: .17em;
+}
+
+.wedding-photobook-section__icon {
+    display: grid;
+    width: 2.15rem;
+    height: 2.15rem;
+    margin: 0 auto .42rem;
+    place-items: center;
+    color: var(--book-leather);
+    border: 1px solid rgba(92, 62, 39, .18);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .52);
+}
+
+.wedding-photobook-section__header h2 {
+    margin: 0;
+    color: var(--book-ink);
+    font-family: "Noto Serif KR", Georgia, serif;
+    font-size: clamp(1.2rem, 3.1vw, 1.65rem);
+    font-weight: 650;
+    letter-spacing: .04em;
+}
+
+.wedding-photobook-section__content {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: hidden auto;
+    overscroll-behavior: contain;
+    padding: .8rem clamp(.75rem, 2.5vw, 1.45rem) 1.2rem;
+    scrollbar-color: rgba(92, 62, 39, .34) transparent;
+    scrollbar-width: thin;
+}
+
+.wedding-photobook-section__content:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--w-primary, #b28a60) 68%, #fff);
+    outline-offset: -3px;
+}
+
+.wedding-photobook-section__content ::deep .w-invite-tab-page {
+    min-height: auto;
+    margin: 0;
+    padding-inline: clamp(.15rem, 1vw, .6rem);
+    background: transparent;
+    box-shadow: none;
+}
+
+.wedding-photobook-section__content ::deep .w-section-title {
+    margin-top: .15rem;
+}
+
+.wedding-photobook-section__footer {
+    display: grid;
+    flex: none;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: .55rem;
+    padding: .55rem clamp(.8rem, 2.5vw, 1.35rem);
+    color: rgba(88, 67, 45, .62);
+    font-family: Georgia, "Noto Serif KR", serif;
+    font-size: .61rem;
+    letter-spacing: .09em;
+    border-top: 1px solid rgba(92, 62, 39, .12);
+}
+
+.wedding-photobook-section__footer span:nth-child(2) {
+    font-family: system-ui, sans-serif;
+    letter-spacing: .04em;
+}
+
+.wedding-photobook-section__footer span:last-child {
+    text-align: right;
+}
+
+.wedding-photobook-page--replica {
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+}
+
+.wedding-photobook-replica-cover {
+    display: grid;
+    width: 100%;
+    height: 100%;
+    place-content: center;
+    gap: .45rem;
+    padding: 2rem;
+    color: #fff;
+    text-align: center;
+    background:
+        linear-gradient(145deg, rgba(31, 19, 10, .42), rgba(31, 19, 10, .74)),
+        var(--book-leather);
+    background-position: center;
+    background-size: cover;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, .48);
+}
+
+.wedding-photobook-replica-cover span {
+    font-size: .66rem;
+    font-weight: 800;
+    letter-spacing: .2em;
+}
+
+.wedding-photobook-replica-cover strong {
+    font-family: "Noto Serif KR", Georgia, serif;
+    font-size: clamp(1.25rem, 4vw, 2rem);
+    letter-spacing: .08em;
+}
+
+.wedding-photobook-replica-cover small {
+    font-family: Georgia, serif;
+    letter-spacing: .12em;
+}
+
+.wedding-photobook-replica-section {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: clamp(1.25rem, 4vw, 3rem);
+    color: var(--book-ink);
+    text-align: center;
+    background:
+        repeating-linear-gradient(0deg, transparent 0 27px, rgba(159, 128, 91, .045) 27px 28px),
+        var(--book-paper);
+}
+
+.wedding-photobook-replica-section > span {
+    color: var(--book-muted);
+    font-size: .58rem;
+    font-weight: 800;
+    letter-spacing: .16em;
+}
+
+.wedding-photobook-replica-section > b {
+    margin: 1.1rem 0 .45rem;
+    font-size: 1.45rem;
+    font-weight: 400;
+}
+
+.wedding-photobook-replica-section h2 {
+    margin: 0;
+    font-family: "Noto Serif KR", Georgia, serif;
+    font-size: clamp(1.15rem, 3vw, 1.6rem);
+}
+
+.wedding-photobook-replica-section p {
+    max-width: 28em;
+    margin: .8rem auto 1.15rem;
+    color: #6d5942;
+    font-family: "Noto Serif KR", Georgia, serif;
+    font-size: .78rem;
+    line-height: 1.75;
+}
+
+.wedding-photobook-replica-section i {
+    display: block;
+    width: min(78%, 18rem);
+    height: .38rem;
+    margin-top: .45rem;
+    border-radius: 999px;
+    background: rgba(92, 62, 39, .1);
+}
+
+.wedding-photobook-replica-section i:nth-of-type(2) {
+    width: min(58%, 13rem);
+}
+
+.wedding-photobook-replica-section i:nth-of-type(3) {
+    width: min(68%, 15rem);
+}
+
+.wedding-photobook-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .75rem;
+    color: var(--book-muted);
+}
+
+.wedding-photobook-toolbar__hint {
+    margin: 0;
+    font-size: .78rem;
+    letter-spacing: .025em;
+}
+
+.wedding-photobook-toolbar__hint span {
+    display: inline-flex;
+    margin-right: .4rem;
+    padding: .15rem .4rem;
+    border: 1px solid rgba(92, 62, 39, .18);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .55);
+}
+
+.wedding-photobook-autoplay {
+    flex: none;
+    border-color: rgba(92, 62, 39, .22);
+    background: rgba(255, 253, 247, .82);
+    color: var(--book-ink);
+}
+
+/*
+ * LayoutTransitionSurface가 전환/키보드/내비게이션을 소유한다.
+ * 아래 규칙은 PagedBook 프리미티브에 포토북의 가죽 표지, 종이 가장자리,
+ * 책등 질감만 입히므로 동적 JSON 렌더러와 동작 계약을 공유한다.
+ */
+.wedding-photobook-reader ::deep .w-layout-transition--paged-book {
+    --w-transition-paper: var(--book-paper);
+    --w-transition-ink: var(--book-ink);
+    --w-transition-accent: var(--w-primary, #b28a60);
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__viewport {
+    padding: clamp(.48rem, 1.35vw, .85rem);
+    border: 1px solid rgba(36, 22, 12, .42);
+    border-radius: 14px 18px 18px 14px;
+    background:
+        linear-gradient(90deg, rgba(255, 255, 255, .06), transparent 8%, transparent 92%, rgba(0, 0, 0, .2)),
+        linear-gradient(145deg, #765337, var(--book-leather) 45%, var(--book-leather-dark));
+    box-shadow:
+        0 28px 48px rgba(53, 34, 17, .24),
+        0 8px 14px rgba(53, 34, 17, .2),
+        inset 0 1px 0 rgba(255, 255, 255, .18),
+        inset 0 0 0 3px rgba(35, 20, 10, .14);
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__viewport::after {
+    position: absolute;
+    top: 1.25rem;
+    right: -.15rem;
+    bottom: .45rem;
+    width: .55rem;
+    border-radius: 0 5px 5px 0;
+    content: "";
+    pointer-events: none;
+    background: repeating-linear-gradient(0deg, #c9b89e 0, #f5eee2 1px, #c9b89e 2px);
+    box-shadow: 2px 2px 4px rgba(44, 28, 18, .18);
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__stack {
+    inset: .72rem;
+    border-radius: 5px;
+    background:
+        repeating-linear-gradient(0deg, #d5c6ae 0, #f4ecdf 1px, #d7c8b1 2px, #f4ecdf 3px);
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__page {
+    inset: clamp(.48rem, 1.35vw, .85rem);
+    border-color: rgba(79, 55, 32, .2);
+    border-radius: 5px;
+    box-shadow:
+        0 18px 36px rgba(45, 27, 13, .2),
+        inset 0 0 0 1px rgba(255, 255, 255, .6);
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__sheet {
+    color: var(--book-ink);
+    background:
+        linear-gradient(115deg, rgba(196, 174, 140, .11), transparent 28%),
+        var(--book-paper);
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__sheet--left {
+    box-shadow:
+        inset -24px 0 30px -26px rgba(39, 23, 11, .82),
+        inset 1px 0 0 rgba(255, 255, 255, .8);
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__sheet--right {
+    box-shadow:
+        inset 24px 0 30px -26px rgba(39, 23, 11, .82),
+        inset -1px 0 0 rgba(255, 255, 255, .8);
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__sheet--left::after,
+.wedding-photobook-reader ::deep .w-layout-transition__sheet--right::before {
+    position: absolute;
+    z-index: 5;
+    top: 0;
+    bottom: 0;
+    width: 13px;
+    content: "";
+    pointer-events: none;
+    background: linear-gradient(90deg, transparent, rgba(54, 33, 15, .19));
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__sheet--left::after {
+    right: 0;
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__sheet--right::before {
+    left: 0;
+    transform: scaleX(-1);
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__status {
+    color: var(--book-ink);
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__navigation {
+    color: var(--book-ink);
+}
+
+.wedding-photobook-reader ::deep .w-layout-transition__arrow {
+    border-color: rgba(92, 62, 39, .22);
+    background: rgba(255, 253, 247, .78);
+    box-shadow: 0 5px 14px rgba(53, 34, 17, .08);
+}
+
+.wedding-photobook-sheet-content {
+    position: relative;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    height: 100%;
+    min-height: 100%;
+    padding: clamp(.8rem, 2.4vw, 1.5rem);
+}
+
+.wedding-photobook-sheet__photo {
+    display: block;
+    width: 100%;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    cursor: zoom-in;
+    border: 0;
+    border-radius: 2px;
+    background: #e8dfd1;
+    box-shadow:
+        0 8px 20px rgba(53, 34, 17, .14),
+        0 0 0 1px rgba(53, 34, 17, .08);
+}
+
+.wedding-photobook-sheet__photo:focus-visible {
+    outline: 3px solid rgba(165, 111, 55, .7);
+    outline-offset: 3px;
+}
+
+.wedding-photobook-sheet__photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-height: 31rem;
+    object-fit: cover;
+    transition: transform .45s ease, filter .45s ease;
+}
+
+.wedding-photobook-sheet__photo:hover img {
+    transform: scale(1.018);
+    filter: saturate(1.04);
+}
+
+.wedding-photobook-sheet__photo--replica {
+    cursor: default;
+}
+
+.wedding-photobook-sheet__placeholder {
+    display: grid;
+    min-height: 18rem;
+    place-items: center;
+    padding: 2rem;
+    color: #9f896e;
+    text-align: center;
+    border: 1px dashed rgba(92, 62, 39, .22);
+    background:
+        linear-gradient(135deg, rgba(255, 255, 255, .65), transparent),
+        #eee6da;
+}
+
+.wedding-photobook-sheet__copy {
+    align-self: end;
+    padding: 1rem .35rem 1.15rem;
+    text-align: center;
+}
+
+.wedding-photobook-sheet__caption {
+    margin: 0;
+    color: var(--book-muted);
+    font-family: "Noto Serif KR", serif;
+    font-size: .9rem;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+}
+
+.wedding-photobook-sheet__body {
+    max-width: 34em;
+    margin: .7rem auto 0;
+    color: #5e4b38;
+    font-family: "Noto Serif KR", serif;
+    font-size: .86rem;
+    line-height: 1.75;
+}
+
+.wedding-photobook-sheet__number {
+    position: absolute;
+    right: .8rem;
+    bottom: .45rem;
+    color: rgba(88, 67, 45, .56);
+    font-family: Georgia, serif;
+    font-size: .7rem;
+    letter-spacing: .12em;
+}
+
+@media (max-width: 719px) {
+    .wedding-photobook-cover__image--backdrop {
+        object-position: var(
+            --w-hero-image-position-mobile,
+            var(--w-hero-image-position-desktop, 50% 50%));
+    }
+
+    .wedding-photobook-cover__image--foreground {
+        object-fit: var(
+            --w-hero-image-fit-mobile,
+            var(--w-hero-image-fit-desktop, contain));
+        object-position: var(
+            --w-hero-image-position-mobile,
+            var(--w-hero-image-position-desktop, 50% 50%));
+    }
+
+    .wedding-photobook-cover__copy {
+        width: min(88%, 27rem);
+        max-width: calc(100% - 1.4rem);
+    }
+
+    .wedding-photobook-cover__copy.w-draggable-positioned {
+        left: var(--w-drag-mobile-x, var(--w-drag-x, 50%));
+        top: var(--w-drag-mobile-y, var(--w-drag-y, 50%));
+    }
+
+    .wedding-photobook-pages {
+        padding-inline: .55rem;
+    }
+
+    .wedding-photobook-heading {
+        padding-inline: .35rem;
+    }
+
+    .wedding-photobook-section__header {
+        padding: .85rem .85rem .58rem;
+    }
+
+    .wedding-photobook-section__content {
+        padding: .62rem .62rem .9rem;
+    }
+
+    .wedding-photobook-section__footer {
+        padding: .48rem .72rem;
+    }
+
+    .wedding-photobook-toolbar {
+        justify-content: flex-end;
+    }
+
+    .wedding-photobook-toolbar__hint {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+    }
+
+    .wedding-photobook-reader ::deep .w-layout-transition__viewport {
+        padding: .5rem;
+        border-radius: 10px 14px 14px 10px;
+    }
+
+    .wedding-photobook-reader ::deep .w-layout-transition__page {
+        inset: .5rem;
+        border-radius: .45rem;
+    }
+
+    .wedding-photobook-reader ::deep .w-layout-transition__sheet--left {
+        box-shadow:
+            inset -9px 0 18px -17px rgba(39, 23, 11, .62),
+            0 1px 3px rgba(44, 28, 18, .16);
+    }
+
+    .wedding-photobook-reader ::deep .w-layout-transition__sheet--left::after {
+        display: none;
+    }
+
+    .wedding-photobook-sheet-content {
+        padding: .85rem .85rem 1rem;
+    }
+
+    .wedding-photobook-sheet__photo img {
+        max-height: min(105vw, 29rem);
+    }
+
+    .wedding-photobook-sheet__placeholder {
+        min-height: min(100vw, 25rem);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wedding-photobook-sheet__photo img {
+        transition: none;
+    }
+
+    .wedding-photobook-sheet__photo:hover img {
+        transform: none;
+    }
+}

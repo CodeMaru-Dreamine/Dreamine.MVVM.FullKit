@@ -226,6 +226,7 @@ public sealed class JsonTenantStore : ITenantStore
         Directory.CreateDirectory(dir);
         Directory.CreateDirectory(Path.Combine(dir, "gallery"));
         Directory.CreateDirectory(Path.Combine(dir, "thumb"));
+        config.UpdatedAt = DateTime.Now;
 
         var tmp = ConfigPath(config.Slug) + ".tmp";
         await _gate.WaitAsync(ct).ConfigureAwait(false);

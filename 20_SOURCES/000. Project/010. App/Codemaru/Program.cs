@@ -42,10 +42,19 @@ public static class Program
     {
         HostApplicationBuilder builder = Host.CreateApplicationBuilder();
 
+        // Certificate 탭에서 저장한 로컬 설정을 다음 실행에도 다시 적용합니다.
+        // 기본 appsettings보다 우선하되, 아래 user secrets와 환경변수로 재정의할 수 있습니다.
+        builder.Configuration.AddJsonFile(
+            Path.Combine(AppContext.BaseDirectory, "appsettings.local.json"),
+            optional: true,
+            reloadOnChange: false);
+
         // Razor/WPF SDK 조합에서는 [assembly: UserSecretsId] 가 자동으로 심어지지 않는
         // 경우가 있어 assembly 기반 오버로드가 조용히 실패한다. csproj의 UserSecretsId
         // 값과 동일한 문자열을 명시적으로 지정해 반드시 로드되도록 한다.
         builder.Configuration.AddUserSecrets("codemaru-oauth-2ba4e1b2");
+        // 로컬 UI 설정이나 user secrets보다 운영 환경변수가 우선하도록 기본 우선순위를 복원합니다.
+        builder.Configuration.AddEnvironmentVariables();
 
         int serverPort = GetInt(builder.Configuration, "CodemaruServer:Port", 5040);
         bool listenAnyIp = GetBool(builder.Configuration, "CodemaruServer:ListenAnyIp", true);
@@ -72,7 +81,7 @@ public static class Program
         builder.Services.AddSingleton<IProcessRunner, ProcessRunner>();
         builder.Services.AddSingleton<ICertificateMonitorService, X509CertificateMonitorService>();
         builder.Services.AddSingleton<IWinAcmeService, WinAcmeService>();
-        builder.Services.AddSingleton<INginxReloadService, NginxReloadService>();
+        builder.Services.AddSingleton<ICaddyReloadService, CaddyReloadService>();
         builder.Services.AddSingleton<ICertificateSettingsWriter, CertificateSettingsWriter>();
         builder.Services.AddSingleton<CertificateMonitorViewModel>();
 

@@ -1,0 +1,56 @@
+@namespace WeddingPlatform.Blazor.Components
+@using Wedding.Common
+@using WeddingPlatform.ViewModels
+
+@*
+    마이그레이션 호환 경계.
+    이 switch는 애플리케이션과 함께 컴파일된 기존 6개 레이아웃에만 사용합니다.
+    업로드·승인되는 신규 레이아웃은 이 컴포넌트에 case를 추가하지 않고
+    LayoutDefinition 기반 DynamicInvitationLayout으로 렌더링해야 합니다.
+*@
+@switch (Vm.LayoutMode)
+{
+    case WeddingLayoutMode.TabMenu:
+        <TabsInvitationLayout Slug="@Slug"
+                              Vm="@Vm"
+                              VmGuest="@VmGuest"
+                              PauseMusicRequested="@PauseMusicRequested" />
+        break;
+    case WeddingLayoutMode.Gallery:
+        <GalleryInvitationLayout Slug="@Slug"
+                                 Vm="@Vm"
+                                 VmGuest="@VmGuest"
+                                 PauseMusicRequested="@PauseMusicRequested" />
+        break;
+    case WeddingLayoutMode.Story:
+        <StoryInvitationLayout Slug="@Slug"
+                               Vm="@Vm"
+                               VmGuest="@VmGuest"
+                               PauseMusicRequested="@PauseMusicRequested" />
+        break;
+    case WeddingLayoutMode.Card:
+        <CardInvitationLayout Slug="@Slug"
+                              Vm="@Vm"
+                              VmGuest="@VmGuest"
+                              PauseMusicRequested="@PauseMusicRequested" />
+        break;
+    case WeddingLayoutMode.PhotoBook:
+        <PhotoBookInvitationLayout Slug="@Slug"
+                                   Vm="@Vm"
+                                   VmGuest="@VmGuest"
+                                   PauseMusicRequested="@PauseMusicRequested" />
+        break;
+    default:
+        <OnePageInvitationLayout Slug="@Slug"
+                                 Vm="@Vm"
+                                 VmGuest="@VmGuest"
+                                 PauseMusicRequested="@PauseMusicRequested" />
+        break;
+}
+
+@code {
+    [Parameter, EditorRequired] public string Slug { get; set; } = "";
+    [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
+    [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
+    [Parameter] public EventCallback PauseMusicRequested { get; set; }
+}

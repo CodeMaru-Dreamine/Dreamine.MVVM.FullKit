@@ -68,7 +68,7 @@ if (-not (Test-Path $settingsFile)) {
 }
 "@ | Set-Content $settingsFile -Encoding UTF8
     Write-Host "⚠ $settingsFile 의 SuperAdminPassword 를 반드시 변경하세요!" -ForegroundColor Red
-    Write-Host "⚠ 앱은 localhost:4080 에서만 대기합니다. 외부 접속은 nginx(conf\nginx.conf)를 통해 80/443으로 제공하세요." -ForegroundColor Cyan
+    Write-Host "⚠ 외부 공개 주소와 TLS 연결은 현재 운영 서버의 배포 방식에 맞춰 구성하세요." -ForegroundColor Cyan
 }
 
 # ── 6. Windows 서비스 등록 ────────────────────────────────────

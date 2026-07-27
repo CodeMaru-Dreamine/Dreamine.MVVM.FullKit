@@ -75,7 +75,7 @@
 
                         <StackPanel Grid.Row="0" Margin="0,0,0,20">
                             <TextBlock FontSize="26" FontWeight="Bold" Foreground="#e5e7eb" Text="Certificate Monitor" />
-                            <TextBlock Margin="0,6,0,0" Foreground="#9ca3af" Text="win-acme 인증서 남은 기간, 자동 갱신 작업, nginx reload 상태를 확인합니다." />
+                            <TextBlock Margin="0,6,0,0" Foreground="#9ca3af" Text="win-acme 인증서 남은 기간, 자동 갱신 작업, Caddy 설정 검증 및 graceful reload 상태를 확인합니다." />
                         </StackPanel>
 
                         <Border Grid.Row="1" Margin="0,0,0,16" Padding="16" Background="#111827" BorderBrush="#1f2937" BorderThickness="1" CornerRadius="10">
@@ -92,6 +92,9 @@
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
                                     <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.Row="0" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Certificate Folder" />
@@ -100,14 +103,28 @@
                                 <TextBlock Grid.Row="1" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="wacs.exe" />
                                 <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8" Text="{Binding WacsPath, UpdateSourceTrigger=PropertyChanged}" />
 
-                                <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="nginx.exe" />
-                                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8" Text="{Binding NginxPath, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Grid.Row="2" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="caddy.exe" />
+                                <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8" Text="{Binding CaddyPath, UpdateSourceTrigger=PropertyChanged}" />
 
-                                <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Nginx Working Dir" />
-                                <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8" Text="{Binding NginxWorkingDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Grid.Row="3" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Caddy Config" />
+                                <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8" Text="{Binding CaddyConfigPath, UpdateSourceTrigger=PropertyChanged}" />
 
-                                <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,0,8,0" Foreground="#9ca3af" Text="Thresholds" />
-                                <StackPanel Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal">
+                                <TextBlock Grid.Row="4" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Caddy Working Dir" />
+                                <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8" Text="{Binding CaddyWorkingDirectory, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <TextBlock Grid.Row="5" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Config Adapter" />
+                                <TextBox Grid.Row="5" Grid.Column="1" Margin="0,0,16,8" Text="{Binding CaddyConfigAdapter, UpdateSourceTrigger=PropertyChanged}" />
+                                <TextBlock Grid.Row="5" Grid.Column="2" Margin="0,0,8,8" Foreground="#9ca3af" Text="Admin API (optional)" />
+                                <TextBox Grid.Row="5" Grid.Column="3" Margin="0,0,0,8" Text="{Binding CaddyAdminAddress, UpdateSourceTrigger=PropertyChanged}" />
+
+                                <TextBlock Grid.Row="6" Grid.Column="0" Margin="0,0,8,8" Foreground="#9ca3af" Text="Reload Mode" />
+                                <CheckBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3" Margin="0,0,0,8"
+                                          Foreground="#d1d5db"
+                                          IsChecked="{Binding CaddyForceReload}"
+                                          Content="Force module reprovisioning (reload renewed certificate files)" />
+
+                                <TextBlock Grid.Row="7" Grid.Column="0" Margin="0,0,8,0" Foreground="#9ca3af" Text="Thresholds" />
+                                <StackPanel Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3" Orientation="Horizontal">
                                     <TextBlock Margin="0,4,8,0" Foreground="#9ca3af" Text="Warning Days" />
                                     <TextBox Width="80" Margin="0,0,16,0" Text="{Binding WarningDays, UpdateSourceTrigger=PropertyChanged}" />
                                     <TextBlock Margin="0,4,8,0" Foreground="#9ca3af" Text="Critical Days" />
@@ -201,7 +218,7 @@
                                 <StackPanel Orientation="Horizontal">
                                     <Button Width="130" Height="34" Margin="0,0,8,0" Command="{Binding RunRenewCommand}" Content="Run Renew" />
                                     <Button Width="130" Height="34" Margin="0,0,8,0" Command="{Binding ForceRenewCommand}" Content="Force Renew" />
-                                    <Button Width="130" Height="34" Command="{Binding ReloadNginxCommand}" Content="Reload Nginx" />
+                                    <Button Width="130" Height="34" Command="{Binding ReloadCaddyCommand}" Content="Reload Caddy" />
                                 </StackPanel>
                                 <TextBlock Margin="0,12,0,0" Foreground="#d1d5db" Text="{Binding StatusMessage}" TextWrapping="Wrap" />
                             </StackPanel>

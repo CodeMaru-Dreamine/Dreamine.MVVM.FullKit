@@ -807,8 +807,8 @@
         {
             HasPremiumPlan = Vm.Config.HasPremiumPlan,
             UnlockedThemeKeys = Vm.Config.UnlockedThemeKeys
+                .Where(WeddingThemeCatalog.IsPresetKey)
                 .Select(WeddingThemeCatalog.NormalizeKey)
-                .Where(WeddingThemeCatalog.IsKnownKey)
                 .ToArray(),
         };
     }

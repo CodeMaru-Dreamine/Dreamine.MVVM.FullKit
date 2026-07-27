@@ -26,6 +26,7 @@ public interface IWeddingThemeCatalog
 public sealed class WeddingThemeCatalog : IWeddingThemeCatalog
 {
     public const string DefaultThemeKey = "rose";
+    public const string CustomThemeKey = "custom";
     public static readonly WeddingThemeCatalog Instance = new();
     public static IReadOnlyList<WeddingThemeOption> Options => Instance.Themes;
 
@@ -43,8 +44,8 @@ public sealed class WeddingThemeCatalog : IWeddingThemeCatalog
         new(
             "ivory",
             "아이보리 크림",
-            "부드러운 아이보리 톤의 프리미엄 테마입니다.",
-            WeddingThemeTier.Premium,
+            "부드러운 아이보리 톤의 기본 제공 테마입니다.",
+            WeddingThemeTier.Free,
             "w-theme-ivory",
             true,
             "#b8a99a",
@@ -52,8 +53,8 @@ public sealed class WeddingThemeCatalog : IWeddingThemeCatalog
         new(
             "forest",
             "포레스트 그린",
-            "차분한 그린 톤의 프리미엄 테마입니다.",
-            WeddingThemeTier.Premium,
+            "차분한 그린 톤의 기본 제공 테마입니다.",
+            WeddingThemeTier.Free,
             "w-theme-forest",
             true,
             "#6b8f71",
@@ -61,8 +62,8 @@ public sealed class WeddingThemeCatalog : IWeddingThemeCatalog
         new(
             "navy",
             "네이비 & 골드",
-            "깊은 네이비와 골드 포인트의 프리미엄 테마입니다.",
-            WeddingThemeTier.Premium,
+            "깊은 네이비와 골드 포인트의 기본 제공 테마입니다.",
+            WeddingThemeTier.Free,
             "w-theme-navy",
             true,
             "#3d5a80",
@@ -70,8 +71,8 @@ public sealed class WeddingThemeCatalog : IWeddingThemeCatalog
         new(
             "blush",
             "블러쉬 핑크",
-            "은은한 핑크 톤의 프리미엄 테마입니다.",
-            WeddingThemeTier.Premium,
+            "은은한 핑크 톤의 기본 제공 테마입니다.",
+            WeddingThemeTier.Free,
             "w-theme-blush",
             true,
             "#d4a5a5",
@@ -98,11 +99,24 @@ public sealed class WeddingThemeCatalog : IWeddingThemeCatalog
             "forest" => "forest",
             "navy" => "navy",
             "blush" => "blush",
+            CustomThemeKey => CustomThemeKey,
             _ => DefaultThemeKey,
         };
     }
 
     public static bool IsKnownKey(string? key)
+    {
+        if (string.IsNullOrWhiteSpace(key)) return false;
+        var normalized = key.Trim().ToLowerInvariant();
+        return string.Equals(normalized, CustomThemeKey, StringComparison.OrdinalIgnoreCase)
+            || Options.Any(x => string.Equals(x.Key, normalized, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// 카탈로그에 등록된 기본 제공 테마인지 확인합니다.
+    /// 사용자 정의 테마는 플랜 권한으로만 제어하므로 개별 잠금 해제 대상에 포함하지 않습니다.
+    /// </summary>
+    public static bool IsPresetKey(string? key)
     {
         if (string.IsNullOrWhiteSpace(key)) return false;
         var normalized = key.Trim().ToLowerInvariant();
@@ -117,8 +131,18 @@ public sealed class WeddingThemeAccessState
 
     public bool IsThemeUnlocked(string key)
     {
+        if (!WeddingThemeCatalog.IsPresetKey(key))
+        {
+            return false;
+        }
+
         var normalized = WeddingThemeCatalog.NormalizeKey(key);
-        return UnlockedThemeKeys.Any(x => string.Equals(WeddingThemeCatalog.NormalizeKey(x), normalized, StringComparison.OrdinalIgnoreCase));
+        return UnlockedThemeKeys.Any(x =>
+            WeddingThemeCatalog.IsPresetKey(x)
+            && string.Equals(
+                WeddingThemeCatalog.NormalizeKey(x),
+                normalized,
+                StringComparison.OrdinalIgnoreCase));
     }
 }
 
@@ -137,6 +161,14 @@ public sealed class WeddingThemeAccessPolicy : IWeddingThemeAccessPolicy
 
     public bool CanUse(string? key, WeddingThemeAccessState access)
     {
+        if (string.Equals(
+                key?.Trim(),
+                WeddingThemeCatalog.CustomThemeKey,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            return access.HasPremiumPlan;
+        }
+
         var option = WeddingThemeCatalog.Instance.Find(key);
         return option is not null && CanUse(option, access);
     }

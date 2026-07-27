@@ -1,5 +1,6 @@
 using Markdig;
 using Wedding.Common;
+using Wedding.Layouts.Contracts;
 using WeddingPlatform.Models;
 using WeddingPlatform.Services;
 
@@ -33,6 +34,12 @@ public sealed class WeddingInvitationViewModel
     /// \endif
     /// </summary>
     private readonly IPhotoService _photos;
+    private readonly IWeddingLayoutCatalogRegistry _layoutRegistry;
+    private WeddingLayoutCatalog _layoutCatalogSnapshot = WeddingLayoutCatalog.Instance;
+    private WeddingLayoutOption? _effectiveLayout;
+    private string? _previewLayoutKey;
+    private string? _previewLayoutVersion;
+    private bool? _previewFollowActiveLayoutVersion;
 
     /// <summary>
     /// \if KO
@@ -58,10 +65,14 @@ public sealed class WeddingInvitationViewModel
     /// <para>The <c>IPhotoService</c> value used for photos.</para>
     /// \endif
     /// </param>
-    public WeddingInvitationViewModel(ITenantStore tenants, IPhotoService photos)
+    public WeddingInvitationViewModel(
+        ITenantStore tenants,
+        IPhotoService photos,
+        IWeddingLayoutCatalogRegistry layoutRegistry)
     {
         _tenants = tenants;
         _photos = photos;
+        _layoutRegistry = layoutRegistry;
     }
 
     /// <summary>
@@ -109,6 +120,17 @@ public sealed class WeddingInvitationViewModel
     /// \endif
     /// </summary>
     public bool NotFound { get; private set; }
+
+    /// <summary>현재 요청이 사용하는 승인된 선언형 레이아웃 패키지입니다.</summary>
+    public WeddingLayoutPublishedPackage? LayoutPackage { get; private set; }
+
+    /// <summary>
+    /// WPF 편집기와 Web이 공유하는 검증된 블록 정의입니다.
+    /// null이면 기존 6종 Razor 호환 렌더러를 사용합니다.
+    /// </summary>
+    public LayoutDefinition? DynamicLayoutDefinition => LayoutPackage?.Definition;
+
+    public bool UsesDynamicLayout => DynamicLayoutDefinition is not null;
 
     /// <summary>
     /// \if KO
@@ -346,7 +368,41 @@ public sealed class WeddingInvitationViewModel
     /// <para>Gets the theme name value.</para>
     /// \endif
     /// </summary>
-    public string ThemeName => InvitationDesignCatalog.GetTheme(DesignSettings.ThemeKey).Key;
+    public string ThemeName =>
+        string.Equals(DesignSettings.ThemeKey, WeddingThemeCatalog.CustomThemeKey, StringComparison.OrdinalIgnoreCase)
+        && Config?.HasPremiumPlan == true
+            ? WeddingThemeCatalog.CustomThemeKey
+            : InvitationDesignCatalog.GetTheme(DesignSettings.ThemeKey).Key;
+
+    /// <summary>
+    /// Premium 사용자 정의 테마에 적용할 안전한 CSS 변수입니다.
+    /// 프리셋 테마이거나 권한이 없으면 빈 사전을 반환합니다.
+    /// </summary>
+    public IReadOnlyDictionary<string, string> ThemeCssVariables
+    {
+        get
+        {
+            if (!string.Equals(ThemeName, WeddingThemeCatalog.CustomThemeKey, StringComparison.OrdinalIgnoreCase))
+            {
+                return new Dictionary<string, string>();
+            }
+
+            var palette = WeddingThemePaletteGenerator.ResolveForRendering(
+                DesignSettings.CustomTheme);
+            return CreateThemeOverrides(
+                palette.Primary,
+                palette.Dark,
+                palette.Accent,
+                palette.Accent,
+                palette.Background,
+                palette.PanelBackground,
+                palette.Text,
+                palette.MutedText,
+                palette.Border,
+                palette.ButtonBackground,
+                palette.ButtonText);
+        }
+    }
     /// <summary>
     /// \if KO
     /// <para>Layout Mode 값을 가져옵니다.</para>
@@ -355,9 +411,34 @@ public sealed class WeddingInvitationViewModel
     /// <para>Gets the layout mode value.</para>
     /// \endif
     /// </summary>
-    public WeddingLayoutMode LayoutMode => DesignSettings.LayoutMode == WeddingLayoutMode.Unknown
-        ? InvitationDesignCatalog.FromLegacyLayoutKey(Config?.InvitationStyle)
-        : DesignSettings.LayoutMode;
+    public WeddingLayoutMode LayoutMode =>
+        _effectiveLayout?.Mode
+        ?? (DesignSettings.LayoutMode == WeddingLayoutMode.Unknown
+            ? InvitationDesignCatalog.FromLegacyLayoutKey(Config?.InvitationStyle)
+            : DesignSettings.LayoutMode);
+
+    /// <summary>현재 청첩장에 고정된 카탈로그 레이아웃 키입니다.</summary>
+    public string LayoutKey => _effectiveLayout?.Key
+        ?? (string.IsNullOrWhiteSpace(DesignSettings.LayoutKey)
+            ? WeddingLayoutCatalog.ToLegacyKey(LayoutMode)
+            : WeddingLayoutKeys.Normalize(DesignSettings.LayoutKey));
+
+    /// <summary>현재 청첩장에 고정된 레이아웃 버전입니다.</summary>
+    public string LayoutVersion
+    {
+        get
+        {
+            var descriptor = _layoutCatalogSnapshot.FindDescriptor(LayoutKey);
+            return _effectiveLayout?.Version
+                ?? (WeddingLayoutVersion.IsValid(DesignSettings.LayoutVersion)
+                ? DesignSettings.LayoutVersion
+                : descriptor?.CurrentVersion ?? WeddingLayoutVersion.Initial);
+        }
+    }
+
+    /// <summary>현재 키와 버전에 해당하는 불변 릴리스입니다.</summary>
+    public WeddingLayoutRelease? LayoutRelease =>
+        _layoutCatalogSnapshot.FindRelease(LayoutKey, LayoutVersion);
     /// <summary>
     /// \if KO
     /// <para>Layout Descriptor 값을 가져옵니다.</para>
@@ -366,7 +447,42 @@ public sealed class WeddingInvitationViewModel
     /// <para>Gets the layout descriptor value.</para>
     /// \endif
     /// </summary>
-    public WeddingLayoutOption LayoutDescriptor => InvitationDesignCatalog.GetLayout(LayoutMode);
+    public WeddingLayoutOption LayoutDescriptor =>
+        _effectiveLayout
+        ?? _layoutCatalogSnapshot.Find(LayoutKey)
+        ?? InvitationDesignCatalog.GetLayout(LayoutMode);
+
+    /// <summary>승인된 패키지의 검증된 스타일 토큰을 현재 레이아웃 루트에만 적용합니다.</summary>
+    public string LayoutStyle
+    {
+        get
+        {
+            if (LayoutPackage is null) return "";
+
+            // 패키지는 레이아웃 제작자가 제안한 기본 팔레트입니다. 테넌트가 고른
+            // 기본 제공 테마(또는 Premium 사용자 정의 테마)는 같은 의미의 토큰을
+            // 마지막에 덮어써서 레이아웃 버전과 무관하게 항상 사용자 선택을 따릅니다.
+            var merged = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var token in LayoutPackage.Definition.StyleTokens)
+            {
+                var variable = CssVariable(token.Token);
+                if (variable is not null)
+                {
+                    merged[variable] = token.Value;
+                }
+            }
+
+            foreach (var (variable, value) in BuildTenantThemeOverrides())
+            {
+                merged[variable] = value;
+            }
+
+            return string.Concat(
+                merged
+                    .OrderBy(x => x.Key, StringComparer.Ordinal)
+                    .Select(x => $"{x.Key}:{x.Value};"));
+        }
+    }
     /// <summary>
     /// \if KO
     /// <para>Invitation Style 값을 가져옵니다.</para>
@@ -397,8 +513,12 @@ public sealed class WeddingInvitationViewModel
     {
         get
         {
+            IReadOnlyList<string> requestedOrder =
+                LayoutPackage?.Definition.SectionOrder is { Count: > 0 } packageOrder
+                    ? packageOrder.Select(ToLegacySectionKey).ToArray()
+                    : DesignSettings.SectionOrder;
             var ordered = WeddingSectionOrderCatalog.NormalizeInvitationOrder(
-                DesignSettings.SectionOrder,
+                requestedOrder,
                 LayoutDescriptor.SupportedSections);
             var visibility = DesignSettings.SectionVisibility;
             if (visibility is null || visibility.Count == 0)
@@ -489,7 +609,46 @@ public sealed class WeddingInvitationViewModel
     /// <para>Gets the accounts value.</para>
     /// \endif
     /// </summary>
-    public IReadOnlyList<AccountInfo> Accounts => Config?.Accounts ?? [];
+    public IReadOnlyList<AccountInfo> Accounts =>
+        Config?.Accounts
+            .Where(AccountInfo.HasDisplayableContent)
+            .ToArray()
+        ?? [];
+
+    /// <summary>
+    /// 별도 iframe 회로가 저장소에서 읽은 계좌 목록을 관리자 화면의 편집 중
+    /// 스냅샷으로 교체합니다. 이 메서드는 미리보기 페이지에서만 호출하며
+    /// 저장소에는 아무 것도 기록하지 않습니다.
+    /// </summary>
+    public void ApplyAdminPreviewAccounts(
+        IReadOnlyList<AccountInfo>? accounts)
+    {
+        if (Config is null)
+        {
+            return;
+        }
+
+        Config.Accounts = accounts?
+            .Where(account => account is not null)
+            .Take(8)
+            .Select(AccountInfo.CloneForPreview)
+            .ToList()
+            ?? [];
+    }
+
+    /// <summary>검색 결과와 브라우저 제목에 사용할 문구입니다.</summary>
+    public string SearchTitle => WeddingSeoService.ResolveSearchTitle(Config);
+
+    /// <summary>검색 결과 설명 메타 태그에 사용할 문구입니다.</summary>
+    public string SearchDescription => WeddingSeoService.ResolveSearchDescription(Config);
+
+    /// <summary>현재 청첩장이 검색 엔진 색인을 허용하는지 여부입니다.</summary>
+    public bool IsSearchIndexingEnabled => WeddingSeoService.IsIndexingEnabled(Config);
+
+    /// <summary>검색 엔진과 공유 서비스에 제공할 고정 canonical URL입니다.</summary>
+    public string CanonicalUrl => Config is null
+        ? WeddingSeoService.SiteBaseUrl + "/"
+        : $"{WeddingSeoService.SiteBaseUrl}/{Uri.EscapeDataString(Config.Slug)}";
 
     /// <summary>
     /// \if KO
@@ -752,6 +911,11 @@ public sealed class WeddingInvitationViewModel
     /// \endif
     /// </summary>
     public string InviteHeroBottomStyle => BuildHeroPanelStyle(DesignSettings.HeroPlacement.InviteBottom);
+
+    /// <summary>
+    /// 모든 레거시 히어로 렌더러가 공유하는 PC/폰별 이미지 맞춤 및 초점 CSS 변수입니다.
+    /// </summary>
+    public string HeroImageStyle => BuildHeroImageStyle(DesignSettings.HeroImagePresentation);
     /// <summary>
     /// \if KO
     /// <para>Has Invite Hero Top Custom Position 값을 가져옵니다.</para>
@@ -971,11 +1135,55 @@ public sealed class WeddingInvitationViewModel
     /// <para>The <c>Task</c> result produced by the load async operation.</para>
     /// \endif
     /// </returns>
-    public async Task LoadAsync(string slug, CancellationToken ct = default)
+    public Task LoadAsync(string slug, CancellationToken ct = default) =>
+        LoadAsync(
+            slug,
+            previewLayoutKey: null,
+            previewLayoutVersion: null,
+            previewFollowActiveLayoutVersion: null,
+            previewThemeSelection: null,
+            ct);
+
+    /// <summary>
+    /// 저장되지 않은 관리자 레이아웃 선택을 현재 미리보기 요청에만 적용해 불러옵니다.
+    /// 공개 테넌트 설정은 변경하지 않습니다.
+    /// </summary>
+    public Task LoadAsync(
+        string slug,
+        string? previewLayoutKey,
+        string? previewLayoutVersion,
+        bool? previewFollowActiveLayoutVersion,
+        CancellationToken ct = default) =>
+        LoadAsync(
+            slug,
+            previewLayoutKey,
+            previewLayoutVersion,
+            previewFollowActiveLayoutVersion,
+            previewThemeSelection: null,
+            ct);
+
+    /// <summary>
+    /// 저장되지 않은 관리자 레이아웃과 테마 선택을 현재 미리보기 요청에만 적용해 불러옵니다.
+    /// 공개 테넌트 설정은 변경하지 않습니다.
+    /// </summary>
+    public async Task LoadAsync(
+        string slug,
+        string? previewLayoutKey,
+        string? previewLayoutVersion,
+        bool? previewFollowActiveLayoutVersion,
+        WeddingThemePreviewSelection? previewThemeSelection,
+        CancellationToken ct = default)
     {
         Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
         if (Config is null) { NotFound = true; IsLoaded = true; return; }
         InvitationDesignCatalog.Normalize(Config);
+        _layoutCatalogSnapshot = _layoutRegistry.Current;
+        ConfigurePreviewLayoutSelection(
+            previewLayoutKey,
+            previewLayoutVersion,
+            previewFollowActiveLayoutVersion);
+        ConfigurePreviewThemeSelection(previewThemeSelection);
+        ResolveEffectiveLayout();
 
         var all = await _photos.GetGalleryAsync(slug, ct).ConfigureAwait(false);
         var sorted = ApplyGalleryOrder(all, Config.GalleryFileNames);
@@ -983,6 +1191,323 @@ public sealed class WeddingInvitationViewModel
         Gallery = sorted.Take(10).ToList();
         IsLoaded = true;
     }
+
+    private void ConfigurePreviewLayoutSelection(
+        string? layoutKey,
+        string? layoutVersion,
+        bool? followActiveLayoutVersion)
+    {
+        _previewLayoutKey = null;
+        _previewLayoutVersion = null;
+        _previewFollowActiveLayoutVersion = null;
+
+        if (!followActiveLayoutVersion.HasValue
+            || string.IsNullOrWhiteSpace(layoutKey))
+        {
+            return;
+        }
+
+        var key = layoutKey.Trim();
+        if (!WeddingLayoutKeys.IsValid(key))
+        {
+            return;
+        }
+
+        var descriptor = _layoutCatalogSnapshot.FindDescriptor(key);
+        if (descriptor is null)
+        {
+            return;
+        }
+
+        var version = followActiveLayoutVersion.Value
+            ? descriptor.CurrentVersion
+            : layoutVersion?.Trim() ?? "";
+        if (!WeddingLayoutVersion.IsValid(version)
+            || _layoutCatalogSnapshot.FindRelease(descriptor.Key, version) is null)
+        {
+            return;
+        }
+
+        _previewLayoutKey = descriptor.Key;
+        _previewLayoutVersion = version;
+        _previewFollowActiveLayoutVersion = followActiveLayoutVersion.Value;
+    }
+
+    private void ConfigurePreviewThemeSelection(
+        WeddingThemePreviewSelection? selection)
+    {
+        if (Config is null || selection is null)
+        {
+            return;
+        }
+
+        var requestedKey = selection.ThemeKey?.Trim();
+        if (string.Equals(
+                requestedKey,
+                WeddingThemeCatalog.CustomThemeKey,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            var palette = selection.Palette;
+            if (!Config.HasPremiumPlan
+                || palette is null
+                || !IsValidPreviewPalette(palette))
+            {
+                return;
+            }
+
+            var custom = Config.DesignSettings.CustomTheme
+                ?? new CustomWeddingThemeSettings();
+            custom.BaseColor = palette.BaseColor;
+            custom.Primary = palette.Primary;
+            custom.Dark = palette.Dark;
+            custom.Accent = palette.Accent;
+            custom.Text = palette.Text;
+            custom.MutedText = palette.MutedText;
+            custom.Background = palette.Background;
+            custom.PanelBackground = palette.PanelBackground;
+            custom.ButtonBackground = palette.ButtonBackground;
+            custom.ButtonText = palette.ButtonText;
+            custom.Border = palette.Border;
+            Config.DesignSettings.CustomTheme = custom;
+            Config.DesignSettings.ThemeKey = WeddingThemeCatalog.CustomThemeKey;
+            Config.ThemeName = WeddingThemeCatalog.CustomThemeKey;
+            return;
+        }
+
+        var option = WeddingThemeCatalog.Instance.Find(requestedKey);
+        if (option is null || !option.IsImplemented)
+        {
+            return;
+        }
+
+        var access = new WeddingThemeAccessState
+        {
+            HasPremiumPlan = Config.HasPremiumPlan,
+            UnlockedThemeKeys = Config.UnlockedThemeKeys,
+        };
+        if (!new WeddingThemeAccessPolicy().CanUse(option, access))
+        {
+            return;
+        }
+
+        Config.DesignSettings.ThemeKey = option.Key;
+        Config.ThemeName = option.Key;
+    }
+
+    private static bool IsValidPreviewPalette(WeddingThemePalette palette) =>
+        WeddingThemePaletteGenerator.TryNormalizeHexColor(palette.BaseColor, out _)
+        && WeddingThemePaletteGenerator.TryNormalizeHexColor(palette.Primary, out _)
+        && WeddingThemePaletteGenerator.TryNormalizeHexColor(palette.Dark, out _)
+        && WeddingThemePaletteGenerator.TryNormalizeHexColor(palette.Accent, out _)
+        && WeddingThemePaletteGenerator.TryNormalizeHexColor(palette.Text, out _)
+        && WeddingThemePaletteGenerator.TryNormalizeHexColor(palette.MutedText, out _)
+        && WeddingThemePaletteGenerator.TryNormalizeHexColor(palette.Background, out _)
+        && WeddingThemePaletteGenerator.TryNormalizeHexColor(palette.PanelBackground, out _)
+        && WeddingThemePaletteGenerator.TryNormalizeHexColor(palette.ButtonBackground, out _)
+        && WeddingThemePaletteGenerator.TryNormalizeHexColor(palette.ButtonText, out _)
+        && WeddingThemePaletteGenerator.TryNormalizeHexColor(palette.Border, out _);
+
+    private void ResolveEffectiveLayout()
+    {
+        if (Config is null)
+        {
+            ApplyBuiltInLayoutFallback();
+            return;
+        }
+
+        var hasPreviewSelection =
+            _previewFollowActiveLayoutVersion.HasValue
+            && !string.IsNullOrWhiteSpace(_previewLayoutKey);
+        var requestedKey = WeddingLayoutKeys.Normalize(
+            hasPreviewSelection
+                ? _previewLayoutKey
+                : Config.DesignSettings.LayoutKey);
+        var descriptor = _layoutCatalogSnapshot.FindDescriptor(requestedKey);
+        var followActiveLayoutVersion = hasPreviewSelection
+            ? _previewFollowActiveLayoutVersion!.Value
+            : Config.DesignSettings.FollowActiveLayoutVersion;
+        var pinnedVersion = hasPreviewSelection
+            ? _previewLayoutVersion
+            : Config.DesignSettings.LayoutVersion;
+        var requestedVersion = followActiveLayoutVersion
+            ? descriptor?.CurrentVersion
+            : WeddingLayoutVersion.IsValid(pinnedVersion)
+                ? pinnedVersion!.Trim()
+                : descriptor?.CurrentVersion;
+        var release = descriptor is null || string.IsNullOrWhiteSpace(requestedVersion)
+            ? null
+            : _layoutCatalogSnapshot.FindRelease(descriptor.Key, requestedVersion);
+
+        if (descriptor is null || release is null || !release.IsImplemented)
+        {
+            ApplyBuiltInLayoutFallback();
+            return;
+        }
+
+        WeddingLayoutPublishedPackage? package = null;
+        var renderMode = descriptor.LegacyMode;
+        var label = descriptor.Label;
+        var description = descriptor.Description;
+        var tier = descriptor.Tier;
+        if (!descriptor.IsBuiltIn)
+        {
+            if (!_layoutRegistry.PublishedPackages.TryGetValue(
+                    release.Id,
+                    out var publishedPackage))
+            {
+                ApplyBuiltInLayoutFallback();
+                return;
+            }
+
+            package = publishedPackage;
+
+            // 신규 등록 경로는 기존 Razor 레이아웃을 베이스로 삼지 않습니다.
+            // Unknown은 아래 DynamicInvitationLayout 진입을 뜻하는 호환 경계 값입니다.
+            renderMode = WeddingLayoutMode.Unknown;
+            label = publishedPackage.Manifest.Label;
+            description = publishedPackage.Manifest.Description;
+        }
+
+        // 등급은 개별 릴리스 manifest가 아니라 LayoutKey 단위의 서버 정책을
+        // 반영한 descriptor에서만 가져옵니다. 따라서 버전을 올리거나 롤백해도
+        // Free/Premium 권한 정책은 바뀌지 않습니다.
+        var canUse = tier == WeddingLayoutTier.Free
+            || Config.HasPremiumPlan;
+        if (!canUse)
+        {
+            ApplyBuiltInLayoutFallback();
+            return;
+        }
+
+        LayoutPackage = package;
+        _effectiveLayout = new WeddingLayoutOption(
+            renderMode,
+            label,
+            description,
+            tier,
+            release.IsImplemented,
+            release.CssClass,
+            release.UsesBottomNavigation,
+            release.SupportedSections)
+        {
+            CatalogKey = descriptor.Key,
+            Version = release.Version,
+        };
+    }
+
+    private void ApplyBuiltInLayoutFallback()
+    {
+        LayoutPackage = null;
+        _effectiveLayout = WeddingLayoutCatalog.Instance.Find(WeddingLayoutKeys.OnePage);
+    }
+
+    private IReadOnlyDictionary<string, string> BuildTenantThemeOverrides()
+    {
+        if (string.Equals(ThemeName, WeddingThemeCatalog.CustomThemeKey, StringComparison.OrdinalIgnoreCase))
+        {
+            var palette = WeddingThemePaletteGenerator.ResolveForRendering(
+                DesignSettings.CustomTheme);
+
+            return CreateThemeOverrides(
+                palette.Primary,
+                palette.Dark,
+                palette.Accent,
+                palette.Accent,
+                palette.Background,
+                palette.PanelBackground,
+                palette.Text,
+                palette.MutedText,
+                palette.Border,
+                palette.ButtonBackground,
+                palette.ButtonText);
+        }
+
+        return WeddingThemeCatalog.NormalizeKey(ThemeName) switch
+        {
+            "ivory" => CreateThemeOverrides(
+                "#b8a99a", "#4a3f38", "#8a7060", "#8a7060", "#ebe0d0",
+                "rgba(253,250,244,.9)", "#4a3f38", "#756a63",
+                "rgba(184,169,154,.35)"),
+            "forest" => CreateThemeOverrides(
+                "#6b8f71", "#2d4a32", "#4a6b50", "#4a6b50", "#d9e8dd",
+                "rgba(238,246,240,.9)", "#2d4a32", "#536c57",
+                "rgba(107,143,113,.35)"),
+            "navy" => CreateThemeOverrides(
+                "#3d5a80", "#1a2a3a", "#98c1d9", "#98c1d9", "#dae2f0",
+                "rgba(238,242,251,.9)", "#1a2a3a", "#526274",
+                "rgba(61,90,128,.32)"),
+            "blush" => CreateThemeOverrides(
+                "#d4a5a5", "#5a3535", "#b07575", "#b07575", "#f7dede",
+                "rgba(253,242,242,.9)", "#5a3535", "#7c5a5a",
+                "rgba(212,165,165,.38)"),
+            _ => CreateThemeOverrides(
+                "#c8a882", "#3a2e28", "#a07850", "#a07850", "#f4e8d4",
+                "rgba(255,252,243,.88)", "#3a2e28", "#6d5a50",
+                "rgba(200,168,130,.32)"),
+        };
+    }
+
+    private static IReadOnlyDictionary<string, string> CreateThemeOverrides(
+        string primary,
+        string dark,
+        string secondary,
+        string accent,
+        string background,
+        string surface,
+        string text,
+        string mutedText,
+        string border,
+        string? buttonBackground = null,
+        string? buttonText = null) =>
+        new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["--w-primary"] = primary,
+            ["--w-dark"] = dark,
+            ["--w-secondary"] = secondary,
+            ["--w-accent"] = accent,
+            ["--w-bg"] = background,
+            ["--w-panel-bg"] = surface,
+            ["--w-text"] = text,
+            ["--w-muted-text"] = mutedText,
+            ["--w-border"] = border,
+            ["--w-button-bg"] = buttonBackground ?? primary,
+            ["--w-button-text"] = buttonText ?? "#ffffff",
+            ["--w-nav-bg"] = surface,
+            ["--w-nav-text"] = text,
+            ["--w-shadow"] = $"0 4px 24px {dark}1f",
+        };
+
+    private static string? CssVariable(LayoutStyleToken token) => token switch
+    {
+        LayoutStyleToken.PrimaryColor => "--w-primary",
+        LayoutStyleToken.SecondaryColor => "--w-secondary",
+        LayoutStyleToken.AccentColor => "--w-accent",
+        LayoutStyleToken.BackgroundColor => "--w-bg",
+        LayoutStyleToken.SurfaceColor => "--w-panel-bg",
+        LayoutStyleToken.TextColor => "--w-text",
+        LayoutStyleToken.MutedTextColor => "--w-muted-text",
+        LayoutStyleToken.BorderColor => "--w-border",
+        LayoutStyleToken.ButtonBackgroundColor => "--w-button-bg",
+        LayoutStyleToken.ButtonTextColor => "--w-button-text",
+        LayoutStyleToken.NavigationBackgroundColor => "--w-nav-bg",
+        LayoutStyleToken.NavigationTextColor => "--w-nav-text",
+        _ => null,
+    };
+
+    private static string ToLegacySectionKey(LayoutSectionKey section) => section switch
+    {
+        LayoutSectionKey.Hero => "hero",
+        LayoutSectionKey.Invitation => "info",
+        LayoutSectionKey.Calendar => "calendar",
+        LayoutSectionKey.Gallery => "gallery",
+        LayoutSectionKey.Story => "story",
+        LayoutSectionKey.Video => "video",
+        LayoutSectionKey.Location => "details",
+        LayoutSectionKey.Accounts => "gift",
+        LayoutSectionKey.Guestbook => "guestbook",
+        LayoutSectionKey.Contact => "contact",
+        _ => "hero",
+    };
 
     /// <summary>
     /// \if KO
@@ -1110,6 +1635,19 @@ public sealed class WeddingInvitationViewModel
     /// <para>The <c>string</c> result produced by the normalize option operation.</para>
     /// \endif
     /// </returns>
+    private static string NormalizeHexColor(string? value, string fallback)
+    {
+        var normalized = value?.Trim();
+        if (normalized is null || normalized.Length != 7 || normalized[0] != '#')
+        {
+            return fallback;
+        }
+
+        return normalized.AsSpan(1).ToString().All(Uri.IsHexDigit)
+            ? normalized.ToLowerInvariant()
+            : fallback;
+    }
+
     private static string NormalizeOption(string? value, string[] allowed, string fallback)
     {
         var normalized = value?.Trim().ToLowerInvariant();
@@ -1194,6 +1732,57 @@ public sealed class WeddingInvitationViewModel
             parts.Add($"--w-drag-mobile-y:{ClampPercent(placement.MobileY):0.##}%;");
         }
         return string.Concat(parts);
+    }
+
+    private static string BuildHeroImageStyle(HeroImagePresentationSettings presentation)
+    {
+        var desktopFit = NormalizeOption(
+            presentation.DesktopFit,
+            [HeroImagePresentationSettings.Contain, HeroImagePresentationSettings.Cover],
+            HeroImagePresentationSettings.Contain);
+        var mobileFit = NormalizeOption(
+            presentation.MobileFit,
+            [HeroImagePresentationSettings.Contain, HeroImagePresentationSettings.Cover],
+            HeroImagePresentationSettings.Contain);
+
+        var desktopX = ClampPercent(
+            desktopFit == HeroImagePresentationSettings.Cover
+                ? presentation.DesktopCrop.X + presentation.DesktopCrop.Width / 2
+                : presentation.DesktopFocusX).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        var desktopY = ClampPercent(
+            desktopFit == HeroImagePresentationSettings.Cover
+                ? presentation.DesktopCrop.Y + presentation.DesktopCrop.Height / 2
+                : presentation.DesktopFocusY).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        var mobileX = ClampPercent(
+            mobileFit == HeroImagePresentationSettings.Cover
+                ? presentation.MobileCrop.X + presentation.MobileCrop.Width / 2
+                : presentation.MobileFocusX).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        var mobileY = ClampPercent(
+            mobileFit == HeroImagePresentationSettings.Cover
+                ? presentation.MobileCrop.Y + presentation.MobileCrop.Height / 2
+                : presentation.MobileFocusY).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture);
+        var desktopCrop = BuildCropVariables("desktop", presentation.DesktopCrop);
+        var mobileCrop = BuildCropVariables("mobile", presentation.MobileCrop);
+
+        return $"--w-hero-image-fit-desktop:{desktopFit};" +
+               $"--w-hero-image-position-desktop:{desktopX}% {desktopY}%;" +
+               $"--w-hero-image-crop-desktop-enabled:{(desktopFit == HeroImagePresentationSettings.Cover ? 1 : 0)};" +
+               desktopCrop +
+               $"--w-hero-image-fit-mobile:{mobileFit};" +
+               $"--w-hero-image-position-mobile:{mobileX}% {mobileY}%;" +
+               $"--w-hero-image-crop-mobile-enabled:{(mobileFit == HeroImagePresentationSettings.Cover ? 1 : 0)};" +
+               mobileCrop;
+    }
+
+    private static string BuildCropVariables(string viewport, HeroImageCropRegion crop)
+    {
+        static string Percent(double value) =>
+            Math.Clamp(value, 0, 100).ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
+
+        return $"--w-hero-image-crop-{viewport}-x:{Percent(crop.X)};" +
+               $"--w-hero-image-crop-{viewport}-y:{Percent(crop.Y)};" +
+               $"--w-hero-image-crop-{viewport}-width:{Percent(crop.Width)};" +
+               $"--w-hero-image-crop-{viewport}-height:{Percent(crop.Height)};";
     }
 
     /// <summary>

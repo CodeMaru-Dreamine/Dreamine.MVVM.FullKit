@@ -1,0 +1,30 @@
+.wedding-story-cover-hero {
+    width: 100%;
+    min-height: clamp(34rem, 82svh, 54rem);
+    border-radius: var(--w-radius);
+    box-shadow: var(--w-shadow);
+    background: var(--w-bg);
+}
+
+.wedding-story-cover-hero .w-hero__content {
+    min-height: inherit;
+}
+
+.wedding-story-cover-hero .w-hero__bg {
+    background-size: var(--w-hero-image-fit-desktop, cover);
+    background-position: var(--w-hero-image-position-desktop, 50% 50%);
+}
+
+@media (max-width: 640px) {
+    .wedding-story-cover-hero .w-hero__bg {
+        background-size: var(--w-hero-image-fit-mobile, var(--w-hero-image-fit-desktop, cover));
+        background-position: var(--w-hero-image-position-mobile, var(--w-hero-image-position-desktop, 50% 50%));
+    }
+}
+
+@media (max-width: 760px) {
+    .wedding-story-cover-hero {
+        min-height: 78svh;
+        border-radius: calc(var(--w-radius) - 4px);
+    }
+}

@@ -10,6 +10,56 @@
     2열 썸네일 그리드 금지. 큰 이미지 + 넓은 텍스트 블록 + 세로 흐름.
 *@
 <section class="wedding-layout-story @Vm.LayoutDescriptor.CssClass">
+    @* Story도 다른 기본 레이아웃과 같은 HeroPlacement 계약을 소비한다.
+       data-drag-container/target은 관리자 iframe의 PC·모바일 위치 드래그 브리지에서 사용한다. *@
+    <section class="wedding-story-cover-hero w-hero w-hero--invite-positioned w-hero--style-@Vm.InvitationStyle"
+             role="banner"
+             data-drag-container
+             data-hero-crop-container>
+        @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
+        {
+            <div class="w-hero__bg"
+                 data-hero-crop-background
+                 data-hero-crop-source="@Vm.HeroImageUrl"
+                 style="background-image:url('@Vm.HeroImageUrl');@Vm.HeroImageStyle"
+                 role="img"
+                 aria-label="@Vm.CoupleName 대표 사진"></div>
+        }
+        else
+        {
+            <div class="w-hero__bg w-hero__bg--default" aria-hidden="true"></div>
+        }
+        <div class="w-hero__overlay"></div>
+        <div class="w-hero__content">
+            <div class="w-hero__top w-panel
+                        w-hero-panel--dv-@Vm.InviteHeroTopVerticalDesktop
+                        w-hero-panel--dh-@Vm.InviteHeroTopHorizontalDesktop
+                        w-hero-panel--mv-@Vm.InviteHeroTopVerticalMobile
+                        w-hero-panel--mh-@Vm.InviteHeroTopHorizontalMobile
+                        @(Vm.HasInviteHeroTopCustomPosition ? "w-draggable-positioned" : "")"
+                 data-drag-target="heroTop"
+                 style="@Vm.InviteHeroTopStyle">
+                <h1 class="w-hero__title">@Vm.HeroTitle</h1>
+                <p class="w-hero__names">@Vm.CoupleName</p>
+            </div>
+
+            <div class="w-hero__bottom w-panel
+                        w-hero-panel--dv-@Vm.InviteHeroBottomVerticalDesktop
+                        w-hero-panel--dh-@Vm.InviteHeroBottomHorizontalDesktop
+                        w-hero-panel--mv-@Vm.InviteHeroBottomVerticalMobile
+                        w-hero-panel--mh-@Vm.InviteHeroBottomHorizontalMobile
+                        @(Vm.HasInviteHeroBottomCustomPosition ? "w-draggable-positioned" : "")"
+                 data-drag-target="heroBottom"
+                 style="@Vm.InviteHeroBottomStyle">
+                <p class="w-hero__date">@Vm.WeddingDate.ToString("yyyy년 MM월 dd일") @Vm.WeddingTime</p>
+                @if (!string.IsNullOrWhiteSpace(Vm.VenueName))
+                {
+                    <p class="w-hero__venue">@Vm.VenueName</p>
+                }
+            </div>
+        </div>
+    </section>
+
     @foreach (var activeSection in Vm.OrderedSections.Where(x => x != "hero"))
     {
         if (activeSection == "story")

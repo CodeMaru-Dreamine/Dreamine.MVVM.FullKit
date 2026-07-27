@@ -1,0 +1,704 @@
+@namespace WeddingPlatform.Blazor.Components
+@using Microsoft.JSInterop
+@using Wedding.Layouts.Contracts
+@using WeddingPlatform.Models
+@using WeddingPlatform.ViewModels
+@inject IJSRuntime JS
+
+@if (ShouldRenderBlock(Block))
+{
+    @switch (Block.Kind)
+    {
+        case LayoutBlockKind.Page:
+            <div id="@DomId" class="@BlockCssClass" style="@BlockStyle">
+                @RenderChildren()
+            </div>
+            break;
+
+        case LayoutBlockKind.Section:
+            <section id="@DomId" class="@BlockCssClass" style="@BlockStyle">
+                @if (Block.Binding == LayoutBindingKey.Invitation
+                    && IsSemanticSectionVisible(LayoutSectionKey.Invitation))
+                {
+                    <InvitationSections Slug="@Slug"
+                                        Vm="@Vm"
+                                        VmGuest="@VmGuest"
+                                        MediaDismissVersion="@MediaDismissVersion"
+                                        IsTabbed="true"
+                                        ActiveSection="info"
+                                        PauseMusicRequested="@PauseMusicRequested" />
+                }
+                @RenderChildren()
+            </section>
+            break;
+
+        case LayoutBlockKind.Container:
+        case LayoutBlockKind.Stack:
+        case LayoutBlockKind.Grid:
+            <div id="@DomId" class="@BlockCssClass" style="@BlockStyle">
+                @RenderChildren()
+            </div>
+            break;
+
+        case LayoutBlockKind.Card:
+            <article id="@DomId" class="@BlockCssClass" style="@BlockStyle">
+                @RenderChildren()
+            </article>
+            break;
+
+        case LayoutBlockKind.Hero:
+            <section id="@DynamicSectionId(LayoutSectionKey.Hero)"
+                     class="@BlockCssClass"
+                     style="@($"{BlockStyle}{Vm.HeroImageStyle}")"
+                     data-hero-crop-container
+                     role="banner">
+                @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
+                {
+                    <img class="w-db-hero__image"
+                         data-hero-crop-image
+                         src="@Vm.HeroImageUrl"
+                         alt="@HeroImageAlt" />
+                }
+                <div class="w-db-hero__overlay"></div>
+                <div class="w-db-hero__content">
+                    @if (HasRenderableChildren(Block))
+                    {
+                        @RenderChildren()
+                    }
+                    else
+                    {
+                        <p class="w-db-kicker">@Vm.HeroTitle</p>
+                        <h1>@Vm.CoupleName</h1>
+                        <p>@Vm.WeddingDate.ToString("yyyy년 MM월 dd일") @Vm.WeddingTime</p>
+                        <p>@Vm.VenueName</p>
+                    }
+                </div>
+            </section>
+            break;
+
+        case LayoutBlockKind.Heading:
+            <h2 id="@DomId" class="@BlockCssClass" style="@BlockStyle">@ResolvedText</h2>
+            break;
+
+        case LayoutBlockKind.Text:
+            <p id="@DomId" class="@BlockCssClass" style="@BlockStyle">@ResolvedText</p>
+            break;
+
+        case LayoutBlockKind.Image:
+            <figure id="@DomId" class="@BlockCssClass" style="@BlockStyle">
+                <img src="@ResolvedImageUrl" alt="@ImageAlt" loading="lazy" />
+            </figure>
+            break;
+
+        case LayoutBlockKind.Gallery:
+            <div id="@DynamicSectionId(LayoutSectionKey.Gallery)" class="@BlockCssClass" style="@BlockStyle">
+                <InvitationSections Slug="@Slug"
+                                    Vm="@Vm"
+                                    VmGuest="@VmGuest"
+                                    MediaDismissVersion="@MediaDismissVersion"
+                                    IsTabbed="true"
+                                    ActiveSection="gallery"
+                                    PauseMusicRequested="@PauseMusicRequested" />
+            </div>
+            break;
+
+        case LayoutBlockKind.Countdown:
+            <section id="@CountdownDomId" class="@BlockCssClass" style="@BlockStyle" aria-label="결혼식까지 남은 날짜">
+                <strong>@CountdownLabel</strong>
+                <span>@Vm.WeddingDate.ToString("yyyy.MM.dd")</span>
+            </section>
+            break;
+
+        case LayoutBlockKind.Calendar:
+            <section id="@DynamicSectionId(LayoutSectionKey.Calendar)" class="@BlockCssClass" style="@BlockStyle">
+                <p class="w-db-kicker">Wedding day</p>
+                <time datetime="@Vm.WeddingDate.ToString("yyyy-MM-dd")">
+                    @Vm.WeddingDate.ToString("yyyy년 MM월 dd일 (ddd)") @Vm.WeddingTime
+                </time>
+            </section>
+            break;
+
+        case LayoutBlockKind.Map:
+            <div id="@DynamicSectionId(LayoutSectionKey.Location)" class="@BlockCssClass" style="@BlockStyle">
+                <InvitationSections Slug="@Slug"
+                                    Vm="@Vm"
+                                    VmGuest="@VmGuest"
+                                    MediaDismissVersion="@MediaDismissVersion"
+                                    IsTabbed="true"
+                                    ActiveSection="details"
+                                    PauseMusicRequested="@PauseMusicRequested" />
+            </div>
+            break;
+
+        case LayoutBlockKind.AccountList:
+            <div id="@DynamicSectionId(LayoutSectionKey.Accounts)" class="@BlockCssClass" style="@BlockStyle">
+                <InvitationSections Slug="@Slug"
+                                    Vm="@Vm"
+                                    VmGuest="@VmGuest"
+                                    MediaDismissVersion="@MediaDismissVersion"
+                                    IsTabbed="true"
+                                    ActiveSection="gift"
+                                    PauseMusicRequested="@PauseMusicRequested" />
+            </div>
+            break;
+
+        case LayoutBlockKind.ContactList:
+            <section id="@DynamicSectionId(LayoutSectionKey.Contact)" class="@BlockCssClass" style="@BlockStyle">
+                <h2 class="w-section-title">연락하기</h2>
+                <div class="w-db-contact-list">
+                    @foreach (var account in Vm.Accounts.Where(x => !string.IsNullOrWhiteSpace(x.Phone)))
+                    {
+                        <article class="w-db-contact">
+                            <strong>@account.Label @account.Name</strong>
+                            <div>
+                                <a class="w-btn" href="@PhoneHref(account.Phone, "tel")">전화</a>
+                                <a class="w-btn" href="@PhoneHref(account.Phone, "sms")">문자</a>
+                            </div>
+                        </article>
+                    }
+                </div>
+            </section>
+            break;
+
+        case LayoutBlockKind.Guestbook:
+            <div id="@DynamicSectionId(LayoutSectionKey.Guestbook)" class="@BlockCssClass" style="@BlockStyle">
+                <InvitationSections Slug="@Slug"
+                                    Vm="@Vm"
+                                    VmGuest="@VmGuest"
+                                    MediaDismissVersion="@MediaDismissVersion"
+                                    IsTabbed="true"
+                                    ActiveSection="guestbook"
+                                    PauseMusicRequested="@PauseMusicRequested" />
+            </div>
+            break;
+
+        case LayoutBlockKind.VideoGallery:
+            <div id="@DynamicSectionId(LayoutSectionKey.Video)" class="@BlockCssClass" style="@BlockStyle">
+                <InvitationSections Slug="@Slug"
+                                    Vm="@Vm"
+                                    VmGuest="@VmGuest"
+                                    MediaDismissVersion="@MediaDismissVersion"
+                                    IsTabbed="true"
+                                    ActiveSection="video"
+                                    PauseMusicRequested="@PauseMusicRequested" />
+            </div>
+            break;
+
+        case LayoutBlockKind.Navigation:
+            <nav id="@DomId" class="@BlockCssClass" style="@BlockStyle" aria-label="청첩장 바로가기">
+                @foreach (var section in VisibleNavigationSections)
+                {
+                    <button type="button" @onclick="() => ScrollToSection(section)">
+                        <span>@SectionIcon(section)</span>
+                        <small>@SectionLabel(section)</small>
+                    </button>
+                }
+            </nav>
+            break;
+
+        case LayoutBlockKind.Button:
+            <button id="@DomId"
+                    type="button"
+                    class="@BlockCssClass"
+                    style="@BlockStyle"
+                    @onclick="ExecuteActionAsync">
+                @(string.IsNullOrWhiteSpace(ResolvedText) ? ActionLabel : ResolvedText)
+            </button>
+            break;
+
+        case LayoutBlockKind.Divider:
+            <hr id="@DomId" class="@BlockCssClass" style="@BlockStyle" />
+            break;
+
+        case LayoutBlockKind.Spacer:
+            <div id="@DomId" class="@BlockCssClass" style="@BlockStyle" aria-hidden="true"></div>
+            break;
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public LayoutBlock Block { get; set; } = default!;
+    [Parameter, EditorRequired] public LayoutDefinition Definition { get; set; } = default!;
+    [Parameter, EditorRequired] public string Slug { get; set; } = "";
+    [Parameter, EditorRequired] public WeddingInvitationViewModel Vm { get; set; } = default!;
+    [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
+    [Parameter] public int MediaDismissVersion { get; set; }
+    [Parameter] public EventCallback PauseMusicRequested { get; set; }
+
+    private string DomId => $"layout-block-{Block.Id}";
+
+    private string CountdownDomId =>
+        HasCalendarBlock
+            ? DomId
+            : DynamicSectionId(LayoutSectionKey.Calendar);
+
+    private bool HasCalendarBlock =>
+        Flatten(Definition.Root).Any(block => block.Kind == LayoutBlockKind.Calendar);
+
+    private IReadOnlyList<LayoutSectionKey> VisibleNavigationSections =>
+        Definition.SectionOrder
+            .Where(IsSemanticSectionVisible)
+            .Where(HasRenderableSemanticBlock)
+            .Distinct()
+            .ToArray();
+
+    private string BlockCssClass =>
+        string.Join(" ",
+        new[]
+        {
+            "w-db",
+            $"w-db--{Block.Kind.ToString().ToLowerInvariant()}",
+            $"w-db--variant-{Block.Variant.ToString().ToLowerInvariant()}",
+            $"w-db--mobile-align-{EffectiveAlignment(Block.Responsive.Mobile).ToString().ToLowerInvariant()}",
+            $"w-db--tablet-align-{EffectiveAlignment(Block.Responsive.Tablet).ToString().ToLowerInvariant()}",
+            $"w-db--desktop-align-{EffectiveAlignment(Block.Responsive.Desktop).ToString().ToLowerInvariant()}",
+            Block.Responsive.Mobile.Hidden ? "w-db--mobile-hidden" : "",
+            Block.Responsive.Tablet.Hidden ? "w-db--tablet-hidden" : "",
+            Block.Responsive.Desktop.Hidden ? "w-db--desktop-hidden" : "",
+            Block.ContainerSettings is null
+                ? ""
+                : $"w-db--justify-{Block.ContainerSettings.Justification.ToString().ToLowerInvariant()}",
+            Block.ContainerSettings?.Wrap == true ? "w-db--wrap" : "",
+            Block.TextSettings is null
+                ? ""
+                : $"w-db--text-{Block.TextSettings.Size.ToString().ToLowerInvariant()} w-db--weight-{Block.TextSettings.Weight.ToString().ToLowerInvariant()} w-db--text-align-{Block.TextSettings.Alignment.ToString().ToLowerInvariant()}",
+            Block.ImageSettings is null
+                ? ""
+                : $"w-db--aspect-{Block.ImageSettings.AspectRatio.ToString().ToLowerInvariant()} w-db--fit-{Block.ImageSettings.Fit.ToString().ToLowerInvariant()} w-db--radius-{Block.ImageSettings.CornerRadius.ToString().ToLowerInvariant()}",
+        }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+    private string BlockStyle
+    {
+        get
+        {
+            var mobile = Block.Responsive.Mobile;
+            var tablet = Block.Responsive.Tablet;
+            var desktop = Block.Responsive.Desktop;
+            return string.Concat(
+                $"--w-db-columns-mobile:{EffectiveColumns(mobile)};",
+                $"--w-db-columns-tablet:{EffectiveColumns(tablet)};",
+                $"--w-db-columns-desktop:{EffectiveColumns(desktop)};",
+                $"--w-db-span-mobile:{ClampGrid(mobile.ColumnSpan)};",
+                $"--w-db-span-tablet:{ClampGrid(tablet.ColumnSpan)};",
+                $"--w-db-span-desktop:{ClampGrid(desktop.ColumnSpan)};",
+                $"--w-db-gap-mobile:{Gap(EffectiveGap(mobile))};",
+                $"--w-db-gap-tablet:{Gap(EffectiveGap(tablet))};",
+                $"--w-db-gap-desktop:{Gap(EffectiveGap(desktop))};");
+        }
+    }
+
+    private string ResolvedText => ResolveText(Block);
+
+    private string ResolveText(LayoutBlock block) => block.Binding switch
+    {
+        LayoutBindingKey.CoupleName => Vm.CoupleName,
+        LayoutBindingKey.HeroTitle => Vm.HeroTitle,
+        LayoutBindingKey.Subtitle => Vm.Subtitle,
+        LayoutBindingKey.WeddingDate => Vm.WeddingDate.ToString("yyyy년 MM월 dd일 (ddd)"),
+        LayoutBindingKey.WeddingTime => Vm.WeddingTime,
+        LayoutBindingKey.VenueName => Vm.VenueName,
+        LayoutBindingKey.VenueAddress => Vm.VenueAddress,
+        LayoutBindingKey.Story => Vm.Story,
+        LayoutBindingKey.Story2 => Vm.Story2,
+        _ => block.Text,
+    };
+
+    private string ResolvedImageUrl => ResolveImageUrl(Block);
+
+    private string ResolveImageUrl(LayoutBlock block) =>
+        block.Binding == LayoutBindingKey.HeroImage ? Vm.HeroImageUrl : "";
+
+    private string HeroImageAlt =>
+        string.IsNullOrWhiteSpace(Block.ImageSettings?.AltText)
+            ? $"{Vm.CoupleName} 대표 사진"
+            : Block.ImageSettings.AltText;
+
+    private string ImageAlt =>
+        string.IsNullOrWhiteSpace(Block.ImageSettings?.AltText)
+            ? Vm.CoupleName
+            : Block.ImageSettings.AltText;
+
+    private string CountdownLabel
+    {
+        get
+        {
+            var days = (Vm.WeddingDate.Date - DateTime.Today).Days;
+            return days switch
+            {
+                > 0 => $"D-{days}",
+                0 => "Wedding Day",
+                _ => $"D+{Math.Abs(days)}",
+            };
+        }
+    }
+
+    /// <summary>
+    /// ContainerSettings supplies the block's base child-layout values. The
+    /// schema defaults on a breakpoint (Columns=1, Gap=Medium,
+    /// Alignment=Stretch) mean "inherit the container base"; any non-default
+    /// breakpoint value is an explicit override. Hidden and ColumnSpan are
+    /// always breakpoint-specific.
+    /// </summary>
+    private int EffectiveColumns(LayoutBreakpointSettings breakpoint) =>
+        Block.ContainerSettings is { } container
+        && breakpoint.Columns == 1
+            ? ClampGrid(container.Columns)
+            : ClampGrid(breakpoint.Columns);
+
+    private LayoutGap EffectiveGap(LayoutBreakpointSettings breakpoint) =>
+        Block.ContainerSettings is { } container
+        && breakpoint.Gap == LayoutGap.Medium
+            ? container.Gap
+            : breakpoint.Gap;
+
+    private LayoutAlignment EffectiveAlignment(LayoutBreakpointSettings breakpoint) =>
+        Block.ContainerSettings is { } container
+        && breakpoint.Alignment == LayoutAlignment.Stretch
+            ? container.Alignment
+            : breakpoint.Alignment;
+
+    private bool ShouldRenderBlock(LayoutBlock block)
+    {
+        var semanticSection = SemanticSection(block);
+        if (semanticSection is { } section
+            && block.Kind != LayoutBlockKind.Section
+            && (!IsSemanticSectionVisible(section) || !HasBlockData(block)))
+        {
+            return false;
+        }
+
+        return block.Kind switch
+        {
+            LayoutBlockKind.Page
+                or LayoutBlockKind.Container
+                or LayoutBlockKind.Stack
+                or LayoutBlockKind.Grid
+                or LayoutBlockKind.Card =>
+                HasRenderableChildren(block),
+            LayoutBlockKind.Section =>
+                (block.Binding == LayoutBindingKey.Invitation
+                    && IsSemanticSectionVisible(LayoutSectionKey.Invitation))
+                || HasRenderableChildren(block),
+            LayoutBlockKind.Heading or LayoutBlockKind.Text =>
+                !string.IsNullOrWhiteSpace(ResolveText(block)),
+            LayoutBlockKind.Image =>
+                !string.IsNullOrWhiteSpace(ResolveImageUrl(block)),
+            LayoutBlockKind.Navigation =>
+                VisibleNavigationSections.Count > 0,
+            _ => true,
+        };
+    }
+
+    private bool HasRenderableChildren(LayoutBlock block) =>
+        block.Children.Any(ShouldRenderBlock);
+
+    private bool HasRenderableSemanticBlock(LayoutSectionKey section) =>
+        FindRenderableSemanticBlock(Definition.Root, section) is not null;
+
+    private LayoutBlock? FindRenderableSemanticBlock(
+        LayoutBlock block,
+        LayoutSectionKey desiredSection)
+    {
+        if (block.Kind == LayoutBlockKind.Navigation)
+        {
+            return null;
+        }
+
+        var blockSection = SemanticSection(block);
+        var ownContentVisible = blockSection is null
+            || IsSemanticSectionVisible(blockSection.Value)
+                && HasBlockData(block);
+        if (!ownContentVisible && block.Kind != LayoutBlockKind.Section)
+        {
+            return null;
+        }
+
+        if (ownContentVisible && blockSection == desiredSection)
+        {
+            return block;
+        }
+
+        foreach (var child in block.Children)
+        {
+            var match = FindRenderableSemanticBlock(child, desiredSection);
+            if (match is not null)
+            {
+                return match;
+            }
+        }
+
+        return null;
+    }
+
+    private bool IsSemanticSectionVisible(LayoutSectionKey section)
+    {
+        // The package order is the declarative source of available sections.
+        // The descriptor is the approved runtime projection of the same list.
+        if (!Definition.SectionOrder.Contains(section)
+            || !Vm.LayoutDescriptor.SupportedSections.Contains(
+                SectionStorageKey(section),
+                StringComparer.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var storageKey = SectionStorageKey(section);
+        if (section != LayoutSectionKey.Hero
+            && Vm.DesignSettings.SectionVisibility.TryGetValue(
+                storageKey,
+                out var visible)
+            && !visible)
+        {
+            return false;
+        }
+
+        return section switch
+        {
+            LayoutSectionKey.Invitation => HasInvitationInfo,
+            LayoutSectionKey.Gallery => Vm.Gallery.Count > 0,
+            LayoutSectionKey.Story => HasStory,
+            LayoutSectionKey.Video => Vm.VideoUrls.Count > 0,
+            LayoutSectionKey.Location => HasLocationDetails,
+            LayoutSectionKey.Accounts => Vm.Accounts.Count > 0,
+            LayoutSectionKey.Guestbook => true,
+            LayoutSectionKey.Contact => HasContactPhones,
+            LayoutSectionKey.Hero or LayoutSectionKey.Calendar => true,
+            _ => false,
+        };
+    }
+
+    private bool HasInvitationInfo =>
+        Vm.Mode != WeddingSiteMode.ThankYou
+        || !string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml);
+
+    private bool HasStory =>
+        !string.IsNullOrWhiteSpace(Vm.Story)
+        || !string.IsNullOrWhiteSpace(Vm.Story2);
+
+    private bool HasLocationDetails =>
+        Vm.Mode != WeddingSiteMode.ThankYou
+        && (!string.IsNullOrWhiteSpace(Vm.VenueName)
+            || !string.IsNullOrWhiteSpace(Vm.VenueAddress)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkKakao)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkNaver)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkAtlan)
+            || !string.IsNullOrWhiteSpace(Vm.MapLinkTmap)
+            || Vm.HasVenueCoords
+            || !string.IsNullOrWhiteSpace(Vm.RoadMapUrl));
+
+    private bool HasContactPhones =>
+        Vm.Accounts.Any(account => !string.IsNullOrWhiteSpace(account.Phone));
+
+    private bool HasBlockData(LayoutBlock block) =>
+        block.Binding switch
+        {
+            LayoutBindingKey.Story => !string.IsNullOrWhiteSpace(Vm.Story),
+            LayoutBindingKey.Story2 => !string.IsNullOrWhiteSpace(Vm.Story2),
+            LayoutBindingKey.HeroImage => !string.IsNullOrWhiteSpace(Vm.HeroImageUrl),
+            _ => true,
+        };
+
+    private static LayoutSectionKey? SemanticSection(LayoutBlock block) =>
+        block.Kind switch
+        {
+            LayoutBlockKind.Hero => LayoutSectionKey.Hero,
+            LayoutBlockKind.Gallery => LayoutSectionKey.Gallery,
+            LayoutBlockKind.Countdown or LayoutBlockKind.Calendar =>
+                LayoutSectionKey.Calendar,
+            LayoutBlockKind.Map => LayoutSectionKey.Location,
+            LayoutBlockKind.AccountList => LayoutSectionKey.Accounts,
+            LayoutBlockKind.ContactList => LayoutSectionKey.Contact,
+            LayoutBlockKind.Guestbook => LayoutSectionKey.Guestbook,
+            LayoutBlockKind.VideoGallery => LayoutSectionKey.Video,
+            LayoutBlockKind.Section
+                when block.Binding == LayoutBindingKey.Invitation =>
+                LayoutSectionKey.Invitation,
+            LayoutBlockKind.Text
+                when block.Binding is LayoutBindingKey.Story
+                    or LayoutBindingKey.Story2 =>
+                LayoutSectionKey.Story,
+            _ => null,
+        };
+
+    private static string SectionStorageKey(LayoutSectionKey section) => section switch
+    {
+        LayoutSectionKey.Hero => "hero",
+        LayoutSectionKey.Invitation => "info",
+        LayoutSectionKey.Calendar => "calendar",
+        LayoutSectionKey.Gallery => "gallery",
+        LayoutSectionKey.Story => "story",
+        LayoutSectionKey.Video => "video",
+        LayoutSectionKey.Location => "details",
+        LayoutSectionKey.Accounts => "gift",
+        LayoutSectionKey.Guestbook => "guestbook",
+        LayoutSectionKey.Contact => "contact",
+        _ => "",
+    };
+
+    private RenderFragment RenderChildren() => builder =>
+    {
+        var sequence = 0;
+        foreach (var child in Block.Children)
+        {
+            builder.OpenComponent<DynamicLayoutBlock>(sequence++);
+            builder.SetKey(child.Id);
+            builder.AddAttribute(sequence++, nameof(Block), child);
+            builder.AddAttribute(sequence++, nameof(Definition), Definition);
+            builder.AddAttribute(sequence++, nameof(Slug), Slug);
+            builder.AddAttribute(sequence++, nameof(Vm), Vm);
+            builder.AddAttribute(sequence++, nameof(VmGuest), VmGuest);
+            builder.AddAttribute(sequence++, nameof(MediaDismissVersion), MediaDismissVersion);
+            builder.AddAttribute(sequence++, nameof(PauseMusicRequested), PauseMusicRequested);
+            builder.CloseComponent();
+        }
+    };
+
+    private async Task ScrollToSection(LayoutSectionKey section)
+    {
+        await JS.InvokeVoidAsync("weddingInterop.scrollToElement", SectionTargetId(section));
+    }
+
+    private async Task ExecuteActionAsync()
+    {
+        var settings = Block.ActionSettings;
+        if (settings is null) return;
+
+        switch (settings.Action)
+        {
+            case LayoutActionKind.ScrollToSection when settings.TargetSection is { } target:
+                await ScrollToSection(target);
+                break;
+            case LayoutActionKind.OpenMap:
+                await ScrollToSection(LayoutSectionKey.Location);
+                break;
+            case LayoutActionKind.OpenRsvp:
+                await ScrollToSection(LayoutSectionKey.Guestbook);
+                break;
+            case LayoutActionKind.CopyAccount:
+                var account = Vm.Accounts.FirstOrDefault(x => !string.IsNullOrWhiteSpace(x.Account));
+                if (account is not null)
+                    await JS.InvokeVoidAsync("weddingInterop.copyToClipboard", account.Account);
+                break;
+            case LayoutActionKind.CallGroom:
+                await InvokePhoneActionAsync(0);
+                break;
+            case LayoutActionKind.CallBride:
+                await InvokePhoneActionAsync(1);
+                break;
+            case LayoutActionKind.ShareInvitation:
+                await JS.InvokeVoidAsync("weddingInterop.shareOrCopy", Vm.CanonicalUrl, Vm.SearchTitle);
+                break;
+        }
+    }
+
+    private async Task InvokePhoneActionAsync(int preferredIndex)
+    {
+        var phones = Vm.Accounts
+            .Where(x => !string.IsNullOrWhiteSpace(x.Phone))
+            .Select(x => x.Phone)
+            .ToArray();
+        if (phones.Length == 0) return;
+        var phone = phones[Math.Min(preferredIndex, phones.Length - 1)];
+        await JS.InvokeVoidAsync("weddingInterop.openSafePhone", phone);
+    }
+
+    private string SectionTargetId(LayoutSectionKey section)
+    {
+        if (section is LayoutSectionKey.Hero
+            or LayoutSectionKey.Calendar
+            or LayoutSectionKey.Gallery
+            or LayoutSectionKey.Video
+            or LayoutSectionKey.Location
+            or LayoutSectionKey.Accounts
+            or LayoutSectionKey.Guestbook
+            or LayoutSectionKey.Contact)
+        {
+            return DynamicSectionId(section);
+        }
+
+        var matchingBlock = FindRenderableSemanticBlock(
+            Definition.Root,
+            section);
+        return matchingBlock is null
+            ? DynamicSectionId(LayoutSectionKey.Hero)
+            : $"layout-block-{matchingBlock.Id}";
+    }
+
+    private static IEnumerable<LayoutBlock> Flatten(LayoutBlock root)
+    {
+        yield return root;
+        foreach (var child in root.Children)
+        {
+            foreach (var descendant in Flatten(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    private string ActionLabel => Block.ActionSettings?.Action switch
+    {
+        LayoutActionKind.ScrollToSection => "자세히 보기",
+        LayoutActionKind.OpenMap => "오시는 길",
+        LayoutActionKind.OpenRsvp => "방명록 쓰기",
+        LayoutActionKind.CopyAccount => "계좌번호 복사",
+        LayoutActionKind.CallGroom => "신랑에게 전화",
+        LayoutActionKind.CallBride => "신부에게 전화",
+        LayoutActionKind.ShareInvitation => "청첩장 공유",
+        _ => "버튼",
+    };
+
+    private static int ClampGrid(int value) => Math.Clamp(value, 1, 12);
+
+    private static string Gap(LayoutGap gap) => gap switch
+    {
+        LayoutGap.None => "0",
+        LayoutGap.ExtraSmall => ".25rem",
+        LayoutGap.Small => ".5rem",
+        LayoutGap.Large => "1.5rem",
+        LayoutGap.ExtraLarge => "2.5rem",
+        _ => "1rem",
+    };
+
+    private static string DynamicSectionId(LayoutSectionKey section) =>
+        $"layout-section-{section.ToString().ToLowerInvariant()}";
+
+    private static string PhoneHref(string? phone, string scheme)
+    {
+        var normalized = new string((phone ?? "")
+            .Where(character => char.IsDigit(character) || character == '+')
+            .Take(24)
+            .ToArray());
+        return normalized.Length == 0 ? "#" : $"{scheme}:{normalized}";
+    }
+
+    private static string SectionLabel(LayoutSectionKey section) => section switch
+    {
+        LayoutSectionKey.Hero => "홈",
+        LayoutSectionKey.Invitation => "예식 안내",
+        LayoutSectionKey.Calendar => "날짜",
+        LayoutSectionKey.Gallery => "사진",
+        LayoutSectionKey.Story => "이야기",
+        LayoutSectionKey.Video => "영상",
+        LayoutSectionKey.Location => "오시는 길",
+        LayoutSectionKey.Accounts => "마음 전하기",
+        LayoutSectionKey.Guestbook => "방명록",
+        LayoutSectionKey.Contact => "연락하기",
+        _ => section.ToString(),
+    };
+
+    private static string SectionIcon(LayoutSectionKey section) => section switch
+    {
+        LayoutSectionKey.Hero => "⌂",
+        LayoutSectionKey.Invitation => "💌",
+        LayoutSectionKey.Calendar => "🗓",
+        LayoutSectionKey.Gallery => "🖼",
+        LayoutSectionKey.Story => "♡",
+        LayoutSectionKey.Video => "▶",
+        LayoutSectionKey.Location => "⌖",
+        LayoutSectionKey.Accounts => "🎁",
+        LayoutSectionKey.Guestbook => "✍",
+        LayoutSectionKey.Contact => "☎",
+        _ => "•",
+    };
+}

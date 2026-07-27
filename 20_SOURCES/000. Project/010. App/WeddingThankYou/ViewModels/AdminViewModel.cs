@@ -944,6 +944,18 @@ namespace WeddingThankYou.ViewModels
 		private bool ValidateThemeForSave(TenantConfig config)
 		{
 			config.UnlockedThemeKeys ??= new();
+			if (string.Equals(
+					config.ThemeName,
+					WeddingThemeCatalog.CustomThemeKey,
+					StringComparison.OrdinalIgnoreCase))
+			{
+				// WeddingPlatform.Web가 관리하는 사용자 정의 팔레트는 이 호환 앱의
+				// JsonExtensionData에 그대로 보존됩니다. 이 앱에서 다른 감사장 설정을
+				// 저장할 때 custom 키를 알 수 없는 프리셋으로 취급해 저장을 막지 않습니다.
+				config.ThemeName = WeddingThemeCatalog.CustomThemeKey;
+				return true;
+			}
+
 			if (!WeddingThemeCatalog.IsKnownKey(config.ThemeName))
 			{
 				StatusMessage = "저장 오류: 존재하지 않는 테마입니다.";
@@ -967,8 +979,8 @@ namespace WeddingThankYou.ViewModels
 			{
 				HasPremiumPlan = config.HasPremiumPlan,
 				UnlockedThemeKeys = config.UnlockedThemeKeys
+					.Where(WeddingThemeCatalog.IsPresetKey)
 					.Select(WeddingThemeCatalog.NormalizeKey)
-					.Where(WeddingThemeCatalog.IsKnownKey)
 					.ToArray(),
 			};
 

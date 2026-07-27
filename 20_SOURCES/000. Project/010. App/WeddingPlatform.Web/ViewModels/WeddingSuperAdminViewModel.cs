@@ -79,6 +79,7 @@ public sealed class WeddingSuperAdminViewModel
     /// \endif
     /// </summary>
     private readonly ISuperAdminSessionTokenService _superAdminTokens;
+    private readonly ISuperAdminAuditLog _superAdminAudit;
 
     /// <summary>
     /// \if KO
@@ -151,7 +152,8 @@ public sealed class WeddingSuperAdminViewModel
         WeddingUserContext userContext,
         IMediaUsageQueryService mediaUsage,
         IMediaMigrationService mediaMigration,
-        ISuperAdminSessionTokenService superAdminTokens)
+        ISuperAdminSessionTokenService superAdminTokens,
+        ISuperAdminAuditLog superAdminAudit)
     {
         _tenants = tenants;
         _opts = opts;
@@ -160,6 +162,7 @@ public sealed class WeddingSuperAdminViewModel
         _mediaUsage = mediaUsage;
         _mediaMigration = mediaMigration;
         _superAdminTokens = superAdminTokens;
+        _superAdminAudit = superAdminAudit;
     }
 
     /// <summary>
@@ -352,9 +355,28 @@ public sealed class WeddingSuperAdminViewModel
     /// <para>Performs the restore session operation.</para>
     /// \endif
     /// </summary>
-    public void RestoreSession()
+    public bool RestoreSession(string? sessionToken)
     {
+        if (!_superAdminTokens.ValidateToken(sessionToken))
+        {
+            IsAuthenticated = false;
+            SuperAdminSessionToken = "";
+            return false;
+        }
+
         IsAuthenticated = true;
+        SuperAdminSessionToken = sessionToken!;
+        StatusMessage = "";
+        return true;
+    }
+
+    /// <summary>현재 슈퍼관리자 화면 세션을 종료합니다.</summary>
+    public void Logout()
+    {
+        IsAuthenticated = false;
+        IsLoaded = false;
+        SuperAdminSessionToken = "";
+        LoginPassword = "";
         StatusMessage = "";
     }
 
@@ -656,7 +678,8 @@ public sealed class WeddingSuperAdminViewModel
             WeddingDate = NewWeddingDate,
             PasswordHash = DreaminePasswordHasher.HashPassword(NewPassword),
             Mode = WeddingSiteMode.Invite,
-            IsPublished = true
+            IsPublished = true,
+            AllowSearchIndexing = false
         };
 
         if (user.IsAuthenticated)
@@ -1069,54 +1092,27 @@ public sealed class WeddingSuperAdminViewModel
     }
 
     /// <summary>
-    /// \if KO
-    /// <para>Unlocked Layouts Async 값을 설정합니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Sets the unlocked layouts async value.</para>
-    /// \endif
+    /// 테넌트의 Premium 플랜 여부를 변경하고 감사 로그에 기록합니다.
+    /// 모든 Premium 레이아웃과 커스텀 테마 권한은 이 값 하나만 사용합니다.
     /// </summary>
-    /// <param name="slug">
-    /// \if KO
-    /// <para>slug에 사용할 <c>string</c> 값입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>string</c> value used for slug.</para>
-    /// \endif
-    /// </param>
-    /// <param name="unlockedLayoutModes">
-    /// \if KO
-    /// <para>unlocked Layout Modes에 사용할 <c>IEnumerable&lt;string&gt;</c> 값입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>IEnumerable&lt;string&gt;</c> value used for unlocked layout modes.</para>
-    /// \endif
-    /// </param>
-    /// <param name="ct">
-    /// \if KO
-    /// <para>취소 요청을 감시하는 토큰입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>A token used to observe cancellation requests.</para>
-    /// \endif
-    /// </param>
-    /// <returns>
-    /// \if KO
-    /// <para>Set Unlocked Layouts Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>Task</c> result produced by the set unlocked layouts async operation.</para>
-    /// \endif
-    /// </returns>
-    public async Task SetUnlockedLayoutsAsync(string slug, IEnumerable<string> unlockedLayoutModes, CancellationToken ct = default)
+    public async Task SetPremiumPlanAsync(string slug, bool enabled, CancellationToken ct = default)
     {
         var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
         if (config is null) return;
 
-        config.UnlockedLayoutModes = NormalizeUnlockedLayoutKeys(unlockedLayoutModes);
+        config.HasPremiumPlan = enabled;
+        // 이전 개별 권한이 남아 있으면 다음 로드의 호환 마이그레이션에서
+        // 해제한 Premium이 다시 활성화될 수 있으므로 플랜 변경 시 제거합니다.
+        config.UnlockedLayoutModes ??= new();
+        config.UnlockedLayoutModes.Clear();
         await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+        await _superAdminAudit
+            .WriteAsync("SetPremiumPlan", slug, $"Enabled={enabled}", ct)
+            .ConfigureAwait(false);
         await LoadAsync(ct).ConfigureAwait(false);
-        StatusMessage = $"✅ '{slug}' 레이아웃 권한 저장됨";
+        StatusMessage = enabled
+            ? $"✅ '{slug}' Premium 플랜이 활성화되었습니다. 모든 Premium 레이아웃을 사용할 수 있습니다."
+            : $"✅ '{slug}' Premium 플랜이 해제되었습니다. Premium 레이아웃과 커스텀 테마 값은 보존되지만 공개 화면에는 적용되지 않습니다.";
     }
 
     /// <summary>
@@ -1169,40 +1165,6 @@ public sealed class WeddingSuperAdminViewModel
         await LoadAsync(ct).ConfigureAwait(false);
         StatusMessage = $"✅ '{slug}' 테마 권한 저장됨";
     }
-
-    /// <summary>
-    /// \if KO
-    /// <para>Normalize Unlocked Layout Keys 작업을 수행합니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Performs the normalize unlocked layout keys operation.</para>
-    /// \endif
-    /// </summary>
-    /// <param name="unlockedLayoutModes">
-    /// \if KO
-    /// <para>unlocked Layout Modes에 사용할 <c>IEnumerable&lt;string&gt;</c> 값입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>IEnumerable&lt;string&gt;</c> value used for unlocked layout modes.</para>
-    /// \endif
-    /// </param>
-    /// <returns>
-    /// \if KO
-    /// <para>Normalize Unlocked Layout Keys 작업에서 생성한 <c>List&lt;string&gt;</c> 결과입니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>The <c>List&lt;string&gt;</c> result produced by the normalize unlocked layout keys operation.</para>
-    /// \endif
-    /// </returns>
-    private static List<string> NormalizeUnlockedLayoutKeys(IEnumerable<string> unlockedLayoutModes) =>
-        unlockedLayoutModes
-            .Select(WeddingLayoutCatalog.FromLegacyKey)
-            .Select(mode => WeddingLayoutCatalog.Instance.Find(mode))
-            .Where(option => option is { Tier: WeddingLayoutTier.Premium })
-            .Select(option => option!.Key)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(x => x)
-            .ToList();
 
     /// <summary>
     /// \if KO

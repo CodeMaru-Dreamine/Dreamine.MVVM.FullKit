@@ -256,7 +256,14 @@ namespace WeddingThankYou.ViewModels
 		/// <para>Gets the theme name value.</para>
 		/// \endif
 		/// </summary>
-		public string ThemeName => Config?.ThemeName ?? "rose";
+		public string ThemeName =>
+			string.Equals(
+				Config?.ThemeName,
+				WeddingThemeCatalog.CustomThemeKey,
+				StringComparison.OrdinalIgnoreCase)
+				? WeddingThemeCatalog.DefaultThemeKey
+				: WeddingThemeCatalog.Instance.Find(Config?.ThemeName)?.Key
+					?? WeddingThemeCatalog.DefaultThemeKey;
 		/// <summary>
 		/// \if KO
 		/// <para>Thank You Style 값을 가져옵니다.</para>

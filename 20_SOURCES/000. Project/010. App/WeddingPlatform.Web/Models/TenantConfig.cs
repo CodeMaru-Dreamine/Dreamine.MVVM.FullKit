@@ -1,3 +1,6 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace WeddingPlatform.Models;
 
 /// <summary>
@@ -437,6 +440,37 @@ public sealed class TenantConfig
     /// </summary>
     public string OgImageFileName { get; set; } = "";
 
+    // ── 검색 엔진 노출 (SEO) ────────────────────────────
+    /// <summary>
+    /// \if KO
+    /// <para>검색 엔진 색인 허용 여부입니다. null은 기존 데이터이며, 공개 샘플 외에는 비허용으로 처리합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets whether search-engine indexing is allowed. Null represents legacy data.</para>
+    /// \endif
+    /// </summary>
+    public bool? AllowSearchIndexing { get; set; }
+
+    /// <summary>
+    /// \if KO
+    /// <para>검색 결과에 사용할 제목입니다. 비어 있으면 커플 이름을 기준으로 자동 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the search-result title. An empty value uses an automatically generated title.</para>
+    /// \endif
+    /// </summary>
+    public string SearchTitle { get; set; } = "";
+
+    /// <summary>
+    /// \if KO
+    /// <para>검색 결과에 사용할 설명입니다. 비어 있으면 예식 정보를 기준으로 자동 생성합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the search-result description. An empty value uses an automatically generated description.</para>
+    /// \endif
+    /// </summary>
+    public string SearchDescription { get; set; } = "";
+
     // ── 자동 감사장 링크 미리보기 (Open Graph) ──────────────────────
     /// <summary>
     /// \if KO
@@ -567,6 +601,15 @@ public sealed class TenantConfig
     public DateTime CreatedAt { get; set; } = DateTime.Now;
     /// <summary>
     /// \if KO
+    /// <para>설정이 마지막으로 저장된 시각입니다. 사이트맵의 lastmod 값에 사용합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the last configuration update time used by sitemap lastmod.</para>
+    /// \endif
+    /// </summary>
+    public DateTime? UpdatedAt { get; set; }
+    /// <summary>
+    /// \if KO
     /// <para>Show On Home 값을 가져오거나 설정합니다.</para>
     /// \endif
     /// \if EN
@@ -594,10 +637,10 @@ public sealed class TenantConfig
     public bool HasPremiumPlan { get; set; } = false;
     /// <summary>
     /// \if KO
-    /// <para>Unlocked Layout Modes 값을 가져오거나 설정합니다.</para>
+    /// <para>이전 버전의 개별 Premium 레이아웃 권한을 역직렬화하기 위한 호환 값입니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Gets or sets the unlocked layout modes value.</para>
+    /// <para>Gets or sets the legacy per-layout Premium grants retained for deserialization compatibility.</para>
     /// \endif
     /// </summary>
     public List<string> UnlockedLayoutModes { get; set; } = new();
@@ -610,6 +653,12 @@ public sealed class TenantConfig
     /// \endif
     /// </summary>
     public List<string> UnlockedThemeKeys { get; set; } = new();
+
+    /// <summary>
+    /// 다른 버전의 웨딩 애플리케이션이 추가한 알 수 없는 필드를 다시 저장할 때도 보존합니다.
+    /// </summary>
+    [JsonExtensionData]
+    public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     /// <summary>
     /// \if KO
     /// <para>Gallery File Names 값을 가져오거나 설정합니다.</para>

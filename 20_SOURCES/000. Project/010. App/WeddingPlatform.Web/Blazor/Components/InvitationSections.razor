@@ -173,9 +173,9 @@
                                         📋 계좌번호 복사
                                     </button>
                                 }
-                                @if (!string.IsNullOrWhiteSpace(acc.KakaoPayUrl))
+                                @if (AccountInfo.NormalizePaymentUrl(acc.KakaoPayUrl) is { Length: > 0 } paymentUrl)
                                 {
-                                    <a href="@acc.KakaoPayUrl" target="_blank" class="w-btn w-btn--kakaopay">💛 카카오페이</a>
+                                    <a href="@paymentUrl" target="_blank" rel="noopener noreferrer" class="w-btn w-btn--kakaopay">💛 카카오페이</a>
                                 }
                                 @if (!string.IsNullOrWhiteSpace(acc.Phone))
                                 {
@@ -272,6 +272,7 @@
     [Parameter, EditorRequired] public WeddingGuestbookViewModel VmGuest { get; set; } = default!;
     [Parameter] public bool IsTabbed { get; set; }
     [Parameter] public string ActiveSection { get; set; } = "";
+    [Parameter] public int MediaDismissVersion { get; set; }
     [Parameter] public EventCallback PauseMusicRequested { get; set; }
 
     private ElementReference lbRef;
@@ -285,6 +286,8 @@
     private bool shouldFocusVideoLightbox;
     private bool isAutoPlaying;
     private CancellationTokenSource? autoCts;
+    private bool hasObservedMediaDismissVersion;
+    private int observedMediaDismissVersion = int.MinValue;
 
     private bool HasStory => !string.IsNullOrWhiteSpace(Vm.Story) || !string.IsNullOrWhiteSpace(Vm.Story2);
     private bool HasInfo => Vm.Mode != WeddingSiteMode.ThankYou || !string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml);
@@ -307,6 +310,12 @@
             ? string.IsNullOrWhiteSpace(ActiveSection) || !IsSectionVisible(ActiveSection) ? [] : [ActiveSection]
             : Vm.OrderedSections.Where(IsSectionVisible);
 
+    private bool ShouldInitializeLeafletMap =>
+        Vm.HasVenueCoords
+        && string.Equals(Vm.SelectedTab, "map", StringComparison.Ordinal)
+        && SectionsToRender.Any(section =>
+            string.Equals(section, "details", StringComparison.Ordinal));
+
     private bool IsSectionVisible(string section) =>
         section != "hero"
         && Vm.LayoutDescriptor.SupportedSections.Contains(section)
@@ -322,10 +331,30 @@
             _ => true,
         };
 
+    protected override void OnParametersSet()
+    {
+        if (!hasObservedMediaDismissVersion)
+        {
+            hasObservedMediaDismissVersion = true;
+            observedMediaDismissVersion = MediaDismissVersion;
+            return;
+        }
+
+        if (observedMediaDismissVersion == MediaDismissVersion)
+        {
+            return;
+        }
+
+        observedMediaDismissVersion = MediaDismissVersion;
+        DismissOpenMedia();
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (Vm.HasVenueCoords)
+        if (ShouldInitializeLeafletMap)
+        {
             await JS.InvokeVoidAsync("weddingInterop.initLeafletMap");
+        }
 
         if (shouldFocusLightbox)
         {
@@ -427,6 +456,17 @@
         isAutoPlaying = false;
         autoCts?.Cancel();
         return Task.CompletedTask;
+    }
+
+    private void DismissOpenMedia()
+    {
+        isAutoPlaying = false;
+        autoCts?.Cancel();
+        Vm.CloseLightbox();
+        videoLightboxOpen = false;
+        shouldFocusLightbox = false;
+        shouldFocusVideoLightbox = false;
+        startX = null;
     }
 
     private async Task PauseMusicForVideo()

@@ -3,14 +3,19 @@
 @implements IAsyncDisposable
 
 <section class="wedding-layout-gallery @Vm.LayoutDescriptor.CssClass">
-    <section class="wedding-gallery-cover" role="banner">
+    <section class="wedding-gallery-cover" role="banner" style="@Vm.HeroImageStyle">
         @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
         {
-            <img class="wedding-gallery-cover__image" src="@Vm.HeroImageUrl" alt="@Vm.CoupleName 대표 사진" />
+            <div class="wedding-gallery-cover__media" data-hero-crop-container>
+                <img class="wedding-gallery-cover__image"
+                     data-hero-crop-image
+                     src="@Vm.HeroImageUrl"
+                     alt="@Vm.CoupleName 대표 사진" />
+            </div>
         }
         else
         {
-            <div class="wedding-gallery-cover__image wedding-gallery-cover__image--empty"></div>
+            <div class="wedding-gallery-cover__media wedding-gallery-cover__image--empty"></div>
         }
         <div class="wedding-gallery-cover__panel">
             <p class="wedding-layout-kicker">@Vm.HeroTitle</p>

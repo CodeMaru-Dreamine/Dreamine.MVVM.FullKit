@@ -30,10 +30,10 @@ public interface IProcessRunner
     /// </param>
     /// <param name="arguments">
     /// \if KO
-    /// <para>실행 인자입니다.</para>
+    /// <para>실행 인자 목록입니다.</para>
     /// \endif
     /// \if EN
-    /// <para>The <c>string</c> value used for arguments.</para>
+    /// <para>The argument list passed to the executable.</para>
     /// \endif
     /// </param>
     /// <param name="workingDirectory">
@@ -78,7 +78,7 @@ public interface IProcessRunner
     /// </returns>
     Task<ProcessExecutionResult> RunAsync(
         string fileName,
-        string arguments,
+        IReadOnlyList<string> arguments,
         string? workingDirectory,
         TimeSpan timeout,
         int maxOutputChars,

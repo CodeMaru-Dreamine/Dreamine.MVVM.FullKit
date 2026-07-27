@@ -4,6 +4,7 @@ using System.Text.Json;
 using Dreamine.Identity;
 using Microsoft.AspNetCore.Components.Forms;
 using Wedding.Common;
+using Wedding.Layouts.Contracts;
 using WeddingPlatform.Models;
 using WeddingPlatform.Services;
 
@@ -73,6 +74,9 @@ public sealed class WeddingAdminViewModel
     /// \endif
     /// </summary>
     private readonly ISuperAdminSessionTokenService _superAdminTokens;
+    /// <summary>슈퍼관리자 작업을 기록하는 감사 로그입니다.</summary>
+    private readonly ISuperAdminAuditLog _superAdminAudit;
+    private readonly IWeddingLayoutCatalogRegistry _layoutRegistry;
 
     /// <summary>
     /// \if KO
@@ -149,7 +153,9 @@ public sealed class WeddingAdminViewModel
         WeddingOptions opts,
         WeddingUserContext userContext,
         IMediaQuotaPolicyResolver mediaPolicyResolver,
-        ISuperAdminSessionTokenService superAdminTokens)
+        ISuperAdminSessionTokenService superAdminTokens,
+        ISuperAdminAuditLog superAdminAudit,
+        IWeddingLayoutCatalogRegistry layoutRegistry)
     {
         _tenants = tenants;
         _photos = photos;
@@ -157,7 +163,68 @@ public sealed class WeddingAdminViewModel
         _userContext = userContext;
         _mediaPolicyResolver = mediaPolicyResolver;
         _superAdminTokens = superAdminTokens;
+        _superAdminAudit = superAdminAudit;
+        _layoutRegistry = layoutRegistry;
     }
+
+    public WeddingLayoutCatalog LayoutCatalog => _layoutRegistry.Current;
+
+    /// <summary>
+    /// 현재 런타임 카탈로그에서 정확한 레이아웃 릴리스를 관리자 UI용 옵션으로 변환합니다.
+    /// 현재 버전만 반환하는 <see cref="WeddingLayoutCatalog.Find(string?)"/>와 달리,
+    /// 이미 적용된 이전 버전도 선택 상태와 버전 배지에 정확히 표시할 수 있습니다.
+    /// </summary>
+    public WeddingLayoutOption? FindLayoutOption(string? layoutKey, string? version = null)
+    {
+        var catalog = _layoutRegistry.Current;
+        var descriptor = catalog.FindDescriptor(layoutKey);
+        if (descriptor is null)
+        {
+            return null;
+        }
+
+        var release = catalog.FindRelease(
+            descriptor.Key,
+            WeddingLayoutVersion.IsValid(version) ? version : descriptor.CurrentVersion);
+        if (release is null)
+        {
+            return null;
+        }
+
+        var mode = descriptor.LegacyMode;
+        var label = descriptor.Label;
+        var description = descriptor.Description;
+        var tier = descriptor.Tier;
+        if (!descriptor.IsBuiltIn)
+        {
+            if (!_layoutRegistry.PublishedPackages.TryGetValue(release.Id, out var package))
+            {
+                return null;
+            }
+
+            mode = WeddingLayoutMode.Unknown;
+            label = package.Manifest.Label;
+            description = package.Manifest.Description;
+        }
+
+        return new WeddingLayoutOption(
+            mode,
+            label,
+            description,
+            tier,
+            release.IsImplemented,
+            release.CssClass,
+            release.UsesBottomNavigation,
+            release.SupportedSections)
+        {
+            CatalogKey = descriptor.Key,
+            Version = release.Version,
+        };
+    }
+
+    /// <summary>기본 6종처럼 애플리케이션 코드와 함께 제공되는 호환 레이아웃인지 반환합니다.</summary>
+    public bool IsBuiltInLayout(string? layoutKey) =>
+        _layoutRegistry.Current.FindDescriptor(layoutKey)?.IsBuiltIn == true;
 
     /// <summary>
     /// \if KO
@@ -250,6 +317,14 @@ public sealed class WeddingAdminViewModel
     /// \endif
     /// </summary>
     public bool IsOwner { get; private set; }
+    /// <summary>
+    /// 현재 관리 화면이 슈퍼관리자 세션으로 열렸는지 여부입니다.
+    /// </summary>
+    public bool IsSuperAdminSession { get; private set; }
+    /// <summary>
+    /// 대표 관리자 또는 슈퍼관리자가 관리자 계정을 변경할 수 있는지 여부입니다.
+    /// </summary>
+    public bool CanManageAdministrators => IsOwner || IsSuperAdminSession;
     /// <summary>
     /// \if KO
     /// <para>Effective Admin Users 값을 가져오거나 설정합니다.</para>
@@ -366,6 +441,7 @@ public sealed class WeddingAdminViewModel
         if (IsLinkedToCurrentUser)
         {
             IsAuthenticated = true;
+            IsSuperAdminSession = false;
             await LoadAsync(slug, ct).ConfigureAwait(false);
         }
     }
@@ -413,6 +489,7 @@ public sealed class WeddingAdminViewModel
         if (IsAdminUser(config, user))
         {
             IsAuthenticated = true;
+            IsSuperAdminSession = false;
             IsLinkedToCurrentUser = true;
             IsOwner = IsOwnerUser(config, user);
             EffectiveAdminUsers = BuildEffectiveAdminUsers(config);
@@ -422,6 +499,7 @@ public sealed class WeddingAdminViewModel
 
         var verification = DreaminePasswordHasher.VerifyPassword(LoginPassword, config.PasswordHash, out var upgradedHash);
         IsAuthenticated = verification is not PasswordHashVerificationResult.Failed;
+        IsSuperAdminSession = false;
         if (!IsAuthenticated)
         {
             StatusMessage = "비밀번호가 틀렸습니다.";
@@ -513,6 +591,7 @@ public sealed class WeddingAdminViewModel
     {
         if (!_superAdminTokens.ValidateToken(sessionToken))
         {
+            StatusMessage = "슈퍼관리자 세션이 없거나 만료되었습니다.";
             return false;
         }
 
@@ -524,11 +603,15 @@ public sealed class WeddingAdminViewModel
         }
 
         IsAuthenticated = true;
+        IsSuperAdminSession = true;
         IsLinkedToCurrentUser = false;
         IsOwner = false;
         EffectiveAdminUsers = BuildEffectiveAdminUsers(config);
         StatusMessage = "슈퍼관리자 권한으로 접속했습니다.";
         await LoadAsync(slug, ct).ConfigureAwait(false);
+        await _superAdminAudit
+            .WriteAsync("OpenTenantAdmin", slug, ct: ct)
+            .ConfigureAwait(false);
         return true;
     }
 
@@ -651,6 +734,12 @@ public sealed class WeddingAdminViewModel
             InvitationDesignCatalog.Normalize(Config);
             Config.PasswordHash = DreaminePasswordHasher.HashPlainTextForStorage(Config.PasswordHash);
             await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+            if (IsSuperAdminSession)
+            {
+                await _superAdminAudit
+                    .WriteAsync("SaveTenantConfig", Config.Slug, ct: ct)
+                    .ConfigureAwait(false);
+            }
             EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
             StatusMessage = "설정이 저장되었습니다.";
         }
@@ -1054,27 +1143,39 @@ public sealed class WeddingAdminViewModel
     private bool ValidateLayoutForSave(TenantConfig config)
     {
         config.DesignSettings ??= new DesignSettings();
-        if (!WeddingLayoutCatalog.IsKnownKey(config.InvitationStyle))
+        var layoutKey = string.IsNullOrWhiteSpace(config.DesignSettings.LayoutKey)
+            ? WeddingLayoutCatalog.ToLegacyKey(
+                InvitationDesignCatalog.ResolveLayoutMode(
+                    config.DesignSettings.LayoutMode,
+                    config.InvitationStyle))
+            : WeddingLayoutKeys.Normalize(config.DesignSettings.LayoutKey);
+
+        var descriptor = LayoutCatalog.FindDescriptor(layoutKey);
+        if (descriptor is null)
         {
             StatusMessage = "저장 오류: 존재하지 않는 레이아웃입니다.";
             return false;
         }
 
-        var mode = config.DesignSettings.LayoutMode;
-        if (mode == WeddingLayoutMode.Unknown)
+        var version = config.DesignSettings.FollowActiveLayoutVersion
+            || string.IsNullOrWhiteSpace(config.DesignSettings.LayoutVersion)
+                ? descriptor.CurrentVersion
+                : config.DesignSettings.LayoutVersion.Trim();
+        var release = LayoutCatalog.FindRelease(layoutKey, version);
+        if (release is null)
         {
-            mode = InvitationDesignCatalog.FromLegacyLayoutKey(config.InvitationStyle);
-            config.DesignSettings.LayoutMode = mode;
+            StatusMessage = "저장 오류: 존재하지 않거나 게시가 중지된 레이아웃 버전입니다.";
+            return false;
         }
 
-        var option = WeddingLayoutCatalog.Instance.Find(mode);
+        var option = FindLayoutOption(layoutKey, release.Version);
         if (option is null)
         {
-            StatusMessage = "저장 오류: 존재하지 않는 레이아웃입니다.";
+            StatusMessage = "저장 오류: 게시 패키지를 확인할 수 없는 레이아웃 버전입니다.";
             return false;
         }
 
-        if (!option.IsImplemented)
+        if (!release.IsImplemented)
         {
             StatusMessage = "저장 오류: 아직 준비 중인 레이아웃입니다.";
             return false;
@@ -1083,18 +1184,25 @@ public sealed class WeddingAdminViewModel
         var access = new WeddingLayoutAccessState
         {
             HasPremiumPlan = config.HasPremiumPlan,
-            UnlockedLayouts = config.UnlockedLayoutModes
-                .Select(WeddingLayoutCatalog.FromLegacyKey)
-                .Where(x => x != WeddingLayoutMode.Unknown)
-                .ToArray(),
         };
 
         if (!new WeddingLayoutAccessPolicy().CanUse(option, access))
         {
-            StatusMessage = "저장 오류: 프리미엄 레이아웃은 플랜 또는 잠금 해제 후 저장할 수 있습니다.";
+            StatusMessage = "저장 오류: Premium 플랜을 활성화하면 모든 Premium 레이아웃을 저장할 수 있습니다.";
             return false;
         }
 
+        config.DesignSettings.LayoutKey = descriptor.Key;
+        config.DesignSettings.LayoutVersion = release.Version;
+
+        // LayoutMode/InvitationStyle은 기존 6개 Razor 렌더러와의 하위 호환 필드입니다.
+        // 업로드 레이아웃은 LayoutKey + LayoutVersion + LayoutDefinition으로만 식별합니다.
+        config.DesignSettings.LayoutMode = descriptor.IsBuiltIn
+            ? descriptor.LegacyMode
+            : WeddingLayoutMode.Unknown;
+        config.InvitationStyle = descriptor.IsBuiltIn
+            ? WeddingLayoutCatalog.ToLegacyKey(descriptor.LegacyMode)
+            : WeddingLayoutKeys.OnePage;
         return true;
     }
 
@@ -1126,6 +1234,58 @@ public sealed class WeddingAdminViewModel
     {
         config.DesignSettings ??= new DesignSettings();
         config.UnlockedThemeKeys ??= new();
+        if (string.Equals(
+                config.DesignSettings.ThemeKey,
+                WeddingThemeCatalog.CustomThemeKey,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            if (!config.HasPremiumPlan)
+            {
+                // 다운그레이드 시 사용자가 만들었던 팔레트와 선택 상태는 보존합니다.
+                // 공개 렌더러가 권한을 다시 확인하여 로즈 기본 테마로 표시하므로,
+                // 테마 이외의 설정 저장까지 막을 필요는 없습니다.
+                config.DesignSettings.ThemeKey = WeddingThemeCatalog.CustomThemeKey;
+                config.ThemeName = WeddingThemeCatalog.CustomThemeKey;
+                return true;
+            }
+
+            config.DesignSettings.CustomTheme ??= new CustomWeddingThemeSettings();
+            var custom = config.DesignSettings.CustomTheme;
+            if (!TryNormalizeHexColor(custom.Primary, out var primary)
+                || !TryNormalizeHexColor(custom.Dark, out var dark)
+                || !TryNormalizeHexColor(custom.Text, out var text)
+                || !TryNormalizeHexColor(custom.Background, out var background)
+                || !TryNormalizeHexColor(custom.PanelBackground, out var panelBackground)
+                || !TryNormalizeOptionalHexColor(custom.BaseColor, out var baseColor)
+                || !TryNormalizeOptionalHexColor(custom.Accent, out var accent)
+                || !TryNormalizeOptionalHexColor(custom.MutedText, out var mutedText)
+                || !TryNormalizeOptionalHexColor(custom.ButtonBackground, out var buttonBackground)
+                || !TryNormalizeOptionalHexColor(custom.ButtonText, out var buttonText)
+                || !TryNormalizeOptionalHexColor(custom.Border, out var border))
+            {
+                StatusMessage = "저장 오류: 커스텀 테마 색상은 #RRGGBB 형식이어야 합니다.";
+                return false;
+            }
+
+            custom.Name = string.IsNullOrWhiteSpace(custom.Name)
+                ? "나만의 테마"
+                : custom.Name.Trim()[..Math.Min(custom.Name.Trim().Length, 40)];
+            custom.Primary = primary;
+            custom.Dark = dark;
+            custom.Text = text;
+            custom.Background = background;
+            custom.PanelBackground = panelBackground;
+            custom.BaseColor = baseColor;
+            custom.Accent = accent;
+            custom.MutedText = mutedText;
+            custom.ButtonBackground = buttonBackground;
+            custom.ButtonText = buttonText;
+            custom.Border = border;
+            config.DesignSettings.ThemeKey = WeddingThemeCatalog.CustomThemeKey;
+            config.ThemeName = WeddingThemeCatalog.CustomThemeKey;
+            return true;
+        }
+
         if (!WeddingThemeCatalog.IsKnownKey(config.DesignSettings.ThemeKey))
         {
             StatusMessage = "저장 오류: 존재하지 않는 테마입니다.";
@@ -1149,8 +1309,8 @@ public sealed class WeddingAdminViewModel
         {
             HasPremiumPlan = config.HasPremiumPlan,
             UnlockedThemeKeys = config.UnlockedThemeKeys
+                .Where(WeddingThemeCatalog.IsPresetKey)
                 .Select(WeddingThemeCatalog.NormalizeKey)
-                .Where(WeddingThemeCatalog.IsKnownKey)
                 .ToArray(),
         };
 
@@ -1163,6 +1323,34 @@ public sealed class WeddingAdminViewModel
         config.DesignSettings.ThemeKey = option.Key;
         config.ThemeName = option.Key;
         return true;
+    }
+
+    private static bool TryNormalizeHexColor(string? value, out string normalized)
+    {
+        normalized = value?.Trim().ToLowerInvariant() ?? "";
+        return normalized.Length == 7
+            && normalized[0] == '#'
+            && normalized.AsSpan(1).ToString().All(Uri.IsHexDigit);
+    }
+
+    private static bool TryNormalizeOptionalHexColor(
+        string? value,
+        out string? normalized)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            normalized = null;
+            return true;
+        }
+
+        if (TryNormalizeHexColor(value, out var color))
+        {
+            normalized = color;
+            return true;
+        }
+
+        normalized = null;
+        return false;
     }
 
     /// <summary>
@@ -1201,7 +1389,7 @@ public sealed class WeddingAdminViewModel
     {
         if (Config is null) return;
         var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
-        if (!IsOwnerUser(Config, user))
+        if (!IsSuperAdminSession && !IsOwnerUser(Config, user))
         {
             StatusMessage = "대표 관리자만 관리자 계정을 삭제할 수 있습니다.";
             return;
@@ -1221,6 +1409,12 @@ public sealed class WeddingAdminViewModel
         }
 
         await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
+        if (IsSuperAdminSession)
+        {
+            await _superAdminAudit
+                .WriteAsync("RemoveTenantAdmin", Config.Slug, $"UserId={userId}", ct)
+                .ConfigureAwait(false);
+        }
         EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
         StatusMessage = "관리자 계정이 삭제되었습니다.";
     }

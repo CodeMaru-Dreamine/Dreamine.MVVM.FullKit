@@ -194,7 +194,9 @@ $task | ConvertTo-Json -Compress
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        string arguments = force ? "--renew --force" : "--renew";
+        IReadOnlyList<string> arguments = force
+            ? ["--renew", "--force"]
+            : ["--renew"];
         return _processRunner.RunAsync(
             options.WacsPath,
             arguments,
@@ -409,7 +411,7 @@ if ($null -ne $i) {
         string encodedCommand = Convert.ToBase64String(Encoding.Unicode.GetBytes(command));
         return _processRunner.RunAsync(
             PowerShellPath,
-            $"-NoProfile -ExecutionPolicy Bypass -EncodedCommand {encodedCommand}",
+            ["-NoProfile", "-ExecutionPolicy", "Bypass", "-EncodedCommand", encodedCommand],
             null,
             timeout,
             maxOutputChars,

@@ -1,0 +1,389 @@
+.wedding-card-experience {
+    width: min(100%, 46rem);
+    min-height: 100svh;
+    margin: 0 auto;
+    padding: clamp(1rem, 4vw, 2rem) clamp(.65rem, 4vw, 1.5rem)
+        calc(2.25rem + env(safe-area-inset-bottom, 0px));
+    color: var(--w-dark, #3a2c17);
+    background:
+        radial-gradient(circle at 12% 4%, color-mix(in srgb, var(--w-primary, #c8a882) 22%, transparent), transparent 28rem),
+        radial-gradient(circle at 92% 84%, color-mix(in srgb, var(--w-primary, #c8a882) 15%, transparent), transparent 24rem),
+        linear-gradient(145deg, color-mix(in srgb, var(--w-bg, #f8f1e8) 88%, #fff), var(--w-bg, #f8f1e8));
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.wedding-card-face {
+    width: 100%;
+    height: 100%;
+}
+
+.wedding-card-cover {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    isolation: isolate;
+    background: color-mix(in srgb, var(--w-primary, #c8a882) 20%, #eee6d9);
+}
+
+.wedding-card-cover__image {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: var(--w-hero-image-fit-desktop, contain);
+    object-position: var(--w-hero-image-position-desktop, 50% 50%);
+}
+
+.wedding-card-cover__image--backdrop {
+    object-fit: cover;
+    filter: blur(18px) saturate(.82);
+    opacity: .54;
+    transform: scale(1.1);
+}
+
+.wedding-card-cover__image--empty {
+    background:
+        radial-gradient(circle at 50% 28%, rgba(255, 255, 255, .62), transparent 24%),
+        linear-gradient(150deg, color-mix(in srgb, var(--w-primary, #c8a882) 48%, #fff), var(--w-bg, #eadfd0));
+}
+
+.wedding-card-cover__veil {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background:
+        linear-gradient(180deg, rgba(21, 13, 7, .3), transparent 30%, transparent 56%, rgba(21, 13, 7, .58)),
+        linear-gradient(90deg, rgba(22, 13, 7, .14), transparent 22%, transparent 78%, rgba(22, 13, 7, .14));
+}
+
+.wedding-card-cover__seal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    z-index: 2;
+    display: grid;
+    width: 3.15rem;
+    height: 3.15rem;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, .66);
+    border-radius: 50%;
+    color: #fff;
+    font-family: Georgia, serif;
+    font-size: 1.05rem;
+    font-style: italic;
+    box-shadow: 0 5px 18px rgba(22, 13, 7, .22);
+    opacity: .74;
+    transform: translate(-50%, -50%);
+}
+
+.wedding-card-cover__panel {
+    position: absolute;
+    z-index: 4;
+    width: calc(100% - 2rem);
+    max-width: 25rem;
+    margin: 0;
+    padding: .85rem 1rem;
+    border-color: rgba(255, 255, 255, .48);
+    background: rgba(255, 252, 246, .87);
+    box-shadow: 0 12px 32px rgba(20, 12, 7, .18);
+}
+
+/*
+ * wedding.css의 공통 위치 모델을 카드 표지도 그대로 소비한다.
+ * 컴포넌트 CSS가 공통 CSS보다 나중에 로드되므로, 이 규칙이 없으면 위의
+ * 고정 top/bottom 값이 --w-drag-* 좌표를 덮어써 드래그가 보이지 않는다.
+ */
+.wedding-card-cover__panel.w-draggable-positioned {
+    left: var(--w-drag-x, 50%);
+    top: var(--w-drag-y, 50%);
+    right: auto !important;
+    bottom: auto !important;
+    transform: translate(-50%, -50%) !important;
+}
+
+.wedding-card-cover__panel.w-design-draggable {
+    z-index: 6;
+    cursor: move;
+    touch-action: none;
+    user-select: none;
+}
+
+.wedding-card-cover__panel h1 {
+    margin: .22rem 0 0;
+    font-family: "Noto Serif KR", Georgia, serif;
+    font-size: clamp(1.32rem, 6vw, 1.8rem);
+    font-weight: 600;
+    letter-spacing: .08em;
+    line-height: 1.3;
+}
+
+.wedding-card-cover__kicker {
+    margin: 0;
+    color: color-mix(in srgb, var(--w-primary, #c8a882) 75%, #4b3825);
+    font-size: .65rem;
+    font-weight: 800;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+}
+
+.wedding-card-cover__date,
+.wedding-card-cover__venue {
+    margin: 0;
+    font-size: .82rem;
+    line-height: 1.55;
+}
+
+.wedding-card-cover__date span {
+    display: inline-block;
+    margin-left: .28rem;
+}
+
+.wedding-card-cover__venue {
+    color: color-mix(in srgb, var(--w-dark, #3a2c17) 68%, transparent);
+}
+
+.wedding-card-sheet {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    overflow: hidden;
+    background:
+        linear-gradient(90deg, transparent 0 1.1rem, rgba(195, 154, 105, .09) 1.1rem 1.16rem, transparent 1.16rem),
+        repeating-linear-gradient(0deg, transparent 0 27px, rgba(159, 128, 91, .055) 27px 28px),
+        color-mix(in srgb, var(--w-panel-bg, #fffaf3) 90%, #fff);
+}
+
+.wedding-card-sheet__header {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas:
+        "folio folio"
+        "icon title"
+        "copy copy";
+    align-items: center;
+    gap: .25rem .75rem;
+    padding: 1.15rem 1.15rem .9rem 1.55rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--w-primary, #c8a882) 22%, transparent);
+    background: color-mix(in srgb, var(--w-panel-bg, #fffaf3) 91%, transparent);
+    backdrop-filter: blur(12px);
+}
+
+.wedding-card-sheet__folio {
+    grid-area: folio;
+    color: color-mix(in srgb, var(--w-primary, #c8a882) 72%, #5c4933);
+    font-size: .57rem;
+    font-weight: 800;
+    letter-spacing: .18em;
+}
+
+.wedding-card-sheet__icon {
+    grid-area: icon;
+    display: grid;
+    width: 2.35rem;
+    height: 2.35rem;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--w-primary, #c8a882) 35%, transparent);
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--w-primary, #c8a882) 14%, #fff);
+    font-size: 1.05rem;
+}
+
+.wedding-card-sheet__header h2 {
+    grid-area: title;
+    margin: 0;
+    font-family: "Noto Serif KR", Georgia, serif;
+    font-size: clamp(1.1rem, 5vw, 1.45rem);
+    font-weight: 600;
+    letter-spacing: .03em;
+}
+
+.wedding-card-sheet__header p {
+    grid-area: copy;
+    margin: .3rem 0 0;
+    color: color-mix(in srgb, var(--w-dark, #3a2c17) 67%, transparent);
+    font-size: .76rem;
+    line-height: 1.55;
+}
+
+.wedding-card-sheet__content {
+    min-height: 0;
+    overflow: hidden auto;
+    overscroll-behavior: contain;
+    scrollbar-color:
+        color-mix(in srgb, var(--w-primary, #c8a882) 72%, #6f573d)
+        color-mix(in srgb, var(--w-primary, #c8a882) 10%, transparent);
+    scrollbar-gutter: stable;
+    scrollbar-width: auto;
+}
+
+.wedding-card-sheet__content::-webkit-scrollbar {
+    width: .48rem;
+}
+
+.wedding-card-sheet__content::-webkit-scrollbar-track {
+    background: color-mix(in srgb, var(--w-primary, #c8a882) 10%, transparent);
+    border-left: 1px solid color-mix(in srgb, var(--w-primary, #c8a882) 12%, transparent);
+}
+
+.wedding-card-sheet__content::-webkit-scrollbar-thumb {
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background:
+        color-mix(in srgb, var(--w-primary, #c8a882) 74%, #6f573d)
+        padding-box;
+}
+
+.wedding-card-sheet__content:focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--w-primary, #c8a882) 72%, #fff);
+    outline-offset: -2px;
+}
+
+.wedding-card-sheet__content ::deep > .w-invite-tab-page {
+    width: 100%;
+    min-height: 100%;
+    margin: 0 !important;
+    padding: 1.1rem 1.1rem 1.5rem 1.55rem !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    box-sizing: border-box;
+}
+
+.wedding-card-sheet__content ::deep .w-section-title {
+    display: none !important;
+}
+
+.wedding-card-sheet__content ::deep .w-gallery__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .55rem;
+}
+
+.wedding-card-sheet__content ::deep .w-gallery__item {
+    border-radius: .55rem;
+    box-shadow: 0 5px 14px rgba(54, 39, 20, .12);
+}
+
+.wedding-card-sheet__content ::deep .w-gift__cards,
+.wedding-card-sheet__content ::deep .w-video__grid {
+    grid-template-columns: 1fr;
+}
+
+.wedding-card-sheet__content ::deep .w-info-list,
+.wedding-card-sheet__content ::deep .w-gift__card,
+.wedding-card-sheet__content ::deep .w-gb__form,
+.wedding-card-sheet__content ::deep .w-gb__entry {
+    border-color: color-mix(in srgb, var(--w-primary, #c8a882) 24%, transparent);
+    background: rgba(255, 255, 255, .64);
+    box-shadow: 0 8px 22px rgba(54, 39, 20, .07);
+}
+
+.wedding-card-sheet__footer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+    padding: .62rem 1.1rem .68rem 1.55rem;
+    border-top: 1px solid color-mix(in srgb, var(--w-primary, #c8a882) 18%, transparent);
+    color: color-mix(in srgb, var(--w-dark, #3a2c17) 42%, transparent);
+    background: color-mix(in srgb, var(--w-panel-bg, #fffaf3) 94%, transparent);
+    font-size: .52rem;
+    font-weight: 700;
+    letter-spacing: .1em;
+}
+
+.wedding-card-sheet__footer > span:last-child {
+    justify-self: end;
+    text-align: right;
+}
+
+.wedding-card-sheet__scroll-hint {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .24rem;
+    color: color-mix(in srgb, var(--w-primary, #c8a882) 78%, #5b432c);
+    font-size: .55rem;
+    font-weight: 800;
+    letter-spacing: .12em;
+    white-space: nowrap;
+}
+
+.wedding-card-sheet__scroll-arrow {
+    display: inline-block;
+    font-size: .75rem;
+    line-height: 1;
+    animation: wedding-card-scroll-cue 1.7s ease-in-out infinite;
+}
+
+@keyframes wedding-card-scroll-cue {
+    0%, 100% {
+        opacity: .55;
+        transform: translateY(-1px);
+    }
+
+    50% {
+        opacity: 1;
+        transform: translateY(2px);
+    }
+}
+
+.wedding-card-navigation__hint {
+    width: min(100%, 34rem);
+    margin: .62rem auto 0;
+    color: color-mix(in srgb, var(--w-dark, #3a2c17) 48%, transparent);
+    font-size: .62rem;
+    line-height: 1.45;
+    text-align: center;
+}
+
+@media (min-width: 720px) {
+    .wedding-card-experience {
+        padding-top: 2rem;
+        padding-bottom: 3.25rem;
+    }
+
+    .wedding-card-cover__panel {
+        width: calc(100% - 3rem);
+    }
+
+    .wedding-card-sheet__header {
+        padding: 1.35rem 1.5rem 1rem 1.85rem;
+    }
+
+    .wedding-card-sheet__content ::deep > .w-invite-tab-page {
+        padding: 1.35rem 1.5rem 1.75rem 1.85rem !important;
+    }
+}
+
+@media (max-width: 390px) {
+    .wedding-card-navigation__hint {
+        display: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .wedding-card-cover__image:not(.wedding-card-cover__image--backdrop) {
+        object-fit: var(--w-hero-image-fit-mobile, var(--w-hero-image-fit-desktop, contain));
+        object-position: var(--w-hero-image-position-mobile, var(--w-hero-image-position-desktop, 50% 50%));
+    }
+
+    .wedding-card-cover__panel.w-draggable-positioned {
+        left: var(--w-drag-mobile-x, var(--w-drag-x, 50%));
+        top: var(--w-drag-mobile-y, var(--w-drag-y, 50%));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wedding-card-sheet__scroll-arrow {
+        animation: none;
+    }
+}
