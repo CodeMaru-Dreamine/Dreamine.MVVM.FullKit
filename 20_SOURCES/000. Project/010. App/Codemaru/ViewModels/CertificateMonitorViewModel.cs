@@ -11,7 +11,7 @@ namespace Codemaru.ViewModels;
 
 /// <summary>
 /// \if KO
-/// <para>\brief 인증서 상태, win-acme 갱신, nginx reload를 제어하는 ViewModel입니다.</para>
+/// <para>\brief 인증서 상태, win-acme 갱신, Caddy reload를 제어하는 ViewModel입니다.</para>
 /// \endif
 /// \if EN
 /// <para>Encapsulates certificate monitor view model functionality and related state.</para>
@@ -39,13 +39,13 @@ public sealed class CertificateMonitorViewModel : INotifyPropertyChanged
     private readonly IWinAcmeService _winAcmeService;
     /// <summary>
     /// \if KO
-    /// <para>nginx Reload Service 값을 보관합니다.</para>
+    /// <para>Caddy reload 서비스를 보관합니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Stores the nginx reload service value.</para>
+    /// <para>Stores the Caddy reload service value.</para>
     /// \endif
     /// </summary>
-    private readonly INginxReloadService _nginxReloadService;
+    private readonly ICaddyReloadService _caddyReloadService;
     /// <summary>
     /// \if KO
     /// <para>settings Writer 값을 보관합니다.</para>
@@ -84,22 +84,26 @@ public sealed class CertificateMonitorViewModel : INotifyPropertyChanged
     private string _wacsPath;
     /// <summary>
     /// \if KO
-    /// <para>nginx Path 값을 보관합니다.</para>
+    /// <para>Caddy 실행 파일 경로를 보관합니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Stores the nginx path value.</para>
+    /// <para>Stores the Caddy path value.</para>
     /// \endif
     /// </summary>
-    private string _nginxPath;
+    private string _caddyPath;
     /// <summary>
     /// \if KO
-    /// <para>nginx Working Directory 값을 보관합니다.</para>
+    /// <para>Caddy 설정 파일 경로를 보관합니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Stores the nginx working directory value.</para>
+    /// <para>Stores the Caddy configuration path value.</para>
     /// \endif
     /// </summary>
-    private string _nginxWorkingDirectory;
+    private string _caddyConfigPath;
+
+    private string _caddyWorkingDirectory;
+    private string _caddyConfigAdapter;
+    private string _caddyAdminAddress;
     /// <summary>
     /// \if KO
     /// <para>status Message 값을 보관합니다.</para>
@@ -259,12 +263,12 @@ public sealed class CertificateMonitorViewModel : INotifyPropertyChanged
     /// <para>The <c>IWinAcmeService</c> value used for win acme service.</para>
     /// \endif
     /// </param>
-    /// <param name="nginxReloadService">
+    /// <param name="caddyReloadService">
     /// \if KO
-    /// <para>nginx reload 서비스입니다.</para>
+    /// <para>Caddy 설정 검증 및 reload 서비스입니다.</para>
     /// \endif
     /// \if EN
-    /// <para>The <c>INginxReloadService</c> value used for nginx reload service.</para>
+    /// <para>The <c>ICaddyReloadService</c> value used for Caddy reload service.</para>
     /// \endif
     /// </param>
     /// <param name="settingsWriter">
@@ -287,20 +291,24 @@ public sealed class CertificateMonitorViewModel : INotifyPropertyChanged
         IOptions<CertificateMonitorOptions> options,
         ICertificateMonitorService certificateMonitorService,
         IWinAcmeService winAcmeService,
-        INginxReloadService nginxReloadService,
+        ICaddyReloadService caddyReloadService,
         ICertificateSettingsWriter settingsWriter)
     {
         CertificateMonitorOptions value = options?.Value ?? throw new ArgumentNullException(nameof(options));
         _certificateMonitorService = certificateMonitorService ?? throw new ArgumentNullException(nameof(certificateMonitorService));
         _winAcmeService = winAcmeService ?? throw new ArgumentNullException(nameof(winAcmeService));
-        _nginxReloadService = nginxReloadService ?? throw new ArgumentNullException(nameof(nginxReloadService));
+        _caddyReloadService = caddyReloadService ?? throw new ArgumentNullException(nameof(caddyReloadService));
         _settingsWriter = settingsWriter ?? throw new ArgumentNullException(nameof(settingsWriter));
         _baseOptions = CloneOptions(value);
 
         _certificateDirectory = value.CertificateDirectory;
         _wacsPath = value.WacsPath;
-        _nginxPath = value.NginxPath;
-        _nginxWorkingDirectory = value.NginxWorkingDirectory;
+        _caddyPath = value.CaddyPath;
+        _caddyConfigPath = value.CaddyConfigPath;
+        _caddyWorkingDirectory = value.CaddyWorkingDirectory;
+        _caddyConfigAdapter = value.CaddyConfigAdapter;
+        _caddyAdminAddress = value.CaddyAdminAddress;
+        CaddyForceReload = value.CaddyForceReload;
         WarningDays = value.WarningDays;
         CriticalDays = value.CriticalDays;
         MaxCommandOutputChars = value.MaxCommandOutputChars;
@@ -310,7 +318,7 @@ public sealed class CertificateMonitorViewModel : INotifyPropertyChanged
         CheckRenewalTaskCommand = new AsyncRelayCommand(CheckRenewalTaskAsync);
         RunRenewCommand = new AsyncRelayCommand(() => RunRenewAsync(force: false));
         ForceRenewCommand = new AsyncRelayCommand(() => RunRenewAsync(force: true));
-        ReloadNginxCommand = new AsyncRelayCommand(ReloadNginxAsync);
+        ReloadCaddyCommand = new AsyncRelayCommand(ReloadCaddyAsync);
         SaveSettingsCommand = new AsyncRelayCommand(SaveSettingsAsync);
     }
 
@@ -354,31 +362,63 @@ public sealed class CertificateMonitorViewModel : INotifyPropertyChanged
 
     /// <summary>
     /// \if KO
-    /// <para>\brief nginx 실행 파일 경로입니다.</para>
+    /// <para>\brief Caddy 실행 파일 경로입니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Gets or sets the nginx path value.</para>
+    /// <para>Gets or sets the Caddy path value.</para>
     /// \endif
     /// </summary>
-    public string NginxPath
+    public string CaddyPath
     {
-        get => _nginxPath;
-        set => SetField(ref _nginxPath, value);
+        get => _caddyPath;
+        set => SetField(ref _caddyPath, value);
     }
 
     /// <summary>
     /// \if KO
-    /// <para>\brief nginx 작업 폴더입니다.</para>
+    /// <para>\brief Caddy 설정 파일 경로입니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Gets or sets the nginx working directory value.</para>
+    /// <para>Gets or sets the Caddy configuration path value.</para>
     /// \endif
     /// </summary>
-    public string NginxWorkingDirectory
+    public string CaddyConfigPath
     {
-        get => _nginxWorkingDirectory;
-        set => SetField(ref _nginxWorkingDirectory, value);
+        get => _caddyConfigPath;
+        set => SetField(ref _caddyConfigPath, value);
     }
+
+    /// <summary>
+    /// <para>\brief Caddy 작업 폴더입니다.</para>
+    /// </summary>
+    public string CaddyWorkingDirectory
+    {
+        get => _caddyWorkingDirectory;
+        set => SetField(ref _caddyWorkingDirectory, value);
+    }
+
+    /// <summary>
+    /// <para>\brief Caddy 설정 어댑터입니다. 비우면 어댑터 플래그를 생략합니다.</para>
+    /// </summary>
+    public string CaddyConfigAdapter
+    {
+        get => _caddyConfigAdapter;
+        set => SetField(ref _caddyConfigAdapter, value);
+    }
+
+    /// <summary>
+    /// <para>\brief 기본값과 다른 경우 사용할 Caddy 관리 API 주소입니다.</para>
+    /// </summary>
+    public string CaddyAdminAddress
+    {
+        get => _caddyAdminAddress;
+        set => SetField(ref _caddyAdminAddress, value);
+    }
+
+    /// <summary>
+    /// <para>\brief 설정이 같아도 Caddy 모듈을 다시 프로비저닝할지 여부입니다.</para>
+    /// </summary>
+    public bool CaddyForceReload { get; set; }
 
     /// <summary>
     /// \if KO
@@ -658,13 +698,13 @@ public sealed class CertificateMonitorViewModel : INotifyPropertyChanged
 
     /// <summary>
     /// \if KO
-    /// <para>\brief nginx reload 명령입니다.</para>
+    /// <para>\brief Caddy 설정 검증 및 graceful reload 명령입니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Gets the reload nginx command value.</para>
+    /// <para>Gets the reload Caddy command value.</para>
     /// \endif
     /// </summary>
-    public ICommand ReloadNginxCommand { get; }
+    public ICommand ReloadCaddyCommand { get; }
 
     /// <summary>
     /// \if KO
@@ -774,27 +814,27 @@ public sealed class CertificateMonitorViewModel : INotifyPropertyChanged
 
     /// <summary>
     /// \if KO
-    /// <para>Reload Nginx Async 작업을 수행합니다.</para>
+    /// <para>Caddy 설정을 검증한 뒤 graceful reload를 수행합니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Performs the reload nginx async operation.</para>
+    /// <para>Performs the Caddy validation and graceful reload operation.</para>
     /// \endif
     /// </summary>
     /// <returns>
     /// \if KO
-    /// <para>Reload Nginx Async 작업에서 생성한 <c>Task</c> 결과입니다.</para>
+    /// <para>Caddy reload 작업에서 생성한 <c>Task</c> 결과입니다.</para>
     /// \endif
     /// \if EN
-    /// <para>The <c>Task</c> result produced by the reload nginx async operation.</para>
+    /// <para>The <c>Task</c> result produced by the Caddy reload operation.</para>
     /// \endif
     /// </returns>
-    private async Task ReloadNginxAsync()
+    private async Task ReloadCaddyAsync()
     {
-        ProcessExecutionResult result = await _nginxReloadService
+        ProcessExecutionResult result = await _caddyReloadService
             .ReloadAsync(CreateOptions(), CancellationToken.None)
             .ConfigureAwait(true);
 
-        ApplyProcessResult("Nginx reload", result);
+        ApplyProcessResult("Caddy reload", result);
     }
 
     /// <summary>
@@ -815,8 +855,16 @@ public sealed class CertificateMonitorViewModel : INotifyPropertyChanged
     /// </returns>
     private async Task SaveSettingsAsync()
     {
-        await _settingsWriter.SaveAsync(CreateOptions(), CancellationToken.None).ConfigureAwait(true);
-        StatusMessage = "Certificate settings saved to appsettings.local.json.";
+        try
+        {
+            await _settingsWriter.SaveAsync(CreateOptions(), CancellationToken.None).ConfigureAwait(true);
+            StatusMessage = "Certificate and Caddy settings saved to appsettings.local.json.";
+        }
+        catch (Exception ex)
+        {
+            StatusMessage = $"Failed to save certificate and Caddy settings: {ex.Message}";
+            CommandOutput = ex.ToString();
+        }
     }
 
     /// <summary>
@@ -878,11 +926,12 @@ public sealed class CertificateMonitorViewModel : INotifyPropertyChanged
             CertificateFilePatterns = _baseOptions.CertificateFilePatterns.ToArray(),
             PfxPassword = string.IsNullOrWhiteSpace(PfxPassword) ? null : PfxPassword,
             WacsPath = WacsPath,
-            NginxPath = NginxPath,
-            NginxWorkingDirectory = NginxWorkingDirectory,
-            NginxReloadArguments = string.IsNullOrWhiteSpace(_baseOptions.NginxReloadArguments)
-                ? "-s reload"
-                : _baseOptions.NginxReloadArguments,
+            CaddyPath = CaddyPath,
+            CaddyConfigPath = CaddyConfigPath,
+            CaddyWorkingDirectory = CaddyWorkingDirectory,
+            CaddyConfigAdapter = CaddyConfigAdapter,
+            CaddyAdminAddress = CaddyAdminAddress,
+            CaddyForceReload = CaddyForceReload,
             WarningDays = Math.Max(1, WarningDays),
             CriticalDays = Math.Max(1, CriticalDays),
             MaxCommandOutputChars = MaxCommandOutputChars <= 0 ? 6000 : MaxCommandOutputChars
@@ -921,9 +970,12 @@ public sealed class CertificateMonitorViewModel : INotifyPropertyChanged
             CertificateFilePatterns = source.CertificateFilePatterns.ToArray(),
             PfxPassword = source.PfxPassword,
             WacsPath = source.WacsPath,
-            NginxPath = source.NginxPath,
-            NginxWorkingDirectory = source.NginxWorkingDirectory,
-            NginxReloadArguments = source.NginxReloadArguments,
+            CaddyPath = source.CaddyPath,
+            CaddyConfigPath = source.CaddyConfigPath,
+            CaddyWorkingDirectory = source.CaddyWorkingDirectory,
+            CaddyConfigAdapter = source.CaddyConfigAdapter,
+            CaddyAdminAddress = source.CaddyAdminAddress,
+            CaddyForceReload = source.CaddyForceReload,
             WarningDays = source.WarningDays,
             CriticalDays = source.CriticalDays,
             MaxCommandOutputChars = source.MaxCommandOutputChars

@@ -1,7 +1,9 @@
 using Codemaru.Options;
 using System.IO;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
 
 namespace Codemaru.Services.Certificates;
 
@@ -34,8 +36,23 @@ public sealed class CertificateSettingsWriter : ICertificateSettingsWriter
     /// \endif
     /// </summary>
     public CertificateSettingsWriter()
+        : this(Path.Combine(AppContext.BaseDirectory, "appsettings.local.json"))
     {
-        _settingsPath = Path.Combine(AppContext.BaseDirectory, "appsettings.local.json");
+    }
+
+    /// <summary>
+    /// \if KO
+    /// <para>\brief 지정한 파일에 인증서 및 Caddy 설정을 저장하는 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a writer that persists certificate and Caddy settings to the specified file.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="settingsPath">로컬 설정 파일 경로입니다.</param>
+    public CertificateSettingsWriter(string settingsPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(settingsPath);
+        _settingsPath = Path.GetFullPath(settingsPath);
     }
 
     /// <summary>
@@ -87,17 +104,65 @@ public sealed class CertificateSettingsWriter : ICertificateSettingsWriter
             ["CertificateFilePatterns"] = patterns,
             ["PfxPassword"] = options.PfxPassword,
             ["WacsPath"] = options.WacsPath,
-            ["NginxPath"] = options.NginxPath,
-            ["NginxWorkingDirectory"] = options.NginxWorkingDirectory,
-            ["NginxReloadArguments"] = options.NginxReloadArguments,
+            ["CaddyPath"] = options.CaddyPath,
+            ["CaddyConfigPath"] = options.CaddyConfigPath,
+            ["CaddyWorkingDirectory"] = options.CaddyWorkingDirectory,
+            ["CaddyConfigAdapter"] = options.CaddyConfigAdapter,
+            ["CaddyAdminAddress"] = options.CaddyAdminAddress,
+            ["CaddyForceReload"] = options.CaddyForceReload,
             ["WarningDays"] = options.WarningDays,
             ["CriticalDays"] = options.CriticalDays,
             ["MaxCommandOutputChars"] = options.MaxCommandOutputChars
         };
 
-        JsonSerializerOptions serializerOptions = new() { WriteIndented = true };
+        JsonSerializerOptions serializerOptions = new()
+        {
+            WriteIndented = true,
+            TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+        };
         string json = root.ToJsonString(serializerOptions);
-        await File.WriteAllTextAsync(_settingsPath, json, cancellationToken).ConfigureAwait(false);
+        await WriteAtomicallyAsync(json, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task WriteAtomicallyAsync(string json, CancellationToken cancellationToken)
+    {
+        string? settingsDirectory = Path.GetDirectoryName(_settingsPath);
+        if (!string.IsNullOrWhiteSpace(settingsDirectory))
+        {
+            Directory.CreateDirectory(settingsDirectory);
+        }
+
+        string temporaryPath = $"{_settingsPath}.{Guid.NewGuid():N}.tmp";
+
+        try
+        {
+            await using (FileStream stream = new(
+                temporaryPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 4096,
+                FileOptions.Asynchronous | FileOptions.WriteThrough))
+            {
+                await using StreamWriter writer = new(
+                    stream,
+                    new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                    bufferSize: 4096,
+                    leaveOpen: true);
+                await writer.WriteAsync(json.AsMemory(), cancellationToken).ConfigureAwait(false);
+                await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                stream.Flush(flushToDisk: true);
+            }
+
+            File.Move(temporaryPath, _settingsPath, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temporaryPath))
+            {
+                File.Delete(temporaryPath);
+            }
+        }
     }
 
     /// <summary>

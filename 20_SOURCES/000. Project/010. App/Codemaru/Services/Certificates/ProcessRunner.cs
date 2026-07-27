@@ -33,10 +33,10 @@ public sealed class ProcessRunner : IProcessRunner
     /// </param>
     /// <param name="arguments">
     /// \if KO
-    /// <para>arguments에 사용할 <c>string</c> 값입니다.</para>
+    /// <para>프로세스에 전달할 인자 목록입니다.</para>
     /// \endif
     /// \if EN
-    /// <para>The <c>string</c> value used for arguments.</para>
+    /// <para>The argument list passed to the executable.</para>
     /// \endif
     /// </param>
     /// <param name="workingDirectory">
@@ -81,7 +81,7 @@ public sealed class ProcessRunner : IProcessRunner
     /// </returns>
     public async Task<ProcessExecutionResult> RunAsync(
         string fileName,
-        string arguments,
+        IReadOnlyList<string> arguments,
         string? workingDirectory,
         TimeSpan timeout,
         int maxOutputChars,
@@ -125,13 +125,17 @@ public sealed class ProcessRunner : IProcessRunner
         ProcessStartInfo startInfo = new()
         {
             FileName = fileName,
-            Arguments = arguments,
             WorkingDirectory = resolvedWorkingDirectory,
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
             CreateNoWindow = true
         };
+
+        foreach (string argument in arguments)
+        {
+            startInfo.ArgumentList.Add(argument);
+        }
 
         using Process process = new() { StartInfo = startInfo, EnableRaisingEvents = true };
 
@@ -173,8 +177,8 @@ public sealed class ProcessRunner : IProcessRunner
                     Output = output.ToString(),
                     Error = error.ToString(),
                     Message = timeoutSource.IsCancellationRequested
-                        ? $"Process timed out: {fileName} {arguments}"
-                        : $"Process canceled: {fileName} {arguments}"
+                        ? $"Process timed out: {FormatCommand(fileName, arguments)}"
+                        : $"Process canceled: {FormatCommand(fileName, arguments)}"
                 };
             }
 
@@ -200,6 +204,20 @@ public sealed class ProcessRunner : IProcessRunner
                 Message = ex.Message
             };
         }
+    }
+
+    private static string FormatCommand(string fileName, IReadOnlyList<string> arguments)
+    {
+        return string.Join(
+            " ",
+            new[] { fileName }.Concat(arguments.Select(QuoteForDisplay)));
+    }
+
+    private static string QuoteForDisplay(string value)
+    {
+        return value.Any(char.IsWhiteSpace)
+            ? $"\"{value.Replace("\"", "\\\"", StringComparison.Ordinal)}\""
+            : value;
     }
 
     /// <summary>

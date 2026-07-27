@@ -52,33 +52,63 @@ public sealed class CertificateMonitorOptions
 
     /// <summary>
     /// \if KO
-    /// <para>\brief nginx 실행 파일 경로입니다.</para>
+    /// <para>\brief Caddy 실행 파일 경로입니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Gets or sets the nginx path value.</para>
+    /// <para>Gets or sets the Caddy path value.</para>
     /// \endif
     /// </summary>
-    public string NginxPath { get; set; } = @"C:\nginx\nginx.exe";
+    public string CaddyPath { get; set; } = @"C:\caddy\caddy.exe";
 
     /// <summary>
     /// \if KO
-    /// <para>\brief nginx 작업 폴더입니다.</para>
+    /// <para>\brief Caddy 설정 파일 경로입니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Gets or sets the nginx working directory value.</para>
+    /// <para>Gets or sets the Caddy configuration path value.</para>
     /// \endif
     /// </summary>
-    public string NginxWorkingDirectory { get; set; } = @"C:\nginx";
+    public string CaddyConfigPath { get; set; } = @"C:\caddy\Caddyfile";
 
     /// <summary>
     /// \if KO
-    /// <para>\brief nginx reload 인자입니다.</para>
+    /// <para>\brief Caddy 작업 폴더입니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Gets or sets the nginx reload arguments value.</para>
+    /// <para>Gets or sets the Caddy working directory value.</para>
     /// \endif
     /// </summary>
-    public string NginxReloadArguments { get; set; } = "-s reload";
+    public string CaddyWorkingDirectory { get; set; } = @"C:\caddy";
+
+    /// <summary>
+    /// \if KO
+    /// <para>\brief Caddy 설정 어댑터입니다. 기본값은 Caddyfile 어댑터입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the Caddy configuration adapter value.</para>
+    /// \endif
+    /// </summary>
+    public string CaddyConfigAdapter { get; set; } = "caddyfile";
+
+    /// <summary>
+    /// \if KO
+    /// <para>\brief 기본값과 다른 경우 사용할 Caddy 관리 API 주소입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets the optional Caddy admin API address value.</para>
+    /// \endif
+    /// </summary>
+    public string CaddyAdminAddress { get; set; } = string.Empty;
+
+    /// <summary>
+    /// \if KO
+    /// <para>\brief 설정이 같아도 인증서 등 모듈을 다시 프로비저닝할지 여부입니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Gets or sets whether Caddy reload should force module reprovisioning.</para>
+    /// \endif
+    /// </summary>
+    public bool CaddyForceReload { get; set; } = true;
 
     /// <summary>
     /// \if KO
