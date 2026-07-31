@@ -179,6 +179,10 @@ jobs:
             # Static, embedded cross-platform sample snippets are catalog
             # data rather than independently executable implementations.
             "20_SOURCES/000. Project/010. App/Dreamine.Web/Services/JsonPlaygroundStore.cs",
+            # Localized copy is declarative content. Its repeated keys and
+            # record shapes are intentional across the ten language catalogs.
+            "20_SOURCES/000. Project/010. App/Codemaru/Services/*Localization.cs",
+            "20_SOURCES/000. Project/010. App/Codemaru/Blazor/Pages/Guide.razor",
             "**/wwwroot/lib/**",
             "**/*.min.js",
             "**/*.min.css"
