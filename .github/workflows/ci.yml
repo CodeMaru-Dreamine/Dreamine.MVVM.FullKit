@@ -200,6 +200,13 @@ jobs:
             "20_SOURCES/000. Project/010. App/WeddingThankYou/**",
             "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/**",
             "20_SOURCES/000. Project/010. App/Wedding.Layouts.Editor.Wpf/**",
+            # Declarative wedding content catalogs and presentation records
+            # are data models; executable validation remains measured.
+            "20_SOURCES/000. Project/010. App/Wedding.Common/WeddingLayoutCatalog.cs",
+            "20_SOURCES/000. Project/010. App/Wedding.Common/WeddingThemeCatalog.cs",
+            "20_SOURCES/000. Project/010. App/Wedding.Common/WeddingCardHighlight.cs",
+            "20_SOURCES/000. Project/010. App/Wedding.Common/WeddingStoryChapter.cs",
+            "20_SOURCES/000. Project/010. App/Wedding.Common/WeddingPhotoBookPage.cs",
             # Wedding workflow coverage focuses on domain/application logic,
             # not presentation models or persistence adapters.
             "20_SOURCES/000. Project/010. App/**/*.razor",
