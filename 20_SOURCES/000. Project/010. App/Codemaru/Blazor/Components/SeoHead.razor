@@ -1,4 +1,6 @@
 @namespace Codemaru.Blazor.Components
+@inject SiteLocalization Text
+@inject PublicLanguageSettings PublicLanguage
 
 <HeadContent>
     <meta name="description" content="@Description" />
@@ -6,6 +8,11 @@
     @if (!NoIndex)
     {
         <link rel="canonical" href="@CanonicalUrl" />
+        @foreach (var language in Text.Languages)
+        {
+            <link rel="alternate" hreflang="@(language.HtmlLanguage ?? language.Code)" href="@LocalizedUrl(language.Code)" />
+        }
+        <link rel="alternate" hreflang="x-default" href="@BaseCanonicalUrl" />
     }
     <meta property="og:title" content="@Title" />
     <meta property="og:description" content="@Description" />
@@ -15,14 +22,14 @@
     <meta property="og:image:secure_url" content="@Image" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="@ImageAlt" />
+    <meta property="og:image:alt" content="@EffectiveImageAlt" />
     <meta property="og:site_name" content="CodeMaru" />
-    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:locale" content="@OpenGraphLocale" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="@Title" />
     <meta name="twitter:description" content="@Description" />
     <meta name="twitter:image" content="@Image" />
-    <meta name="twitter:image:alt" content="@ImageAlt" />
+    <meta name="twitter:image:alt" content="@EffectiveImageAlt" />
 </HeadContent>
 
 @code {
@@ -30,13 +37,31 @@
     [Parameter, EditorRequired] public string Description { get; set; } = string.Empty;
     [Parameter, EditorRequired] public string CanonicalPath { get; set; } = "/";
     [Parameter] public string Image { get; set; } = "https://codemaru.co.kr/img/codemaru_og_v2.png";
-    [Parameter] public string ImageAlt { get; set; } = "CodeMaru 디지털 서비스";
+    [Parameter] public string? ImageAlt { get; set; }
     [Parameter] public string Type { get; set; } = "website";
     [Parameter] public bool NoIndex { get; set; }
 
-    private string CanonicalUrl => CanonicalPath.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+    private string BaseCanonicalUrl => CanonicalPath.StartsWith("http", StringComparison.OrdinalIgnoreCase)
         ? CanonicalPath
         : $"https://codemaru.co.kr/{CanonicalPath.TrimStart('/')}";
+    private string EffectiveImageAlt => string.IsNullOrWhiteSpace(ImageAlt)
+        ? $"CodeMaru — {Text["services.title"]}"
+        : ImageAlt;
+    private string CanonicalUrl => LocalizedUrl(Text.Language);
+    private string LocalizedUrl(string language)
+    {
+        var separator = BaseCanonicalUrl.Contains('?', StringComparison.Ordinal) ? "&" : "?";
+        return language == PublicLanguage.DefaultLanguage
+            ? BaseCanonicalUrl
+            : $"{BaseCanonicalUrl}{separator}lang={Uri.EscapeDataString(language)}";
+    }
+
+    private string OpenGraphLocale => Text.Language switch
+    {
+        "ko" => "ko_KR", "en" => "en_US", "es" => "es_ES", "fr" => "fr_FR",
+        "it" => "it_IT", "pt" => "pt_PT", "vi" => "vi_VN", "ja" => "ja_JP",
+        "zh-hans" => "zh_CN", "zh-hant" => "zh_TW", _ => "en_US"
+    };
 
     private string Robots => NoIndex
         ? "noindex, nofollow, noarchive"

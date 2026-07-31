@@ -83,6 +83,8 @@ public static class Program
         builder.Services.AddSingleton<ICardProfileStore, JsonCardProfileStore>();
         builder.Services.AddSingleton<CardHybridSession>();
         builder.Services.AddScoped<CardHybridCircuitSession>();
+        builder.Services.AddScoped<SiteLocalization>();
+        builder.Services.AddSingleton<PublicLanguageSettings>();
         builder.Services.Configure<CertificateMonitorOptions>(
             builder.Configuration.GetSection("CertificateMonitor"));
         builder.Services.AddSingleton<IProcessRunner, ProcessRunner>();
@@ -113,6 +115,7 @@ public static class Program
             options.ConfigureServices = services =>
             {
                 services.AddScoped<CardHybridCircuitSession>();
+                services.AddScoped<SiteLocalization>();
                 var adminEmails = builder.Configuration
                     .GetSection("Administration:AllowedEmails")
                     .Get<string[]>() ?? [];
@@ -136,6 +139,7 @@ public static class Program
                 services.Configure<Contact.MailSettings>(builder.Configuration.GetSection("MailSettings"));
             };
             options.SharedServiceTypes.Add(typeof(IQrSvgGenerator));
+            options.SharedServiceTypes.Add(typeof(PublicLanguageSettings));
             options.SharedServiceTypes.Add(typeof(ImageBackgroundRemover));
             options.SharedServiceTypes.Add(typeof(LandingPageExporter));
             options.SharedServiceTypes.Add(typeof(LandingPagePublisher));

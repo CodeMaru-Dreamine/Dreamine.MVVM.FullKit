@@ -9,6 +9,7 @@
 @inject LandingPagePublisher Publisher
 @inject CardProfileImporter Importer
 @inject IJSRuntime JS
+@inject SiteLocalization Text
 
 <PageTitle>CardHybrid — 무료 명함 QR · vCard · 랜딩 페이지 | CodeMaru</PageTitle>
 <SeoHead Title="CardHybrid — 무료 명함 QR · vCard · 랜딩 페이지"
@@ -22,14 +23,14 @@
     {
         <div class="migration-prompt" role="dialog" aria-labelledby="migrationPromptTitle">
             <div class="migration-prompt-body">
-                <h3 id="migrationPromptTitle">로그인 전에 편집하시던 명함이 있어요</h3>
-                <p>이 명함을 <strong>@Session.CurrentUser.DisplayName</strong> 계정에 저장할까요?</p>
+                <h3 id="migrationPromptTitle">@Dialog.MigrationTitle</h3>
+                <p><strong>@Session.CurrentUser.DisplayName</strong> — @Dialog.MigrationQuestion</p>
                 <p class="migration-prompt-warning">
-                    ⚠️ 계정에 이미 저장된 명함이 있으면 <strong>덮어쓰기</strong> 됩니다.
+                    ⚠️ @Dialog.MigrationWarning
                 </p>
                 <div class="migration-prompt-actions">
-                    <button type="button" class="primary-button" @onclick="AcceptGuestMigrationAsync">계정에 저장</button>
-                    <button type="button" class="ghost-button" @onclick="RejectGuestMigrationAsync">폐기</button>
+                    <button type="button" class="primary-button" @onclick="AcceptGuestMigrationAsync">@Dialog.SaveAccount</button>
+                    <button type="button" class="ghost-button" @onclick="RejectGuestMigrationAsync">@Dialog.Discard</button>
                 </div>
             </div>
         </div>
@@ -39,30 +40,27 @@
     {
         <div class="save-options-prompt" role="dialog" aria-labelledby="saveOptionsTitle">
             <div class="save-options-body">
-                <h3 id="saveOptionsTitle">명함 저장 옵션</h3>
-                <p>
-                    이력 저장과 함께 공개 랜딩 페이지를 만들 수 있습니다.
-                    vCard에 공개할 항목도 여기서 정하세요.
-                </p>
+                <h3 id="saveOptionsTitle">@Dialog.SaveOptionsTitle</h3>
+                <p>@Dialog.SaveOptionsDescription</p>
 
                 <label class="check-row">
                     <input type="checkbox" @bind="publishLandingOnSave" />
-                    공개용 index.html 생성
+                    @Dialog.PublishPage
                 </label>
                 <label class="check-row">
                     <input type="checkbox" @bind="includePhoneInVCard" />
-                    vCard에 전화번호 포함
+                    @C("includePhone")
                 </label>
                 <label class="check-row">
                     <input type="checkbox" @bind="includeAddressInVCard" />
-                    vCard에 주소 포함
+                    @C("includeAddress")
                 </label>
 
                 <p class="save-options-url">@LandingUrl</p>
 
                 <div class="save-options-actions">
-                    <button type="button" class="primary-button" @onclick="SaveHistoryWithOptionsAsync">저장</button>
-                    <button type="button" class="ghost-button" @onclick="CancelSaveOptions">취소</button>
+                    <button type="button" class="primary-button" @onclick="SaveHistoryWithOptionsAsync">@Dialog.Save</button>
+                    <button type="button" class="ghost-button" @onclick="CancelSaveOptions">@Dialog.Cancel</button>
                 </div>
             </div>
         </div>
@@ -75,26 +73,26 @@
                 <h1>CardHybrid</h1>
             </div>
             <div class="toolbar">
-                <button type="button" class="ghost-button" title="현재 입력값으로 QR 다시 생성" @onclick="ApplyProfile">QR 갱신</button>
+                <button type="button" class="ghost-button" title="@C("refreshQr")" @onclick="ApplyProfile">@C("refreshQr")</button>
                 <button type="button" class="primary-button" title="현재 명함을 이력에 저장" @onclick="OpenSaveOptionsPrompt">@HistorySaveButtonText</button>
             </div>
         </div>
 
         <div class="tool-grid">
-            <section class="editor-panel" aria-label="명함 편집">
+            <section class="editor-panel" aria-label="@C("editor")">
                 <div class="panel-header">
-                    <h2>명함 정보</h2>
-                    <span>@lastSavedText</span>
+                    <h2>@C("cardInfo")</h2>
+                    <span>@SavedStatus</span>
                 </div>
 
                 <div class="profile-fieldset">
                 <div class="field-with-style">
                     <label class="field-main">
-                        앞면 브랜드
+                        @C("frontBrand")
                         <input @bind="brand" @bind:event="oninput" />
                     </label>
                     <label>
-                        폰트
+                        @C("font")
                         <select @bind="frontFontFamily">
                             @foreach (var font in FontOptions)
                             {
@@ -103,18 +101,18 @@
                         </select>
                     </label>
                     <label>
-                        크기
+                        @C("size")
                         <input type="number" min="10" max="56" step="1" @bind="frontBrandFontSize" @bind:event="oninput" />
                     </label>
                 </div>
 
                 <div class="field-with-style">
                     <label class="field-main">
-                        앞면 태그라인
+                        @C("frontTagline")
                         <input @bind="tagline" @bind:event="oninput" />
                     </label>
                     <label>
-                        폰트
+                        @C("font")
                         <select @bind="frontFontFamily">
                             @foreach (var font in FontOptions)
                             {
@@ -123,18 +121,18 @@
                         </select>
                     </label>
                     <label>
-                        크기
+                        @C("size")
                         <input type="number" min="10" max="40" step="1" @bind="frontTaglineFontSize" @bind:event="oninput" />
                     </label>
                 </div>
 
                 <div class="field-with-style">
                     <label class="field-main">
-                        분야
+                        @C("category")
                         <textarea rows="3" @bind="category" @bind:event="oninput"></textarea>
                     </label>
                     <label>
-                        폰트
+                        @C("font")
                         <select @bind="frontFontFamily">
                             @foreach (var font in FontOptions)
                             {
@@ -143,18 +141,18 @@
                         </select>
                     </label>
                     <label>
-                        크기
+                        @C("size")
                         <input type="number" min="10" max="40" step="1" @bind="frontCategoryFontSize" @bind:event="oninput" />
                     </label>
                 </div>
 
                 <div class="field-with-style">
                     <label class="field-main">
-                        이메일
+                        @C("email")
                         <input type="email" @bind="email" @bind:event="oninput" />
                     </label>
                     <label>
-                        폰트
+                        @C("font")
                         <select @bind="frontFontFamily">
                             @foreach (var font in FontOptions)
                             {
@@ -163,18 +161,18 @@
                         </select>
                     </label>
                     <label>
-                        크기
+                        @C("size")
                         <input type="number" min="9" max="28" step="1" @bind="frontEmailFontSize" @bind:event="oninput" />
                     </label>
                 </div>
 
                 <div class="field-with-style">
                     <label class="field-main">
-                        뒷면 브랜드
+                        @C("backBrand")
                         <input @bind="backBrand" @bind:event="oninput" />
                     </label>
                     <label>
-                        폰트
+                        @C("font")
                         <select @bind="backFontFamily">
                             @foreach (var font in FontOptions)
                             {
@@ -183,18 +181,18 @@
                         </select>
                     </label>
                     <label>
-                        크기
+                        @C("size")
                         <input type="number" min="10" max="48" step="1" @bind="backBrandFontSize" @bind:event="oninput" />
                     </label>
                 </div>
 
                 <div class="field-with-style">
                     <label class="field-main">
-                        뒷면 태그라인
+                        @C("backTagline")
                         <input @bind="backTagline" @bind:event="oninput" />
                     </label>
                     <label>
-                        폰트
+                        @C("font")
                         <select @bind="backFontFamily">
                             @foreach (var font in FontOptions)
                             {
@@ -203,18 +201,18 @@
                         </select>
                     </label>
                     <label>
-                        크기
+                        @C("size")
                         <input type="number" min="9" max="32" step="1" @bind="backTaglineFontSize" @bind:event="oninput" />
                     </label>
                 </div>
 
                 <div class="field-with-style">
                     <label class="field-main">
-                        이름
+                        @C("name")
                         <input @bind="name" @bind:event="oninput" />
                     </label>
                     <label>
-                        폰트
+                        @C("font")
                         <select @bind="backFontFamily">
                             @foreach (var font in FontOptions)
                             {
@@ -223,18 +221,18 @@
                         </select>
                     </label>
                     <label>
-                        크기
+                        @C("size")
                         <input type="number" min="10" max="36" step="1" @bind="backNameFontSize" @bind:event="oninput" />
                     </label>
                 </div>
 
                 <div class="field-with-style">
                     <label class="field-main">
-                        직책
+                        @C("role")
                         <input @bind="role" @bind:event="oninput" />
                     </label>
                     <label>
-                        폰트
+                        @C("font")
                         <select @bind="backFontFamily">
                             @foreach (var font in FontOptions)
                             {
@@ -243,45 +241,45 @@
                         </select>
                     </label>
                     <label>
-                        크기
+                        @C("size")
                         <input type="number" min="9" max="30" step="1" @bind="backRoleFontSize" @bind:event="oninput" />
                     </label>
                 </div>
                 <label>
-                    전화
+                    @C("phone")
                     <textarea rows="2" @bind="phone" @bind:event="oninput"></textarea>
                 </label>
                 <label>
-                    주소
+                    @C("address")
                     <input @bind="address" @bind:event="oninput" />
                 </label>
                 <label>
-                    영문 주소 이름
+                    @C("handle")
                     <input @bind="landingHandle" @bind:event="oninput" placeholder="minsu" />
                     <span class="field-hint">@LandingUrl</span>
                 </label>
 
                 <div class="size-grid">
                     <label>
-                        가로(mm)
+                        @C("width")
                         <input type="number" min="40" max="140" step="1" @bind="cardWidthMm" @bind:event="oninput" />
                     </label>
                     <label>
-                        세로(mm)
+                        @C("height")
                         <input type="number" min="25" max="90" step="1" @bind="cardHeightMm" @bind:event="oninput" />
                     </label>
                 </div>
 
                 <div class="accent-row">
                     <label>
-                        강조색
+                        @C("accent")
                         <input type="color" @bind="accentColor" />
                     </label>
                     <div class="swatch" style="background:@accentColor"></div>
                 </div>
 
                 <label>
-                    뒷면 이미지
+                    @C("backImage")
                     <InputFile OnChange="OnLogoSelectedAsync" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,.ico" />
                 </label>
 
@@ -289,49 +287,49 @@
                 {
                     <label class="check-row">
                         <input type="checkbox" checked="@removeLogoBackground" @onchange="OnRemoveBackgroundChangedAsync" />
-                        이미지 배경 제거
+                        @C("removeBackground")
                     </label>
-                    <button type="button" class="ghost-button full-button" @onclick="RemoveLogo">이미지 제거</button>
+                    <button type="button" class="ghost-button full-button" @onclick="RemoveLogo">@C("removeImage")</button>
                 }
 
                 <label>
-                    짧은 소개
+                    @C("shortBio")
                     <input @bind="shortBio" @bind:event="oninput" />
                 </label>
                 <label>
-                    랜딩 설명
+                    @C("landingDescription")
                     <textarea rows="3" @bind="landingDescription" @bind:event="oninput"></textarea>
                 </label>
                 <label>
-                    vCard 노트
+                    @C("vcardNote")
                     <textarea rows="2" @bind="vCardNote" @bind:event="oninput"></textarea>
                 </label>
                 <label>
-                    내부 메모
+                    @C("internalMemo")
                     <textarea rows="3" @bind="internalMemo" @bind:event="oninput"></textarea>
                 </label>
                 </div>
             </section>
 
-            <section class="preview-panel" aria-label="명함 및 랜딩 미리보기">
-                <div class="preview-tabs" role="tablist" aria-label="미리보기 탭">
-                    <button type="button" class="@TabClass("card")" @onclick='() => activePreviewTab = "card"'>명함</button>
-                    <button type="button" class="@TabClass("landing")" @onclick='() => activePreviewTab = "landing"'>랜딩 HTML</button>
+            <section class="preview-panel" aria-label="@C("preview")">
+                <div class="preview-tabs" role="tablist" aria-label="@C("preview")">
+                    <button type="button" class="@TabClass("card")" @onclick='() => activePreviewTab = "card"'>@C("card")</button>
+                    <button type="button" class="@TabClass("landing")" @onclick='() => activePreviewTab = "landing"'>@C("landingHtml")</button>
                 </div>
 
                 @if (activePreviewTab == "card")
                 {
                     <div class="export-actions card-export-actions">
-                        <a class="ghost-button" download="card-front.svg" href="@CardFrontSvgDataUrl">앞면 SVG</a>
-                        <a class="ghost-button" download="card-back.svg" href="@CardBackSvgDataUrl">뒷면 SVG</a>
+                        <a class="ghost-button" download="card-front.svg" href="@CardFrontSvgDataUrl">@C("frontSvg")</a>
+                        <a class="ghost-button" download="card-back.svg" href="@CardBackSvgDataUrl">@C("backSvg")</a>
                     </div>
 
                     <div class="card-preview-block">
-                        <span class="side-label">앞면</span>
+                        <span class="side-label">@C("front")</span>
                         @if (IsImportedImageCard)
                         {
                             <div class="business-card imported-card" style="@CardStyle">
-                                <img src="@importedFrontImageDataUrl" alt="가져온 명함 앞면" />
+                                <img src="@importedFrontImageDataUrl" alt="@Dialog.ImportedFrontAlt" />
                             </div>
                         }
                         else
@@ -351,17 +349,17 @@
                     </div>
 
                     <div class="card-preview-block">
-                        <span class="side-label">뒷면</span>
+                        <span class="side-label">@C("back")</span>
                         @if (IsImportedImageCard)
                         {
                             <div class="business-card imported-card" style="@CardStyle">
                                 @if (string.IsNullOrWhiteSpace(importedBackImageDataUrl))
                                 {
-                                    <span class="imported-card-empty">뒷면 이미지 없음</span>
+                                    <span class="imported-card-empty">@Dialog.NoBackImage</span>
                                 }
                                 else
                                 {
-                                    <img src="@importedBackImageDataUrl" alt="가져온 명함 뒷면" />
+                                    <img src="@importedBackImageDataUrl" alt="@Dialog.ImportedBackAlt" />
                                 }
                             </div>
                         }
@@ -409,12 +407,12 @@
                 {
                     <div class="export-panel">
                         <div class="panel-header">
-                            <h2>랜딩 페이지 만들기</h2>
+                            <h2>@C("landingCreate")</h2>
                             <div class="export-actions">
-                                <button type="button" class="ghost-button" @onclick="SaveLandingHtmlToServerAsync">서버 index.html 저장</button>
-                                <a class="ghost-button" download="card-landing.html" href="@LandingHtmlDataUrl">HTML 저장</a>
-                                <a class="ghost-button" download="contact.vcf" href="@VCardDataUrl">모바일 vCard</a>
-                                <a class="ghost-button" download="contact_windows.vcf" href="@WindowsVCardDataUrl">Windows 연락처 vCard</a>
+                                <button type="button" class="ghost-button" @onclick="SaveLandingHtmlToServerAsync">@C("saveServer")</button>
+                                <a class="ghost-button" download="card-landing.html" href="@LandingHtmlDataUrl">@C("saveHtml")</a>
+                                <a class="ghost-button" download="contact.vcf" href="@VCardDataUrl">@C("mobileVcard")</a>
+                                <a class="ghost-button" download="contact_windows.vcf" href="@WindowsVCardDataUrl">@C("windowsVcard")</a>
                             </div>
                         </div>
 
@@ -423,21 +421,21 @@
                             <p class="@LandingPublishMessageClass">@landingPublishMessage</p>
                         }
 
-                        <div class="theme-row" role="radiogroup" aria-label="랜딩 페이지 테마">
-                            <button type="button" class="@ThemeClass("light")" @onclick='() => SetTheme("light")'>밝은</button>
-                            <button type="button" class="@ThemeClass("dark")" @onclick='() => SetTheme("dark")'>어두운</button>
-                            <button type="button" class="@ThemeClass("blue")" @onclick='() => SetTheme("blue")'>블루</button>
-                            <button type="button" class="@ThemeClass("green")" @onclick='() => SetTheme("green")'>그린</button>
+                        <div class="theme-row" role="radiogroup" aria-label="@C("landingHtml")">
+                            <button type="button" class="@ThemeClass("light")" @onclick='() => SetTheme("light")'>@C("themeLight")</button>
+                            <button type="button" class="@ThemeClass("dark")" @onclick='() => SetTheme("dark")'>@C("themeDark")</button>
+                            <button type="button" class="@ThemeClass("blue")" @onclick='() => SetTheme("blue")'>@C("themeBlue")</button>
+                            <button type="button" class="@ThemeClass("green")" @onclick='() => SetTheme("green")'>@C("themeGreen")</button>
                         </div>
 
                         <div class="vcard-options" aria-label="vCard 공개 항목">
                             <label class="check-row compact">
                                 <input type="checkbox" @bind="includePhoneInVCard" />
-                                vCard에 전화 포함
+                                @C("includePhone")
                             </label>
                             <label class="check-row compact">
                                 <input type="checkbox" @bind="includeAddressInVCard" />
-                                vCard에 주소 포함
+                                @C("includeAddress")
                             </label>
                         </div>
 
@@ -484,17 +482,17 @@
                         </div>
 
                         <label>
-                            내보낼 HTML
+                            @C("exportHtml")
                             <textarea rows="10" readonly>@LandingHtml</textarea>
                         </label>
                     </div>
                 }
             </section>
 
-            <section class="history-panel" aria-label="명함 이력">
+            <section class="history-panel" aria-label="@C("historyLabel")">
                 <div class="panel-header">
-                    <h2>이력</h2>
-                    <button type="button" class="icon-button" title="이력 비우기" @onclick="ClearHistory">초기화</button>
+                    <h2>@C("history")</h2>
+                    <button type="button" class="icon-button" title="@C("reset")" @onclick="ClearHistory">@C("reset")</button>
                 </div>
 
                 <div class="signin-box">
@@ -502,22 +500,22 @@
                     <AuthorizeView>
                         <NotAuthorized>
                             <p class="signin-hint">
-                                로그인하면 명함이 계정에 저장됩니다.
+                                @C("guestHint")
                                 <br />
-                                우측 상단 <strong>로그인</strong> 버튼으로 로그인하거나 새 계정을 만드세요.
+                                @Dialog.SignInAction
                             </p>
                         </NotAuthorized>
                     </AuthorizeView>
                 </div>
 
                 <label class="import-box">
-                    외부 명함 가져오기
+                    @C("importCard")
                     <InputFile OnChange="OnImportSelectedAsync" multiple accept=".vcf,text/vcard,text/x-vcard,image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,.ico" />
                 </label>
 
                 @if (State.History.Count == 0)
                 {
-                    <p class="empty-text">저장된 명함 이력이 없습니다.</p>
+                    <p class="empty-text">@C("emptyHistory")</p>
                 }
                 else
                 {
@@ -525,14 +523,14 @@
                         @foreach (var entry in State.History)
                         {
                             <div class="history-item">
-                                <button type="button" class="history-summary" title="이력 편집" @onclick="() => LoadHistory(entry)">
+                                <button type="button" class="history-summary" title="@C("edit")" @onclick="() => LoadHistory(entry)">
                                     <strong>@entry.Profile.BackBrand</strong>
                                     <span>@entry.Profile.Name / @entry.Profile.Role</span>
                                     <small>@entry.CreatedAt.ToString("yyyy.MM.dd HH:mm")</small>
                                 </button>
-                                <div class="history-actions" aria-label="이력 항목 작업">
-                                    <button type="button" class="history-action-button" @onclick="() => LoadHistory(entry)">편집</button>
-                                    <button type="button" class="history-action-button danger" @onclick="() => DeleteHistory(entry)">삭제</button>
+                                <div class="history-actions" aria-label="@C("historyLabel")">
+                                    <button type="button" class="history-action-button" @onclick="() => LoadHistory(entry)">@C("edit")</button>
+                                    <button type="button" class="history-action-button danger" @onclick="() => DeleteHistory(entry)">@C("delete")</button>
                                 </div>
                             </div>
                         }
@@ -544,6 +542,8 @@
 </main>
 
 @code {
+    private string C(string key) => CardHybridLocalization.Get(Text.Language, key);
+    private CardHybridLocalization.DialogCopy Dialog => CardHybridLocalization.Dialog(Text.Language);
     private CardHybridState State => Session.State;
     private static readonly string[] FontOptions =
     [
@@ -599,7 +599,7 @@
     private bool publishLandingOnSave = true;
     private bool showSaveOptionsPrompt;
     private string activePreviewTab = "card";
-    private string lastSavedText = "아직 저장 전";
+    private string lastSavedText = string.Empty;
     private string landingPublishMessage = string.Empty;
     private bool landingPublishMessageIsError;
     private Guid? editingHistoryId;
@@ -623,15 +623,16 @@
     private string WindowsVCardDataUrl => $"data:text/x-vcard;charset=us-ascii,{Uri.EscapeDataString(Exporter.BuildWindowsVCard(CreateProfile()))}";
     private string CardFrontSvgDataUrl => $"data:image/svg+xml;charset=utf-8,{Uri.EscapeDataString(Exporter.BuildCardSideSvg(CreateProfile(), State.QrSvg, true))}";
     private string CardBackSvgDataUrl => $"data:image/svg+xml;charset=utf-8,{Uri.EscapeDataString(Exporter.BuildCardSideSvg(CreateProfile(), State.QrSvg, false))}";
-    private string HistorySaveButtonText => editingHistoryId.HasValue ? "수정 저장" : "이력 저장";
+    private string SavedStatus => string.IsNullOrWhiteSpace(lastSavedText) ? C("notSaved") : lastSavedText;
+    private string HistorySaveButtonText => C("saveHistory");
     private string LandingPublishMessageClass => landingPublishMessageIsError
         ? "publish-message error"
         : "publish-message";
     private bool IsImportedImageCard => !string.IsNullOrWhiteSpace(importedFrontImageDataUrl) ||
         !string.IsNullOrWhiteSpace(importedBackImageDataUrl);
     private string CurrentUserLabel => string.IsNullOrWhiteSpace(Session.CurrentUser.Email)
-        ? "게스트 사용 중"
-        : $"{Session.CurrentUser.DisplayName} 사용 중";
+        ? C("guest")
+        : Session.CurrentUser.DisplayName;
 
     private const string GuestStorageKey = "codemaru:cardhybrid:guest";
     private static readonly JsonSerializerOptions GuestJsonOptions = new(JsonSerializerDefaults.Web);
