@@ -14,33 +14,6 @@
  */
 const _hlsState = Object.create(null);
 
-window.codemaruTheme = {
-    get() {
-        const item = document.cookie.split(";").map(value => value.trim())
-            .find(value => value.startsWith("dreamine-theme="));
-        const theme = item
-            ? decodeURIComponent(item.substring("dreamine-theme=".length))
-            : localStorage.getItem("codemaru-theme");
-        return theme === "light" || theme === "dark" ? theme : "system";
-    },
-    set(theme) {
-        const host = window.location.hostname.toLowerCase();
-        const domain = host === "codemaru.co.kr" || host.endsWith(".codemaru.co.kr")
-            ? "; Domain=.codemaru.co.kr"
-            : "";
-        if (theme === "light" || theme === "dark") {
-            localStorage.setItem("codemaru-theme", theme);
-            document.cookie = `dreamine-theme=${theme}; Path=/; Max-Age=31536000; SameSite=Lax${domain}`;
-            document.documentElement.dataset.theme = theme;
-            return;
-        }
-
-        localStorage.removeItem("codemaru-theme");
-        document.cookie = `dreamine-theme=; Path=/; Max-Age=0; SameSite=Lax${domain}`;
-        delete document.documentElement.dataset.theme;
-    }
-};
-
 /**
  * @brief 캐시 무력화를 위해 매 요청마다 고유 쿼리스트링(_cb=timestamp)을 부착합니다.
  * @param {string} url - 원본 m3u8 URL(예: "/hls/front/index.m3u8").

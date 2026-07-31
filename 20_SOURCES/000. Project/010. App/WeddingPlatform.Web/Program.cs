@@ -34,11 +34,11 @@ public static class Program
     /// \endif
     /// </summary>
     [STAThread]
-    public static void Main()
+    public static void Main(string[] args)
     {
         try
         {
-            Run();
+            Run(args);
         }
         catch (Exception ex)
         {
@@ -59,10 +59,12 @@ public static class Program
     /// <para>Performs the run operation.</para>
     /// \endif
     /// </summary>
-    private static void Run()
+    private static void Run(string[] args)
     {
-        HostApplicationBuilder builder = Host.CreateApplicationBuilder();
+        HostApplicationBuilder builder = Host.CreateApplicationBuilder(args);
         builder.Configuration.AddUserSecrets("codemaru-oauth-2ba4e1b2");
+        // Keep deployment and local launch settings above developer secrets.
+        builder.Configuration.AddEnvironmentVariables();
 
         int serverPort = GetInt(builder.Configuration, "WeddingServer:Port", 5050);
         bool listenAnyIp = GetBool(builder.Configuration, "WeddingServer:ListenAnyIp", true);

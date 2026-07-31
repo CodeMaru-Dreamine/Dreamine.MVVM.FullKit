@@ -2992,6 +2992,12 @@ body.w-theme-blush {
 
 /* ── CodeMaru 공통 Nav (통일 규격, 라이트 테마) ── */
 .wh-topnav {
+    --cm-header-bg: rgba(253, 246, 238, .88);
+    --cm-header-border: rgba(107, 78, 42, .12);
+    --cm-header-text: #6b4e2a;
+    --cm-header-active-bg: rgba(107, 78, 42, .08);
+    --cm-header-active-text: #3a2e28;
+    --cm-header-menu-bg: #fdf6ee;
     position: sticky;
     top: 0;
     z-index: 2000;
@@ -4951,19 +4957,134 @@ body.w-theme-blush {
     display: none !important;
 }
 /* Shared CodeMaru language/theme controls. Tenant invitation palettes remain intact. */
-.wp-preferences { position: fixed; z-index: 10000; top: .75rem; right: .75rem; display: flex; gap: .45rem; padding: .4rem; border: 1px solid rgba(128,128,128,.28); border-radius: .8rem; background: color-mix(in srgb, Canvas 92%, transparent); color: CanvasText; box-shadow: 0 .4rem 1.4rem rgba(0,0,0,.12); backdrop-filter: blur(14px); font: 600 .78rem/1.2 system-ui,sans-serif; }
+.wp-preferences { display: flex; align-items: center; gap: .35rem; margin-left: .2rem; font: 600 .75rem/1.2 system-ui,sans-serif; }
 .wp-preferences label { display: flex; align-items: center; gap: .3rem; }
 .wp-preferences select { min-height: 2rem; max-width: 9.5rem; border: 1px solid rgba(128,128,128,.35); border-radius: .5rem; padding: .25rem .45rem; background: Canvas; color: CanvasText; font: inherit; }
+.wh-user-menu { position: relative; flex: 0 0 auto; }
+.wh-user-menu summary { list-style: none; }
+.wh-user-menu summary::-webkit-details-marker { display: none; }
+.wh-user-badge { cursor: pointer; white-space: nowrap; padding: .45rem .65rem; border: 1px solid rgba(128,128,128,.35); border-radius: .65rem; font-weight: 700; }
+.wh-user-popover { position: absolute; z-index: 1000; top: calc(100% + .55rem); right: 0; width: 13.5rem; padding: .75rem; border: 1px solid rgba(128,128,128,.25); border-radius: .8rem; background: Canvas; color: CanvasText; box-shadow: 0 .7rem 2rem rgba(0,0,0,.18); }
+.wh-user-menu-label { margin: 0 0 .55rem; color: color-mix(in srgb, CanvasText 65%, transparent); font-size: .75rem; font-weight: 700; }
+.wh-user-popover .wp-preferences { display: grid; margin: 0; }
+.wh-user-popover .wp-preferences label { display: grid; grid-template-columns: auto 1fr; }
+.wh-user-popover .wp-preferences select { grid-column: 1 / -1; width: 100%; max-width: none; }
+.wh-user-menu-divider { height: 1px; margin: .7rem 0; background: rgba(128,128,128,.22); }
+.wh-user-popover > a { display: block; padding: .55rem .35rem; border-radius: .45rem; }
+.wh-user-popover > a:hover { background: color-mix(in srgb, CanvasText 8%, transparent); }
 html[data-theme="light"] { color-scheme: light; }
 html[data-theme="dark"] { color-scheme: dark; }
+.w-admin-preferences {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 1rem auto;
+    position: relative;
+    z-index: 20;
+}
 html[data-theme="dark"] body { background: #0b1220; color: #e5edf8; }
 html[data-theme="dark"] .wh-page { background: #0b1220; color: #e5edf8; }
 html[data-theme="dark"] .wh-topnav, html[data-theme="dark"] .wh-create__box, html[data-theme="dark"] .wh-feature, html[data-theme="dark"] .wh-invite-card { background: #111b2d; color: #e5edf8; border-color: #2b3b55; }
 html[data-theme="dark"] .wh-input, html[data-theme="dark"] .wh-input-prefix { background: #0e1728; color: #f3f6fb; border-color: #34445f; }
+html[data-theme="dark"] .wh-topnav {
+    --cm-header-bg: rgba(11,18,32,.96);
+    --cm-header-border: #2b3b55;
+    --cm-header-text: #e6edf7;
+    --cm-header-active-bg: #1c2a42;
+    --cm-header-active-text: #fff;
+    --cm-header-menu-bg: #111b2d;
+    background: rgba(11,18,32,.96);
+}
+html[data-theme="dark"] .wh-topnav a,
+html[data-theme="dark"] .wh-topnav__links a,
+html[data-theme="dark"] .wh-topnav__auth,
+html[data-theme="dark"] .wh-user-badge { color: #e6edf7; }
+html[data-theme="dark"] .wh-topnav__links a:hover,
+html[data-theme="dark"] .wh-topnav__links a.active { background: #1c2a42; color: #fff; }
+html[data-theme="dark"] .wh-topnav__burger span { background: #e6edf7; }
+html[data-theme="dark"] .wh-hero { background: linear-gradient(135deg,#101b2e 0%,#16233a 52%,#1c2b45 100%); }
+html[data-theme="dark"] .wh-hero__title,
+html[data-theme="dark"] .wh-create__title,
+html[data-theme="dark"] .wh-feature h3,
+html[data-theme="dark"] .wh-invites__title,
+html[data-theme="dark"] .wh-invite-card__name,
+html[data-theme="dark"] .wh-account strong { color: #f4f7fb; }
+html[data-theme="dark"] .wh-hero__sub,
+html[data-theme="dark"] .wh-create__desc,
+html[data-theme="dark"] .wh-feature p,
+html[data-theme="dark"] .wh-empty,
+html[data-theme="dark"] .wh-label,
+html[data-theme="dark"] .wh-label__hint,
+html[data-theme="dark"] .wh-create__notice,
+html[data-theme="dark"] .wh-invite-card__venue { color: #b8c4d6; }
+html[data-theme="dark"] .wh-create { background: #0d1627; border-color: #2b3b55; }
+html[data-theme="dark"] .wh-service-notice,
+html[data-theme="dark"] .wh-account { background: #152238; color: #c8d3e3; border-color: #2b3b55; }
+html[data-theme="dark"] .wh-btn--secondary { background: #17243a; color: #edf3fb; border-color: #354663; }
+html[data-theme="dark"] .wh-prefix,
+html[data-theme="dark"] .wh-create__notice code,
+html[data-theme="dark"] .wh-empty code { background: #17243a; color: #c8d3e3; border-color: #34445f; }
+html[data-theme="dark"] .wh-footer { border-color: #2b3b55; color: #9cabc0; }
+html[data-theme="dark"] .wh-user-popover { background: #111b2d; color: #e5edf8; border-color: #34445f; }
+html[data-theme="dark"] .wedding-admin-shell {
+    --wa-bg: #0b1220;
+    --wa-card: rgba(17, 27, 45, .96);
+    --wa-card-strong: #162238;
+    --wa-border: rgba(123, 148, 183, .24);
+    --wa-border-strong: rgba(148, 170, 201, .38);
+    --wa-text: #e7eef8;
+    --wa-muted: #a8b6ca;
+    --wa-gold: #e0bd8c;
+    --wa-gold-dark: #f0cc98;
+    --wa-sage: #77b18a;
+    --wa-blue: #83b5e8;
+    background: radial-gradient(circle at 16% 10%, rgba(83, 119, 166, .17), transparent 30%), #0b1220;
+}
+html[data-theme="dark"] .wedding-admin-sidebar,
+html[data-theme="dark"] .wedding-admin-detail { background: rgba(13, 22, 39, .96); }
+html[data-theme="dark"] .wedding-admin-nav__item { color: #c4d0e0; }
+html[data-theme="dark"] .wedding-admin-nav__item:hover,
+html[data-theme="dark"] .wedding-admin-nav__item.is-active { background: #1a2941; color: #fff; }
+html[data-theme="dark"] .wedding-admin-shell input,
+html[data-theme="dark"] .wedding-admin-shell select,
+html[data-theme="dark"] .wedding-admin-shell textarea { background: #0d1728; color: #edf3fb; border-color: #344760; }
 @media (prefers-color-scheme: dark) {
   html:not([data-theme]) { color-scheme: dark; }
   html:not([data-theme]) body, html:not([data-theme]) .wh-page { background: #0b1220; color: #e5edf8; }
+  html:not([data-theme]) .wedding-admin-shell {
+    --wa-bg: #0b1220; --wa-card: rgba(17,27,45,.96); --wa-card-strong: #162238;
+    --wa-border: rgba(123,148,183,.24); --wa-border-strong: rgba(148,170,201,.38);
+    --wa-text: #e7eef8; --wa-muted: #a8b6ca; --wa-gold: #e0bd8c; --wa-gold-dark: #f0cc98;
+    --wa-sage: #77b18a; --wa-blue: #83b5e8;
+    background: radial-gradient(circle at 16% 10%, rgba(83,119,166,.17), transparent 30%), #0b1220;
+  }
+  html:not([data-theme]) .wedding-admin-sidebar,
+  html:not([data-theme]) .wedding-admin-detail { background: rgba(13,22,39,.96); }
+  html:not([data-theme]) .wedding-admin-nav__item { color: #c4d0e0; }
+  html:not([data-theme]) .wedding-admin-nav__item:hover,
+  html:not([data-theme]) .wedding-admin-nav__item.is-active { background: #1a2941; color: #fff; }
   html:not([data-theme]) .wh-topnav, html:not([data-theme]) .wh-create__box, html:not([data-theme]) .wh-feature, html:not([data-theme]) .wh-invite-card { background: #111b2d; color: #e5edf8; border-color: #2b3b55; }
+  html:not([data-theme]) .wh-topnav {
+    --cm-header-bg: rgba(11,18,32,.96);
+    --cm-header-border: #2b3b55;
+    --cm-header-text: #e6edf7;
+    --cm-header-active-bg: #1c2a42;
+    --cm-header-active-text: #fff;
+    --cm-header-menu-bg: #111b2d;
+    background: rgba(11,18,32,.96);
+  }
+  html:not([data-theme]) .wh-topnav a, html:not([data-theme]) .wh-topnav__links a, html:not([data-theme]) .wh-topnav__auth, html:not([data-theme]) .wh-user-badge { color: #e6edf7; }
+  html:not([data-theme]) .wh-topnav__links a:hover, html:not([data-theme]) .wh-topnav__links a.active { background: #1c2a42; color: #fff; }
+  html:not([data-theme]) .wh-topnav__burger span { background: #e6edf7; }
+  html:not([data-theme]) .wh-hero { background: linear-gradient(135deg,#101b2e 0%,#16233a 52%,#1c2b45 100%); }
+  html:not([data-theme]) .wh-hero__title, html:not([data-theme]) .wh-create__title, html:not([data-theme]) .wh-feature h3, html:not([data-theme]) .wh-invites__title, html:not([data-theme]) .wh-invite-card__name, html:not([data-theme]) .wh-account strong { color: #f4f7fb; }
+  html:not([data-theme]) .wh-hero__sub, html:not([data-theme]) .wh-create__desc, html:not([data-theme]) .wh-feature p, html:not([data-theme]) .wh-empty, html:not([data-theme]) .wh-label, html:not([data-theme]) .wh-label__hint, html:not([data-theme]) .wh-create__notice, html:not([data-theme]) .wh-invite-card__venue { color: #b8c4d6; }
+  html:not([data-theme]) .wh-create { background: #0d1627; border-color: #2b3b55; }
+  html:not([data-theme]) .wh-service-notice, html:not([data-theme]) .wh-account { background: #152238; color: #c8d3e3; border-color: #2b3b55; }
+  html:not([data-theme]) .wh-btn--secondary { background: #17243a; color: #edf3fb; border-color: #354663; }
+  html:not([data-theme]) .wh-input, html:not([data-theme]) .wh-input-prefix { background: #0e1728; color: #f3f6fb; border-color: #34445f; }
+  html:not([data-theme]) .wh-prefix, html:not([data-theme]) .wh-create__notice code, html:not([data-theme]) .wh-empty code { background: #17243a; color: #c8d3e3; border-color: #34445f; }
+  html:not([data-theme]) .wh-footer { border-color: #2b3b55; color: #9cabc0; }
+  html:not([data-theme]) .wh-user-popover { background: #111b2d; color: #e5edf8; border-color: #34445f; }
 }
-@media (max-width: 720px) { .wp-preferences { top: auto; bottom: .65rem; left: .65rem; right: .65rem; justify-content: center; } .wp-preferences__label { display: none; } .wp-preferences select { max-width: 8.5rem; } }
+@media (max-width: 720px) { .wp-preferences { width: 100%; margin: .4rem 0 0; padding-top: .65rem; border-top: 1px solid rgba(128,128,128,.2); justify-content: stretch; } .wp-preferences label { flex: 1; } .wp-preferences__label { display: none; } .wp-preferences select { width: 100%; max-width: none; } .wh-user-menu { width: 100%; } .wh-user-badge { display: block; } .wh-user-popover { position: static; width: auto; margin-top: .45rem; box-shadow: none; } }
 .wh-hero__title { white-space: pre-line; }
