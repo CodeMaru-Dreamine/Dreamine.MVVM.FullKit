@@ -1,0 +1,202 @@
+@page "/admin/cards"
+@namespace Codemaru.Blazor.Pages
+@attribute [Authorize(Policy = "CodemaruAdmin")]
+@using Microsoft.AspNetCore.Authorization
+@using Dreamine.Database.Abstractions
+@inject IDatabaseProvider Database
+@inject ICardProfileStore CardStore
+
+<PageTitle>명함 관리 | CodeMaru</PageTitle>
+<SeoHead Title="명함 관리 | CodeMaru"
+         Description="CodeMaru 관리자 전용 멀티테넌트 명함 관리 화면입니다."
+         CanonicalPath="/admin/cards"
+         NoIndex="true" />
+
+<section class="cm-admin cm-card-admin">
+    <header class="cm-admin-heading">
+        <div>
+            <p class="cm-admin-eyebrow">CARDHYBRID ADMINISTRATION</p>
+            <h1>명함 관리</h1>
+            <p>테넌트별로 저장된 명함과 공개 랜딩 주소를 확인합니다.</p>
+        </div>
+        <a class="cm-admin-secondary" href="/admin"><i class="fa-solid fa-arrow-left"></i> 운영 대시보드</a>
+    </header>
+
+    <div class="cm-admin-metrics" aria-label="명함 운영 요약">
+        <article class="cm-admin-metric accent-blue">
+            <i class="fa-solid fa-address-card"></i>
+            <div><span>저장된 명함</span><strong>@_cards.Count</strong></div>
+        </article>
+        <article class="cm-admin-metric accent-purple">
+            <i class="fa-solid fa-building-user"></i>
+            <div><span>테넌트</span><strong>@_cards.Select(card => card.UserId).Distinct().Count()</strong></div>
+        </article>
+        <article class="cm-admin-metric accent-green">
+            <i class="fa-solid fa-link"></i>
+            <div><span>공개 주소</span><strong>@_cards.Count(card => !string.IsNullOrWhiteSpace(card.Profile.LandingSlug))</strong></div>
+        </article>
+        <article class="cm-admin-metric accent-orange">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <div><span>최근 7일 수정</span><strong>@_cards.Count(card => card.SavedAt >= DateTime.UtcNow.AddDays(-7))</strong></div>
+        </article>
+    </div>
+
+    <section class="cm-admin-panel">
+        <div class="cm-admin-panel-title">
+            <div>
+                <h2>테넌트 명함 목록</h2>
+                <p>현재 저장소는 사용자 계정 하나를 하나의 테넌트로 구분합니다.</p>
+            </div>
+            <div class="cm-user-list-tools">
+                <label>
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="search"
+                           placeholder="이름, 이메일, 브랜드, 테넌트 검색"
+                           aria-label="명함 검색"
+                           @bind="_search"
+                           @bind:event="oninput" />
+                </label>
+            </div>
+        </div>
+
+        @if (_loadFailed)
+        {
+            <p class="cm-user-list-empty">명함 저장소를 불러올 수 없습니다.</p>
+        }
+        else if (!FilteredCards.Any())
+        {
+            <p class="cm-user-list-empty">조건에 맞는 저장된 명함이 없습니다.</p>
+        }
+        else
+        {
+            <div class="cm-user-table-wrap">
+                <table class="cm-user-table cm-card-admin-table">
+                    <thead>
+                        <tr>
+                            <th>명함</th>
+                            <th>테넌트 / 소유자</th>
+                            <th>공개 경로</th>
+                            <th>최근 저장</th>
+                            <th>화면 연결</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var card in FilteredCards)
+                        {
+                            var owner = OwnerOf(card.UserId);
+                            <tr>
+                                <td>
+                                    <div class="cm-user-identity">
+                                        <span style="background:@card.Profile.AccentColor; color:#fff">
+                                            @Initial(card.Profile.Name)
+                                        </span>
+                                        <div>
+                                            <strong>@card.Profile.Name</strong>
+                                            <small>@card.Profile.BackBrand · @card.Profile.Role</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <strong>@TenantLabel(card.UserId)</strong>
+                                    <small class="cm-table-subtext">@(owner?.Email ?? $"사용자 #{card.UserId}")</small>
+                                </td>
+                                <td><code>@PublicPath(card)</code></td>
+                                <td><time datetime="@card.SavedAt.ToString("O")">@LocalDate(card.SavedAt)</time></td>
+                                <td>
+                                    <div class="cm-service-actions">
+                                        <a class="cm-service-user-link" href="@PublicPath(card)" target="_blank" rel="noopener">공개 명함</a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    <aside class="cm-admin-note">
+        <i class="fa-solid fa-circle-info"></i>
+        <p><strong>현재 저장 모델</strong>은 테넌트(사용자)당 대표 명함 1개입니다. 한 테넌트가 여러 명함을 소유하는 조직형 모델은 다음 단계에서 CardId와 별도 Cards 테이블을 추가해 확장할 수 있습니다.</p>
+    </aside>
+</section>
+
+@code {
+    private List<CardHybridSnapshot> _cards = [];
+    private Dictionary<string, CardOwner> _owners = new(StringComparer.OrdinalIgnoreCase);
+    private string _search = string.Empty;
+    private bool _loadFailed;
+
+    private IEnumerable<CardHybridSnapshot> FilteredCards
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(_search))
+            {
+                return _cards;
+            }
+
+            var search = _search.Trim();
+            return _cards.Where(card =>
+            {
+                var owner = OwnerOf(card.UserId);
+                return card.Profile.Name.Contains(search, StringComparison.OrdinalIgnoreCase)
+                    || card.Profile.BackBrand.Contains(search, StringComparison.OrdinalIgnoreCase)
+                    || card.Profile.Email.Contains(search, StringComparison.OrdinalIgnoreCase)
+                    || (card.UserId?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (owner?.Email.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false)
+                    || (owner?.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false);
+            });
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _cards = (await CardStore.ListAsync()).ToList();
+            const string sql = "SELECT Id, Email, DisplayName FROM Users";
+            var owners = await Database.QueryAsync<CardOwner>(sql);
+            _owners = owners.ToDictionary(owner => owner.Id.ToString(), StringComparer.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            _loadFailed = true;
+        }
+    }
+
+    private CardOwner? OwnerOf(string? userId) =>
+        userId is not null && _owners.TryGetValue(userId, out var owner) ? owner : null;
+
+    private string TenantLabel(string? userId)
+    {
+        var owner = OwnerOf(userId);
+        return !string.IsNullOrWhiteSpace(owner?.DisplayName)
+            ? owner.DisplayName
+            : $"Tenant {userId}";
+    }
+
+    private static string PublicPath(CardHybridSnapshot card)
+    {
+        var path = card.Profile.LandingSlug.Trim().Trim('/');
+        return string.IsNullOrWhiteSpace(path) ? "#" : $"/{path}";
+    }
+
+    private static string Initial(string value) =>
+        string.IsNullOrWhiteSpace(value) ? "?" : value.Trim()[..1].ToUpperInvariant();
+
+    private static string LocalDate(DateTime value)
+    {
+        var utc = value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
+            : value.ToUniversalTime();
+        return utc.ToLocalTime().ToString("yyyy.MM.dd HH:mm");
+    }
+
+    private sealed class CardOwner
+    {
+        public long Id { get; set; }
+        public string Email { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+    }
+}

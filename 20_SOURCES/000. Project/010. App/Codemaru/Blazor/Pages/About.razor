@@ -1,0 +1,85 @@
+@page "/about"
+@namespace Codemaru.Blazor.Pages
+
+<PageTitle>CodeMaru 소개 — 직접 만들고 운영하는 디지털 서비스</PageTitle>
+<SeoHead Title="CodeMaru 소개 — 직접 만들고 운영하는 디지털 서비스"
+         Description="CodeMaru는 장민수가 운영하는 1인 개발 스튜디오입니다. 실제 문제에서 출발한 웹·WPF·자동화 서비스를 직접 설계하고 개발하며 운영합니다."
+         CanonicalPath="/about"
+         ImageAlt="CodeMaru 개발 스튜디오 소개" />
+
+<article class="cm-about">
+    <header class="cm-about-hero">
+        <div>
+            <p class="cm-home-kicker">ABOUT CODEMARU</p>
+            <h1>작은 문제부터<br />직접 해결합니다</h1>
+            <p class="cm-about-lead">
+                CodeMaru는 장민수가 운영하는 1인 개발 스튜디오입니다.
+                보기 좋은 시제품에 그치지 않고, 실제로 사용할 서비스를 직접 만들고 운영하며 개선합니다.
+            </p>
+            <div class="cm-about-actions">
+                <a class="cm-home-primary" href="/contact">개발 문의하기 <i class="fa-solid fa-arrow-right"></i></a>
+                <a class="cm-home-secondary" href="https://github.com/CodeMaru-Dreamine" target="_blank" rel="noopener">
+                    <i class="fa-brands fa-github"></i> GitHub
+                </a>
+            </div>
+        </div>
+        <img src="/img/codemaru-about-v2.png" alt="노트북과 화분이 놓인 CodeMaru 개발 작업 공간" />
+    </header>
+
+    <section class="cm-about-story">
+        <div>
+            <p class="cm-home-kicker">WHY CODEMARU</p>
+            <h2>필요해서 만들고,<br />운영하며 검증합니다</h2>
+        </div>
+        <div>
+            <p>명함을 더 편하게 공유하고 싶어서 CardHybrid를, 가족의 기록을 안전하게 모으기 위해 Families를 만들었습니다.</p>
+            <p>장비 UI와 데이터베이스, CCTV 모니터링처럼 현장에서 필요했던 도구도 같은 방식으로 해결합니다. 서비스에서 얻은 경험은 오픈소스 Dreamine 프레임워크로 다시 정리합니다.</p>
+        </div>
+    </section>
+
+    <section class="cm-about-principles" aria-label="CodeMaru 개발 원칙">
+        <article>
+            <span>01</span>
+            <i class="fa-solid fa-pen-ruler"></i>
+            <h2>직접 설계 · 개발</h2>
+            <p>문제를 이해하고 구조를 설계한 뒤, 화면부터 데이터와 배포까지 책임집니다.</p>
+        </article>
+        <article>
+            <span>02</span>
+            <i class="fa-solid fa-server"></i>
+            <h2>실제 운영</h2>
+            <p>직접 운영하면서 장애와 사용 흐름을 확인하고, 동작하는 결과로 검증합니다.</p>
+        </article>
+        <article>
+            <span>03</span>
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <h2>지속적인 개선</h2>
+            <p>사용자 피드백과 운영 데이터를 반영해 작은 개선을 꾸준히 이어갑니다.</p>
+        </article>
+    </section>
+
+    <section class="cm-about-capabilities">
+        <div>
+            <p class="cm-home-kicker">WHAT I BUILD</p>
+            <h2>웹과 데스크톱,<br />현장을 함께 연결합니다</h2>
+            <p>한 화면만 만드는 것이 아니라 서비스가 지속될 수 있는 전체 흐름을 구성합니다.</p>
+        </div>
+        <ul>
+            <li><i class="fa-brands fa-windows"></i><span><strong>WPF · MVVM</strong> 장비 제어, 모니터링, 업무용 데스크톱 UI</span></li>
+            <li><i class="fa-solid fa-globe"></i><span><strong>ASP.NET · Blazor</strong> 웹 서비스, 관리자 페이지, 인증</span></li>
+            <li><i class="fa-solid fa-database"></i><span><strong>Database</strong> SQLite, SQL Server, MySQL 기반 데이터 구조</span></li>
+            <li><i class="fa-solid fa-video"></i><span><strong>CCTV · RTSP</strong> 영상 변환, 실시간 모니터링, 원격 뷰어</span></li>
+            <li><i class="fa-solid fa-gears"></i><span><strong>산업 자동화</strong> PLC 연동, 설정·레시피, 현장 운영 도구</span></li>
+            <li><i class="fa-solid fa-code-branch"></i><span><strong>Open Source</strong> Dreamine MVVM 생태계와 재사용 라이브러리</span></li>
+        </ul>
+    </section>
+
+    <section class="cm-about-cta">
+        <div>
+            <p class="cm-home-kicker">WORK WITH CODEMARU</p>
+            <h2>해결하고 싶은 문제가 있나요?</h2>
+            <p>필요한 기능과 현재 상황을 알려주시면 구현 범위와 현실적인 진행 방법을 함께 검토합니다.</p>
+        </div>
+        <a class="cm-home-primary" href="/contact">문의하기 <i class="fa-solid fa-arrow-right"></i></a>
+    </section>
+</article>

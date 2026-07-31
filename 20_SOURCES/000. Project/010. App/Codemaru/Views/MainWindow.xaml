@@ -45,7 +45,55 @@
             </DockPanel>
         </Border>
 
-        <TabControl Grid.Column="1" Margin="14" SelectedIndex="1">
+        <TabControl Grid.Column="1" Margin="14" SelectedIndex="0">
+            <TabItem Header="Dashboard">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" Background="#F5F7FB">
+                    <StackPanel Margin="28">
+                        <TextBlock Foreground="#0891B2" FontSize="12" FontWeight="Bold" Text="CODEMARU OPERATIONS" />
+                        <TextBlock Margin="0,6,0,4" Foreground="#14213D" FontSize="30" FontWeight="Bold" Text="운영 대시보드" />
+                        <TextBlock Foreground="#52627A" FontSize="14" Text="CodeMaru 서비스와 로컬 운영 도구의 현재 구성을 확인합니다." />
+
+                        <UniformGrid Margin="0,24,0,0" Columns="4">
+                            <Border Margin="0,0,10,0" Padding="18" Background="White" BorderBrush="#DCE5F2" BorderThickness="1" CornerRadius="12">
+                                <StackPanel><TextBlock Foreground="#64748B" Text="연결된 서비스" /><TextBlock Margin="0,8,0,0" Foreground="#14213D" FontSize="25" FontWeight="Bold" Text="8" /></StackPanel>
+                            </Border>
+                            <Border Margin="0,0,10,0" Padding="18" Background="White" BorderBrush="#DCE5F2" BorderThickness="1" CornerRadius="12">
+                                <StackPanel><TextBlock Foreground="#64748B" Text="CardHybrid" /><TextBlock Margin="0,8,0,0" Foreground="#16845B" FontSize="19" FontWeight="Bold" Text="실행 중" /></StackPanel>
+                            </Border>
+                            <Border Margin="0,0,10,0" Padding="18" Background="White" BorderBrush="#DCE5F2" BorderThickness="1" CornerRadius="12">
+                                <StackPanel><TextBlock Foreground="#64748B" Text="공통 인증" /><TextBlock Margin="0,8,0,0" Foreground="#16845B" FontSize="19" FontWeight="Bold" Text="연결됨" /></StackPanel>
+                            </Border>
+                            <Border Padding="18" Background="White" BorderBrush="#DCE5F2" BorderThickness="1" CornerRadius="12">
+                                <StackPanel><TextBlock Foreground="#64748B" Text="저장된 명함" /><TextBlock Margin="0,8,0,0" Foreground="#14213D" FontSize="25" FontWeight="Bold" Text="{Binding HistoryCount}" /></StackPanel>
+                            </Border>
+                        </UniformGrid>
+
+                        <Grid Margin="0,22,0,0">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="1.35*" /><ColumnDefinition Width="16" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+                            <Border Grid.Column="0" Padding="22" Background="White" BorderBrush="#DCE5F2" BorderThickness="1" CornerRadius="12">
+                                <StackPanel>
+                                    <TextBlock Foreground="#14213D" FontSize="18" FontWeight="Bold" Text="관리 도구" />
+                                    <TextBlock Margin="0,5,0,18" Foreground="#64748B" Text="상단 탭에서 필요한 운영 화면으로 이동하세요." />
+                                    <Border Margin="0,0,0,10" Padding="14" Background="#F1F7FF" CornerRadius="8"><DockPanel><TextBlock Foreground="#1D4ED8" FontWeight="Bold" Text="CardHybrid Server" /><TextBlock DockPanel.Dock="Right" Foreground="#16845B" Text="웹 서버 화면" /></DockPanel></Border>
+                                    <Border Margin="0,0,0,10" Padding="14" Background="#F1F7FF" CornerRadius="8"><DockPanel><TextBlock Foreground="#1D4ED8" FontWeight="Bold" Text="Embedded" /><TextBlock DockPanel.Dock="Right" Foreground="#16845B" Text="로컬 편집 화면" /></DockPanel></Border>
+                                    <Border Padding="14" Background="#F1F7FF" CornerRadius="8"><DockPanel><TextBlock Foreground="#1D4ED8" FontWeight="Bold" Text="Certificate" /><TextBlock DockPanel.Dock="Right" Foreground="#16845B" Text="SSL · Caddy 관리" /></DockPanel></Border>
+                                </StackPanel>
+                            </Border>
+                            <Border Grid.Column="2" Padding="22" Background="White" BorderBrush="#DCE5F2" BorderThickness="1" CornerRadius="12">
+                                <StackPanel>
+                                    <TextBlock Foreground="#14213D" FontSize="18" FontWeight="Bold" Text="현재 명함" />
+                                    <TextBlock Margin="0,18,0,0" Foreground="#64748B" Text="브랜드" />
+                                    <TextBlock Margin="0,4,0,0" Foreground="#14213D" FontSize="20" FontWeight="Bold" Text="{Binding Brand}" />
+                                    <TextBlock Margin="0,16,0,0" Foreground="#64748B" Text="사용자" />
+                                    <TextBlock Margin="0,4,0,0" Foreground="#14213D" FontWeight="SemiBold" Text="{Binding CurrentUser}" />
+                                    <TextBlock Margin="0,16,0,0" Foreground="#64748B" Text="상태" />
+                                    <TextBlock Margin="0,4,0,0" Foreground="#16845B" FontWeight="SemiBold" Text="{Binding StatusMessage}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </Border>
+                        </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
             <TabItem Header="CardHybrid Server" x:Name="ServerTab">
                 <Border Background="#303530" Padding="14"
                         d:Visibility="Visible"

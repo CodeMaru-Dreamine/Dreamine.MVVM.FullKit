@@ -3,6 +3,10 @@
 @namespace Codemaru.Blazor.Pages
 
 <PageTitle>이용 설명서 — @CurrentGuide.Title</PageTitle>
+<SeoHead Title="@($"{CurrentGuide.Title} 이용 설명서 | CodeMaru")"
+         Description="@($"{CurrentGuide.Subtitle}. 시작 방법과 주요 기능, 자주 묻는 질문을 확인하세요.")"
+         CanonicalPath="@($"/guide/{ActiveKey}")"
+         ImageAlt="@($"{CurrentGuide.ShortTitle} 이용 설명서")" />
 
 <section class="guide-page">
     <nav class="guide-nav">
@@ -35,7 +39,14 @@
 @code {
     [Parameter] public string? Service { get; set; }
 
-    private string ActiveKey => string.IsNullOrWhiteSpace(Service) ? "cardhybrid" : Service.ToLowerInvariant();
+    private string ActiveKey
+    {
+        get
+        {
+            var requested = string.IsNullOrWhiteSpace(Service) ? "cardhybrid" : Service.ToLowerInvariant();
+            return Guides.ContainsKey(requested) ? requested : "cardhybrid";
+        }
+    }
 
     private GuideEntry CurrentGuide => Guides.TryGetValue(ActiveKey, out var g) ? g : Guides["cardhybrid"];
 

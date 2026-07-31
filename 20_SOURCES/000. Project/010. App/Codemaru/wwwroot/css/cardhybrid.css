@@ -161,10 +161,26 @@ select {
     border: 1px solid #c9d2c7;
     border-radius: 6px;
     padding: 9px 10px;
+    background: #fff;
     color: #172119;
+    caret-color: #172119;
     font: inherit;
     font-weight: 400;
     resize: vertical;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: #64748b;
+    opacity: 1;
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled {
+    background: #edf1eb;
+    color: #526057;
+    opacity: 1;
 }
 
 select {

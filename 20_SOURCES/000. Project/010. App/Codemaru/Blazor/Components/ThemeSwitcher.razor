@@ -1,0 +1,49 @@
+@namespace Codemaru.Blazor.Components
+@inject IJSRuntime JS
+
+<label class="cm-theme-switcher" title="화면 테마">
+    <i class="@ThemeIcon" aria-hidden="true"></i>
+    <span class="visually-hidden">화면 테마</span>
+    <select value="@_theme" @onchange="OnThemeChangedAsync" aria-label="화면 테마">
+        @foreach (var option in Options)
+        {
+            <option value="@option.Value">@option.Label</option>
+        }
+    </select>
+</label>
+
+@code {
+    private static readonly (string Value, string Label, string Description)[] Options =
+    [
+        ("system", "System", "운영체제 설정 사용"),
+        ("light", "Light", "라이트 모드 사용"),
+        ("dark", "Dark", "다크 모드 사용")
+    ];
+
+    private string _theme = "system";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        _theme = await JS.InvokeAsync<string>("codemaruTheme.get");
+        StateHasChanged();
+    }
+
+    private async Task OnThemeChangedAsync(ChangeEventArgs args)
+    {
+        var theme = args.Value?.ToString() ?? "system";
+        _theme = theme;
+        await JS.InvokeVoidAsync("codemaruTheme.set", theme);
+    }
+
+    private string ThemeIcon => _theme switch
+    {
+        "light" => "fa-solid fa-sun",
+        "dark" => "fa-solid fa-moon",
+        _ => "fa-solid fa-desktop"
+    };
+}

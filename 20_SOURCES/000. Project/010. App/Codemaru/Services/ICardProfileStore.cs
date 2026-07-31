@@ -20,6 +20,9 @@ namespace Codemaru.Services;
 /// </remarks>
 public interface ICardProfileStore
 {
+    /// <summary>관리 화면에서 사용할 저장된 명함 스냅샷 목록을 반환합니다.</summary>
+    Task<IReadOnlyList<CardHybridSnapshot>> ListAsync(CancellationToken cancellationToken = default);
+
     /// <summary>
     /// \if KO
     /// <para>\brief 지정된 사용자 ID 의 저장된 스냅샷을 로드합니다.</para>

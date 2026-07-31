@@ -1,0 +1,346 @@
+@page "/admin"
+@namespace Codemaru.Blazor.Pages
+@attribute [Authorize(Policy = "CodemaruAdmin")]
+@using Microsoft.AspNetCore.Authorization
+@using Dreamine.Database.Abstractions
+@inject IDatabaseProvider Database
+
+<PageTitle>운영 대시보드 | CodeMaru</PageTitle>
+<SeoHead Title="운영 대시보드 | CodeMaru"
+         Description="CodeMaru 관리자 전용 운영 대시보드입니다."
+         CanonicalPath="/admin"
+         NoIndex="true" />
+
+<section class="cm-admin">
+    <header class="cm-admin-heading">
+        <div>
+            <p class="cm-admin-eyebrow">CODEMARU OPERATIONS</p>
+            <h1>운영 대시보드</h1>
+            <p>CodeMaru 서비스와 관리 화면을 한곳에서 확인합니다.</p>
+        </div>
+        <a class="cm-admin-primary" href="/admin/cards">
+            명함 관리 열기 <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        </a>
+    </header>
+
+    <div class="cm-admin-metrics" aria-label="운영 요약">
+        <button class="cm-admin-metric accent-blue @MetricActiveClass(UserView.All)"
+                type="button"
+                @onclick="() => ShowUsers(UserView.All)"
+                aria-expanded="@(_selectedUserView == UserView.All)">
+            <i class="fa-solid fa-users"></i>
+            <div><span>전체 이용자</span><strong>@MetricText(_metrics.TotalUsers)</strong><small>목록 보기</small></div>
+        </button>
+        <button class="cm-admin-metric accent-purple @MetricActiveClass(UserView.New)"
+                type="button"
+                @onclick="() => ShowUsers(UserView.New)"
+                aria-expanded="@(_selectedUserView == UserView.New)">
+            <i class="fa-solid fa-user-plus"></i>
+            <div><span>최근 7일 가입</span><strong>@MetricText(_metrics.NewUsers)</strong><small>목록 보기</small></div>
+        </button>
+        <button class="cm-admin-metric accent-green @MetricActiveClass(UserView.Active)"
+                type="button"
+                @onclick="() => ShowUsers(UserView.Active)"
+                aria-expanded="@(_selectedUserView == UserView.Active)">
+            <i class="fa-solid fa-user-check"></i>
+            <div><span>최근 7일 이용자</span><strong>@MetricText(_metrics.ActiveUsers)</strong><small>목록 보기</small></div>
+        </button>
+        <article class="cm-admin-metric accent-orange">
+            <i class="fa-solid fa-layer-group"></i>
+            <div><span>연결된 서비스</span><strong>@Services.Length</strong></div>
+        </article>
+    </div>
+
+    @if (_selectedUserView is not null)
+    {
+        <section class="cm-admin-panel cm-user-list-panel">
+            <div class="cm-admin-panel-title">
+                <div>
+                    <h2>@UserViewTitle</h2>
+                    <p>공통 사용자 DB에 등록된 계정 @FilteredUsers.Count()명을 표시합니다.</p>
+                </div>
+                <div class="cm-user-list-tools">
+                    <label>
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="search"
+                               placeholder="이름, 이메일, 로그인 방식 검색"
+                               aria-label="이용자 검색"
+                               @bind="_userSearch"
+                               @bind:event="oninput" />
+                    </label>
+                    <button type="button" title="이용자 목록 닫기" aria-label="이용자 목록 닫기" @onclick="CloseUsers">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            @if (_metrics.IsUnavailable)
+            {
+                <p class="cm-user-list-empty">사용자 DB를 불러올 수 없습니다.</p>
+            }
+            else if (!FilteredUsers.Any())
+            {
+                <p class="cm-user-list-empty">조건에 맞는 이용자가 없습니다.</p>
+            }
+            else
+            {
+                <div class="cm-user-table-wrap">
+                    <table class="cm-user-table">
+                        <thead>
+                            <tr>
+                                <th>이용자</th>
+                                <th>로그인 방식</th>
+                                <th>가입일</th>
+                                <th>최근 이용</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in FilteredUsers)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="cm-user-identity">
+                                            @if (!string.IsNullOrWhiteSpace(user.AvatarUrl))
+                                            {
+                                                <img src="@user.AvatarUrl" alt="" referrerpolicy="no-referrer" />
+                                            }
+                                            else
+                                            {
+                                                <span>@UserInitial(user)</span>
+                                            }
+                                            <div>
+                                                <strong>@DisplayName(user)</strong>
+                                                <small>@user.Email</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="cm-provider-badge">@ProviderName(user.Provider)</span></td>
+                                    <td><time datetime="@user.CreatedAt.ToString("O")">@LocalDate(user.CreatedAt)</time></td>
+                                    <td><time datetime="@user.LastLoginAt.ToString("O")">@LocalDate(user.LastLoginAt)</time></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </section>
+    }
+
+    <section class="cm-admin-panel">
+        <div class="cm-admin-panel-title">
+            <div>
+                <h2>통합 서비스 관리</h2>
+                <p>각 서비스의 사용자 사이트와 관리자 사이트를 바로 엽니다.</p>
+            </div>
+            <span class="cm-status-pill"><i></i> 포털 정상</span>
+        </div>
+
+        <div class="cm-service-table">
+            <div class="cm-service-row cm-service-head" aria-hidden="true">
+                <span>서비스</span><span>영역</span><span>상태</span><span>화면 연결</span>
+            </div>
+            @foreach (var service in Services)
+            {
+                <div class="cm-service-row">
+                    <strong>@service.Name</strong>
+                    <span>@service.Category</span>
+                    <span class="cm-service-state"><i></i> 연결됨</span>
+                    <span class="cm-service-actions">
+                        <a class="cm-service-user-link" href="@service.Url" target="@service.Target" rel="@service.Rel">
+                            사용자 화면
+                        </a>
+                        @if (service.AdminUrl is not null)
+                        {
+                            <a class="cm-service-admin-link" href="@service.AdminUrl" target="@service.Target" rel="@service.Rel">
+                                관리자 <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="cm-service-unavailable">관리 화면 없음</span>
+                        }
+                    </span>
+                </div>
+            }
+        </div>
+    </section>
+
+    <div class="cm-admin-grid">
+        <section class="cm-admin-panel">
+            <div class="cm-admin-panel-title">
+                <div>
+                    <h2>운영 체크리스트</h2>
+                    <p>배포 전후 확인할 핵심 항목입니다.</p>
+                </div>
+            </div>
+            <ul class="cm-admin-checklist">
+                <li><i class="fa-solid fa-circle-check"></i><span><strong>공통 로그인</strong> Dreamine.Identity 연동</span></li>
+                <li><i class="fa-solid fa-circle-check"></i><span><strong>반응형 테마</strong> System · Light · Dark 지원</span></li>
+                <li><i class="fa-solid fa-circle-check"></i><span><strong>서비스 포털</strong> 8개 서비스 진입점 연결</span></li>
+                <li><i class="fa-solid fa-circle-check"></i><span><strong>이용자 지표</strong> 공통 사용자 DB 실시간 집계</span></li>
+            </ul>
+        </section>
+
+        <section class="cm-admin-panel">
+            <div class="cm-admin-panel-title">
+                <div>
+                    <h2>다음 단계</h2>
+                    <p>실제 데이터가 준비되면 확장할 영역입니다.</p>
+                </div>
+            </div>
+            <div class="cm-admin-next">
+                <span>01</span><p><strong>통합 상태 API</strong> 서비스 헬스 체크와 최근 확인 시각</p>
+                <span>02</span><p><strong>통합 분석</strong> 회원·요청·전환 지표 집계</p>
+                <span>03</span><p><strong>권한 분리</strong> 운영자 역할과 감사 로그</p>
+            </div>
+        </section>
+    </div>
+</section>
+
+@code {
+    private DashboardMetrics _metrics = new();
+    private List<DashboardUser> _users = [];
+    private UserView? _selectedUserView;
+    private string _userSearch = string.Empty;
+
+    private IEnumerable<DashboardUser> FilteredUsers
+    {
+        get
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-7);
+            IEnumerable<DashboardUser> users = _selectedUserView switch
+            {
+                UserView.New => _users.Where(user => user.CreatedAt >= cutoff),
+                UserView.Active => _users.Where(user => user.LastLoginAt >= cutoff),
+                _ => _users
+            };
+
+            if (string.IsNullOrWhiteSpace(_userSearch))
+            {
+                return users;
+            }
+
+            var search = _userSearch.Trim();
+            return users.Where(user =>
+                user.DisplayName.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || user.Email.Contains(search, StringComparison.OrdinalIgnoreCase)
+                || user.Provider.Contains(search, StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    private string UserViewTitle => _selectedUserView switch
+    {
+        UserView.New => "최근 7일 가입 이용자",
+        UserView.Active => "최근 7일 이용자",
+        _ => "전체 이용자"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            const string sql =
+                "SELECT COUNT(*) AS TotalUsers, " +
+                "SUM(CASE WHEN CreatedAt >= datetime('now', '-7 days') THEN 1 ELSE 0 END) AS NewUsers, " +
+                "SUM(CASE WHEN LastLoginAt >= datetime('now', '-7 days') THEN 1 ELSE 0 END) AS ActiveUsers " +
+                "FROM Users";
+            var rows = await Database.QueryAsync<DashboardMetrics>(sql);
+            _metrics = rows.FirstOrDefault() ?? new DashboardMetrics();
+
+            const string usersSql =
+                "SELECT Id, Provider, Email, DisplayName, AvatarUrl, CreatedAt, LastLoginAt " +
+                "FROM Users ORDER BY LastLoginAt DESC LIMIT 500";
+            _users = (await Database.QueryAsync<DashboardUser>(usersSql)).ToList();
+        }
+        catch
+        {
+            _metrics = new DashboardMetrics { IsUnavailable = true };
+        }
+    }
+
+    private static string MetricText(long value) =>
+        value.ToString("N0", System.Globalization.CultureInfo.InvariantCulture);
+
+    private void ShowUsers(UserView view)
+    {
+        _selectedUserView = view;
+        _userSearch = string.Empty;
+    }
+
+    private void CloseUsers()
+    {
+        _selectedUserView = null;
+        _userSearch = string.Empty;
+    }
+
+    private string MetricActiveClass(UserView view) => _selectedUserView == view ? "selected" : string.Empty;
+
+    private static string DisplayName(DashboardUser user) =>
+        string.IsNullOrWhiteSpace(user.DisplayName) ? user.Email : user.DisplayName;
+
+    private static string UserInitial(DashboardUser user)
+    {
+        var value = DisplayName(user).Trim();
+        return value.Length == 0 ? "?" : value[..1].ToUpperInvariant();
+    }
+
+    private static string ProviderName(string provider) => provider.ToLowerInvariant() switch
+    {
+        "local" => "이메일",
+        "google" => "Google",
+        "naver" => "Naver",
+        "kakao" => "Kakao",
+        _ => provider
+    };
+
+    private static string LocalDate(DateTime value)
+    {
+        var utc = value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
+            : value.ToUniversalTime();
+        return utc.ToLocalTime().ToString("yyyy.MM.dd HH:mm");
+    }
+
+    private static readonly ServiceLink[] Services =
+    [
+        new("CardHybrid", "명함 · QR", "/cardhybrid", "/admin/cards", "_self"),
+        new("Dreamine", "개발 플랫폼", "https://dreamine.kr/", "https://dreamine.kr/admin", "_blank"),
+        new("Wedding", "모바일 청첩장", "https://wedding.codemaru.co.kr", "https://wedding.codemaru.co.kr/admin", "_blank"),
+        new("ThankYou", "감사장", "https://thankyou.codemaru.co.kr/", "https://thankyou.codemaru.co.kr/admin", "_blank"),
+        new("Families", "가족 앨범", "https://families.codemaru.co.kr", "https://families.codemaru.co.kr/admin", "_blank"),
+        new("Portfolio", "포트폴리오", "https://portfolio.codemaru.co.kr/", "https://portfolio.codemaru.co.kr/admin", "_blank"),
+        new("CCTV Viewer", "영상 모니터링", "https://cctvviewer.codemaru.co.kr", null, "_blank"),
+        new("Shop Store", "쇼핑몰", "https://shop.codemaru.co.kr/", "https://shop.codemaru.co.kr/admin", "_blank")
+    ];
+
+    private sealed record ServiceLink(string Name, string Category, string Url, string? AdminUrl, string Target)
+    {
+        public string Rel => Target == "_blank" ? "noopener" : string.Empty;
+    }
+
+    private sealed class DashboardMetrics
+    {
+        public long TotalUsers { get; set; }
+        public long NewUsers { get; set; }
+        public long ActiveUsers { get; set; }
+        public bool IsUnavailable { get; set; }
+    }
+
+    private sealed class DashboardUser
+    {
+        public long Id { get; set; }
+        public string Provider { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string AvatarUrl { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public DateTime LastLoginAt { get; set; }
+    }
+
+    private enum UserView
+    {
+        All,
+        New,
+        Active
+    }
+}
