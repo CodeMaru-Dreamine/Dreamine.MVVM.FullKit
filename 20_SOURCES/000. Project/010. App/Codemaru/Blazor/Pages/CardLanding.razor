@@ -2,9 +2,10 @@
 @page "/card/{Tenant}/{Slug}"
 @namespace Codemaru.Blazor.Pages
 @inject ICardProfileStore Store
+@inject SiteLocalization Text
 
-<SeoHead Title="@(_profile is null ? "명함을 찾을 수 없습니다 | CodeMaru" : $"{_profile.Name} - {_profile.BackBrand}")"
-         Description="@(_profile?.LandingDescription ?? "요청한 CodeMaru 명함을 찾을 수 없습니다.")"
+<SeoHead Title="@(_profile is null ? $"{Copy.NotFound} | CodeMaru" : $"{_profile.Name} - {_profile.BackBrand}")"
+         Description="@(_profile?.LandingDescription ?? Copy.NotFound)"
          CanonicalPath="/card"
          NoIndex="true" />
 
@@ -12,7 +13,7 @@
 {
     <main class="public-card-page">
         <section class="public-card">
-            <p>명함을 찾을 수 없습니다.</p>
+            <p>@Copy.NotFound</p>
         </section>
     </main>
 }
@@ -39,12 +40,12 @@ else
             <p class="description">@_profile.LandingDescription</p>
 
             <div class="public-actions">
-                <a href="mailto:@_profile.Email">메일 보내기</a>
+                <a href="mailto:@_profile.Email">@Copy.EmailAction</a>
                 @if (!string.IsNullOrWhiteSpace(_profile.Phone))
                 {
-                    <a href="tel:@_profile.Phone">전화하기</a>
+                    <a href="tel:@_profile.Phone">@Copy.PhoneAction</a>
                 }
-                <a href="@_profile.Website" target="_blank">웹사이트</a>
+                <a href="@_profile.Website" target="_blank">@Copy.Website</a>
             </div>
 
             <dl class="public-contact">
@@ -53,15 +54,15 @@ else
                     <dd>@_profile.Email</dd>
                 </div>
                 <div>
-                    <dt>Company</dt>
+                    <dt>@Copy.Company</dt>
                     <dd>@_profile.BackBrand</dd>
                 </div>
                 <div>
-                    <dt>Phone</dt>
+                    <dt>@Copy.Phone</dt>
                     <dd>@Display(_profile.Phone)</dd>
                 </div>
                 <div>
-                    <dt>Address</dt>
+                    <dt>@Copy.Address</dt>
                     <dd>@Display(_profile.Address)</dd>
                 </div>
             </dl>
@@ -74,6 +75,7 @@ else
     [Parameter] public string? Slug { get; set; }
 
     private CardProfile? _profile;
+    private CardHybridLocalization.LandingCopy Copy => CardHybridLocalization.Landing(Text.Language);
 
     protected override async Task OnParametersSetAsync()
     {

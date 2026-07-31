@@ -4,10 +4,12 @@
 @using Microsoft.AspNetCore.Authorization
 @using Dreamine.Database.Abstractions
 @inject IDatabaseProvider Database
+@inject SiteLocalization Text
+@inject PublicLanguageSettings PublicLanguage
 
-<PageTitle>운영 대시보드 | CodeMaru</PageTitle>
-<SeoHead Title="운영 대시보드 | CodeMaru"
-         Description="CodeMaru 관리자 전용 운영 대시보드입니다."
+<PageTitle>@A("dashboard") | CodeMaru</PageTitle>
+<SeoHead Title="@($"{A("dashboard")} | CodeMaru")"
+         Description="@A("dashboardLead")"
          CanonicalPath="/admin"
          NoIndex="true" />
 
@@ -15,13 +17,40 @@
     <header class="cm-admin-heading">
         <div>
             <p class="cm-admin-eyebrow">CODEMARU OPERATIONS</p>
-            <h1>운영 대시보드</h1>
-            <p>CodeMaru 서비스와 관리 화면을 한곳에서 확인합니다.</p>
+            <h1>@A("dashboard")</h1>
+            <p>@A("dashboardLead")</p>
         </div>
         <a class="cm-admin-primary" href="/admin/cards">
-            명함 관리 열기 <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            @A("openCards") <i class="fa-solid fa-arrow-up-right-from-square"></i>
         </a>
     </header>
+
+    <section class="cm-admin-panel cm-public-language">
+        <div class="cm-admin-panel-title">
+            <div>
+                <h2>SEO / OG · @Text["language"]</h2>
+                <p>@PublicLanguageLead</p>
+            </div>
+            <div class="cm-user-list-tools">
+                <label>
+                    <i class="fa-solid fa-language"></i>
+                    <select @bind="_publicLanguage">
+                        @foreach (var language in Text.Languages)
+                        {
+                            <option value="@language.Code">@language.Region · @language.NativeName</option>
+                        }
+                    </select>
+                </label>
+                <button type="button" class="cm-admin-primary" @onclick="SavePublicLanguageAsync">
+                    <i class="fa-solid fa-floppy-disk"></i> @CardHybridLocalization.Dialog(Text.Language).Save
+                </button>
+                @if (_publicLanguageSaved)
+                {
+                    <span class="cm-status-pill"><i></i> @_publicLanguage</span>
+                }
+            </div>
+        </div>
+    </section>
 
     <div class="cm-admin-metrics" aria-label="운영 요약">
         <button class="cm-admin-metric accent-blue @MetricActiveClass(UserView.All)"
@@ -29,25 +58,25 @@
                 @onclick="() => ShowUsers(UserView.All)"
                 aria-expanded="@(_selectedUserView == UserView.All)">
             <i class="fa-solid fa-users"></i>
-            <div><span>전체 이용자</span><strong>@MetricText(_metrics.TotalUsers)</strong><small>목록 보기</small></div>
+            <div><span>@A("totalUsers")</span><strong>@MetricText(_metrics.TotalUsers)</strong><small>@A("viewList")</small></div>
         </button>
         <button class="cm-admin-metric accent-purple @MetricActiveClass(UserView.New)"
                 type="button"
                 @onclick="() => ShowUsers(UserView.New)"
                 aria-expanded="@(_selectedUserView == UserView.New)">
             <i class="fa-solid fa-user-plus"></i>
-            <div><span>최근 7일 가입</span><strong>@MetricText(_metrics.NewUsers)</strong><small>목록 보기</small></div>
+            <div><span>@A("newUsers")</span><strong>@MetricText(_metrics.NewUsers)</strong><small>@A("viewList")</small></div>
         </button>
         <button class="cm-admin-metric accent-green @MetricActiveClass(UserView.Active)"
                 type="button"
                 @onclick="() => ShowUsers(UserView.Active)"
                 aria-expanded="@(_selectedUserView == UserView.Active)">
             <i class="fa-solid fa-user-check"></i>
-            <div><span>최근 7일 이용자</span><strong>@MetricText(_metrics.ActiveUsers)</strong><small>목록 보기</small></div>
+            <div><span>@A("activeUsers")</span><strong>@MetricText(_metrics.ActiveUsers)</strong><small>@A("viewList")</small></div>
         </button>
         <article class="cm-admin-metric accent-orange">
             <i class="fa-solid fa-layer-group"></i>
-            <div><span>연결된 서비스</span><strong>@Services.Length</strong></div>
+            <div><span>@A("services")</span><strong>@Services.Length</strong></div>
         </article>
     </div>
 
@@ -57,18 +86,18 @@
             <div class="cm-admin-panel-title">
                 <div>
                     <h2>@UserViewTitle</h2>
-                    <p>공통 사용자 DB에 등록된 계정 @FilteredUsers.Count()명을 표시합니다.</p>
+                    <p>@A("accounts"): @FilteredUsers.Count()</p>
                 </div>
                 <div class="cm-user-list-tools">
                     <label>
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="search"
-                               placeholder="이름, 이메일, 로그인 방식 검색"
-                               aria-label="이용자 검색"
+                               placeholder="@A("searchUsers")"
+                               aria-label="@A("searchUsers")"
                                @bind="_userSearch"
                                @bind:event="oninput" />
                     </label>
-                    <button type="button" title="이용자 목록 닫기" aria-label="이용자 목록 닫기" @onclick="CloseUsers">
+                    <button type="button" title="@A("close")" aria-label="@A("close")" @onclick="CloseUsers">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
@@ -76,11 +105,11 @@
 
             @if (_metrics.IsUnavailable)
             {
-                <p class="cm-user-list-empty">사용자 DB를 불러올 수 없습니다.</p>
+                <p class="cm-user-list-empty">@A("dbUnavailable")</p>
             }
             else if (!FilteredUsers.Any())
             {
-                <p class="cm-user-list-empty">조건에 맞는 이용자가 없습니다.</p>
+                <p class="cm-user-list-empty">@A("noUsers")</p>
             }
             else
             {
@@ -88,10 +117,10 @@
                     <table class="cm-user-table">
                         <thead>
                             <tr>
-                                <th>이용자</th>
-                                <th>로그인 방식</th>
-                                <th>가입일</th>
-                                <th>최근 이용</th>
+                                <th>@A("user")</th>
+                                <th>@A("provider")</th>
+                                <th>@A("joined")</th>
+                                <th>@A("lastUsed")</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -129,35 +158,35 @@
     <section class="cm-admin-panel">
         <div class="cm-admin-panel-title">
             <div>
-                <h2>통합 서비스 관리</h2>
-                <p>각 서비스의 사용자 사이트와 관리자 사이트를 바로 엽니다.</p>
+                <h2>@A("serviceManagement")</h2>
+                <p>@A("serviceLead")</p>
             </div>
-            <span class="cm-status-pill"><i></i> 포털 정상</span>
+            <span class="cm-status-pill"><i></i> @A("portalHealthy")</span>
         </div>
 
         <div class="cm-service-table">
             <div class="cm-service-row cm-service-head" aria-hidden="true">
-                <span>서비스</span><span>영역</span><span>상태</span><span>화면 연결</span>
+                <span>@A("services")</span><span>@A("category")</span><span>@A("status")</span><span>@A("screens")</span>
             </div>
             @foreach (var service in Services)
             {
                 <div class="cm-service-row">
                     <strong>@service.Name</strong>
                     <span>@service.Category</span>
-                    <span class="cm-service-state"><i></i> 연결됨</span>
+                    <span class="cm-service-state"><i></i> @A("connected")</span>
                     <span class="cm-service-actions">
                         <a class="cm-service-user-link" href="@service.Url" target="@service.Target" rel="@service.Rel">
-                            사용자 화면
+                            @A("userScreen")
                         </a>
                         @if (service.AdminUrl is not null)
                         {
                             <a class="cm-service-admin-link" href="@service.AdminUrl" target="@service.Target" rel="@service.Rel">
-                                관리자 <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                @A("administrator") <i class="fa-solid fa-arrow-up-right-from-square"></i>
                             </a>
                         }
                         else
                         {
-                            <span class="cm-service-unavailable">관리 화면 없음</span>
+                            <span class="cm-service-unavailable">@A("noAdmin")</span>
                         }
                     </span>
                 </div>
@@ -165,43 +194,29 @@
         </div>
     </section>
 
-    <div class="cm-admin-grid">
-        <section class="cm-admin-panel">
-            <div class="cm-admin-panel-title">
-                <div>
-                    <h2>운영 체크리스트</h2>
-                    <p>배포 전후 확인할 핵심 항목입니다.</p>
-                </div>
-            </div>
-            <ul class="cm-admin-checklist">
-                <li><i class="fa-solid fa-circle-check"></i><span><strong>공통 로그인</strong> Dreamine.Identity 연동</span></li>
-                <li><i class="fa-solid fa-circle-check"></i><span><strong>반응형 테마</strong> System · Light · Dark 지원</span></li>
-                <li><i class="fa-solid fa-circle-check"></i><span><strong>서비스 포털</strong> 8개 서비스 진입점 연결</span></li>
-                <li><i class="fa-solid fa-circle-check"></i><span><strong>이용자 지표</strong> 공통 사용자 DB 실시간 집계</span></li>
-            </ul>
-        </section>
-
-        <section class="cm-admin-panel">
-            <div class="cm-admin-panel-title">
-                <div>
-                    <h2>다음 단계</h2>
-                    <p>실제 데이터가 준비되면 확장할 영역입니다.</p>
-                </div>
-            </div>
-            <div class="cm-admin-next">
-                <span>01</span><p><strong>통합 상태 API</strong> 서비스 헬스 체크와 최근 확인 시각</p>
-                <span>02</span><p><strong>통합 분석</strong> 회원·요청·전환 지표 집계</p>
-                <span>03</span><p><strong>권한 분리</strong> 운영자 역할과 감사 로그</p>
-            </div>
-        </section>
-    </div>
 </section>
 
 @code {
+    private string A(string key) => AdminLocalization.Get(Text.Language, key);
+    private string PublicLanguageLead => Text.Language switch
+    {
+        "ko" => "언어 매개변수가 없는 URL의 기본 공개 언어입니다.",
+        "es" => "Idioma público predeterminado para URL sin parámetro de idioma.",
+        "fr" => "Langue publique par défaut des URL sans paramètre de langue.",
+        "it" => "Lingua pubblica predefinita per gli URL senza parametro lingua.",
+        "pt" => "Idioma público padrão para URLs sem parâmetro de idioma.",
+        "vi" => "Ngôn ngữ công khai mặc định cho URL không có tham số ngôn ngữ.",
+        "ja" => "言語パラメーターがないURLの既定公開言語です。",
+        "zh-hans" => "未指定语言参数时网址使用的默认公开语言。",
+        "zh-hant" => "未指定語言參數時網址使用的預設公開語言。",
+        _ => "Default public language for URLs without a language parameter."
+    };
     private DashboardMetrics _metrics = new();
     private List<DashboardUser> _users = [];
     private UserView? _selectedUserView;
     private string _userSearch = string.Empty;
+    private string _publicLanguage = "ko";
+    private bool _publicLanguageSaved;
 
     private IEnumerable<DashboardUser> FilteredUsers
     {
@@ -230,13 +245,14 @@
 
     private string UserViewTitle => _selectedUserView switch
     {
-        UserView.New => "최근 7일 가입 이용자",
-        UserView.Active => "최근 7일 이용자",
-        _ => "전체 이용자"
+        UserView.New => A("newUsers"),
+        UserView.Active => A("activeUsers"),
+        _ => A("totalUsers")
     };
 
     protected override async Task OnInitializedAsync()
     {
+        _publicLanguage = PublicLanguage.DefaultLanguage;
         try
         {
             const string sql =
@@ -256,6 +272,12 @@
         {
             _metrics = new DashboardMetrics { IsUnavailable = true };
         }
+    }
+
+    private async Task SavePublicLanguageAsync()
+    {
+        await PublicLanguage.SaveAsync(_publicLanguage);
+        _publicLanguageSaved = true;
     }
 
     private static string MetricText(long value) =>
@@ -286,7 +308,7 @@
 
     private static string ProviderName(string provider) => provider.ToLowerInvariant() switch
     {
-        "local" => "이메일",
+        "local" => "Email",
         "google" => "Google",
         "naver" => "Naver",
         "kakao" => "Kakao",
@@ -303,14 +325,14 @@
 
     private static readonly ServiceLink[] Services =
     [
-        new("CardHybrid", "명함 · QR", "/cardhybrid", "/admin/cards", "_self"),
-        new("Dreamine", "개발 플랫폼", "https://dreamine.kr/", "https://dreamine.kr/admin", "_blank"),
-        new("Wedding", "모바일 청첩장", "https://wedding.codemaru.co.kr", "https://wedding.codemaru.co.kr/admin", "_blank"),
-        new("ThankYou", "감사장", "https://thankyou.codemaru.co.kr/", "https://thankyou.codemaru.co.kr/admin", "_blank"),
-        new("Families", "가족 앨범", "https://families.codemaru.co.kr", "https://families.codemaru.co.kr/admin", "_blank"),
-        new("Portfolio", "포트폴리오", "https://portfolio.codemaru.co.kr/", "https://portfolio.codemaru.co.kr/admin", "_blank"),
-        new("CCTV Viewer", "영상 모니터링", "https://cctvviewer.codemaru.co.kr", null, "_blank"),
-        new("Shop Store", "쇼핑몰", "https://shop.codemaru.co.kr/", "https://shop.codemaru.co.kr/admin", "_blank")
+        new("CardHybrid", "Business card · QR", "/cardhybrid", "/admin/cards", "_self"),
+        new("Dreamine", "Development platform", "https://dreamine.kr/", "https://dreamine.kr/admin", "_blank"),
+        new("Wedding", "Mobile invitation", "https://wedding.codemaru.co.kr", "https://wedding.codemaru.co.kr/admin", "_blank"),
+        new("ThankYou", "Thank-you page", "https://thankyou.codemaru.co.kr/", "https://thankyou.codemaru.co.kr/admin", "_blank"),
+        new("Families", "Family album", "https://families.codemaru.co.kr", "https://families.codemaru.co.kr/admin", "_blank"),
+        new("Portfolio", "Portfolio", "https://portfolio.codemaru.co.kr/", "https://portfolio.codemaru.co.kr/admin", "_blank"),
+        new("CCTV Viewer", "Video monitoring", "https://cctvviewer.codemaru.co.kr", null, "_blank"),
+        new("Shop Store", "Store", "https://shop.codemaru.co.kr/", "https://shop.codemaru.co.kr/admin", "_blank")
     ];
 
     private sealed record ServiceLink(string Name, string Category, string Url, string? AdminUrl, string Target)

@@ -1,6 +1,7 @@
 @namespace Codemaru.Blazor.Layout
 @implements IDisposable
 @inject NavigationManager Navigation
+@inject SiteLocalization Text
 @using Codemaru.Blazor.Components
 
 <header class="cm-topbar">
@@ -14,7 +15,7 @@
 
     <div class="cm-right">
         <nav id="cmMenu" class="cm-nav cm-nav-menu @(isOpen ? "open" : null)">
-            <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="active">Home</NavLink>
+            <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="active">@Text["nav.home"]</NavLink>
             <a href="https://dreamine.kr/" target="_blank" rel="noopener">Dreamine</a>
             <NavLink href="/cardhybrid" ActiveClass="active">CardHybrid</NavLink>
             <a href="https://wedding.codemaru.co.kr">Wedding</a>
@@ -23,7 +24,7 @@
             <a href="https://portfolio.codemaru.co.kr/">Portfolio</a>
             <a href="https://cctvviewer.codemaru.co.kr">CCTV</a>
             <a href="https://shop.codemaru.co.kr/">ShopStore</a>
-            <NavLink href="/contact" Match="NavLinkMatch.All" ActiveClass="active">Contact</NavLink>
+            <NavLink href="/contact" Match="NavLinkMatch.All" ActiveClass="active">@Text["contact"]</NavLink>
 
             <AuthorizeView>
                 <Authorized>
@@ -34,22 +35,24 @@
                             <i class="fa-solid fa-chevron-down cm-user-chevron"></i>
                         </summary>
                         <div class="cm-user-popover">
-                            <p class="cm-user-menu-label">화면 설정</p>
+                            <p class="cm-user-menu-label">@Text["screenSettings"]</p>
                             <ThemeSwitcher />
+                            <LanguageSwitcher />
                             <div class="cm-user-menu-divider"></div>
-                            <a href="/account?returnUrl=@ReturnUrl"><i class="fa-regular fa-user"></i> 내 계정</a>
+                            <a href="/account?returnUrl=@ReturnUrl"><i class="fa-regular fa-user"></i> @Text["account"]</a>
                             <AuthorizeView Policy="CodemaruAdmin" Context="adminContext">
                                 <Authorized>
-                                    <a href="/admin"><i class="fa-solid fa-chart-line"></i> 관리자</a>
+                                    <a href="/admin"><i class="fa-solid fa-chart-line"></i> @Text["admin"]</a>
                                 </Authorized>
                             </AuthorizeView>
-                            <a href="/signout?returnUrl=@ReturnUrl"><i class="fa-solid fa-arrow-right-from-bracket"></i> 로그아웃</a>
+                            <a href="/signout?returnUrl=@ReturnUrl"><i class="fa-solid fa-arrow-right-from-bracket"></i> @Text["logout"]</a>
                         </div>
                     </details>
                 </Authorized>
                 <NotAuthorized>
                     <ThemeSwitcher />
-                    <a class="cm-auth-link" href="/login?returnUrl=@ReturnUrl">로그인</a>
+                    <LanguageSwitcher />
+                    <a class="cm-auth-link" href="/login?returnUrl=@ReturnUrl">@Text["login"]</a>
                 </NotAuthorized>
             </AuthorizeView>
         </nav>
@@ -57,7 +60,7 @@
         <button class="cm-nav-burger"
                 type="button"
                 @onclick="ToggleMenu"
-                aria-label="메뉴 열기/닫기"
+                aria-label="@Text["nav.toggle"]"
                 aria-expanded="@isOpen"
                 aria-controls="cmMenu">
             <span></span><span></span><span></span>
@@ -70,10 +73,10 @@
 
     private string ReturnUrl => Uri.EscapeDataString(new Uri(Navigation.Uri).PathAndQuery);
 
-    private static string DisplayNameOf(AuthenticationState context)
+    private string DisplayNameOf(AuthenticationState context)
     {
         var name = context.User.Identity?.Name;
-        return string.IsNullOrWhiteSpace(name) ? "로그인됨" : name;
+        return string.IsNullOrWhiteSpace(name) ? Text["account"] : name;
     }
 
     private void ToggleMenu()
@@ -84,7 +87,10 @@
     protected override void OnInitialized()
     {
         Navigation.LocationChanged += HandleLocationChanged;
+        Text.Changed += HandleLanguageChanged;
     }
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
     private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
     {
@@ -100,5 +106,6 @@
     public void Dispose()
     {
         Navigation.LocationChanged -= HandleLocationChanged;
+        Text.Changed -= HandleLanguageChanged;
     }
 }

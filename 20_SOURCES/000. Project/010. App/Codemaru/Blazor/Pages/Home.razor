@@ -1,34 +1,35 @@
 @page "/"
 @namespace Codemaru.Blazor.Pages
+@inject SiteLocalization Text
 
-<PageTitle>CodeMaru - 명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV, 쇼핑몰</PageTitle>
-<SeoHead Title="CodeMaru — 필요한 디지털 도구를 직접 만듭니다"
-         Description="CodeMaru는 명함 QR과 vCard 랜딩 페이지, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 직영 쇼핑몰, 개발자 포트폴리오를 제공하는 실용적인 디지털 서비스 플랫폼입니다."
+<PageTitle>CodeMaru — @Plain(Text["home.title"])</PageTitle>
+<SeoHead Title="@($"CodeMaru — {Plain(Text["home.title"])}")"
+         Description="@Plain(Text["home.lead"])"
          CanonicalPath="/"
-         ImageAlt="명함 QR, 모바일 청첩장, CCTV와 개발 도구를 표현한 CodeMaru 서비스" />
+         ImageAlt="@Text["services.title"]" />
 
 <section class="cm-home-hero">
     <div class="cm-home-copy">
-        <p class="cm-home-kicker">CodeMaru</p>
-        <h1>필요한 디지털 도구를<br />직접 만듭니다</h1>
-        <p>명함 QR부터 모바일 청첩장, 감사장, 가족 앨범,<br />CCTV 모니터링, 직영 쇼핑몰까지.</p>
+        <p class="cm-home-kicker">@Text["home.kicker"]</p>
+        <h1>@AsHtml(Text["home.title"])</h1>
+        <p>@AsHtml(Text["home.lead"])</p>
         <div class="cm-home-actions">
-            <a class="cm-home-primary" href="#services">서비스 둘러보기 <i class="fa-solid fa-arrow-right"></i></a>
-            <a class="cm-home-secondary" href="/about">CodeMaru 소개</a>
+            <a class="cm-home-primary" href="#services">@Text["home.services"] <i class="fa-solid fa-arrow-right"></i></a>
+            <a class="cm-home-secondary" href="/about">@Text["home.about"]</a>
         </div>
     </div>
-    <img class="cm-home-hero-art" src="/img/codemaru-hero-v2.png" alt="명함 QR, 모바일 청첩장, CCTV 모니터링과 개발 도구를 표현한 CodeMaru 서비스 일러스트" />
+    <img class="cm-home-hero-art" src="/img/codemaru-hero-v2.png" alt="@Text["services.title"]" />
 </section>
 
 <section class="cm-home-values" aria-label="CodeMaru 운영 원칙">
-    <article><i class="fa-solid fa-code"></i><div><strong>직접 설계 · 개발</strong><span>필요한 기능을 직접 설계하고 끝까지 책임집니다.</span></div></article>
-    <article><i class="fa-solid fa-check"></i><div><strong>실제로 운영 중</strong><span>모든 서비스는 실제 운영 경험을 통해 검증됩니다.</span></div></article>
-    <article><i class="fa-solid fa-arrow-trend-up"></i><div><strong>지속적인 개선</strong><span>사용자의 피드백을 반영하며 꾸준히 개선합니다.</span></div></article>
+    <article><i class="fa-solid fa-code"></i><div><strong>@Text["value.design.title"]</strong><span>@Text["value.design.text"]</span></div></article>
+    <article><i class="fa-solid fa-check"></i><div><strong>@Text["value.run.title"]</strong><span>@Text["value.run.text"]</span></div></article>
+    <article><i class="fa-solid fa-arrow-trend-up"></i><div><strong>@Text["value.improve.title"]</strong><span>@Text["value.improve.text"]</span></div></article>
 </section>
 
 <header id="services" class="cm-section-heading">
-    <h2>CodeMaru 서비스</h2>
-    <p>작은 문제를 해결하는 데서 시작해, 실제로 쓰이는 서비스를 만듭니다.</p>
+    <h2>@Text["services.title"]</h2>
+    <p>@Text["services.lead"]</p>
 </header>
 
 <section class="cm-cards cm-home-services" aria-label="CodeMaru 서비스">
@@ -44,11 +45,11 @@
         </div>
         <div class="cm-card-body">
             <h2>Dreamine</h2>
-            <p>WPF와 Blazor를 한 코드 흐름으로 묶는 오픈소스 MVVM 프레임워크입니다. ViewModel, Command, 변경 알림 코드를 줄이고 데스크톱과 웹 UI를 함께 설계할 수 있습니다.</p>
+            <p>@Text["service.dreamine"]</p>
         </div>
         <div class="cm-card-footer">
-            <a class="cm-btn" href="https://dreamine.kr/" target="_blank" rel="noopener">사이트 보기</a>
-            <a class="cm-btn-secondary" href="/guide/dreamine">이용 설명서</a>
+            <a class="cm-btn" href="https://dreamine.kr/" target="_blank" rel="noopener">@Text["service.open"]</a>
+            <a class="cm-btn-secondary" href="/guide/dreamine">@Text["service.guide"]</a>
         </div>
     </article>
 
@@ -64,11 +65,11 @@
         </div>
         <div class="cm-card-body">
             <h2>CardHybrid</h2>
-            <p>QR 코드 하나로 모바일 소개 페이지와 vCard 연락처 저장을 연결합니다. 명함 앞뒤 디자인, SVG/HTML 출력, AI 배경 제거, 버전 저장까지 한 화면에서 관리합니다.</p>
+            <p>@Text["service.cardhybrid"]</p>
         </div>
         <div class="cm-card-footer">
-            <a class="cm-btn" href="/cardhybrid">명함 만들기</a>
-            <a class="cm-btn-secondary" href="/guide/cardhybrid">이용 설명서</a>
+            <a class="cm-btn" href="/cardhybrid">@Text["service.cardhybrid.action"]</a>
+            <a class="cm-btn-secondary" href="/guide/cardhybrid">@Text["service.guide"]</a>
         </div>
     </article>
 
@@ -84,11 +85,11 @@
         </div>
         <div class="cm-card-body">
             <h2>Wedding</h2>
-            <p>사진, 지도, 방명록, 배경음악, 계좌 안내가 담긴 모바일 청첩장을 빠르게 만듭니다. CodeMaru 공통 로그인으로 만들고 관리하며 링크 하나로 하객에게 전달합니다.</p>
+            <p>@Text["service.wedding"]</p>
         </div>
         <div class="cm-card-footer">
-            <a class="cm-btn" href="https://wedding.codemaru.co.kr">청첩장 만들기</a>
-            <a class="cm-btn-secondary" href="/guide/wedding">이용 설명서</a>
+            <a class="cm-btn" href="https://wedding.codemaru.co.kr">@Text["service.wedding.action"]</a>
+            <a class="cm-btn-secondary" href="/guide/wedding">@Text["service.guide"]</a>
         </div>
     </article>
 
@@ -104,11 +105,11 @@
         </div>
         <div class="cm-card-body">
             <h2>ThankYou</h2>
-            <p>결혼식 이후 하객에게 전할 감사 인사, 사진, 계좌 안내, 연락처를 모바일 페이지로 정리합니다. Wedding과 같은 흐름으로 초대 이후의 마음까지 이어줍니다.</p>
+            <p>@Text["service.thankyou"]</p>
         </div>
         <div class="cm-card-footer">
-            <a class="cm-btn" href="https://thankyou.codemaru.co.kr/">감사장 만들기</a>
-            <a class="cm-btn-secondary" href="/guide/thankyou">이용 설명서</a>
+            <a class="cm-btn" href="https://thankyou.codemaru.co.kr/">@Text["service.thankyou.action"]</a>
+            <a class="cm-btn-secondary" href="/guide/thankyou">@Text["service.guide"]</a>
         </div>
     </article>
 
@@ -124,11 +125,11 @@
         </div>
         <div class="cm-card-body">
             <h2>Families</h2>
-            <p>가족끼리만 공유하는 비공개 앨범과 타임라인입니다. 사진, 동영상, 이야기, 댓글, 반응을 한곳에 모아 가족 기록을 검색 엔진 노출 없이 보관합니다.</p>
+            <p>@Text["service.families"]</p>
         </div>
         <div class="cm-card-footer">
-            <a class="cm-btn" href="https://families.codemaru.co.kr">바로가기</a>
-            <a class="cm-btn-secondary" href="/guide/families">이용 설명서</a>
+            <a class="cm-btn" href="https://families.codemaru.co.kr">@Text["service.families.action"]</a>
+            <a class="cm-btn-secondary" href="/guide/families">@Text["service.guide"]</a>
         </div>
     </article>
 
@@ -144,11 +145,11 @@
         </div>
         <div class="cm-card-body">
             <h2>Portfolio</h2>
-            <p>.NET, Blazor, WPF, 서비스 운영 경험을 프로젝트 단위로 정리한 개발자 포트폴리오입니다. 기술 스택, 이력, GitHub, 라이브 링크를 한눈에 확인할 수 있습니다.</p>
+            <p>@Text["service.portfolio"]</p>
         </div>
         <div class="cm-card-footer">
-            <a class="cm-btn" href="https://portfolio.codemaru.co.kr/">포트폴리오 보기</a>
-            <a class="cm-btn-secondary" href="/guide/portfolio">이용 설명서</a>
+            <a class="cm-btn" href="https://portfolio.codemaru.co.kr/">@Text["service.portfolio.action"]</a>
+            <a class="cm-btn-secondary" href="/guide/portfolio">@Text["service.guide"]</a>
         </div>
     </article>
 
@@ -164,11 +165,11 @@
         </div>
         <div class="cm-card-body">
             <h2>CCTV Viewer</h2>
-            <p>카메라가 연결된 Windows PC에 에이전트를 설치하면 RTSP 영상을 HLS로 변환해 브라우저에서 확인할 수 있습니다. 공개 라이브 링크와 다중 카메라 관리를 지원합니다.</p>
+            <p>@Text["service.cctv"]</p>
         </div>
         <div class="cm-card-footer">
-            <a class="cm-btn" href="https://cctvviewer.codemaru.co.kr">뷰어 열기</a>
-            <a class="cm-btn-secondary" href="/guide/cctv">이용 설명서</a>
+            <a class="cm-btn" href="https://cctvviewer.codemaru.co.kr">@Text["service.cctv.action"]</a>
+            <a class="cm-btn-secondary" href="/guide/cctv">@Text["service.guide"]</a>
         </div>
     </article>
 
@@ -184,11 +185,11 @@
         </div>
         <div class="cm-card-body">
             <h2>Shop Store</h2>
-            <p>농산물, 소프트웨어, 소규모 개발 용역을 직접 판매하는 CodeMaru 직영 쇼핑몰입니다. 장바구니, 주문 관리, 배송/환불 정책, 공통 로그인 기반 구매 흐름을 제공합니다.</p>
+            <p>@Text["service.shop"]</p>
         </div>
         <div class="cm-card-footer">
-            <a class="cm-btn" href="https://shop.codemaru.co.kr/">쇼핑하기</a>
-            <a class="cm-btn-secondary" href="/guide/shop">이용 설명서</a>
+            <a class="cm-btn" href="https://shop.codemaru.co.kr/">@Text["service.shop.action"]</a>
+            <a class="cm-btn-secondary" href="/guide/shop">@Text["service.guide"]</a>
         </div>
     </article>
 </section>
@@ -196,17 +197,21 @@
 <section id="about" class="cm-maker">
     <div class="cm-maker-copy">
         <p class="cm-home-kicker">About CodeMaru</p>
-        <h2>작은 문제부터<br />직접 해결합니다</h2>
-        <p>CodeMaru는 1인 개발 스튜디오입니다. 실제로 필요했던 기능을 직접 만들고, 운영하며 사용자의 피드백을 바탕으로 계속 개선합니다.</p>
+        <h2>@AsHtml(Text["about.title"])</h2>
+        <p>@Text["about.lead"]</p>
         <div class="cm-maker-links">
-            <a href="/about">CodeMaru 자세히 보기</a>
+            <a href="/about">@Text["home.about"]</a>
             <a href="https://github.com/CodeMaru-Dreamine" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> GitHub</a>
         </div>
     </div>
-    <img class="cm-maker-art" src="/img/codemaru-about-v2.png" alt="노트북과 화분이 놓인 CodeMaru 개발 작업 공간" />
+    <img class="cm-maker-art" src="/img/codemaru-about-v2.png" alt="@Text["about"]" />
 </section>
 
 @code {
+    private static string Plain(string value) => value.Replace("\n", " ", StringComparison.Ordinal);
+    private static MarkupString AsHtml(string value) =>
+        new(value.Replace("\n", "<br />", StringComparison.Ordinal));
+
     private static string PreviewSrc(string key, string fallback)
     {
         var path = Path.Combine(AppContext.BaseDirectory, "wwwroot", "img", "previews", $"{key}.jpg");

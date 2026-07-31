@@ -1,0 +1,50 @@
+@namespace Codemaru.Blazor.Components
+@inject IJSRuntime JS
+@inject SiteLocalization Text
+@inject NavigationManager Navigation
+
+<label class="cm-language-switcher" title="@Text["language"]">
+    <i class="fa-solid fa-language" aria-hidden="true"></i>
+    <span class="visually-hidden">@Text["language"]</span>
+    <select value="@Text.Language" @onchange="OnLanguageChangedAsync" aria-label="@Text["language"]">
+        @foreach (var option in Text.Languages)
+        {
+            <option value="@option.Code">@option.Region&nbsp; @option.NativeName</option>
+        }
+    </select>
+</label>
+
+@code {
+    private string[] SupportedLanguages => Text.Languages.Select(item => item.Code).ToArray();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender)
+        {
+            return;
+        }
+
+        Text.SetLanguage(await JS.InvokeAsync<string>(
+            "dreamineLocalization.get",
+            SupportedLanguages,
+            "ko",
+            "codemaru-language"));
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task OnLanguageChangedAsync(ChangeEventArgs args)
+    {
+        var language = args.Value?.ToString() ?? "ko";
+        Text.SetLanguage(language);
+        await JS.InvokeVoidAsync(
+            "dreamineLocalization.set",
+            language,
+            SupportedLanguages,
+            "ko",
+            "codemaru-language");
+        Navigation.NavigateTo(
+            Navigation.GetUriWithQueryParameter("lang", language),
+            replace: true);
+        await InvokeAsync(StateHasChanged);
+    }
+}

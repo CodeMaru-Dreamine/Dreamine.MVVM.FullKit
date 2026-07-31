@@ -1,25 +1,18 @@
 @namespace Codemaru.Blazor.Components
 @inject IJSRuntime JS
+@inject SiteLocalization Text
 
-<label class="cm-theme-switcher" title="화면 테마">
+<label class="cm-theme-switcher" title="@Text["theme.label"]">
     <i class="@ThemeIcon" aria-hidden="true"></i>
-    <span class="visually-hidden">화면 테마</span>
-    <select value="@_theme" @onchange="OnThemeChangedAsync" aria-label="화면 테마">
-        @foreach (var option in Options)
-        {
-            <option value="@option.Value">@option.Label</option>
-        }
+    <span class="visually-hidden">@Text["theme.label"]</span>
+    <select value="@_theme" @onchange="OnThemeChangedAsync" aria-label="@Text["theme.label"]">
+        <option value="system">@Text["theme.system"]</option>
+        <option value="light">@Text["theme.light"]</option>
+        <option value="dark">@Text["theme.dark"]</option>
     </select>
 </label>
 
 @code {
-    private static readonly (string Value, string Label, string Description)[] Options =
-    [
-        ("system", "System", "운영체제 설정 사용"),
-        ("light", "Light", "라이트 모드 사용"),
-        ("dark", "Dark", "다크 모드 사용")
-    ];
-
     private string _theme = "system";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

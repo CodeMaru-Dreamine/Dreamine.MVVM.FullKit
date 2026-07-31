@@ -42,6 +42,7 @@
     <ProjectReference Include="..\..\..\100. Library\Database.Core\Dreamine.Database.Core.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Database.Sqlite\Dreamine.Database.Sqlite.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Identity\Dreamine.Identity.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\UI.Blazor\Dreamine.UI.Blazor.csproj" />
   </ItemGroup>
 
   <ItemGroup>

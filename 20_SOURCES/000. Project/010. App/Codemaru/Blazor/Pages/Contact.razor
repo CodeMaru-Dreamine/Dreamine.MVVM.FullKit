@@ -4,63 +4,58 @@
 @using System.Net
 @using System.Net.Mail
 @inject Microsoft.Extensions.Options.IOptions<Contact.MailSettings> MailOptions
+@inject SiteLocalization Text
 
-<PageTitle>CodeMaru Contact</PageTitle>
-<SeoHead Title="개발 의뢰 및 문의 | CodeMaru"
-         Description="WPF·MVVM 장비 UI, 로컬 데이터베이스, ASP.NET 웹 서비스, CCTV·RTSP 뷰어 개발 범위와 문의 방법을 안내합니다."
+<PageTitle>@Copy.PageTitle | CodeMaru</PageTitle>
+<SeoHead Title="@($"{Copy.PageTitle} | CodeMaru")"
+         Description="@Copy.Intro"
          CanonicalPath="/contact"
-         ImageAlt="CodeMaru 개발 의뢰 및 문의" />
+         ImageAlt="@Copy.PageTitle" />
 
 <section class="contact-wrap">
     <header class="section-header">
         <span class="section-icon"><i class="fas fa-envelope"></i></span>
-        <h3>Contact</h3>
+        <h3>@Copy.PageTitle</h3>
     </header>
 
     <section class="section-card hire-card">
-        <h4 class="block-title">개발 의뢰 안내</h4>
-        <p class="note">
-            CodeMaru는 C# WPF MVVM 기반 업무용 프로그램, 장비 UI, 로컬 DB 프로그램, ASP.NET 웹 서비스를 제작합니다.
-            단순 화면 제작이 아니라 View, ViewModel, Service, Repository 계층을 분리하여 유지보수 가능한 구조로 구현합니다.
-        </p>
+        <h4 class="block-title">@Copy.HireTitle</h4>
+        <p class="note">@Copy.Intro</p>
 
-        <h5 class="hire-subtitle">주요 개발 범위</h5>
+        <h5 class="hire-subtitle">@Copy.ScopeTitle</h5>
         <ul class="hire-list">
-            <li>장비 UI / 모니터링 화면</li>
-            <li>설정 / 레시피 / 파라미터 관리</li>
-            <li>SQLite / SQL Server 기반 로컬 DB 프로그램</li>
-            <li>업무용 관리자 프로그램</li>
-            <li>ASP.NET 기반 웹 서비스 및 관리자 페이지</li>
-            <li>CCTV / RTSP 뷰어</li>
+            @foreach (var scope in Copy.Scopes)
+            {
+                <li>@scope</li>
+            }
         </ul>
 
-        <h5 class="hire-subtitle">계약 기준</h5>
+        <h5 class="hire-subtitle">@Copy.PricingTitle</h5>
         <table class="price-table">
             <tbody>
-                <tr><td>원격 기능 개발</td><td>150만~400만원</td></tr>
-                <tr><td>원격 프로젝트</td><td>300만~700만원</td></tr>
-                <tr><td>월 단위 원격 개발</td><td>월 600만~900만원</td></tr>
-                <tr><td>유지보수 계약</td><td>월 70만~200만원</td></tr>
-                <tr><td>현장 방문 지원</td><td>1일 80만~120만원</td></tr>
-                <tr><td>국내 현장 상주</td><td>월 1,000만~1,400만원</td></tr>
-                <tr><td>장거리 / 해외 현장 투입</td><td>항공·숙박·체류 조건에 따라 별도 산정</td></tr>
+                <tr><td>@Copy.PricingLabels[0]</td><td>₩1.5M–4M</td></tr>
+                <tr><td>@Copy.PricingLabels[1]</td><td>₩3M–7M</td></tr>
+                <tr><td>@Copy.PricingLabels[2]</td><td>₩6M–9M / month</td></tr>
+                <tr><td>@Copy.PricingLabels[3]</td><td>₩0.7M–2M / month</td></tr>
+                <tr><td>@Copy.PricingLabels[4]</td><td>₩0.8M–1.2M / day</td></tr>
+                <tr><td>@Copy.PricingLabels[5]</td><td>₩10M–14M / month</td></tr>
+                <tr><td>@Copy.PricingLabels[6]</td><td>@Copy.OverseasPrice</td></tr>
             </tbody>
         </table>
 
         <p class="note hire-footnote">
-            ※ 최종 견적은 요구사항, 화면 수, DB 연동, 장비 통신 여부, 현장 대응 범위, 일정에 따라 달라집니다.
-            문의 시 필요한 기능, 예상 일정, 원격/현장 여부를 함께 보내주시면 더 정확히 검토할 수 있습니다.
+            @Copy.Footnote
         </p>
     </section>
 
     <div class="contact-grid">
         <aside class="section-card">
-            <h4 class="block-title">연락 카드</h4>
+            <h4 class="block-title">@Copy.ContactCard</h4>
 
             <div class="kv">
                 <i class="fas fa-at"></i>
                 <div>
-                    <div class="kv-key">이메일</div>
+                    <div class="kv-key">@Copy.Email</div>
                     <a class="kv-val" href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a>
                 </div>
             </div>
@@ -84,20 +79,20 @@
             <div class="kv">
                 <i class="fas fa-location-dot"></i>
                 <div>
-                    <div class="kv-key">위치</div>
-                    <div class="kv-val">충청남도 청양군 · Remote / On-site 협업 가능</div>
+                    <div class="kv-key">@Copy.Location</div>
+                    <div class="kv-val">@Copy.LocationText</div>
                 </div>
             </div>
 
-            <div class="note">Dreamine 관련 문의나 견적 및 협업 제안은 환영합니다.</div>
+            <div class="note">@Copy.Welcome</div>
         </aside>
 
         <article class="section-card form-card">
             <header class="form-head">
                 <span class="badge-grad"><i class="fas fa-paper-plane"></i></span>
                 <div>
-                    <h4 class="form-title">의견을 보내주세요.</h4>
-                    <p class="form-desc">보내주신 내용은 연락 및 회신 용도로만 사용합니다.</p>
+                    <h4 class="form-title">@Copy.FormTitle</h4>
+                    <p class="form-desc">@Copy.FormDescription</p>
                 </div>
             </header>
 
@@ -107,7 +102,7 @@
 
                 <div class="form-grid-2">
                     <div class="form-row">
-                        <label for="name">Full name</label>
+                        <label for="name">@Copy.FullName</label>
                         <div class="input-group">
                             <i class="fas fa-user"></i>
                             <InputText id="name" class="input" @bind-Value="Form.Name" />
@@ -116,7 +111,7 @@
                     </div>
 
                     <div class="form-row">
-                        <label for="email">Email address</label>
+                        <label for="email">@Copy.EmailAddress</label>
                         <div class="input-group">
                             <i class="fas fa-envelope"></i>
                             <InputText id="email" class="input" @bind-Value="Form.Email" />
@@ -125,7 +120,7 @@
                     </div>
 
                     <div class="form-row span-2">
-                        <label for="phone">Phone number <small class="muted">(선택)</small></label>
+                        <label for="phone">@Copy.PhoneNumber <small class="muted">(@Copy.Optional)</small></label>
                         <div class="input-group">
                             <i class="fas fa-phone"></i>
                             <InputText id="phone" class="input" @bind-Value="Form.Phone" />
@@ -133,11 +128,11 @@
                     </div>
 
                     <div class="form-row span-2">
-                        <label for="msg">Message</label>
+                        <label for="msg">@Copy.Message</label>
                         <div class="input-group textarea-group">
                             <i class="fas fa-comment-dots"></i>
                             <InputTextArea id="msg" class="textarea" @bind-Value="Form.Message" rows="8"
-                                           placeholder="@MessagePlaceholder" />
+                                           placeholder="@Copy.Placeholder" />
                         </div>
                         <ValidationMessage For="@(() => Form.Message)" />
                     </div>
@@ -149,21 +144,21 @@
                     @if (sending)
                     {
                         <span class="spinner"></span>
-                        <span>Sending...</span>
+                        <span>@Copy.Sending...</span>
                     }
                     else
                     {
-                        <span>견적 문의 보내기</span>
+                        <span>@Copy.Send</span>
                     }
                 </button>
 
                 @if (ok is true)
                 {
-                    <div class="alert ok">메일이 전송되었습니다. 빠른 시일 내 회신드릴게요.</div>
+                    <div class="alert ok">@Copy.Success</div>
                 }
                 else if (ok is false)
                 {
-                    <div class="alert fail">전송에 실패했습니다. 설정을 확인한 뒤 다시 시도해 주세요.</div>
+                    <div class="alert fail">@Copy.Failure</div>
                     @if (!string.IsNullOrWhiteSpace(error))
                     {
                         <pre class="alert fail detail">@error</pre>
@@ -207,8 +202,7 @@
         public string? Honeypot { get; set; }
     }
 
-    private const string MessagePlaceholder =
-        "예: WPF 장비 설정 프로그램 개발 문의입니다.\n필요 기능, 예상 일정, 원격/현장 여부를 함께 보내주시면 검토 후 회신드립니다.";
+    private ContactCopy Copy => ContactLocalization.Get(Text.Language);
 
     private readonly ContactFormModel Form = new();
     private bool sending;

@@ -1,6 +1,7 @@
 @namespace Codemaru.Blazor
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
+@inject SiteLocalization Text
 
 <Router AppAssembly="@typeof(Routes).Assembly">
     <Found Context="routeData">
@@ -11,14 +12,14 @@
                         <i class="fa-solid fa-lock"></i>
                         <AuthorizeView Context="accessContext">
                             <Authorized>
-                                <h1>관리자 권한이 필요합니다</h1>
-                                <p>현재 계정에는 CodeMaru 운영 대시보드 접근 권한이 없습니다.</p>
-                                <a href="/">홈으로 돌아가기</a>
+                                <h1>@Copy.AdminRequired</h1>
+                                <p>@Copy.AdminRequiredDetail</p>
+                                <a href="/">@Copy.Home</a>
                             </Authorized>
                             <NotAuthorized>
-                                <h1>로그인이 필요합니다</h1>
-                                <p>운영 대시보드에 접근하려면 관리자 계정으로 로그인하세요.</p>
-                                <a href="/login?returnUrl=%2Fadmin">로그인하고 계속하기</a>
+                                <h1>@Copy.SignInRequired</h1>
+                                <p>@Copy.SignInRequiredDetail</p>
+                                <a href="/login?returnUrl=%2Fadmin">@Copy.SignIn</a>
                             </NotAuthorized>
                         </AuthorizeView>
                     </main>
@@ -27,20 +28,24 @@
         </AuthorizeRouteView>
     </Found>
     <NotFound>
-        <PageTitle>페이지를 찾을 수 없습니다 | CodeMaru</PageTitle>
+        <PageTitle>@Copy.NotFound | CodeMaru</PageTitle>
         <HeadContent>
             <meta name="robots" content="noindex, follow" />
         </HeadContent>
         <LayoutView Layout="@typeof(MainLayout)">
             <main class="cm-not-found">
                 <p class="cm-not-found-code">404</p>
-                <h1>페이지를 찾을 수 없습니다</h1>
-                <p>주소가 바뀌었거나 더 이상 제공하지 않는 페이지입니다.</p>
+                <h1>@Copy.NotFound</h1>
+                <p>@Copy.NotFoundDetail</p>
                 <div class="cm-not-found-actions">
-                    <a href="/">CodeMaru 홈</a>
-                    <a href="/guide">이용 설명서</a>
+                    <a href="/">@Copy.Home</a>
+                    <a href="/guide">@Copy.Guides</a>
                 </div>
             </main>
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    private RouteCopy Copy => RouteLocalization.Get(Text.Language);
+}
