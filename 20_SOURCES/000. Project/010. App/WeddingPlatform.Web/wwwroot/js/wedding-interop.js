@@ -1304,3 +1304,32 @@ window.weddingInterop = {
         } catch (e) { }
     }
 };
+
+window.weddingPreferences = {
+    readCookie: function (name) {
+        var prefix = name + '=';
+        var item = document.cookie.split(';').map(function (x) { return x.trim(); })
+            .find(function (x) { return x.indexOf(prefix) === 0; });
+        return item ? decodeURIComponent(item.substring(prefix.length)) : null;
+    },
+    getTheme: function () {
+        var theme = this.readCookie('dreamine-theme') || localStorage.getItem('codemaru-theme');
+        return theme === 'light' || theme === 'dark' ? theme : 'system';
+    },
+    setTheme: function (theme) {
+        var selected = theme === 'light' || theme === 'dark' ? theme : 'system';
+        var host = window.location.hostname.toLowerCase();
+        var domain = host === 'codemaru.co.kr' || host.endsWith('.codemaru.co.kr')
+            ? '; Domain=.codemaru.co.kr' : '';
+        if (selected === 'system') {
+            localStorage.removeItem('codemaru-theme');
+            document.cookie = 'dreamine-theme=; Path=/; Max-Age=0; SameSite=Lax' + domain;
+            delete document.documentElement.dataset.theme;
+        } else {
+            localStorage.setItem('codemaru-theme', selected);
+            document.cookie = 'dreamine-theme=' + selected + '; Path=/; Max-Age=31536000; SameSite=Lax' + domain;
+            document.documentElement.dataset.theme = selected;
+        }
+        return selected;
+    }
+};

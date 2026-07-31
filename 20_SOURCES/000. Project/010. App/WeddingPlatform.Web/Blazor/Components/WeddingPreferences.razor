@@ -1,0 +1,61 @@
+@namespace WeddingPlatform.Blazor.Components
+@implements IDisposable
+@using Microsoft.JSInterop
+@inject WeddingLocalization Text
+@inject IJSRuntime JS
+@inject NavigationManager Navigation
+
+<div class="wp-preferences" aria-label="@Text["theme"] / @Text["language"]">
+    <label title="@Text["theme"]">
+        <span aria-hidden="true">@ThemeIcon</span>
+        <span class="wp-preferences__label">@Text["theme"]</span>
+        <select value="@theme" @onchange="ChangeThemeAsync" aria-label="@Text["theme"]">
+            <option value="system">@Text["system"]</option>
+            <option value="light">@Text["light"]</option>
+            <option value="dark">@Text["dark"]</option>
+        </select>
+    </label>
+    <label title="@Text["language"]">
+        <span aria-hidden="true">🌐</span>
+        <span class="wp-preferences__label">@Text["language"]</span>
+        <select value="@Text.Language" @onchange="ChangeLanguageAsync" aria-label="@Text["language"]">
+            @foreach (var language in WeddingLocalization.Languages)
+            {
+                <option value="@language.Code">@language.Region&nbsp; @language.NativeName</option>
+            }
+        </select>
+    </label>
+</div>
+
+@code {
+    private string theme = "system";
+    private string[] SupportedLanguages => WeddingLocalization.Languages.Select(x => x.Code).ToArray();
+    private string ThemeIcon => theme switch { "light" => "☀", "dark" => "☾", _ => "▣" };
+
+    protected override void OnInitialized() => Text.Changed += OnChanged;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        Text.SetLanguage(await JS.InvokeAsync<string>("dreamineLocalization.get", SupportedLanguages, "ko", "codemaru-language"));
+        theme = await JS.InvokeAsync<string>("weddingPreferences.getTheme");
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ChangeLanguageAsync(ChangeEventArgs args)
+    {
+        var language = args.Value?.ToString() ?? "ko";
+        Text.SetLanguage(language);
+        await JS.InvokeVoidAsync("dreamineLocalization.set", language, SupportedLanguages, "ko", "codemaru-language");
+        Navigation.NavigateTo(Navigation.GetUriWithQueryParameter("lang", language), replace: true);
+    }
+
+    private async Task ChangeThemeAsync(ChangeEventArgs args)
+    {
+        theme = args.Value?.ToString() ?? "system";
+        await JS.InvokeVoidAsync("weddingPreferences.setTheme", theme);
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Text.Changed -= OnChanged;
+}

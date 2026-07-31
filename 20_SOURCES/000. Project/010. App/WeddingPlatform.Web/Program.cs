@@ -166,6 +166,7 @@ public static class Program
                 });
 
                 services.AddScoped<WeddingUserContext>();
+                services.AddScoped<WeddingLocalization>();
                 services.AddSingleton<
                     Microsoft.AspNetCore.Hosting.IStartupFilter,
                     WeddingSeoStartupFilter>();

@@ -16,17 +16,27 @@ const _hlsState = Object.create(null);
 
 window.codemaruTheme = {
     get() {
-        const theme = localStorage.getItem("codemaru-theme");
+        const item = document.cookie.split(";").map(value => value.trim())
+            .find(value => value.startsWith("dreamine-theme="));
+        const theme = item
+            ? decodeURIComponent(item.substring("dreamine-theme=".length))
+            : localStorage.getItem("codemaru-theme");
         return theme === "light" || theme === "dark" ? theme : "system";
     },
     set(theme) {
+        const host = window.location.hostname.toLowerCase();
+        const domain = host === "codemaru.co.kr" || host.endsWith(".codemaru.co.kr")
+            ? "; Domain=.codemaru.co.kr"
+            : "";
         if (theme === "light" || theme === "dark") {
             localStorage.setItem("codemaru-theme", theme);
+            document.cookie = `dreamine-theme=${theme}; Path=/; Max-Age=31536000; SameSite=Lax${domain}`;
             document.documentElement.dataset.theme = theme;
             return;
         }
 
         localStorage.removeItem("codemaru-theme");
+        document.cookie = `dreamine-theme=; Path=/; Max-Age=0; SameSite=Lax${domain}`;
         delete document.documentElement.dataset.theme;
     }
 };

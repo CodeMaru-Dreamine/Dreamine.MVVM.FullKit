@@ -4950,3 +4950,20 @@ body.w-theme-blush {
 .wedding-card-frame--has-header .w-section-title {
     display: none !important;
 }
+/* Shared CodeMaru language/theme controls. Tenant invitation palettes remain intact. */
+.wp-preferences { position: fixed; z-index: 10000; top: .75rem; right: .75rem; display: flex; gap: .45rem; padding: .4rem; border: 1px solid rgba(128,128,128,.28); border-radius: .8rem; background: color-mix(in srgb, Canvas 92%, transparent); color: CanvasText; box-shadow: 0 .4rem 1.4rem rgba(0,0,0,.12); backdrop-filter: blur(14px); font: 600 .78rem/1.2 system-ui,sans-serif; }
+.wp-preferences label { display: flex; align-items: center; gap: .3rem; }
+.wp-preferences select { min-height: 2rem; max-width: 9.5rem; border: 1px solid rgba(128,128,128,.35); border-radius: .5rem; padding: .25rem .45rem; background: Canvas; color: CanvasText; font: inherit; }
+html[data-theme="light"] { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; }
+html[data-theme="dark"] body { background: #0b1220; color: #e5edf8; }
+html[data-theme="dark"] .wh-page { background: #0b1220; color: #e5edf8; }
+html[data-theme="dark"] .wh-topnav, html[data-theme="dark"] .wh-create__box, html[data-theme="dark"] .wh-feature, html[data-theme="dark"] .wh-invite-card { background: #111b2d; color: #e5edf8; border-color: #2b3b55; }
+html[data-theme="dark"] .wh-input, html[data-theme="dark"] .wh-input-prefix { background: #0e1728; color: #f3f6fb; border-color: #34445f; }
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme]) { color-scheme: dark; }
+  html:not([data-theme]) body, html:not([data-theme]) .wh-page { background: #0b1220; color: #e5edf8; }
+  html:not([data-theme]) .wh-topnav, html:not([data-theme]) .wh-create__box, html:not([data-theme]) .wh-feature, html:not([data-theme]) .wh-invite-card { background: #111b2d; color: #e5edf8; border-color: #2b3b55; }
+}
+@media (max-width: 720px) { .wp-preferences { top: auto; bottom: .65rem; left: .65rem; right: .65rem; justify-content: center; } .wp-preferences__label { display: none; } .wp-preferences select { max-width: 8.5rem; } }
+.wh-hero__title { white-space: pre-line; }

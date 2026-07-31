@@ -7,6 +7,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+    <script>
+        (() => {
+            const cookie = document.cookie.split(';').map(x => x.trim()).find(x => x.startsWith('dreamine-theme='));
+            const saved = cookie ? decodeURIComponent(cookie.substring('dreamine-theme='.length)) : localStorage.getItem('codemaru-theme');
+            if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+        })();
+    </script>
     <link rel="stylesheet" href="/css/wedding.css?v=20260726-theme-palette" />
     <link rel="stylesheet" href="/WeddingPlatform.Web.styles.css?v=20260726-presentations" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -24,6 +31,7 @@
       삼성 인터넷 등 일부 브라우저가 WebSocket을 차단할 때 LongPolling으로 자동 폴백하고,
       회선 연결 실패 시 최대 10회 재시도하도록 설정합니다.
     -->
+    <script src="/_content/Dreamine.UI.Blazor/dreamine-localization.js"></script>
     <script src="/_framework/blazor.web.js" autostart="false"></script>
     <!-- Leaflet JS — 로컬 파일이라 빠름, CDN과 달리 지연/차단 없음 -->
     <script src="/lib/leaflet/leaflet.min.js"></script>
