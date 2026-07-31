@@ -322,6 +322,7 @@ public sealed class WeddingSuperAdminViewModel
     /// \endif
     /// </summary>
     public string SuperAdminSessionToken { get; private set; } = "";
+    public bool HasConfiguredPassword => _superAdminTokens.HasConfiguredPassword;
 
     /// <summary>
     /// \if KO
@@ -341,7 +342,10 @@ public sealed class WeddingSuperAdminViewModel
     /// </returns>
     public Task<bool> LoginAsync()
     {
-        IsAuthenticated = DreaminePasswordHasher.VerifyPassword(LoginPassword, _opts.SuperAdminPassword);
+        var environmentPassword = Environment.GetEnvironmentVariable("Wedding__SuperAdminPassword");
+        IsAuthenticated = string.IsNullOrWhiteSpace(environmentPassword)
+            ? _superAdminTokens.VerifyPassword(LoginPassword)
+            : DreaminePasswordHasher.VerifyPassword(LoginPassword, environmentPassword);
         StatusMessage = IsAuthenticated ? "" : "비밀번호가 틀렸습니다.";
         SuperAdminSessionToken = IsAuthenticated ? _superAdminTokens.CreateToken() : "";
         return Task.FromResult(IsAuthenticated);

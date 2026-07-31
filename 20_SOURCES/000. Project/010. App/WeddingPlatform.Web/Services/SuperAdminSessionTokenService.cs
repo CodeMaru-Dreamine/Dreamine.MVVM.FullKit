@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Dreamine.Identity;
 
 namespace WeddingPlatform.Services;
 
@@ -13,6 +14,12 @@ namespace WeddingPlatform.Services;
 /// </summary>
 public interface ISuperAdminSessionTokenService
 {
+    /// <summary>Gets whether a super-admin credential is configured.</summary>
+    bool HasConfiguredPassword { get; }
+
+    /// <summary>Validates the configured super-admin credential.</summary>
+    bool VerifyPassword(string password);
+
     /// <summary>
     /// \if KO
     /// <para>현재 설정의 슈퍼 어드민 비밀값으로 서명된 세션 토큰을 생성합니다.</para>
@@ -86,6 +93,10 @@ public sealed class SuperAdminSessionTokenService : ISuperAdminSessionTokenServi
     /// \endif
     /// </summary>
     private readonly byte[] _signingKey;
+    private readonly string _passwordHash;
+
+    /// <inheritdoc />
+    public bool HasConfiguredPassword => !string.IsNullOrWhiteSpace(_passwordHash);
 
     /// <summary>
     /// \if KO
@@ -106,10 +117,18 @@ public sealed class SuperAdminSessionTokenService : ISuperAdminSessionTokenServi
     public SuperAdminSessionTokenService(WeddingOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        _signingKey = string.IsNullOrWhiteSpace(options.SuperAdminPassword)
+        var configuredPassword = Environment.GetEnvironmentVariable("Wedding__SuperAdminPassword");
+        _passwordHash = string.IsNullOrWhiteSpace(configuredPassword)
+            ? options.SuperAdminPassword
+            : configuredPassword;
+        _signingKey = string.IsNullOrWhiteSpace(_passwordHash)
             ? RandomNumberGenerator.GetBytes(32)
-            : SHA256.HashData(Encoding.UTF8.GetBytes(options.SuperAdminPassword));
+            : SHA256.HashData(Encoding.UTF8.GetBytes(_passwordHash));
     }
+
+    /// <inheritdoc />
+    public bool VerifyPassword(string password) =>
+        DreaminePasswordHasher.VerifyPassword(password, _passwordHash);
 
     /// <summary>
     /// \if KO

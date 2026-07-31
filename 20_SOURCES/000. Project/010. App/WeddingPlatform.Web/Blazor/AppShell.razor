@@ -7,6 +7,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+    <script>
+        (() => {
+            const cookie = document.cookie.split(';').map(x => x.trim()).find(x => x.startsWith('dreamine-theme='));
+            const saved = cookie ? decodeURIComponent(cookie.substring('dreamine-theme='.length)) : localStorage.getItem('codemaru-theme');
+            if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+        })();
+    </script>
     <link rel="stylesheet" href="/css/wedding.css?v=20260726-theme-palette" />
     <link rel="stylesheet" href="/WeddingPlatform.Web.styles.css?v=20260726-presentations" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -27,6 +34,7 @@
     <script src="/_framework/blazor.web.js" autostart="false"></script>
     <!-- Leaflet JS — 로컬 파일이라 빠름, CDN과 달리 지연/차단 없음 -->
     <script src="/lib/leaflet/leaflet.min.js"></script>
+    <script src="/_content/Dreamine.UI.Blazor/dreamine-portal.js"></script>
     <script src="/js/wedding-interop.js?v=20260726-theme-palette"></script>
     <script>
         Blazor.start({
