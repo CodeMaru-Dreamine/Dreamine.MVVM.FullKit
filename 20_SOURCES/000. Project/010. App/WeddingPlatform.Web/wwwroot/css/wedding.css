@@ -2992,6 +2992,17 @@ body.w-theme-blush {
 
 /* ── CodeMaru 공통 Nav (통일 규격, 라이트 테마) ── */
 .wh-topnav {
+    --dreamine-portal-background: rgba(253, 246, 238, .88);
+    --dreamine-portal-panel: #fdf6ee;
+    --dreamine-portal-border: rgba(107, 78, 42, .18);
+    --dreamine-portal-text: #6b4e2a;
+    --dreamine-portal-strong: #3a2e28;
+    --dreamine-portal-muted: #7a6a5e;
+    --dreamine-portal-hover: rgba(107, 78, 42, .08);
+    --dreamine-portal-active-background: rgba(107, 78, 42, .12);
+    --dreamine-portal-active-text: #2d211b;
+    --dreamine-portal-icon-background: #fffdf8;
+    --dreamine-portal-icon-border: rgba(107, 78, 42, .14);
     --cm-header-bg: rgba(253, 246, 238, .88);
     --cm-header-border: rgba(107, 78, 42, .12);
     --cm-header-text: #6b4e2a;
@@ -4981,11 +4992,133 @@ html[data-theme="dark"] { color-scheme: dark; }
     position: relative;
     z-index: 20;
 }
+
+/* Normal tenant administration follows the shared portal theme. */
+.w-admin {
+    --wa-bg: #f7f5f0;
+    --wa-panel: #ffffff;
+    --wa-panel-soft: #f8f6f2;
+    --wa-panel-muted: #f0ebe0;
+    --wa-text: #342f2a;
+    --wa-strong: #211d1a;
+    --wa-muted: #756d66;
+    --wa-border: #e4ddd3;
+    --wa-hover: rgba(200, 168, 130, .13);
+    --wa-active: rgba(200, 168, 130, .22);
+    min-height: 100vh;
+    color: var(--wa-text);
+    background: var(--wa-bg);
+}
+.w-admin .w-admin-preferences {
+    margin-bottom: 0;
+    padding: .55rem 1rem;
+    color: var(--wa-text);
+    background: var(--wa-panel);
+    border-bottom: 1px solid var(--wa-border);
+}
+.w-admin .w-admin-shell { color: var(--wa-text); background: var(--wa-bg); }
+.w-admin .w-admin-nav,
+.w-admin .w-admin-content__topbar { color: var(--wa-text); background: var(--wa-panel); border-color: var(--wa-border); }
+.w-admin .w-admin-content,
+.w-admin .w-admin-content__body { color: var(--wa-text); background: var(--wa-bg); }
+.w-admin .w-admin-preview { color: var(--wa-text); background: var(--wa-panel-muted); border-color: var(--wa-border); }
+.w-admin .w-admin-nav__head,
+.w-admin .w-admin-nav__foot,
+.w-admin .w-admin__section-h,
+.w-admin .w-admin__sub-h,
+.w-admin .w-admin-splitter { border-color: var(--wa-border); }
+.w-admin .w-admin-nav__brand small,
+.w-admin .w-admin-nav__link,
+.w-admin .w-admin-preview__hint,
+.w-admin .w-hint { color: var(--wa-muted); }
+.w-admin .w-admin-nav__item,
+.w-admin .w-admin-nav__close,
+.w-admin .w-admin-preview__close,
+.w-admin .w-admin-nav__toggle,
+.w-admin .w-admin-preview__toggle { color: var(--wa-text); }
+.w-admin .w-admin-nav__item:hover,
+.w-admin .w-admin-nav__link:hover,
+.w-admin .w-admin-nav__close:hover,
+.w-admin .w-admin-preview__close:hover,
+.w-admin .w-admin-nav__toggle:hover,
+.w-admin .w-admin-preview__toggle:hover { color: var(--wa-strong); background: var(--wa-hover); }
+.w-admin .w-admin-nav__item.active { color: var(--wa-strong); background: var(--wa-active); }
+.w-admin .w-admin-nav__icon { color: var(--w-primary); background: var(--wa-panel-soft); border-color: var(--wa-border); }
+.w-admin .w-admin-nav__item.active .w-admin-nav__icon { color: var(--wa-strong); background: var(--wa-active); border-color: var(--w-primary); }
+.w-admin .w-admin-title__icon { color: var(--wa-strong); background: var(--wa-active); }
+.w-admin .w-admin__section-h,
+.w-admin .w-admin__sub-h,
+.w-admin .w-label,
+.w-admin .w-admin-content__title { color: var(--wa-strong); }
+.w-admin .w-status--compact { color: var(--wa-text); background: var(--wa-panel-soft); border: 1px solid var(--wa-border); }
+.w-admin .w-input,
+.w-admin input:not([type="range"]):not([type="checkbox"]):not([type="radio"]),
+.w-admin select,
+.w-admin textarea,
+.w-admin .w-admin-preview__mode,
+.w-admin .w-admin-preview__device,
+.w-admin .w-layout-combobox__trigger,
+.w-admin .w-layout-combobox__popover,
+.w-admin .w-note-toolbar button {
+    color: var(--wa-text);
+    background: var(--wa-panel);
+    border-color: var(--wa-border);
+}
+.w-admin .w-style-card,
+.w-admin .w-layout-detail,
+.w-admin .w-layout-version-policy,
+.w-admin .w-note-preview,
+.w-admin .w-theme-builder,
+.w-admin .w-theme-color-editor,
+.w-admin .w-theme-custom,
+.w-admin .w-admin-card,
+.w-admin .w-media-card,
+.w-admin .w-gallery-item,
+.w-admin .w-account-editor,
+.w-admin .w-share-panel { color: var(--wa-text); background: var(--wa-panel); border-color: var(--wa-border); }
+.w-admin .w-layout-detail__facts > div,
+.w-admin .w-layout-option:hover,
+.w-admin .w-layout-option:focus-visible,
+.w-admin .w-layout-option.is-selected,
+.w-admin .w-style-card__preview,
+.w-admin .w-note-preview__head { color: var(--wa-text); background: var(--wa-panel-soft); border-color: var(--wa-border); }
+.w-admin .w-layout-detail__content > p,
+.w-admin .w-layout-detail__facts dt,
+.w-admin .w-layout-combobox__value small,
+.w-admin .w-layout-option__meta small,
+.w-admin .w-style-card__meta small { color: var(--wa-muted); }
+.w-admin .w-layout-detail__facts dd,
+.w-admin .w-layout-combobox__trigger,
+.w-admin .w-layout-combobox__search-label { color: var(--wa-text); }
+
+html[data-theme="dark"] .w-admin {
+    --wa-bg: #0b1220;
+    --wa-panel: #111b2d;
+    --wa-panel-soft: #17243a;
+    --wa-panel-muted: #0e192b;
+    --wa-text: #d8e2f0;
+    --wa-strong: #f5f8fc;
+    --wa-muted: #aebbd0;
+    --wa-border: #34445f;
+    --wa-hover: #1c2a42;
+    --wa-active: #203453;
+}
 html[data-theme="dark"] body { background: #0b1220; color: #e5edf8; }
 html[data-theme="dark"] .wh-page { background: #0b1220; color: #e5edf8; }
 html[data-theme="dark"] .wh-topnav, html[data-theme="dark"] .wh-create__box, html[data-theme="dark"] .wh-feature, html[data-theme="dark"] .wh-invite-card { background: #111b2d; color: #e5edf8; border-color: #2b3b55; }
 html[data-theme="dark"] .wh-input, html[data-theme="dark"] .wh-input-prefix { background: #0e1728; color: #f3f6fb; border-color: #34445f; }
 html[data-theme="dark"] .wh-topnav {
+    --dreamine-portal-background: rgba(11,18,32,.96);
+    --dreamine-portal-panel: #111b2d;
+    --dreamine-portal-border: #34445f;
+    --dreamine-portal-text: #d8e2f0;
+    --dreamine-portal-strong: #f5f8fc;
+    --dreamine-portal-muted: #aebbd0;
+    --dreamine-portal-hover: #1c2a42;
+    --dreamine-portal-active-background: #203453;
+    --dreamine-portal-active-text: #ffffff;
+    --dreamine-portal-icon-background: #17243a;
+    --dreamine-portal-icon-border: #34445f;
     --cm-header-bg: rgba(11,18,32,.96);
     --cm-header-border: #2b3b55;
     --cm-header-text: #e6edf7;
@@ -5049,6 +5182,18 @@ html[data-theme="dark"] .wedding-admin-shell select,
 html[data-theme="dark"] .wedding-admin-shell textarea { background: #0d1728; color: #edf3fb; border-color: #344760; }
 @media (prefers-color-scheme: dark) {
   html:not([data-theme]) { color-scheme: dark; }
+  html:not([data-theme]) .w-admin {
+    --wa-bg: #0b1220;
+    --wa-panel: #111b2d;
+    --wa-panel-soft: #17243a;
+    --wa-panel-muted: #0e192b;
+    --wa-text: #d8e2f0;
+    --wa-strong: #f5f8fc;
+    --wa-muted: #aebbd0;
+    --wa-border: #34445f;
+    --wa-hover: #1c2a42;
+    --wa-active: #203453;
+  }
   html:not([data-theme]) body, html:not([data-theme]) .wh-page { background: #0b1220; color: #e5edf8; }
   html:not([data-theme]) .wedding-admin-shell {
     --wa-bg: #0b1220; --wa-card: rgba(17,27,45,.96); --wa-card-strong: #162238;
@@ -5064,6 +5209,17 @@ html[data-theme="dark"] .wedding-admin-shell textarea { background: #0d1728; col
   html:not([data-theme]) .wedding-admin-nav__item.is-active { background: #1a2941; color: #fff; }
   html:not([data-theme]) .wh-topnav, html:not([data-theme]) .wh-create__box, html:not([data-theme]) .wh-feature, html:not([data-theme]) .wh-invite-card { background: #111b2d; color: #e5edf8; border-color: #2b3b55; }
   html:not([data-theme]) .wh-topnav {
+    --dreamine-portal-background: rgba(11,18,32,.96);
+    --dreamine-portal-panel: #111b2d;
+    --dreamine-portal-border: #34445f;
+    --dreamine-portal-text: #d8e2f0;
+    --dreamine-portal-strong: #f5f8fc;
+    --dreamine-portal-muted: #aebbd0;
+    --dreamine-portal-hover: #1c2a42;
+    --dreamine-portal-active-background: #203453;
+    --dreamine-portal-active-text: #ffffff;
+    --dreamine-portal-icon-background: #17243a;
+    --dreamine-portal-icon-border: #34445f;
     --cm-header-bg: rgba(11,18,32,.96);
     --cm-header-border: #2b3b55;
     --cm-header-text: #e6edf7;
