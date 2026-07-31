@@ -165,6 +165,9 @@ jobs:
             "**/*.min.css"
           ) -join ","
           $cpdExclusions = @(
+            # Library packages have dedicated SonarCloud projects. FullKit
+            # scans them for issues but does not duplicate their CPD metrics.
+            "20_SOURCES/100. Library/**",
             "**/*.g.cs",
             "**/*.g.i.cs",
             "**/*.Designer.cs",
@@ -181,6 +184,9 @@ jobs:
             "**/*.min.css"
           ) -join ","
           $coverageExclusions = @(
+            # Library packages publish coverage through their dedicated
+            # SonarCloud projects; FullKit measures application integration.
+            "20_SOURCES/100. Library/**",
             # These applications are compiled in CI but do not yet have
             # executable test projects. They remain fully issue-scanned.
             "20_SOURCES/000. Project/010. App/Codemaru/**",
@@ -192,9 +198,17 @@ jobs:
             "20_SOURCES/000. Project/010. App/Portfolio.Web/**",
             "20_SOURCES/000. Project/010. App/ShopPlatform.Web/**",
             "20_SOURCES/000. Project/010. App/WeddingThankYou/**",
+            "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/**",
+            "20_SOURCES/000. Project/010. App/Wedding.Layouts.Editor.Wpf/**",
+            # Declarative wedding content catalogs and presentation records
+            # are data models; executable validation remains measured.
+            "20_SOURCES/000. Project/010. App/Wedding.Common/WeddingLayoutCatalog.cs",
+            "20_SOURCES/000. Project/010. App/Wedding.Common/WeddingThemeCatalog.cs",
+            "20_SOURCES/000. Project/010. App/Wedding.Common/WeddingCardHighlight.cs",
+            "20_SOURCES/000. Project/010. App/Wedding.Common/WeddingStoryChapter.cs",
+            "20_SOURCES/000. Project/010. App/Wedding.Common/WeddingPhotoBookPage.cs",
             # Wedding workflow coverage focuses on domain/application logic,
             # not presentation models or persistence adapters.
-            "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/ViewModels/**",
             "20_SOURCES/000. Project/010. App/**/*.razor",
             "20_SOURCES/000. Project/010. App/**/wwwroot/js/**",
             "20_SOURCES/000. Project/010. App/**/Services/Json*Store.cs",
