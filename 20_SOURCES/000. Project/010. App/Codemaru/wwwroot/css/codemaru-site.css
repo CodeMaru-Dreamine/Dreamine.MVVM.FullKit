@@ -158,7 +158,8 @@ html, body {
     gap: .75rem;
 }
 
-.cm-theme-switcher {
+.cm-theme-switcher,
+.cm-language-switcher {
     display: inline-flex;
     align-items: center;
     gap: .35rem;
@@ -170,14 +171,16 @@ html, body {
     color: var(--cm-muted);
 }
 
-.cm-theme-switcher > i {
+.cm-theme-switcher > i,
+.cm-language-switcher > i {
     width: 14px;
     color: var(--cm-brand);
     font-size: .78rem;
     text-align: center;
 }
 
-.cm-theme-switcher select {
+.cm-theme-switcher select,
+.cm-language-switcher select {
     width: auto;
     min-width: 70px;
     padding: .28rem 1.25rem .28rem .2rem;
@@ -191,7 +194,8 @@ html, body {
     outline: none;
 }
 
-.cm-theme-switcher select option {
+.cm-theme-switcher select option,
+.cm-language-switcher select option {
     background: var(--cm-panel);
     color: var(--cm-text);
 }
@@ -261,11 +265,13 @@ html, body {
     box-shadow: var(--cm-shadow);
 }
 
-.cm-user-popover .cm-theme-switcher {
+.cm-user-popover .cm-theme-switcher,
+.cm-user-popover .cm-language-switcher {
     width: 100%;
 }
 
-.cm-user-popover .cm-theme-switcher select {
+.cm-user-popover .cm-theme-switcher select,
+.cm-user-popover .cm-language-switcher select {
     flex: 1;
 }
 
@@ -1313,7 +1319,8 @@ button.cm-admin-metric.selected {
         color: var(--cm-strong);
     }
 
-    .cm-nav-menu .cm-theme-switcher {
+    .cm-nav-menu .cm-theme-switcher,
+    .cm-nav-menu .cm-language-switcher {
         width: 100%;
         min-height: 44px;
         background: var(--cm-panel-2);

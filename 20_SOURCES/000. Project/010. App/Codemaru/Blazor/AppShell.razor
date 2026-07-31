@@ -1,14 +1,17 @@
 @namespace Codemaru.Blazor
 @using Microsoft.AspNetCore.Components.Web
+@inject NavigationManager Navigation
+@inject SiteLocalization Text
+@inject PublicLanguageSettings PublicLanguage
 
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="@Text.HtmlLanguage">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <title>CodeMaru - 명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV, 쇼핑몰</title>
-    <meta name="keywords" content="코드마루, CodeMaru, 명함 QR, vCard, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 쇼핑몰, 포트폴리오, Dreamine, CardHybrid" />
+    <title>CodeMaru — @Text["services.title"]</title>
+    <meta name="keywords" content="CodeMaru, CardHybrid, Dreamine, vCard, QR, Wedding, ThankYou, Families, CCTV, ShopStore, Portfolio" />
     <link rel="icon" type="image/jpeg" href="/img/Codemaru_Essence.jpg" />
     <script>
         (() => {
@@ -23,7 +26,7 @@
         {
           "@@context": "https://schema.org",
           "@@type": "Organization",
-          "name": "코드마루",
+          "name": "CodeMaru",
           "url": "https://codemaru.co.kr/",
           "logo": "https://codemaru.co.kr/img/Codemaru_Bloom_Light.jpg",
           "sameAs": [
@@ -40,7 +43,7 @@
               "@@type": "WebApplication",
               "name": "CardHybrid",
               "url": "https://codemaru.co.kr/cardhybrid",
-              "description": "QR, vCard, 명함 랜딩 페이지와 명함 앞뒷면 내보내기를 지원하는 CodeMaru 명함 도구."
+              "description": "@Text["service.cardhybrid"]"
             }
           ]
         }
@@ -57,7 +60,24 @@
 </head>
 <body>
     <Codemaru.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
+    <script src="/_content/Dreamine.UI.Blazor/dreamine-localization.js"></script>
     <script src="/_framework/blazor.web.js"></script>
     <script src="/js/site.js" defer></script>
 </body>
 </html>
+
+@code {
+    protected override void OnInitialized()
+    {
+        var uri = new Uri(Navigation.Uri);
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+        if (query.TryGetValue("lang", out var language))
+        {
+            Text.SetLanguage(language.ToString());
+        }
+        else
+        {
+            Text.SetLanguage(PublicLanguage.DefaultLanguage);
+        }
+    }
+}
