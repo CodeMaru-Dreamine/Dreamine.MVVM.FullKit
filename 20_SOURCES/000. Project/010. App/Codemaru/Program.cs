@@ -63,6 +63,13 @@ public static class Program
             .GetSection(AuthOptions.SectionName)
             .Get<AuthOptions>() ?? new AuthOptions();
 
+#if DEBUG
+        // 브라우저는 localhost 응답에서 .codemaru.co.kr 도메인 쿠키를 거부합니다.
+        // 로컬 개발 빌드에서는 host-only 쿠키를 사용하고, Release 배포에서는
+        // appsettings의 공유 도메인을 유지해 서브도메인 SSO를 지원합니다.
+        authOptions.CookieDomain = string.Empty;
+#endif
+
         string usersDbPath = Path.Combine(AppContext.BaseDirectory, "App_Data", "codemaru.db");
 
         builder.Services.AddDreamineHybridWpf();
@@ -106,6 +113,19 @@ public static class Program
             options.ConfigureServices = services =>
             {
                 services.AddScoped<CardHybridCircuitSession>();
+                var adminEmails = builder.Configuration
+                    .GetSection("Administration:AllowedEmails")
+                    .Get<string[]>() ?? [];
+
+                services.AddAuthorization(authorization =>
+                    authorization.AddPolicy(
+                        "CodemaruAdmin",
+                        policy => policy.RequireAssertion(context =>
+                        {
+                            var email = context.User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+                            return !string.IsNullOrWhiteSpace(email)
+                                   && adminEmails.Contains(email, StringComparer.OrdinalIgnoreCase);
+                        })));
 
                 // DreamineBlazorServerHostedService는 Blazor 서버용으로 완전히 별도의
                 // DI 컨테이너를 새로 만들기 때문에, 위에서 바깥쪽 호스트에 등록한
@@ -142,15 +162,20 @@ public static class Program
     private static readonly Dictionary<string, (string Title, string Desc, string Image, string Url)> OgMeta = new()
     {
         ["/"] = (
-            "CodeMaru - 명함 QR · 청첩장 · 감사장 · 가족 앨범 · CCTV · 쇼핑몰",
-            "명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 쇼핑몰까지 CodeMaru 계정 하나로 사용하는 디지털 서비스 플랫폼입니다.",
-            "https://codemaru.co.kr/img/codemaru_og.png",
+            "CodeMaru — 필요한 디지털 도구를 직접 만듭니다",
+            "명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV 모니터링과 직영 쇼핑몰까지 직접 만들고 운영합니다.",
+            "https://codemaru.co.kr/img/codemaru_og_v2.png",
             "https://codemaru.co.kr/"),
         ["/cardhybrid"] = (
             "CardHybrid — 무료 명함 QR · vCard · 랜딩 페이지 | CodeMaru",
             "QR 코드 하나로 내 정보를 전달합니다. 스캔만 하면 모바일 랜딩 페이지가 열리고 vCard로 연락처 저장까지. 앞뒤 명함 디자인 편집, AI 배경 제거, SVG 내보내기 무료 제공.",
-            "https://codemaru.co.kr/img/cardhybrid_og.png",
+            "https://codemaru.co.kr/img/codemaru_og_v2.png",
             "https://codemaru.co.kr/cardhybrid"),
+        ["/about"] = (
+            "CodeMaru 소개 — 직접 만들고 운영하는 디지털 서비스",
+            "CodeMaru는 장민수가 운영하는 1인 개발 스튜디오입니다. 실제 문제에서 출발한 웹·WPF·자동화 서비스를 직접 설계하고 개발하며 운영합니다.",
+            "https://codemaru.co.kr/img/codemaru_og_v2.png",
+            "https://codemaru.co.kr/about"),
         ["/guide"] = (
             "이용 설명서 | CodeMaru",
             "CardHybrid 명함, Wedding 청첩장, ThankYou 감사장, Families 가족 앨범, CCTV Viewer, Shop Store, Portfolio, Dreamine 프레임워크의 상세 이용 가이드를 제공합니다.",
@@ -251,18 +276,21 @@ public static class Program
         // 카카오 인앱브라우저(KAKAOTALK/x.x)는 브라우저이므로 제외 — 크롤러만 감지
         bool isBot = ua.Contains("Kakaotalk-Scrap", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("kakaostory-og-reader", StringComparison.OrdinalIgnoreCase)
-                  || ua.Contains("Naver", StringComparison.OrdinalIgnoreCase)
-                  || ua.Contains("Googlebot", StringComparison.OrdinalIgnoreCase)
-                  || ua.Contains("Mediapartners-Google", StringComparison.OrdinalIgnoreCase)
-                  || ua.Contains("AdsBot-Google", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("facebookexternalhit", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("Twitterbot", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("Discordbot", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("Slackbot", StringComparison.OrdinalIgnoreCase)
                   || ua.Contains("LinkedInBot", StringComparison.OrdinalIgnoreCase)
-                  || ua.Contains("Baiduspider", StringComparison.OrdinalIgnoreCase);
+                  || ua.Contains("TelegramBot", StringComparison.OrdinalIgnoreCase)
+                  || ua.Contains("WhatsApp", StringComparison.OrdinalIgnoreCase);
 
         var method = context.Request.Method;
+        var requestPath = context.Request.Path.Value ?? "/";
+        if (IsPrivateIndexPath(requestPath))
+        {
+            context.Response.Headers["X-Robots-Tag"] = "noindex, nofollow, noarchive";
+        }
+
         if (!isBot || (!string.Equals(method, "GET", StringComparison.OrdinalIgnoreCase)
                     && !string.Equals(method, "HEAD", StringComparison.OrdinalIgnoreCase)))
         {
@@ -270,7 +298,7 @@ public static class Program
             return;
         }
 
-        var path = context.Request.Path.Value ?? "/";
+        var path = requestPath;
         var normalizedPath = path == "/" ? "/" : path.TrimEnd('/');
         if (!OgMeta.TryGetValue(normalizedPath, out var og))
         {
@@ -307,6 +335,17 @@ public static class Program
             <body></body>
             </html>
             """, context.RequestAborted);
+    }
+
+    private static bool IsPrivateIndexPath(string path)
+    {
+        return path.StartsWith("/admin", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/login", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/signup", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/account", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/signout", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/_identity", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("/card/", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

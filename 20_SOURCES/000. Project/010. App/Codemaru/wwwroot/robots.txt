@@ -3,6 +3,13 @@ Disallow: /api/
 Disallow: /_blazor/
 Disallow: /query
 Disallow: /search
+Disallow: /admin
+Disallow: /login
+Disallow: /signup
+Disallow: /account
+Disallow: /signout
+Disallow: /_identity/
+Disallow: /card/
 Allow: /_framework/
 Allow: /css/
 Allow: /js/

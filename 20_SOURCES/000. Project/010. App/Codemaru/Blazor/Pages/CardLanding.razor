@@ -3,6 +3,11 @@
 @namespace Codemaru.Blazor.Pages
 @inject ICardProfileStore Store
 
+<SeoHead Title="@(_profile is null ? "명함을 찾을 수 없습니다 | CodeMaru" : $"{_profile.Name} - {_profile.BackBrand}")"
+         Description="@(_profile?.LandingDescription ?? "요청한 CodeMaru 명함을 찾을 수 없습니다.")"
+         CanonicalPath="/card"
+         NoIndex="true" />
+
 @if (_profile is null)
 {
     <main class="public-card-page">

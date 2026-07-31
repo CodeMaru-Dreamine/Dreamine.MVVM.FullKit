@@ -69,6 +69,45 @@ public sealed class JsonCardProfileStore : ICardProfileStore
         Directory.CreateDirectory(_rootDirectory);
     }
 
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<CardHybridSnapshot>> ListAsync(CancellationToken cancellationToken = default)
+    {
+        var snapshots = new List<CardHybridSnapshot>();
+
+        foreach (var userDirectory in Directory.EnumerateDirectories(_rootDirectory))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var filePath = Path.Combine(userDirectory, SnapshotFileName);
+            if (!File.Exists(filePath))
+            {
+                continue;
+            }
+
+            try
+            {
+                await using var stream = File.OpenRead(filePath);
+                var snapshot = await JsonSerializer.DeserializeAsync<CardHybridSnapshot>(
+                    stream, SerializerOptions, cancellationToken).ConfigureAwait(false);
+                if (snapshot?.Profile is not null && !string.IsNullOrWhiteSpace(snapshot.UserId))
+                {
+                    snapshots.Add(snapshot);
+                }
+            }
+            catch (JsonException)
+            {
+                // 손상된 단일 스냅샷은 관리 목록 전체를 막지 않습니다.
+            }
+            catch (IOException)
+            {
+                // 저장 중 잠시 잠긴 파일은 다음 조회에서 다시 읽습니다.
+            }
+        }
+
+        return snapshots
+            .OrderByDescending(static snapshot => snapshot.SavedAt)
+            .ToArray();
+    }
+
     /// <summary>
     /// \if KO
     /// <para>Async 데이터를 불러옵니다.</para>
