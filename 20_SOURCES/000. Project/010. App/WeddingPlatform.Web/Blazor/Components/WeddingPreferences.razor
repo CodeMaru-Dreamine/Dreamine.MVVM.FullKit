@@ -1,0 +1,36 @@
+@namespace WeddingPlatform.Blazor.Components
+@implements IDisposable
+@inject WeddingLocalization Text
+
+<DreaminePortalPreferences CssClass="wp-preferences"
+                           ThemeLabel="@Text["theme"]"
+                           SystemThemeLabel="@Text["system"]"
+                           LightThemeLabel="@Text["light"]"
+                           DarkThemeLabel="@Text["dark"]"
+                           ThemeStorageKey="codemaru-theme"
+                           CookieDomain=".codemaru.co.kr"
+                           Language="@Text.Language"
+                           LanguageChanged="ChangeLanguageAsync"
+                           Languages="@Languages"
+                           LanguageLabel="@Text["language"]"
+                           FallbackLanguage="ko"
+                           LanguageStorageKey="codemaru-language" />
+
+@code {
+    private static readonly IReadOnlyList<DreamineLanguage> Languages =
+        WeddingLocalization.Languages
+            .Select(item => new DreamineLanguage(item.Code, item.Region, item.NativeName, item.HtmlLanguage))
+            .ToArray();
+
+    protected override void OnInitialized() => Text.Changed += OnChanged;
+
+    private Task ChangeLanguageAsync(string language)
+    {
+        Text.SetLanguage(language);
+        return Task.CompletedTask;
+    }
+
+    private void OnChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Text.Changed -= OnChanged;
+}

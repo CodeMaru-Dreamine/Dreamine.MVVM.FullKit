@@ -11,26 +11,30 @@
 @inject IWeddingLayoutCatalogRegistry LayoutRegistry
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject WeddingLocalization Text
 @implements IDisposable
 
-<PageTitle>어드민 — @Slug</PageTitle>
+<PageTitle>@Text["admin"] — @Slug</PageTitle>
 <HeadContent>
     <meta name="robots" content="noindex, nofollow" />
 </HeadContent>
 
 <div class="w-admin">
+    <div class="w-admin-preferences" aria-label="화면 설정">
+        <WeddingPlatform.Blazor.Components.WeddingPreferences />
+    </div>
     @if (!Vm.IsAuthenticated && !_superAdminAutoLoginChecked)
     {
         <div class="w-loading">
             <div class="w-spinner"></div>
-            <p class="w-hint">관리 권한을 확인하고 있습니다.</p>
+            <p class="w-hint">@Text["admin.checking"]</p>
         </div>
     }
     else if (!Vm.IsAuthenticated)
     {
-        <h1 class="w-admin__title">⚙ 어드민 — <code>@Slug</code></h1>
+        <h1 class="w-admin__title">⚙ @Text["admin"] — <code>@Slug</code></h1>
         <div class="w-admin__login w-panel">
-            <h2>관리자 로그인</h2>
+            <h2>@Text["admin.signin"]</h2>
             @if (Vm.IsSignedIn)
             {
                 <p class="w-hint">현재 공용 로그인: <strong>@Vm.CurrentUserLabel</strong></p>
@@ -39,14 +43,14 @@
             else
             {
                 <p class="w-hint">CodeMaru/Dreamine 계정으로 먼저 로그인하면, 기존 비밀번호 확인 후 이 웨딩 사이트를 계정에 연결할 수 있습니다.</p>
-                <a class="w-btn" href="@LoginUrl">공용 로그인</a>
+                <a class="w-btn" href="@LoginUrl">@Text["common.login"]</a>
             }
             <input class="w-input"
                    type="password"
                    placeholder="비밀번호"
                    @bind="Vm.LoginPassword"
                    @bind:event="oninput" />
-            <button class="w-btn w-btn--primary" @onclick="OnLogin">로그인</button>
+            <button class="w-btn w-btn--primary" @onclick="OnLogin">@Text["login"]</button>
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
                 <p class="w-status">@Vm.StatusMessage</p>
@@ -80,23 +84,23 @@
                         <button class="w-admin-nav__item @(_selected == item.Key ? "active" : "")"
                                 @onclick="() => SelectSection(item.Key)">
                             <span class="w-admin-nav__icon">@((MarkupString)item.Icon)</span>
-                            <span class="w-admin-nav__label">@item.Label</span>
+                            <span class="w-admin-nav__label">@AdminNavLabel(item.Key)</span>
                         </button>
                     }
                 </nav>
 
                 <div class="w-admin-nav__foot">
                     <button class="w-btn w-btn--primary w-btn--block" @onclick="OnSaveConfig">
-                        설정 저장
+                        @Text["admin.save"]
                     </button>
                     <button class="w-btn w-btn--block" @onclick="OnShareInvitation">
-                        공유하기
+                        @Text["admin.share"]
                     </button>
                     @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
                     {
                         <p class="w-status w-status--compact">@Vm.StatusMessage</p>
                     }
-                    <a class="w-admin-nav__link" href="/@Slug" target="_blank">청첩장 열기</a>
+                    <a class="w-admin-nav__link" href="/@Slug" target="_blank">@Text["admin.open.invite"]</a>
                     <a class="w-admin-nav__link" href="/@Slug/thankyou" target="_blank">감사장 열기</a>
                 </div>
             </aside>
@@ -108,7 +112,7 @@
                     <button class="w-admin-nav__toggle" @onclick="() => _navOpen = !_navOpen" aria-label="메뉴 열기">☰</button>
                     <h2 class="w-admin-content__title">
                         <span class="w-admin-title__icon">@((MarkupString)CurrentNavItem.Icon)</span>
-                        <span class="w-admin-title__text">@CurrentNavItem.Label</span>
+                        <span class="w-admin-title__text">@AdminNavLabel(CurrentNavItem.Key)</span>
                     </h2>
                     <button class="w-admin-preview__toggle" @onclick="OnPreviewToggle" aria-label="미리보기 열기"
                             title="@(_previewCollapsed ? "미리보기 펼치기" : "미리보기")">
@@ -1443,7 +1447,14 @@
 @code {
     [Parameter] public string Slug { get; set; } = "";
 
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string LoginUrl
+    {
+        get
+        {
+            var current = Nav.ToAbsoluteUri(Nav.Uri);
+            return $"/_identity/login?lang={Uri.EscapeDataString(Text.Language)}&returnUrl={Uri.EscapeDataString(current.PathAndQuery)}";
+        }
+    }
 
     private string _selected = "basic";
     private bool _navOpen = false;
@@ -1523,6 +1534,20 @@
         (i.Key != "photobook" || IsPhotoBookLayout) &&
         (i.Key != "cards"     || IsCardLayout));
     private NavItem CurrentNavItem => VisibleNavItems.FirstOrDefault(i => i.Key == _selected) ?? _navItems[0];
+    private string AdminNavLabel(string key) => key switch
+    {
+        "basic" => Text["admin.basic"],
+        "notice" => Text["admin.notice"],
+        "design" => Text["admin.design"],
+        "story" => Text["admin.story"],
+        "photobook" => Text["admin.photobook"],
+        "cards" => Text["admin.cards"],
+        "content" => Text["admin.content"],
+        "map" => Text["admin.map"],
+        "account" => Text["admin.payment"],
+        "share" => Text["admin.sharing"],
+        _ => key
+    };
     private string PreviewUrl
     {
         get
@@ -2321,8 +2346,11 @@
     protected override async Task OnInitializedAsync()
     {
         LayoutRegistry.Changed += OnLayoutCatalogChanged;
+        Text.Changed += OnLanguageChanged;
         await Vm.InitializeAsync(Slug);
     }
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
     private void OnLayoutCatalogChanged(
         object? sender,
@@ -2883,6 +2911,7 @@
     public void Dispose()
     {
         LayoutRegistry.Changed -= OnLayoutCatalogChanged;
+        Text.Changed -= OnLanguageChanged;
         lock (_uploadTickerSync)
         {
             if (_disposed)

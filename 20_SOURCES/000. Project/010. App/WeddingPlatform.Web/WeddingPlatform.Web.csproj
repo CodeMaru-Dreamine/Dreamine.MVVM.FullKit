@@ -43,6 +43,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\100. Library\UI.Blazor\Dreamine.UI.Blazor.csproj" />
     <ProjectReference Include="..\Shared\Dreamine.AppSecurity.csproj" />
     <ProjectReference Include="..\Wedding.Layouts.Contracts\Wedding.Layouts.Contracts.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />

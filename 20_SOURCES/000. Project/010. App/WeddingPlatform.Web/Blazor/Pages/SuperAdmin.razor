@@ -16,8 +16,9 @@
 @inject NavigationManager Nav
 @inject IWeddingLayoutCatalogRegistry LayoutRegistry
 @inject IWeddingLayoutSubmissionService LayoutSubmissions
+@inject WeddingLocalization Text
 
-<PageTitle>Wedding 통합 어드민</PageTitle>
+<PageTitle>@Text["admin.integrated"]</PageTitle>
 <HeadContent>
     <meta name="robots" content="noindex, nofollow" />
 </HeadContent>
@@ -32,11 +33,18 @@
     }
     else if (!Vm.IsAuthenticated)
     {
+        <div class="w-admin-preferences" aria-label="화면 설정">
+            <WeddingPlatform.Blazor.Components.WeddingPreferences />
+        </div>
         <div class="w-admin__login w-panel">
             <h2>슈퍼 어드민 로그인</h2>
-            <p class="w-sa-hint">appsettings.json -> Wedding:SuperAdminPassword</p>
+            @if (!Vm.HasConfiguredPassword)
+            {
+                <p class="w-status w-status--error">Wedding:SuperAdminPassword 설정이 필요합니다.</p>
+            }
             <input class="w-input" type="password" placeholder="어드민 비밀번호"
                    @bind="Vm.LoginPassword"
+                   @bind:event="oninput"
                    @onkeydown="OnLoginKeyDown" />
             <button class="w-btn w-btn--primary" @onclick="OnLogin">로그인</button>
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
@@ -66,17 +74,17 @@
                 <span class="wedding-admin-brand__mark">W</span>
                 <div>
                     <strong>Wedding</strong>
-                    <span>통합 어드민</span>
+                    <span>@Text["admin.integrated"]</span>
                 </div>
             </div>
 
-            <nav class="wedding-admin-nav" aria-label="슈퍼 어드민 메뉴">
-                <button class="@NavClass("dashboard")" type="button" @onclick='() => SetActiveMenu("dashboard")'>대시보드</button>
-                <button class="@NavClass("invite")" type="button" @onclick='() => SetActiveMenu("invite")'>청첩장 관리</button>
-                <button class="@NavClass("account")" type="button" @onclick='() => SetActiveMenu("account")'>계정 관리</button>
-                <button class="@NavClass("media")" type="button" @onclick='() => SetActiveMenu("media")'>미디어 관리</button>
-                <button class="@NavClass("layouts")" type="button" @onclick='() => SetActiveMenu("layouts")'>레이아웃 카탈로그</button>
-                <button class="@NavClass("settings")" type="button" @onclick='() => SetActiveMenu("settings")'>설정</button>
+            <nav class="wedding-admin-nav" aria-label="@Text["admin.super"]">
+                <button class="@NavClass("dashboard")" type="button" @onclick='() => SetActiveMenu("dashboard")'>@Text["admin.dashboard"]</button>
+                <button class="@NavClass("invite")" type="button" @onclick='() => SetActiveMenu("invite")'>@Text["admin.invitations"]</button>
+                <button class="@NavClass("account")" type="button" @onclick='() => SetActiveMenu("account")'>@Text["admin.accounts"]</button>
+                <button class="@NavClass("media")" type="button" @onclick='() => SetActiveMenu("media")'>@Text["admin.media"]</button>
+                <button class="@NavClass("layouts")" type="button" @onclick='() => SetActiveMenu("layouts")'>@Text["admin.layouts"]</button>
+                <button class="@NavClass("settings")" type="button" @onclick='() => SetActiveMenu("settings")'>@Text["admin.settings"]</button>
             </nav>
 
             <div class="wedding-admin-sidebar__meter">
@@ -95,27 +103,28 @@
                 </div>
 
                 <div class="wedding-admin-header__tools">
+                    <WeddingPlatform.Blazor.Components.WeddingPreferences />
                     @if (!ShowLayoutCatalog)
                     {
                     <label class="wedding-admin-search">
-                        <span>검색</span>
+                        <span>@Text["admin.search"]</span>
                         <input value="@_searchText"
                                @oninput="OnSearchInput"
-                               placeholder="커플 이름, 슬러그, 이메일 검색" />
+                               placeholder="@Text["admin.search.placeholder"]" />
                     </label>
                     }
                     <button class="wedding-admin-action-button is-compact" type="button" @onclick="OnRefresh" title="전체 목록 새로고침">
-                        @(ShowLayoutCatalog ? "카탈로그 다시 읽기" : "새로고침")
+                        @(ShowLayoutCatalog ? Text["admin.layouts"] : Text["admin.refresh"])
                     </button>
                     <button class="wedding-admin-action-button is-compact" type="button" @onclick="OnLogout" title="최고 관리자 로그아웃">
-                        로그아웃
+                        @Text["logout"]
                     </button>
                     <button class="wedding-admin-icon-button" type="button" title="알림">!</button>
                     <div class="wedding-admin-profile">
                         <span>A</span>
                         <div>
                             <strong>Admin</strong>
-                            <small>최고 관리자</small>
+                            <small>@Text["admin.super"]</small>
                         </div>
                     </div>
                 </div>
@@ -130,19 +139,19 @@
 
             @if (ShowStats)
             {
-                <section class="wedding-admin-stats" aria-label="요약">
+                <section class="wedding-admin-stats" aria-label="@Text["admin.summary"]">
                     <article class="wedding-admin-stat-card">
                         <span class="wedding-admin-stat-card__icon">A</span>
                         <div>
-                            <small>전체 계정 수</small>
+                            <small>@Text["admin.total.accounts"]</small>
                             <strong>@Vm.Tenants.Count</strong>
-                            <em>등록된 커플</em>
+                            <em>@Text["admin.registered.couples"]</em>
                         </div>
                     </article>
                     <article class="wedding-admin-stat-card">
                         <span class="wedding-admin-stat-card__icon is-green">H</span>
                         <div>
-                            <small>메인 노출</small>
+                            <small>@Text["admin.home.visible"]</small>
                             <strong>@MainVisibleCount</strong>
                             <em>@Percent(MainVisibleCount, Vm.Tenants.Count)</em>
                         </div>
@@ -150,7 +159,7 @@
                     <article class="wedding-admin-stat-card">
                         <span class="wedding-admin-stat-card__icon is-gold">PR</span>
                         <div>
-                            <small>Premium 활성</small>
+                            <small>@Text["admin.premium.active"]</small>
                             <strong>@PremiumActiveCount</strong>
                             <em>권한 보유 계정</em>
                         </div>
@@ -158,7 +167,7 @@
                     <article class="wedding-admin-stat-card">
                         <span class="wedding-admin-stat-card__icon is-sage">M</span>
                         <div>
-                            <small>저장 용량</small>
+                            <small>@Text["admin.storage"]</small>
                             <strong>@TotalStorageLabel</strong>
                             <em>@AvailableStorageLabel</em>
                         </div>
@@ -166,7 +175,7 @@
                     <article class="wedding-admin-stat-card">
                         <span class="wedding-admin-stat-card__icon is-blue">V</span>
                         <div>
-                            <small>동영상 사용량</small>
+                            <small>@Text["admin.video.usage"]</small>
                             <strong>@TotalVideoCount 개</strong>
                             <em>사진 @TotalPhotoCount 장</em>
                         </div>
@@ -1868,12 +1877,12 @@
     private bool ShowTenantTable => _activeMenu != "settings" && _activeMenu != "layouts";
     private string ActiveTitle => _activeMenu switch
     {
-        "invite" => "청첩장 관리",
-        "account" => "계정 관리",
-        "media" => "미디어 관리",
-        "layouts" => "레이아웃 카탈로그",
-        "settings" => "설정",
-        _ => "Wedding 통합 어드민"
+        "invite" => Text["admin.invitations"],
+        "account" => Text["admin.accounts"],
+        "media" => Text["admin.media"],
+        "layouts" => Text["admin.layouts"],
+        "settings" => Text["admin.settings"],
+        _ => Text["admin.integrated"]
     };
     private string ActiveDescription => _activeMenu switch
     {
@@ -1882,7 +1891,7 @@
         "media" => "이미지와 영상 정책, 사용량, 최적화 마이그레이션을 관리합니다.",
         "layouts" => "실시간 카탈로그의 활성 버전과 불변 릴리스 기록을 서버 재시작 없이 확인합니다.",
         "settings" => "전체 설정을 조정합니다.",
-        _ => "등록된 커플 계정을 관리하고 새 청첩장을 만듭니다."
+        _ => Text["admin.integrated.desc"]
     };
     private string TableTitle => _activeMenu switch
     {
@@ -1948,7 +1957,10 @@
     protected override void OnInitialized()
     {
         LayoutRegistry.Changed += OnLayoutCatalogChanged;
+        Text.Changed += OnLanguageChanged;
     }
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -3372,5 +3384,6 @@
     public void Dispose()
     {
         LayoutRegistry.Changed -= OnLayoutCatalogChanged;
+        Text.Changed -= OnLanguageChanged;
     }
 }

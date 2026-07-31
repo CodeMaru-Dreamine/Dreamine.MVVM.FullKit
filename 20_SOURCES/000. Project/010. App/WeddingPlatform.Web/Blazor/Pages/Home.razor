@@ -7,81 +7,69 @@
 @inject WeddingSuperAdminViewModel Vm
 @inject WeddingUserContext UserContext
 @inject NavigationManager Nav
+@inject WeddingLocalization Text
+@using Dreamine.UI.Blazor.Navigation
 
-<PageTitle>💒 무료 모바일 청첩장 — Codemaru Wedding</PageTitle>
+<PageTitle>@Text["page.title"]</PageTitle>
 
 <HeadContent>
-    <meta name="description" content="사진·음악·지도·방명록·계좌 안내까지 — 5분이면 완성되는 무료 모바일 청첩장 서비스" />
+    <meta name="description" content="@Text["seo.description"]" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="@Nav.Uri" />
-    <meta property="og:title" content="💒 무료 모바일 청첩장 — Codemaru Wedding" />
-    <meta property="og:description" content="사진·음악·지도·방명록·계좌 안내까지 — 5분이면 완성되는 무료 모바일 청첩장 서비스" />
+    <meta property="og:title" content="@Text["page.title"]" />
+    <meta property="og:description" content="@Text["seo.description"]" />
     <meta property="og:image" content="@(Nav.BaseUri.TrimEnd('/') + "/img/og-platform.jpg")" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="💒 무료 모바일 청첩장 — Codemaru Wedding" />
-    <meta name="twitter:description" content="사진·음악·지도·방명록·계좌 안내까지 — 5분이면 완성되는 무료 모바일 청첩장 서비스" />
+    <meta name="twitter:title" content="@Text["page.title"]" />
+    <meta name="twitter:description" content="@Text["seo.description"]" />
     <meta name="twitter:image" content="@(Nav.BaseUri.TrimEnd('/') + "/img/og-platform.jpg")" />
 </HeadContent>
 
 <div class="wh-page">
-    <header class="wh-topnav">
-        <a class="wh-topnav__brand" href="https://codemaru.co.kr">
-            <img class="wh-topnav__mark" src="/img/Codemaru%20Bloom%20Light.jpg" alt="" />
-            <span>CodeMaru</span>
-        </a>
-        <nav id="whTopnavMenu" class="wh-topnav__links @(isNavOpen ? "open" : null)" aria-label="CodeMaru 서비스">
-            <a href="https://codemaru.co.kr">Home</a>
-            <a href="https://dreamine.kr/" target="_blank" rel="noopener">Dreamine</a>
-            <a href="https://codemaru.co.kr/cardhybrid">CardHybrid</a>
-            <a href="https://wedding.codemaru.co.kr" class="active" aria-current="page">Wedding</a>
-            <a href="https://thankyou.codemaru.co.kr/">ThankYou</a>
-            <a href="https://families.codemaru.co.kr">Families</a>
-            <a href="https://portfolio.codemaru.co.kr/">Portfolio</a>
-            <a href="https://cctvviewer.codemaru.co.kr">CCTV</a>
-            <a href="https://shop.codemaru.co.kr/">ShopStore</a>
-            <a href="https://codemaru.co.kr/contact">Contact</a>
-            @if (!hasLoadedCurrentUser)
-            {
-                <span class="wh-topnav__auth wh-topnav__auth--pending" aria-hidden="true"></span>
-            }
-            else if (currentUser.IsAuthenticated)
-            {
-                <a class="wh-topnav__auth" href="@AccountUrl">@NavUserLabel</a>
-                <a class="wh-topnav__auth" href="@SignoutUrl">로그아웃</a>
-            }
-            else
-            {
-                <a class="wh-topnav__auth" href="@LoginUrl">로그인</a>
-            }
-        </nav>
-        <button class="wh-topnav__burger"
-                type="button"
-                @onclick="ToggleNav"
-                aria-label="메뉴 열기/닫기"
-                aria-expanded="@isNavOpen"
-                aria-controls="whTopnavMenu">
-            <span></span><span></span><span></span>
-        </button>
-    </header>
+    <DreaminePortalHeader BrandName="CodeMaru"
+                          BrandUrl="@CodeMaruHomeUrl"
+                          BrandImageUrl="/img/Codemaru%20Bloom%20Light.jpg"
+                          BrandLightImageUrl="/img/Codemaru%20Bloom%20Light.jpg"
+                          Items="@PortalItems"
+                          ActiveKey="wedding"
+                          NavigationAriaLabel="CodeMaru services"
+                          ToggleMenuLabel="@Text["nav.toggle"]"
+                          CssClass="wh-topnav"
+                          IsAuthenticated="@currentUser.IsAuthenticated"
+                          DisplayName="@NavUserLabel"
+                          ScreenSettingsLabel="@Text["screen.settings"]"
+                          LoginUrl="@(hasLoadedCurrentUser ? LoginUrl : null)"
+                          LoginLabel="@Text["login"]"
+                          AccountUrl="@AccountUrl"
+                          AccountLabel="@Text["account"]"
+                          SignoutUrl="@SignoutUrl"
+                          SignoutLabel="@Text["logout"]">
+        <Preferences>
+            <WeddingPlatform.Blazor.Components.WeddingPreferences />
+        </Preferences>
+        <AdditionalUserActions>
+            <a href="#my-invites"><span aria-hidden="true">▣</span> @Text["manage.mine"]</a>
+        </AdditionalUserActions>
+    </DreaminePortalHeader>
 
     <!-- ── 히어로 배너 ── -->
     <section class="wh-hero">
         <div class="wh-hero__inner">
-            <p class="wh-hero__badge">✨ 무료 모바일 청첩장</p>
-            <h1 class="wh-hero__title">우리의 특별한 날을<br />모바일 청첩장으로</h1>
-            <p class="wh-hero__sub">사진·음악·지도·방명록 — 5분이면 완성</p>
+            <p class="wh-hero__badge">@Text["hero.badge"]</p>
+            <h1 class="wh-hero__title">@Text["hero.title"]</h1>
+            <p class="wh-hero__sub">@Text["hero.sub"]</p>
             <div class="wh-hero__actions">
-                <a href="#create" class="wh-btn wh-btn--primary">지금 무료로 만들기 →</a>
-                <a href="https://codemaru.co.kr" class="wh-btn wh-btn--secondary">CodeMaru 홈</a>
+                <a href="#create" class="wh-btn wh-btn--primary">@Text["create.now"]</a>
+                <a href="@LocalizedUrl("https://codemaru.co.kr")" class="wh-btn wh-btn--secondary">@Text["codemaru.home"]</a>
                 @if (currentUser.IsAuthenticated)
                 {
-                    <a href="#my-invites" class="wh-btn wh-btn--secondary">내 청첩장 관리</a>
+                    <a href="#my-invites" class="wh-btn wh-btn--secondary">@Text["manage.mine"]</a>
                 }
                 else if (hasLoadedCurrentUser)
                 {
-                    <a href="@LoginUrl" class="wh-btn wh-btn--secondary">로그인</a>
+                    <a href="@LoginUrl" class="wh-btn wh-btn--secondary">@Text["login"]</a>
                 }
             </div>
         </div>
@@ -89,42 +77,42 @@
 
     <!-- ── 서비스 안내 ── -->
     <div class="wh-service-notice">
-        <span>⚡ 무료 서비스 특성상 일시적인 접속 지연이 발생할 수 있습니다. 문의: <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a></span>
+        <span>@Text["service.notice"] <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a></span>
         <span class="wh-notice-sep">·</span>
-        <span>🗑 사진 미업로드 계정은 <strong>24시간 후 자동 삭제</strong>됩니다.</span>
+        <span>@Text["service.cleanup"]</span>
     </div>
 
     <!-- ── 기능 소개 ── -->
     <section class="wh-features">
         <div class="wh-feature">
             <span class="wh-feature__icon">🖼</span>
-            <h3>사진 갤러리</h3>
-            <p>웨딩 사진을 갤러리로 공유하고 슬라이드쇼로 감상</p>
+            <h3>@Text["features.photos"]</h3>
+            <p>@Text["features.photos.desc"]</p>
         </div>
         <div class="wh-feature">
             <span class="wh-feature__icon">🗺</span>
-            <h3>스마트 지도</h3>
-            <p>카카오맵·네이버·아틀란·T맵 원터치 길찾기</p>
+            <h3>@Text["features.map"]</h3>
+            <p>@Text["features.map.desc"]</p>
         </div>
         <div class="wh-feature">
             <span class="wh-feature__icon">🎵</span>
-            <h3>배경 음악</h3>
-            <p>좋아하는 음악을 배경으로 설정</p>
+            <h3>@Text["features.music"]</h3>
+            <p>@Text["features.music.desc"]</p>
         </div>
         <div class="wh-feature">
             <span class="wh-feature__icon">📖</span>
-            <h3>방명록</h3>
-            <p>하객들의 축하 메시지를 온라인으로 받기</p>
+            <h3>@Text["features.guestbook"]</h3>
+            <p>@Text["features.guestbook.desc"]</p>
         </div>
         <div class="wh-feature">
             <span class="wh-feature__icon">💌</span>
-            <h3>계좌 안내</h3>
-            <p>신랑·신부·부모님 계좌를 탭 한 번에 복사</p>
+            <h3>@Text["features.accounts"]</h3>
+            <p>@Text["features.accounts.desc"]</p>
         </div>
         <div class="wh-feature">
             <span class="wh-feature__icon">🎨</span>
-            <h3>5가지 테마</h3>
-            <p>로즈골드·아이보리·포레스트·네이비·블러쉬</p>
+            <h3>@Text["features.themes"]</h3>
+            <p>@Text["features.themes.desc"]</p>
         </div>
     </section>
 
@@ -134,21 +122,21 @@
             @if (currentUser.IsAuthenticated)
             {
                 <div class="wh-account">
-                    <span>공용 로그인</span>
+                    <span>@Text["common.login"]</span>
                     <strong>@CurrentUserLabel</strong>
-                    <a href="@AccountUrl" class="wh-account__link">내 계정</a>
-                    <a href="@SignoutUrl" class="wh-account__link">로그아웃</a>
+                    <a href="@AccountUrl" class="wh-account__link">@Text["account"]</a>
+                    <a href="@SignoutUrl" class="wh-account__link">@Text["logout"]</a>
                 </div>
             }
             else if (hasLoadedCurrentUser)
             {
                 <div class="wh-account wh-account--guest">
-                    <span>로그인하면 생성한 청첩장이 내 계정에 바로 연결됩니다.</span>
-                    <a href="@LoginUrl" class="wh-account__link">공용 로그인</a>
+                    <span>@Text["guest.account"]</span>
+                    <a href="@LoginUrl" class="wh-account__link">@Text["common.login"]</a>
                 </div>
             }
-            <h2 class="wh-create__title">무료로 시작하기</h2>
-            <p class="wh-create__desc">아래 정보를 입력하면 바로 청첩장이 생성됩니다.</p>
+            <h2 class="wh-create__title">@Text["start.title"]</h2>
+            <p class="wh-create__desc">@Text["start.desc"]</p>
 
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
@@ -160,8 +148,8 @@
             <div class="wh-form">
                 <div class="wh-form__row">
                     <label class="wh-label">
-                        URL 주소
-                        <span class="wh-label__hint">영문·숫자·하이픈만 (예: hong-gildong)</span>
+                        @Text["field.slug"]
+                        <span class="wh-label__hint">@Text["field.slug.hint"]</span>
                     </label>
                     <div class="wh-input-prefix">
                         <span class="wh-prefix">@Nav.BaseUri</span>
@@ -175,32 +163,32 @@
                 </div>
 
                 <div class="wh-form__row">
-                    <label class="wh-label">커플 이름</label>
-                    <input class="wh-input" @bind="Vm.NewCoupleName" placeholder="홍길동 ♥ 김영희" />
+                    <label class="wh-label">@Text["field.couple"]</label>
+                    <input class="wh-input" @bind="Vm.NewCoupleName" placeholder="@Text["field.couple.placeholder"]" />
                 </div>
 
                 <div class="wh-form__row">
-                    <label class="wh-label">결혼 예정일</label>
+                    <label class="wh-label">@Text["field.date"]</label>
                     <input class="wh-input" type="date" @bind="Vm.NewWeddingDate" />
                 </div>
 
                 <div class="wh-form__row">
                     <label class="wh-label">
-                        어드민 비밀번호
-                        <span class="wh-label__hint">청첩장 편집 시 사용</span>
+                        @Text["field.password"]
+                        <span class="wh-label__hint">@Text["field.password.hint"]</span>
                     </label>
                     <input class="wh-input" type="password" @bind="Vm.NewPassword"
-                           placeholder="8자 이상 권장" autocomplete="new-password" />
+                           placeholder="@Text["field.password.placeholder"]" autocomplete="new-password" />
                 </div>
 
                 <button class="wh-btn wh-btn--primary wh-btn--full"
                         @onclick="OnCreate" disabled="@isCreating">
-                    @(isCreating ? "생성 중..." : "✨ 청첩장 만들기")
+                    @(isCreating ? Text["creating"] : Text["create.button"])
                 </button>
             </div>
 
             <p class="wh-create__notice">
-                생성 후 <code>/{슬러그}/admin</code> 에서 사진·음악·지도 등을 설정할 수 있습니다.
+                @Text["create.notice"]
             </p>
         </div>
     </section>
@@ -208,7 +196,7 @@
     @if (currentUser.IsAuthenticated)
     {
         <section class="wh-invites wh-invites--mine" id="my-invites">
-            <h2 class="wh-invites__title">내 청첩장</h2>
+            <h2 class="wh-invites__title">@Text["my.invites"]</h2>
             @if (myInvites.Count == 0)
             {
                 <p class="wh-empty">아직 이 계정에 연결된 청첩장이 없습니다. 기존 청첩장이 있다면 <code>/{슬러그}/admin</code>에서 기존 비밀번호를 한 번 입력해 연결하세요.</p>
@@ -223,7 +211,7 @@
                                 <div class="wh-invite-card__name">@t.CoupleName</div>
                                 <div class="wh-invite-card__date">@t.WeddingDate.ToString("yyyy년 MM월 dd일")</div>
                                 <div class="wh-invite-card__venue">/@t.Slug/admin</div>
-                                <span class="wh-manage-link">관리 열기 →</span>
+                                <span class="wh-manage-link">@Text["manage.open"]</span>
                             </div>
                         </a>
                     }
@@ -236,7 +224,7 @@
     @if (publicInvites.Count > 0)
     {
         <section class="wh-invites">
-            <h2 class="wh-invites__title">💒 청첩장 목록</h2>
+            <h2 class="wh-invites__title">@Text["public.invites"]</h2>
             <div class="wh-invites__grid">
                 @foreach (var t in publicInvites)
                 {
@@ -270,7 +258,7 @@
     <!-- ── 하단 ── -->
     <footer class="wh-footer">
         <p>Powered by Codemaru Wedding Platform · <a href="mailto:admin@codemaru.co.kr" class="wh-footer__contact">admin@codemaru.co.kr</a></p>
-        <a href="/admin" class="wh-admin-link">관리자</a>
+        <a href="/admin" class="wh-admin-link">@Text["admin"]</a>
     </footer>
 </div>
 
@@ -281,19 +269,48 @@
     private List<WeddingPlatform.Models.TenantConfig> myInvites = [];
     private WeddingCurrentUser currentUser = WeddingCurrentUser.Anonymous;
     private bool hasLoadedCurrentUser;
-    private bool isNavOpen;
 
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string AccountUrl => $"https://codemaru.co.kr/_identity/account?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string SignoutUrl => $"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string NavUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? "내 계정" : currentUser.DisplayName;
+    // Authentication must be completed on the current host. In local/WPF mode a
+    // codemaru.co.kr sign-out cannot remove the localhost cookie; in production
+    // the shared cookie domain is still honoured by this same relative endpoint.
+    private string LoginUrl => IdentityUrl("login");
+    private string AccountUrl => IdentityUrl("account");
+    private string SignoutUrl => IdentityUrl("signout");
+    private string NavUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? Text["account"] : currentUser.DisplayName;
     private string CurrentUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName)
         ? currentUser.Provider
         : $"{currentUser.DisplayName} ({currentUser.Provider})";
+    private string CodeMaruHomeUrl => LocalizedUrl("https://codemaru.co.kr");
+    private IReadOnlyList<DreaminePortalNavigationItem> PortalItems =>
+    [
+        new("home", Text["home"], CodeMaruHomeUrl),
+        new("dreamine", "Dreamine", "https://dreamine.kr/", OpenInNewWindow: true),
+        new("cardhybrid", "CardHybrid", LocalizedUrl("https://codemaru.co.kr/cardhybrid")),
+        new("wedding", "Wedding", LocalizedUrl("https://wedding.codemaru.co.kr")),
+        new("thankyou", "ThankYou", LocalizedUrl("https://thankyou.codemaru.co.kr/")),
+        new("families", "Families", LocalizedUrl("https://families.codemaru.co.kr")),
+        new("portfolio", "Portfolio", LocalizedUrl("https://portfolio.codemaru.co.kr/")),
+        new("cctv", "CCTV", LocalizedUrl("https://cctvviewer.codemaru.co.kr")),
+        new("shop", "ShopStore", LocalizedUrl("https://shop.codemaru.co.kr/")),
+        new("contact", Text["contact"], LocalizedUrl("https://codemaru.co.kr/contact"))
+    ];
+
+    private string LocalizedUrl(string url)
+    {
+        var separator = url.Contains('?') ? '&' : '?';
+        return $"{url}{separator}lang={Uri.EscapeDataString(Text.Language)}";
+    }
+
+    private string IdentityUrl(string action)
+    {
+        var current = Nav.ToAbsoluteUri(Nav.Uri);
+        var returnUrl = current.PathAndQuery;
+        return $"/_identity/{action}?lang={Uri.EscapeDataString(Text.Language)}&returnUrl={Uri.EscapeDataString(returnUrl)}";
+    }
 
     protected override void OnInitialized()
     {
-        Nav.LocationChanged += OnLocationChanged;
+        Text.Changed += OnTextChanged;
         Vm.NewSlug = "";
         Vm.NewCoupleName = "";
         Vm.NewPassword = "";
@@ -351,24 +368,10 @@
         string.Equals(config.OwnerUserId, currentUser.Id, StringComparison.Ordinal)
         || (config.AdminUsers?.Any(x => string.Equals(x.UserId, currentUser.Id, StringComparison.Ordinal)) == true);
 
-    private void ToggleNav()
-    {
-        isNavOpen = !isNavOpen;
-    }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        if (!isNavOpen)
-        {
-            return;
-        }
-
-        isNavOpen = false;
-        _ = InvokeAsync(StateHasChanged);
-    }
-
     public void Dispose()
     {
-        Nav.LocationChanged -= OnLocationChanged;
+        Text.Changed -= OnTextChanged;
     }
+
+    private void OnTextChanged() => _ = InvokeAsync(StateHasChanged);
 }

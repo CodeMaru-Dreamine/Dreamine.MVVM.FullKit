@@ -14,23 +14,6 @@
  */
 const _hlsState = Object.create(null);
 
-window.codemaruTheme = {
-    get() {
-        const theme = localStorage.getItem("codemaru-theme");
-        return theme === "light" || theme === "dark" ? theme : "system";
-    },
-    set(theme) {
-        if (theme === "light" || theme === "dark") {
-            localStorage.setItem("codemaru-theme", theme);
-            document.documentElement.dataset.theme = theme;
-            return;
-        }
-
-        localStorage.removeItem("codemaru-theme");
-        delete document.documentElement.dataset.theme;
-    }
-};
-
 /**
  * @brief 캐시 무력화를 위해 매 요청마다 고유 쿼리스트링(_cb=timestamp)을 부착합니다.
  * @param {string} url - 원본 m3u8 URL(예: "/hls/front/index.m3u8").

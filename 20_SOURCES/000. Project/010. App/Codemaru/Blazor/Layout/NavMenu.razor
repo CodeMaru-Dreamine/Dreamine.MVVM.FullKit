@@ -2,76 +2,124 @@
 @implements IDisposable
 @inject NavigationManager Navigation
 @inject SiteLocalization Text
-@using Codemaru.Blazor.Components
+@using Dreamine.UI.Blazor.Navigation
 
-<header class="cm-topbar">
-    <a class="cm-brand" href="/">
-        <span class="cm-brand-logo-wrap">
-            <img class="cm-brand-logo cm-logo-dark" src="/img/Codemaru_Bloom.jpg" alt="" />
-            <img class="cm-brand-logo cm-logo-light" src="/img/Codemaru_Bloom_Light.jpg" alt="" />
-        </span>
-        <span class="cm-brand-text">CodeMaru</span>
-    </a>
-
-    <div class="cm-right">
-        <nav id="cmMenu" class="cm-nav cm-nav-menu @(isOpen ? "open" : null)">
-            <NavLink href="/" Match="NavLinkMatch.All" ActiveClass="active">@Text["nav.home"]</NavLink>
-            <a href="https://dreamine.kr/" target="_blank" rel="noopener">Dreamine</a>
-            <NavLink href="/cardhybrid" ActiveClass="active">CardHybrid</NavLink>
-            <a href="https://wedding.codemaru.co.kr">Wedding</a>
-            <a href="https://thankyou.codemaru.co.kr/">ThankYou</a>
-            <a href="https://families.codemaru.co.kr">Families</a>
-            <a href="https://portfolio.codemaru.co.kr/">Portfolio</a>
-            <a href="https://cctvviewer.codemaru.co.kr">CCTV</a>
-            <a href="https://shop.codemaru.co.kr/">ShopStore</a>
-            <NavLink href="/contact" Match="NavLinkMatch.All" ActiveClass="active">@Text["contact"]</NavLink>
-
-            <AuthorizeView>
-                <Authorized>
-                    <details class="cm-user-menu">
-                        <summary class="cm-user-badge">
-                            <i class="fa-solid fa-user"></i>
-                            @DisplayNameOf(context)
-                            <i class="fa-solid fa-chevron-down cm-user-chevron"></i>
-                        </summary>
-                        <div class="cm-user-popover">
-                            <p class="cm-user-menu-label">@Text["screenSettings"]</p>
-                            <ThemeSwitcher />
-                            <LanguageSwitcher />
-                            <div class="cm-user-menu-divider"></div>
-                            <a href="/account?returnUrl=@ReturnUrl"><i class="fa-regular fa-user"></i> @Text["account"]</a>
-                            <AuthorizeView Policy="CodemaruAdmin" Context="adminContext">
-                                <Authorized>
-                                    <a href="/admin"><i class="fa-solid fa-chart-line"></i> @Text["admin"]</a>
-                                </Authorized>
-                            </AuthorizeView>
-                            <a href="/signout?returnUrl=@ReturnUrl"><i class="fa-solid fa-arrow-right-from-bracket"></i> @Text["logout"]</a>
-                        </div>
-                    </details>
-                </Authorized>
-                <NotAuthorized>
-                    <ThemeSwitcher />
-                    <LanguageSwitcher />
-                    <a class="cm-auth-link" href="/login?returnUrl=@ReturnUrl">@Text["login"]</a>
-                </NotAuthorized>
-            </AuthorizeView>
-        </nav>
-
-        <button class="cm-nav-burger"
-                type="button"
-                @onclick="ToggleMenu"
-                aria-label="@Text["nav.toggle"]"
-                aria-expanded="@isOpen"
-                aria-controls="cmMenu">
-            <span></span><span></span><span></span>
-        </button>
-    </div>
-</header>
+<AuthorizeView>
+    <Authorized Context="authenticationState">
+        <DreaminePortalHeader BrandName="CodeMaru"
+                              BrandUrl="/"
+                              BrandImageUrl="/img/Codemaru_Bloom.jpg"
+                              BrandLightImageUrl="/img/Codemaru_Bloom_Light.jpg"
+                              BrandImageAlt=""
+                              Items="@NavigationItems"
+                              ActiveKey="@ActiveKey"
+                              NavigationAriaLabel="CodeMaru services"
+                              ToggleMenuLabel="@Text["nav.toggle"]"
+                              Fixed="true"
+                              IsAuthenticated="true"
+                              DisplayName="@DisplayNameOf(authenticationState)"
+                              ScreenSettingsLabel="@Text["screenSettings"]"
+                              AccountUrl="@($"/account?returnUrl={ReturnUrl}")"
+                              AccountLabel="@Text["account"]"
+                              SignoutUrl="@($"/signout?returnUrl={ReturnUrl}")"
+                              SignoutLabel="@Text["logout"]">
+            <Preferences>
+                <DreaminePortalPreferences ThemeLabel="@Text["theme.label"]"
+                                           SystemThemeLabel="@Text["theme.system"]"
+                                           LightThemeLabel="@Text["theme.light"]"
+                                           DarkThemeLabel="@Text["theme.dark"]"
+                                           ThemeStorageKey="codemaru-theme"
+                                           CookieDomain=".codemaru.co.kr"
+                                           Language="@Text.Language"
+                                           LanguageChanged="ChangeLanguageAsync"
+                                           Languages="@Text.Languages"
+                                           LanguageLabel="@Text["language"]"
+                                           FallbackLanguage="ko"
+                                           LanguageStorageKey="codemaru-language" />
+            </Preferences>
+            <AdditionalUserActions>
+                <AuthorizeView Policy="CodemaruAdmin" Context="adminContext">
+                    <Authorized>
+                        <a href="/admin"><span aria-hidden="true">⌁</span> @Text["admin"]</a>
+                    </Authorized>
+                </AuthorizeView>
+            </AdditionalUserActions>
+        </DreaminePortalHeader>
+    </Authorized>
+    <NotAuthorized>
+        <DreaminePortalHeader BrandName="CodeMaru"
+                              BrandUrl="/"
+                              BrandImageUrl="/img/Codemaru_Bloom.jpg"
+                              BrandLightImageUrl="/img/Codemaru_Bloom_Light.jpg"
+                              BrandImageAlt=""
+                              Items="@NavigationItems"
+                              ActiveKey="@ActiveKey"
+                              NavigationAriaLabel="CodeMaru services"
+                              ToggleMenuLabel="@Text["nav.toggle"]"
+                              Fixed="true"
+                              LoginUrl="@($"/login?returnUrl={ReturnUrl}")"
+                              LoginLabel="@Text["login"]">
+            <Preferences>
+                <DreaminePortalPreferences ThemeLabel="@Text["theme.label"]"
+                                           SystemThemeLabel="@Text["theme.system"]"
+                                           LightThemeLabel="@Text["theme.light"]"
+                                           DarkThemeLabel="@Text["theme.dark"]"
+                                           ThemeStorageKey="codemaru-theme"
+                                           CookieDomain=".codemaru.co.kr"
+                                           Language="@Text.Language"
+                                           LanguageChanged="ChangeLanguageAsync"
+                                           Languages="@Text.Languages"
+                                           LanguageLabel="@Text["language"]"
+                                           FallbackLanguage="ko"
+                                           LanguageStorageKey="codemaru-language" />
+            </Preferences>
+        </DreaminePortalHeader>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
-    private bool isOpen;
-
     private string ReturnUrl => Uri.EscapeDataString(new Uri(Navigation.Uri).PathAndQuery);
+
+    private string? ActiveKey
+    {
+        get
+        {
+            var path = new Uri(Navigation.Uri).AbsolutePath.Trim('/');
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return "home";
+            }
+
+            return path.Split('/', StringSplitOptions.RemoveEmptyEntries)[0].ToLowerInvariant() switch
+            {
+                "cardhybrid" => "cardhybrid",
+                "contact" => "contact",
+                _ => null
+            };
+        }
+    }
+
+    private IReadOnlyList<DreaminePortalNavigationItem> NavigationItems =>
+    [
+        new("home", Text["nav.home"], "/"),
+        new("dreamine", "Dreamine", "https://dreamine.kr/", true),
+        new("cardhybrid", "CardHybrid", "/cardhybrid"),
+        new("wedding", "Wedding", "https://wedding.codemaru.co.kr"),
+        new("thankyou", "ThankYou", "https://thankyou.codemaru.co.kr/"),
+        new("families", "Families", "https://families.codemaru.co.kr"),
+        new("portfolio", "Portfolio", "https://portfolio.codemaru.co.kr/"),
+        new("cctv", "CCTV", "https://cctvviewer.codemaru.co.kr"),
+        new("shop", "ShopStore", "https://shop.codemaru.co.kr/"),
+        new("contact", Text["contact"], "/contact")
+    ];
+
+    protected override void OnInitialized() => Text.Changed += HandleLanguageChanged;
+
+    private Task ChangeLanguageAsync(string language)
+    {
+        Text.SetLanguage(language);
+        return Task.CompletedTask;
+    }
 
     private string DisplayNameOf(AuthenticationState context)
     {
@@ -79,33 +127,7 @@
         return string.IsNullOrWhiteSpace(name) ? Text["account"] : name;
     }
 
-    private void ToggleMenu()
-    {
-        isOpen = !isOpen;
-    }
-
-    protected override void OnInitialized()
-    {
-        Navigation.LocationChanged += HandleLocationChanged;
-        Text.Changed += HandleLanguageChanged;
-    }
-
     private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
-    private void HandleLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        if (!isOpen)
-        {
-            return;
-        }
-
-        isOpen = false;
-        _ = InvokeAsync(StateHasChanged);
-    }
-
-    public void Dispose()
-    {
-        Navigation.LocationChanged -= HandleLocationChanged;
-        Text.Changed -= HandleLanguageChanged;
-    }
+    public void Dispose() => Text.Changed -= HandleLanguageChanged;
 }
