@@ -280,7 +280,11 @@
 
                 <label>
                     @C("backImage")
-                    <InputFile OnChange="OnLogoSelectedAsync" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,.ico" />
+                    <span class="localized-file-input">
+                        <InputFile OnChange="OnLogoSelectedAsync" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,.ico" />
+                        <span class="localized-file-button">@C("chooseFile")</span>
+                        <span class="localized-file-name">@(logoFileName ?? C("noFileSelected"))</span>
+                    </span>
                 </label>
 
                 @if (!string.IsNullOrWhiteSpace(logoImageDataUrl))
@@ -510,7 +514,11 @@
 
                 <label class="import-box">
                     @C("importCard")
-                    <InputFile OnChange="OnImportSelectedAsync" multiple accept=".vcf,text/vcard,text/x-vcard,image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,.ico" />
+                    <span class="localized-file-input">
+                        <InputFile OnChange="OnImportSelectedAsync" multiple accept=".vcf,text/vcard,text/x-vcard,image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon,image/vnd.microsoft.icon,.ico" />
+                        <span class="localized-file-button">@C("chooseFile")</span>
+                        <span class="localized-file-name">@(importFileName ?? C("noFileSelected"))</span>
+                    </span>
                 </label>
 
                 @if (State.History.Count == 0)
@@ -576,6 +584,8 @@
     private string vCardNote = string.Empty;
     private string internalMemo = string.Empty;
     private string? logoImageDataUrl;
+    private string? logoFileName;
+    private string? importFileName;
     private string? importedFrontImageDataUrl;
     private string? importedBackImageDataUrl;
     private byte[]? logoOriginalBytes;
@@ -847,6 +857,12 @@
     private async Task OnImportSelectedAsync(InputFileChangeEventArgs args)
     {
         var files = args.GetMultipleFiles(10);
+        importFileName = files.Count switch
+        {
+            0 => null,
+            1 => files[0].Name,
+            _ => $"{files[0].Name} +{files.Count - 1}"
+        };
         if (files.Count == 0)
         {
             lastSavedText = "선택된 파일 없음";
@@ -1036,6 +1052,7 @@
     private async Task OnLogoSelectedAsync(InputFileChangeEventArgs args)
     {
         var file = args.File;
+        logoFileName = file.Name;
         await using var stream = file.OpenReadStream(maxAllowedSize: 2 * 1024 * 1024);
         using var memory = new MemoryStream();
         await stream.CopyToAsync(memory);
