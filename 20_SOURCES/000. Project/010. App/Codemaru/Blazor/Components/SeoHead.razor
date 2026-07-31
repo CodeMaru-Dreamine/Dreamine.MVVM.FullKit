@@ -1,0 +1,44 @@
+@namespace Codemaru.Blazor.Components
+
+<HeadContent>
+    <meta name="description" content="@Description" />
+    <meta name="robots" content="@Robots" />
+    @if (!NoIndex)
+    {
+        <link rel="canonical" href="@CanonicalUrl" />
+    }
+    <meta property="og:title" content="@Title" />
+    <meta property="og:description" content="@Description" />
+    <meta property="og:type" content="@Type" />
+    <meta property="og:url" content="@CanonicalUrl" />
+    <meta property="og:image" content="@Image" />
+    <meta property="og:image:secure_url" content="@Image" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="@ImageAlt" />
+    <meta property="og:site_name" content="CodeMaru" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="@Title" />
+    <meta name="twitter:description" content="@Description" />
+    <meta name="twitter:image" content="@Image" />
+    <meta name="twitter:image:alt" content="@ImageAlt" />
+</HeadContent>
+
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string Description { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string CanonicalPath { get; set; } = "/";
+    [Parameter] public string Image { get; set; } = "https://codemaru.co.kr/img/codemaru_og_v2.png";
+    [Parameter] public string ImageAlt { get; set; } = "CodeMaru 디지털 서비스";
+    [Parameter] public string Type { get; set; } = "website";
+    [Parameter] public bool NoIndex { get; set; }
+
+    private string CanonicalUrl => CanonicalPath.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+        ? CanonicalPath
+        : $"https://codemaru.co.kr/{CanonicalPath.TrimStart('/')}";
+
+    private string Robots => NoIndex
+        ? "noindex, nofollow, noarchive"
+        : "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1";
+}

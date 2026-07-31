@@ -8,27 +8,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <title>CodeMaru - 명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV, 쇼핑몰</title>
-    <meta name="description" content="CodeMaru는 명함 QR과 vCard 랜딩 페이지, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 직영 쇼핑몰, 개발자 포트폴리오를 제공하는 디지털 서비스 플랫폼입니다." />
     <meta name="keywords" content="코드마루, CodeMaru, 명함 QR, vCard, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 쇼핑몰, 포트폴리오, Dreamine, CardHybrid" />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://codemaru.co.kr/" />
-
-    <meta property="og:title" content="CodeMaru - 명함 QR · 청첩장 · 감사장 · 가족 앨범 · CCTV · 쇼핑몰" />
-    <meta property="og:description" content="명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 쇼핑몰까지 CodeMaru 계정 하나로 사용하는 디지털 서비스 플랫폼입니다." />
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://codemaru.co.kr/" />
-    <meta property="og:image" content="https://codemaru.co.kr/img/codemaru_og.png" />
-    <meta property="og:image:secure_url" content="https://codemaru.co.kr/img/codemaru_og.png" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:site_name" content="코드마루" />
-    <meta property="og:locale" content="ko_KR" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="CodeMaru - 명함 QR · 청첩장 · 감사장 · 가족 앨범 · CCTV" />
-    <meta name="twitter:description" content="명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 쇼핑몰까지 제공하는 CodeMaru 서비스 플랫폼입니다." />
-    <meta name="twitter:image" content="https://codemaru.co.kr/img/codemaru_og.png" />
     <link rel="icon" type="image/jpeg" href="/img/Codemaru_Essence.jpg" />
+    <script>
+        (() => {
+            const saved = localStorage.getItem("codemaru-theme");
+            if (saved === "light" || saved === "dark") {
+                document.documentElement.dataset.theme = saved;
+            }
+        })();
+    </script>
 
     <script type="application/ld+json">
         {
@@ -36,7 +25,7 @@
           "@@type": "Organization",
           "name": "코드마루",
           "url": "https://codemaru.co.kr/",
-          "logo": "https://codemaru.co.kr/img/codemaru_og.png",
+          "logo": "https://codemaru.co.kr/img/Codemaru_Bloom_Light.jpg",
           "sameAs": [
             "https://shop.codemaru.co.kr",
             "https://wedding.codemaru.co.kr",

@@ -1,10 +1,14 @@
 @namespace Codemaru.Blazor.Layout
 @implements IDisposable
 @inject NavigationManager Navigation
+@using Codemaru.Blazor.Components
 
 <header class="cm-topbar">
     <a class="cm-brand" href="/">
-        <img class="cm-brand-logo" src="/img/Codemaru_Bloom_Light.jpg" alt="Codemaru" />
+        <span class="cm-brand-logo-wrap">
+            <img class="cm-brand-logo cm-logo-dark" src="/img/Codemaru_Bloom.jpg" alt="" />
+            <img class="cm-brand-logo cm-logo-light" src="/img/Codemaru_Bloom_Light.jpg" alt="" />
+        </span>
         <span class="cm-brand-text">CodeMaru</span>
     </a>
 
@@ -23,13 +27,28 @@
 
             <AuthorizeView>
                 <Authorized>
-                    <a class="cm-user-badge" href="/account?returnUrl=@ReturnUrl" title="내 계정">
-                        <i class="fa-solid fa-user"></i>
-                        @DisplayNameOf(context)
-                    </a>
-                    <a class="cm-auth-link" href="/signout?returnUrl=@ReturnUrl">로그아웃</a>
+                    <details class="cm-user-menu">
+                        <summary class="cm-user-badge">
+                            <i class="fa-solid fa-user"></i>
+                            @DisplayNameOf(context)
+                            <i class="fa-solid fa-chevron-down cm-user-chevron"></i>
+                        </summary>
+                        <div class="cm-user-popover">
+                            <p class="cm-user-menu-label">화면 설정</p>
+                            <ThemeSwitcher />
+                            <div class="cm-user-menu-divider"></div>
+                            <a href="/account?returnUrl=@ReturnUrl"><i class="fa-regular fa-user"></i> 내 계정</a>
+                            <AuthorizeView Policy="CodemaruAdmin" Context="adminContext">
+                                <Authorized>
+                                    <a href="/admin"><i class="fa-solid fa-chart-line"></i> 관리자</a>
+                                </Authorized>
+                            </AuthorizeView>
+                            <a href="/signout?returnUrl=@ReturnUrl"><i class="fa-solid fa-arrow-right-from-bracket"></i> 로그아웃</a>
+                        </div>
+                    </details>
                 </Authorized>
                 <NotAuthorized>
+                    <ThemeSwitcher />
                     <a class="cm-auth-link" href="/login?returnUrl=@ReturnUrl">로그인</a>
                 </NotAuthorized>
             </AuthorizeView>

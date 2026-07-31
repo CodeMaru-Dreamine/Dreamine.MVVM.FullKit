@@ -2,26 +2,36 @@
 @namespace Codemaru.Blazor.Pages
 
 <PageTitle>CodeMaru - 명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV, 쇼핑몰</PageTitle>
-<HeadContent>
-    <meta name="description" content="CodeMaru는 명함 QR과 vCard 랜딩 페이지, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 직영 쇼핑몰, 개발자 포트폴리오를 제공하는 실용적인 디지털 서비스 플랫폼입니다." />
-    <meta property="og:title" content="CodeMaru - 명함 QR · 청첩장 · 감사장 · 가족 앨범 · CCTV · 쇼핑몰" />
-    <meta property="og:description" content="명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 쇼핑몰까지 CodeMaru 계정 하나로 사용하는 디지털 서비스 플랫폼입니다." />
-    <meta property="og:url" content="https://codemaru.co.kr/" />
-    <meta property="og:image" content="https://codemaru.co.kr/img/codemaru_og.png" />
-    <meta name="twitter:title" content="CodeMaru - 명함 QR · 청첩장 · 감사장 · 가족 앨범 · CCTV" />
-    <meta name="twitter:description" content="명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 쇼핑몰까지 제공하는 CodeMaru 서비스 플랫폼입니다." />
-</HeadContent>
+<SeoHead Title="CodeMaru — 필요한 디지털 도구를 직접 만듭니다"
+         Description="CodeMaru는 명함 QR과 vCard 랜딩 페이지, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 직영 쇼핑몰, 개발자 포트폴리오를 제공하는 실용적인 디지털 서비스 플랫폼입니다."
+         CanonicalPath="/"
+         ImageAlt="명함 QR, 모바일 청첩장, CCTV와 개발 도구를 표현한 CodeMaru 서비스" />
 
-<section class="cm-hero">
-    <img class="cm-hero-logo" src="img/Codemaru_Core.jpg" alt="CodeMaru 로고" />
-    <h1>CodeMaru</h1>
-    <p class="lead">
-        명함 QR, 모바일 청첩장, 감사장, 가족 앨범, CCTV 원격 모니터링, 직영 쇼핑몰까지<br />
-        개인과 소규모 사업자가 바로 쓸 수 있는 실용적인 디지털 도구를 직접 만들고 운영합니다.
-    </p>
+<section class="cm-home-hero">
+    <div class="cm-home-copy">
+        <p class="cm-home-kicker">CodeMaru</p>
+        <h1>필요한 디지털 도구를<br />직접 만듭니다</h1>
+        <p>명함 QR부터 모바일 청첩장, 감사장, 가족 앨범,<br />CCTV 모니터링, 직영 쇼핑몰까지.</p>
+        <div class="cm-home-actions">
+            <a class="cm-home-primary" href="#services">서비스 둘러보기 <i class="fa-solid fa-arrow-right"></i></a>
+            <a class="cm-home-secondary" href="/about">CodeMaru 소개</a>
+        </div>
+    </div>
+    <img class="cm-home-hero-art" src="/img/codemaru-hero-v2.png" alt="명함 QR, 모바일 청첩장, CCTV 모니터링과 개발 도구를 표현한 CodeMaru 서비스 일러스트" />
 </section>
 
-<section class="cm-cards" aria-label="CodeMaru 서비스">
+<section class="cm-home-values" aria-label="CodeMaru 운영 원칙">
+    <article><i class="fa-solid fa-code"></i><div><strong>직접 설계 · 개발</strong><span>필요한 기능을 직접 설계하고 끝까지 책임집니다.</span></div></article>
+    <article><i class="fa-solid fa-check"></i><div><strong>실제로 운영 중</strong><span>모든 서비스는 실제 운영 경험을 통해 검증됩니다.</span></div></article>
+    <article><i class="fa-solid fa-arrow-trend-up"></i><div><strong>지속적인 개선</strong><span>사용자의 피드백을 반영하며 꾸준히 개선합니다.</span></div></article>
+</section>
+
+<header id="services" class="cm-section-heading">
+    <h2>CodeMaru 서비스</h2>
+    <p>작은 문제를 해결하는 데서 시작해, 실제로 쓰이는 서비스를 만듭니다.</p>
+</header>
+
+<section class="cm-cards cm-home-services" aria-label="CodeMaru 서비스">
     <article class="cm-card">
         <div class="cm-card-preview">
             <div class="cm-browser-frame">
@@ -183,16 +193,17 @@
     </article>
 </section>
 
-<section class="cm-maker">
-    <h2>CodeMaru를 만드는 사람</h2>
-    <p>
-        CodeMaru는 장민수 개발자 1인이 설계, 개발, 운영하는 인디 플랫폼입니다.
-        실제로 필요한 기능을 직접 만들고, 문의와 개선 요청을 빠르게 반영하는 것을 중요하게 생각합니다.
-    </p>
-    <div class="cm-maker-links">
-        <a href="/contact">문의하기</a>
-        <a href="https://github.com/CodeMaru-Dreamine" target="_blank" rel="noopener">GitHub</a>
+<section id="about" class="cm-maker">
+    <div class="cm-maker-copy">
+        <p class="cm-home-kicker">About CodeMaru</p>
+        <h2>작은 문제부터<br />직접 해결합니다</h2>
+        <p>CodeMaru는 1인 개발 스튜디오입니다. 실제로 필요했던 기능을 직접 만들고, 운영하며 사용자의 피드백을 바탕으로 계속 개선합니다.</p>
+        <div class="cm-maker-links">
+            <a href="/about">CodeMaru 자세히 보기</a>
+            <a href="https://github.com/CodeMaru-Dreamine" target="_blank" rel="noopener"><i class="fa-brands fa-github"></i> GitHub</a>
+        </div>
     </div>
+    <img class="cm-maker-art" src="/img/codemaru-about-v2.png" alt="노트북과 화분이 놓인 CodeMaru 개발 작업 공간" />
 </section>
 
 @code {
