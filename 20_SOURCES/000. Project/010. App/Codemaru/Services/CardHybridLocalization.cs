@@ -19,7 +19,8 @@ public static class CardHybridLocalization
         "windowsVcard", "themeLight", "themeDark", "themeBlue", "themeGreen",
         "includePhone", "includeAddress", "exportHtml", "history", "reset",
         "guest", "guestHint", "importCard", "emptyHistory", "edit", "delete",
-        "refreshQr", "saveHistory", "savedHistory", "editor", "preview", "historyLabel"
+        "refreshQr", "saveHistory", "savedHistory", "editor", "preview", "historyLabel",
+        "chooseFile", "noFileSelected"
     ];
 
     private static readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> Texts =
@@ -35,7 +36,7 @@ public static class CardHybridLocalization
                 "Windows 연락처 vCard", "밝은", "어두운", "블루", "그린",
                 "vCard에 전화 포함", "vCard에 주소 포함", "내보낼 HTML", "이력", "초기화",
                 "게스트 사용 중", "로그인하면 명함이 계정에 저장됩니다.", "외부 명함 가져오기", "저장된 명함 이력이 없습니다.", "편집", "삭제",
-                "QR 갱신", "이력 저장", "이력 저장", "명함 편집", "명함 및 랜딩 미리보기", "명함 이력"
+                "QR 갱신", "이력 저장", "이력 저장", "명함 편집", "명함 및 랜딩 미리보기", "명함 이력", "파일 선택", "선택된 파일 없음"
             ]),
             ["en"] = Map([
                 "Card details", "Not saved yet", "Front brand", "Font", "Size", "Front tagline",
@@ -47,7 +48,7 @@ public static class CardHybridLocalization
                 "Windows contact vCard", "Light", "Dark", "Blue", "Green",
                 "Include phone in vCard", "Include address in vCard", "Exported HTML", "History", "Reset",
                 "Using as guest", "Sign in to save cards to your account.", "Import external card", "No saved card history.", "Edit", "Delete",
-                "Refresh QR", "Save history", "Save history", "Card editor", "Card and landing preview", "Card history"
+                "Refresh QR", "Save history", "Save history", "Card editor", "Card and landing preview", "Card history", "Choose file", "No file selected"
             ]),
             ["es"] = Map([
                 "Datos de tarjeta", "Aún sin guardar", "Marca frontal", "Fuente", "Tamaño", "Lema frontal",
@@ -59,7 +60,7 @@ public static class CardHybridLocalization
                 "vCard para Windows", "Claro", "Oscuro", "Azul", "Verde",
                 "Incluir teléfono", "Incluir dirección", "HTML exportado", "Historial", "Restablecer",
                 "Uso como invitado", "Inicia sesión para guardar tarjetas.", "Importar tarjeta", "No hay historial guardado.", "Editar", "Eliminar",
-                "Actualizar QR", "Guardar historial", "Guardar historial", "Editor de tarjetas", "Vista previa", "Historial de tarjetas"
+                "Actualizar QR", "Guardar historial", "Guardar historial", "Editor de tarjetas", "Vista previa", "Historial de tarjetas", "Elegir archivo", "Ningún archivo seleccionado"
             ]),
             ["fr"] = Map([
                 "Informations de carte", "Pas encore enregistrée", "Marque recto", "Police", "Taille", "Slogan recto",
@@ -71,7 +72,7 @@ public static class CardHybridLocalization
                 "vCard Windows", "Clair", "Sombre", "Bleu", "Vert",
                 "Inclure le téléphone", "Inclure l’adresse", "HTML exporté", "Historique", "Réinitialiser",
                 "Mode invité", "Connectez-vous pour enregistrer vos cartes.", "Importer une carte", "Aucun historique.", "Modifier", "Supprimer",
-                "Actualiser le QR", "Enregistrer", "Enregistrer", "Éditeur de carte", "Aperçu carte et page", "Historique des cartes"
+                "Actualiser le QR", "Enregistrer", "Enregistrer", "Éditeur de carte", "Aperçu carte et page", "Historique des cartes", "Choisir un fichier", "Aucun fichier sélectionné"
             ]),
             ["it"] = Map([
                 "Dati biglietto", "Non ancora salvato", "Marchio fronte", "Font", "Dimensione", "Slogan fronte",
@@ -83,7 +84,7 @@ public static class CardHybridLocalization
                 "vCard Windows", "Chiaro", "Scuro", "Blu", "Verde",
                 "Includi telefono", "Includi indirizzo", "HTML esportato", "Cronologia", "Ripristina",
                 "Modalità ospite", "Accedi per salvare i biglietti.", "Importa biglietto", "Nessuna cronologia.", "Modifica", "Elimina",
-                "Aggiorna QR", "Salva cronologia", "Salva cronologia", "Editor biglietto", "Anteprima", "Cronologia biglietti"
+                "Aggiorna QR", "Salva cronologia", "Salva cronologia", "Editor biglietto", "Anteprima", "Cronologia biglietti", "Scegli file", "Nessun file selezionato"
             ]),
             ["pt"] = Map([
                 "Dados do cartão", "Ainda não salvo", "Marca frontal", "Fonte", "Tamanho", "Slogan frontal",
@@ -95,7 +96,7 @@ public static class CardHybridLocalization
                 "vCard Windows", "Claro", "Escuro", "Azul", "Verde",
                 "Incluir telefone", "Incluir endereço", "HTML exportado", "Histórico", "Redefinir",
                 "Modo visitante", "Entre para salvar cartões.", "Importar cartão", "Nenhum histórico salvo.", "Editar", "Excluir",
-                "Atualizar QR", "Salvar histórico", "Salvar histórico", "Editor de cartão", "Pré-visualização", "Histórico de cartões"
+                "Atualizar QR", "Salvar histórico", "Salvar histórico", "Editor de cartão", "Pré-visualização", "Histórico de cartões", "Escolher arquivo", "Nenhum arquivo selecionado"
             ]),
             ["vi"] = Map([
                 "Thông tin danh thiếp", "Chưa lưu", "Thương hiệu mặt trước", "Phông chữ", "Kích thước", "Khẩu hiệu mặt trước",
@@ -107,7 +108,7 @@ public static class CardHybridLocalization
                 "vCard Windows", "Sáng", "Tối", "Xanh dương", "Xanh lá",
                 "Gồm số điện thoại", "Gồm địa chỉ", "HTML xuất", "Lịch sử", "Đặt lại",
                 "Đang dùng với tư cách khách", "Đăng nhập để lưu danh thiếp.", "Nhập danh thiếp", "Chưa có lịch sử.", "Sửa", "Xóa",
-                "Cập nhật QR", "Lưu lịch sử", "Lưu lịch sử", "Trình sửa danh thiếp", "Xem trước", "Lịch sử danh thiếp"
+                "Cập nhật QR", "Lưu lịch sử", "Lưu lịch sử", "Trình sửa danh thiếp", "Xem trước", "Lịch sử danh thiếp", "Chọn tệp", "Chưa chọn tệp"
             ]),
             ["ja"] = Map([
                 "名刺情報", "未保存", "表面ブランド", "フォント", "サイズ", "表面タグライン",
@@ -119,7 +120,7 @@ public static class CardHybridLocalization
                 "Windows連絡先vCard", "ライト", "ダーク", "ブルー", "グリーン",
                 "電話番号を含める", "住所を含める", "出力HTML", "履歴", "初期化",
                 "ゲストとして使用中", "ログインすると名刺を保存できます。", "外部名刺を取り込む", "保存履歴はありません。", "編集", "削除",
-                "QRを更新", "履歴を保存", "履歴を保存", "名刺エディター", "名刺とページのプレビュー", "名刺履歴"
+                "QRを更新", "履歴を保存", "履歴を保存", "名刺エディター", "名刺とページのプレビュー", "名刺履歴", "ファイルを選択", "ファイルが選択されていません"
             ]),
             ["zh-hans"] = Map([
                 "名片信息", "尚未保存", "正面品牌", "字体", "大小", "正面标语",
@@ -131,7 +132,7 @@ public static class CardHybridLocalization
                 "Windows 联系人 vCard", "浅色", "深色", "蓝色", "绿色",
                 "包含电话", "包含地址", "导出 HTML", "历史记录", "重置",
                 "访客模式", "登录后可将名片保存到账户。", "导入外部名片", "暂无保存记录。", "编辑", "删除",
-                "更新 QR", "保存记录", "保存记录", "名片编辑器", "名片与落地页预览", "名片历史"
+                "更新 QR", "保存记录", "保存记录", "名片编辑器", "名片与落地页预览", "名片历史", "选择文件", "未选择文件"
             ]),
             ["zh-hant"] = Map([
                 "名片資訊", "尚未儲存", "正面品牌", "字型", "大小", "正面標語",
@@ -143,7 +144,7 @@ public static class CardHybridLocalization
                 "Windows 聯絡人 vCard", "淺色", "深色", "藍色", "綠色",
                 "包含電話", "包含地址", "匯出 HTML", "歷史紀錄", "重設",
                 "訪客模式", "登入後可將名片儲存至帳戶。", "匯入外部名片", "尚無儲存紀錄。", "編輯", "刪除",
-                "更新 QR", "儲存紀錄", "儲存紀錄", "名片編輯器", "名片與到達頁預覽", "名片歷史"
+                "更新 QR", "儲存紀錄", "儲存紀錄", "名片編輯器", "名片與到達頁預覽", "名片歷史", "選擇檔案", "尚未選擇檔案"
             ])
         };
 
