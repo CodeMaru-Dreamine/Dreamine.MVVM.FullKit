@@ -41,27 +41,30 @@
             <section>
                 <h2>@Copy.Start</h2>
                 <ol>
-                    <li>@Copy.StepOpen.Replace("{service}", Current.Name)</li>
-                    <li>@Copy.StepEnter</li>
-                    <li>@Copy.StepPreview</li>
-                    <li>@Copy.StepSave</li>
+                    @foreach (var step in Details.Steps)
+                    {
+                        <li>@step</li>
+                    }
                 </ol>
             </section>
             <section>
                 <h2>@Copy.Features</h2>
                 <dl>
-                    <dt>✏️ @Copy.Edit</dt><dd>@Copy.EditDetail</dd>
-                    <dt>👁️ @Copy.Preview</dt><dd>@Copy.PreviewDetail</dd>
-                    <dt>🔗 @Copy.Share</dt><dd>@Copy.ShareDetail</dd>
-                    <dt>🔐 @Copy.Account</dt><dd>@Copy.AccountDetail</dd>
+                    @foreach (var feature in Details.Features)
+                    {
+                        <dt>@feature.Icon @feature.Title</dt>
+                        <dd>@feature.Description</dd>
+                    }
                 </dl>
             </section>
             <section>
                 <h2>@Copy.Faq</h2>
                 <dl>
-                    <dt>@Copy.FaqMobile</dt><dd>@Copy.FaqMobileAnswer</dd>
-                    <dt>@Copy.FaqLanguage</dt><dd>@Copy.FaqLanguageAnswer</dd>
-                    <dt>@Copy.FaqSave</dt><dd>@Copy.FaqSaveAnswer</dd>
+                    @foreach (var faq in Details.Faqs)
+                    {
+                        <dt>@faq.Question</dt>
+                        <dd>@faq.Answer</dd>
+                    }
                 </dl>
             </section>
         </div>
@@ -76,12 +79,14 @@
         get
         {
             var requested = string.IsNullOrWhiteSpace(Service) ? "cardhybrid" : Service.ToLowerInvariant();
+            requested = requested == "shop" ? "shopstore" : requested;
             return Services.Any(item => item.Key == requested) ? requested : "cardhybrid";
         }
     }
 
     private GuideCopy Copy => GuideCopies[Text.Language];
     private ServiceGuide Current => Services.First(item => item.Key == ActiveKey);
+    private ServiceGuideDetails Details => GuideDetailsCatalog.Get(Text.Language, ActiveKey);
 
     private IReadOnlyList<ServiceGuide> Services =>
     [
