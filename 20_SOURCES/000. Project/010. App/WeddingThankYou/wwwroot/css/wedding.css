@@ -3504,6 +3504,14 @@ html[data-theme="dark"] .wedding-admin-detail { background:#0d1627; }
 @media (max-width:720px) { .wp-preferences { width:100%; padding-top:.6rem; } .wp-preferences label { flex:1; } .wp-preferences select { width:100%; } }
 
 /* Complete dark palette for explicit dark and OS-following system mode. */
+html[data-theme="light"] input:is(.wh-input, .w-input)[type="date"] {
+    color-scheme: light;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) input:is(.wh-input, .w-input)[type="date"] {
+    color-scheme: dark;
+}
+
 :is(html[data-theme="dark"], html.system-dark:not([data-theme])) .wh-topnav {
     --dreamine-portal-background: rgba(11,18,32,.96);
     --dreamine-portal-panel: #111b2d;
