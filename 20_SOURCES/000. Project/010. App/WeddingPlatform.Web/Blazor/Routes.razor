@@ -1,6 +1,10 @@
 @namespace WeddingPlatform.Blazor
 @using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.WebUtilities
 @using WeddingPlatform.Blazor.Layout
+@inject NavigationManager Navigation
+@inject WeddingLocalization Text
+@implements IDisposable
 
 <Router AppAssembly="@typeof(Routes).Assembly">
     <Found Context="routeData">
@@ -14,3 +18,26 @@
         </div>
     </NotFound>
 </Router>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        ApplyQueryLanguage(Navigation.Uri);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        ApplyQueryLanguage(args.Location);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ApplyQueryLanguage(string uri)
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(uri).Query);
+        if (query.TryGetValue("lang", out var language) && !string.IsNullOrWhiteSpace(language))
+            Text.SetLanguage(WeddingLocalization.NormalizeLanguageCode(language.ToString()));
+    }
+
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+}

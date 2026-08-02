@@ -132,6 +132,11 @@ public sealed class TenantConfig
     /// </summary>
     public List<string> SectionOrder { get; set; } = WeddingSectionOrderCatalog.ThankYouRecommendedOrder.ToList();
     /// <summary>
+    /// 섹션별 공개 화면 노출 여부입니다. 값이 없으면 노출하며 hero는 항상 노출합니다.
+    /// WeddingPlatform과 같은 데이터 계약을 사용합니다.
+    /// </summary>
+    public Dictionary<string, bool> SectionVisibility { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+    /// <summary>
     /// \if KO
     /// <para>Story Chapters 값을 가져오거나 설정합니다.</para>
     /// \endif
@@ -140,6 +145,8 @@ public sealed class TenantConfig
     /// \endif
     /// </summary>
     public List<StoryChapter> StoryChapters { get; set; } = WeddingStoryChapterDefaults.Create();
+    public List<PhotoBookPage> PhotoBookPages { get; set; } = WeddingPhotoBookPageDefaults.Create();
+    public List<CardHighlight> CardHighlights { get; set; } = WeddingCardHighlightDefaults.Create();
     /// <summary>
     /// \if KO
     /// <para>Hero Image File Name 값을 가져오거나 설정합니다.</para>
@@ -197,6 +204,16 @@ public sealed class TenantConfig
     /// \endif
     /// </summary>
     public WeddingFloatingPosition HeroPanelPlacement { get; set; } = new();
+    /// <summary>
+    /// 카드·포토북 표지의 상단 제목 문구 위치입니다. 기존 데이터에서 이 필드가
+    /// 없을 때만 <see cref="HeroPanelPlacement"/> 값을 한 번 복사해 마이그레이션합니다.
+    /// 이후에는 일반 감사장 문구 위치와 완전히 독립적으로 저장됩니다.
+    /// </summary>
+    public WeddingFloatingPosition HeroTopPanelPlacement { get; set; } = null!;
+    /// <summary>
+    /// 카드·포토북 표지의 하단 날짜/장소 문구 위치입니다.
+    /// </summary>
+    public WeddingFloatingPosition HeroBottomPanelPlacement { get; set; } = new();
     /// <summary>
     /// \if KO
     /// <para>Map Link Kakao 값을 가져오거나 설정합니다.</para>
@@ -280,6 +297,104 @@ public sealed class TenantConfig
     /// \endif
     /// </summary>
     public string ThemeName { get; set; } = "rose";
+
+    private CustomWeddingThemeSettings _customTheme = new()
+    {
+        Accent = "#a07850",
+    };
+
+    /// <summary>
+    /// WeddingPlatform.Web와 동일한 10토큰 사용자 테마 원본입니다.
+    /// 아래의 CustomTheme* 평면 속성은 기존 JSON/화면 코드와의 호환을 위해
+    /// 이 객체에 직접 연결된 별칭으로 유지됩니다.
+    /// </summary>
+    [JsonPropertyOrder(-100)]
+    public CustomWeddingThemeSettings CustomTheme
+    {
+        get => _customTheme;
+        set => _customTheme = value ?? new CustomWeddingThemeSettings();
+    }
+
+    public string CustomThemeName
+    {
+        get => CustomTheme.Name;
+        set => CustomTheme.Name = value;
+    }
+
+    public string CustomThemeBaseColor
+    {
+        get => CustomTheme.BaseColor ?? CustomTheme.Primary;
+        set => CustomTheme.BaseColor = value;
+    }
+
+    public string CustomThemePrimary
+    {
+        get => CustomTheme.Primary;
+        set => CustomTheme.Primary = value;
+    }
+
+    public string CustomThemeDark
+    {
+        get => CustomTheme.Dark;
+        set => CustomTheme.Dark = value;
+    }
+
+    public string CustomThemeAccent
+    {
+        get => CustomTheme.Accent ?? CustomTheme.Primary;
+        set => CustomTheme.Accent = value;
+    }
+
+    public string CustomThemeText
+    {
+        get => CustomTheme.Text;
+        set => CustomTheme.Text = value;
+    }
+
+    public string CustomThemeMutedText
+    {
+        get => CustomTheme.MutedText ?? CustomTheme.Text;
+        set => CustomTheme.MutedText = value;
+    }
+
+    public string CustomThemeBackground
+    {
+        get => CustomTheme.Background;
+        set => CustomTheme.Background = value;
+    }
+
+    public string CustomThemePanel
+    {
+        get => CustomTheme.PanelBackground;
+        set => CustomTheme.PanelBackground = value;
+    }
+
+    public string CustomThemeButtonBackground
+    {
+        get => CustomTheme.ButtonBackground ?? CustomTheme.Primary;
+        set => CustomTheme.ButtonBackground = value;
+    }
+
+    public string CustomThemeButtonText
+    {
+        get => CustomTheme.ButtonText ?? "#ffffff";
+        set => CustomTheme.ButtonText = value;
+    }
+
+    public string CustomThemeBorder
+    {
+        get => CustomTheme.Border ?? CustomTheme.Primary;
+        set => CustomTheme.Border = value;
+    }
+
+    public string HeroDesktopFit { get; set; } = "contain";
+    public string HeroMobileFit { get; set; } = "contain";
+    public double HeroDesktopFocusX { get; set; } = 50;
+    public double HeroDesktopFocusY { get; set; } = 50;
+    public double HeroMobileFocusX { get; set; } = 50;
+    public double HeroMobileFocusY { get; set; } = 50;
+    public HeroImageCropRegion HeroDesktopCrop { get; set; } = new();
+    public HeroImageCropRegion HeroMobileCrop { get; set; } = new();
 
     /// <summary>
     /// \if KO

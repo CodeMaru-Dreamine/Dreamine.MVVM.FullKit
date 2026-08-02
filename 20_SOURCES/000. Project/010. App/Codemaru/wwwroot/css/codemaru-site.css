@@ -62,6 +62,12 @@ html, body {
     font-family: system-ui, "Noto Sans KR", "Segoe UI", "Malgun Gothic", sans-serif;
 }
 
+.cm-body.cm-body--flush {
+    width: 100%;
+    min-width: 0;
+    padding: 62px 0 0;
+}
+
 .cm-footer {
     flex-shrink: 0;
 }

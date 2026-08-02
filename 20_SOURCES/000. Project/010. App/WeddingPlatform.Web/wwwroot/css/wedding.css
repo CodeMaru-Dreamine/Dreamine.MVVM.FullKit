@@ -17,6 +17,9 @@
 
 /* 전역 가로 스크롤 방지 + box-sizing 표준화 */
 html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
     max-width: 100%;
     overflow-x: hidden;
 }
@@ -1845,8 +1848,59 @@ body {
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    flex-wrap: wrap;
     gap: .7rem;
     min-width: min(620px, 58%);
+}
+
+.w-local-file {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    min-height: 2.25rem;
+    overflow: hidden;
+    color: var(--wa-text, #243047);
+    background: var(--wa-input, #fff);
+    border: 1px solid var(--wa-border, #d8dee9);
+    border-radius: .45rem;
+    cursor: pointer;
+}
+
+.w-local-file__native {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    opacity: 0;
+}
+
+.w-local-file__button {
+    align-self: stretch;
+    display: inline-flex;
+    align-items: center;
+    padding: .45rem .7rem;
+    color: var(--wa-button-text, #fff);
+    background: var(--wa-primary, #826a50);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.w-local-file__name {
+    min-width: 0;
+    padding: .45rem .7rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.w-local-file:focus-within {
+    outline: 2px solid var(--wa-focus, #5a8dee);
+    outline-offset: 2px;
+}
+
+.w-local-file:has(.w-local-file__native:disabled) {
+    cursor: not-allowed;
+    opacity: .58;
 }
 .wedding-admin-search {
     flex: 1;
@@ -1880,13 +1934,13 @@ body {
     min-height: 36px;
     border: 1px solid var(--wa-border-strong);
     background: var(--wa-card-strong);
-    color: #5b4c40;
+    color: var(--wa-text);
     border-radius: 8px;
     padding: .45rem .75rem;
     font: inherit;
     font-size: .88rem;
     line-height: 1.35;
-    white-space: normal;
+    white-space: nowrap;
     text-decoration: none;
     cursor: pointer;
 }
@@ -2988,6 +3042,12 @@ body.w-theme-blush {
     font-family: system-ui, 'Noto Sans KR', sans-serif;
     color: #2d2d2d; background: #fff;
     min-height: 100vh;
+    padding-top: 62px;
+}
+
+#create,
+#my-invites {
+    scroll-margin-top: 74px;
 }
 
 /* ── CodeMaru 공통 Nav (통일 규격, 라이트 테마) ── */
@@ -5068,6 +5128,14 @@ html[data-theme="dark"] { color-scheme: dark; }
 .w-admin .w-layout-detail,
 .w-admin .w-layout-version-policy,
 .w-admin .w-note-preview,
+.w-admin .w-note-editor,
+.w-admin .w-story-admin-card,
+.w-admin .w-admin__hero-preview,
+.w-admin .w-admin__music-preview,
+.w-admin .w-admin__video-item,
+.w-admin .w-acc-editor,
+.w-admin .w-layout-detail__notice,
+.w-admin .w-layout-detail__success,
 .w-admin .w-theme-builder,
 .w-admin .w-theme-color-editor,
 .w-admin .w-theme-custom,
@@ -5081,7 +5149,30 @@ html[data-theme="dark"] { color-scheme: dark; }
 .w-admin .w-layout-option:focus-visible,
 .w-admin .w-layout-option.is-selected,
 .w-admin .w-style-card__preview,
-.w-admin .w-note-preview__head { color: var(--wa-text); background: var(--wa-panel-soft); border-color: var(--wa-border); }
+.w-admin .w-note-preview__head,
+.w-admin .w-layout-detail__notice,
+.w-admin .w-layout-detail__success { color: var(--wa-text); background: var(--wa-panel-soft); border-color: var(--wa-border); }
+.w-admin .w-note-preview__body,
+.w-admin .w-note-preview__body :is(h1,h2,h3,h4,h5,h6,p,li,strong,em),
+.w-admin .w-story-admin-card,
+.w-admin .w-story-admin-card :is(h1,h2,h3,h4,h5,h6,p,span,strong,small),
+.w-admin .w-admin__hero-preview,
+.w-admin .w-admin__music-preview,
+.w-admin .w-admin__video-meta { color: var(--wa-text); }
+.w-admin .w-btn:not(.w-btn--primary):not(.w-btn--danger) {
+    color: var(--wa-text);
+    background: var(--wa-panel-soft);
+    border-color: var(--wa-border);
+}
+.w-admin .w-btn:not(.w-btn--primary):not(.w-btn--danger):hover:not(:disabled) {
+    color: var(--wa-strong);
+    background: var(--wa-hover);
+    border-color: var(--w-primary);
+}
+.w-admin .w-btn:disabled,
+.w-admin button:disabled { color: var(--wa-muted); opacity: .72; }
+.w-admin input::placeholder,
+.w-admin textarea::placeholder { color: color-mix(in srgb, var(--wa-muted) 82%, transparent); opacity: 1; }
 .w-admin .w-layout-detail__content > p,
 .w-admin .w-layout-detail__facts dt,
 .w-admin .w-layout-combobox__value small,
@@ -5244,3 +5335,126 @@ html[data-theme="dark"] .wedding-admin-shell textarea { background: #0d1728; col
 }
 @media (max-width: 720px) { .wp-preferences { width: 100%; margin: .4rem 0 0; padding-top: .65rem; border-top: 1px solid rgba(128,128,128,.2); justify-content: stretch; } .wp-preferences label { flex: 1; } .wp-preferences__label { display: none; } .wp-preferences select { width: 100%; max-width: none; } .wh-user-menu { width: 100%; } .wh-user-badge { display: block; } .wh-user-popover { position: static; width: auto; margin-top: .45rem; box-shadow: none; } }
 .wh-hero__title { white-space: pre-line; }
+
+/* Theme-token pass for tenant and super-administration surfaces. */
+.wedding-admin-shell,
+.w-admin {
+    color-scheme: light;
+}
+html[data-theme="dark"] .wedding-admin-shell,
+html[data-theme="dark"] .w-admin {
+    color-scheme: dark;
+}
+.wedding-admin-shell .wedding-admin-policy-grid section,
+.wedding-admin-shell .wedding-admin-usage-mini,
+.wedding-admin-shell .wedding-admin-permission,
+.wedding-admin-shell .wedding-admin-table th {
+    color: var(--wa-text);
+    background: var(--wa-card-strong);
+    border-color: var(--wa-border);
+}
+.wedding-admin-shell .wedding-admin-checkline,
+.wedding-admin-shell .wedding-admin-table td,
+.wedding-admin-shell .wedding-admin-number-input,
+.wedding-admin-shell .w-sa-slug,
+.wedding-admin-shell .w-label {
+    color: var(--wa-text);
+}
+.wedding-admin-shell .wedding-admin-select,
+.wedding-admin-shell .wedding-admin-number-input {
+    color: var(--wa-text);
+    background: var(--wa-card-strong);
+    border-color: var(--wa-border);
+}
+.wedding-admin-shell .wedding-admin-table tbody tr:hover,
+.wedding-admin-shell .wedding-admin-table tbody tr.is-selected {
+    background: color-mix(in srgb, var(--wa-gold) 13%, transparent);
+}
+html[data-theme="dark"] .wedding-admin-shell .wedding-admin-badge.is-muted {
+    color: #d1dbea;
+    background: #27354a;
+}
+html[data-theme="dark"] .wedding-admin-shell .wedding-admin-badge.is-success {
+    color: #bce8c9;
+    background: #193729;
+}
+html[data-theme="dark"] .wedding-admin-shell .wedding-admin-badge.is-gold {
+    color: #ffe0ad;
+    background: #453620;
+}
+html[data-theme="dark"] .wedding-admin-shell .wedding-admin-card,
+html[data-theme="dark"] .wedding-admin-shell .wedding-admin-stat-card,
+html[data-theme="dark"] .wedding-admin-shell .wedding-admin-detail-panel {
+    box-shadow: 0 16px 36px rgba(0, 0, 0, .24);
+}
+
+.w-admin .w-theme-btn,
+.w-admin .w-custom-theme,
+.w-admin .w-custom-theme__generator,
+.w-admin .w-custom-theme__base,
+.w-admin .w-custom-theme__details,
+.w-admin .w-custom-theme__colors label,
+.w-admin .w-section-order-item,
+.w-admin .w-drag-control-card,
+.w-admin .w-admin-users__item,
+.w-admin .wedding-admin-usage-mini,
+.w-admin .wedding-admin-permission {
+    color: var(--wa-text);
+    background: var(--wa-panel);
+    border-color: var(--wa-border);
+}
+.w-admin .w-custom-theme__generator,
+.w-admin .w-section-order-item.is-fixed,
+.w-admin .w-section-order-item.is-hidden,
+.w-admin .w-custom-theme__details[open] summary,
+.w-admin .w-drag-control-card > span {
+    color: var(--wa-text);
+    background: var(--wa-panel-soft);
+    border-color: var(--wa-border);
+}
+.w-admin .w-custom-theme__base > span,
+.w-admin .w-custom-theme__details summary,
+.w-admin .w-custom-theme__colors label > span,
+.w-admin .w-section-order-item__label,
+.w-admin .w-admin-users__item small {
+    color: var(--wa-muted);
+}
+.w-admin .w-custom-theme__palette,
+.w-admin .w-section-order-item__icon {
+    background: var(--wa-panel-soft);
+    border-color: var(--wa-border);
+}
+html[data-theme="dark"] .w-admin .w-custom-theme__contrast .is-good {
+    color: #bce8c9;
+    background: #193729;
+}
+html[data-theme="dark"] .w-admin .w-custom-theme__contrast .is-warning {
+    color: #ffd0a4;
+    background: #452c18;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme]) .wedding-admin-shell,
+    html:not([data-theme]) .w-admin { color-scheme: dark; }
+    html:not([data-theme]) .wedding-admin-shell .wedding-admin-policy-grid section,
+    html:not([data-theme]) .wedding-admin-shell .wedding-admin-usage-mini,
+    html:not([data-theme]) .wedding-admin-shell .wedding-admin-permission,
+    html:not([data-theme]) .wedding-admin-shell .wedding-admin-table th {
+        color: var(--wa-text);
+        background: var(--wa-card-strong);
+        border-color: var(--wa-border);
+    }
+    html:not([data-theme]) .w-admin .w-theme-btn,
+    html:not([data-theme]) .w-admin .w-custom-theme,
+    html:not([data-theme]) .w-admin .w-custom-theme__generator,
+    html:not([data-theme]) .w-admin .w-custom-theme__base,
+    html:not([data-theme]) .w-admin .w-custom-theme__details,
+    html:not([data-theme]) .w-admin .w-custom-theme__colors label,
+    html:not([data-theme]) .w-admin .w-section-order-item,
+    html:not([data-theme]) .w-admin .w-drag-control-card,
+    html:not([data-theme]) .w-admin .w-admin-users__item {
+        color: var(--wa-text);
+        background: var(--wa-panel);
+        border-color: var(--wa-border);
+    }
+}

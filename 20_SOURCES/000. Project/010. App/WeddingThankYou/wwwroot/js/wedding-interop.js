@@ -2,10 +2,84 @@
 
 window.weddingInterop = {
 
-    applyTheme: function (themeName) {
-        document.body.className = document.body.className
-            .replace(/w-theme-\S+/g, '').trim();
-        if (themeName) document.body.classList.add('w-theme-' + themeName);
+    clearTheme: function () {
+        var supportedVariables = [
+            '--w-primary',
+            '--w-dark',
+            '--w-secondary',
+            '--w-accent',
+            '--w-text',
+            '--w-muted-text',
+            '--w-bg',
+            '--w-panel-bg',
+            '--w-border',
+            '--w-button-bg',
+            '--w-button-text',
+            '--w-nav-bg',
+            '--w-nav-text',
+            '--w-shadow'
+        ];
+        var roots = Array.from(document.querySelectorAll('.w-public-root'));
+        roots.push(document.body);
+        roots.forEach(function (root) {
+            Array.from(root.classList)
+                .filter(function (className) { return className.indexOf('w-theme-') === 0; })
+                .forEach(function (className) { root.classList.remove(className); });
+            supportedVariables.forEach(function (name) {
+                root.style.removeProperty(name);
+            });
+        });
+    },
+
+    applyTheme: function (themeName, variables) {
+        var normalizedTheme = typeof themeName === 'string'
+            && /^[a-z0-9-]{1,32}$/.test(themeName)
+            ? themeName
+            : 'rose';
+        var supportedVariables = [
+            '--w-primary',
+            '--w-dark',
+            '--w-secondary',
+            '--w-accent',
+            '--w-text',
+            '--w-muted-text',
+            '--w-bg',
+            '--w-panel-bg',
+            '--w-border',
+            '--w-button-bg',
+            '--w-button-text',
+            '--w-nav-bg',
+            '--w-nav-text',
+            '--w-shadow'
+        ];
+
+        // 구버전 body 테마와 직전 감사장 테마를 모두 정리한 뒤 현재 공개
+        // 감사장 루트에만 새 테마를 적용한다.
+        window.weddingInterop.clearTheme();
+
+        var themeRoot = document.querySelector('.w-public-root');
+        if (!themeRoot) return;
+
+        Array.from(themeRoot.classList)
+            .filter(function (className) { return className.indexOf('w-theme-') === 0; })
+            .forEach(function (className) { themeRoot.classList.remove(className); });
+        themeRoot.classList.add('w-theme-' + normalizedTheme);
+        supportedVariables.forEach(function (name) {
+            themeRoot.style.removeProperty(name);
+        });
+        if (normalizedTheme === 'custom' && variables) {
+            supportedVariables.forEach(function (name) {
+                var value = variables[name];
+                if (typeof value === 'string' && value.length <= 80) {
+                    themeRoot.style.setProperty(name, value);
+                }
+            });
+        }
+    },
+
+    setDocumentLanguage: function (language) {
+        if (typeof language !== 'string' || !/^[a-z]{2,3}(?:-[A-Za-z]{2,4})?$/.test(language)) return;
+        document.documentElement.lang = language;
     },
 
     initMusicAutoplay: function () {
@@ -18,6 +92,242 @@ window.weddingInterop = {
         }
         document.addEventListener('click', tryPlay);
         document.addEventListener('touchstart', tryPlay);
+    },
+
+    /**
+     * PageTurn은 현재/target/양면 leaf를 먼저 렌더한 후 시작한다.
+     * 실제 표시될 이미지가 decode되기 전에 3D 회전을 시작하면 종이색만
+     * 잠깐 노출될 수 있으므로, 필요한 이미지를 eager로 전환하고 decode를
+     * 기다린 다음 두 animation frame 뒤 Blazor에 제어를 돌려준다.
+     */
+    preparePageTurn: function (viewport) {
+        if (!viewport) return Promise.resolve();
+
+        var images = Array.from(viewport.querySelectorAll('img'));
+        var readiness = images.map(function (img) {
+            try {
+                img.loading = 'eager';
+                img.setAttribute('loading', 'eager');
+            } catch (_) { }
+
+            if (img.complete && img.naturalWidth > 0) {
+                if (typeof img.decode === 'function') {
+                    return img.decode().catch(function () { });
+                }
+                return Promise.resolve();
+            }
+
+            return new Promise(function (resolve) {
+                var settled = false;
+                var finish = function () {
+                    if (settled) return;
+                    settled = true;
+                    img.removeEventListener('load', finish);
+                    img.removeEventListener('error', finish);
+                    if (typeof img.decode === 'function' && img.naturalWidth > 0) {
+                        img.decode().catch(function () { }).then(resolve);
+                    } else {
+                        resolve();
+                    }
+                };
+                img.addEventListener('load', finish, { once: true });
+                img.addEventListener('error', finish, { once: true });
+            });
+        });
+
+        var timeout = new Promise(function (resolve) {
+            window.setTimeout(resolve, 2200);
+        });
+
+        return Promise.race([
+            Promise.all(readiness),
+            timeout
+        ]).then(function () {
+            return new Promise(function (resolve) {
+                window.requestAnimationFrame(function () {
+                    window.requestAnimationFrame(resolve);
+                });
+            });
+        });
+    },
+
+    /**
+     * 실제 reader 폭을 관찰해 PC 펼침면(2쪽)과 모바일 단일면(1쪽)을
+     * Blazor에 전달하고 가로 휠/터치 스와이프를 페이지 이동으로 연결한다.
+     */
+    observePageTurnViewport: function (viewport, dotnetRef, observeResponsiveBook) {
+        if (!viewport || !dotnetRef) return;
+
+        if (viewport._weddingPageTurnObserver) {
+            viewport._weddingPageTurnObserver.disconnect();
+            delete viewport._weddingPageTurnObserver;
+        }
+        if (viewport._weddingHorizontalWheelHandler) {
+            viewport.removeEventListener('wheel', viewport._weddingHorizontalWheelHandler, false);
+            delete viewport._weddingHorizontalWheelHandler;
+        }
+        if (viewport._weddingTouchSwipeHandlers) {
+            var previousSwipe = viewport._weddingTouchSwipeHandlers;
+            viewport.removeEventListener('pointerdown', previousSwipe.pointerDown, true);
+            viewport.removeEventListener('pointerup', previousSwipe.pointerUp, true);
+            viewport.removeEventListener('pointercancel', previousSwipe.pointerCancel, true);
+            viewport.removeEventListener('click', previousSwipe.click, true);
+            delete viewport._weddingTouchSwipeHandlers;
+        }
+
+        if (observeResponsiveBook) {
+            var layoutHost = viewport.parentElement || viewport;
+            var lastCompact = null;
+            var notify = function () {
+                var compact = layoutHost.getBoundingClientRect().width <= 719;
+                if (compact === lastCompact) return;
+                lastCompact = compact;
+                dotnetRef.invokeMethodAsync('OnPageTurnViewportModeChanged', compact)
+                    .catch(function () { });
+            };
+
+            var observer = new ResizeObserver(notify);
+            observer.observe(layoutHost);
+            viewport._weddingPageTurnObserver = observer;
+            notify();
+        }
+
+        var accumulatedWheelX = 0;
+        var wheelBlockedUntil = 0;
+        var wheelHandler = function (event) {
+            var horizontalDelta =
+                Math.abs(event.deltaX) > Math.abs(event.deltaY) * 1.05
+                    ? event.deltaX
+                    : event.shiftKey
+                        ? event.deltaY
+                        : 0;
+            if (Math.abs(horizontalDelta) < 1) return;
+
+            event.preventDefault();
+            if (Date.now() < wheelBlockedUntil) return;
+
+            accumulatedWheelX += horizontalDelta;
+            if (Math.abs(accumulatedWheelX) < 48) return;
+
+            var direction = accumulatedWheelX > 0 ? 1 : -1;
+            accumulatedWheelX = 0;
+            wheelBlockedUntil = Date.now() + 900;
+            dotnetRef.invokeMethodAsync('OnPageTurnHorizontalWheel', direction)
+                .catch(function () { });
+        };
+
+        viewport.addEventListener('wheel', wheelHandler, { passive: false });
+        viewport._weddingHorizontalWheelHandler = wheelHandler;
+
+        var touchStart = null;
+        var touchSwipeBlockedUntil = 0;
+        var suppressClickUntil = 0;
+        var shouldIgnoreTouchSwipe = function (target) {
+            return target instanceof Element
+                && target.closest(
+                    'input,textarea,select,video,[contenteditable="true"],'
+                    + '.leaflet-container,.w-design-draggable'
+                ) !== null;
+        };
+        var pointerDown = function (event) {
+            if (event.pointerType !== 'touch'
+                || shouldIgnoreTouchSwipe(event.target)) {
+                touchStart = null;
+                return;
+            }
+
+            touchStart = {
+                id: event.pointerId,
+                x: event.clientX,
+                y: event.clientY
+            };
+        };
+        var pointerUp = function (event) {
+            if (!touchStart
+                || event.pointerType !== 'touch'
+                || event.pointerId !== touchStart.id) {
+                return;
+            }
+
+            var deltaX = event.clientX - touchStart.x;
+            var deltaY = event.clientY - touchStart.y;
+            touchStart = null;
+            if (Math.abs(deltaX) < 48
+                || Math.abs(deltaX) <= Math.abs(deltaY) * 1.2
+                || Date.now() < touchSwipeBlockedUntil) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+            touchSwipeBlockedUntil = Date.now() + 850;
+            suppressClickUntil = Date.now() + 600;
+            dotnetRef.invokeMethodAsync(
+                'OnPageTurnHorizontalWheel',
+                deltaX < 0 ? 1 : -1
+            ).catch(function () { });
+        };
+        var pointerCancel = function (event) {
+            if (touchStart && event.pointerId === touchStart.id) {
+                touchStart = null;
+            }
+        };
+        var click = function (event) {
+            if (Date.now() >= suppressClickUntil) return;
+            event.preventDefault();
+            event.stopPropagation();
+            event.stopImmediatePropagation();
+        };
+
+        viewport.addEventListener('pointerdown', pointerDown, {
+            capture: true,
+            passive: true
+        });
+        viewport.addEventListener('pointerup', pointerUp, {
+            capture: true,
+            passive: false
+        });
+        viewport.addEventListener('pointercancel', pointerCancel, {
+            capture: true,
+            passive: true
+        });
+        viewport.addEventListener('click', click, {
+            capture: true,
+            passive: false
+        });
+        viewport._weddingTouchSwipeHandlers = {
+            pointerDown: pointerDown,
+            pointerUp: pointerUp,
+            pointerCancel: pointerCancel,
+            click: click
+        };
+    },
+
+    disposePageTurnViewport: function (viewport) {
+        if (!viewport) return;
+        if (viewport._weddingPageTurnObserver) {
+            viewport._weddingPageTurnObserver.disconnect();
+            delete viewport._weddingPageTurnObserver;
+        }
+        if (viewport._weddingHorizontalWheelHandler) {
+            viewport.removeEventListener('wheel', viewport._weddingHorizontalWheelHandler, false);
+            delete viewport._weddingHorizontalWheelHandler;
+        }
+        if (viewport._weddingTouchSwipeHandlers) {
+            var swipe = viewport._weddingTouchSwipeHandlers;
+            viewport.removeEventListener('pointerdown', swipe.pointerDown, true);
+            viewport.removeEventListener('pointerup', swipe.pointerUp, true);
+            viewport.removeEventListener('pointercancel', swipe.pointerCancel, true);
+            viewport.removeEventListener('click', swipe.click, true);
+            delete viewport._weddingTouchSwipeHandlers;
+        }
+    },
+
+    getPageTurnNavigationStep: function (viewport) {
+        if (!viewport) return 1;
+        var layoutHost = viewport.parentElement || viewport;
+        return layoutHost.getBoundingClientRect().width <= 719 ? 1 : 2;
     },
 
     /**
@@ -203,7 +513,10 @@ window.weddingInterop = {
             var data = event.data;
             if (!data || typeof data !== 'object' || Array.isArray(data)) return;
             if (data.type !== 'wedding-design-drag') return;
-            if (data.target !== 'music' && data.target !== 'heroThankYou') return;
+            if (data.target !== 'music'
+                && data.target !== 'heroThankYou'
+                && data.target !== 'heroTop'
+                && data.target !== 'heroBottom') return;
             if (typeof data.xPercent !== 'number' || !Number.isFinite(data.xPercent)
                 || data.xPercent < 0 || data.xPercent > 100) return;
             if (typeof data.yPercent !== 'number' || !Number.isFinite(data.yPercent)
@@ -385,6 +698,385 @@ window.weddingInterop = {
             el.addEventListener('pointerup', onUp);
             el.addEventListener('pointercancel', onUp);
         });
+    },
+
+    /**
+     * 청첩장 폰용 햄버거 FAB 드래그 이동.
+     * 위치는 localStorage 에 저장되고 다음 접속 시 복원됨.
+     * 5px 이상 이동하면 드래그로 간주해 클릭 이벤트 억제.
+     */
+    initHeroCropEditor: function (dotnetRef) {
+        var stage = document.querySelector('[data-hero-crop-editor-stage]');
+        if (!stage || stage.dataset.cropEditorBound) return;
+        var image = stage.querySelector('img');
+        var selection = stage.querySelector('[data-crop-selection]');
+        if (!image || !selection) return;
+        stage.dataset.cropEditorBound = '1';
+
+        var aspect = Math.max(0.1, Number(stage.dataset.aspect) || (16 / 9));
+        var crop = {
+            x: Number(stage.dataset.cropX) || 0,
+            y: Number(stage.dataset.cropY) || 0,
+            width: Number(stage.dataset.cropWidth) || 100,
+            height: Number(stage.dataset.cropHeight) || 100
+        };
+        var operation = null;
+        var pointerId = null;
+        var minSize = 28;
+
+        function imageBounds() {
+            var stageRect = stage.getBoundingClientRect();
+            var imageRect = image.getBoundingClientRect();
+            return {
+                left: imageRect.left - stageRect.left,
+                top: imageRect.top - stageRect.top,
+                width: imageRect.width,
+                height: imageRect.height
+            };
+        }
+
+        function clampRect(rect, bounds) {
+            rect.width = Math.max(minSize, Math.min(bounds.width, rect.width));
+            rect.height = rect.width / aspect;
+            if (rect.height > bounds.height) {
+                rect.height = bounds.height;
+                rect.width = rect.height * aspect;
+            }
+            rect.x = Math.max(0, Math.min(bounds.width - rect.width, rect.x));
+            rect.y = Math.max(0, Math.min(bounds.height - rect.height, rect.y));
+            return rect;
+        }
+
+        function conformInitialRect(bounds) {
+            var rect = {
+                x: bounds.width * crop.x / 100,
+                y: bounds.height * crop.y / 100,
+                width: bounds.width * crop.width / 100,
+                height: bounds.height * crop.height / 100
+            };
+            var centerX = rect.x + rect.width / 2;
+            var centerY = rect.y + rect.height / 2;
+            if (rect.width / Math.max(1, rect.height) > aspect) {
+                rect.width = rect.height * aspect;
+            } else {
+                rect.height = rect.width / aspect;
+            }
+            rect.x = centerX - rect.width / 2;
+            rect.y = centerY - rect.height / 2;
+            return clampRect(rect, bounds);
+        }
+
+        function renderRect(rect) {
+            var bounds = imageBounds();
+            selection.style.left = (bounds.left + rect.x) + 'px';
+            selection.style.top = (bounds.top + rect.y) + 'px';
+            selection.style.width = rect.width + 'px';
+            selection.style.height = rect.height + 'px';
+        }
+
+        function rectFromSelection() {
+            var bounds = imageBounds();
+            var rect = selection.getBoundingClientRect();
+            var stageRect = stage.getBoundingClientRect();
+            return {
+                x: rect.left - stageRect.left - bounds.left,
+                y: rect.top - stageRect.top - bounds.top,
+                width: rect.width,
+                height: rect.height
+            };
+        }
+
+        function localPoint(event, bounds) {
+            var stageRect = stage.getBoundingClientRect();
+            return {
+                x: Math.max(0, Math.min(bounds.width, event.clientX - stageRect.left - bounds.left)),
+                y: Math.max(0, Math.min(bounds.height, event.clientY - stageRect.top - bounds.top))
+            };
+        }
+
+        function rectFromAnchor(anchor, point, signX, signY, bounds) {
+            var width = Math.max(minSize, Math.abs(point.x - anchor.x));
+            var height = Math.max(minSize, Math.abs(point.y - anchor.y));
+            if (width / height > aspect) height = width / aspect;
+            else width = height * aspect;
+
+            var maxWidth = signX > 0 ? bounds.width - anchor.x : anchor.x;
+            var maxHeight = signY > 0 ? bounds.height - anchor.y : anchor.y;
+            var scale = Math.min(1, maxWidth / width, maxHeight / height);
+            width *= Math.max(0.01, scale);
+            height *= Math.max(0.01, scale);
+            if (width < minSize || height < minSize) {
+                width = Math.min(maxWidth, Math.max(minSize, minSize * aspect));
+                height = width / aspect;
+                if (height > maxHeight) {
+                    height = maxHeight;
+                    width = height * aspect;
+                }
+            }
+
+            return clampRect({
+                x: signX > 0 ? anchor.x : anchor.x - width,
+                y: signY > 0 ? anchor.y : anchor.y - height,
+                width: width,
+                height: height
+            }, bounds);
+        }
+
+        function notify(rect) {
+            var bounds = imageBounds();
+            if (!bounds.width || !bounds.height) return;
+            crop = {
+                x: Math.max(0, Math.min(100, rect.x / bounds.width * 100)),
+                y: Math.max(0, Math.min(100, rect.y / bounds.height * 100)),
+                width: Math.max(0, Math.min(100, rect.width / bounds.width * 100)),
+                height: Math.max(0, Math.min(100, rect.height / bounds.height * 100))
+            };
+            dotnetRef.invokeMethodAsync(
+                'OnHeroCropDraftChanged',
+                stage.dataset.viewport || 'mobile',
+                crop.x,
+                crop.y,
+                crop.width,
+                crop.height
+            ).catch(function () { });
+        }
+
+        function onPointerDown(event) {
+            if (event.button !== undefined && event.button !== 0) return;
+            var bounds = imageBounds();
+            if (!bounds.width || !bounds.height) return;
+            var point = localPoint(event, bounds);
+            var handle = event.target && event.target.dataset
+                ? event.target.dataset.cropHandle
+                : null;
+            var current = rectFromSelection();
+
+            if (handle) {
+                var east = handle.indexOf('e') >= 0;
+                var south = handle.indexOf('s') >= 0;
+                operation = {
+                    type: 'resize',
+                    anchor: {
+                        x: east ? current.x : current.x + current.width,
+                        y: south ? current.y : current.y + current.height
+                    },
+                    signX: east ? 1 : -1,
+                    signY: south ? 1 : -1
+                };
+            } else if (event.target === selection || selection.contains(event.target)) {
+                operation = {
+                    type: 'move',
+                    start: point,
+                    rect: current
+                };
+            } else {
+                operation = {
+                    type: 'draw',
+                    anchor: point,
+                    signX: point.x <= bounds.width / 2 ? 1 : -1,
+                    signY: point.y <= bounds.height / 2 ? 1 : -1
+                };
+                renderRect(rectFromAnchor(
+                    point,
+                    { x: point.x + operation.signX * minSize * aspect, y: point.y + operation.signY * minSize },
+                    operation.signX,
+                    operation.signY,
+                    bounds));
+            }
+
+            pointerId = event.pointerId;
+            if (stage.setPointerCapture && pointerId !== undefined) {
+                try { stage.setPointerCapture(pointerId); } catch (_) { }
+            }
+            event.preventDefault();
+        }
+
+        function onPointerMove(event) {
+            if (!operation) return;
+            var bounds = imageBounds();
+            var point = localPoint(event, bounds);
+            var next;
+            if (operation.type === 'move') {
+                next = clampRect({
+                    x: operation.rect.x + point.x - operation.start.x,
+                    y: operation.rect.y + point.y - operation.start.y,
+                    width: operation.rect.width,
+                    height: operation.rect.height
+                }, bounds);
+            } else {
+                next = rectFromAnchor(
+                    operation.anchor,
+                    point,
+                    operation.signX,
+                    operation.signY,
+                    bounds);
+            }
+            renderRect(next);
+            event.preventDefault();
+        }
+
+        function onPointerUp(event) {
+            if (!operation) return;
+            operation = null;
+            var rect = clampRect(rectFromSelection(), imageBounds());
+            renderRect(rect);
+            notify(rect);
+            if (stage.releasePointerCapture && pointerId !== null) {
+                try { stage.releasePointerCapture(pointerId); } catch (_) { }
+            }
+            pointerId = null;
+            event && event.preventDefault && event.preventDefault();
+        }
+
+        function initialize() {
+            var bounds = imageBounds();
+            if (!bounds.width || !bounds.height) return;
+            var initial = conformInitialRect(bounds);
+            renderRect(initial);
+            notify(initial);
+        }
+
+        stage.addEventListener('pointerdown', onPointerDown);
+        stage.addEventListener('pointermove', onPointerMove);
+        stage.addEventListener('pointerup', onPointerUp);
+        stage.addEventListener('pointercancel', onPointerUp);
+        if (image.complete) window.requestAnimationFrame(initialize);
+        else image.addEventListener('load', initialize, { once: true });
+    },
+
+    /**
+     * 공개 히어로에 저장된 정규화 크롭 사각형을 적용한다.
+     * 선택 영역을 하나의 가상 이미지로 보고 현재 레이아웃 영역에 cover 하므로
+     * 레이아웃 비율이 조금 달라도 사용자가 고른 영역 밖으로 벗어나지 않는다.
+     */
+    initHeroCropTargets: function () {
+        function numberVar(style, name, fallback) {
+            var value = Number.parseFloat(style.getPropertyValue(name));
+            return Number.isFinite(value) ? value : fallback;
+        }
+
+        function currentViewport() {
+            return document.documentElement.clientWidth <= 719 ? 'mobile' : 'desktop';
+        }
+
+        function cropState(target) {
+            var style = getComputedStyle(target);
+            var viewport = currentViewport();
+            return {
+                enabled: numberVar(style, '--w-hero-image-crop-' + viewport + '-enabled', 0) >= 0.5,
+                x: numberVar(style, '--w-hero-image-crop-' + viewport + '-x', 0),
+                y: numberVar(style, '--w-hero-image-crop-' + viewport + '-y', 0),
+                width: numberVar(style, '--w-hero-image-crop-' + viewport + '-width', 100),
+                height: numberVar(style, '--w-hero-image-crop-' + viewport + '-height', 100)
+            };
+        }
+
+        function containerFor(target) {
+            return target.closest('[data-hero-crop-container]') || target.parentElement;
+        }
+
+        function geometry(target, naturalWidth, naturalHeight) {
+            var container = containerFor(target);
+            if (!container || !naturalWidth || !naturalHeight) return null;
+            var width = container.clientWidth;
+            var height = container.clientHeight;
+            if (!width || !height) return null;
+            var crop = cropState(target);
+            if (!crop.enabled) return { crop: crop, container: container, full: true };
+
+            var cropWidth = naturalWidth * Math.max(0.05, crop.width / 100);
+            var cropHeight = naturalHeight * Math.max(0.05, crop.height / 100);
+            var cropX = naturalWidth * Math.max(0, crop.x / 100);
+            var cropY = naturalHeight * Math.max(0, crop.y / 100);
+            var scale = Math.max(width / cropWidth, height / cropHeight);
+            return {
+                crop: crop,
+                container: container,
+                full: false,
+                width: naturalWidth * scale,
+                height: naturalHeight * scale,
+                left: -cropX * scale + (width - cropWidth * scale) / 2,
+                top: -cropY * scale + (height - cropHeight * scale) / 2
+            };
+        }
+
+        function resetImage(target) {
+            ['position', 'inset', 'left', 'top', 'right', 'bottom', 'width', 'height',
+             'maxWidth', 'maxHeight', 'objectFit', 'objectPosition', 'transform']
+                .forEach(function (name) { target.style[name] = ''; });
+        }
+
+        function applyImage(target) {
+            if (!target.complete || !target.naturalWidth) return;
+            var result = geometry(target, target.naturalWidth, target.naturalHeight);
+            if (!result) return;
+            if (result.full) {
+                resetImage(target);
+                return;
+            }
+
+            target.style.position = 'absolute';
+            target.style.inset = 'auto';
+            target.style.left = result.left + 'px';
+            target.style.top = result.top + 'px';
+            target.style.right = 'auto';
+            target.style.bottom = 'auto';
+            target.style.width = result.width + 'px';
+            target.style.height = result.height + 'px';
+            target.style.maxWidth = 'none';
+            target.style.maxHeight = 'none';
+            target.style.objectFit = 'fill';
+            target.style.objectPosition = '0 0';
+            target.style.transform = 'none';
+        }
+
+        function applyBackground(target) {
+            var source = target.dataset.heroCropSource;
+            if (!source) return;
+            var loader = target._wHeroCropLoader;
+            if (!loader || target._wHeroCropSource !== source) {
+                loader = new Image();
+                loader.src = source;
+                target._wHeroCropLoader = loader;
+                target._wHeroCropSource = source;
+                loader.addEventListener('load', function () { applyBackground(target); });
+            }
+            if (!loader.complete || !loader.naturalWidth) return;
+            var result = geometry(target, loader.naturalWidth, loader.naturalHeight);
+            if (!result) return;
+            if (result.full) {
+                target.style.backgroundSize = '';
+                target.style.backgroundPosition = '';
+                return;
+            }
+            target.style.backgroundSize = result.width + 'px ' + result.height + 'px';
+            target.style.backgroundPosition = result.left + 'px ' + result.top + 'px';
+            target.style.backgroundRepeat = 'no-repeat';
+        }
+
+        function applyAll() {
+            document.querySelectorAll('[data-hero-crop-image]').forEach(function (target) {
+                if (!target.dataset.heroCropLoadBound) {
+                    target.dataset.heroCropLoadBound = '1';
+                    target.addEventListener('load', function () { applyImage(target); });
+                }
+                applyImage(target);
+            });
+            document.querySelectorAll('[data-hero-crop-background]').forEach(applyBackground);
+        }
+
+        window.__wHeroCropApplyAll = applyAll;
+        if (!window.__wHeroCropResizeBound) {
+            window.__wHeroCropResizeBound = true;
+            var resizeTimer = 0;
+            window.addEventListener('resize', function () {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function () {
+                    window.__wHeroCropApplyAll && window.__wHeroCropApplyAll();
+                }, 80);
+            });
+        }
+        applyAll();
     },
 
     /**

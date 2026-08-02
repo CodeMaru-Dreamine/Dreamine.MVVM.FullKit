@@ -28,25 +28,25 @@
     {
         <div class="w-loading">
             <div class="w-spinner"></div>
-            <p class="w-sa-hint">최고 관리자 세션을 확인하고 있습니다.</p>
+            <p class="w-sa-hint">@Text["admin.super.checking"]</p>
         </div>
     }
     else if (!Vm.IsAuthenticated)
     {
-        <div class="w-admin-preferences" aria-label="화면 설정">
+        <div class="w-admin-preferences" aria-label="@Text["screen.settings"]">
             <WeddingPlatform.Blazor.Components.WeddingPreferences />
         </div>
         <div class="w-admin__login w-panel">
-            <h2>슈퍼 어드민 로그인</h2>
+            <h2>@Text["admin.super.login"]</h2>
             @if (!Vm.HasConfiguredPassword)
             {
-                <p class="w-status w-status--error">Wedding:SuperAdminPassword 설정이 필요합니다.</p>
+                <p class="w-status w-status--error">@Text["admin.super.password.required"]</p>
             }
-            <input class="w-input" type="password" placeholder="어드민 비밀번호"
+            <input class="w-input" type="password" placeholder="@Text["field.password"]"
                    @bind="Vm.LoginPassword"
                    @bind:event="oninput"
                    @onkeydown="OnLoginKeyDown" />
-            <button class="w-btn w-btn--primary" @onclick="OnLogin">로그인</button>
+            <button class="w-btn w-btn--primary" @onclick="OnLogin">@Text["login"]</button>
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
                 <p class="w-status w-status--error">@Vm.StatusMessage</p>
@@ -88,9 +88,9 @@
             </nav>
 
             <div class="wedding-admin-sidebar__meter">
-                <span>무료 미디어 기본 정책</span>
+                <span>@Text["admin.super.free.policy"]</span>
                 <strong>@FormatVideoSize(Vm.MediaPolicy.FreeTier.VideoMaxFileSizeMb)</strong>
-                <small>영상 @FormatLimit(Vm.MediaPolicy.FreeTier.VideoMaxCount, "개") · 이미지 @FormatLimit(Vm.MediaPolicy.FreeTier.ImageMaxCount, "장")</small>
+                <small>@Text["admin.media.video"] @Vm.MediaPolicy.FreeTier.VideoMaxCount · @Text["admin.media.gallery"] @Vm.MediaPolicy.FreeTier.ImageMaxCount</small>
             </div>
         </aside>
 
@@ -113,13 +113,13 @@
                                placeholder="@Text["admin.search.placeholder"]" />
                     </label>
                     }
-                    <button class="wedding-admin-action-button is-compact" type="button" @onclick="OnRefresh" title="전체 목록 새로고침">
+                    <button class="wedding-admin-action-button is-compact" type="button" @onclick="OnRefresh" title="@Text["admin.refresh"]">
                         @(ShowLayoutCatalog ? Text["admin.layouts"] : Text["admin.refresh"])
                     </button>
-                    <button class="wedding-admin-action-button is-compact" type="button" @onclick="OnLogout" title="최고 관리자 로그아웃">
+                    <button class="wedding-admin-action-button is-compact" type="button" @onclick="OnLogout" title="@Text["logout"]">
                         @Text["logout"]
                     </button>
-                    <button class="wedding-admin-icon-button" type="button" title="알림">!</button>
+                    <button class="wedding-admin-icon-button" type="button" title="@Text["admin.notifications"]">!</button>
                     <div class="wedding-admin-profile">
                         <span>A</span>
                         <div>
@@ -161,7 +161,7 @@
                         <div>
                             <small>@Text["admin.premium.active"]</small>
                             <strong>@PremiumActiveCount</strong>
-                            <em>권한 보유 계정</em>
+                            <em>@Text["admin.super.premium.plan"]</em>
                         </div>
                     </article>
                     <article class="wedding-admin-stat-card">
@@ -176,8 +176,8 @@
                         <span class="wedding-admin-stat-card__icon is-blue">V</span>
                         <div>
                             <small>@Text["admin.video.usage"]</small>
-                            <strong>@TotalVideoCount 개</strong>
-                            <em>사진 @TotalPhotoCount 장</em>
+                            <strong>@TotalVideoCount</strong>
+                            <em>@Text["admin.media.gallery"] @TotalPhotoCount</em>
                         </div>
                     </article>
                 </section>
@@ -196,29 +196,26 @@
                 <section class="wedding-admin-card wedding-admin-layout-upload" aria-labelledby="layout-upload-title">
                     <div class="wedding-admin-card__header">
                         <div>
-                            <h2 id="layout-upload-title">JSON 레이아웃 추가</h2>
-                            <p>
-                                WPF 편집기가 만든 LayoutPackage JSON을 서버 검증 후 승인 대기열에 등록합니다.
-                                업로드만으로 공개되거나 활성화되지는 않습니다.
-                            </p>
+                            <h2 id="layout-upload-title">@Text["admin.super.layout.upload"]</h2>
+                            <p>@Text["admin.super.layout.upload.desc"]</p>
                         </div>
-                        <span class="wedding-admin-badge is-success">슈퍼관리자 전용</span>
+                        <span class="wedding-admin-badge is-success">@Text["admin.super.only"]</span>
                     </div>
 
                     @if (Vm.Tenants.Count == 0)
                     {
-                        <p class="w-sa-empty">레이아웃 소유권을 기록할 청첩장 계정이 없습니다.</p>
+                        <p class="w-sa-empty">@Text["admin.super.layout.owner.empty"]</p>
                     }
                     else
                     {
                         <div class="wedding-admin-layout-upload__form">
                             <label class="w-label">
-                                LayoutKey 소유 계정
+                                @Text["admin.super.layout.owner"]
                                 <select class="w-input"
                                         disabled="@_isLayoutWorkflowBusy"
                                         @bind="_layoutUploadTenantSlug"
                                         @bind:after="OnLayoutUploadTenantChanged">
-                                    <option value="">계정을 선택하세요</option>
+                                    <option value="">@Text["admin.super.select.account"]</option>
                                     @foreach (var tenant in Vm.Tenants
                                         .OrderBy(x => x.CoupleName, StringComparer.CurrentCulture)
                                         .ThenBy(x => x.Slug, StringComparer.OrdinalIgnoreCase))
@@ -227,19 +224,19 @@
                                     }
                                 </select>
                                 <span class="w-hint">
-                                    새 LayoutKey의 영구 소유 계정입니다. 같은 키의 버전 업로드에도 최초 소유 계정을 선택하세요.
+                                    @Text["admin.super.layout.owner.hint"]
                                 </span>
                             </label>
 
                             <label class="w-label">
                                 WPF LayoutPackage JSON
-                                <InputFile @key="_layoutUploadInputVersion"
-                                           class="w-input"
-                                           accept=".json,application/json"
-                                           disabled="@(_isLayoutWorkflowBusy || string.IsNullOrWhiteSpace(_layoutUploadTenantSlug))"
-                                           OnChange="OnSuperAdminLayoutPackageUpload" />
+                                <LocalizedInputFile @key="_layoutUploadInputVersion"
+                                                    Class="w-input"
+                                                    Accept=".json,application/json"
+                                                    Disabled="@(_isLayoutWorkflowBusy || string.IsNullOrWhiteSpace(_layoutUploadTenantSlug))"
+                                                    OnChange="OnSuperAdminLayoutPackageUpload" />
                                 <span class="w-hint">
-                                    최대 384KB · Contracts 스키마 v1 · 기존 key/version은 덮어쓰지 않습니다.
+                                    @Text["admin.super.layout.package.hint"]
                                 </span>
                             </label>
                         </div>
@@ -257,26 +254,26 @@
                 <section class="wedding-admin-card wedding-admin-table-card" aria-labelledby="layout-catalog-title">
                     <div class="wedding-admin-table-card__header">
                         <div>
-                            <h2 id="layout-catalog-title">활성 레이아웃 <span>@layoutCatalog.Descriptors.Count</span></h2>
-                            <p>
-                                기본 제공 @(layoutCatalog.Descriptors.Count(x => x.IsBuiltIn))개 ·
-                                활성 업로드 @(layoutCatalog.Descriptors.Count(x => !x.IsBuiltIn))개 ·
-                                승인 업로드 릴리스 @(publishedLayoutPackages.Count)개 ·
-                                전체 불변 릴리스 @(WeddingLayoutCatalog.Instance.Releases.Count + publishedLayoutPackages.Count)개
-                            </p>
+                            <h2 id="layout-catalog-title">@Text["admin.super.layout.active"] <span>@layoutCatalog.Descriptors.Count</span></h2>
+                            <p>@string.Format(
+                                Text["admin.super.layout.summary"],
+                                layoutCatalog.Descriptors.Count(x => x.IsBuiltIn),
+                                layoutCatalog.Descriptors.Count(x => !x.IsBuiltIn),
+                                publishedLayoutPackages.Count,
+                                WeddingLayoutCatalog.Instance.Releases.Count + publishedLayoutPackages.Count)</p>
                         </div>
 
                         <div class="wedding-admin-table-tools">
-                            <span class="wedding-admin-badge is-success">실시간 감시 중</span>
+                            <span class="wedding-admin-badge is-success">@Text["admin.super.layout.watch"]</span>
                             @if (_layoutCatalogChangedAt is { } changedAt)
                             {
-                                <small>최근 자동 적용 @changedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</small>
+                                <small>@string.Format(Text["admin.super.layout.last.applied"], changedAt.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss"))</small>
                             }
                             <button class="wedding-admin-action-button"
                                     type="button"
                                     disabled="@_isLayoutCatalogReloading"
                                     @onclick="OnReloadLayoutCatalog">
-                                @(_isLayoutCatalogReloading ? "확인 중..." : "지금 다시 읽기")
+                                @(_isLayoutCatalogReloading ? Text["admin.super.layout.checking"] : Text["admin.super.layout.reload"])
                             </button>
                         </div>
                     </div>
@@ -292,12 +289,12 @@
                         <table class="wedding-admin-table">
                             <thead>
                                 <tr>
-                                    <th>레이아웃</th>
-                                    <th>안정 키</th>
-                                    <th>등급</th>
-                                    <th>활성 버전</th>
-                                    <th>소스</th>
-                                    <th>런타임 상태</th>
+                                    <th>@Text["admin.super.layout.name"]</th>
+                                    <th>@Text["admin.super.layout.key"]</th>
+                                    <th>@Text["admin.super.table.tier"]</th>
+                                    <th>@Text["admin.super.layout.version"]</th>
+                                    <th>@Text["admin.super.layout.source"]</th>
+                                    <th>@Text["admin.super.layout.runtime"]</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -308,21 +305,21 @@
                                     var activeRelease = layoutCatalog.FindRelease(descriptor.Key, descriptor.CurrentVersion);
                                     <tr>
                                         <td>
-                                            <strong>@descriptor.Label</strong>
-                                            <small style="display:block">@descriptor.Description</small>
+                                            <strong>@LayoutLabel(descriptor.Key, descriptor.Label)</strong>
+                                            <small style="display:block">@LayoutDescription(descriptor.Key, descriptor.Description)</small>
                                         </td>
                                         <td><span class="w-sa-slug">@descriptor.Key</span></td>
                                         <td>
                                             <span class="wedding-admin-badge @(descriptor.Tier == WeddingLayoutTier.Premium ? "is-gold" : "is-muted")">
                                                 @TierLabel(descriptor.Tier)
                                             </span>
-                                            <small style="display:block">내장 정책 확정 · 보호</small>
+                                            <small style="display:block">@Text["admin.super.layout.policy.protected"]</small>
                                         </td>
                                         <td><strong>v@(descriptor.CurrentVersion)</strong></td>
                                         <td>@SourceLabel(descriptor)</td>
                                         <td>
                                             <span class="wedding-admin-badge @(activeRelease?.IsImplemented == true ? "is-success" : "is-danger")">
-                                                @(activeRelease?.IsImplemented == true ? "서비스 중" : "사용 불가")
+                                                @(activeRelease?.IsImplemented == true ? Text["admin.super.layout.serving"] : Text["admin.super.layout.unavailable"])
                                             </span>
                                         </td>
                                     </tr>
@@ -336,13 +333,10 @@
                     <div class="wedding-admin-table-card__header">
                         <div>
                             <h2 id="layout-policy-title">
-                                LayoutKey 등급 정책
+                                @Text["admin.super.layout.tier.policy"]
                                 <span>@_layoutDefinitionPolicies.Count</span>
                             </h2>
-                            <p>
-                                서버가 소유하는 단일 등급 원장입니다. 한 정책은 해당 키의 모든 과거·현재·향후 버전과
-                                모든 사용자 접근 권한에 적용됩니다.
-                            </p>
+                            <p>@Text["admin.super.layout.policy.desc"]</p>
                         </div>
                     </div>
 
@@ -379,12 +373,12 @@
                                 <thead>
                                     <tr>
                                         <th>LayoutKey</th>
-                                        <th>등급</th>
-                                        <th>정책 구분</th>
-                                        <th>Revision</th>
-                                        <th>최근 분류</th>
-                                        <th>사유</th>
-                                        <th>작업</th>
+                                        <th>@Text["admin.super.table.tier"]</th>
+                                        <th>@Text["admin.super.layout.policy.kind"]</th>
+                                        <th>@Text["admin.super.layout.revision"]</th>
+                                        <th>@Text["admin.super.layout.policy.recent"]</th>
+                                        <th>@Text["admin.super.layout.reason"]</th>
+                                        <th>@Text["admin.super.table.action"]</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -402,15 +396,15 @@
                                             </td>
                                             <td>
                                                 <span class="wedding-admin-badge @(isProtectedPolicy ? "is-muted" : "is-success")">
-                                                    @(isProtectedPolicy ? "기본 제공 · 확정" : "사용자 정책")
+                                                    @(isProtectedPolicy ? Text["admin.super.layout.policy.protected"] : Text["admin.super.layout.user.policy"])
                                                 </span>
                                             </td>
-                                            <td>@(isProtectedPolicy ? "보호" : policy.Revision.ToString())</td>
+                                            <td>@(isProtectedPolicy ? Text["admin.super.layout.protected"] : policy.Revision.ToString())</td>
                                             <td>
                                                 @if (isProtectedPolicy)
                                                 {
-                                                    <span>서버 내장</span>
-                                                    <small style="display:block">변경 불가</small>
+                                                    <span>@Text["admin.super.layout.server.builtin"]</span>
+                                                    <small style="display:block">@Text["admin.super.layout.immutable"]</small>
                                                 }
                                                 else
                                                 {
@@ -420,11 +414,11 @@
                                                     </small>
                                                 }
                                             </td>
-                                            <td>@policy.Reason</td>
+                                            <td>@PolicyReasonLabel(policy.Reason)</td>
                                             <td>
                                                 @if (isProtectedPolicy)
                                                 {
-                                                    <span class="wedding-admin-badge is-muted">보호됨</span>
+                                                    <span class="wedding-admin-badge is-muted">@Text["admin.super.layout.protected"]</span>
                                                 }
                                                 else
                                                 {
@@ -432,7 +426,7 @@
                                                             type="button"
                                                             disabled="@_isLayoutWorkflowBusy"
                                                             @onclick="() => OpenStandaloneLayoutDefinitionPolicyEditor(policy.LayoutKey)">
-                                                        등급 정책 관리
+                                                        @Text["admin.super.layout.manage.policy"]
                                                     </button>
                                                 }
                                             </td>
@@ -554,10 +548,10 @@
                     <div class="wedding-admin-table-card__header">
                         <div>
                             <h2 id="layout-submission-title">
-                                업로드 검토
+                                @Text["admin.super.layout.review"]
                                 <span>@_layoutSubmissions.Count(x => x.Status == WeddingLayoutSubmissionStatus.Pending)</span>
                             </h2>
-                            <p>슈퍼관리자가 등록한 선언형 레이아웃을 검토하고, 승인 시 불변 릴리스로 게시합니다.</p>
+                            <p>@Text["admin.super.layout.review.desc"]</p>
                         </div>
 
                         <div class="wedding-admin-table-tools">
@@ -572,17 +566,17 @@
                             }
                             <select class="w-input"
                                     style="width:auto; min-width:130px; margin:0"
-                                    title="업로드 검토 표시 범위"
+                                    title="@Text["admin.super.layout.review.scope"]"
                                     @bind="_layoutSubmissionFilter">
-                                <option value="pending">대기 중</option>
-                                <option value="completed">처리 완료</option>
-                                <option value="all">전체 이력</option>
+                                <option value="pending">@Text["admin.super.layout.review.pending"]</option>
+                                <option value="completed">@Text["admin.super.layout.review.completed"]</option>
+                                <option value="all">@Text["admin.super.all"]</option>
                             </select>
                             <button class="wedding-admin-action-button"
                                     type="button"
                                     disabled="@_isLayoutWorkflowBusy"
                                     @onclick="LoadLayoutSubmissionsAsync">
-                                @(_isLayoutWorkflowBusy ? "불러오는 중..." : "검토 목록 새로고침")
+                                @(_isLayoutWorkflowBusy ? Text["admin.super.loading"] : Text["admin.super.layout.review.refresh"])
                             </button>
                         </div>
                     </div>
@@ -596,11 +590,11 @@
 
                     @if (_layoutSubmissions.Count == 0)
                     {
-                        <p class="w-sa-empty">검토할 레이아웃 업로드가 없습니다.</p>
+                        <p class="w-sa-empty">@Text["admin.super.layout.review.empty"]</p>
                     }
                     else if (FilteredLayoutSubmissions.Count == 0)
                     {
-                        <p class="w-sa-empty">선택한 범위에 표시할 업로드가 없습니다.</p>
+                        <p class="w-sa-empty">@Text["admin.super.layout.review.empty.filtered"]</p>
                     }
                     else
                     {
@@ -608,14 +602,14 @@
                             <table class="wedding-admin-table">
                                 <thead>
                                     <tr>
-                                        <th>제출 시각</th>
-                                        <th>제출 계정</th>
-                                        <th>레이아웃</th>
-                                        <th>버전</th>
-                                        <th>등급</th>
-                                        <th>상태</th>
-                                        <th>검토 결과</th>
-                                        <th>작업</th>
+                                        <th>@Text["admin.super.layout.submitted.at"]</th>
+                                        <th>@Text["admin.super.layout.submitted.by"]</th>
+                                        <th>@Text["admin.super.layout.name"]</th>
+                                        <th>@Text["admin.super.layout.version"]</th>
+                                        <th>@Text["admin.super.table.tier"]</th>
+                                        <th>@Text["admin.super.layout.status"]</th>
+                                        <th>@Text["admin.super.layout.review.result"]</th>
+                                        <th>@Text["admin.super.table.action"]</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -642,7 +636,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <span class="wedding-admin-badge is-danger">미분류</span>
+                                                    <span class="wedding-admin-badge is-danger">@Text["admin.super.layout.unclassified"]</span>
                                                 }
                                             </td>
                                             <td>
@@ -673,12 +667,12 @@
                                                                 type="button"
                                                                 disabled="@_isLayoutWorkflowBusy"
                                                                 @onclick="() => SelectLayoutSubmissionAsync(submission)">
-                                                            검토
+                                                            @Text["admin.super.layout.review.action"]
                                                         </button>
                                                     }
                                                     else
                                                     {
-                                                        <span class="wedding-admin-badge is-muted">처리 완료</span>
+                                                        <span class="wedding-admin-badge is-muted">@Text["admin.super.layout.review.done"]</span>
                                                     }
 
                                                     @if (submissionPolicy is null)
@@ -687,7 +681,7 @@
                                                                 type="button"
                                                                 disabled="@_isLayoutWorkflowBusy"
                                                                 @onclick="() => OpenStandaloneLayoutDefinitionPolicyEditor(submission.LayoutKey)">
-                                                            등급 설정
+                                                            @Text["admin.super.layout.classify"]
                                                         </button>
                                                     }
 
@@ -1007,19 +1001,16 @@
                     <div class="wedding-admin-table-card__header">
                         <div>
                             <h2 id="layout-archive-title">
-                                서버 보관함
+                                @Text["admin.super.layout.archive"]
                                 <span>@_layoutArchives.Count</span>
                             </h2>
-                            <p>
-                                운영 목록에서 분리한 업로드입니다. 여기에서만 원본 패키지와 승인 릴리스
-                                payload를 복구 불가능하게 영구 삭제할 수 있습니다.
-                            </p>
+                            <p>@Text["admin.super.layout.archive.desc"]</p>
                         </div>
                     </div>
 
                     @if (_layoutArchives.Count == 0)
                     {
-                        <p class="w-sa-empty">영구 삭제할 수 있는 보관 항목이 없습니다.</p>
+                        <p class="w-sa-empty">@Text["admin.super.layout.archive.empty"]</p>
                     }
                     else
                     {
@@ -1027,13 +1018,13 @@
                             <table class="wedding-admin-table">
                                 <thead>
                                     <tr>
-                                        <th>보관 시각</th>
-                                        <th>제출 계정</th>
+                                        <th>@Text["admin.super.layout.archived.at"]</th>
+                                        <th>@Text["admin.super.layout.submitted.account"]</th>
                                         <th>LayoutKey</th>
-                                        <th>버전</th>
-                                        <th>보관 범위</th>
-                                        <th>보관 정보</th>
-                                        <th>작업</th>
+                                        <th>@Text["admin.super.layout.version"]</th>
+                                        <th>@Text["admin.super.layout.archive.scope"]</th>
+                                        <th>@Text["admin.super.layout.archive.info"]</th>
+                                        <th>@Text["admin.super.table.action"]</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -1046,7 +1037,9 @@
                                             <td><span class="w-sa-slug">v@(archive.LayoutVersion)</span></td>
                                             <td>
                                                 <span class="wedding-admin-badge @(archive.PublishedReleaseArchived ? "is-gold" : "is-muted")">
-                                                    @(archive.PublishedReleaseArchived ? "제출 + 승인 릴리스" : "제출 원본")
+                                                    @(archive.PublishedReleaseArchived
+                                                        ? Text["admin.super.layout.archive.release"]
+                                                        : Text["admin.super.layout.archive.submission"])
                                                 </span>
                                             </td>
                                             <td>
@@ -1058,7 +1051,7 @@
                                                         type="button"
                                                         disabled="@_isLayoutWorkflowBusy"
                                                         @onclick="() => BeginArchivedLayoutPurge(archive)">
-                                                    영구 삭제
+                                                    @Text["admin.super.layout.purge"]
                                                 </button>
                                             </td>
                                         </tr>
@@ -1161,10 +1154,10 @@
                     <div class="wedding-admin-table-card__header">
                         <div>
                             <h2 id="layout-release-title">
-                                버전 기록
+                                @Text["admin.super.layout.history"]
                                 <span>@(WeddingLayoutCatalog.Instance.Releases.Count + publishedLayoutPackages.Count)</span>
                             </h2>
-                            <p>각 버전은 덮어쓰지 않는 불변 릴리스이며, 현재 포인터와 이전 버전을 함께 보관합니다.</p>
+                            <p>@Text["admin.super.layout.history.desc"]</p>
                         </div>
                     </div>
 
@@ -1172,14 +1165,14 @@
                         <table class="wedding-admin-table">
                             <thead>
                                 <tr>
-                                    <th>레이아웃</th>
-                                    <th>버전</th>
-                                    <th>상태</th>
-                                    <th>등급</th>
-                                    <th>소스</th>
-                                    <th>승인 정보</th>
-                                    <th>섹션</th>
-                                    <th>작업</th>
+                                    <th>@Text["admin.super.layout.name"]</th>
+                                    <th>@Text["admin.super.layout.version"]</th>
+                                    <th>@Text["admin.super.layout.status"]</th>
+                                    <th>@Text["admin.super.table.tier"]</th>
+                                    <th>@Text["admin.super.layout.source"]</th>
+                                    <th>@Text["admin.super.layout.approval"]</th>
+                                    <th>@Text["admin.super.layout.sections"]</th>
+                                    <th>@Text["admin.super.table.action"]</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1198,25 +1191,25 @@
                                             StringComparison.Ordinal);
                                         <tr>
                                             <td>
-                                                <strong>@descriptor.Label</strong>
+                                                <strong>@LayoutLabel(descriptor.Key, descriptor.Label)</strong>
                                                 <small style="display:block">@release.LayoutKey</small>
                                             </td>
                                             <td><span class="w-sa-slug">v@(release.Version)</span></td>
                                             <td>
                                                 <span class="wedding-admin-badge @(isCurrent ? "is-success" : "is-muted")">
-                                                    @(isCurrent ? "현재 활성" : "보관 버전")
+                                                    @(isCurrent ? Text["admin.super.layout.current"] : Text["admin.super.layout.archived"])
                                                 </span>
                                             </td>
                                             <td>
                                                 <span class="wedding-admin-badge @(descriptor.Tier == WeddingLayoutTier.Premium ? "is-gold" : "is-muted")">
                                                     @TierLabel(descriptor.Tier)
                                                 </span>
-                                                <small style="display:block">내장 정책 확정 · 보호</small>
+                                                <small style="display:block">@Text["admin.super.layout.policy.protected"]</small>
                                             </td>
                                             <td>@SourceLabel(descriptor)</td>
-                                            <td><span>기본 릴리스 보호</span></td>
-                                            <td>@(release.SupportedSections.Count)개</td>
-                                            <td><span class="wedding-admin-badge is-muted">보호됨</span></td>
+                                            <td><span>@Text["admin.super.layout.base.release"]</span></td>
+                                            <td>@string.Format(Text["admin.super.layout.count"], release.SupportedSections.Count)</td>
+                                            <td><span class="wedding-admin-badge is-muted">@Text["admin.super.layout.protected"]</span></td>
                                         </tr>
                                     }
                                 }
@@ -1251,7 +1244,11 @@
                                             <td><span class="w-sa-slug">v@(publishedPackage.Manifest.Version)</span></td>
                                             <td>
                                                 <span class="wedding-admin-badge @(isCurrent ? "is-success" : "is-muted")">
-                                                    @(isCurrent ? "현재 활성" : activeDescriptor is null ? "승인됨 · 미활성" : "보관 버전")
+                                                    @(isCurrent
+                                                        ? Text["admin.super.layout.current"]
+                                                        : activeDescriptor is null
+                                                            ? Text["admin.super.layout.approved.inactive"]
+                                                            : Text["admin.super.layout.archived"])
                                                 </span>
                                             </td>
                                             <td>
@@ -1263,10 +1260,10 @@
                                                 }
                                                 else
                                                 {
-                                                    <span class="wedding-admin-badge is-danger">미분류</span>
+                                                    <span class="wedding-admin-badge is-danger">@Text["admin.super.layout.unclassified"]</span>
                                                 }
                                             </td>
-                                            <td>승인 업로드</td>
+                                            <td>@Text["admin.super.source.uploaded"]</td>
                                             <td>
                                                 <span>@publishedPackage.Approval.ApprovedBy</span>
                                                 <small style="display:block">
@@ -1274,11 +1271,11 @@
                                                 </small>
                                                 <small style="display:block">@publishedPackage.Approval.OwnerTenantSlug</small>
                                             </td>
-                                            <td>@(publishedPackage.Definition.SectionOrder.Count)개</td>
+                                            <td>@string.Format(Text["admin.super.layout.count"], publishedPackage.Definition.SectionOrder.Count)</td>
                                             <td>
                                                 @if (isCurrent)
                                                 {
-                                                    <span class="wedding-admin-badge is-success">서비스 중</span>
+                                                    <span class="wedding-admin-badge is-success">@Text["admin.super.layout.in.service"]</span>
                                                 }
                                                 else
                                                 {
@@ -1335,10 +1332,7 @@
                         </section>
                     }
 
-                    <p class="w-hint">
-                        기본 제공 6종은 보호되며, 업로드 릴리스만 활성 버전 전환과 롤백이 가능합니다.
-                        변경은 원자적으로 적용되고 실패하면 마지막 정상 카탈로그가 계속 서비스됩니다.
-                    </p>
+                    <p class="w-hint">@Text["admin.super.layout.footer.hint"]</p>
                 </section>
             }
 
@@ -1350,15 +1344,15 @@
                     <article class="wedding-admin-card wedding-admin-card--create">
                     <div class="wedding-admin-card__header">
                         <div>
-                            <h2>새 청첩장 만들기</h2>
-                            <p>URL ID와 기본 정보를 입력해 새 계정을 생성합니다.</p>
+                            <h2>@Text["admin.super.create"]</h2>
+                            <p>@Text["admin.super.create.desc"]</p>
                         </div>
                     </div>
 
                     <div class="w-sa-form wedding-admin-form">
                         <div class="w-sa-field">
-                            <label class="w-label">슬러그 (URL ID)</label>
-                            <input class="w-input" placeholder="예: gildong-sunja"
+                            <label class="w-label">@Text["admin.super.slug"]</label>
+                            <input class="w-input" placeholder="gildong-sunja"
                                    @bind="Vm.NewSlug" />
                             @if (!string.IsNullOrWhiteSpace(Vm.NewSlug))
                             {
@@ -1367,24 +1361,24 @@
                         </div>
 
                         <div class="w-sa-field">
-                            <label class="w-label">커플 이름</label>
-                            <input class="w-input" placeholder="예: 홍길동 ♥ 성춘향"
+                            <label class="w-label">@Text["field.couple"]</label>
+                            <input class="w-input" placeholder="@Text["field.couple.placeholder"]"
                                    @bind="Vm.NewCoupleName" />
                         </div>
 
                         <div class="w-sa-field">
-                            <label class="w-label">결혼 날짜</label>
+                            <label class="w-label">@Text["field.date"]</label>
                             <input class="w-input" type="date" @bind="Vm.NewWeddingDate" />
                         </div>
 
                         <div class="w-sa-field">
-                            <label class="w-label">커플 어드민 비밀번호</label>
-                            <input class="w-input" type="password" placeholder="커플이 어드민 접속 시 사용"
+                            <label class="w-label">@Text["admin.super.couple.password"]</label>
+                            <input class="w-input" type="password" placeholder="@Text["field.password.hint"]"
                                    @bind="Vm.NewPassword" />
                         </div>
 
                         <button class="w-btn w-btn--primary w-sa-create-btn" @onclick="OnCreate">
-                            청첩장 생성
+                            @Text["create.button"]
                         </button>
                     </div>
                     </article>
@@ -1395,84 +1389,84 @@
                     <article class="wedding-admin-card wedding-admin-card--settings">
                     <div class="wedding-admin-card__header">
                         <div>
-                            <h2>미디어 정책 설정</h2>
-                            <p>Account Override → Tier Policy → System Default 순서로 최종 정책이 계산됩니다.</p>
+                            <h2>@Text["admin.super.media.policy"]</h2>
+                            <p>@Text["admin.super.media.policy.desc"]</p>
                         </div>
                     </div>
 
                     <div class="wedding-admin-policy-grid">
                         <section>
-                            <h3>무료 계정 기본 정책</h3>
-                            <label class="w-label">이미지 최대 개수</label>
+                            <h3>@Text["admin.super.free.tier"]</h3>
+                            <label class="w-label">@Text["admin.super.image.count"]</label>
                             <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.FreeTier.ImageMaxCount" />
-                            <label class="w-label">이미지 최대 저장 용량(MB)</label>
+                            <label class="w-label">@Text["admin.super.image.storage"]</label>
                             <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.FreeTier.ImageOptimizedMaxStorageMb" />
-                            <label class="w-label">영상 한 파일 최대 용량(MB)</label>
+                            <label class="w-label">@Text["admin.super.video.file"]</label>
                             <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.FreeTier.VideoMaxFileSizeMb" />
-                            <label class="w-label">영상 최대 개수</label>
+                            <label class="w-label">@Text["admin.super.video.count"]</label>
                             <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.FreeTier.VideoMaxCount" />
                             <label class="wedding-admin-checkline">
                                 <input type="checkbox" @bind="Vm.MediaPolicy.FreeTier.KeepOriginalImages" />
-                                <span>원본 이미지 보관</span>
+                                <span>@Text["admin.super.keep.images"]</span>
                             </label>
                             <label class="wedding-admin-checkline">
                                 <input type="checkbox" @bind="Vm.MediaPolicy.FreeTier.KeepOriginalVideos" />
-                                <span>원본 영상 보관</span>
+                                <span>@Text["admin.super.keep.videos"]</span>
                             </label>
                         </section>
 
                         <section>
-                            <h3>Premium 계정 기본 정책</h3>
-                            <label class="w-label">이미지 최대 개수</label>
+                            <h3>@Text["admin.super.premium.tier"]</h3>
+                            <label class="w-label">@Text["admin.super.image.count"]</label>
                             <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.ImageMaxCount" />
-                            <label class="w-label">이미지 최대 저장 용량(MB)</label>
+                            <label class="w-label">@Text["admin.super.image.storage"]</label>
                             <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.ImageOptimizedMaxStorageMb" />
-                            <label class="w-label">원본 이미지 저장 용량(MB)</label>
+                            <label class="w-label">@Text["admin.super.original.storage"]</label>
                             <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.ImageOriginalMaxStorageMb" />
-                            <label class="w-label">영상 한 파일 최대 용량(MB)</label>
+                            <label class="w-label">@Text["admin.super.video.file"]</label>
                             <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.VideoMaxFileSizeMb" />
-                            <label class="w-label">영상 최대 개수</label>
+                            <label class="w-label">@Text["admin.super.video.count"]</label>
                             <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.VideoMaxCount" />
                             <label class="wedding-admin-checkline">
                                 <input type="checkbox" @bind="Vm.MediaPolicy.PremiumTier.KeepOriginalImages" />
-                                <span>원본 이미지 보관</span>
+                                <span>@Text["admin.super.keep.images"]</span>
                             </label>
                             <label class="wedding-admin-checkline">
                                 <input type="checkbox" @bind="Vm.MediaPolicy.PremiumTier.KeepOriginalVideos" />
-                                <span>원본 영상 보관</span>
+                                <span>@Text["admin.super.keep.videos"]</span>
                             </label>
                         </section>
 
                         <section>
-                            <h3>이미지 처리 설정</h3>
-                            <label class="w-label">이미지 최대 해상도(px)</label>
+                            <h3>@Text["admin.super.image.processing"]</h3>
+                            <label class="w-label">@Text["admin.super.image.resolution"]</label>
                             <input class="w-input" type="number" min="320" @bind="Vm.MediaPolicy.FreeTier.ImageMaxLongSidePx" />
-                            <label class="w-label">이미지 출력 형식</label>
+                            <label class="w-label">@Text["admin.super.image.format"]</label>
                             <select class="w-input" @bind="Vm.MediaPolicy.FreeTier.ImageOutputFormat">
                                 <option value="WebP">WebP</option>
                                 <option value="Jpeg">JPEG</option>
                                 <option value="Png">PNG</option>
                             </select>
-                            <label class="w-label">이미지 품질</label>
+                            <label class="w-label">@Text["admin.super.image.quality"]</label>
                             <input class="w-input" type="number" min="1" max="100" @bind="Vm.MediaPolicy.FreeTier.ImageQuality" />
                             <label class="wedding-admin-checkline">
                                 <input type="checkbox" @bind="Vm.MediaPolicy.FreeTier.StripExif" />
-                                <span>EXIF 제거</span>
+                                <span>@Text["admin.super.image.exif"]</span>
                             </label>
-                            <p class="w-hint">무료 정책의 이미지 처리값은 시스템 기본 처리 기준으로도 사용됩니다.</p>
+                            <p class="w-hint">@Text["admin.super.processing.default.hint"]</p>
                         </section>
 
                         <section>
-                            <h3>영상 처리 설정</h3>
-                            <label class="w-label">무료 영상 저장 용량(MB)</label>
+                            <h3>@Text["admin.super.video.processing"]</h3>
+                            <label class="w-label">@Text["admin.super.free.tier"] · @Text["admin.super.video.storage"]</label>
                             <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.FreeTier.VideoMaxStorageMb" />
-                            <label class="w-label">Premium 영상 저장 용량(MB)</label>
+                            <label class="w-label">@Text["admin.super.premium.tier"] · @Text["admin.super.video.storage"]</label>
                             <input class="w-input" type="number" min="0" @bind="Vm.MediaPolicy.PremiumTier.VideoMaxStorageMb" />
-                            <p class="w-hint">0은 무제한입니다. 계정별 override가 있으면 우측 상세 패널 값이 우선합니다.</p>
+                            <p class="w-hint">@Text["admin.super.override.hint"]</p>
                         </section>
                     </div>
 
-                    <button class="w-btn w-btn--primary" @onclick="OnSaveGlobalSettings">전체 설정 저장</button>
+                    <button class="w-btn w-btn--primary" @onclick="OnSaveGlobalSettings">@Text["admin.super.save.all"]</button>
                     </article>
                 }
                 </section>
@@ -1489,22 +1483,22 @@
 
                     <div class="wedding-admin-table-tools">
                         <select class="wedding-admin-select" value="@_statusFilter" @onchange="OnFilterChange">
-                            <option value="all">전체</option>
-                            <option value="published">메인 노출</option>
-                            <option value="hidden">메인 숨김</option>
-                            <option value="premium">Premium 활성</option>
+                            <option value="all">@Text["admin.super.all"]</option>
+                            <option value="published">@Text["admin.super.visible"]</option>
+                            <option value="hidden">@Text["admin.super.hidden"]</option>
+                            <option value="premium">@Text["admin.super.premium.plan"]</option>
                             @if (IsMediaMenu)
                             {
-                                <option value="image">이미지 있음</option>
-                                <option value="video">영상 있음</option>
-                                <option value="free">무료</option>
-                                <option value="migration-completed">최적화 완료</option>
-                                <option value="migration-pending">변환 대기</option>
-                                <option value="migration-failed">변환 실패</option>
-                                <option value="keep-original">원본 보관 계정</option>
+                                <option value="image">@Text["admin.super.filter.images"]</option>
+                                <option value="video">@Text["admin.super.filter.videos"]</option>
+                                <option value="free">@Text["admin.super.filter.free"]</option>
+                                <option value="migration-completed">@Text["admin.super.filter.optimized"]</option>
+                                <option value="migration-pending">@Text["admin.super.filter.pending"]</option>
+                                <option value="migration-failed">@Text["admin.super.filter.failed"]</option>
+                                <option value="keep-original">@Text["admin.super.filter.originals"]</option>
                             }
                         </select>
-                        <button class="wedding-admin-action-button" type="button" @onclick="OnRefresh">새로고침</button>
+                        <button class="wedding-admin-action-button" type="button" @onclick="OnRefresh">@Text["admin.refresh"]</button>
                     </div>
                 </div>
 
@@ -1518,30 +1512,30 @@
                         <table class="wedding-admin-table">
                             <thead>
                                 <tr>
-                                    <th>슬러그</th>
-                                    <th>커플 이름</th>
-                                    <th>결혼일</th>
-                                    <th>메인 노출</th>
+                                    <th>@Text["admin.super.table.slug"]</th>
+                                    <th>@Text["admin.super.table.couple"]</th>
+                                    <th>@Text["admin.super.table.date"]</th>
+                                    <th>@Text["admin.super.table.home"]</th>
                                     @if (IsMediaMenu)
                                     {
-                                        <th>등급</th>
-                                        <th>이미지</th>
-                                        <th>최적화 용량</th>
-                                        <th>원본 용량</th>
-                                        <th>영상</th>
-                                        <th>전체 사용량</th>
-                                        <th>마이그레이션</th>
+                                        <th>@Text["admin.super.table.tier"]</th>
+                                        <th>@Text["admin.super.table.images"]</th>
+                                        <th>@Text["admin.super.table.optimized"]</th>
+                                        <th>@Text["admin.super.table.original"]</th>
+                                        <th>@Text["admin.super.table.videos"]</th>
+                                        <th>@Text["admin.super.table.total"]</th>
+                                        <th>@Text["admin.super.table.migration"]</th>
                                     }
                                     else
                                     {
-                                        <th>Premium 레이아웃</th>
-                                        <th>테마</th>
-                                        <th>저장 용량</th>
-                                        <th>영상 개수</th>
+                                        <th>@Text["admin.super.table.premium.layouts"]</th>
+                                        <th>@Text["admin.super.table.theme"]</th>
+                                        <th>@Text["admin.super.table.storage"]</th>
+                                        <th>@Text["admin.super.video.count"]</th>
                                     }
-                                    <th>최근 수정</th>
-                                    <th>링크</th>
-                                    <th>액션</th>
+                                    <th>@Text["admin.super.table.updated"]</th>
+                                    <th>@Text["admin.super.table.link"]</th>
+                                    <th>@Text["admin.super.table.action"]</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1553,17 +1547,17 @@
                                         <td>@t.WeddingDate.ToString("yyyy-MM-dd")</td>
                                         <td>
                                             <span class="wedding-admin-badge @(t.ShowOnHome ? "is-success" : "is-muted")">
-                                                @(t.ShowOnHome ? "노출" : "숨김")
+                                                @(t.ShowOnHome ? Text["admin.super.visible"] : Text["admin.super.hidden"])
                                             </span>
                                         </td>
                                         @if (IsMediaMenu)
                                         {
                                             var usage = GetUsage(t);
                                             <td><span class="wedding-admin-badge @(t.HasPremiumPlan ? "is-gold" : "is-muted")">@(t.HasPremiumPlan ? "Premium" : "Free")</span></td>
-                                            <td>@usage.ImageCount 장</td>
+                                            <td>@usage.ImageCount</td>
                                             <td>@FormatBytes(usage.OptimizedImageBytes)</td>
                                             <td>@FormatBytes(usage.OriginalImageBytes)</td>
-                                            <td>@usage.VideoCount 개 / @FormatBytes(usage.VideoBytes)</td>
+                                            <td>@usage.VideoCount / @FormatBytes(usage.VideoBytes)</td>
                                             <td>@FormatBytes(usage.TotalBytes)</td>
                                             <td><span class="wedding-admin-badge @MigrationBadgeClass(usage.MigrationState)">@MigrationLabel(usage.MigrationState)</span></td>
                                             <td>@(usage.LastModified?.ToString("yyyy-MM-dd") ?? t.CreatedAt.ToString("yyyy-MM-dd"))</td>
@@ -1573,15 +1567,15 @@
                                             <td>@RenderLayoutBadges(t)</td>
                                             <td>@RenderThemeBadges(t)</td>
                                             <td>@EstimateTenantStorage(t)</td>
-                                            <td>@t.VideoFileNames.Count 개</td>
+                                            <td>@t.VideoFileNames.Count</td>
                                             <td>@t.CreatedAt.ToString("yyyy-MM-dd")</td>
                                         }
                                         <td>
-                                            <a class="wedding-admin-icon-link" href="@PublicPath(t)" target="_blank" @onclick:stopPropagation="true">열기</a>
+                                            <a class="wedding-admin-icon-link" href="@PublicPath(t)" target="_blank" @onclick:stopPropagation="true">@Text["admin.super.open"]</a>
                                         </td>
                                         <td>
                                             <button class="wedding-admin-action-button is-compact" type="button" @onclick="() => SelectTenant(t)" @onclick:stopPropagation="true">
-                                                상세
+                                                @Text["admin.super.details"]
                                             </button>
                                         </td>
                                     </tr>
@@ -1591,13 +1585,13 @@
                     </div>
 
                     <div class="wedding-admin-pagination">
-                        <span>@currentPage / @totalPages 페이지</span>
+                        <span>@currentPage / @totalPages</span>
                         <div>
-                            <button class="wedding-admin-action-button is-compact" type="button" disabled="@(currentPage <= 1)" @onclick="PrevPage">이전</button>
-                            <button class="wedding-admin-action-button is-compact" type="button" disabled="@(currentPage >= totalPages)" @onclick="NextPage">다음</button>
+                            <button class="wedding-admin-action-button is-compact" type="button" disabled="@(currentPage <= 1)" @onclick="PrevPage">@Text["admin.super.previous"]</button>
+                            <button class="wedding-admin-action-button is-compact" type="button" disabled="@(currentPage >= totalPages)" @onclick="NextPage">@Text["admin.super.next"]</button>
                         </div>
                         <label>
-                            페이지당
+                            @Text["admin.super.per.page"]
                             <select class="wedding-admin-select" value="@_pageSize" @onchange="OnPageSizeChange">
                                 <option value="10">10</option>
                                 <option value="20">20</option>
@@ -1615,11 +1609,11 @@
             {
                 <div class="wedding-admin-detail-panel__header">
                     <div>
-                        <span>선택한 계정 상세</span>
+                        <span>@Text["admin.super.selected"]</span>
                         <h2>@selected.CoupleName</h2>
                         <p>@selected.Slug</p>
                     </div>
-                    <button class="wedding-admin-icon-button" type="button" @onclick="ClearSelection" title="선택 해제">x</button>
+                    <button class="wedding-admin-icon-button" type="button" @onclick="ClearSelection" title="@Text["admin.super.clear.selection"]">x</button>
                 </div>
 
                 var mediaOverride = EnsureMediaOverride(selected);
@@ -1627,24 +1621,24 @@
 
                 <dl class="wedding-admin-detail-list">
                     <div>
-                        <dt>결혼일</dt>
+                        <dt>@Text["admin.super.table.date"]</dt>
                         <dd>@selected.WeddingDate.ToString("yyyy-MM-dd")</dd>
                     </div>
                     <div>
-                        <dt>공개 상태</dt>
-                        <dd><span class="wedding-admin-badge @(selected.IsPublished ? "is-success" : "is-muted")">@(selected.IsPublished ? "공개 중" : "비공개")</span></dd>
+                        <dt>@Text["admin.super.published"]</dt>
+                        <dd><span class="wedding-admin-badge @(selected.IsPublished ? "is-success" : "is-muted")">@(selected.IsPublished ? Text["admin.super.published"] : Text["admin.super.private"])</span></dd>
                     </div>
                     <div>
-                        <dt>메인 노출</dt>
+                        <dt>@Text["admin.super.table.home"]</dt>
                         <dd>
                             <label class="wedding-admin-switch">
                                 <input type="checkbox" checked="@selected.ShowOnHome" @onchange="e => OnShowOnHomeChange(selected, e)" />
-                                <span>@(selected.ShowOnHome ? "노출" : "숨김")</span>
+                                <span>@(selected.ShowOnHome ? Text["admin.super.visible"] : Text["admin.super.hidden"])</span>
                             </label>
                         </dd>
                     </div>
                     <div>
-                        <dt>고정 순서</dt>
+                        <dt>@Text["admin.super.pin.order"]</dt>
                         <dd>
                             <input type="number" class="wedding-admin-number-input" min="0" max="99"
                                    value="@selected.PinOrder"
@@ -1654,95 +1648,95 @@
                 </dl>
 
                 <section class="wedding-admin-panel-section">
-                    <h3>Premium 플랜</h3>
+                    <h3>@Text["admin.super.premium.plan"]</h3>
                     <label class="wedding-admin-switch">
                         <input type="checkbox"
                                checked="@selected.HasPremiumPlan"
                                @onchange="e => OnPremiumPlanChange(selected, e)" />
-                        <span>@(selected.HasPremiumPlan ? "활성" : "비활성")</span>
+                        <span>@(selected.HasPremiumPlan ? Text["admin.super.active"] : Text["admin.super.inactive"])</span>
                     </label>
-                    <p class="w-hint">Premium 사용자는 나만의 색상 테마를 만들 수 있으며 모든 Premium 레이아웃을 사용할 수 있습니다.</p>
+                    <p class="w-hint">@Text["admin.super.premium.hint"]</p>
                 </section>
 
                 <section class="wedding-admin-panel-section">
-                    <h3>계정별 미디어 설정</h3>
+                    <h3>@Text["admin.super.account.media"]</h3>
                     <div class="wedding-admin-usage-mini">
-                        <span>이미지 @selectedUsage.ImageCount 장</span>
-                        <span>최적화 @FormatBytes(selectedUsage.OptimizedImageBytes)</span>
-                        <span>원본 @FormatBytes(selectedUsage.OriginalImageBytes)</span>
-                        <span>영상 @selectedUsage.VideoCount 개 / @FormatBytes(selectedUsage.VideoBytes)</span>
+                        <span>@Text["admin.super.table.images"] @selectedUsage.ImageCount</span>
+                        <span>@Text["admin.super.table.optimized"] @FormatBytes(selectedUsage.OptimizedImageBytes)</span>
+                        <span>@Text["admin.super.table.original"] @FormatBytes(selectedUsage.OriginalImageBytes)</span>
+                        <span>@Text["admin.super.table.videos"] @selectedUsage.VideoCount / @FormatBytes(selectedUsage.VideoBytes)</span>
                     </div>
 
-                    <label class="w-label">이미지 최대 개수</label>
-                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                    <label class="w-label">@Text["admin.super.image.count"]</label>
+                    <input class="w-input" type="number" min="0" placeholder="@Text["admin.super.tier.default"]"
                            @bind="mediaOverride.ImageMaxCount" />
 
-                    <label class="w-label">이미지 최대 저장 용량(MB)</label>
-                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                    <label class="w-label">@Text["admin.super.image.storage"]</label>
+                    <input class="w-input" type="number" min="0" placeholder="@Text["admin.super.tier.default"]"
                            @bind="mediaOverride.ImageOptimizedMaxStorageMb" />
 
-                    <label class="w-label">원본 이미지 저장 용량(MB)</label>
-                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                    <label class="w-label">@Text["admin.super.original.storage"]</label>
+                    <input class="w-input" type="number" min="0" placeholder="@Text["admin.super.tier.default"]"
                            @bind="mediaOverride.ImageOriginalMaxStorageMb" />
 
-                    <label class="w-label">영상 한 파일 최대 용량(MB)</label>
-                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                    <label class="w-label">@Text["admin.super.video.file"]</label>
+                    <input class="w-input" type="number" min="0" placeholder="@Text["admin.super.tier.default"]"
                            @bind="mediaOverride.VideoMaxFileSizeMb" />
 
-                    <label class="w-label">영상 최대 개수</label>
-                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                    <label class="w-label">@Text["admin.super.video.count"]</label>
+                    <input class="w-input" type="number" min="0" placeholder="@Text["admin.super.tier.default"]"
                            @bind="mediaOverride.VideoMaxCount" />
 
-                    <label class="w-label">영상 저장 용량(MB)</label>
-                    <input class="w-input" type="number" min="0" placeholder="등급 기본값"
+                    <label class="w-label">@Text["admin.super.video.storage"]</label>
+                    <input class="w-input" type="number" min="0" placeholder="@Text["admin.super.tier.default"]"
                            @bind="mediaOverride.VideoMaxStorageMb" />
 
                     <label class="wedding-admin-checkline">
                         <input type="checkbox"
                                checked="@(mediaOverride.KeepOriginalImages == true)"
                                @onchange="e => mediaOverride.KeepOriginalImages = ReadBool(e)" />
-                        <span>원본 이미지 보관</span>
+                        <span>@Text["admin.super.keep.images"]</span>
                     </label>
                     <label class="wedding-admin-checkline">
                         <input type="checkbox"
                                checked="@(mediaOverride.KeepOriginalVideos == true)"
                                @onchange="e => mediaOverride.KeepOriginalVideos = ReadBool(e)" />
-                        <span>원본 영상 보관</span>
+                        <span>@Text["admin.super.keep.videos"]</span>
                     </label>
 
-                    <button class="wedding-admin-action-button is-primary" type="button" @onclick="() => OnSaveMediaOverride(selected)">미디어 정책 저장</button>
-                    <button class="wedding-admin-action-button" type="button" @onclick="() => OnResetMediaOverride(selected)">계정별 Override 초기화</button>
+                    <button class="wedding-admin-action-button is-primary" type="button" @onclick="() => OnSaveMediaOverride(selected)">@Text["admin.super.media.save"]</button>
+                    <button class="wedding-admin-action-button" type="button" @onclick="() => OnResetMediaOverride(selected)">@Text["admin.super.override.reset"]</button>
                 </section>
 
                 <section class="wedding-admin-panel-section">
-                    <h3>이미지 마이그레이션</h3>
+                    <h3>@Text["admin.super.migration"]</h3>
                     <div class="wedding-admin-migration-state">
                         <span class="wedding-admin-badge @MigrationBadgeClass(selectedUsage.MigrationState)">@MigrationLabel(selectedUsage.MigrationState)</span>
-                        <small>@(Vm.MigrationStatuses.TryGetValue(selected.Slug, out var migration) ? migration.Message : "아직 실행 기록이 없습니다.")</small>
+                        <small>@(Vm.MigrationStatuses.TryGetValue(selected.Slug, out var migration) ? MigrationLabel(migration.State) : Text["admin.super.no.migration"])</small>
                     </div>
-                    <button class="wedding-admin-action-button" type="button" @onclick="() => OnQueueMigration(selected)">이미지 최적화 실행</button>
-                    <button class="wedding-admin-action-button" type="button" @onclick="() => OnRetryMigration(selected)">실패 항목 재시도</button>
+                    <button class="wedding-admin-action-button" type="button" @onclick="() => OnQueueMigration(selected)">@Text["admin.super.migration.run"]</button>
+                    <button class="wedding-admin-action-button" type="button" @onclick="() => OnRetryMigration(selected)">@Text["admin.super.migration.retry"]</button>
                 </section>
 
                 <section class="wedding-admin-panel-section">
-                    <h3>테마 정책</h3>
-                    <p class="w-hint">기본 색상 테마 5종은 모든 사용자에게 제공됩니다. 사용자 정의 색상 편집은 Premium 플랜에 포함됩니다.</p>
+                    <h3>@Text["admin.super.theme.policy"]</h3>
+                    <p class="w-hint">@Text["admin.super.theme.policy.hint"]</p>
                 </section>
 
                 <section class="wedding-admin-panel-section">
-                    <h3>빠른 액션</h3>
+                    <h3>@Text["admin.super.quick.actions"]</h3>
                     <div class="wedding-admin-quick-actions">
-                        <a class="wedding-admin-action-button" href="@PublicPath(selected)" target="_blank">미리보기 열기</a>
-                        <button class="wedding-admin-action-button" type="button" @onclick="() => CopyPublicLink(selected)">링크 복사</button>
-                        <a class="wedding-admin-action-button" href="/@selected.Slug/admin" target="_blank" rel="noopener">계정 관리</a>
+                        <a class="wedding-admin-action-button" href="@PublicPath(selected)" target="_blank">@Text["admin.super.preview"]</a>
+                        <button class="wedding-admin-action-button" type="button" @onclick="() => CopyPublicLink(selected)">@Text["admin.super.copy.link"]</button>
+                        <a class="wedding-admin-action-button" href="/@selected.Slug/admin" target="_blank" rel="noopener">@Text["admin.super.manage.account"]</a>
                         @if (_confirmSlug == selected.Slug)
                         {
-                            <button class="wedding-admin-action-button is-danger" type="button" @onclick="() => OnDeleteConfirmed(selected.Slug)">삭제 확인</button>
-                            <button class="wedding-admin-action-button" type="button" @onclick="() => _confirmSlug = null">취소</button>
+                            <button class="wedding-admin-action-button is-danger" type="button" @onclick="() => OnDeleteConfirmed(selected.Slug)">@Text["admin.super.confirm.delete"]</button>
+                            <button class="wedding-admin-action-button" type="button" @onclick="() => _confirmSlug = null">@Text["admin.cancel"]</button>
                         }
                         else
                         {
-                            <button class="wedding-admin-action-button is-danger" type="button" @onclick="() => _confirmSlug = selected.Slug">계정 삭제</button>
+                            <button class="wedding-admin-action-button is-danger" type="button" @onclick="() => _confirmSlug = selected.Slug">@Text["admin.super.delete.account"]</button>
                         }
                     </div>
                 </section>
@@ -1750,8 +1744,8 @@
             else
             {
                 <div class="wedding-admin-detail-empty">
-                    <strong>선택한 계정이 없습니다.</strong>
-                    <span>등록된 커플을 선택하면 권한과 빠른 액션이 표시됩니다.</span>
+                    <strong>@Text["admin.super.no.selection"]</strong>
+                    <span>@Text["admin.super.selection.help"]</span>
                 </div>
             }
         </aside>
@@ -1886,29 +1880,29 @@
     };
     private string ActiveDescription => _activeMenu switch
     {
-        "invite" => "청첩장 계정을 모아 보고 메인 노출과 링크를 관리합니다.",
-        "account" => "계정을 선택해 업로드 제한, 권한, 삭제를 관리합니다.",
-        "media" => "이미지와 영상 정책, 사용량, 최적화 마이그레이션을 관리합니다.",
-        "layouts" => "실시간 카탈로그의 활성 버전과 불변 릴리스 기록을 서버 재시작 없이 확인합니다.",
-        "settings" => "전체 설정을 조정합니다.",
+        "invite" => Text["admin.super.invite.desc"],
+        "account" => Text["admin.super.account.desc"],
+        "media" => Text["admin.super.media.desc"],
+        "layouts" => Text["admin.super.layouts.desc"],
+        "settings" => Text["admin.super.settings.desc"],
         _ => Text["admin.integrated.desc"]
     };
     private string TableTitle => _activeMenu switch
     {
-        "invite" => "청첩장 계정",
-        "account" => "계정 목록",
-        "media" => "미디어 관리 대상",
-        _ => "등록된 커플"
+        "invite" => Text["admin.super.list.invites"],
+        "account" => Text["admin.super.list.accounts"],
+        "media" => Text["admin.super.list.media"],
+        _ => Text["admin.registered.couples"]
     };
     private string TableDescription => _activeMenu switch
     {
-        "media" => "계정을 선택하면 우측에서 계정별 미디어 제한과 이미지 최적화를 처리할 수 있습니다.",
-        _ => "목록에서는 상태를 빠르게 보고, 권한 관리는 우측 상세 패널에서 처리합니다."
+        "media" => Text["admin.super.list.media.desc"],
+        _ => Text["admin.super.list.desc"]
     };
     private string EmptyText => _activeMenu switch
     {
-        "invite" => "조건에 맞는 청첩장 계정이 없습니다.",
-        _ => "조건에 맞는 계정이 없습니다."
+        "invite" => Text["admin.super.empty.invite"],
+        _ => Text["admin.super.empty"]
     };
 
     private IEnumerable<TenantConfig> FilteredTenants
@@ -1947,10 +1941,10 @@
     private int TotalPhotoCount => Vm.MediaUsage.Values.Sum(x => x.ImageCount);
     private int TotalVideoCount => Vm.MediaUsage.Values.Sum(x => x.VideoCount);
     private long TotalStorageBytes => Vm.MediaUsage.Values.Sum(x => x.TotalBytes);
-    private string TotalStorageLabel => Vm.IsMediaUsageAccurate ? FormatBytes(TotalStorageBytes) : "빠른 집계";
+    private string TotalStorageLabel => Vm.IsMediaUsageAccurate ? FormatBytes(TotalStorageBytes) : Text["admin.super.storage.quick"];
     private string AvailableStorageLabel => Vm.IsMediaUsageAccurate && GetAvailableStorageBytes() is long bytes
-        ? $"{FormatBytes(bytes)} 남음"
-        : "미디어 관리에서 갱신";
+        ? string.Format(Text["admin.super.storage.remaining"], FormatBytes(bytes))
+        : Text["admin.super.storage.refresh"];
 
     private bool _sessionRestoreChecked;
 
@@ -2215,10 +2209,10 @@
         {
             await RefreshLayoutSubmissionsNoLockAsync();
             _layoutWorkflowSucceeded = true;
-            _layoutWorkflowStatus =
-                $"✅ 레이아웃 작업 목록을 갱신했습니다. " +
-                $"대기 {_layoutSubmissions.Count(x => x.Status == WeddingLayoutSubmissionStatus.Pending)}건 · " +
-                $"보관 {_layoutArchives.Count}건";
+            _layoutWorkflowStatus = string.Format(
+                Text["admin.super.layout.refresh.status"],
+                _layoutSubmissions.Count(x => x.Status == WeddingLayoutSubmissionStatus.Pending),
+                _layoutArchives.Count);
         }
         catch (Exception ex)
         {
@@ -3181,13 +3175,13 @@
         tenant.MediaPolicyOverride?.KeepOriginalImages == true
         || tenant.MediaPolicyOverride?.KeepOriginalVideos == true;
 
-    private static string MigrationLabel(MediaMigrationState state) => state switch
+    private string MigrationLabel(MediaMigrationState state) => state switch
     {
-        MediaMigrationState.Pending => "변환 대기",
-        MediaMigrationState.Processing => "처리 중",
-        MediaMigrationState.Completed => "완료",
-        MediaMigrationState.Failed => "실패",
-        _ => "건너뜀"
+        MediaMigrationState.Pending => Text["admin.super.migration.pending"],
+        MediaMigrationState.Processing => Text["admin.super.migration.processing"],
+        MediaMigrationState.Completed => Text["admin.super.migration.completed"],
+        MediaMigrationState.Failed => Text["admin.super.migration.failed"],
+        _ => Text["admin.super.migration.skipped"]
     };
 
     private static string MigrationBadgeClass(MediaMigrationState state) => state switch
@@ -3247,7 +3241,7 @@
     private MarkupString RenderLayoutBadges(TenantConfig tenant)
     {
         var labels = tenant.HasPremiumPlan
-            ? PremiumLayouts.Select(x => x.Label).ToArray()
+            ? PremiumLayouts.Select(x => LayoutLabel(x.Key, x.Label)).ToArray()
             : [];
 
         return BuildBadgeMarkup(labels);
@@ -3258,17 +3252,17 @@
         var themeKey = tenant.DesignSettings?.ThemeKey ?? tenant.ThemeName;
         var labels = string.Equals(themeKey, WeddingThemeCatalog.CustomThemeKey, StringComparison.OrdinalIgnoreCase)
             && tenant.HasPremiumPlan
-                ? new[] { "나만의 테마" }
-                : new[] { WeddingThemeCatalog.Instance.Find(themeKey)?.DisplayName ?? "로즈 골드" };
+                ? new[] { Text["theme.custom"] }
+                : new[] { ThemeLabel(themeKey) };
 
         return BuildBadgeMarkup(labels);
     }
 
-    private static MarkupString BuildBadgeMarkup(IReadOnlyList<string> labels)
+    private MarkupString BuildBadgeMarkup(IReadOnlyList<string> labels)
     {
         if (labels.Count == 0)
         {
-            return new MarkupString("<span class=\"wedding-admin-badge is-muted\">없음</span>");
+            return new MarkupString($"<span class=\"wedding-admin-badge is-muted\">{System.Net.WebUtility.HtmlEncode(Text["admin.super.none"])}</span>");
         }
 
         var visible = labels.Take(2).Select(label => $"<span class=\"wedding-admin-badge\">{System.Net.WebUtility.HtmlEncode(label)}</span>");
@@ -3378,8 +3372,46 @@
         policy.Revision == 0
         || WeddingLayoutCatalog.Instance.FindDescriptor(policy.LayoutKey)?.IsBuiltIn == true;
 
-    private static string SourceLabel(WeddingLayoutDescriptor descriptor) =>
-        descriptor.IsBuiltIn ? "기본 제공" : "승인 업로드";
+    private string SourceLabel(WeddingLayoutDescriptor descriptor) =>
+        descriptor.IsBuiltIn ? Text["admin.super.source.builtin"] : Text["admin.super.source.uploaded"];
+
+    private string LayoutLabel(string? key, string fallback) => WeddingLayoutKeys.Normalize(key) switch
+    {
+        WeddingLayoutKeys.OnePage => Text["layout.onepage"],
+        WeddingLayoutKeys.Tabs => Text["layout.tabs"],
+        WeddingLayoutKeys.Gallery => Text["layout.gallery"],
+        WeddingLayoutKeys.Story => Text["layout.story"],
+        WeddingLayoutKeys.Card => Text["layout.card"],
+        WeddingLayoutKeys.PhotoBook => Text["layout.photobook"],
+        _ => fallback
+    };
+
+    private string LayoutDescription(string? key, string fallback) => WeddingLayoutKeys.Normalize(key) switch
+    {
+        WeddingLayoutKeys.OnePage => Text["admin.super.layout.description.onepage"],
+        WeddingLayoutKeys.Tabs => Text["admin.super.layout.description.tabs"],
+        WeddingLayoutKeys.Gallery => Text["admin.super.layout.description.gallery"],
+        WeddingLayoutKeys.Story => Text["admin.super.layout.description.story"],
+        WeddingLayoutKeys.Card => Text["admin.super.layout.description.card"],
+        WeddingLayoutKeys.PhotoBook => Text["admin.super.layout.description.photobook"],
+        _ => fallback
+    };
+
+    private string PolicyReasonLabel(string? reason) => reason switch
+    {
+        "Protected application-owned layout classification." => Text["admin.super.layout.policy.protected"],
+        _ => reason ?? "-"
+    };
+
+    private string ThemeLabel(string? key) => WeddingThemeCatalog.NormalizeKey(key) switch
+    {
+        WeddingThemeCatalog.DefaultThemeKey => Text["theme.rose"],
+        "ivory" => Text["theme.ivory"],
+        "forest" => Text["theme.forest"],
+        "navy" => Text["theme.navy"],
+        "blush" => Text["theme.blush"],
+        _ => Text["theme.rose"]
+    };
 
     public void Dispose()
     {

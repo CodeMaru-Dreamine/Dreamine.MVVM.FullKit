@@ -235,6 +235,7 @@ public sealed class WeddingAdminViewModel
     /// \endif
     /// </summary>
     public string MaxVideoSizeLabel { get; private set; } = "최대 200MB";
+    public int MaxVideoSizeMb { get; private set; } = 200;
     /// <summary>
     /// \if KO
     /// <para>동영상 업로드 최대 개수 (0이면 무제한).</para>
@@ -658,6 +659,7 @@ public sealed class WeddingAdminViewModel
         EffectiveMediaPolicy = await _mediaPolicyResolver.ResolveAsync(Config, ct).ConfigureAwait(false);
 
         var effectiveMb = EffectiveMediaPolicy.VideoMaxFileSizeMb;
+        MaxVideoSizeMb = effectiveMb;
         MaxVideoSizeLabel = effectiveMb <= 0 ? "무제한" : $"최대 {effectiveMb}MB";
 
         MaxVideoCount = EffectiveMediaPolicy.VideoMaxCount;

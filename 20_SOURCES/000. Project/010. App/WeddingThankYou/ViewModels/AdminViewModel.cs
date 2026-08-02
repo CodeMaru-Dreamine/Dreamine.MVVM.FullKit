@@ -906,9 +906,14 @@ namespace WeddingThankYou.ViewModels
 					.Select(WeddingLayoutCatalog.FromLegacyKey)
 					.Where(x => x != WeddingLayoutMode.Unknown)
 					.ToArray(),
+				UnlockedLayoutKeys = config.UnlockedLayoutModes.ToArray(),
 			};
 
-			if (!new WeddingLayoutAccessPolicy().CanUse(option, access))
+			var canUseLayout = option.Tier == WeddingLayoutTier.Free
+				|| access.HasPremiumPlan
+				|| access.IsLayoutUnlocked(option.Mode)
+				|| access.IsLayoutUnlocked(option.Key);
+			if (!canUseLayout)
 			{
 				StatusMessage = "저장 오류: 프리미엄 레이아웃은 플랜 또는 잠금 해제 후 저장할 수 있습니다.";
 				return false;
@@ -949,9 +954,47 @@ namespace WeddingThankYou.ViewModels
 					WeddingThemeCatalog.CustomThemeKey,
 					StringComparison.OrdinalIgnoreCase))
 			{
-				// WeddingPlatform.Web가 관리하는 사용자 정의 팔레트는 이 호환 앱의
-				// JsonExtensionData에 그대로 보존됩니다. 이 앱에서 다른 감사장 설정을
-				// 저장할 때 custom 키를 알 수 없는 프리셋으로 취급해 저장을 막지 않습니다.
+				if (!config.HasPremiumPlan)
+				{
+					// 다운그레이드된 계정은 만든 팔레트를 삭제하지 않습니다.
+					// 공개 렌더러가 권한을 확인하므로 다른 설정의 저장까지 막을 필요는 없습니다.
+					config.ThemeName = WeddingThemeCatalog.CustomThemeKey;
+					return true;
+				}
+
+				config.CustomTheme ??= new CustomWeddingThemeSettings();
+				var custom = config.CustomTheme;
+				if (!WeddingThemePaletteGenerator.TryNormalizeHexColor(custom.Primary, out var primary)
+					|| !WeddingThemePaletteGenerator.TryNormalizeHexColor(custom.Dark, out var dark)
+					|| !WeddingThemePaletteGenerator.TryNormalizeHexColor(custom.Text, out var text)
+					|| !WeddingThemePaletteGenerator.TryNormalizeHexColor(custom.Background, out var background)
+					|| !WeddingThemePaletteGenerator.TryNormalizeHexColor(custom.PanelBackground, out var panelBackground)
+					|| !TryNormalizeOptionalHexColor(custom.BaseColor, out var baseColor)
+					|| !TryNormalizeOptionalHexColor(custom.Accent, out var accent)
+					|| !TryNormalizeOptionalHexColor(custom.MutedText, out var mutedText)
+					|| !TryNormalizeOptionalHexColor(custom.ButtonBackground, out var buttonBackground)
+					|| !TryNormalizeOptionalHexColor(custom.ButtonText, out var buttonText)
+					|| !TryNormalizeOptionalHexColor(custom.Border, out var border))
+				{
+					StatusMessage = "저장 오류: 커스텀 테마 색상은 #RRGGBB 형식이어야 합니다.";
+					return false;
+				}
+
+				var name = custom.Name?.Trim() ?? "";
+				custom.Name = string.IsNullOrWhiteSpace(name)
+					? "나만의 테마"
+					: name[..Math.Min(name.Length, 40)];
+				custom.Primary = primary;
+				custom.Dark = dark;
+				custom.Text = text;
+				custom.Background = background;
+				custom.PanelBackground = panelBackground;
+				custom.BaseColor = baseColor;
+				custom.Accent = accent;
+				custom.MutedText = mutedText;
+				custom.ButtonBackground = buttonBackground;
+				custom.ButtonText = buttonText;
+				custom.Border = border;
 				config.ThemeName = WeddingThemeCatalog.CustomThemeKey;
 				return true;
 			}
@@ -992,6 +1035,26 @@ namespace WeddingThankYou.ViewModels
 
 			config.ThemeName = option.Key;
 			return true;
+		}
+
+		private static bool TryNormalizeOptionalHexColor(
+			string? value,
+			out string? normalized)
+		{
+			if (string.IsNullOrWhiteSpace(value))
+			{
+				normalized = null;
+				return true;
+			}
+
+			if (WeddingThemePaletteGenerator.TryNormalizeHexColor(value, out var color))
+			{
+				normalized = color;
+				return true;
+			}
+
+			normalized = null;
+			return false;
 		}
 
 		/// <summary>

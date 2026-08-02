@@ -4,36 +4,45 @@
 @rendermode InteractiveServer
 
 @using Microsoft.JSInterop
+@using Markdig
 @using Wedding.Common
 @using WeddingThankYou.Models
 @inject WeddingThankYou.ViewModels.AdminViewModel Vm
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject ThankYouLocalization Text
 @implements IDisposable
 
-<PageTitle>관리 — @Slug</PageTitle>
+<PageTitle>@Text["admin"] — @Slug</PageTitle>
+<HeadContent>
+    <link rel="stylesheet" href="/css/WeddingPlatformLayout.css?v=20260802-layout-parity-3" />
+    <link rel="stylesheet" href="/css/thankyou-admin-accessibility.css?v=20260802-layout-parity-3" />
+</HeadContent>
 
 <div class="w-admin">
+    <div class="w-admin-preferences" aria-label="@Text["screen.settings"]">
+        <WeddingThankYou.Blazor.Components.ThankYouPreferences />
+    </div>
     @if (!Vm.IsAuthenticated)
     {
         <div class="w-admin__login w-panel">
-            <h1 class="w-admin__title">⚙ 감사장 관리 — <code>@Slug</code></h1>
-            <h2>관리자 로그인</h2>
+            <h1 class="w-admin__title">⚙ @Text["admin.manage"] — <code>@Slug</code></h1>
+            <h2>@Text["admin.signin"]</h2>
             @if (Vm.IsSignedIn)
             {
-                <p class="w-hint">현재 공용 로그인: <strong>@Vm.CurrentUserLabel</strong></p>
-                <p class="w-hint">기존 관리자 비밀번호를 한 번 입력하면 이 계정이 감사장 관리자로 추가됩니다.</p>
+                <p class="w-hint">@Text["admin.shared.current"]: <strong>@Vm.CurrentUserLabel</strong></p>
+                <p class="w-hint">@Text["admin.link.account"]</p>
             }
             else
             {
-                <p class="w-hint">CodeMaru/Dreamine 계정으로 먼저 로그인하면, 기존 비밀번호 확인 후 이 감사장을 계정에 연결할 수 있습니다.</p>
-                <a class="w-btn" href="@LoginUrl">공용 로그인</a>
+                <p class="w-hint">@Text["admin.login.first"]</p>
+                <a class="w-btn" href="@LoginUrl">@Text["common.login"]</a>
             }
-            <input class="w-input" type="password" placeholder="비밀번호" @bind="Vm.LoginPassword" />
-            <button class="w-btn w-btn--primary" @onclick="OnLogin">로그인</button>
+            <input class="w-input" type="password" placeholder="@Text["field.password"]" @bind="Vm.LoginPassword" />
+            <button class="w-btn w-btn--primary" @onclick="OnLogin">@Text["login"]</button>
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
-                <p class="w-status">@Vm.StatusMessage</p>
+                <p class="w-status">@DisplayStatusMessage</p>
             }
         </div>
     }
@@ -46,18 +55,18 @@
         <div class="w-admin-shell @(_previewCollapsed ? "is-preview-collapsed" : "")">
             @if (_navOpen)
             {
-                <button class="w-admin-nav__backdrop" @onclick="() => _navOpen = false" aria-label="메뉴 닫기"></button>
+                <button class="w-admin-nav__backdrop" @onclick="() => _navOpen = false" aria-label="@Text["admin.close.menu"]"></button>
             }
             <aside class="w-admin-nav @(_navOpen ? "is-open" : "")">
                 <div class="w-admin-nav__head">
                     <div class="w-admin-nav__brand">
                         <span class="w-admin-nav__brand-icon">⚙</span>
                         <div>
-                            <strong>관리</strong>
+                            <strong>@Text["admin.manage"]</strong>
                             <small>@Slug</small>
                         </div>
                     </div>
-                    <button class="w-admin-nav__close" @onclick="() => _navOpen = false" aria-label="메뉴 닫기">✕</button>
+                    <button class="w-admin-nav__close" @onclick="() => _navOpen = false" aria-label="@Text["admin.close.menu"]">✕</button>
                 </div>
 
                 <nav class="w-admin-nav__list">
@@ -73,30 +82,30 @@
 
                 <div class="w-admin-nav__foot">
                     <button class="w-btn w-btn--primary w-btn--block" @onclick="OnSaveConfig">
-                        설정 저장
+                        @Text["admin.save"]
                     </button>
                     <button class="w-btn w-btn--block" @onclick="OnShareThankYou">
-                        공유하기
+                        @Text["admin.share"]
                     </button>
                     @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
                     {
-                        <p class="w-status">@Vm.StatusMessage</p>
+                        <p class="w-status">@DisplayStatusMessage</p>
                     }
-                    <a class="w-admin-nav__link" href="@PreviewUrl" target="_blank">감사장 열기</a>
+                    <a class="w-admin-nav__link" href="@PreviewUrl" target="_blank">@Text["admin.open.thankyou"]</a>
                 </div>
             </aside>
 
             <main class="w-admin-content">
                 <div class="w-admin-content__topbar">
-                    <button class="w-admin-nav__toggle" @onclick="() => _navOpen = !_navOpen" aria-label="메뉴 열기">☰</button>
+                    <button class="w-admin-nav__toggle" @onclick="() => _navOpen = !_navOpen" aria-label="@Text["admin.open.menu"]">☰</button>
                     <h2 class="w-admin-content__title">
                         <span class="w-admin-title__icon">@((MarkupString)CurrentNavItem.Icon)</span>
                         <span class="w-admin-title__text">@CurrentNavItem.Label</span>
                     </h2>
-                    <button class="w-admin-preview__toggle" @onclick="OnPreviewToggle" aria-label="미리보기 열기"
-                            title="미리보기 열기">
+                    <button class="w-admin-preview__toggle" @onclick="OnPreviewToggle" aria-label="@Text["admin.open.preview"]"
+                            title="@Text["admin.open.preview"]">
                         <span class="w-admin-preview__toggle-icon">📱</span>
-                        <span class="w-admin-preview__toggle-text">@(_previewCollapsed ? "미리보기 펼치기" : "미리보기")</span>
+                        <span class="w-admin-preview__toggle-text">@(_previewCollapsed ? Text["admin.expand.preview"] : Text["admin.preview"])</span>
                     </button>
                 </div>
 
@@ -104,69 +113,109 @@
                     @if (_selected == "basic")
                     {
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">기본 정보</h3>
-                            <label class="w-label">상단 타이틀 문구</label>
+                            <h3 class="w-admin__section-h">@Text["admin.basic.hero"]</h3>
+                            <label class="w-label">@Text["admin.basic.title"]</label>
                             <input class="w-input" @bind="Vm.Config!.HeroTitle" placeholder="Thank You" />
 
-                            <label class="w-label">커플 이름</label>
+                            <label class="w-label">@Text["field.couple"]</label>
                             <input class="w-input" @bind="Vm.Config!.CoupleName" />
 
                             <div class="w-coord-row">
                                 <div>
-                                    <label class="w-label">결혼 날짜</label>
+                                    <label class="w-label">@Text["field.date"]</label>
                                     <input class="w-input" type="date" @bind="Vm.Config.WeddingDate" />
                                 </div>
                                 <div>
-                                    <label class="w-label">결혼 시간</label>
-                                    <input class="w-input" @bind="Vm.Config.WeddingTime" placeholder="예: PM 12:00" />
+                                    <label class="w-label">@Text["admin.basic.time"]</label>
+                                    <input class="w-input" @bind="Vm.Config.WeddingTime" placeholder="@Text["admin.basic.time.placeholder"]" />
                                 </div>
                             </div>
 
-                            <label class="w-label">스토리 (한국어)</label>
+                            <label class="w-label">@Text["admin.basic.venue"]</label>
+                            <input class="w-input" @bind="Vm.Config.VenueName" />
+
+                            <label class="w-label">@Text["admin.basic.address"]</label>
+                            <input class="w-input" @bind="Vm.Config.VenueAddress" />
+
+                            <label class="w-label">@Text["admin.basic.story.ko"]</label>
                             <textarea class="w-input w-textarea" rows="5" @bind="Vm.Config.Story"></textarea>
 
-                            <label class="w-label">스토리 (기타 언어)</label>
+                            <label class="w-label">@Text["admin.basic.story.other"]</label>
                             <textarea class="w-input w-textarea" rows="5" @bind="Vm.Config.Story2"></textarea>
 
-                            <label class="w-label">감사 메시지</label>
+                            <label class="w-label">@Text["admin.notice"]</label>
+                            <p class="w-hint">@Text["admin.notice.desc"]</p>
+                            <p class="w-hint">@Text["admin.notice.ai"]</p>
+                            <div class="w-note-examples" aria-label="@Text["admin.notice.examples"]">
+                                <button class="w-btn w-btn--sm" type="button" @onclick='() => ApplyCeremonyNoteExample("warm")'>@Text["admin.notice.warm"]</button>
+                                <button class="w-btn w-btn--sm" type="button" @onclick='() => ApplyCeremonyNoteExample("formal")'>@Text["admin.notice.formal"]</button>
+                                <button class="w-btn w-btn--sm" type="button" @onclick='() => ApplyCeremonyNoteExample("simple")'>@Text["admin.notice.simple"]</button>
+                                <button class="w-btn w-btn--sm" type="button" @onclick='() => ApplyCeremonyNoteExample("ai")'>@Text["admin.notice.ai.example"]</button>
+                            </div>
                             <div class="w-note-toolbar">
                                 <button class="@(Vm.Config.CeremonyNoteFormat == "Markdown" ? "active" : "")"
-                                        @onclick='() => Vm.Config.CeremonyNoteFormat = "Markdown"'>Markdown</button>
+                                        @onclick='() => Vm.Config.CeremonyNoteFormat = "Markdown"'>@Text["admin.notice.markdown"]</button>
                                 <button class="@(Vm.Config.CeremonyNoteFormat == "Html" ? "active" : "")"
                                         @onclick='() => Vm.Config.CeremonyNoteFormat = "Html"'>HTML</button>
                             </div>
-                            <textarea class="w-input w-textarea w-textarea--code" rows="8" @bind="Vm.Config.CeremonyNote"
-                                      placeholder="## 감사 인사&#10;&#10;소중한 자리에 함께해 주셔서 진심으로 감사드립니다."></textarea>
+                            <div class="w-note-editor-grid">
+                                <div class="w-note-editor">
+                                    @if (Vm.Config.CeremonyNoteFormat == "Markdown")
+                                    {
+                                        <textarea class="w-input w-textarea w-textarea--code w-textarea--notice" rows="12"
+                                                  @bind="Vm.Config.CeremonyNote" @bind:event="oninput"
+                                                  placeholder="@Text["admin.notice.markdown.placeholder"]"></textarea>
+                                        <p class="w-hint">@Text["admin.notice.markdown.hint"]</p>
+                                    }
+                                    else
+                                    {
+                                        <textarea class="w-input w-textarea w-textarea--code w-textarea--notice" rows="12"
+                                                  @bind="Vm.Config.CeremonyNote" @bind:event="oninput"
+                                                  placeholder="@Text["admin.notice.html.placeholder"]"></textarea>
+                                        <p class="w-hint">@Text["admin.notice.html.hint"]</p>
+                                    }
+                                </div>
+                                <div class="w-note-preview">
+                                    <div class="w-note-preview__head">@Text["admin.notice.html.preview"]</div>
+                                    <div class="w-note-preview__body">
+                                        @if (string.IsNullOrWhiteSpace(Vm.Config.CeremonyNote))
+                                        {
+                                            <p class="w-note-preview__empty">@Text["admin.notice.preview.empty"]</p>
+                                        }
+                                        else
+                                        {
+                                            @((MarkupString)CeremonyNotePreviewHtml)
+                                        }
+                                    </div>
+                                </div>
+                            </div>
                         </section>
                     }
                     else if (_selected == "design")
                     {
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">감사장 레이아웃</h3>
-                            <p class="w-hint">감사장이 하객에게 어떻게 보이는지 결정하는 구조입니다.</p>
-                            <div class="w-style-picker">
-                                @foreach (var descriptor in WeddingLayoutCatalog.Options)
-                                {
-                                    var canUse = CanUseLayout(descriptor);
-                                    var canSelect = canUse && descriptor.IsImplemented;
-                                    <label class="w-style-card @(CurrentLayoutMode == descriptor.Mode ? "active" : "") @(!canSelect ? "is-locked" : "")">
-                                        <input type="radio" name="w-layout" value="@descriptor.Key" checked="@(CurrentLayoutMode == descriptor.Mode)"
-                                               disabled="@(!canSelect)"
-                                               @onchange="() => SelectLayout(descriptor.Mode)" />
-                                        <div class="w-style-card__preview w-style-card__preview--@descriptor.Key"></div>
-                                        <div class="w-style-card__meta">
-                                            <strong>@descriptor.Label @if (!descriptor.IsImplemented) { <span class="w-layout-lock">준비 중</span> } else if (!canUse) { <span class="w-layout-lock">잠금</span> }</strong>
-                                            <small>@descriptor.Description</small>
-                                            @if (!descriptor.IsImplemented)
-                                            {
-                                                <small class="w-layout-lock-hint">권한 부여는 가능하지만 아직 화면 렌더러가 준비되지 않았습니다.</small>
-                                            }
-                                            else if (!canUse)
-                                            {
-                                                <small class="w-layout-lock-hint">프리미엄 플랜 또는 개별 잠금 해제 후 사용할 수 있습니다.</small>
-                                            }
+                            <h3 class="w-admin__section-h">@Text["admin.design.layout"]</h3>
+                            <p class="w-hint">@Text["admin.design.layout.hint"]</p>
+                            @{ var selectedLayout = SelectedLayoutOption; var matchingLayouts = FilteredLayoutOptions.ToArray(); }
+                            <div class="w-layout-picker">
+                                <div class="w-layout-combobox">
+                                    <button type="button" class="w-layout-combobox__trigger" aria-haspopup="listbox" aria-expanded="@_layoutPickerOpen" @onclick="() => _layoutPickerOpen = !_layoutPickerOpen"><span class="w-layout-combobox__value"><small>@Text["admin.design.select"]</small><strong>@(selectedLayout is null ? Text["admin.design.none"] : LocalizedLayoutLabel(selectedLayout))</strong></span><span class="w-layout-combobox__chevron">@(_layoutPickerOpen ? "▴" : "▾")</span></button>
+                                    @if (_layoutPickerOpen)
+                                    {
+                                        <div class="w-layout-combobox__popover"><label class="w-layout-combobox__search-label">@Text["admin.design.search"]</label><input class="w-input w-layout-combobox__search" type="search" placeholder="@Text["admin.design.search.placeholder"]" @bind="_layoutSearch" @bind:event="oninput" />
+                                            <div class="w-layout-options" role="listbox">
+                                                @foreach (var descriptor in matchingLayouts)
+                                                {
+                                                    var canUse = CanUseLayout(descriptor); var canApply = canUse && descriptor.IsImplemented; var applied = CurrentLayoutMode == descriptor.Mode; var selected = selectedLayout?.Mode == descriptor.Mode;
+                                                    <button type="button" class="w-layout-option @(selected ? "is-selected" : "") @(!canApply ? "is-locked" : "")" disabled="@(!canApply)" @onclick="() => ChooseLayout(descriptor)"><span class="w-style-card__preview w-style-card__preview--@descriptor.Key"></span><span class="w-layout-option__meta"><strong>@LocalizedLayoutLabel(descriptor)</strong><small>@LocalizedLayoutDescription(descriptor)</small></span><span class="w-layout-option__badges">@if (applied) { <span class="w-layout-badge w-layout-badge--active">@Text["admin.design.applied"]</span> }<span class="w-layout-badge">@(descriptor.Tier == WeddingLayoutTier.Free ? "Free" : "Premium")</span></span></button>
+                                                }
+                                            </div>
                                         </div>
-                                    </label>
+                                    }
+                                </div>
+                                @if (selectedLayout is not null)
+                                {
+                                    <article class="w-layout-detail"><div class="w-layout-detail__visual w-style-card__preview w-style-card__preview--@selectedLayout.Key"></div><div class="w-layout-detail__content"><div class="w-layout-detail__badges"><span class="w-layout-badge">@(selectedLayout.Tier == WeddingLayoutTier.Free ? "Free" : "Premium")</span>@if (CurrentLayoutMode == selectedLayout.Mode) { <span class="w-layout-badge w-layout-badge--active">@Text["admin.design.current"]</span> }</div><h4>@LocalizedLayoutLabel(selectedLayout)</h4><p>@LocalizedLayoutDescription(selectedLayout)</p><dl class="w-layout-detail__facts"><div><dt>@Text["admin.design.screen.mode"]</dt><dd>@(selectedLayout.UsesBottomNavigation ? Text["admin.design.bottom.nav"] : Text["admin.design.vertical.scroll"])</dd></div><div><dt>@Text["admin.design.supported.sections"]</dt><dd>@selectedLayout.SupportedSections.Count</dd></div></dl><div class="w-layout-detail__actions"><button type="button" class="w-btn w-btn--primary" disabled="@(CurrentLayoutMode == selectedLayout.Mode)" @onclick="ApplySelectedLayout">@Text["admin.layout.apply"]</button></div></div></article>
                                 }
                             </div>
                         </section>
@@ -174,26 +223,33 @@
                         <section class="w-admin__section">
                             <div class="w-admin-section-title-row">
                                 <div>
-                                    <h3 class="w-admin__section-h">모바일 섹션 순서</h3>
-                                    <p class="w-hint">감사장 모바일 화면과 탭 메뉴가 이 순서를 따릅니다.</p>
+                                    <h3 class="w-admin__section-h">@Text["admin.design.sections"]</h3>
+                                    <p class="w-hint">@Text["admin.design.sections.hint"]</p>
                                 </div>
-                                <button type="button" class="w-btn w-btn--sm" @onclick="ResetSectionOrder">추천 순서</button>
+                                <button type="button" class="w-btn w-btn--sm" @onclick="ResetSectionOrder">@Text["admin.design.recommended"]</button>
                             </div>
                             <div class="w-section-order-list">
                                 @foreach (var section in OrderedDesignSections)
                                 {
-                                    <div class="w-section-order-item @(section == "hero" ? "is-fixed" : "")">
+                                    var isSectionVisible = IsSectionVisible(section);
+                                    <div class="w-section-order-item @(section == "hero" ? "is-fixed" : "") @(!isSectionVisible ? "is-hidden" : "")">
                                         <span class="w-section-order-item__icon">@WeddingSectionOrderCatalog.GetIcon(section)</span>
-                                        <span class="w-section-order-item__label">@WeddingSectionOrderCatalog.GetLabel(section)</span>
+                                        <span class="w-section-order-item__label">@LocalizedSectionLabel(section)</span>
                                         <div class="w-section-order-item__actions">
                                             @if (section == "hero")
                                             {
-                                                <span class="w-hint">고정</span>
+                                                <span class="w-hint">@Text["admin.design.fixed"]</span>
                                             }
                                             else
                                             {
-                                                <button type="button" class="w-btn w-btn--sm" @onclick="() => MoveSection(section, -1)">위</button>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick="() => MoveSection(section, 1)">아래</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick="() => MoveSection(section, -1)">@Text["admin.design.up"]</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick="() => MoveSection(section, 1)">@Text["admin.design.down"]</button>
+                                                <button type="button"
+                                                        class="w-btn w-btn--sm @(isSectionVisible ? "" : "w-btn--muted")"
+                                                        title="@(isSectionVisible ? Text["admin.design.section.hide.title"] : Text["admin.design.section.show.title"])"
+                                                        @onclick="() => ToggleSectionVisibility(section)">
+                                                    @(isSectionVisible ? Text["admin.design.hide"] : Text["admin.design.show"])
+                                                </button>
                                             }
                                         </div>
                                     </div>
@@ -202,7 +258,7 @@
                         </section>
 
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">🎨 테마 색상</h3>
+                            <h3 class="w-admin__section-h">🎨 @Text["admin.design.colors"]</h3>
                             <div class="w-theme-picker">
                                 @foreach (var t in ThankYouDesignCatalog.Themes)
                                 {
@@ -214,70 +270,248 @@
                                             @onclick="() => SelectTheme(t.Key)">
                                         <span class="w-theme-swatch"></span>
                                         <span>
-                                            @t.DisplayName
+                                            @LocalizedThemeLabel(t.Key)
                                             @if (!t.IsImplemented)
                                             {
-                                                <small class="w-layout-lock">준비 중</small>
+                                                <small class="w-layout-lock">@Text["admin.design.preparing"]</small>
                                             }
                                             else if (!canUse)
                                             {
-                                                <small class="w-layout-lock">잠금</small>
+                                                <small class="w-layout-lock">@Text["admin.design.locked"]</small>
                                             }
                                         </span>
                                     </button>
                                 }
                             </div>
+
+                            <div class="w-custom-theme @(Vm.Config!.ThemeName == WeddingThemeCatalog.CustomThemeKey ? "is-active" : "")">
+                                <div class="w-custom-theme__head">
+                                    <div>
+                                        <strong>@Text["admin.design.custom.theme"]</strong>
+                                        <p class="w-hint">@Text["admin.design.custom.theme.hint"]</p>
+                                    </div>
+                                    <span class="w-layout-badge">Premium</span>
+                                </div>
+
+                                @if (Vm.Config.HasPremiumPlan)
+                                {
+                                    var customPalette = CurrentCustomPalette;
+
+                                    <label class="w-label">@Text["admin.design.theme.name"]</label>
+                                    <input class="w-input"
+                                           maxlength="40"
+                                           @bind="Vm.Config.CustomTheme.Name" />
+
+                                    <div class="w-custom-theme__generator">
+                                        <div class="w-custom-theme__generator-copy">
+                                            <strong>@Text["admin.design.auto.palette"]</strong>
+                                            <p class="w-hint">@Text["admin.design.auto.palette.hint"]</p>
+                                        </div>
+                                        <label class="w-custom-theme__base">
+                                            <span>@Text["admin.design.primary.color"]</span>
+                                            <input type="color"
+                                                   value="@customPalette.BaseColor"
+                                                   @oninput="OnThemeBaseColorChanged" />
+                                            <code>@customPalette.BaseColor</code>
+                                        </label>
+                                        <button type="button"
+                                                class="w-btn w-btn--sm"
+                                                @onclick="ApplyAutomaticThemePalette">
+                                            @Text["admin.design.palette.rebuild"]
+                                        </button>
+                                    </div>
+
+                                    <div class="w-custom-theme__palette"
+                                         aria-label="@Text["admin.design.palette.aria"]">
+                                        <span style="--w-custom-swatch:@customPalette.Primary" title="@Text["admin.design.color.primary"]"></span>
+                                        <span style="--w-custom-swatch:@customPalette.Accent" title="@Text["admin.design.color.accent"]"></span>
+                                        <span style="--w-custom-swatch:@customPalette.Background" title="@Text["admin.design.color.background"]"></span>
+                                        <span style="--w-custom-swatch:@customPalette.PanelBackground" title="@Text["admin.design.color.surface"]"></span>
+                                        <span style="--w-custom-swatch:@customPalette.Text" title="@Text["admin.design.color.text"]"></span>
+                                        <span style="--w-custom-swatch:@customPalette.MutedText" title="@Text["admin.design.color.muted"]"></span>
+                                    </div>
+
+                                    <div class="w-custom-theme__contrast" aria-live="polite">
+                                        <span class="@(TextContrastRatio >= 4.5 ? "is-good" : "is-warning")">
+                                            @Text["admin.design.contrast.text"] @TextContrastRatio.ToString("0.0"):1
+                                        </span>
+                                        <span class="@(MutedContrastRatio >= 4.5 ? "is-good" : "is-warning")">
+                                            @Text["admin.design.contrast.muted"] @MutedContrastRatio.ToString("0.0"):1
+                                        </span>
+                                        <span class="@(ButtonContrastRatio >= 4.5 ? "is-good" : "is-warning")">
+                                            @Text["admin.design.contrast.button"] @ButtonContrastRatio.ToString("0.0"):1
+                                        </span>
+                                    </div>
+
+                                    <details class="w-custom-theme__details">
+                                        <summary>@Text["admin.design.colors.advanced"]</summary>
+                                        <p class="w-hint">@Text["admin.design.colors.advanced.hint"]</p>
+                                        <div class="w-custom-theme__colors">
+                                            <label>
+                                                <span>@Text["admin.design.color.primary"]</span>
+                                                <input type="color" value="@customPalette.Primary"
+                                                       @oninput='e => UpdateCustomThemeColor("primary", e.Value?.ToString())' />
+                                                <code>@customPalette.Primary</code>
+                                            </label>
+                                            <label>
+                                                <span>@Text["admin.design.color.accent"]</span>
+                                                <input type="color" value="@customPalette.Accent"
+                                                       @oninput='e => UpdateCustomThemeColor("accent", e.Value?.ToString())' />
+                                                <code>@customPalette.Accent</code>
+                                            </label>
+                                            <label>
+                                                <span>@Text["admin.design.color.accent.text"]</span>
+                                                <input type="color" value="@customPalette.Dark"
+                                                       @oninput='e => UpdateCustomThemeColor("dark", e.Value?.ToString())' />
+                                                <code>@customPalette.Dark</code>
+                                            </label>
+                                            <label>
+                                                <span>@Text["admin.design.color.text"]</span>
+                                                <input type="color" value="@customPalette.Text"
+                                                       @oninput='e => UpdateCustomThemeColor("text", e.Value?.ToString())' />
+                                                <code>@customPalette.Text</code>
+                                            </label>
+                                            <label>
+                                                <span>@Text["admin.design.color.muted"]</span>
+                                                <input type="color" value="@customPalette.MutedText"
+                                                       @oninput='e => UpdateCustomThemeColor("muted", e.Value?.ToString())' />
+                                                <code>@customPalette.MutedText</code>
+                                            </label>
+                                            <label>
+                                                <span>@Text["admin.design.color.background"]</span>
+                                                <input type="color" value="@customPalette.Background"
+                                                       @oninput='e => UpdateCustomThemeColor("background", e.Value?.ToString())' />
+                                                <code>@customPalette.Background</code>
+                                            </label>
+                                            <label>
+                                                <span>@Text["admin.design.color.surface"]</span>
+                                                <input type="color" value="@customPalette.PanelBackground"
+                                                       @oninput='e => UpdateCustomThemeColor("panel", e.Value?.ToString())' />
+                                                <code>@customPalette.PanelBackground</code>
+                                            </label>
+                                            <label>
+                                                <span>@Text["admin.design.color.button"]</span>
+                                                <input type="color" value="@customPalette.ButtonBackground"
+                                                       @oninput='e => UpdateCustomThemeColor("button", e.Value?.ToString())' />
+                                                <code>@customPalette.ButtonBackground</code>
+                                            </label>
+                                            <label>
+                                                <span>@Text["admin.design.color.button.text"]</span>
+                                                <input type="color" value="@customPalette.ButtonText"
+                                                       @oninput='e => UpdateCustomThemeColor("button-text", e.Value?.ToString())' />
+                                                <code>@customPalette.ButtonText</code>
+                                            </label>
+                                            <label>
+                                                <span>@Text["admin.design.color.border"]</span>
+                                                <input type="color" value="@customPalette.Border"
+                                                       @oninput='e => UpdateCustomThemeColor("border", e.Value?.ToString())' />
+                                                <code>@customPalette.Border</code>
+                                            </label>
+                                        </div>
+                                    </details>
+
+                                    <button type="button"
+                                            class="w-btn w-btn--primary"
+                                            @onclick="SelectCustomTheme">
+                                        @(Vm.Config.ThemeName == WeddingThemeCatalog.CustomThemeKey
+                                            ? Text["admin.design.custom.selected"]
+                                            : Text["admin.design.custom.use"])
+                                    </button>
+                                }
+                                else if (Vm.Config.ThemeName == WeddingThemeCatalog.CustomThemeKey)
+                                {
+                                    <p class="w-layout-detail__notice">@Text["admin.design.custom.preserved"]</p>
+                                }
+                                else
+                                {
+                                    <p class="w-layout-detail__notice">@Text["admin.design.custom.premium.hint"]</p>
+                                }
+                            </div>
                         </section>
 
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">히어로 이미지</h3>
+                            <h3 class="w-admin__section-h">🖼 @Text["admin.hero.image"]</h3>
                             @if (!string.IsNullOrWhiteSpace(Vm.Config!.HeroImageFileName))
                             {
-                                <div class="w-admin__hero-preview">
-                                    <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="히어로" />
-                                    <span>@Vm.Config.HeroImageFileName</span>
-                                </div>
+                                <button type="button" class="w-admin__hero-preview w-admin__hero-preview--button" title="@Text["admin.hero.image.edit"]" @onclick="OpenHeroCropEditor"><img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="@Text["admin.hero.image"]" /><span><b>@Vm.Config.HeroImageFileName</b><small>@Text["admin.hero.image.tap"]</small></span></button>
                             }
-                            <InputFile class="w-file-input" OnChange="OnHeroUpload" accept="image/*" />
-                            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
+                            <LocalizedInputFile Class="w-file-input" OnChange="OnHeroUpload" Accept="image/*" />
+                            @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
+                            <p class="w-hint">@Text["admin.hero.image.recommend"]</p>
+                            @if (!string.IsNullOrWhiteSpace(Vm.Config.HeroImageFileName)) { <button type="button" class="w-btn w-btn--primary" @onclick="OpenHeroCropEditor">@Text["admin.hero.image.edit.area"]</button> }
                         </section>
+
+                        @if (_heroCropEditorOpen && !string.IsNullOrWhiteSpace(Vm.Config!.HeroImageFileName))
+                        {
+                            <div class="w-hero-crop-modal__backdrop" @onclick="CloseHeroCropEditor">
+                                <section class="w-hero-crop-modal" role="dialog" aria-modal="true" aria-labelledby="hero-crop-title" @onclick:stopPropagation>
+                                    <header class="w-hero-crop-modal__head"><div><h3 id="hero-crop-title">@Text["admin.hero.crop.title"]</h3><p>@Text["admin.hero.crop.desc"]</p></div><button type="button" class="w-admin-preview__close" @onclick="CloseHeroCropEditor" aria-label="@Text["common.cancel"]">✕</button></header>
+                                    <div class="w-hero-crop-guide"><strong>@Text["admin.hero.crop.source"]</strong><span>@Text["admin.hero.crop.source.hint"]</span><small>@Text["admin.hero.crop.target.hint"]</small></div>
+                                    <div class="w-hero-crop-modal__tabs"><button type="button" class="@(_heroCropViewport == "desktop" ? "active" : "")" @onclick='() => SetHeroCropViewport("desktop")'>PC · 16:9</button><button type="button" class="@(_heroCropViewport == "mobile" ? "active" : "")" @onclick='() => SetHeroCropViewport("mobile")'>@Text["admin.hero.crop.phone"] · @CurrentPreviewDevice.Width×@CurrentPreviewDevice.Height</button></div>
+                                    <div class="w-hero-crop-modal__modes"><button type="button" class="@(CurrentHeroCropUsesFullImage ? "active" : "")" @onclick="() => SetHeroCropMode(true)">@Text["admin.hero.crop.full"]<small>@Text["admin.hero.crop.fit"]</small></button><button type="button" class="@(!CurrentHeroCropUsesFullImage ? "active" : "")" @onclick="() => SetHeroCropMode(false)">@Text["admin.hero.crop.area"]<small>@Text["admin.hero.crop.fill"]</small></button></div>
+                                    @if (CurrentHeroCropUsesFullImage)
+                                    {
+                                        <div class="w-hero-crop-editor w-hero-crop-editor--full"><img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="@Text["admin.hero.image"]" /><span>@Text["admin.hero.crop.full.hint"]</span></div>
+                                    }
+                                    else
+                                    {
+                                        <div @key="HeroCropEditorKey" class="w-hero-crop-editor" data-hero-crop-editor-stage data-viewport="@_heroCropViewport" data-aspect="@CurrentHeroCropAspect.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-crop-x="@CurrentHeroCropDraft.X.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-crop-y="@CurrentHeroCropDraft.Y.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-crop-width="@CurrentHeroCropDraft.Width.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-crop-height="@CurrentHeroCropDraft.Height.ToString(System.Globalization.CultureInfo.InvariantCulture)">
+                                            <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="@Text["admin.hero.crop.title"]" />
+                                            <div class="w-hero-crop-editor__selection" data-crop-selection><span class="w-hero-crop-editor__label">@(_heroCropViewport == "desktop" ? "PC 16:9" : $"{Text["admin.preview.phone"]} {CurrentPreviewDevice.Width}:{CurrentPreviewDevice.Height}")</span><i data-crop-handle="nw"></i><i data-crop-handle="ne"></i><i data-crop-handle="sw"></i><i data-crop-handle="se"></i></div>
+                                        </div>
+                                        <p class="w-hint">@Text["admin.hero.crop.drag.hint"]</p>
+                                    }
+                                    <footer class="w-hero-crop-modal__actions"><button type="button" class="w-btn" @onclick="CloseHeroCropEditor">@Text["common.cancel"]</button><button type="button" class="w-btn w-btn--primary" @onclick="ApplyHeroCropEditor">@Text["admin.hero.crop.apply"]</button></footer>
+                                </section>
+                            </div>
+                        }
 
                         @if (UsesThankYouHeroPlacement)
                         {
                             <section class="w-admin__section">
-                                <h3 class="w-admin__section-h">히어로 문구 위치</h3>
-                                <p class="w-hint">오른쪽 미리보기에서 감사장 문구 박스를 끌어 위치를 정합니다. 드래그를 놓으면 자동 저장됩니다.</p>
-                                <div class="w-drag-control-card">
-                                    <strong>감사장 문구 박스</strong>
-                                    <span>@FormatFloatingPosition(Vm.Config!.HeroPanelPlacement)</span>
-                                    <button type="button" class="w-btn w-btn--sm" @onclick="AlignHeroPanel">가까운 정렬</button>
-                                    <button type="button" class="w-btn w-btn--sm" @onclick="ResetHeroPanel">기본 위치</button>
-                                </div>
+                                <h3 class="w-admin__section-h">@Text["admin.hero.position"]</h3>
+                                <p class="w-hint">@Text["admin.hero.position.hint"]</p>
+                                @if (UsesSplitHeroPlacement)
+                                {
+                                    <div class="w-drag-control-grid">
+                                        @HeroPositionControl("heroTop", Text["admin.hero.position.top"], Vm.Config!.HeroTopPanelPlacement)
+                                        @HeroPositionControl("heroBottom", Text["admin.hero.position.bottom"], Vm.Config.HeroBottomPanelPlacement)
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="w-drag-control-card">
+                                        <strong>@Text["admin.hero.position"]</strong>
+                                        <span>@FormatFloatingPosition(Vm.Config!.HeroPanelPlacement)</span>
+                                        <button type="button" class="w-btn w-btn--sm" @onclick="AlignHeroPanel">@Text["common.align"]</button>
+                                        <button type="button" class="w-btn w-btn--sm" @onclick="ResetHeroPanel">@Text["common.reset"]</button>
+                                    </div>
+                                }
                             </section>
                         }
 
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">🎵 배경 음악</h3>
+                            <h3 class="w-admin__section-h">🎵 @Text["admin.media.music"]</h3>
                             @if (!string.IsNullOrWhiteSpace(Vm.Config!.MusicFileName))
                             {
                                 <div class="w-admin__music-preview">
                                     <audio controls src="@Vm.GetMusicUrl(Slug, Vm.Config.MusicFileName)" style="width:100%"></audio>
-                                    <span class="w-hint">현재: @Vm.Config.MusicFileName</span>
-                                    <button class="w-btn w-btn--danger w-btn--sm" @onclick="OnRemoveMusic">🗑 음악 제거</button>
+                                    <span class="w-hint">@Text["common.current"]: @Vm.Config.MusicFileName</span>
+                                    <button class="w-btn w-btn--danger w-btn--sm" @onclick="OnRemoveMusic">🗑 @Text["common.remove"]</button>
                                 </div>
                             }
                             else
                             {
-                                <p class="w-hint">배경 음악이 없습니다. mp3·ogg·m4a 파일을 업로드하세요.</p>
+                                <p class="w-hint">@Text["admin.media.music.empty"]</p>
                             }
-                            <InputFile class="w-file-input" OnChange="OnMusicUpload" accept="audio/*" />
-                            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
+                            <LocalizedInputFile OnChange="OnMusicUpload" Accept="audio/*" />
+                            @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
 
-                            <label class="w-label" style="margin-top:.75rem">음악 버튼 위치</label>
+                            <label class="w-label" style="margin-top:.75rem">@Text["admin.media.position"]</label>
                             <div class="w-drag-control-card">
-                                <span>오른쪽 미리보기의 음악 버튼을 원하는 위치로 끌어 놓으면 자동 저장됩니다.</span>
+                                <span>@Text["admin.media.position.hint"]</span>
                                 <span>@FormatFloatingPosition(Vm.Config!.MusicButtonPlacement)</span>
-                                <button type="button" class="w-btn w-btn--sm" @onclick="ResetMusicButtonPosition">기본 위치</button>
+                                <button type="button" class="w-btn w-btn--sm" @onclick="ResetMusicButtonPosition">@Text["admin.media.default.position"]</button>
                             </div>
                         </section>
                     }
@@ -286,8 +520,8 @@
                         @if (!IsStoryLayout)
                         {
                             <section class="w-admin__section">
-                                <h3 class="w-admin__section-h">스토리 챕터</h3>
-                                <p class="w-hint">Story 레이아웃을 선택하면 챕터 문구와 대표 사진을 관리할 수 있습니다.</p>
+                                <h3 class="w-admin__section-h">@Text["admin.story"]</h3>
+                                <p class="w-hint">@Text["admin.story.hint"]</p>
                             </section>
                         }
                         else
@@ -295,10 +529,10 @@
                             <section class="w-admin__section">
                                 <div class="w-admin-section-title-row">
                                     <div>
-                                        <h3 class="w-admin__section-h">스토리 챕터</h3>
-                                        <p class="w-hint">Story 레이아웃에서 사용할 챕터별 대표 사진과 문구입니다. 기본 4개 챕터는 유지되고, 필요한 챕터를 추가할 수 있습니다.</p>
+                                        <h3 class="w-admin__section-h">@Text["admin.story"]</h3>
+                                        <p class="w-hint">@Text["admin.story.detail.hint"]</p>
                                     </div>
-                                    <button type="button" class="w-btn w-btn--primary" @onclick="OnAddStoryChapter">챕터 추가</button>
+                                    <button type="button" class="w-btn w-btn--primary" @onclick="OnAddStoryChapter">@Text["admin.story.add"]</button>
                                 </div>
                                 <div class="w-story-admin-list">
                                     @foreach (var chapter in Vm.Config!.StoryChapters)
@@ -309,22 +543,22 @@
                                                 <div class="w-story-admin-card__actions">
                                                     @if (chapter.ChapterNumber <= 4)
                                                     {
-                                                        <span class="w-layout-lock">기본</span>
+                                                        <span class="w-layout-lock">@Text["common.default"]</span>
                                                     }
                                                     else
                                                     {
-                                                        <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeleteStoryChapter(chapter.ChapterNumber)">삭제</button>
+                                                        <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeleteStoryChapter(chapter.ChapterNumber)">@Text["common.delete"]</button>
                                                     }
-                                                    <button type="button" class="w-btn w-btn--small" @onclick="() => OnSaveStoryChapter(chapter)">챕터 저장</button>
+                                                    <button type="button" class="w-btn w-btn--small" @onclick="() => OnSaveStoryChapter(chapter)">@Text["admin.story.save"]</button>
                                                 </div>
                                             </div>
-                                            <label class="w-label">챕터 제목</label>
+                                            <label class="w-label">@Text["admin.story.title"]</label>
                                             <input class="w-input" @bind="chapter.Title" />
-                                            <label class="w-label">챕터 본문</label>
+                                            <label class="w-label">@Text["admin.story.body"]</label>
                                             <textarea class="w-input w-textarea" rows="4" @bind="chapter.Body"></textarea>
-                                            <label class="w-label">대표 사진</label>
+                                            <label class="w-label">@Text["admin.story.photo"]</label>
                                             <select class="w-input" @bind="chapter.PhotoPath">
-                                                <option value="">자동 선택</option>
+                                                <option value="">@Text["admin.story.photo.auto"]</option>
                                                 @foreach (var photo in Vm.Gallery)
                                                 {
                                                     <option value="@photo.FileName">@photo.FileName</option>
@@ -333,7 +567,7 @@
                                             @if (!string.IsNullOrWhiteSpace(chapter.PhotoPath))
                                             {
                                                 <div class="w-story-admin-photo">
-                                                    <img src="@Vm.GetThumbUrl(Slug, chapter.PhotoPath)" alt="선택된 대표 사진" />
+                                                    <img src="@Vm.GetThumbUrl(Slug, chapter.PhotoPath)" alt="@Text["admin.story.photo"]" />
                                                     <span>@chapter.PhotoPath</span>
                                                 </div>
                                             }
@@ -343,11 +577,58 @@
                             </section>
                         }
                     }
+                    else if (_selected == "photobook")
+                    {
+                        <section class="w-admin__section">
+                            <div class="w-admin-section-title-row">
+                                <div><h3 class="w-admin__section-h">@Text["admin.photobook"]</h3><p class="w-hint">@Text["admin.photobook.detail.hint"]</p></div>
+                                <button type="button" class="w-btn w-btn--primary" @onclick="OnAddPhotoBookPage">@Text["admin.photobook.add"]</button>
+                            </div>
+                            <div class="w-story-admin-list">
+                                @foreach (var bookPage in Vm.Config!.PhotoBookPages)
+                                {
+                                    <article class="w-story-admin-card">
+                                        <div class="w-story-admin-card__head"><strong>@bookPage.Caption</strong><div class="w-story-admin-card__actions">
+                                            @if (bookPage.PageNumber <= 4) { <span class="w-layout-lock">@Text["common.default"]</span> }
+                                            else { <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeletePhotoBookPage(bookPage.PageNumber)">@Text["common.delete"]</button> }
+                                            <button type="button" class="w-btn w-btn--small" @onclick="OnSaveConfig">@Text["admin.photobook.save"]</button>
+                                        </div></div>
+                                        <label class="w-label">@Text["admin.photobook.caption"]</label><input class="w-input" @bind="bookPage.Caption" placeholder="@Text["admin.photobook.caption.placeholder"]" />
+                                        <label class="w-label">@Text["admin.photobook.body"]</label><textarea class="w-input w-textarea" rows="3" @bind="bookPage.Body" placeholder="@Text["admin.photobook.body.placeholder"]"></textarea>
+                                        <label class="w-label">@Text["admin.photobook.photo"]</label><select class="w-input" @bind="bookPage.PhotoFileName"><option value="">@Text["admin.photobook.photo.auto"]</option>@foreach (var photo in Vm.Gallery) { <option value="@photo.FileName">@photo.FileName</option> }</select>
+                                        @if (!string.IsNullOrWhiteSpace(bookPage.PhotoFileName)) { <div class="w-story-admin-photo"><img src="@Vm.GetThumbUrl(Slug, bookPage.PhotoFileName)" alt="@Text["admin.photobook.photo"]" /><span>@bookPage.PhotoFileName</span></div> }
+                                    </article>
+                                }
+                            </div>
+                        </section>
+                    }
+                    else if (_selected == "cards")
+                    {
+                        <section class="w-admin__section">
+                            <div class="w-admin-section-title-row"><div><h3 class="w-admin__section-h">@Text["admin.cards"]</h3><p class="w-hint">@Text["admin.cards.detail.hint"]</p></div><button type="button" class="w-btn w-btn--primary" @onclick="OnAddCardHighlight">@Text["admin.cards.add"]</button></div>
+                            <div class="w-story-admin-list">
+                                @foreach (var highlight in Vm.Config!.CardHighlights)
+                                {
+                                    <article class="w-story-admin-card">
+                                        <div class="w-story-admin-card__head"><strong>@(string.IsNullOrWhiteSpace(highlight.Icon) ? "✨" : highlight.Icon) @(string.IsNullOrWhiteSpace(highlight.Title) ? LocalizedSectionLabel(highlight.SectionKey) : highlight.Title)</strong><div class="w-story-admin-card__actions">
+                                            @if (highlight.Order <= 3) { <span class="w-layout-lock">@Text["common.default"]</span> }
+                                            else { <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeleteCardHighlight(highlight.Order)">@Text["common.delete"]</button> }
+                                            <button type="button" class="w-btn w-btn--small" @onclick="OnSaveConfig">@Text["admin.cards.save"]</button>
+                                        </div></div>
+                                        <label class="w-label">@Text["admin.cards.target"]</label><select class="w-input" @bind="highlight.SectionKey"><option value="">@Text["admin.cards.target.none"]</option>@foreach (var sectionKey in OrderedDesignSections.Where(x => x != "hero")) { <option value="@sectionKey">@WeddingSectionOrderCatalog.GetIcon(sectionKey) @LocalizedSectionLabel(sectionKey)</option> }</select>
+                                        <label class="w-label">@Text["admin.cards.icon"] <span class="w-label__hint">@Text["admin.cards.icon.hint"]</span></label><input class="w-input" @bind="highlight.Icon" placeholder="@Text["admin.cards.icon.placeholder"]" />
+                                        <label class="w-label">@Text["admin.cards.title"] <span class="w-label__hint">@Text["admin.cards.title.hint"]</span></label><input class="w-input" @bind="highlight.Title" />
+                                        <label class="w-label">@Text["admin.cards.body"]</label><textarea class="w-input w-textarea" rows="2" @bind="highlight.Body"></textarea>
+                                    </article>
+                                }
+                            </div>
+                        </section>
+                    }
                     else if (_selected == "content")
                     {
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">🎬 우리의 영상</h3>
-                            <p class="w-hint">브라우저 재생 호환성은 mp4 / webm이 가장 좋습니다. mov / m4v는 기기나 코덱에 따라 재생되지 않을 수 있습니다. @Vm.MaxVideoSizeLabel, @(Vm.MaxVideoCount <= 0 ? "개수 무제한" : $"최대 {Vm.MaxVideoCount}개").</p>
+                            <h3 class="w-admin__section-h">🎬 @Text["admin.media.video"]</h3>
+                            <p class="w-hint">@Text["admin.media.video.hint"] @DisplayMaxVideoSize</p>
 
                             @if (Vm.Config!.VideoFileNames.Count > 0)
                             {
@@ -360,7 +641,7 @@
                                             <div class="w-admin__video-meta">
                                                 <span class="w-hint">@fn</span>
                                                 <button class="w-btn w-btn--danger w-btn--sm"
-                                                        @onclick="() => OnDeleteVideo(fn)">삭제</button>
+                                                        @onclick="() => OnDeleteVideo(fn)">@Text["common.delete"]</button>
                                             </div>
                                         </div>
                                     }
@@ -369,22 +650,22 @@
 
                             @if (Vm.MaxVideoCount <= 0 || Vm.Config.VideoFileNames.Count < Vm.MaxVideoCount)
                             {
-                                <InputFile class="w-file-input" OnChange="OnVideoUpload" accept="video/*" />
-                                @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초 경과, 용량에 따라 시간이 걸릴 수 있습니다)</span> }
+                                <LocalizedInputFile OnChange="OnVideoUpload" Accept="video/*" />
+                                @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
                             }
                             else
                             {
-                                <p class="w-hint" style="color:var(--w-primary)">최대 @(Vm.MaxVideoCount)개 업로드 완료. 삭제 후 추가 가능합니다.</p>
+                                <p class="w-hint" style="color:var(--w-primary)">@Text["admin.media.video.limit"]</p>
                             }
                         </section>
 
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">🖼 갤러리 사진 (@Vm.Gallery.Count 장)</h3>
-                            <label class="w-label">자동재생 간격 — <strong>@Vm.Config!.GalleryAutoPlaySeconds 초</strong></label>
+                            <h3 class="w-admin__section-h">🖼 @Text["admin.media.gallery"] (@Vm.Gallery.Count)</h3>
+                            <label class="w-label">@Text["admin.media.interval"] — <strong>@Vm.Config!.GalleryAutoPlaySeconds @Text["common.seconds"]</strong></label>
                             <input type="range" class="w-range" min="1" max="10" step="1"
                                    @bind="Vm.Config!.GalleryAutoPlaySeconds" @bind:event="oninput" />
-                            <InputFile class="w-file-input" OnChange="OnGalleryUpload" accept="image/*" multiple />
-                            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
+                            <LocalizedInputFile OnChange="OnGalleryUpload" Accept="image/*" Multiple="true" />
+                            @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
 
                             <div class="w-admin__gallery">
                                 @foreach (var p in Vm.Gallery)
@@ -392,13 +673,13 @@
                                     <div class="w-admin__gallery-item">
                                         <img src="@Vm.GetThumbUrl(Slug, p.FileName)" alt="@p.FileName" />
                                         <div class="w-admin__photo-order">
-                                            <button type="button" class="w-btn w-btn--sm" title="맨 앞으로" @onclick="() => OnMovePhotoTo(p.FileName, true)">처음</button>
-                                            <button type="button" class="w-btn w-btn--sm" title="앞으로" @onclick="() => OnMovePhoto(p.FileName, -1)">↑</button>
-                                            <button type="button" class="w-btn w-btn--sm" title="뒤로" @onclick="() => OnMovePhoto(p.FileName, 1)">↓</button>
-                                            <button type="button" class="w-btn w-btn--sm" title="맨 뒤로" @onclick="() => OnMovePhotoTo(p.FileName, false)">끝</button>
+                                            <button type="button" class="w-btn w-btn--sm" title="@Text["common.first"]" @onclick="() => OnMovePhotoTo(p.FileName, true)">@Text["common.first"]</button>
+                                            <button type="button" class="w-btn w-btn--sm" title="@Text["common.forward"]" @onclick="() => OnMovePhoto(p.FileName, -1)">↑</button>
+                                            <button type="button" class="w-btn w-btn--sm" title="@Text["common.backward"]" @onclick="() => OnMovePhoto(p.FileName, 1)">↓</button>
+                                            <button type="button" class="w-btn w-btn--sm" title="@Text["common.last"]" @onclick="() => OnMovePhotoTo(p.FileName, false)">@Text["common.last"]</button>
                                         </div>
                                         <button class="w-btn w-btn--danger w-btn--sm"
-                                                @onclick="() => OnDeletePhoto(p.FileName)">삭제</button>
+                                                @onclick="() => OnDeletePhoto(p.FileName)">@Text["common.delete"]</button>
                                         <span class="w-admin__fname">@p.FileName</span>
                                     </div>
                                 }
@@ -408,18 +689,18 @@
                     else if (_selected == "map")
                     {
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">예식장 정보</h3>
-                            <label class="w-label">예식장 이름</label>
+                            <h3 class="w-admin__section-h">@Text["admin.map"]</h3>
+                            <label class="w-label">@Text["admin.basic.venue"]</label>
                             <input class="w-input" @bind="Vm.Config!.VenueName" />
 
-                            <label class="w-label">예식장 주소</label>
+                            <label class="w-label">@Text["admin.basic.address"]</label>
                             <input class="w-input" @bind="Vm.Config.VenueAddress" />
 
                             <div class="w-maplink-header" style="margin-top:.75rem">
-                                <span class="w-label" style="margin:0">지도 좌표</span>
+                                <span class="w-label" style="margin:0">@Text["admin.map.coordinates"]</span>
                                 <button class="w-btn w-btn--sm" type="button" @onclick="OnGeocode"
                                         disabled="@Vm.IsGeocoding">
-                                    @(Vm.IsGeocoding ? "검색 중..." : "📍 좌표 자동 검색")
+                                    @(Vm.IsGeocoding ? Text["admin.map.searching"] : $"📍 {Text["admin.map.search"]}")
                                 </button>
                             </div>
                             @if (!string.IsNullOrWhiteSpace(Vm.GeocodeStatus))
@@ -430,54 +711,54 @@
                             }
                             <div class="w-coord-row">
                                 <div>
-                                    <label class="w-label">위도</label>
+                                    <label class="w-label">@Text["admin.map.latitude"]</label>
                                     <input class="w-input" type="number" step="0.000001" @bind="Vm.Config.VenueLat" />
                                 </div>
                                 <div>
-                                    <label class="w-label">경도</label>
+                                    <label class="w-label">@Text["admin.map.longitude"]</label>
                                     <input class="w-input" type="number" step="0.000001" @bind="Vm.Config.VenueLng" />
                                 </div>
                             </div>
                         </section>
 
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">🗺 지도 앱 링크</h3>
+                            <h3 class="w-admin__section-h">🗺 @Text["admin.map.links"]</h3>
                             <div class="w-maplink-header">
-                                <span class="w-label" style="margin:0">카카오맵 · 네이버지도 · 아틀란 · T맵</span>
+                                <span class="w-label" style="margin:0">@Text["admin.map.apps"]</span>
                                 <button class="w-btn w-btn--sm" type="button" @onclick="OnAutoGenerateMapLinks"
-                                        title="예식장 이름·주소·좌표를 이용해 링크를 자동으로 채워드립니다">
-                                    ✨ 자동 생성
+                                        title="@Text["admin.map.generate.hint"]">
+                                    ✨ @Text["admin.map.generate"]
                                 </button>
                             </div>
-                            <p class="w-hint">예식장 이름/주소/좌표를 먼저 입력한 후 <strong>자동 생성</strong> 버튼을 누르세요.</p>
+                            <p class="w-hint">@Text["admin.map.generate.hint"]</p>
                             @if (Vm.Config!.MapLinkKakao != "" || Vm.Config.MapLinkNaver != "" || Vm.Config.MapLinkAtlan != "" || Vm.Config.MapLinkTmap != "")
                             {
-                                <p class="w-hint" style="color:green">✅ 링크 생성 완료 (카카오맵 · 네이버지도 · 아틀란 · T맵)</p>
+                                <p class="w-hint" style="color:green">✅ @Text["admin.map.generate.done"]</p>
                             }
                         </section>
 
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">약도 이미지</h3>
+                            <h3 class="w-admin__section-h">@Text["admin.map.roadmap"]</h3>
                             @if (!string.IsNullOrWhiteSpace(Vm.Config!.RoadMapFileName))
                             {
                                 <div class="w-admin__hero-preview">
-                                    <img src="@Vm.GetRoadMapUrl(Slug, Vm.Config.RoadMapFileName)" alt="약도" />
+                                    <img src="@Vm.GetRoadMapUrl(Slug, Vm.Config.RoadMapFileName)" alt="@Text["admin.map.roadmap"]" />
                                     <span>@Vm.Config.RoadMapFileName</span>
                                 </div>
                             }
                             else
                             {
-                                <p class="w-hint">아직 약도 이미지가 없습니다.</p>
+                                <p class="w-hint">@Text["admin.map.roadmap.empty"]</p>
                             }
-                            <InputFile class="w-file-input" OnChange="OnRoadMapUpload" accept="image/*" />
-                            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
+                            <LocalizedInputFile OnChange="OnRoadMapUpload" Accept="image/*" />
+                            @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
                         </section>
                     }
                     else if (_selected == "account")
                     {
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">💌 마음 전하실 곳</h3>
-                            <p class="w-hint">신랑·신부·부모님 등 최대 8명까지 등록할 수 있습니다. 계좌 또는 연락처만 입력해도 됩니다.</p>
+                            <h3 class="w-admin__section-h">💌 @Text["admin.payment.title"]</h3>
+                            <p class="w-hint">@Text["admin.payment.hint"]</p>
 
                             @for (int i = 0; i < Vm.Config!.Accounts.Count; i++)
                             {
@@ -485,48 +766,48 @@
                                 var acc = Vm.Config.Accounts[idx];
                                 <div class="w-acc-editor">
                                     <div class="w-acc-editor__header">
-                                        <strong>@((idx + 1))번 — @(string.IsNullOrWhiteSpace(acc.Label) ? "(레이블 없음)" : acc.Label)</strong>
-                                        <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => RemoveAccount(idx)">✕ 삭제</button>
+                                        <strong>@string.Format(Text["admin.payment.item"], idx + 1) — @(string.IsNullOrWhiteSpace(acc.Label) ? Text["admin.payment.label.empty"] : LocalizedAccountLabel(acc.Label))</strong>
+                                        <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => RemoveAccount(idx)">✕ @Text["common.delete"]</button>
                                     </div>
                                     <div class="w-acc-editor__grid">
                                         <div>
-                                            <label class="w-label">레이블</label>
+                                            <label class="w-label">@Text["admin.payment.label"]</label>
                                             <select class="w-input" value="@acc.Label" @onchange="e => acc.Label = e.Value?.ToString() ?? string.Empty">
-                                                <option>신랑</option>
-                                                <option>신부</option>
-                                                <option>신랑 아버지</option>
-                                                <option>신랑 어머니</option>
-                                                <option>신부 아버지</option>
-                                                <option>신부 어머니</option>
-                                                <option>직접 입력</option>
+                                                <option value="신랑">@Text["admin.payment.groom"]</option>
+                                                <option value="신부">@Text["admin.payment.bride"]</option>
+                                                <option value="신랑 아버지">@Text["admin.payment.groom.father"]</option>
+                                                <option value="신랑 어머니">@Text["admin.payment.groom.mother"]</option>
+                                                <option value="신부 아버지">@Text["admin.payment.bride.father"]</option>
+                                                <option value="신부 어머니">@Text["admin.payment.bride.mother"]</option>
+                                                <option value="직접 입력">@Text["admin.payment.custom"]</option>
                                             </select>
                                             @if (acc.Label == "직접 입력" || !_defaultLabels.Contains(acc.Label))
                                             {
-                                                <input class="w-input" style="margin-top:.4rem" @bind="acc.Label" placeholder="레이블 직접 입력" />
+                                                <input class="w-input" style="margin-top:.4rem" @bind="acc.Label" placeholder="@Text["admin.payment.label.placeholder"]" />
                                             }
                                         </div>
                                         <div>
-                                            <label class="w-label">이름</label>
-                                            <input class="w-input" @bind="acc.Name" placeholder="홍길동" />
+                                            <label class="w-label">@Text["admin.payment.name"]</label>
+                                            <input class="w-input" @bind="acc.Name" placeholder="@Text["admin.payment.name.placeholder"]" />
                                         </div>
                                         <div>
-                                            <label class="w-label">연락처</label>
+                                            <label class="w-label">@Text["admin.payment.contact"]</label>
                                             <input class="w-input" @bind="acc.Phone" placeholder="010-0000-0000" />
                                         </div>
                                         <div>
-                                            <label class="w-label">은행명</label>
-                                            <input class="w-input" @bind="acc.BankName" placeholder="국민은행" />
+                                            <label class="w-label">@Text["admin.payment.bank"]</label>
+                                            <input class="w-input" @bind="acc.BankName" placeholder="@Text["admin.payment.bank.placeholder"]" />
                                         </div>
                                         <div>
-                                            <label class="w-label">계좌번호</label>
+                                            <label class="w-label">@Text["admin.payment.number"]</label>
                                             <input class="w-input" @bind="acc.Account" placeholder="000-000-000000" />
                                         </div>
                                         <div>
-                                            <label class="w-label">예금주</label>
-                                            <input class="w-input" @bind="acc.AccountHolder" placeholder="홍길동" />
+                                            <label class="w-label">@Text["admin.payment.holder"]</label>
+                                            <input class="w-input" @bind="acc.AccountHolder" placeholder="@Text["admin.payment.holder.placeholder"]" />
                                         </div>
                                         <div class="w-acc-editor__full">
-                                            <label class="w-label">카카오페이 URL</label>
+                                            <label class="w-label">@Text["admin.payment.kakaopay"]</label>
                                             <input class="w-input" @bind="acc.KakaoPayUrl" placeholder="https://qr.kakaopay.com/..." />
                                         </div>
                                     </div>
@@ -535,48 +816,48 @@
 
                             @if (Vm.Config.Accounts.Count < 8)
                             {
-                                <button class="w-btn" @onclick="AddAccount">+ 계좌 / 연락처 추가</button>
+                                <button class="w-btn" @onclick="AddAccount">+ @Text["admin.payment.add"]</button>
                             }
                         </section>
                     }
                     else if (_selected == "share")
                     {
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">🔗 링크 미리보기</h3>
-                            <p class="w-hint">카카오톡·문자 등으로 감사장 링크를 공유할 때 표시되는 제목·설명·이미지입니다.</p>
+                            <h3 class="w-admin__section-h">🔗 @Text["admin.share.og.thankyou"]</h3>
+                            <p class="w-hint">@Text["admin.share.og.hint"]</p>
 
-                            <label class="w-label">연결할 청첩장 URL</label>
+                            <label class="w-label">@Text["admin.share.invitation.url"]</label>
                             <input class="w-input" @bind="Vm.Config!.InvitationUrl"
                                    placeholder="https://wedding.example.com/couple" />
-                            <p class="w-hint">비워두면 감사장 하단의 청첩장 보기 링크를 숨깁니다.</p>
+                            <p class="w-hint">@Text["admin.share.invitation.url.hint"]</p>
 
-                            <label class="w-label">미리보기 제목</label>
+                            <label class="w-label">@Text["admin.share.og.title"]</label>
                             <input class="w-input" @bind="Vm.Config!.OgTitle"
-                                   placeholder="@(Vm.Config?.CoupleName + " 감사 인사")" />
+                                   placeholder="@string.Format(Text["admin.share.og.thankyou.title.placeholder"], Vm.Config?.CoupleName)" />
 
-                            <label class="w-label">미리보기 설명</label>
+                            <label class="w-label">@Text["admin.share.og.description"]</label>
                             <textarea class="w-input w-textarea" rows="3" @bind="Vm.Config!.OgDescription"
-                                      placeholder="@($"{Vm.Config?.WeddingDate:yyyy년 MM월 dd일} {Vm.Config?.VenueName}에서의 결혼식을 마쳤습니다.")"></textarea>
+                                      placeholder="@string.Format(Text["admin.share.og.thankyou.description.placeholder"], Vm.Config?.CoupleName, Vm.Config?.VenueName)"></textarea>
 
-                            <label class="w-label">미리보기 이미지</label>
+                            <label class="w-label">@Text["admin.share.og.image"]</label>
                             @if (!string.IsNullOrWhiteSpace(Vm.Config!.OgImageFileName))
                             {
                                 <div class="w-admin__hero-preview">
-                                    <img src="@Vm.GetOgImageUrl(Slug, Vm.Config.OgImageFileName)" alt="OG 이미지" />
+                                    <img src="@Vm.GetOgImageUrl(Slug, Vm.Config.OgImageFileName)" alt="@Text["admin.share.og.thankyou.image.alt"]" />
                                     <span>@Vm.Config.OgImageFileName</span>
-                                    <button class="w-btn w-btn--sm" @onclick="() => { Vm.Config!.OgImageFileName = string.Empty; }">✕ 제거</button>
+                                    <button class="w-btn w-btn--sm" @onclick="() => { Vm.Config!.OgImageFileName = string.Empty; }">✕ @Text["common.remove"]</button>
                                 </div>
                             }
-                            <InputFile class="w-file-input" OnChange="OnOgImageUpload" accept="image/*" />
-                            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
+                            <LocalizedInputFile OnChange="OnOgImageUpload" Accept="image/*" />
+                            @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
                         </section>
 
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">👥 관리자 계정</h3>
-                            <p class="w-hint">공용 로그인 상태에서 기존 관리자 비밀번호를 입력하면 여러 계정이 같은 감사장을 관리할 수 있습니다.</p>
+                            <h3 class="w-admin__section-h">👥 @Text["admin.share.users"]</h3>
+                            <p class="w-hint">@Text["admin.share.users.hint"]</p>
                             @if (Vm.EffectiveAdminUsers.Count == 0)
                             {
-                                <p class="w-hint">아직 공용 로그인에 연결된 관리자 계정이 없습니다.</p>
+                                <p class="w-hint">@Text["admin.share.users.empty"]</p>
                             }
                             else
                             {
@@ -586,7 +867,7 @@
                                         var isOwner = string.Equals(admin.Role, "Owner", StringComparison.OrdinalIgnoreCase);
                                         <div class="w-admin-users__item">
                                             <div>
-                                                <strong>@(isOwner ? "대표 관리자" : "관리자")</strong>
+                                                <strong>@(isOwner ? Text["admin.owner"] : Text["admin"])</strong>
                                                 <span>@(string.IsNullOrWhiteSpace(admin.DisplayName) ? admin.Provider : admin.DisplayName)</span>
                                                 @if (!string.IsNullOrWhiteSpace(admin.Email))
                                                 {
@@ -596,7 +877,7 @@
                                             </div>
                                             @if (Vm.IsOwner && !isOwner)
                                             {
-                                                <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => OnRemoveAdmin(admin.UserId)">삭제</button>
+                                                <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => OnRemoveAdmin(admin.UserId)">@Text["common.delete"]</button>
                                             }
                                         </div>
                                     }
@@ -605,40 +886,40 @@
                         </section>
 
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">🔒 어드민 비밀번호</h3>
-                            <label class="w-label">변경 시 입력</label>
+                            <h3 class="w-admin__section-h">🔒 @Text["admin.share.password"]</h3>
+                            <label class="w-label">@Text["admin.share.password.change"]</label>
                             <input class="w-input" type="password" @bind="Vm.Config!.PasswordHash" />
                         </section>
                     }
                 </div>
             </main>
 
-            <div class="w-admin-splitter" title="드래그: 폭 조정 · 더블클릭: 기본값 복원"></div>
+            <div class="w-admin-splitter" title="@Text["admin.preview.splitter"]"></div>
 
             <aside class="w-admin-preview @(_previewOpen ? "is-open" : "")">
                 <div class="w-admin-preview__head">
                     <strong>@PreviewHeaderTitle</strong>
                     <div class="w-admin-preview__actions">
-                        <button class="w-admin-preview__mode @(_previewMode == "phone" ? "active" : "")" @onclick='() => SetPreviewMode("phone")'>폰</button>
+                        <button class="w-admin-preview__mode @(_previewMode == "phone" ? "active" : "")" @onclick='() => SetPreviewMode("phone")'>@Text["admin.preview.phone"]</button>
                         <button class="w-admin-preview__mode @(_previewMode == "pc" ? "active" : "")" @onclick='() => SetPreviewMode("pc")'>PC</button>
                         @if (_previewMode == "phone")
                         {
-                            <select class="w-admin-preview__device" value="@_previewDeviceKey" @onchange="SetPreviewDevice" title="폰 미리보기 기기">
+                            <select class="w-admin-preview__device" value="@_previewDeviceKey" @onchange="SetPreviewDevice" title="@Text["admin.preview.device"]">
                                 @foreach (var device in _previewDevices)
                                 {
                                     <option value="@device.Key">@device.Label</option>
                                 }
                             </select>
                         }
-                        <button class="w-btn w-btn--sm" @onclick="ReloadPreview" title="미리보기 새로고침">🔄</button>
-                        <a class="w-btn w-btn--sm" href="@PreviewUrl" target="_blank" title="새 탭에서 열기">↗</a>
-                        <button class="w-admin-preview__close" @onclick="OnClosePreview" aria-label="미리보기 접기">✕</button>
+                        <button class="w-btn w-btn--sm" @onclick="ReloadPreview" title="@Text["admin.preview.refresh"]">🔄</button>
+                        <a class="w-btn w-btn--sm" href="@PreviewUrl" target="_blank" title="@Text["admin.preview.newtab"]">↗</a>
+                        <button class="w-admin-preview__close" @onclick="OnClosePreview" aria-label="@Text["admin.preview.collapse"]">✕</button>
                     </div>
                 </div>
                 <div class="w-admin-preview__frame w-admin-preview__frame--@_previewMode" style="@PreviewFrameStyle">
                     <iframe id="w-preview-iframe" src="@PreviewUrl" title="@PreviewTitle"></iframe>
                 </div>
-                <p class="w-admin-preview__hint">저장 후 자동으로 새로고침됩니다.</p>
+                <p class="w-admin-preview__hint">@Text["admin.preview.hint"]</p>
             </aside>
         </div>
     }
@@ -656,6 +937,17 @@
     private bool _initialStateLoaded;
     private bool _adminInteropInitialized;
     private bool _superAdminAutoLoginChecked;
+    private bool _layoutPickerOpen;
+    private string _layoutSearch = "";
+    private WeddingLayoutMode? _layoutCandidateMode;
+    private bool _heroCropEditorOpen;
+    private bool _heroCropEditorNeedsInit;
+    private string _heroCropViewport = "mobile";
+    private bool _heroCropDesktopFull = true;
+    private bool _heroCropMobileFull = true;
+    private HeroImageCropRegion _heroCropDesktopDraft = new();
+    private HeroImageCropRegion _heroCropMobileDraft = new();
+    private long _heroCropEditorRevision;
     private string _previewMode = "phone";
     private string _previewDeviceKey = "galaxyS26";
     private DotNetObjectReference<Admin>? _selfRef;
@@ -680,32 +972,117 @@
         new("galaxyS24Ultra", "Galaxy S24 Ultra · 384×854", 384, 854),
     ];
 
-    private static readonly NavItem[] _navItems =
+    private NavItem[] NavItems =>
     [
-        new("basic",   Icon("user"), "기본 정보"),
-        new("design",  Icon("palette"), "디자인"),
-        new("story",   Icon("palette"), "스토리 챕터"),
-        new("content", Icon("media"), "사진·동영상"),
-        new("share",   Icon("share"), "공유 설정"),
+        new("basic",   Icon("user"), Text["admin.basic"]),
+        new("design",  Icon("palette"), Text["admin.design"]),
+        new("story",   Icon("palette"), Text["admin.story"]),
+        new("photobook", Icon("media"), Text["admin.photobook"]),
+        new("cards", Icon("card"), Text["admin.cards"]),
+        new("content", Icon("media"), Text["admin.media"]),
+        new("share",   Icon("share"), Text["admin.share.settings"]),
     ];
 
     private bool IsStoryLayout => CurrentLayoutMode == WeddingLayoutMode.Story;
-    private bool UsesThankYouHeroPlacement => CurrentLayoutMode is WeddingLayoutMode.WebPage or WeddingLayoutMode.TabMenu;
-    private IEnumerable<NavItem> VisibleNavItems => _navItems.Where(i => i.Key != "story" || IsStoryLayout);
-    private NavItem CurrentNavItem => VisibleNavItems.FirstOrDefault(i => i.Key == _selected) ?? _navItems[0];
-    private string PreviewUrl => $"/{Slug}/thankyou?adminPreview=true";
-    private string PreviewTitle => "감사장 미리보기";
+    private bool IsPhotoBookLayout => CurrentLayoutMode == WeddingLayoutMode.PhotoBook;
+    private bool IsCardLayout => CurrentLayoutMode == WeddingLayoutMode.Card;
+    private bool UsesSplitHeroPlacement => CurrentLayoutMode is WeddingLayoutMode.Card or WeddingLayoutMode.PhotoBook;
+    private bool UsesThankYouHeroPlacement =>
+        CurrentLayoutMode is WeddingLayoutMode.WebPage or WeddingLayoutMode.TabMenu or WeddingLayoutMode.Card or WeddingLayoutMode.PhotoBook;
+    private IEnumerable<NavItem> VisibleNavItems => NavItems.Where(i =>
+        (i.Key != "story" || IsStoryLayout) &&
+        (i.Key != "photobook" || IsPhotoBookLayout) &&
+        (i.Key != "cards" || IsCardLayout));
+    private NavItem CurrentNavItem => VisibleNavItems.FirstOrDefault(i => i.Key == _selected) ?? NavItems[0];
+    private string PreviewUrl => $"/{Slug}/thankyou?adminPreview=true&lang={Uri.EscapeDataString(Text.Language)}";
+    private string PreviewTitle => Text["admin.preview"];
+    private string DisplayMaxVideoSize => Vm.MaxVideoSizeLabel == "무제한"
+        ? Text["common.unlimited"]
+        : Vm.MaxVideoSizeLabel.Replace("최대 ", string.Empty, StringComparison.Ordinal);
+    private string DisplayStatusMessage => Vm.StatusMessage switch
+    {
+        "설정이 저장되었습니다." => Text["admin.status.saved"],
+        "삭제 완료" => Text["common.remove"],
+        _ => Vm.StatusMessage
+    };
+    private string CeremonyNotePreviewHtml
+    {
+        get
+        {
+            var raw = Vm.Config?.CeremonyNote ?? "";
+            if (string.IsNullOrWhiteSpace(raw)) return "";
+            if (string.Equals(Vm.Config?.CeremonyNoteFormat, "Html", StringComparison.OrdinalIgnoreCase))
+                return raw;
+            return Markdown.ToHtml(raw, new MarkdownPipelineBuilder().UseAdvancedExtensions().Build());
+        }
+    }
+    private string LocalizedLayoutLabel(WeddingLayoutOption option) =>
+        Text[$"layout.{WeddingLayoutKeys.Normalize(option.Key)}"];
+    private string LocalizedLayoutDescription(WeddingLayoutOption option) =>
+        Text[$"admin.super.layout.description.{WeddingLayoutKeys.Normalize(option.Key)}"];
+    private string LocalizedThemeLabel(string key) => Text[$"theme.{key.Trim().ToLowerInvariant()}"];
+    private string LocalizedAccountLabel(string label) => label switch
+    {
+        "신랑" => Text["admin.payment.groom"],
+        "신부" => Text["admin.payment.bride"],
+        "신랑 아버지" => Text["admin.payment.groom.father"],
+        "신랑 어머니" => Text["admin.payment.groom.mother"],
+        "신부 아버지" => Text["admin.payment.bride.father"],
+        "신부 어머니" => Text["admin.payment.bride.mother"],
+        "직접 입력" => Text["admin.payment.custom"],
+        _ => label
+    };
+    private string LocalizedSectionLabel(string section) => section switch
+    {
+        "hero" => Text["home"],
+        "info" or "notice" => Text["admin.notice"],
+        "thankyou" or "message" => Text["section.message"],
+        "story" => Text["admin.story"],
+        "gallery" or "photos" => Text["admin.media.gallery"],
+        "video" or "videos" => Text["admin.media.video"],
+        "details" or "map" => Text["admin.map"],
+        "gift" or "account" => Text["admin.payment"],
+        "guestbook" => Text["features.guestbook"],
+        _ => WeddingSectionOrderCatalog.GetLabel(section)
+    };
     private PreviewDevice CurrentPreviewDevice =>
         _previewDevices.FirstOrDefault(x => string.Equals(x.Key, _previewDeviceKey, StringComparison.OrdinalIgnoreCase))
         ?? _previewDevices[0];
     private string PreviewHeaderTitle =>
-        _previewMode == "phone" ? $"폰 미리보기 · {CurrentPreviewDevice.Label}" : "PC 미리보기";
+        _previewMode == "phone" ? $"{Text["admin.preview.phone"]} · {CurrentPreviewDevice.Label}" : $"PC {Text["admin.preview"]}";
     private string PreviewFrameStyle =>
         _previewMode == "phone"
             ? $"--w-preview-device-width:{CurrentPreviewDevice.Width}px;--w-preview-device-height:{CurrentPreviewDevice.Height}px;"
             : "";
+    private WeddingThemePalette CurrentCustomPalette =>
+        WeddingThemePaletteGenerator.ResolveForEditing(Vm.Config?.CustomTheme);
+    private double TextContrastRatio =>
+        WeddingThemePaletteGenerator.ContrastRatio(
+            CurrentCustomPalette.Text,
+            CurrentCustomPalette.Background);
+    private double MutedContrastRatio =>
+        WeddingThemePaletteGenerator.ContrastRatio(
+            CurrentCustomPalette.MutedText,
+            CurrentCustomPalette.Background);
+    private double ButtonContrastRatio =>
+        WeddingThemePaletteGenerator.ContrastRatio(
+            CurrentCustomPalette.ButtonText,
+            CurrentCustomPalette.ButtonBackground);
     private IReadOnlyList<string> OrderedDesignSections =>
         WeddingSectionOrderCatalog.NormalizeThankYouOrder(Vm.Config?.SectionOrder);
+
+    private bool IsSectionVisible(string section)
+    {
+        if (Vm.Config is null || string.Equals(section, "hero", StringComparison.OrdinalIgnoreCase)) return true;
+        return !Vm.Config.SectionVisibility.TryGetValue(section, out var visible) || visible;
+    }
+
+    private void ToggleSectionVisibility(string section)
+    {
+        if (Vm.Config is null || string.Equals(section, "hero", StringComparison.OrdinalIgnoreCase)) return;
+        var current = !Vm.Config.SectionVisibility.TryGetValue(section, out var visible) || visible;
+        Vm.Config.SectionVisibility[section] = !current;
+    }
 
     private void SetPreviewMode(string mode)
     {
@@ -745,7 +1122,7 @@
     {
         if (string.Equals(_selected, key, StringComparison.OrdinalIgnoreCase)) return;
 
-        if (key == "story" && !IsStoryLayout)
+        if ((key == "story" && !IsStoryLayout) || (key == "photobook" && !IsPhotoBookLayout) || (key == "cards" && !IsCardLayout))
         {
             _selected = "design";
             _navOpen = false;
@@ -764,6 +1141,196 @@
     /// <summary>현재 설정에 반영된 감사장 레이아웃 모드 (Admin UI 활성 카드 표시에 사용).</summary>
     private WeddingLayoutMode CurrentLayoutMode =>
         ThankYouDesignCatalog.ResolveLayoutMode(Vm.Config?.ThankYouStyle);
+    private WeddingLayoutOption? SelectedLayoutOption => WeddingLayoutCatalog.Instance.Find(_layoutCandidateMode ?? CurrentLayoutMode);
+    private IEnumerable<WeddingLayoutOption> FilteredLayoutOptions => WeddingLayoutCatalog.Options.Where(x =>
+        string.IsNullOrWhiteSpace(_layoutSearch) ||
+        LocalizedLayoutLabel(x).Contains(_layoutSearch, StringComparison.CurrentCultureIgnoreCase) ||
+        LocalizedLayoutDescription(x).Contains(_layoutSearch, StringComparison.CurrentCultureIgnoreCase));
+    private void ChooseLayout(WeddingLayoutOption option)
+    {
+        _layoutCandidateMode = option.Mode;
+        _layoutPickerOpen = false;
+        _layoutSearch = "";
+    }
+    private void ApplySelectedLayout()
+    {
+        if (SelectedLayoutOption is not { } selected) return;
+        SelectLayout(selected.Mode);
+        _layoutCandidateMode = null;
+    }
+    private bool CurrentHeroCropUsesFullImage =>
+        _heroCropViewport == "mobile" ? _heroCropMobileFull : _heroCropDesktopFull;
+    private HeroImageCropRegion CurrentHeroCropDraft =>
+        _heroCropViewport == "mobile" ? _heroCropMobileDraft : _heroCropDesktopDraft;
+    private double CurrentHeroCropAspect =>
+        _heroCropViewport == "mobile"
+            ? (double)CurrentPreviewDevice.Width / CurrentPreviewDevice.Height
+            : 16d / 9d;
+    private string HeroCropEditorKey => $"{_heroCropViewport}:{_heroCropEditorRevision}";
+
+    private void OpenHeroCropEditor()
+    {
+        if (Vm.Config is null) return;
+        _heroCropDesktopFull = !string.Equals(Vm.Config.HeroDesktopFit, "cover", StringComparison.OrdinalIgnoreCase);
+        _heroCropMobileFull = !string.Equals(Vm.Config.HeroMobileFit, "cover", StringComparison.OrdinalIgnoreCase);
+        _heroCropDesktopDraft = CloneCrop(Vm.Config.HeroDesktopCrop);
+        _heroCropMobileDraft = CloneCrop(Vm.Config.HeroMobileCrop);
+        _heroCropViewport = _previewMode == "pc" ? "desktop" : "mobile";
+        _heroCropEditorOpen = true;
+        QueueHeroCropEditorInit();
+    }
+
+    private void CloseHeroCropEditor()
+    {
+        _heroCropEditorOpen = false;
+        _heroCropEditorNeedsInit = false;
+    }
+
+    private void SetHeroCropViewport(string viewport)
+    {
+        _heroCropViewport = viewport == "desktop" ? "desktop" : "mobile";
+        _previewMode = _heroCropViewport == "desktop" ? "pc" : "phone";
+        QueueHeroCropEditorInit();
+    }
+
+    private void SetHeroCropMode(bool useFullImage)
+    {
+        if (_heroCropViewport == "mobile") _heroCropMobileFull = useFullImage;
+        else _heroCropDesktopFull = useFullImage;
+        QueueHeroCropEditorInit();
+    }
+
+    private void QueueHeroCropEditorInit()
+    {
+        _heroCropEditorRevision++;
+        _heroCropEditorNeedsInit = _heroCropEditorOpen && !CurrentHeroCropUsesFullImage;
+    }
+
+    [JSInvokable]
+    public void OnHeroCropDraftChanged(string viewport, double x, double y, double width, double height)
+    {
+        var draft = new HeroImageCropRegion { X = x, Y = y, Width = width, Height = height };
+        NormalizeCropDraft(draft);
+        if (string.Equals(viewport, "mobile", StringComparison.OrdinalIgnoreCase)) _heroCropMobileDraft = draft;
+        else _heroCropDesktopDraft = draft;
+    }
+
+    private async Task ApplyHeroCropEditor()
+    {
+        if (Vm.Config is null) return;
+        Vm.Config.HeroDesktopFit = _heroCropDesktopFull ? "contain" : "cover";
+        Vm.Config.HeroMobileFit = _heroCropMobileFull ? "contain" : "cover";
+        Vm.Config.HeroDesktopCrop = CloneCrop(_heroCropDesktopDraft);
+        Vm.Config.HeroMobileCrop = CloneCrop(_heroCropMobileDraft);
+        Vm.Config.HeroDesktopFocusX = Vm.Config.HeroDesktopCrop.X + Vm.Config.HeroDesktopCrop.Width / 2;
+        Vm.Config.HeroDesktopFocusY = Vm.Config.HeroDesktopCrop.Y + Vm.Config.HeroDesktopCrop.Height / 2;
+        Vm.Config.HeroMobileFocusX = Vm.Config.HeroMobileCrop.X + Vm.Config.HeroMobileCrop.Width / 2;
+        Vm.Config.HeroMobileFocusY = Vm.Config.HeroMobileCrop.Y + Vm.Config.HeroMobileCrop.Height / 2;
+        await OnSaveConfig();
+        CloseHeroCropEditor();
+    }
+
+    private static HeroImageCropRegion CloneCrop(HeroImageCropRegion? source) => new()
+    {
+        X = source?.X ?? 0,
+        Y = source?.Y ?? 0,
+        Width = source?.Width ?? 100,
+        Height = source?.Height ?? 100,
+    };
+
+    private static void NormalizeCropDraft(HeroImageCropRegion crop)
+    {
+        crop.X = Math.Clamp(double.IsFinite(crop.X) ? crop.X : 0, 0, 95);
+        crop.Y = Math.Clamp(double.IsFinite(crop.Y) ? crop.Y : 0, 0, 95);
+        crop.Width = Math.Clamp(double.IsFinite(crop.Width) ? crop.Width : 100, 5, 100 - crop.X);
+        crop.Height = Math.Clamp(double.IsFinite(crop.Height) ? crop.Height : 100, 5, 100 - crop.Y);
+    }
+    private void SelectCustomTheme()
+    {
+        if (Vm.Config is null || !Vm.Config.HasPremiumPlan) return;
+        ActivateCustomTheme();
+    }
+
+    private void OnThemeBaseColorChanged(ChangeEventArgs e)
+    {
+        if (Vm.Config is null
+            || !Vm.Config.HasPremiumPlan
+            || !WeddingThemePaletteGenerator.TryNormalizeHexColor(
+                e.Value?.ToString(),
+                out var baseColor))
+        {
+            return;
+        }
+
+        WeddingThemePaletteGenerator.ApplyGenerated(Vm.Config.CustomTheme, baseColor);
+        ActivateCustomTheme();
+    }
+
+    private void ApplyAutomaticThemePalette()
+    {
+        if (Vm.Config is null || !Vm.Config.HasPremiumPlan) return;
+
+        var baseColor = WeddingThemePaletteGenerator.NormalizeHexColor(
+            Vm.Config.CustomTheme.BaseColor,
+            Vm.Config.CustomTheme.Primary);
+        WeddingThemePaletteGenerator.ApplyGenerated(Vm.Config.CustomTheme, baseColor);
+        ActivateCustomTheme();
+    }
+
+    private void UpdateCustomThemeColor(string token, string? value)
+    {
+        if (Vm.Config is null
+            || !Vm.Config.HasPremiumPlan
+            || !WeddingThemePaletteGenerator.TryNormalizeHexColor(value, out var normalized))
+        {
+            return;
+        }
+
+        var custom = Vm.Config.CustomTheme;
+        switch (token)
+        {
+            case "primary":
+                custom.Primary = normalized;
+                break;
+            case "accent":
+                custom.Accent = normalized;
+                break;
+            case "dark":
+                custom.Dark = normalized;
+                break;
+            case "text":
+                custom.Text = normalized;
+                break;
+            case "muted":
+                custom.MutedText = normalized;
+                break;
+            case "background":
+                custom.Background = normalized;
+                break;
+            case "panel":
+                custom.PanelBackground = normalized;
+                break;
+            case "button":
+                custom.ButtonBackground = normalized;
+                break;
+            case "button-text":
+                custom.ButtonText = normalized;
+                break;
+            case "border":
+                custom.Border = normalized;
+                break;
+            default:
+                return;
+        }
+
+        ActivateCustomTheme();
+    }
+
+    private void ActivateCustomTheme()
+    {
+        if (Vm.Config is null) return;
+        Vm.Config.ThemeName = WeddingThemeCatalog.CustomThemeKey;
+    }
 
     /// <summary>레이아웃 카드 선택 시 호출 — legacy 문자열 필드에 저장.</summary>
     private void SelectLayout(WeddingLayoutMode mode)
@@ -772,7 +1339,9 @@
         var option = WeddingLayoutCatalog.Instance.Find(mode);
         if (option is null || !option.IsImplemented || !CanUseLayout(option)) return;
         Vm.Config.ThankYouStyle = ThankYouDesignCatalog.ToLegacyLayoutKey(mode);
-        if (mode != WeddingLayoutMode.Story && _selected == "story")
+        if ((mode != WeddingLayoutMode.Story && _selected == "story") ||
+            (mode != WeddingLayoutMode.PhotoBook && _selected == "photobook") ||
+            (mode != WeddingLayoutMode.Card && _selected == "cards"))
         {
             _selected = "design";
         }
@@ -781,7 +1350,11 @@
     private bool CanUseLayout(WeddingLayoutOption option)
     {
         if (Vm.Config is null) return option.Tier == WeddingLayoutTier.Free;
-        return new WeddingLayoutAccessPolicy().CanUse(option, BuildLayoutAccessState());
+        var access = BuildLayoutAccessState();
+        return option.Tier == WeddingLayoutTier.Free
+            || access.HasPremiumPlan
+            || access.IsLayoutUnlocked(option.Mode)
+            || access.IsLayoutUnlocked(option.Key);
     }
 
     private WeddingLayoutAccessState BuildLayoutAccessState()
@@ -794,6 +1367,7 @@
                 .Select(WeddingLayoutCatalog.FromLegacyKey)
                 .Where(x => x != WeddingLayoutMode.Unknown)
                 .ToArray(),
+            UnlockedLayoutKeys = Vm.Config.UnlockedLayoutModes.ToArray(),
         };
     }
 
@@ -835,8 +1409,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Text.Changed += OnLanguageChanged;
         await Vm.InitializeAsync(Slug);
     }
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -871,6 +1448,14 @@
                     _previewCollapsed = await JS.InvokeAsync<bool>("weddingInterop.getPreviewCollapsed");
                     StateHasChanged();
                 }
+                catch { }
+            }
+
+            if (_heroCropEditorOpen && _heroCropEditorNeedsInit)
+            {
+                _heroCropEditorNeedsInit = false;
+                _selfRef ??= DotNetObjectReference.Create(this);
+                try { await JS.InvokeVoidAsync("weddingInterop.initHeroCropEditor", _selfRef); }
                 catch { }
             }
         }
@@ -1040,6 +1625,36 @@
         await ReloadPreview();
     }
 
+    private async Task ResetHeroPanel(string target, bool mobile)
+    {
+        var position = ResolveHeroPanelPlacement(target);
+        if (position is null) return;
+
+        if (mobile)
+        {
+            position.MobileX = null;
+            position.MobileY = null;
+        }
+        else
+        {
+            position.DesktopX = null;
+            position.DesktopY = null;
+        }
+
+        await Vm.SaveConfigAsync();
+        await ReloadPreview();
+    }
+
+    private async Task AlignHeroPanel(string target, bool mobile)
+    {
+        var position = ResolveHeroPanelPlacement(target);
+        if (position is null) return;
+
+        SnapFloatingPosition(position, mobile);
+        await Vm.SaveConfigAsync();
+        await ReloadPreview();
+    }
+
     [JSInvokable]
     public async Task OnPreviewElementMoved(string target, double xPercent, double yPercent, string viewport)
     {
@@ -1054,11 +1669,18 @@
             case "heroThankYou":
                 SetFloatingPosition(Vm.Config.HeroPanelPlacement, xPercent, yPercent, isMobile);
                 break;
+            case "heroTop":
+                SetFloatingPosition(Vm.Config.HeroTopPanelPlacement, xPercent, yPercent, isMobile);
+                break;
+            case "heroBottom":
+                SetFloatingPosition(Vm.Config.HeroBottomPanelPlacement, xPercent, yPercent, isMobile);
+                break;
             default:
                 return;
         }
 
         await Vm.SaveConfigAsync();
+        await ReloadPreview();
         StateHasChanged();
     }
 
@@ -1090,6 +1712,32 @@
         }
     }
 
+    private static void SnapFloatingPosition(WeddingFloatingPosition position, bool mobile)
+    {
+        if (mobile)
+        {
+            if (!position.HasMobile) return;
+            position.MobileX = SnapPercent(position.MobileX!.Value);
+            position.MobileY = SnapPercent(position.MobileY!.Value);
+            return;
+        }
+
+        if (!position.HasDesktop) return;
+        position.DesktopX = SnapPercent(position.DesktopX!.Value);
+        position.DesktopY = SnapPercent(position.DesktopY!.Value);
+    }
+
+    private WeddingFloatingPosition? ResolveHeroPanelPlacement(string target)
+    {
+        if (Vm.Config is null) return null;
+        return target switch
+        {
+            "heroTop" => Vm.Config.HeroTopPanelPlacement,
+            "heroBottom" => Vm.Config.HeroBottomPanelPlacement,
+            _ => null,
+        };
+    }
+
     private static double SnapPercent(double value)
     {
         var anchors = new[] { 15d, 50d, 85d };
@@ -1098,11 +1746,55 @@
 
     private static double ClampPercent(double value) => Math.Clamp(value, 0, 100);
 
-    private static string FormatFloatingPosition(WeddingFloatingPosition position)
+    private string FormatFloatingPosition(WeddingFloatingPosition position)
     {
-        var mobile = position.HasMobile ? $"모바일 {position.MobileX:0.#}%, {position.MobileY:0.#}%" : "모바일 기본";
-        var desktop = position.HasDesktop ? $"PC {position.DesktopX:0.#}%, {position.DesktopY:0.#}%" : "PC 기본";
+        var mobileLabel = Text["admin.preview.phone"];
+        var defaultLabel = Text["admin.media.default.position"];
+        var mobile = position.HasMobile ? $"{mobileLabel} {position.MobileX:0.#}%, {position.MobileY:0.#}%" : $"{mobileLabel} · {defaultLabel}";
+        var desktop = position.HasDesktop ? $"PC {position.DesktopX:0.#}%, {position.DesktopY:0.#}%" : $"PC · {defaultLabel}";
         return $"{desktop} · {mobile}";
+    }
+
+    private RenderFragment HeroPositionControl(string target, string title, WeddingFloatingPosition position) => @<div class="w-drag-control-card">
+        <strong>@title</strong>
+        <div class="w-drag-control-device">
+            <span><b>PC</b> @FormatFloatingPosition(position, false)</span>
+            <div>
+                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("pc")'>@Text["admin.hero.position.drag"]</button>
+                <button type="button" class="w-btn w-btn--sm" @onclick="() => AlignHeroPanel(target, false)">@Text["common.align"]</button>
+                <button type="button" class="w-btn w-btn--sm" @onclick="() => ResetHeroPanel(target, false)">@Text["common.reset"]</button>
+            </div>
+        </div>
+        <div class="w-drag-control-device">
+            <span><b>@Text["admin.preview.phone"]</b> @FormatFloatingPosition(position, true)</span>
+            <div>
+                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("phone")'>@Text["admin.hero.position.drag"]</button>
+                <button type="button" class="w-btn w-btn--sm" @onclick="() => AlignHeroPanel(target, true)">@Text["common.align"]</button>
+                <button type="button" class="w-btn w-btn--sm" @onclick="() => ResetHeroPanel(target, true)">@Text["common.reset"]</button>
+            </div>
+        </div>
+    </div>;
+
+    private string FormatFloatingPosition(WeddingFloatingPosition position, bool mobile)
+    {
+        var defaultLabel = Text["admin.media.default.position"];
+        if (mobile)
+            return position.HasMobile ? $"{position.MobileX:0.#}%, {position.MobileY:0.#}%" : defaultLabel;
+        return position.HasDesktop ? $"{position.DesktopX:0.#}%, {position.DesktopY:0.#}%" : defaultLabel;
+    }
+
+    private void ApplyCeremonyNoteExample(string tone)
+    {
+        if (Vm.Config is null) return;
+
+        Vm.Config.CeremonyNoteFormat = "Markdown";
+        Vm.Config.CeremonyNote = tone switch
+        {
+            "formal" => Text["admin.notice.template.formal"],
+            "simple" => Text["admin.notice.template.simple"],
+            "ai" => Text["admin.notice.template.ai"],
+            _ => Text["admin.notice.template.warm"],
+        };
     }
 
     private async Task OnSaveStoryChapter(StoryChapter chapter)
@@ -1126,12 +1818,43 @@
         StateHasChanged();
     }
 
+    private async Task OnAddPhotoBookPage()
+    {
+        if (Vm.Config is null) return;
+        var number = Vm.Config.PhotoBookPages.Count == 0 ? 1 : Vm.Config.PhotoBookPages.Max(x => x.PageNumber) + 1;
+        Vm.Config.PhotoBookPages.Add(new PhotoBookPage { PageNumber = number, Caption = $"PAGE {number:00}" });
+        await OnSaveConfig();
+    }
+
+    private async Task OnDeletePhotoBookPage(int pageNumber)
+    {
+        if (Vm.Config is null || pageNumber <= 4) return;
+        Vm.Config.PhotoBookPages.RemoveAll(x => x.PageNumber == pageNumber);
+        await OnSaveConfig();
+    }
+
+    private async Task OnAddCardHighlight()
+    {
+        if (Vm.Config is null) return;
+        var order = Vm.Config.CardHighlights.Count == 0 ? 1 : Vm.Config.CardHighlights.Max(x => x.Order) + 1;
+        Vm.Config.CardHighlights.Add(new CardHighlight { Order = order });
+        await OnSaveConfig();
+    }
+
+    private async Task OnDeleteCardHighlight(int order)
+    {
+        if (Vm.Config is null || order <= 3) return;
+        Vm.Config.CardHighlights.RemoveAll(x => x.Order == order);
+        await OnSaveConfig();
+    }
+
     private async Task OnShareThankYou()
     {
-        var url = new Uri(new Uri(Nav.BaseUri), $"{Slug}/thankyou").ToString();
-        var title = string.IsNullOrWhiteSpace(Vm.Config?.CoupleName) ? "감사장" : $"{Vm.Config.CoupleName} 감사장";
+        var url = new Uri(new Uri(Nav.BaseUri), $"{Slug}/thankyou?lang={Uri.EscapeDataString(Text.Language)}").ToString();
+        var coupleName = string.IsNullOrWhiteSpace(Vm.Config?.CoupleName) ? Text["public.thankyou"] : Vm.Config.CoupleName;
+        var title = string.Format(Text["admin.share.og.thankyou.title.placeholder"], coupleName);
         var result = await JS.InvokeAsync<string>("weddingInterop.shareOrCopy", url, title);
-        Vm.SetStatusMessage(result == "shared" ? "공유 창을 열었습니다." : "감사장 링크를 복사했습니다.");
+        Vm.SetStatusMessage(Text[result == "shared" ? "admin.share.result.shared" : "admin.share.result.copied"]);
     }
 
     private async Task OnRemoveAdmin(string userId)
@@ -1249,6 +1972,7 @@
 
     public void Dispose()
     {
+        Text.Changed -= OnLanguageChanged;
         lock (_uploadTickerSync)
         {
             if (_disposed)

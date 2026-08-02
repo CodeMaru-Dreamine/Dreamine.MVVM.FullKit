@@ -15,6 +15,7 @@
                               ActiveKey="@ActiveKey"
                               NavigationAriaLabel="CodeMaru services"
                               ToggleMenuLabel="@Text["nav.toggle"]"
+                              UseCodeMaruAppearance="true"
                               Fixed="true"
                               IsAuthenticated="true"
                               DisplayName="@DisplayNameOf(authenticationState)"
@@ -56,6 +57,7 @@
                               ActiveKey="@ActiveKey"
                               NavigationAriaLabel="CodeMaru services"
                               ToggleMenuLabel="@Text["nav.toggle"]"
+                              UseCodeMaruAppearance="true"
                               Fixed="true"
                               LoginUrl="@($"/login?returnUrl={ReturnUrl}")"
                               LoginLabel="@Text["login"]">
@@ -113,7 +115,11 @@
         new("contact", Text["contact"], "/contact")
     ];
 
-    protected override void OnInitialized() => Text.Changed += HandleLanguageChanged;
+    protected override void OnInitialized()
+    {
+        Text.Changed += HandleLanguageChanged;
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
 
     private Task ChangeLanguageAsync(string language)
     {
@@ -129,5 +135,12 @@
 
     private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
-    public void Dispose() => Text.Changed -= HandleLanguageChanged;
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args) =>
+        _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Text.Changed -= HandleLanguageChanged;
+        Navigation.LocationChanged -= HandleLocationChanged;
+    }
 }

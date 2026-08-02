@@ -1,6 +1,6 @@
-@namespace WeddingPlatform.Blazor.Components
+@namespace WeddingThankYou.Blazor.Components
 @implements IDisposable
-@inject WeddingLocalization Text
+@inject ThankYouLocalization Text
 
 <DreaminePortalPreferences ThemeLabel="@Text["theme"]"
                            SystemThemeLabel="@Text["system"]"
@@ -17,7 +17,7 @@
 
 @code {
     private static readonly IReadOnlyList<DreamineLanguage> Languages =
-        WeddingLocalization.Languages
+        ThankYouLocalization.Languages
             .Select(item => new DreamineLanguage(item.Code, item.Region, item.NativeName, item.HtmlLanguage))
             .ToArray();
 
@@ -30,6 +30,5 @@
     }
 
     private void OnChanged() => _ = InvokeAsync(StateHasChanged);
-
     public void Dispose() => Text.Changed -= OnChanged;
 }

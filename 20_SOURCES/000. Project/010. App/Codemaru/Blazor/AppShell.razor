@@ -15,10 +15,13 @@
     <link rel="icon" type="image/jpeg" href="/img/Codemaru_Essence.jpg" />
     <script>
         (() => {
-            const saved = localStorage.getItem("codemaru-theme");
-            if (saved === "light" || saved === "dark") {
-                document.documentElement.dataset.theme = saved;
-            }
+            const media = window.matchMedia('(prefers-color-scheme: dark)');
+            const syncSystemClass = event => document.documentElement.classList.toggle('system-dark', event.matches);
+            syncSystemClass(media);
+            media.addEventListener?.('change', syncSystemClass);
+            const cookie = document.cookie.split(';').map(x => x.trim()).find(x => x.startsWith('dreamine-theme='));
+            const saved = cookie ? decodeURIComponent(cookie.substring('dreamine-theme='.length)) : localStorage.getItem('codemaru-theme');
+            if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
         })();
     </script>
 
@@ -52,8 +55,8 @@
     <link rel="stylesheet" href="/css/site.css" />
     <link rel="stylesheet" href="/css/cardhybrid.css" />
     <link rel="stylesheet" href="/app.css" />
-    <link rel="stylesheet" href="/Codemaru.styles.css" />
-    <link rel="stylesheet" href="/css/codemaru-site.css" />
+    <link rel="stylesheet" href="/Codemaru.styles.css?v=20260802-codemaru-shell-2" />
+    <link rel="stylesheet" href="/css/codemaru-site.css?v=20260802-codemaru-shell-2" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
     <HeadOutlet />
@@ -61,7 +64,7 @@
 <body>
     <Codemaru.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     <script src="/_content/Dreamine.UI.Blazor/dreamine-localization.js"></script>
-    <script src="/_content/Dreamine.UI.Blazor/dreamine-portal.js"></script>
+    <script src="/_content/Dreamine.UI.Blazor/dreamine-portal.js?v=20260802-portal-shell-1"></script>
     <script src="/_framework/blazor.web.js"></script>
     <script src="/js/site.js" defer></script>
 </body>

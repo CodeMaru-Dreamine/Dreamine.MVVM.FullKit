@@ -28,18 +28,35 @@
   </ItemGroup>
 
   <ItemGroup>
+    <RazorComponent Include="..\WeddingPlatform.Web\Blazor\Components\LayoutTransitionSurface.razor" Link="Blazor\Components\LayoutTransitionSurface.razor" />
     <Compile Include="..\Wedding.Common\WeddingLayoutCatalog.cs" Link="Common\WeddingLayoutCatalog.cs" />
     <Compile Include="..\Wedding.Common\WeddingFloatingPosition.cs" Link="Common\WeddingFloatingPosition.cs" />
     <Compile Include="..\Wedding.Common\WeddingSectionOrderCatalog.cs" Link="Common\WeddingSectionOrderCatalog.cs" />
     <Compile Include="..\Wedding.Common\WeddingStoryChapter.cs" Link="Common\WeddingStoryChapter.cs" />
+    <Compile Include="..\Wedding.Common\WeddingPhotoBookPage.cs" Link="Common\WeddingPhotoBookPage.cs" />
+    <Compile Include="..\Wedding.Common\WeddingCardHighlight.cs" Link="Common\WeddingCardHighlight.cs" />
     <Compile Include="..\Wedding.Common\WeddingThemeCatalog.cs" Link="Common\WeddingThemeCatalog.cs" />
+    <Compile Include="..\WeddingPlatform.Web\Services\WeddingLocalization.cs" Link="Services\SharedWeddingLocalization.cs" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Wedding.Layouts.Contracts\Wedding.Layouts.Contracts.csproj" />
     <ProjectReference Include="..\Shared\Dreamine.AppSecurity.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Identity\Dreamine.Identity.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\UI.Blazor\Dreamine.UI.Blazor.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\WeddingPlatform.Web\Blazor\Components\LayoutTransitionSurface.razor.css"
+             Link="wwwroot\css\LayoutTransitionSurface.css"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\WeddingPlatform.Web\wwwroot\css\wedding.css"
+             Link="wwwroot\css\WeddingPlatformLayout.css"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

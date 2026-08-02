@@ -27,6 +27,7 @@ namespace WeddingThankYou.ViewModels
 		/// \endif
 		/// </summary>
 		private readonly IGuestbookStorage _storage;
+		private readonly ThankYouLocalization _text;
 		/// <summary>
 		/// \if KO
 		/// <para>entries 값을 보관합니다.</para>
@@ -53,7 +54,11 @@ namespace WeddingThankYou.ViewModels
 		/// <para>The <c>IGuestbookStorage</c> value used for storage.</para>
 		/// \endif
 		/// </param>
-		public GuestbookViewModel(IGuestbookStorage storage) => _storage = storage;
+		public GuestbookViewModel(IGuestbookStorage storage, ThankYouLocalization text)
+		{
+			_storage = storage;
+			_text = text;
+		}
 
 		/// <summary>
 		/// \if KO
@@ -93,14 +98,14 @@ namespace WeddingThankYou.ViewModels
 		/// <para>Stores the default messages value.</para>
 		/// \endif
 		/// </summary>
-		private static readonly string[] DefaultMessages =
-		{
-			"💖 두 분의 앞날에 사랑과 행복이 가득하시길 바랍니다 ✨",
-			"🎉 결혼을 진심으로 축하드립니다! 영원히 함께하세요 💍",
-			"🌸 오늘의 약속이 평생의 기쁨으로 이어지길 바랍니다 💕",
-			"🕊️ 늘 서로를 아끼고 존중하며 행복한 가정을 꾸리시길 🙏",
-			"🌈 두 분의 미래가 언제나 밝고 빛나길 바랍니다 ✨"
-		};
+		private static readonly string[] DefaultMessageKeys =
+		[
+			"public.guestbook.default.1",
+			"public.guestbook.default.2",
+			"public.guestbook.default.3",
+			"public.guestbook.default.4",
+			"public.guestbook.default.5",
+		];
 
 		/// <summary>
 		/// \if KO
@@ -113,7 +118,7 @@ namespace WeddingThankYou.ViewModels
 		public void ApplyDefaultMessage()
 		{
 			if (string.IsNullOrEmpty(Message))
-				Message = DefaultMessages[Random.Shared.Next(DefaultMessages.Length)];
+				Message = _text[DefaultMessageKeys[Random.Shared.Next(DefaultMessageKeys.Length)]];
 		}
 
 		/// <summary>
@@ -189,7 +194,7 @@ namespace WeddingThankYou.ViewModels
 				_entries = list.ToList();
 				LastStatus = string.Empty;
 			}
-			catch { LastStatus = "방명록 데이터를 불러오는 중 오류가 발생했어요."; }
+			catch { LastStatus = _text["public.guestbook.status.load.error"]; }
 		}
 
 		/// <summary>
@@ -227,8 +232,8 @@ namespace WeddingThankYou.ViewModels
 		public async Task AddEntryAsync(string slug, CancellationToken ct = default)
 		{
 			if (IsSaving) return;
-			if (string.IsNullOrWhiteSpace(Name)) { LastStatus = "이름을 입력해주세요."; return; }
-			if (string.IsNullOrWhiteSpace(Message)) { LastStatus = "메시지를 입력해주세요."; return; }
+			if (string.IsNullOrWhiteSpace(Name)) { LastStatus = _text["public.guestbook.status.name.required"]; return; }
+			if (string.IsNullOrWhiteSpace(Message)) { LastStatus = _text["public.guestbook.status.message.required"]; return; }
 
 			var entry = new GuestbookEntry
 			{
@@ -248,9 +253,9 @@ namespace WeddingThankYou.ViewModels
 				Name = string.Empty;
 				Contact = string.Empty;
 				Message = string.Empty;
-				LastStatus = "저장되었습니다. 감사합니다 🙏";
+				LastStatus = _text["public.guestbook.status.save.success"];
 			}
-			catch { LastStatus = "저장 중 오류가 발생했어요."; }
+			catch { LastStatus = _text["public.guestbook.status.save.error"]; }
 			finally { IsSaving = false; }
 		}
 
@@ -292,9 +297,9 @@ namespace WeddingThankYou.ViewModels
 			{
 				var list = await _storage.LoadAsync(slug, ct).ConfigureAwait(false);
 				_entries = list.ToList();
-				LastStatus = "새로고침 완료";
+				LastStatus = _text["public.guestbook.status.reload.success"];
 			}
-			catch { LastStatus = "새로고침 중 오류가 발생했어요."; }
+			catch { LastStatus = _text["public.guestbook.status.reload.error"]; }
 		}
 	}
 
