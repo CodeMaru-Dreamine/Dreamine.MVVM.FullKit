@@ -2299,6 +2299,12 @@ html, body {
     font-family: system-ui, 'Noto Sans KR', sans-serif;
     color: #2d2d2d; background: #fff;
     min-height: 100vh;
+    padding-top: 62px;
+}
+
+#create,
+#my-thankyous {
+    scroll-margin-top: 74px;
 }
 
 /* ── CodeMaru 공통 Nav (통일 규격, 라이트 테마) ── */

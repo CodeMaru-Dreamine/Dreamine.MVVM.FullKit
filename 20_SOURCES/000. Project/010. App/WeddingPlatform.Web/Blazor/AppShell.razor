@@ -1,21 +1,28 @@
 @namespace WeddingPlatform.Blazor
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager Navigation
+@inject WeddingLocalization Text
 
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="@Text.HtmlLanguage">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
     <script>
         (() => {
+            const media = window.matchMedia('(prefers-color-scheme: dark)');
+            const syncSystemClass = event => document.documentElement.classList.toggle('system-dark', event.matches);
+            syncSystemClass(media);
+            media.addEventListener?.('change', syncSystemClass);
             const cookie = document.cookie.split(';').map(x => x.trim()).find(x => x.startsWith('dreamine-theme='));
             const saved = cookie ? decodeURIComponent(cookie.substring('dreamine-theme='.length)) : localStorage.getItem('codemaru-theme');
             if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
         })();
     </script>
-    <link rel="stylesheet" href="/css/wedding.css?v=20260726-theme-palette" />
-    <link rel="stylesheet" href="/WeddingPlatform.Web.styles.css?v=20260726-presentations" />
+    <link rel="stylesheet" href="/css/wedding.css?v=20260802-portal-shell-1" />
+    <link rel="stylesheet" href="/WeddingPlatform.Web.styles.css?v=20260802-portal-shell-1" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet" />
@@ -34,7 +41,7 @@
     <script src="/_framework/blazor.web.js" autostart="false"></script>
     <!-- Leaflet JS — 로컬 파일이라 빠름, CDN과 달리 지연/차단 없음 -->
     <script src="/lib/leaflet/leaflet.min.js"></script>
-    <script src="/_content/Dreamine.UI.Blazor/dreamine-portal.js"></script>
+    <script src="/_content/Dreamine.UI.Blazor/dreamine-portal.js?v=20260802-portal-shell-1"></script>
     <script src="/js/wedding-interop.js?v=20260726-theme-palette"></script>
     <script>
         Blazor.start({
@@ -57,3 +64,14 @@
     </script>
 </body>
 </html>
+
+@code {
+    protected override void OnInitialized()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        if (query.TryGetValue("lang", out var language))
+        {
+            Text.SetLanguage(WeddingLocalization.NormalizeLanguageCode(language.ToString()));
+        }
+    }
+}

@@ -2,9 +2,10 @@
 @using Microsoft.AspNetCore.Components.Web
 @using Microsoft.AspNetCore.WebUtilities
 @inject NavigationManager Navigation
+@inject ThankYouLocalization Text
 
 <!DOCTYPE html>
-<html lang="@DocumentLanguage">
+<html lang="@Text.HtmlLanguage">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,9 +21,9 @@
             if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
         })();
     </script>
-    <link rel="stylesheet" href="/css/wedding.css?v=20260802-layout-parity-3" />
-    <link rel="stylesheet" href="/css/LayoutTransitionSurface.css?v=20260802-layout-parity-3" />
-    <link rel="stylesheet" href="/WeddingThankYou.styles.css?v=20260802-layout-parity-3" />
+    <link rel="stylesheet" href="/css/wedding.css?v=20260802-portal-shell-1" />
+    <link rel="stylesheet" href="/css/LayoutTransitionSurface.css?v=20260802-portal-shell-1" />
+    <link rel="stylesheet" href="/WeddingThankYou.styles.css?v=20260802-portal-shell-1" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet" />
@@ -31,8 +32,8 @@
 <body>
     <WeddingThankYou.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     <script src="/_framework/blazor.web.js" autostart="false"></script>
-    <script src="/_content/Dreamine.UI.Blazor/dreamine-portal.js?v=20260802-chinese-alias-1"></script>
-    <script src="/js/wedding-interop.js?v=20260802-layout-parity-3"></script>
+    <script src="/_content/Dreamine.UI.Blazor/dreamine-portal.js?v=20260802-portal-shell-1"></script>
+    <script src="/js/wedding-interop.js?v=20260802-portal-shell-1"></script>
     <script>
         Blazor.start({
             circuit: {
@@ -54,16 +55,12 @@
 </html>
 
 @code {
-    private string DocumentLanguage
+    protected override void OnInitialized()
     {
-        get
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        if (query.TryGetValue("lang", out var language))
         {
-            var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
-            var requested = ThankYouLocalization.NormalizeLanguageCode(
-                query.TryGetValue("lang", out var value) ? value.ToString() : "ko");
-            return ThankYouLocalization.Languages
-                .FirstOrDefault(item => string.Equals(item.Code, requested, StringComparison.OrdinalIgnoreCase))
-                ?.HtmlLanguage ?? "ko";
+            Text.SetLanguage(ThankYouLocalization.NormalizeLanguageCode(language.ToString()));
         }
     }
 }

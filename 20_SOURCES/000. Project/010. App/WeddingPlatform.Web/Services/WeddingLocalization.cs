@@ -617,6 +617,17 @@ public sealed class WeddingLocalization
     public string HtmlLanguage => Languages.First(x => x.Code == Language).HtmlLanguage;
     public event Action? Changed;
 
+    public static string NormalizeLanguageCode(string? language)
+    {
+        var normalized = language?.Trim().ToLowerInvariant().Replace('_', '-');
+        return normalized switch
+        {
+            "zh" or "zh-cn" or "zh-sg" => "zh-hans",
+            "zh-tw" or "zh-hk" or "zh-mo" => "zh-hant",
+            _ => normalized ?? "ko"
+        };
+    }
+
     public string this[string key]
     {
         get
@@ -629,7 +640,7 @@ public sealed class WeddingLocalization
 
     public void SetLanguage(string? language)
     {
-        var normalized = language?.Trim().ToLowerInvariant().Replace('_', '-');
+        var normalized = NormalizeLanguageCode(language);
         if (!Codes.Contains(normalized)) normalized = "ko";
         if (Language == normalized) return;
         Language = normalized!;

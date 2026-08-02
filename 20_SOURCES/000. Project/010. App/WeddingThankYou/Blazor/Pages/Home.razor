@@ -28,18 +28,19 @@
 
 <div class="wh-page">
     <DreaminePortalHeader BrandName="CodeMaru"
-                          BrandUrl="https://codemaru.co.kr"
+                          BrandUrl="@CodeMaruHomeUrl"
                           BrandImageUrl="/img/Codemaru_Bloom.jpg"
                           BrandLightImageUrl="/img/Codemaru%20Bloom%20Light.jpg"
                           Items="@PortalItems"
                           ActiveKey="thankyou"
                           NavigationAriaLabel="CodeMaru services"
                           ToggleMenuLabel="@Text["nav.toggle"]"
-                          CssClass="wh-topnav"
+                          UseCodeMaruAppearance="true"
+                          Fixed="true"
                           IsAuthenticated="@currentUser.IsAuthenticated"
                           DisplayName="@NavUserLabel"
                           ScreenSettingsLabel="@Text["screen.settings"]"
-                          LoginUrl="@(hasLoadedCurrentUser ? LoginUrl : null)"
+                          LoginUrl="@LoginUrl"
                           LoginLabel="@Text["login"]"
                           AccountUrl="@AccountUrl"
                           AccountLabel="@Text["account"]"
@@ -61,7 +62,7 @@
             <p class="wh-hero__sub">@Text["hero.sub"]</p>
             <div class="wh-hero__actions">
                 <a href="#create" class="wh-btn wh-btn--primary">@Text["create.now"] →</a>
-                <a href="https://codemaru.co.kr" class="wh-btn wh-btn--secondary">@Text["codemaru.home"]</a>
+                <a href="@CodeMaruHomeUrl" class="wh-btn wh-btn--secondary">@Text["codemaru.home"]</a>
                 @if (currentUser.IsAuthenticated)
                 {
                     <a href="#my-thankyous" class="wh-btn wh-btn--secondary">@Text["manage.mine"]</a>
@@ -257,24 +258,27 @@
     private ThankYouCurrentUser currentUser = ThankYouCurrentUser.Anonymous;
     private bool hasLoadedCurrentUser;
 
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string AccountUrl => $"https://codemaru.co.kr/_identity/account?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string SignoutUrl => $"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string LoginUrl => IdentityUrl("login");
+    private string AccountUrl => IdentityUrl("account");
+    private string SignoutUrl => IdentityUrl("signout");
     private string NavUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? Text["account"] : currentUser.DisplayName;
     private string WithLanguage(string path) => $"{path}{(path.Contains('?') ? '&' : '?')}lang={Uri.EscapeDataString(Text.Language)}";
+    private string CodeMaruHomeUrl => WithLanguage("https://codemaru.co.kr");
     private IReadOnlyList<DreaminePortalNavigationItem> PortalItems =>
     [
-        new("home", Text["home"], "https://codemaru.co.kr"),
+        new("home", Text["home"], CodeMaruHomeUrl),
         new("dreamine", "Dreamine", "https://dreamine.kr/", true),
-        new("cardhybrid", "CardHybrid", "https://codemaru.co.kr/cardhybrid"),
-        new("wedding", "Wedding", "https://wedding.codemaru.co.kr"),
-        new("thankyou", "ThankYou", "https://thankyou.codemaru.co.kr/"),
-        new("families", "Families", "https://families.codemaru.co.kr"),
-        new("portfolio", "Portfolio", "https://portfolio.codemaru.co.kr/"),
-        new("cctv", "CCTV", "https://cctvviewer.codemaru.co.kr"),
-        new("shop", "ShopStore", "https://shop.codemaru.co.kr/"),
-        new("contact", Text["contact"], "https://codemaru.co.kr/contact")
+        new("cardhybrid", "CardHybrid", WithLanguage("https://codemaru.co.kr/cardhybrid")),
+        new("wedding", "Wedding", WithLanguage("https://wedding.codemaru.co.kr")),
+        new("thankyou", "ThankYou", WithLanguage("https://thankyou.codemaru.co.kr/")),
+        new("families", "Families", WithLanguage("https://families.codemaru.co.kr")),
+        new("portfolio", "Portfolio", WithLanguage("https://portfolio.codemaru.co.kr/")),
+        new("cctv", "CCTV", WithLanguage("https://cctvviewer.codemaru.co.kr")),
+        new("shop", "ShopStore", WithLanguage("https://shop.codemaru.co.kr/")),
+        new("contact", Text["contact"], WithLanguage("https://codemaru.co.kr/contact"))
     ];
+    private string IdentityUrl(string action) =>
+        $"https://codemaru.co.kr/_identity/{action}?lang={Uri.EscapeDataString(Text.Language)}&returnUrl={Uri.EscapeDataString(Nav.Uri)}";
     private string CurrentUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName)
         ? currentUser.Provider
         : $"{currentUser.DisplayName} ({currentUser.Provider})";

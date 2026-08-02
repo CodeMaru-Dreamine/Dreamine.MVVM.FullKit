@@ -9,9 +9,9 @@ public sealed class ThankYouLocalization
     [
         new("en", "US", "English", "en"), new("es", "ES", "Español", "es"),
         new("fr", "FR", "Français", "fr"), new("it", "IT", "Italiano", "it"),
-        new("pt", "BR", "Português", "pt-BR"), new("ko", "KR", "한국어", "ko"),
+        new("pt", "PT", "Português", "pt"), new("ko", "KR", "한국어", "ko"),
         new("ja", "JP", "日本語", "ja"), new("zh-hans", "CN", "简体中文", "zh-Hans"),
-        new("zh-hant", "TW", "繁體中文", "zh-Hant"), new("vi", "VN", "Tiếng Việt", "vi")
+        new("zh-hant", "HK", "繁體中文", "zh-Hant"), new("vi", "VN", "Tiếng Việt", "vi")
     ];
 
     private static readonly string[] Codes = Languages.Select(x => x.Code).ToArray();
