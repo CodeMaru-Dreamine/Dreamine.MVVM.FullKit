@@ -1,4 +1,24 @@
 @namespace WeddingThankYou.Blazor.Layout
 @inherits LayoutComponentBase
+@inject NavigationManager Navigation
 
-@Body
+<main class="@RootClass">
+    @Body
+</main>
+
+@code {
+    private string RootClass
+    {
+        get
+        {
+            var segments = new Uri(Navigation.Uri).AbsolutePath
+                .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            var isInvitation = (segments.Length == 1
+                    && !string.Equals(segments[0], "admin", StringComparison.OrdinalIgnoreCase))
+                || (segments.Length == 2
+                    && string.Equals(segments[1], "thankyou", StringComparison.OrdinalIgnoreCase));
+
+            return isInvitation ? "w-public-root" : "w-app-route";
+        }
+    }
+}

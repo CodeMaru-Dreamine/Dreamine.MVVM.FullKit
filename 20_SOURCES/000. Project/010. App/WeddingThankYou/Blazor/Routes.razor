@@ -1,6 +1,10 @@
 @namespace WeddingThankYou.Blazor
 @using Microsoft.AspNetCore.Components.Routing
+@using Microsoft.AspNetCore.WebUtilities
 @using WeddingThankYou.Blazor.Layout
+@inject NavigationManager Navigation
+@inject ThankYouLocalization Text
+@implements IDisposable
 
 <Router AppAssembly="@typeof(Routes).Assembly">
     <Found Context="routeData">
@@ -9,8 +13,31 @@
     <NotFound>
         <div class="w-notfound">
             <h1>404</h1>
-            <p>페이지를 찾을 수 없습니다.</p>
-            <a href="/">홈으로</a>
+            <p>@Text["public.notfound.message"]</p>
+            <a href="/">@Text["public.home"]</a>
         </div>
     </NotFound>
 </Router>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Navigation.LocationChanged += OnLocationChanged;
+        ApplyQueryLanguage(Navigation.Uri);
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        ApplyQueryLanguage(args.Location);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ApplyQueryLanguage(string uri)
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(uri).Query);
+        if (query.TryGetValue("lang", out var language) && !string.IsNullOrWhiteSpace(language))
+            Text.SetLanguage(language.ToString());
+    }
+
+    public void Dispose() => Navigation.LocationChanged -= OnLocationChanged;
+}

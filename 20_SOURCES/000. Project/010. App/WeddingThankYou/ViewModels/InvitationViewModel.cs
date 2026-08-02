@@ -248,6 +248,8 @@ namespace WeddingThankYou.ViewModels
 		/// \endif
 		/// </summary>
 		public IReadOnlyList<StoryChapter> StoryChapters => Config?.StoryChapters ?? WeddingStoryChapterDefaults.Create();
+		public IReadOnlyList<PhotoBookPage> PhotoBookPages => Config?.PhotoBookPages ?? WeddingPhotoBookPageDefaults.Create();
+		public IReadOnlyList<CardHighlight> CardHighlights => Config?.CardHighlights ?? WeddingCardHighlightDefaults.Create();
 		/// <summary>
 		/// \if KO
 		/// <para>Theme Name 값을 가져옵니다.</para>
@@ -261,9 +263,41 @@ namespace WeddingThankYou.ViewModels
 				Config?.ThemeName,
 				WeddingThemeCatalog.CustomThemeKey,
 				StringComparison.OrdinalIgnoreCase)
-				? WeddingThemeCatalog.DefaultThemeKey
+			&& Config?.HasPremiumPlan == true
+				? WeddingThemeCatalog.CustomThemeKey
 				: WeddingThemeCatalog.Instance.Find(Config?.ThemeName)?.Key
 					?? WeddingThemeCatalog.DefaultThemeKey;
+
+		/// <summary>공개 감사장에 적용할 검증된 사용자 테마 CSS 변수입니다.</summary>
+		public IReadOnlyDictionary<string, string> ThemeCssVariables
+		{
+			get
+			{
+				if (!string.Equals(ThemeName, WeddingThemeCatalog.CustomThemeKey, StringComparison.OrdinalIgnoreCase))
+				{
+					return new Dictionary<string, string>();
+				}
+
+				var palette = WeddingThemePaletteGenerator.ResolveForRendering(Config?.CustomTheme);
+				return new Dictionary<string, string>(StringComparer.Ordinal)
+				{
+					["--w-primary"] = palette.Primary,
+					["--w-dark"] = palette.Dark,
+					["--w-secondary"] = palette.Accent,
+					["--w-accent"] = palette.Accent,
+					["--w-text"] = palette.Text,
+					["--w-muted-text"] = palette.MutedText,
+					["--w-bg"] = palette.Background,
+					["--w-panel-bg"] = palette.PanelBackground,
+					["--w-border"] = palette.Border,
+					["--w-button-bg"] = palette.ButtonBackground,
+					["--w-button-text"] = palette.ButtonText,
+					["--w-nav-bg"] = palette.PanelBackground,
+					["--w-nav-text"] = palette.Text,
+					["--w-shadow"] = $"0 4px 24px {palette.Dark}1f",
+				};
+			}
+		}
 		/// <summary>
 		/// \if KO
 		/// <para>Thank You Style 값을 가져옵니다.</para>
@@ -290,7 +324,13 @@ namespace WeddingThankYou.ViewModels
 		/// <para>Gets the ordered sections value.</para>
 		/// \endif
 		/// </summary>
-		public IReadOnlyList<string> OrderedSections => WeddingSectionOrderCatalog.NormalizeThankYouOrder(Config?.SectionOrder);
+		public IReadOnlyList<string> OrderedSections => WeddingSectionOrderCatalog
+			.NormalizeThankYouOrder(Config?.SectionOrder)
+			.Where(section => string.Equals(section, "hero", StringComparison.OrdinalIgnoreCase)
+				|| Config?.SectionVisibility is null
+				|| !Config.SectionVisibility.TryGetValue(section, out var visible)
+				|| visible)
+			.ToArray();
 		/// <summary>
 		/// \if KO
 		/// <para>Ceremony Note Html 값을 가져옵니다.</para>
@@ -376,6 +416,30 @@ namespace WeddingThankYou.ViewModels
 		/// </summary>
 		public bool HasCustomHeroPanelPosition =>
 			Config?.HeroPanelPlacement.HasDesktop == true || Config?.HeroPanelPlacement.HasMobile == true;
+
+		/// <summary>카드·포토북 표지 상단 문구에 적용할 독립 드래그 위치 스타일입니다.</summary>
+		public string HeroTopPanelStyle => BuildFloatingStyleWithDefaults(
+			Config?.HeroTopPanelPlacement ?? new WeddingFloatingPosition(),
+			ResolveHorizontalPercent(HeroPanelHorizontalDesktop),
+			ResolveVerticalPercent(HeroPanelVerticalDesktop),
+			ResolveHorizontalPercent(HeroPanelHorizontalMobile),
+			ResolveVerticalPercent(HeroPanelVerticalMobile));
+
+		/// <summary>카드·포토북 표지 하단 날짜/장소 문구에 적용할 드래그 위치 스타일입니다.</summary>
+		public string HeroBottomPanelStyle => BuildFloatingStyleWithDefaults(
+			Config?.HeroBottomPanelPlacement ?? new WeddingFloatingPosition(),
+			50,
+			85,
+			50,
+			85);
+
+		/// <summary>카드·포토북 표지 상단 문구에 사용자 지정 위치가 있는지 여부입니다.</summary>
+		public bool HasCustomHeroTopPanelPosition =>
+			Config?.HeroTopPanelPlacement?.HasDesktop == true || Config?.HeroTopPanelPlacement?.HasMobile == true;
+
+		/// <summary>카드·포토북 표지 하단 문구에 사용자 지정 위치가 있는지 여부입니다.</summary>
+		public bool HasCustomHeroBottomPanelPosition =>
+			Config?.HeroBottomPanelPlacement.HasDesktop == true || Config?.HeroBottomPanelPlacement.HasMobile == true;
 
 		/// <summary>
 		/// \if KO
@@ -916,6 +980,34 @@ namespace WeddingThankYou.ViewModels
 			}
 			return string.Concat(parts);
 		}
+
+		private static string BuildFloatingStyleWithDefaults(
+			WeddingFloatingPosition position,
+			double defaultDesktopX,
+			double defaultDesktopY,
+			double defaultMobileX,
+			double defaultMobileY)
+		{
+			var desktopX = position.HasDesktop ? ClampPercent(position.DesktopX) : defaultDesktopX;
+			var desktopY = position.HasDesktop ? ClampPercent(position.DesktopY) : defaultDesktopY;
+			var mobileX = position.HasMobile ? ClampPercent(position.MobileX) : defaultMobileX;
+			var mobileY = position.HasMobile ? ClampPercent(position.MobileY) : defaultMobileY;
+			return $"--w-drag-x:{desktopX:0.##}%;--w-drag-y:{desktopY:0.##}%;--w-drag-mobile-x:{mobileX:0.##}%;--w-drag-mobile-y:{mobileY:0.##}%;";
+		}
+
+		private static double ResolveHorizontalPercent(string? value) => value?.Trim().ToLowerInvariant() switch
+		{
+			"left" => 15,
+			"right" => 85,
+			_ => 50,
+		};
+
+		private static double ResolveVerticalPercent(string? value) => value?.Trim().ToLowerInvariant() switch
+		{
+			"middle" => 50,
+			"bottom" => 85,
+			_ => 15,
+		};
 
 		/// <summary>
 		/// \if KO

@@ -1,0 +1,310 @@
+/*
+ * Tenant-admin contrast refinements.
+ *
+ * WeddingPlatformLayout.css supplies the shared Wedding visual language.  This
+ * file is intentionally loaded after it and only strengthens the dark/system
+ * admin surface; invitation/public layout colors are not affected.
+ */
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin {
+    --wa-bg: #0b1220;
+    --wa-panel: #111b2d;
+    --wa-panel-soft: #17243a;
+    --wa-panel-muted: #0e192b;
+    --wa-input: #0d1728;
+    --wa-text: #e0e9f5;
+    --wa-strong: #f7f9fc;
+    --wa-muted: #bdc9da;
+    --wa-border: #4a5f7d;
+    --wa-hover: #223551;
+    --wa-active: #294364;
+    --wa-focus: #8dbcf0;
+    --wa-gold-readable: #e6bd87;
+}
+
+/* Section-order rows: hidden/fixed state is communicated by styling, not by
+   fading the whole row (which also faded its controls below readable contrast). */
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-section-order-item {
+    color: var(--wa-text);
+    background: var(--wa-panel-soft);
+    border-color: var(--wa-border);
+    opacity: 1;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-section-order-item.is-fixed {
+    color: var(--wa-text);
+    background: #142036;
+    opacity: 1;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-section-order-item.is-hidden {
+    color: var(--wa-text);
+    background: repeating-linear-gradient(
+        135deg,
+        #17243a 0 8px,
+        #142036 8px 16px
+    );
+    border-color: #536984;
+    opacity: 1;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-section-order-item__label {
+    color: var(--wa-strong);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-section-order-item.is-hidden .w-section-order-item__label {
+    color: #c7d2e2;
+    text-decoration-color: #91a2b9;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-section-order-item__icon {
+    color: #f0ca96;
+    background: #243653;
+    border: 1px solid #536984;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-section-order-item__actions .w-hint {
+    color: #c7d2e2;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-section-order-item__actions .w-btn {
+    color: #edf3fa !important;
+    background: #1d2f49 !important;
+    border-color: #607795 !important;
+    opacity: 1;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-section-order-item__actions .w-btn:hover:not(:disabled),
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-section-order-item__actions .w-btn:focus-visible {
+    color: #ffffff !important;
+    background: #294564 !important;
+    border-color: #8dbcf0 !important;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-section-order-item__actions .w-btn--muted {
+    color: #ffe0ad !important;
+    background: #40331f !important;
+    border-color: #a77d4a !important;
+}
+
+/* Hero-panel and music-button position cards. */
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-drag-control-card {
+    color: var(--wa-text);
+    background: var(--wa-panel-soft);
+    border-color: var(--wa-border);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-drag-control-card > strong {
+    color: var(--wa-strong);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-drag-control-card > span,
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-drag-control-device > span {
+    color: #c7d2e2;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-drag-control-card .w-btn {
+    color: #edf3fa;
+    background: #1d2f49;
+    border-color: #607795;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-drag-control-card .w-btn:hover:not(:disabled),
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-drag-control-card .w-btn:focus-visible {
+    color: #fff;
+    background: #294564;
+    border-color: #8dbcf0;
+}
+
+/* Preset and custom theme controls use neutral admin tokens.  Invitation theme
+   tokens remain represented only by their swatches. */
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-theme-btn {
+    color: var(--wa-text);
+    background: var(--wa-panel-soft);
+    border-color: var(--wa-border);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-theme-btn.active {
+    color: var(--wa-strong);
+    border-color: var(--wa-gold-readable);
+    box-shadow: 0 0 0 2px rgba(230, 189, 135, .2);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-theme-btn:disabled {
+    color: #b7c4d6;
+    opacity: .78;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme {
+    color: var(--wa-text);
+    background: var(--wa-panel);
+    border-color: var(--wa-border);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme.is-active {
+    border-color: var(--wa-gold-readable);
+    box-shadow: 0 0 0 2px rgba(230, 189, 135, .2);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__head strong,
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__generator-copy strong {
+    color: var(--wa-strong);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__head .w-hint,
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__generator-copy .w-hint,
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__details > .w-hint {
+    color: var(--wa-muted);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__generator {
+    color: var(--wa-text);
+    background: #14223a;
+    border-color: #526987;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__base,
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__details,
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__colors label {
+    color: var(--wa-text);
+    background: #0f1a2c;
+    border-color: var(--wa-border);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__base > span,
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__colors label > span {
+    color: #c5d1e1;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme code {
+    color: #eef3fa;
+    background: #182740;
+    border-radius: .3rem;
+    padding: .12rem .3rem;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__palette {
+    background: #0f1a2c;
+    border-color: #607795;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__details summary {
+    color: var(--wa-strong);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__details[open] summary {
+    color: var(--wa-strong);
+    background: #17243a;
+    border-color: var(--wa-border);
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__contrast .is-good {
+    color: #c8efd3;
+    background: #183a28;
+    border: 1px solid #3d7252;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-custom-theme__contrast .is-warning {
+    color: #ffdbb8;
+    background: #4a2e18;
+    border: 1px solid #98643b;
+}
+
+/* Keep keyboard navigation obvious on the compact controls above. */
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin :is(
+    .w-section-order-item__actions .w-btn,
+    .w-drag-control-card .w-btn,
+    .w-theme-btn,
+    .w-custom-theme summary,
+    .w-custom-theme input
+):focus-visible {
+    outline: 2px solid var(--wa-focus);
+    outline-offset: 2px;
+}
+
+/* Locked layouts and disabled controls must remain legible in dark/system mode.
+   Preserve the control shape instead of fading the whole subtree. */
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-layout-option.is-locked {
+    color: var(--wa-text);
+    background: var(--wa-panel-soft);
+    border-color: var(--wa-border);
+    opacity: 1;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin :is(.w-btn, button):disabled {
+    color: #b7c4d6;
+    background: #1a2638;
+    border-color: #52657f;
+    opacity: 1;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-btn--primary:not(:disabled) {
+    color: #211d1a;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-local-file:has(.w-local-file__native:disabled) {
+    color: #b7c4d6;
+    background: #1a2638;
+    border-color: #52657f;
+    opacity: 1;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .w-admin .w-local-file:has(.w-local-file__native:disabled) .w-local-file__button {
+    color: #c4cfdd;
+    background: #2a374a;
+}
+
+/* Super-admin controls use the same readable system-dark palette. */
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .wedding-admin-shell :is(
+    .wedding-admin-nav__item,
+    .wedding-admin-action-button,
+    .wedding-admin-icon-button,
+    .wedding-admin-icon-link,
+    .w-label,
+    .w-sa-slug
+) {
+    color: #e7eef8;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .wedding-admin-shell :is(
+    .wedding-admin-header span,
+    .wedding-admin-card p,
+    .wedding-admin-detail-list dt,
+    .wedding-admin-checkline,
+    .wedding-admin-permission small
+) {
+    color: #afbdd1;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .wedding-admin-shell .wedding-admin-badge.is-success {
+    color: #bce8c9;
+    background: #193729;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .wedding-admin-shell .wedding-admin-badge.is-muted {
+    color: #d1dbea;
+    background: #27354a;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .wedding-admin-shell .wedding-admin-stat-card__icon.is-green,
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .wedding-admin-shell .wedding-admin-stat-card__icon.is-sage {
+    color: #bce8c9;
+    background: #193729;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .wedding-admin-shell :is(
+    .wedding-admin-action-button.is-primary,
+    .wedding-admin-primary-button
+) {
+    color: #172033;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .wedding-admin-shell :is(
+    .wedding-admin-action-button,
+    .wedding-admin-icon-button
+):disabled {
+    color: #9faec2;
+    background: #1a2638;
+    border-color: #52657f;
+    opacity: 1;
+}

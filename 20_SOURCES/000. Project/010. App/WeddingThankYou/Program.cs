@@ -146,6 +146,7 @@ public static class Program
                 });
 
                 services.AddScoped<ThankYouUserContext>();
+                services.AddScoped<ThankYouLocalization>();
             };
 
             options.AddDreamineIdentity(authOptions, usersDbPath);

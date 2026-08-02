@@ -316,9 +316,32 @@ public static class ThankYouDesignCatalog
         config.UnlockedLayoutModes ??= new();
         config.UnlockedThemeKeys ??= new();
         config.SectionOrder ??= WeddingSectionOrderCatalog.ThankYouRecommendedOrder.ToList();
+        config.SectionVisibility ??= new(StringComparer.OrdinalIgnoreCase);
         config.HeroPanelPlacement ??= new WeddingFloatingPosition();
+        config.HeroTopPanelPlacement ??= CloneFloatingPosition(config.HeroPanelPlacement);
+        config.HeroBottomPanelPlacement ??= new WeddingFloatingPosition();
         config.MusicButtonPlacement ??= new WeddingFloatingPosition();
+        config.CustomTheme ??= new CustomWeddingThemeSettings();
+        config.HeroDesktopCrop ??= new HeroImageCropRegion();
+        config.HeroMobileCrop ??= new HeroImageCropRegion();
+        config.CeremonyNote = NormalizeCeremonyNoteLineBreaks(config.CeremonyNote);
+        NormalizeCustomTheme(config.CustomTheme);
+        NormalizeHeroImagePresentation(config);
         config.StoryChapters = WeddingStoryChapterDefaults.Normalize(config.StoryChapters);
+        config.PhotoBookPages = WeddingPhotoBookPageDefaults.Normalize(config.PhotoBookPages);
+        config.CardHighlights = WeddingCardHighlightDefaults.Normalize(config.CardHighlights);
+        // Wedding의 기본 카드는 info/details/gift를 대상으로 하지만 감사장은
+        // message/gallery/guestbook가 대응 섹션이다. 신규·기본 데이터만 의미에 맞게 이관한다.
+        foreach (var highlight in config.CardHighlights)
+        {
+            highlight.SectionKey = highlight.SectionKey switch
+            {
+                "info" => "message",
+                "details" => "gallery",
+                "gift" => "guestbook",
+                _ => highlight.SectionKey,
+            };
+        }
 
         // 테마
         var themeKey = !string.IsNullOrWhiteSpace(config.ThemeName) ? config.ThemeName : "rose";
@@ -328,5 +351,114 @@ public static class ThankYouDesignCatalog
         var mode = ResolveLayoutMode(config.ThankYouStyle);
         config.ThankYouStyle = ToLegacyLayoutKey(mode);
         config.SectionOrder = WeddingSectionOrderCatalog.NormalizeThankYouOrder(config.SectionOrder);
+        config.SectionVisibility = config.SectionVisibility
+            .Where(pair => config.SectionOrder.Contains(pair.Key, StringComparer.OrdinalIgnoreCase)
+                && !string.Equals(pair.Key, "hero", StringComparison.OrdinalIgnoreCase))
+            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static WeddingFloatingPosition CloneFloatingPosition(WeddingFloatingPosition source) => new()
+    {
+        DesktopX = source.DesktopX,
+        DesktopY = source.DesktopY,
+        MobileX = source.MobileX,
+        MobileY = source.MobileY,
+    };
+
+    private static string NormalizeCeremonyNoteLineBreaks(string? value)
+    {
+        // Older records stored textarea line breaks as numeric HTML entities. Decode only
+        // CR/LF entities here so HTML ceremony-note content otherwise remains untouched.
+        var normalized = (value ?? string.Empty)
+            .Replace("&#10;", "\n", StringComparison.OrdinalIgnoreCase)
+            .Replace("&#xA;", "\n", StringComparison.OrdinalIgnoreCase)
+            .Replace("&#x0A;", "\n", StringComparison.OrdinalIgnoreCase)
+            .Replace("&#13;", "\r", StringComparison.OrdinalIgnoreCase)
+            .Replace("&#xD;", "\r", StringComparison.OrdinalIgnoreCase)
+            .Replace("&#x0D;", "\r", StringComparison.OrdinalIgnoreCase);
+
+        return normalized
+            .Replace("\r\n", "\n", StringComparison.Ordinal)
+            .Replace('\r', '\n');
+    }
+
+    private static void NormalizeHeroImagePresentation(TenantConfig config)
+    {
+        config.HeroDesktopFit = NormalizeHeroFit(config.HeroDesktopFit);
+        config.HeroMobileFit = NormalizeHeroFit(config.HeroMobileFit);
+        config.HeroDesktopFocusX = NormalizePercent(config.HeroDesktopFocusX);
+        config.HeroDesktopFocusY = NormalizePercent(config.HeroDesktopFocusY);
+        config.HeroMobileFocusX = NormalizePercent(config.HeroMobileFocusX);
+        config.HeroMobileFocusY = NormalizePercent(config.HeroMobileFocusY);
+        NormalizeCropRegion(config.HeroDesktopCrop);
+        NormalizeCropRegion(config.HeroMobileCrop);
+    }
+
+    private static string NormalizeHeroFit(string? value) =>
+        string.Equals(value, "cover", StringComparison.OrdinalIgnoreCase) ? "cover" : "contain";
+
+    private static double NormalizePercent(double value) =>
+        double.IsFinite(value) ? Math.Clamp(value, 0, 100) : 50;
+
+    private static void NormalizeCropRegion(HeroImageCropRegion crop)
+    {
+        crop.X = double.IsFinite(crop.X) ? Math.Clamp(crop.X, 0, 95) : 0;
+        crop.Y = double.IsFinite(crop.Y) ? Math.Clamp(crop.Y, 0, 95) : 0;
+        crop.Width = double.IsFinite(crop.Width) ? Math.Clamp(crop.Width, 5, 100 - crop.X) : 100 - crop.X;
+        crop.Height = double.IsFinite(crop.Height) ? Math.Clamp(crop.Height, 5, 100 - crop.Y) : 100 - crop.Y;
+    }
+
+    /// <summary>
+    /// 기존 5색 JSON과 새 10토큰 JSON을 모두 안전한 6자리 HEX 값으로 정규화합니다.
+    /// 이미 유효한 사용자 색은 보존하고, 없거나 잘못된 확장 토큰만 대표색 기반
+    /// WCAG 팔레트 값으로 채웁니다.
+    /// </summary>
+    public static void NormalizeCustomTheme(CustomWeddingThemeSettings custom)
+    {
+        ArgumentNullException.ThrowIfNull(custom);
+
+        var baseFallback = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.Primary,
+            WeddingThemePaletteGenerator.DefaultBaseColor);
+        var baseColor = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.BaseColor,
+            baseFallback);
+        var generated = WeddingThemePaletteGenerator.Generate(baseColor);
+
+        var name = custom.Name?.Trim() ?? "";
+        custom.Name = string.IsNullOrWhiteSpace(name)
+            ? "나만의 테마"
+            : name[..Math.Min(name.Length, 40)];
+        custom.BaseColor = baseColor;
+        custom.Primary = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.Primary,
+            generated.Primary);
+        custom.Dark = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.Dark,
+            generated.Dark);
+        custom.Accent = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.Accent,
+            generated.Accent);
+        custom.Text = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.Text,
+            generated.Text);
+        custom.MutedText = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.MutedText,
+            generated.MutedText);
+        custom.Background = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.Background,
+            generated.Background);
+        custom.PanelBackground = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.PanelBackground,
+            generated.PanelBackground);
+        custom.ButtonBackground = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.ButtonBackground,
+            generated.ButtonBackground);
+        custom.ButtonText = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.ButtonText,
+            generated.ButtonText);
+        custom.Border = WeddingThemePaletteGenerator.NormalizeHexColor(
+            custom.Border,
+            generated.Border);
     }
 }

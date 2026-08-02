@@ -1,13 +1,28 @@
 @namespace WeddingThankYou.Blazor
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager Navigation
 
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="@DocumentLanguage">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="/css/wedding.css?v=20260706" />
+    <script>
+        (() => {
+            const media = window.matchMedia('(prefers-color-scheme: dark)');
+            const syncSystemClass = event => document.documentElement.classList.toggle('system-dark', event.matches);
+            syncSystemClass(media);
+            media.addEventListener?.('change', syncSystemClass);
+            const cookie = document.cookie.split(';').map(x => x.trim()).find(x => x.startsWith('dreamine-theme='));
+            const saved = cookie ? decodeURIComponent(cookie.substring('dreamine-theme='.length)) : localStorage.getItem('codemaru-theme');
+            if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/wedding.css?v=20260802-layout-parity-3" />
+    <link rel="stylesheet" href="/css/LayoutTransitionSurface.css?v=20260802-layout-parity-3" />
+    <link rel="stylesheet" href="/WeddingThankYou.styles.css?v=20260802-layout-parity-3" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600&display=swap" rel="stylesheet" />
@@ -16,7 +31,8 @@
 <body>
     <WeddingThankYou.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     <script src="/_framework/blazor.web.js" autostart="false"></script>
-    <script src="/js/wedding-interop.js"></script>
+    <script src="/_content/Dreamine.UI.Blazor/dreamine-portal.js?v=20260802-chinese-alias-1"></script>
+    <script src="/js/wedding-interop.js?v=20260802-layout-parity-3"></script>
     <script>
         Blazor.start({
             circuit: {
@@ -36,3 +52,18 @@
     </script>
 </body>
 </html>
+
+@code {
+    private string DocumentLanguage
+    {
+        get
+        {
+            var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+            var requested = ThankYouLocalization.NormalizeLanguageCode(
+                query.TryGetValue("lang", out var value) ? value.ToString() : "ko");
+            return ThankYouLocalization.Languages
+                .FirstOrDefault(item => string.Equals(item.Code, requested, StringComparison.OrdinalIgnoreCase))
+                ?.HtmlLanguage ?? "ko";
+        }
+    }
+}

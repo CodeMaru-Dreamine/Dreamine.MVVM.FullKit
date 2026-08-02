@@ -239,7 +239,7 @@
                                             @onclick="ToggleLayoutPicker">
                                         <span class="w-layout-combobox__value">
                                             <small>@Text["admin.design.select"]</small>
-                                            <strong>@(selectedLayout?.Label ?? Text["admin.design.none"])</strong>
+                                            <strong>@(selectedLayout is null ? Text["admin.design.none"] : LocalizedLayoutLabel(selectedLayout))</strong>
                                         </span>
                                         <span class="w-layout-combobox__chevron" aria-hidden="true">@(_layoutPickerOpen ? "▴" : "▾")</span>
                                     </button>
@@ -252,12 +252,12 @@
                                                    class="w-input w-layout-combobox__search"
                                                    type="search"
                                                    autocomplete="off"
-                                                   placeholder="이름, 설명, 등급으로 검색"
+                                                   placeholder="@Text["admin.design.search.placeholder"]"
                                                    @bind="_layoutSearch"
                                                    @bind:event="oninput"
                                                    @onkeydown="OnLayoutSearchKeyDown" />
 
-                                            <div id="w-layout-options" class="w-layout-options" role="listbox" aria-label="레이아웃 검색 결과">
+                                            <div id="w-layout-options" class="w-layout-options" role="listbox" aria-label="@Text["admin.design.search.results"]">
                                                 @if (matchingLayouts.Length == 0)
                                                 {
                                                     <p class="w-layout-options__empty">@Text["admin.design.noresults"]</p>
@@ -281,8 +281,8 @@
                                                                 @onclick="() => SelectLayoutCandidate(descriptor)">
                                                             <span class="w-style-card__preview w-style-card__preview--@descriptor.Key" aria-hidden="true"></span>
                                                             <span class="w-layout-option__meta">
-                                                                <strong>@descriptor.Label</strong>
-                                                                <small>@descriptor.Description</small>
+                                                                <strong>@LocalizedLayoutLabel(descriptor)</strong>
+                                                                <small>@LocalizedLayoutDescription(descriptor)</small>
                                                             </span>
                                                             <span class="w-layout-option__badges">
                                                                 @if (isApplied)
@@ -324,36 +324,36 @@
                                     <article class="w-layout-detail" aria-live="polite">
                                         <div class="w-layout-detail__visual w-style-card__preview w-style-card__preview--@selectedLayout.Key"
                                              role="img"
-                                             aria-label="@selectedLayout.Label 레이아웃 구성 미리보기"></div>
+                                             aria-label="@LocalizedLayoutLabel(selectedLayout)"></div>
 
                                         <div class="w-layout-detail__content">
                                             <div class="w-layout-detail__badges">
                                                 <span class="w-layout-badge">@LayoutTierLabel(selectedLayout)</span>
-                                                <span class="w-layout-badge">@(Vm.IsBuiltInLayout(selectedLayout.Key) ? "기본 제공" : "승인 레이아웃")</span>
+                                                <span class="w-layout-badge">@(Vm.IsBuiltInLayout(selectedLayout.Key) ? Text["admin.design.builtin"] : Text["admin.design.approved"])</span>
                                                 <span class="w-layout-badge">v@(selectedLayout.Version)</span>
                                                 @if (isSelectedLayoutApplied)
                                                 {
-                                                    <span class="w-layout-badge w-layout-badge--active">현재 적용됨</span>
+                                                    <span class="w-layout-badge w-layout-badge--active">@Text["admin.design.current"]</span>
                                                 }
                                             </div>
-                                            <h4>@selectedLayout.Label</h4>
-                                            <p>@selectedLayout.Description</p>
+                                            <h4>@LocalizedLayoutLabel(selectedLayout)</h4>
+                                            <p>@LocalizedLayoutDescription(selectedLayout)</p>
 
                                             <dl class="w-layout-detail__facts">
                                                 <div>
-                                                    <dt>화면 방식</dt>
-                                                    <dd>@(selectedLayout.UsesBottomNavigation ? "하단 메뉴 탐색" : "세로 스크롤")</dd>
+                                                    <dt>@Text["admin.design.screen.mode"]</dt>
+                                                    <dd>@(selectedLayout.UsesBottomNavigation ? Text["admin.design.bottom.nav"] : Text["admin.design.vertical.scroll"])</dd>
                                                 </div>
                                                 <div>
-                                                    <dt>지원 섹션</dt>
-                                                    <dd>@(selectedLayout.SupportedSections.Count)개</dd>
+                                                    <dt>@Text["admin.design.supported.sections"]</dt>
+                                                    <dd>@string.Format(Text["admin.super.layout.count"], selectedLayout.SupportedSections.Count)</dd>
                                                 </div>
                                             </dl>
 
                                             @if (availableVersions.Count > 1)
                                             {
                                                 <label class="w-label">
-                                                    사용할 버전
+                                                    @Text["admin.design.use.version"]
                                                     <select class="w-input"
                                                             value="@selectedLayout.Version"
                                                             @onchange="e => SelectLayoutVersion(selectedLayout.Key, e)">
@@ -380,9 +380,7 @@
                                                         StringComparison.Ordinal))
                                                 {
                                                     <p class="w-layout-detail__notice">
-                                                        현재 청첩장은 v@(appliedLayout.Version)을 계속 사용합니다.
-                                                        사용 가능한 활성 버전 v@(activeVersion)이 있지만 자동으로
-                                                        바뀌지 않습니다. 위에서 새 버전을 선택한 뒤 업데이트하세요.
+                                                        @string.Format(Text["admin.design.version.notice"], appliedLayout.Version, activeVersion)
                                                     </p>
                                                 }
                                             }
@@ -393,11 +391,9 @@
                                                     <input type="checkbox"
                                                            @bind="Vm.Config!.DesignSettings.FollowActiveLayoutVersion" />
                                                     <span>
-                                                        <strong>새 활성 버전 자동 적용</strong>
+                                                        <strong>@Text["admin.design.follow.active"]</strong>
                                                         <small>
-                                                            기본은 현재 v@(selectedLayout.Version)에 고정됩니다.
-                                                            이 옵션을 직접 켠 경우에만 이후 승인된 활성 버전과
-                                                            슈퍼관리자 롤백을 자동으로 따라갑니다.
+                                                            @string.Format(Text["admin.design.follow.active.hint"], selectedLayout.Version)
                                                         </small>
                                                     </span>
                                                 </label>
@@ -405,18 +401,17 @@
                                             else
                                             {
                                                 <p class="w-layout-detail__notice">
-                                                    적용하면 v@(selectedLayout.Version)에 고정됩니다.
-                                                    새 버전 자동 적용은 적용 후 별도로 켤 수 있습니다.
+                                                    @string.Format(Text["admin.design.apply.pin.hint"], selectedLayout.Version)
                                                 </p>
                                             }
 
                                             @if (!selectedLayout.IsImplemented)
                                             {
-                                                <p class="w-layout-detail__notice">이 레이아웃은 아직 화면 렌더러가 준비되지 않았습니다.</p>
+                                                <p class="w-layout-detail__notice">@Text["admin.design.renderer.missing"]</p>
                                             }
                                             else if (!canUseSelectedLayout)
                                             {
-                                                <p class="w-layout-detail__notice">Premium 플랜을 활성화하면 모든 Premium 레이아웃을 사용할 수 있습니다.</p>
+                                                <p class="w-layout-detail__notice">@Text["admin.design.premium.required"]</p>
                                             }
                                             else if (!string.IsNullOrWhiteSpace(_layoutApplyMessage))
                                             {
@@ -441,7 +436,7 @@
                             <div class="w-admin-section-title-row">
                                 <div>
                                     <h3 class="w-admin__section-h">@Text["admin.design.sections"]</h3>
-                                    <p class="w-hint">모든 레이아웃에서 표시 가능한 섹션이 이 순서를 따릅니다. 홈은 레이아웃의 대표 영역이라 항상 첫 화면으로 유지됩니다.</p>
+                                    <p class="w-hint">@Text["admin.design.sections.hint"]</p>
                                 </div>
                                 <button type="button" class="w-btn w-btn--sm" @onclick="ResetSectionOrder">@Text["admin.design.recommended"]</button>
                             </div>
@@ -463,7 +458,7 @@
                                                 <button type="button" class="w-btn w-btn--sm" @onclick="() => MoveSection(section, 1)">@Text["admin.design.down"]</button>
                                                 <button type="button"
                                                         class="w-btn w-btn--sm @(isSectionVisible ? "" : "w-btn--muted")"
-                                                        title="@(isSectionVisible ? "이 섹션을 청첩장에서 숨깁니다" : "이 섹션을 청첩장에 다시 표시합니다")"
+                                                        title="@(isSectionVisible ? Text["admin.design.section.hide.title"] : Text["admin.design.section.show.title"])"
                                                         @onclick="() => ToggleSectionVisibility(section)">
                                                     @(isSectionVisible ? Text["admin.design.hide"] : Text["admin.design.show"])
                                                 </button>
@@ -487,7 +482,7 @@
                                             @onclick="() => SelectTheme(t.Key)">
                                         <span class="w-theme-swatch"></span>
                                         <span>
-                                            @t.DisplayName
+                                            @Text[$"theme.{t.Key}"]
                                             @if (!t.IsImplemented)
                                             {
                                                 <small class="w-layout-lock">@Text["admin.design.preparing"]</small>
@@ -504,8 +499,8 @@
                             <div class="w-custom-theme @(Vm.Config!.DesignSettings.ThemeKey == WeddingThemeCatalog.CustomThemeKey ? "is-active" : "")">
                                 <div class="w-custom-theme__head">
                                     <div>
-                                        <strong>나만의 색상 테마</strong>
-                                        <p class="w-hint">레이아웃과 별도로 저장되므로 레이아웃 버전을 변경해도 색상은 유지됩니다.</p>
+                                        <strong>@Text["admin.design.custom.theme"]</strong>
+                                        <p class="w-hint">@Text["admin.design.custom.theme.hint"]</p>
                                     </div>
                                     <span class="w-layout-badge">Premium</span>
                                 </div>
@@ -514,21 +509,18 @@
                                 {
                                     var customPalette = CurrentCustomPalette;
 
-                                    <label class="w-label">테마 이름</label>
+                                    <label class="w-label">@Text["admin.design.theme.name"]</label>
                                     <input class="w-input"
                                            maxlength="40"
                                            @bind="Vm.Config.DesignSettings.CustomTheme.Name" />
 
                                     <div class="w-custom-theme__generator">
                                         <div class="w-custom-theme__generator-copy">
-                                            <strong>대표 색상으로 자동 맞춤</strong>
-                                            <p class="w-hint">
-                                                색상 하나만 고르면 배경·본문·버튼·경계선을 읽기 편한 대비로 자동 보정합니다.
-                                                자동 보정 후에도 아래에서 원하는 색만 다시 바꿀 수 있습니다.
-                                            </p>
+                                            <strong>@Text["admin.design.auto.palette"]</strong>
+                                            <p class="w-hint">@Text["admin.design.auto.palette.hint"]</p>
                                         </div>
                                         <label class="w-custom-theme__base">
-                                            <span>대표 색상</span>
+                                            <span>@Text["admin.design.primary.color"]</span>
                                             <input type="color"
                                                    value="@customPalette.BaseColor"
                                                    @oninput="OnThemeBaseColorChanged" />
@@ -537,92 +529,92 @@
                                         <button type="button"
                                                 class="w-btn w-btn--sm"
                                                 @onclick="ApplyAutomaticThemePalette">
-                                            자동 팔레트 다시 만들기
+                                            @Text["admin.design.palette.rebuild"]
                                         </button>
                                     </div>
 
                                     <div class="w-custom-theme__palette"
-                                         aria-label="현재 사용자 정의 색상 팔레트">
-                                        <span style="--w-custom-swatch:@customPalette.Primary" title="포인트"></span>
-                                        <span style="--w-custom-swatch:@customPalette.Accent" title="강조"></span>
-                                        <span style="--w-custom-swatch:@customPalette.Background" title="배경"></span>
-                                        <span style="--w-custom-swatch:@customPalette.PanelBackground" title="표면"></span>
-                                        <span style="--w-custom-swatch:@customPalette.Text" title="본문"></span>
-                                        <span style="--w-custom-swatch:@customPalette.MutedText" title="보조 본문"></span>
+                                         aria-label="@Text["admin.design.palette.aria"]">
+                                        <span style="--w-custom-swatch:@customPalette.Primary" title="@Text["admin.design.color.primary"]"></span>
+                                        <span style="--w-custom-swatch:@customPalette.Accent" title="@Text["admin.design.color.accent"]"></span>
+                                        <span style="--w-custom-swatch:@customPalette.Background" title="@Text["admin.design.color.background"]"></span>
+                                        <span style="--w-custom-swatch:@customPalette.PanelBackground" title="@Text["admin.design.color.surface"]"></span>
+                                        <span style="--w-custom-swatch:@customPalette.Text" title="@Text["admin.design.color.text"]"></span>
+                                        <span style="--w-custom-swatch:@customPalette.MutedText" title="@Text["admin.design.color.muted"]"></span>
                                     </div>
 
                                     <div class="w-custom-theme__contrast" aria-live="polite">
                                         <span class="@(TextContrastRatio >= 4.5 ? "is-good" : "is-warning")">
-                                            본문 대비 @TextContrastRatio.ToString("0.0"):1
+                                            @Text["admin.design.contrast.text"] @TextContrastRatio.ToString("0.0"):1
                                         </span>
                                         <span class="@(MutedContrastRatio >= 4.5 ? "is-good" : "is-warning")">
-                                            보조 글자 @MutedContrastRatio.ToString("0.0"):1
+                                            @Text["admin.design.contrast.muted"] @MutedContrastRatio.ToString("0.0"):1
                                         </span>
                                         <span class="@(ButtonContrastRatio >= 4.5 ? "is-good" : "is-warning")">
-                                            버튼 대비 @ButtonContrastRatio.ToString("0.0"):1
+                                            @Text["admin.design.contrast.button"] @ButtonContrastRatio.ToString("0.0"):1
                                         </span>
                                     </div>
 
                                     <details class="w-custom-theme__details">
-                                        <summary>세부 색상 직접 조정</summary>
-                                        <p class="w-hint">자동 결과가 마음에 들지 않는 항목만 바꿔도 됩니다. 변경 내용은 오른쪽 미리보기에 바로 반영됩니다.</p>
+                                        <summary>@Text["admin.design.colors.advanced"]</summary>
+                                        <p class="w-hint">@Text["admin.design.colors.advanced.hint"]</p>
                                         <div class="w-custom-theme__colors">
                                             <label>
-                                                <span>포인트(보정)</span>
+                                                <span>@Text["admin.design.color.primary"]</span>
                                                 <input type="color" value="@customPalette.Primary"
                                                        @oninput='e => UpdateCustomThemeColor("primary", e.Value?.ToString())' />
                                                 <code>@customPalette.Primary</code>
                                             </label>
                                             <label>
-                                                <span>강조</span>
+                                                <span>@Text["admin.design.color.accent"]</span>
                                                 <input type="color" value="@customPalette.Accent"
                                                        @oninput='e => UpdateCustomThemeColor("accent", e.Value?.ToString())' />
                                                 <code>@customPalette.Accent</code>
                                             </label>
                                             <label>
-                                                <span>강조 텍스트</span>
+                                                <span>@Text["admin.design.color.accent.text"]</span>
                                                 <input type="color" value="@customPalette.Dark"
                                                        @oninput='e => UpdateCustomThemeColor("dark", e.Value?.ToString())' />
                                                 <code>@customPalette.Dark</code>
                                             </label>
                                             <label>
-                                                <span>본문</span>
+                                                <span>@Text["admin.design.color.text"]</span>
                                                 <input type="color" value="@customPalette.Text"
                                                        @oninput='e => UpdateCustomThemeColor("text", e.Value?.ToString())' />
                                                 <code>@customPalette.Text</code>
                                             </label>
                                             <label>
-                                                <span>보조 본문</span>
+                                                <span>@Text["admin.design.color.muted"]</span>
                                                 <input type="color" value="@customPalette.MutedText"
                                                        @oninput='e => UpdateCustomThemeColor("muted", e.Value?.ToString())' />
                                                 <code>@customPalette.MutedText</code>
                                             </label>
                                             <label>
-                                                <span>배경</span>
+                                                <span>@Text["admin.design.color.background"]</span>
                                                 <input type="color" value="@customPalette.Background"
                                                        @oninput='e => UpdateCustomThemeColor("background", e.Value?.ToString())' />
                                                 <code>@customPalette.Background</code>
                                             </label>
                                             <label>
-                                                <span>패널</span>
+                                                <span>@Text["admin.design.color.surface"]</span>
                                                 <input type="color" value="@customPalette.PanelBackground"
                                                        @oninput='e => UpdateCustomThemeColor("panel", e.Value?.ToString())' />
                                                 <code>@customPalette.PanelBackground</code>
                                             </label>
                                             <label>
-                                                <span>버튼</span>
+                                                <span>@Text["admin.design.color.button"]</span>
                                                 <input type="color" value="@customPalette.ButtonBackground"
                                                        @oninput='e => UpdateCustomThemeColor("button", e.Value?.ToString())' />
                                                 <code>@customPalette.ButtonBackground</code>
                                             </label>
                                             <label>
-                                                <span>버튼 글자</span>
+                                                <span>@Text["admin.design.color.button.text"]</span>
                                                 <input type="color" value="@customPalette.ButtonText"
                                                        @oninput='e => UpdateCustomThemeColor("button-text", e.Value?.ToString())' />
                                                 <code>@customPalette.ButtonText</code>
                                             </label>
                                             <label>
-                                                <span>경계선</span>
+                                                <span>@Text["admin.design.color.border"]</span>
                                                 <input type="color" value="@customPalette.Border"
                                                        @oninput='e => UpdateCustomThemeColor("border", e.Value?.ToString())' />
                                                 <code>@customPalette.Border</code>
@@ -639,8 +631,8 @@
                                             class="w-btn w-btn--primary"
                                             @onclick="SelectCustomTheme">
                                         @(Vm.Config.DesignSettings.ThemeKey == WeddingThemeCatalog.CustomThemeKey
-                                            ? "나만의 테마 선택됨"
-                                            : "나만의 테마 사용")
+                                            ? Text["admin.design.custom.selected"]
+                                            : Text["admin.design.custom.use"])
                                     </button>
                                 }
                                 else
@@ -648,43 +640,39 @@
                                     @if (Vm.Config.DesignSettings.ThemeKey == WeddingThemeCatalog.CustomThemeKey)
                                     {
                                         <p class="w-layout-detail__notice">
-                                            저장된 나만의 테마 값은 보존되어 있습니다. 현재 공개 화면에는 로즈 골드 기본 테마가 적용되며,
-                                            Premium을 다시 활성화하면 기존 색상을 그대로 이어서 사용할 수 있습니다.
+                                            @Text["admin.design.custom.preserved"]
                                         </p>
                                     }
                                     else
                                     {
-                                        <p class="w-layout-detail__notice">Premium 플랜에서 직접 색상을 만들고 저장할 수 있습니다. 기본 테마 5종은 모두 무료입니다.</p>
+                                        <p class="w-layout-detail__notice">@Text["admin.design.custom.premium.hint"]</p>
                                     }
                                 }
                             </div>
                         </section>
 
                         <section class="w-admin__section">
-                            <h3 class="w-admin__section-h">🖼 히어로 이미지</h3>
+                            <h3 class="w-admin__section-h">🖼 @Text["admin.hero.image"]</h3>
                             @if (!string.IsNullOrWhiteSpace(Vm.Config!.HeroImageFileName))
                             {
                                 <button type="button"
                                         class="w-admin__hero-preview w-admin__hero-preview--button"
-                                        title="전체 표시 또는 사용할 영역 편집"
+                                        title="@Text["admin.hero.image.edit"]"
                                         @onclick="OpenHeroCropEditor">
-                                    <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="히어로" />
+                                    <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="@Text["admin.hero.image"]" />
                                     <span>
                                         <b>@Vm.Config.HeroImageFileName</b>
-                                        <small>사진을 눌러 PC·폰 표시 영역 편집</small>
+                                        <small>@Text["admin.hero.image.tap"]</small>
                                     </span>
                                 </button>
                             }
-                            <InputFile class="w-file-input" OnChange="OnHeroUpload" accept="image/*" />
-                            @if (Vm.IsUploading) { <span class="w-uploading">업로드 중... (@_uploadElapsedSec 초)</span> }
-                            <p class="w-hint">
-                                권장 원본: 짧은 변 2,000px 이상, 여백이 있는 4:5 사진(예: 2000×2500 이상).
-                                PC는 16:9, 폰은 선택한 기기 비율로 영역을 따로 지정할 수 있습니다.
-                            </p>
+                            <LocalizedInputFile Class="w-file-input" OnChange="OnHeroUpload" Accept="image/*" />
+                            @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
+                            <p class="w-hint">@Text["admin.hero.image.recommend"]</p>
                             @if (!string.IsNullOrWhiteSpace(Vm.Config.HeroImageFileName))
                             {
                                 <button type="button" class="w-btn w-btn--primary" @onclick="OpenHeroCropEditor">
-                                    전체 표시 · 사용할 영역 편집
+                                    @Text["admin.hero.image.edit.area"]
                                 </button>
                             }
                         </section>
@@ -699,16 +687,16 @@
                                          @onclick:stopPropagation>
                                     <header class="w-hero-crop-modal__head">
                                         <div>
-                                            <h3 id="hero-crop-title">히어로 이미지 표시 영역</h3>
-                                            <p>전체 사진을 쓰거나, 화면 비율이 고정된 사각형을 그리고 이동·확대해 사용할 영역을 고르세요.</p>
+                                            <h3 id="hero-crop-title">@Text["admin.hero.crop.title"]</h3>
+                                            <p>@Text["admin.hero.crop.desc"]</p>
                                         </div>
-                                        <button type="button" class="w-admin-preview__close" @onclick="CloseHeroCropEditor" aria-label="닫기">✕</button>
+                                        <button type="button" class="w-admin-preview__close" @onclick="CloseHeroCropEditor" aria-label="@Text["common.cancel"]">✕</button>
                                     </header>
 
                                     <div class="w-hero-crop-guide">
-                                        <strong>가장 선명하게 보이는 원본</strong>
-                                        <span>짧은 변 2,000px 이상 · 권장 2000×2500(4:5) 이상 · 인물과 글자가 사진 가장자리에서 떨어진 구도</span>
-                                        <small>PC 목표 1920×1080 · 폰 목표 1080×1920. 한 장을 함께 쓰므로 원본에 여백이 많을수록 두 화면 모두 자연스럽습니다.</small>
+                                        <strong>@Text["admin.hero.crop.source"]</strong>
+                                        <span>@Text["admin.hero.crop.source.hint"]</span>
+                                        <small>@Text["admin.hero.crop.target.hint"]</small>
                                     </div>
 
                                     <div class="w-hero-crop-modal__tabs">
@@ -720,7 +708,7 @@
                                         <button type="button"
                                                 class="@(_heroCropViewport == "mobile" ? "active" : "")"
                                                 @onclick='() => SetHeroCropViewport("mobile")'>
-                                            폰 · @CurrentPreviewDevice.Width×@CurrentPreviewDevice.Height
+                                            @Text["admin.hero.crop.phone"] · @CurrentPreviewDevice.Width×@CurrentPreviewDevice.Height
                                         </button>
                                     </div>
 
@@ -728,22 +716,22 @@
                                         <button type="button"
                                                 class="@(CurrentHeroCropUsesFullImage ? "active" : "")"
                                                 @onclick="() => SetHeroCropMode(true)">
-                                            전체 표시
-                                            <small>사진을 자르지 않고 여백 허용</small>
+                                            @Text["admin.hero.crop.full"]
+                                            <small>@Text["admin.hero.crop.fit"]</small>
                                         </button>
                                         <button type="button"
                                                 class="@(!CurrentHeroCropUsesFullImage ? "active" : "")"
                                                 @onclick="() => SetHeroCropMode(false)">
-                                            사각형 영역 사용
-                                            <small>선택 영역으로 화면을 빈틈없이 채움</small>
+                                            @Text["admin.hero.crop.area"]
+                                            <small>@Text["admin.hero.crop.fill"]</small>
                                         </button>
                                     </div>
 
                                     @if (CurrentHeroCropUsesFullImage)
                                     {
                                         <div class="w-hero-crop-editor w-hero-crop-editor--full">
-                                            <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="히어로 원본 전체" />
-                                            <span>전체 이미지가 표시됩니다. 화면 비율이 다르면 위·아래 또는 좌·우에 여백이 생길 수 있습니다.</span>
+                                            <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="@Text["admin.hero.image"]" />
+                                            <span>@Text["admin.hero.crop.full.hint"]</span>
                                         </div>
                                     }
                                     else
@@ -757,21 +745,21 @@
                                              data-crop-y="@CurrentHeroCropDraft.Y.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                              data-crop-width="@CurrentHeroCropDraft.Width.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                              data-crop-height="@CurrentHeroCropDraft.Height.ToString(System.Globalization.CultureInfo.InvariantCulture)">
-                                            <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="영역을 선택할 히어로 원본" />
+                                            <img src="@Vm.GetHeroUrl(Slug, Vm.Config.HeroImageFileName)" alt="@Text["admin.hero.crop.title"]" />
                                             <div class="w-hero-crop-editor__selection" data-crop-selection>
-                                                <span class="w-hero-crop-editor__label">@(_heroCropViewport == "desktop" ? "PC 16:9" : $"폰 {CurrentPreviewDevice.Width}:{CurrentPreviewDevice.Height}")</span>
+                                                <span class="w-hero-crop-editor__label">@(_heroCropViewport == "desktop" ? "PC 16:9" : $"{Text["admin.preview.phone"]} {CurrentPreviewDevice.Width}:{CurrentPreviewDevice.Height}")</span>
                                                 <i data-crop-handle="nw"></i>
                                                 <i data-crop-handle="ne"></i>
                                                 <i data-crop-handle="sw"></i>
                                                 <i data-crop-handle="se"></i>
                                             </div>
                                         </div>
-                                        <p class="w-hint">빈 곳을 끌어 새 사각형을 그리고, 사각형 안쪽은 이동, 네 모서리는 크기 조절입니다. 화면 비율은 자동으로 유지됩니다.</p>
+                                        <p class="w-hint">@Text["admin.hero.crop.drag.hint"]</p>
                                     }
 
                                     <footer class="w-hero-crop-modal__actions">
-                                        <button type="button" class="w-btn" @onclick="CloseHeroCropEditor">취소</button>
-                                        <button type="button" class="w-btn w-btn--primary" @onclick="ApplyHeroCropEditor">적용하고 미리보기</button>
+                                        <button type="button" class="w-btn" @onclick="CloseHeroCropEditor">@Text["common.cancel"]</button>
+                                        <button type="button" class="w-btn w-btn--primary" @onclick="ApplyHeroCropEditor">@Text["admin.hero.crop.apply"]</button>
                                     </footer>
                                 </section>
                             </div>
@@ -780,44 +768,44 @@
                         @if (UsesInviteHeroPlacement)
                         {
                             <section class="w-admin__section">
-                                <h3 class="w-admin__section-h">히어로 문구 위치</h3>
-                                <p class="w-hint">PC 또는 폰 미리보기를 먼저 선택한 뒤 문구 박스를 끌어 주세요. 두 위치는 따로 저장되며 드래그를 놓으면 즉시 반영됩니다.</p>
+                                <h3 class="w-admin__section-h">@Text["admin.hero.position"]</h3>
+                                <p class="w-hint">@Text["admin.hero.position.hint"]</p>
                                 <div class="w-drag-control-grid">
                                     <div class="w-drag-control-card">
-                                        <strong>상단 문구</strong>
+                                        <strong>@Text["admin.hero.position.top"]</strong>
                                         <div class="w-drag-control-device">
                                             <span><b>PC</b> @FormatPanelPosition(Vm.Config!.DesignSettings.HeroPlacement.InviteTop, false)</span>
                                             <div>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("pc")'>끌어서 조정</button>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroTop", false)'>정렬</button>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroTop", false)'>초기화</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("pc")'>@Text["admin.hero.position.drag"]</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroTop", false)'>@Text["common.align"]</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroTop", false)'>@Text["common.reset"]</button>
                                             </div>
                                         </div>
                                         <div class="w-drag-control-device">
-                                            <span><b>폰</b> @FormatPanelPosition(Vm.Config.DesignSettings.HeroPlacement.InviteTop, true)</span>
+                                            <span><b>@Text["admin.preview.phone"]</b> @FormatPanelPosition(Vm.Config.DesignSettings.HeroPlacement.InviteTop, true)</span>
                                             <div>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("phone")'>끌어서 조정</button>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroTop", true)'>정렬</button>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroTop", true)'>초기화</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("phone")'>@Text["admin.hero.position.drag"]</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroTop", true)'>@Text["common.align"]</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroTop", true)'>@Text["common.reset"]</button>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="w-drag-control-card">
-                                        <strong>하단 장소·방명록</strong>
+                                        <strong>@Text["admin.hero.position.bottom"]</strong>
                                         <div class="w-drag-control-device">
                                             <span><b>PC</b> @FormatPanelPosition(Vm.Config!.DesignSettings.HeroPlacement.InviteBottom, false)</span>
                                             <div>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("pc")'>끌어서 조정</button>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroBottom", false)'>정렬</button>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroBottom", false)'>초기화</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("pc")'>@Text["admin.hero.position.drag"]</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroBottom", false)'>@Text["common.align"]</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroBottom", false)'>@Text["common.reset"]</button>
                                             </div>
                                         </div>
                                         <div class="w-drag-control-device">
-                                            <span><b>폰</b> @FormatPanelPosition(Vm.Config.DesignSettings.HeroPlacement.InviteBottom, true)</span>
+                                            <span><b>@Text["admin.preview.phone"]</b> @FormatPanelPosition(Vm.Config.DesignSettings.HeroPlacement.InviteBottom, true)</span>
                                             <div>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("phone")'>끌어서 조정</button>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroBottom", true)'>정렬</button>
-                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroBottom", true)'>초기화</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => SetPreviewMode("phone")'>@Text["admin.hero.position.drag"]</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => AlignHeroPanel("heroBottom", true)'>@Text["common.align"]</button>
+                                                <button type="button" class="w-btn w-btn--sm" @onclick='() => ResetHeroPanel("heroBottom", true)'>@Text["common.reset"]</button>
                                             </div>
                                         </div>
                                     </div>
@@ -832,8 +820,8 @@
                         @if (!IsStoryLayout)
                         {
                             <section class="w-admin__section">
-                                <h3 class="w-admin__section-h">스토리 챕터</h3>
-                                <p class="w-hint">Story 레이아웃을 선택하면 챕터 문구와 대표 사진을 관리할 수 있습니다.</p>
+                                <h3 class="w-admin__section-h">@Text["admin.story"]</h3>
+                                <p class="w-hint">@Text["admin.story.hint"]</p>
                             </section>
                         }
                         else
@@ -841,10 +829,10 @@
                             <section class="w-admin__section">
                                 <div class="w-admin-section-title-row">
                                     <div>
-                                        <h3 class="w-admin__section-h">스토리 챕터</h3>
-                                        <p class="w-hint">Story 레이아웃에서 사용할 챕터별 대표 사진과 문구입니다. 기본 4개 챕터는 유지되고, 필요한 챕터를 추가할 수 있습니다.</p>
+                                        <h3 class="w-admin__section-h">@Text["admin.story"]</h3>
+                                        <p class="w-hint">@Text["admin.story.detail.hint"]</p>
                                     </div>
-                                    <button type="button" class="w-btn w-btn--primary" @onclick="OnAddStoryChapter">챕터 추가</button>
+                                    <button type="button" class="w-btn w-btn--primary" @onclick="OnAddStoryChapter">@Text["admin.story.add"]</button>
                                 </div>
                                 <div class="w-story-admin-list">
                                     @foreach (var chapter in Vm.Config!.DesignSettings.StoryChapters)
@@ -855,22 +843,22 @@
                                                 <div class="w-story-admin-card__actions">
                                                     @if (chapter.ChapterNumber <= 4)
                                                     {
-                                                        <span class="w-layout-lock">기본</span>
+                                                        <span class="w-layout-lock">@Text["common.default"]</span>
                                                     }
                                                     else
                                                     {
-                                                        <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeleteStoryChapter(chapter.ChapterNumber)">삭제</button>
+                                                        <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeleteStoryChapter(chapter.ChapterNumber)">@Text["common.delete"]</button>
                                                     }
-                                                    <button type="button" class="w-btn w-btn--small" @onclick="() => OnSaveStoryChapter(chapter)">챕터 저장</button>
+                                                    <button type="button" class="w-btn w-btn--small" @onclick="() => OnSaveStoryChapter(chapter)">@Text["admin.story.save"]</button>
                                                 </div>
                                             </div>
-                                            <label class="w-label">챕터 제목</label>
+                                            <label class="w-label">@Text["admin.story.title"]</label>
                                             <input class="w-input" @bind="chapter.Title" />
-                                            <label class="w-label">챕터 본문</label>
+                                            <label class="w-label">@Text["admin.story.body"]</label>
                                             <textarea class="w-input w-textarea" rows="4" @bind="chapter.Body"></textarea>
-                                            <label class="w-label">대표 사진</label>
+                                            <label class="w-label">@Text["admin.story.photo"]</label>
                                             <select class="w-input" @bind="chapter.PhotoPath">
-                                                <option value="">자동 선택</option>
+                                                <option value="">@Text["admin.story.photo.auto"]</option>
                                                 @foreach (var photo in Vm.Gallery)
                                                 {
                                                     <option value="@photo.FileName">@photo.FileName</option>
@@ -879,7 +867,7 @@
                                             @if (!string.IsNullOrWhiteSpace(chapter.PhotoPath))
                                             {
                                                 <div class="w-story-admin-photo">
-                                                    <img src="@Vm.GetThumbUrl(Slug, chapter.PhotoPath)" alt="선택된 대표 사진" />
+                                                    <img src="@Vm.GetThumbUrl(Slug, chapter.PhotoPath)" alt="@Text["admin.story.photo"]" />
                                                     <span>@chapter.PhotoPath</span>
                                                 </div>
                                             }
@@ -896,8 +884,8 @@
                         @if (!IsPhotoBookLayout)
                         {
                             <section class="w-admin__section">
-                                <h3 class="w-admin__section-h">포토북 페이지</h3>
-                                <p class="w-hint">PhotoBook 레이아웃을 선택하면 앨범 페이지별 사진과 문구를 관리할 수 있습니다.</p>
+                                <h3 class="w-admin__section-h">@Text["admin.photobook"]</h3>
+                                <p class="w-hint">@Text["admin.photobook.hint"]</p>
                             </section>
                         }
                         else
@@ -905,10 +893,10 @@
                             <section class="w-admin__section">
                                 <div class="w-admin-section-title-row">
                                     <div>
-                                        <h3 class="w-admin__section-h">포토북 페이지</h3>
-                                        <p class="w-hint">포토북 앨범 상단에 크게 표시할 페이지입니다. 사진을 지정하지 않으면 갤러리 순서대로 자동 보충됩니다. 기본 4개는 유지되고 필요하면 추가할 수 있습니다.</p>
+                                        <h3 class="w-admin__section-h">@Text["admin.photobook"]</h3>
+                                        <p class="w-hint">@Text["admin.photobook.detail.hint"]</p>
                                     </div>
-                                    <button type="button" class="w-btn w-btn--primary" @onclick="OnAddPhotoBookPage">페이지 추가</button>
+                                    <button type="button" class="w-btn w-btn--primary" @onclick="OnAddPhotoBookPage">@Text["admin.photobook.add"]</button>
                                 </div>
                                 <div class="w-story-admin-list">
                                     @* Razor 는 '@page' 를 지시문으로 예약하므로 반복 변수 이름은 반드시 page 를 피해야 한다. *@
@@ -920,22 +908,22 @@
                                                 <div class="w-story-admin-card__actions">
                                                     @if (bookPage.PageNumber <= 4)
                                                     {
-                                                        <span class="w-layout-lock">기본</span>
+                                                        <span class="w-layout-lock">@Text["common.default"]</span>
                                                     }
                                                     else
                                                     {
-                                                        <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeletePhotoBookPage(bookPage.PageNumber)">삭제</button>
+                                                        <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeletePhotoBookPage(bookPage.PageNumber)">@Text["common.delete"]</button>
                                                     }
-                                                    <button type="button" class="w-btn w-btn--small" @onclick="() => OnSavePhotoBookPage(bookPage)">페이지 저장</button>
+                                                    <button type="button" class="w-btn w-btn--small" @onclick="() => OnSavePhotoBookPage(bookPage)">@Text["admin.photobook.save"]</button>
                                                 </div>
                                             </div>
-                                            <label class="w-label">캡션 (짧은 한 줄)</label>
-                                            <input class="w-input" @bind="bookPage.Caption" placeholder="예: 첫 만남" />
-                                            <label class="w-label">본문 문구</label>
-                                            <textarea class="w-input w-textarea" rows="3" @bind="bookPage.Body" placeholder="사진 아래에 표시할 짧은 문구"></textarea>
-                                            <label class="w-label">사진 선택</label>
+                                            <label class="w-label">@Text["admin.photobook.caption"]</label>
+                                            <input class="w-input" @bind="bookPage.Caption" placeholder="@Text["admin.photobook.caption.placeholder"]" />
+                                            <label class="w-label">@Text["admin.photobook.body"]</label>
+                                            <textarea class="w-input w-textarea" rows="3" @bind="bookPage.Body" placeholder="@Text["admin.photobook.body.placeholder"]"></textarea>
+                                            <label class="w-label">@Text["admin.photobook.photo"]</label>
                                             <select class="w-input" @bind="bookPage.PhotoFileName">
-                                                <option value="">자동 보충 (갤러리 순서)</option>
+                                                <option value="">@Text["admin.photobook.photo.auto"]</option>
                                                 @foreach (var photo in Vm.Gallery)
                                                 {
                                                     <option value="@photo.FileName">@photo.FileName</option>
@@ -944,7 +932,7 @@
                                             @if (!string.IsNullOrWhiteSpace(bookPage.PhotoFileName))
                                             {
                                                 <div class="w-story-admin-photo">
-                                                    <img src="@Vm.GetThumbUrl(Slug, bookPage.PhotoFileName)" alt="선택된 페이지 사진" />
+                                                    <img src="@Vm.GetThumbUrl(Slug, bookPage.PhotoFileName)" alt="@Text["admin.photobook.photo"]" />
                                                     <span>@bookPage.PhotoFileName</span>
                                                 </div>
                                             }
@@ -961,8 +949,8 @@
                         @if (!IsCardLayout)
                         {
                             <section class="w-admin__section">
-                                <h3 class="w-admin__section-h">카드 강조</h3>
-                                <p class="w-hint">Card 레이아웃을 선택하면 각 섹션 카드의 아이콘과 제목·부제를 커스터마이즈할 수 있습니다.</p>
+                                <h3 class="w-admin__section-h">@Text["admin.cards"]</h3>
+                                <p class="w-hint">@Text["admin.cards.hint"]</p>
                             </section>
                         }
                         else
@@ -970,10 +958,10 @@
                             <section class="w-admin__section">
                                 <div class="w-admin-section-title-row">
                                     <div>
-                                        <h3 class="w-admin__section-h">카드 강조</h3>
-                                        <p class="w-hint">카드 레이아웃에서 각 섹션 카드(예식 안내/오시는 길/계좌 안내 등) 위에 얹혀 표시될 아이콘·제목·부제입니다. 대상 섹션을 선택하면 그 섹션 카드 헤더가 대체됩니다. 제목을 비우면 섹션 기본 라벨이 표시됩니다.</p>
+                                        <h3 class="w-admin__section-h">@Text["admin.cards"]</h3>
+                                        <p class="w-hint">@Text["admin.cards.detail.hint"]</p>
                                     </div>
-                                    <button type="button" class="w-btn w-btn--primary" @onclick="OnAddCardHighlight">강조 카드 추가</button>
+                                    <button type="button" class="w-btn w-btn--primary" @onclick="OnAddCardHighlight">@Text["admin.cards.add"]</button>
                                 </div>
                                 <div class="w-story-admin-list">
                                     @{
@@ -985,7 +973,7 @@
                                     @foreach (var highlight in Vm.Config!.DesignSettings.CardHighlights)
                                     {
                                         var headTitle = string.IsNullOrWhiteSpace(highlight.Title)
-                                            ? (string.IsNullOrWhiteSpace(highlight.SectionKey) ? "(대상 섹션 미지정)" : WeddingSectionOrderCatalog.GetLabel(highlight.SectionKey))
+                                            ? (string.IsNullOrWhiteSpace(highlight.SectionKey) ? Text["admin.cards.target.unset"] : LocalizedSectionLabel(highlight.SectionKey))
                                             : highlight.Title;
                                         <article class="w-story-admin-card">
                                             <div class="w-story-admin-card__head">
@@ -993,29 +981,29 @@
                                                 <div class="w-story-admin-card__actions">
                                                     @if (highlight.Order <= 3)
                                                     {
-                                                        <span class="w-layout-lock">기본</span>
+                                                        <span class="w-layout-lock">@Text["common.default"]</span>
                                                     }
                                                     else
                                                     {
-                                                        <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeleteCardHighlight(highlight.Order)">삭제</button>
+                                                        <button type="button" class="w-btn w-btn--small" @onclick="() => OnDeleteCardHighlight(highlight.Order)">@Text["common.delete"]</button>
                                                     }
-                                                    <button type="button" class="w-btn w-btn--small" @onclick="() => OnSaveCardHighlight(highlight)">카드 저장</button>
+                                                    <button type="button" class="w-btn w-btn--small" @onclick="() => OnSaveCardHighlight(highlight)">@Text["admin.cards.save"]</button>
                                                 </div>
                                             </div>
-                                            <label class="w-label">대상 섹션</label>
+                                            <label class="w-label">@Text["admin.cards.target"]</label>
                                             <select class="w-input" @bind="highlight.SectionKey">
-                                                <option value="">(사용 안 함)</option>
+                                                <option value="">@Text["admin.cards.target.none"]</option>
                                                 @foreach (var sectionKey in cardSupportedSections)
                                                 {
-                                                    <option value="@sectionKey">@WeddingSectionOrderCatalog.GetIcon(sectionKey) @WeddingSectionOrderCatalog.GetLabel(sectionKey)</option>
+                                                    <option value="@sectionKey">@WeddingSectionOrderCatalog.GetIcon(sectionKey) @LocalizedSectionLabel(sectionKey)</option>
                                                 }
                                             </select>
-                                            <label class="w-label">아이콘 · 이모지 <span class="w-label__hint">비우면 섹션 기본 아이콘</span></label>
-                                            <input class="w-input" @bind="highlight.Icon" placeholder="예: 💒 📍 💌" />
-                                            <label class="w-label">제목 오버라이드 <span class="w-label__hint">비우면 섹션 기본 라벨</span></label>
-                                            <input class="w-input" @bind="highlight.Title" placeholder="비워두면 섹션 라벨 그대로" />
-                                            <label class="w-label">부제 · 본문</label>
-                                            <textarea class="w-input w-textarea" rows="2" @bind="highlight.Body" placeholder="카드 헤더 아래에 얹을 부가 문구(선택)"></textarea>
+                                            <label class="w-label">@Text["admin.cards.icon"] <span class="w-label__hint">@Text["admin.cards.icon.hint"]</span></label>
+                                            <input class="w-input" @bind="highlight.Icon" placeholder="@Text["admin.cards.icon.placeholder"]" />
+                                            <label class="w-label">@Text["admin.cards.title"] <span class="w-label__hint">@Text["admin.cards.title.hint"]</span></label>
+                                            <input class="w-input" @bind="highlight.Title" placeholder="@Text["admin.cards.title.hint"]" />
+                                            <label class="w-label">@Text["admin.cards.body"]</label>
+                                            <textarea class="w-input w-textarea" rows="2" @bind="highlight.Body" placeholder="@Text["admin.cards.body"]"></textarea>
                                         </article>
                                     }
                                 </div>
@@ -1040,7 +1028,7 @@
                             {
                                 <p class="w-hint">@Text["admin.media.music.empty"]</p>
                             }
-                            <InputFile class="w-file-input" OnChange="OnMusicUpload" accept="audio/*" />
+                            <LocalizedInputFile Class="w-file-input" OnChange="OnMusicUpload" Accept="audio/*" />
                             @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
 
                             <label class="w-label" style="margin-top:.75rem">@Text["admin.media.position"]</label>
@@ -1053,7 +1041,7 @@
 
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🎬 @Text["admin.media.video"]</h3>
-                            <p class="w-hint">갤러리 위에 표시됩니다. mp4 / webm / mov 권장, @Vm.MaxVideoSizeLabel, @(Vm.MaxVideoCount <= 0 ? "개수 무제한" : $"최대 {Vm.MaxVideoCount}개").</p>
+                            <p class="w-hint">@Text["admin.media.video.hint"] @LocalizedVideoSizeLabel</p>
 
                             @if (Vm.Config!.VideoFileNames.Count > 0)
                             {
@@ -1075,12 +1063,12 @@
 
                             @if (Vm.MaxVideoCount <= 0 || Vm.Config.VideoFileNames.Count < Vm.MaxVideoCount)
                             {
-                                <InputFile class="w-file-input" OnChange="OnVideoUpload" accept="video/*" />
+                                <LocalizedInputFile Class="w-file-input" OnChange="OnVideoUpload" Accept="video/*" />
                                 @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
                             }
                             else
                             {
-                                <p class="w-hint" style="color:var(--w-primary)">최대 @(Vm.MaxVideoCount)개 업로드 완료. 삭제 후 추가 가능합니다.</p>
+                                <p class="w-hint w-hint--attention">@Text["admin.media.video.limit"]</p>
                             }
                         </section>
 
@@ -1090,9 +1078,9 @@
                             <label class="w-label">@Text["admin.media.interval"] — <strong>@Vm.Config!.GalleryAutoPlaySeconds @Text["common.seconds"]</strong></label>
                             <input type="range" class="w-range" min="1" max="10" step="1"
                                    @bind="Vm.Config!.GalleryAutoPlaySeconds" @bind:event="oninput" />
-                            <p class="w-hint">1 ~ 10초 · 설정 저장 후 청첩장에 반영됩니다.</p>
+                            <p class="w-hint">@Text["admin.media.interval.hint"]</p>
 
-                            <InputFile class="w-file-input" OnChange="OnGalleryUpload" accept="image/*" multiple />
+                            <LocalizedInputFile Class="w-file-input" OnChange="OnGalleryUpload" Accept="image/*" Multiple="true" />
                             @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
 
                             <div class="w-admin__gallery">
@@ -1101,10 +1089,10 @@
                                     <div class="w-admin__gallery-item">
                                         <img src="@Vm.GetThumbUrl(Slug, p.FileName)" alt="@p.FileName" />
                                         <div class="w-admin__photo-order">
-                                            <button type="button" class="w-btn w-btn--sm" title="맨 앞으로" @onclick="() => OnMovePhotoTo(p.FileName, true)">처음</button>
-                                            <button type="button" class="w-btn w-btn--sm" title="앞으로" @onclick="() => OnMovePhoto(p.FileName, -1)">↑</button>
-                                            <button type="button" class="w-btn w-btn--sm" title="뒤로" @onclick="() => OnMovePhoto(p.FileName, 1)">↓</button>
-                                            <button type="button" class="w-btn w-btn--sm" title="맨 뒤로" @onclick="() => OnMovePhotoTo(p.FileName, false)">끝</button>
+                                            <button type="button" class="w-btn w-btn--sm" title="@Text["common.first"]" @onclick="() => OnMovePhotoTo(p.FileName, true)">@Text["common.first"]</button>
+                                            <button type="button" class="w-btn w-btn--sm" title="@Text["common.forward"]" aria-label="@Text["common.forward"]" @onclick="() => OnMovePhoto(p.FileName, -1)">↑</button>
+                                            <button type="button" class="w-btn w-btn--sm" title="@Text["common.backward"]" aria-label="@Text["common.backward"]" @onclick="() => OnMovePhoto(p.FileName, 1)">↓</button>
+                                            <button type="button" class="w-btn w-btn--sm" title="@Text["common.last"]" @onclick="() => OnMovePhotoTo(p.FileName, false)">@Text["common.last"]</button>
                                         </div>
                                         <button class="w-btn w-btn--danger w-btn--sm"
                                                 @onclick="() => OnDeletePhoto(p.FileName)">@Text["common.delete"]</button>
@@ -1124,7 +1112,7 @@
                                 <span class="w-label" style="margin:0">@Text["admin.map.latlng"]</span>
                                 <button class="w-btn w-btn--sm" type="button" @onclick="OnGeocode"
                                         disabled="@Vm.IsGeocoding"
-                                        title="예식장 이름/주소로 위도·경도를 자동으로 찾아줍니다">
+                                        title="@Text["admin.map.search.hint"]">
                                     @(Vm.IsGeocoding ? Text["admin.map.searching"] : $"📍 {Text["admin.map.search"]}")
                                 </button>
                             </div>
@@ -1137,29 +1125,29 @@
                             <div class="w-coord-row">
                                 <div>
                                     <label class="w-label">@Text["admin.map.latitude"]</label>
-                                    <input class="w-input" type="number" step="0.000001" @bind="Vm.Config!.VenueLat" placeholder="자동 검색 또는 직접 입력" />
+                                    <input class="w-input" type="number" step="0.000001" @bind="Vm.Config!.VenueLat" placeholder="@Text["admin.map.input.placeholder"]" />
                                 </div>
                                 <div>
                                     <label class="w-label">@Text["admin.map.longitude"]</label>
-                                    <input class="w-input" type="number" step="0.000001" @bind="Vm.Config.VenueLng" placeholder="자동 검색 또는 직접 입력" />
+                                    <input class="w-input" type="number" step="0.000001" @bind="Vm.Config.VenueLng" placeholder="@Text["admin.map.input.placeholder"]" />
                                 </div>
                             </div>
-                            <p class="w-hint">좌표가 있으면 청첩장에 지도가 표시됩니다. 예식장 이름·주소는 <strong>기본 정보</strong> 탭에서 먼저 입력하세요.</p>
+                            <p class="w-hint">@Text["admin.map.coordinates.hint"]</p>
                         </section>
 
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🗺 @Text["admin.map.links"]</h3>
                             <div class="w-maplink-header">
-                                <span class="w-label" style="margin:0">카카오맵 · 네이버지도 · 아틀란 · T맵</span>
+                                <span class="w-label" style="margin:0">@Text["admin.map.apps"]</span>
                                 <button class="w-btn w-btn--sm" type="button" @onclick="OnAutoGenerateMapLinks"
-                                        title="예식장 이름·주소·좌표를 이용해 링크를 자동으로 채워드립니다">
+                                        title="@Text["admin.map.generate.hint"]">
                                     ✨ @Text["admin.map.generate"]
                                 </button>
                             </div>
-                            <p class="w-hint">예식장 이름/주소/좌표를 먼저 입력한 후 <strong>자동 생성</strong> 버튼을 누르세요.</p>
+                            <p class="w-hint">@Text["admin.map.generate.hint"]</p>
                             @if (Vm.Config!.MapLinkKakao != "" || Vm.Config.MapLinkNaver != "" || Vm.Config.MapLinkAtlan != "" || Vm.Config.MapLinkTmap != "")
                             {
-                                <p class="w-hint" style="color:green">✅ 링크 생성 완료 (카카오맵 · 네이버지도 · 아틀란 · T맵)</p>
+                                <p class="w-hint w-hint--success">✅ @Text["admin.map.generate.done"]</p>
                             }
                         </section>
 
@@ -1168,15 +1156,15 @@
                             @if (!string.IsNullOrWhiteSpace(Vm.Config!.RoadMapFileName))
                             {
                                 <div class="w-admin__hero-preview">
-                                    <img src="@Vm.GetRoadMapUrl(Slug, Vm.Config.RoadMapFileName)" alt="약도" />
+                                    <img src="@Vm.GetRoadMapUrl(Slug, Vm.Config.RoadMapFileName)" alt="@Text["admin.map.roadmap"]" />
                                     <span>@Vm.Config.RoadMapFileName</span>
                                 </div>
                             }
                             else
                             {
-                                <p class="w-hint">아직 약도 이미지가 없습니다. 업로드하면 청첩장 약도 탭에 표시됩니다.</p>
+                                <p class="w-hint">@Text["admin.map.roadmap.empty"]</p>
                             }
-                            <InputFile class="w-file-input" OnChange="OnRoadMapUpload" accept="image/*" />
+                            <LocalizedInputFile Class="w-file-input" OnChange="OnRoadMapUpload" Accept="image/*" />
                             @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
                         </section>
                     }
@@ -1194,7 +1182,7 @@
                                 var acc = Vm.Config.Accounts[idx];
                                 <div class="w-acc-editor">
                                     <div class="w-acc-editor__header">
-                                        <strong>@((idx + 1))번 — @(string.IsNullOrWhiteSpace(acc.Label) ? "(레이블 없음)" : acc.Label)</strong>
+                                        <strong>@string.Format(Text["admin.payment.item"], idx + 1) — @(string.IsNullOrWhiteSpace(acc.Label) ? Text["admin.payment.label.empty"] : acc.Label)</strong>
                                         <button class="w-btn w-btn--danger w-btn--sm" @onclick="() => RemoveAccount(idx)">✕ @Text["common.delete"]</button>
                                     </div>
                                     <div class="w-acc-editor__grid">
@@ -1203,20 +1191,20 @@
                                             <select class="w-input" value="@acc.Label" @onchange="e => OnAccountLabelChanged(acc, e)">
                                                 <option value="신랑">@Text["admin.payment.groom"]</option>
                                                 <option value="신부">@Text["admin.payment.bride"]</option>
-                                                <option>신랑 아버지</option>
-                                                <option>신랑 어머니</option>
-                                                <option>신부 아버지</option>
-                                                <option>신부 어머니</option>
+                                                <option value="신랑 아버지">@Text["admin.payment.groom.father"]</option>
+                                                <option value="신랑 어머니">@Text["admin.payment.groom.mother"]</option>
+                                                <option value="신부 아버지">@Text["admin.payment.bride.father"]</option>
+                                                <option value="신부 어머니">@Text["admin.payment.bride.mother"]</option>
                                                 <option value="직접 입력">@Text["admin.payment.custom"]</option>
                                             </select>
                                             @if (acc.Label == "직접 입력" || !_defaultLabels.Contains(acc.Label))
                                             {
-                                                <input class="w-input" style="margin-top:.4rem" @bind="acc.Label" @bind:after="PublishPreviewAccountDraftAsync" placeholder="레이블 직접 입력" />
+                                                <input class="w-input" style="margin-top:.4rem" @bind="acc.Label" @bind:after="PublishPreviewAccountDraftAsync" placeholder="@Text["admin.payment.label.placeholder"]" />
                                             }
                                         </div>
                                         <div>
                                             <label class="w-label">@Text["admin.payment.name"]</label>
-                                            <input class="w-input" @bind="acc.Name" @bind:after="PublishPreviewAccountDraftAsync" placeholder="홍길동" />
+                                            <input class="w-input" @bind="acc.Name" @bind:after="PublishPreviewAccountDraftAsync" placeholder="@Text["admin.payment.name.placeholder"]" />
                                         </div>
                                         <div>
                                             <label class="w-label">@Text["admin.payment.contact"]</label>
@@ -1224,7 +1212,7 @@
                                         </div>
                                         <div>
                                             <label class="w-label">@Text["admin.payment.bank"]</label>
-                                            <input class="w-input" @bind="acc.BankName" @bind:after="PublishPreviewAccountDraftAsync" placeholder="국민은행" />
+                                            <input class="w-input" @bind="acc.BankName" @bind:after="PublishPreviewAccountDraftAsync" placeholder="@Text["admin.payment.bank.placeholder"]" />
                                         </div>
                                         <div>
                                             <label class="w-label">@Text["admin.payment.number"]</label>
@@ -1232,10 +1220,10 @@
                                         </div>
                                         <div>
                                             <label class="w-label">@Text["admin.payment.holder"]</label>
-                                            <input class="w-input" @bind="acc.AccountHolder" @bind:after="PublishPreviewAccountDraftAsync" placeholder="홍길동" />
+                                            <input class="w-input" @bind="acc.AccountHolder" @bind:after="PublishPreviewAccountDraftAsync" placeholder="@Text["admin.payment.holder.placeholder"]" />
                                         </div>
                                         <div class="w-acc-editor__full">
-                                            <label class="w-label">카카오페이 URL (선택)</label>
+                                            <label class="w-label">@Text["admin.payment.kakaopay"]</label>
                                             <input class="w-input" @bind="acc.KakaoPayUrl" @bind:after="PublishPreviewAccountDraftAsync" placeholder="https://qr.kakaopay.com/..." />
                                         </div>
                                     </div>
@@ -1259,43 +1247,38 @@
                                 <option value="@WeddingSiteMode.ThankYou">@Text["admin.share.thankyou"]</option>
                                 <option value="@WeddingSiteMode.Both">@Text["admin.share.both"]</option>
                             </select>
-                            <p class="w-hint">예식 완료 후 <strong>감사장</strong>으로 바꾸면 지도·예식 안내 대신 감사 인사가 표시됩니다.</p>
+                            <p class="w-hint">@Text["admin.share.mode.hint"]</p>
 
-                            <label class="w-label">감사장 URL (외부, 선택)</label>
+                            <label class="w-label">@Text["admin.share.thankyou.url"]</label>
                             <input class="w-input" @bind="Vm.Config.ThankYouUrl" placeholder="https://thankyou.example.com" />
 
                             <label class="w-label">@Text["admin.share.home"]</label>
                             <label class="w-toggle">
                                 <input type="checkbox" @bind="Vm.Config.ShowOnHome" />
                                 <span class="w-toggle__track"></span>
-                                <span class="w-toggle__label">@(Vm.Config.ShowOnHome ? "ON — 메인 페이지에 표시됨" : "OFF — 메인 페이지에 숨김")</span>
+                                <span class="w-toggle__label">@(Vm.Config.ShowOnHome ? Text["admin.share.home.on"] : Text["admin.share.home.off"])</span>
                             </label>
                         </section>
 
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🔎 @Text["admin.share.seo"]</h3>
-                            <p class="w-hint">
-                                허용하면 이 청첩장이 자동 사이트맵에 포함되고 Google·네이버 같은 검색 엔진에
-                                색인을 허용합니다. 검색 결과 반영과 제외에는 수일 이상 걸릴 수 있습니다.
-                            </p>
+                            <p class="w-hint">@Text["admin.share.seo.hint"]</p>
 
-                            <label class="w-label">검색 엔진 노출</label>
+                            <label class="w-label">@Text["admin.share.seo"]</label>
                             <label class="w-toggle">
                                 <input type="checkbox"
                                        checked="@EffectiveSearchIndexing"
                                        @onchange="OnSearchIndexingChanged" />
                                 <span class="w-toggle__track"></span>
                                 <span class="w-toggle__label">
-                                    @(EffectiveSearchIndexing
-                                        ? "ON — 검색 결과 노출 및 사이트맵 포함"
-                                        : "OFF — noindex 적용 및 사이트맵 제외")
+                                    @(EffectiveSearchIndexing ? Text["admin.share.seo.on"] : Text["admin.share.seo.off"])
                                 </span>
                             </label>
 
                             @if (!Vm.Config!.IsPublished)
                             {
                                 <p class="w-status w-status--compact">
-                                    현재 청첩장이 비공개 상태라 검색 노출을 켜도 색인되지 않습니다.
+                                    @Text["admin.share.seo.private"]
                                 </p>
                             }
 
@@ -1304,7 +1287,7 @@
                                    maxlength="70"
                                    @bind="Vm.Config.SearchTitle"
                                    placeholder="@WeddingSeoService.ResolveSearchTitle(Vm.Config)" />
-                            <p class="w-hint">비워두면 커플 이름을 이용해 자동 생성합니다.</p>
+                            <p class="w-hint">@Text["admin.share.search.auto"]</p>
 
                             <label class="w-label">@Text["admin.share.search.description"]</label>
                             <textarea class="w-input w-textarea"
@@ -1312,67 +1295,67 @@
                                       maxlength="180"
                                       @bind="Vm.Config.SearchDescription"
                                       placeholder="@WeddingSeoService.ResolveSearchDescription(Vm.Config)"></textarea>
-                            <p class="w-hint">검색 사이트가 상황에 따라 페이지 내용에서 다른 문구를 선택할 수도 있습니다.</p>
+                            <p class="w-hint">@Text["admin.share.search.note"]</p>
                         </section>
 
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🔗 @Text["admin.share.og"]</h3>
-                            <p class="w-hint">카카오톡·문자 등으로 청첩장 링크를 공유할 때 표시되는 제목·설명·이미지입니다.</p>
+                            <p class="w-hint">@Text["admin.share.og.hint"]</p>
 
                             <label class="w-label">@Text["admin.share.og.title"]</label>
                             <input class="w-input" @bind="Vm.Config!.OgTitle"
-                                   placeholder="@(Vm.Config?.CoupleName + " 청첩장")" />
+                                   placeholder="@string.Format(Text["admin.share.og.invite.title.placeholder"], Vm.Config?.CoupleName)" />
 
                             <label class="w-label">@Text["admin.share.og.description"]</label>
                             <textarea class="w-input w-textarea" rows="3" @bind="Vm.Config!.OgDescription"
-                                      placeholder="@($"{Vm.Config?.WeddingDate:yyyy년 MM월 dd일} {Vm.Config?.VenueName}에서 함께해 주세요.")"></textarea>
+                                      placeholder="@string.Format(Text["admin.share.og.invite.description.placeholder"], Vm.Config?.CoupleName, Vm.Config?.VenueName)"></textarea>
 
                             <label class="w-label">@Text["admin.share.og.image"]</label>
                             @if (!string.IsNullOrWhiteSpace(Vm.Config!.OgImageFileName))
                             {
                                 <div class="w-admin__hero-preview">
-                                    <img src="@Vm.GetOgImageUrl(Slug, Vm.Config.OgImageFileName)" alt="OG 이미지" />
+                                    <img src="@Vm.GetOgImageUrl(Slug, Vm.Config.OgImageFileName)" alt="@Text["admin.share.og.image.alt"]" />
                                     <span>@Vm.Config.OgImageFileName</span>
                                     <button class="w-btn w-btn--sm" @onclick="() => { Vm.Config!.OgImageFileName = string.Empty; }">✕ @Text["common.remove"]</button>
                                 </div>
                             }
-                            <InputFile class="w-file-input" OnChange="OnOgImageUpload" accept="image/*" />
-                            <p class="w-hint">권장 크기: 1200×630px (가로형). 카카오톡 미리보기는 링크 캐시가 있어 바로 반영 안 될 수 있습니다.</p>
+                            <LocalizedInputFile Class="w-file-input" OnChange="OnOgImageUpload" Accept="image/*" />
+                            <p class="w-hint">@Text["admin.share.og.size.hint"]</p>
                             @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
                         </section>
 
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">💌 @Text["admin.share.og.thankyou"]</h3>
-                            <p class="w-hint">이 청첩장에서 자동으로 제공되는 <code>/@Slug/thankyou</code> 감사장 링크를 공유할 때 표시되는 제목·설명·이미지입니다.</p>
+                            <p class="w-hint">@string.Format(Text["admin.share.og.thankyou.hint"], Slug)</p>
 
                             <label class="w-label">@Text["admin.share.og.title"]</label>
                             <input class="w-input" @bind="Vm.Config!.ThankYouOgTitle"
-                                   placeholder="@(Vm.Config?.CoupleName + " 감사 인사")" />
+                                   placeholder="@string.Format(Text["admin.share.og.thankyou.title.placeholder"], Vm.Config?.CoupleName)" />
 
                             <label class="w-label">@Text["admin.share.og.description"]</label>
                             <textarea class="w-input w-textarea" rows="3" @bind="Vm.Config!.ThankYouOgDescription"
-                                      placeholder="@($"{Vm.Config?.WeddingDate:yyyy년 MM월 dd일} {Vm.Config?.VenueName}에서의 결혼식을 마쳤습니다. 함께해 주셔서 감사합니다.")"></textarea>
+                                      placeholder="@string.Format(Text["admin.share.og.thankyou.description.placeholder"], Vm.Config?.CoupleName, Vm.Config?.VenueName)"></textarea>
 
                             <label class="w-label">@Text["admin.share.og.image"]</label>
                             @if (!string.IsNullOrWhiteSpace(Vm.Config!.ThankYouOgImageFileName))
                             {
                                 <div class="w-admin__hero-preview">
-                                    <img src="@Vm.GetOgImageUrl(Slug, Vm.Config.ThankYouOgImageFileName)" alt="감사장 OG 이미지" />
+                                    <img src="@Vm.GetOgImageUrl(Slug, Vm.Config.ThankYouOgImageFileName)" alt="@Text["admin.share.og.thankyou.image.alt"]" />
                                     <span>@Vm.Config.ThankYouOgImageFileName</span>
                                     <button class="w-btn w-btn--sm" @onclick="() => { Vm.Config!.ThankYouOgImageFileName = string.Empty; }">✕ @Text["common.remove"]</button>
                                 </div>
                             }
-                            <InputFile class="w-file-input" OnChange="OnThankYouOgImageUpload" accept="image/*" />
-                            <p class="w-hint">감사장 전용 이미지가 없으면 청첩장 OG 이미지가 아니라 히어로 이미지를 사용합니다.</p>
+                            <LocalizedInputFile Class="w-file-input" OnChange="OnThankYouOgImageUpload" Accept="image/*" />
+                            <p class="w-hint">@Text["admin.share.og.thankyou.image.hint"]</p>
                             @if (Vm.IsUploading) { <span class="w-uploading">@Text["common.uploading"] (@_uploadElapsedSec @Text["common.seconds"])</span> }
                         </section>
 
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">👥 @Text["admin.share.users"]</h3>
-                            <p class="w-hint">공용 로그인 상태에서 기존 관리자 비밀번호를 입력하면 여러 계정이 같은 청첩장을 관리할 수 있습니다.</p>
+                            <p class="w-hint">@Text["admin.share.users.hint"]</p>
                             @if (Vm.EffectiveAdminUsers.Count == 0)
                             {
-                                <p class="w-hint">아직 공용 로그인에 연결된 관리자 계정이 없습니다.</p>
+                                <p class="w-hint">@Text["admin.share.users.empty"]</p>
                             }
                             else
                             {
@@ -1402,7 +1385,7 @@
 
                         <section class="w-admin__section">
                             <h3 class="w-admin__section-h">🔒 @Text["admin.share.password"]</h3>
-                            <label class="w-label">비밀번호 (변경 시 입력)</label>
+                            <label class="w-label">@Text["admin.share.password.change"]</label>
                             <input class="w-input" type="password" @bind="Vm.Config!.PasswordHash" />
                         </section>
                     }
@@ -1600,19 +1583,28 @@
     private string LocalizedSectionLabel(string section) => section switch
     {
         "hero" => Text["home"],
-        "notice" => Text["admin.notice"],
+        "info" or "notice" => Text["admin.notice"],
         "story" => Text["admin.story"],
         "gallery" => Text["admin.media.gallery"],
         "video" => Text["admin.media.video"],
-        "map" => Text["admin.map"],
-        "account" => Text["admin.payment"],
+        "details" or "map" => Text["admin.map"],
+        "gift" or "account" => Text["admin.payment"],
         "guestbook" => Text["features.guestbook"],
         _ => WeddingSectionOrderCatalog.GetLabel(section)
     };
-    private string DisplayStatusMessage =>
-        Vm.StatusMessage.Contains("슈퍼관리자 권한으로 접속", StringComparison.Ordinal)
-            ? Text["admin.super.connected"]
-            : Vm.StatusMessage;
+    private string LocalizedLayoutLabel(WeddingLayoutOption option) =>
+        Text[$"layout.{WeddingLayoutKeys.Normalize(option.Key)}"];
+    private string LocalizedLayoutDescription(WeddingLayoutOption option) =>
+        Text[$"admin.super.layout.description.{WeddingLayoutKeys.Normalize(option.Key)}"];
+    private string DisplayStatusMessage => Vm.StatusMessage switch
+    {
+        var message when message.Contains("슈퍼관리자 권한으로 접속", StringComparison.Ordinal) => Text["admin.super.connected"],
+        "설정이 저장되었습니다." => Text["admin.status.saved"],
+        _ => Vm.StatusMessage
+    };
+    private string LocalizedVideoSizeLabel => Vm.MaxVideoSizeMb <= 0
+        ? Text["common.unlimited"]
+        : string.Format(Text["admin.media.max.size"], Vm.MaxVideoSizeMb);
     private bool EffectiveSearchIndexing => WeddingSeoService.IsIndexingEnabled(Vm.Config);
     private WeddingLayoutOption? AppliedLayoutOption =>
         Vm.Config is null
@@ -1637,8 +1629,8 @@
             }
 
             return Vm.LayoutCatalog.Layouts.Where(option =>
-                option.Label.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || option.Description.Contains(query, StringComparison.OrdinalIgnoreCase)
+                LocalizedLayoutLabel(option).Contains(query, StringComparison.OrdinalIgnoreCase)
+                || LocalizedLayoutDescription(option).Contains(query, StringComparison.OrdinalIgnoreCase)
                 || option.Key.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || option.Version.Contains(query, StringComparison.OrdinalIgnoreCase)
                 || LayoutTierLabel(option).Contains(query, StringComparison.OrdinalIgnoreCase));
@@ -1715,8 +1707,8 @@
         }
     }
 
-    private static string LayoutTierLabel(WeddingLayoutOption option) =>
-        option.Tier == WeddingLayoutTier.Free ? "무료" : "프리미엄";
+    private string LayoutTierLabel(WeddingLayoutOption option) =>
+        option.Tier == WeddingLayoutTier.Free ? Text["common.free"] : Text["common.premium"];
 
     private bool IsAppliedLayout(WeddingLayoutOption option)
     {
@@ -1755,7 +1747,7 @@
         }
     }
 
-    private static string LayoutVersionOptionLabel(
+    private string LayoutVersionOptionLabel(
         WeddingLayoutOption option,
         WeddingLayoutOption? applied,
         string? activeVersion)
@@ -1765,7 +1757,7 @@
             && string.Equals(applied.Key, option.Key, StringComparison.OrdinalIgnoreCase)
             && string.Equals(applied.Version, option.Version, StringComparison.Ordinal))
         {
-            labels.Add("현재 사용");
+            labels.Add(Text["common.in.use"]);
         }
 
         if (string.Equals(
@@ -1773,7 +1765,7 @@
                 option.Version,
                 StringComparison.Ordinal))
         {
-            labels.Add("현재 활성");
+            labels.Add(Text["common.active"]);
         }
 
         return string.Join(" · ", labels);
@@ -1785,7 +1777,7 @@
     {
         if (IsAppliedLayout(selected))
         {
-            return "현재 적용 중";
+            return Text["common.applied"];
         }
 
         if (applied is not null
@@ -1795,11 +1787,11 @@
                 StringComparison.OrdinalIgnoreCase))
         {
             return CompareLayoutVersions(selected.Version, applied.Version) > 0
-                ? $"v{selected.Version}로 업데이트"
-                : $"v{selected.Version} 사용";
+                ? string.Format(Text["common.update.version"], selected.Version)
+                : string.Format(Text["common.use.version"], selected.Version);
         }
 
-        return "이 레이아웃 적용";
+        return Text["admin.layout.apply"];
     }
 
     private static int CompareLayoutVersions(string? left, string? right)
@@ -1886,8 +1878,7 @@
         await PublishPreviewAccountDraftAsync();
         _previewOpen = true;
         _previewRevision++;
-        _layoutApplyMessage =
-            $"{option.Label} 레이아웃을 오른쪽 미리보기에 반영했습니다. 설정 저장을 누르면 공개 청첩장에 확정됩니다.";
+        _layoutApplyMessage = string.Format(Text["admin.preview.layout.message"], LocalizedLayoutLabel(option));
     }
 
     private static string Icon(string name) => name switch
@@ -1975,7 +1966,7 @@
         if (option is null || !option.IsImplemented || !CanUseTheme(option)) return;
         Vm.Config.DesignSettings.ThemeKey = option.Key;
         Vm.Config.ThemeName = Vm.Config.DesignSettings.ThemeKey;
-        _themePreviewMessage = $"{option.DisplayName} 테마를 오른쪽 미리보기에 반영했습니다.";
+        _themePreviewMessage = string.Format(Text["admin.preview.theme.message"], Text[$"theme.{option.Key}"]);
         CaptureThemePreview();
     }
 
@@ -1985,7 +1976,7 @@
         Vm.Config.DesignSettings.CustomTheme ??= new CustomWeddingThemeSettings();
         Vm.Config.DesignSettings.ThemeKey = WeddingThemeCatalog.CustomThemeKey;
         Vm.Config.ThemeName = WeddingThemeCatalog.CustomThemeKey;
-        _themePreviewMessage = "나만의 테마를 오른쪽 미리보기에 반영했습니다.";
+        _themePreviewMessage = Text["admin.preview.custom.message"];
         CaptureThemePreview();
     }
 
@@ -2004,8 +1995,7 @@
             ??= new CustomWeddingThemeSettings();
         WeddingThemePaletteGenerator.ApplyGenerated(custom, baseColor);
         ActivateCustomTheme();
-        QueueThemePreview(
-            "대표 색상으로 읽기 편한 팔레트를 자동 생성해 미리보기에 반영했습니다.");
+        QueueThemePreview(Text["admin.preview.palette.message"]);
     }
 
     private void ApplyAutomaticThemePalette()
@@ -2022,8 +2012,7 @@
             custom.Primary);
         WeddingThemePaletteGenerator.ApplyGenerated(custom, baseColor);
         ActivateCustomTheme();
-        _themePreviewMessage =
-            "대표 색상으로 읽기 편한 팔레트를 자동 생성해 미리보기에 반영했습니다.";
+        _themePreviewMessage = Text["admin.preview.palette.message"];
         CaptureThemePreview();
     }
 
@@ -2077,8 +2066,7 @@
         }
 
         ActivateCustomTheme();
-        QueueThemePreview(
-            "세부 색상 변경을 미리보기에 반영했습니다. 설정 저장 전까지 공개 화면에는 적용되지 않습니다.");
+        QueueThemePreview(Text["admin.preview.color.message"]);
     }
 
     private void ActivateCustomTheme()
@@ -2152,10 +2140,10 @@
         Vm.Config.CeremonyNoteFormat = "Markdown";
         Vm.Config.CeremonyNote = tone switch
         {
-            "formal" => "## 예식 안내\n\n귀한 걸음으로 함께해 주시는 모든 분들께 깊이 감사드립니다.\n\n예식 당일 혼잡할 수 있으니 여유 있게 도착해 주시면 감사하겠습니다. 주차 및 식장 안내는 현장 안내 표지와 직원 안내를 따라주세요.",
-            "simple" => "## 예식 안내\n\n소중한 자리에 함께해 주셔서 감사합니다.\n\n예식은 정시에 시작될 예정입니다. 편안한 마음으로 오셔서 저희의 시작을 축복해 주세요.",
-            "ai" => "웹 AI에게 이렇게 요청해 보세요.\n\n> 모바일 청첩장에 넣을 예식 안내 문구를 작성해줘. 따뜻하고 정중한 톤으로, 주차 안내와 감사 인사를 포함하고, Markdown 형식으로 만들어줘.",
-            _ => "## 예식 안내\n\n먼 길 귀한 걸음으로 함께해 주시는 모든 분들께 진심으로 감사드립니다.\n\n저희 두 사람이 새로운 시작을 하는 자리에 따뜻한 축복으로 함께해 주세요. 오시는 길에 불편함 없도록 아래 안내를 참고해 주시면 감사하겠습니다.",
+            "formal" => Text["admin.notice.template.formal"],
+            "simple" => Text["admin.notice.template.simple"],
+            "ai" => Text["admin.notice.template.ai"],
+            _ => Text["admin.notice.template.warm"],
         };
     }
 
@@ -2380,7 +2368,7 @@
                 && args.Current.FindRelease(candidate) is null)
             {
                 _layoutCandidate = null;
-                _layoutApplyMessage = "선택했던 레이아웃 버전이 게시 목록에서 내려가 현재 적용값으로 돌아왔습니다.";
+                _layoutApplyMessage = Text["admin.layout.unavailable"];
             }
 
             StateHasChanged();
@@ -2400,7 +2388,7 @@
         }
         catch (Exception ex)
         {
-            Vm.SetStatusMessage($"슈퍼관리자 자동 인증을 확인하지 못했습니다. 통합 어드민에서 다시 열어주세요. ({ex.GetType().Name})");
+            Vm.SetStatusMessage($"{Text["admin.super.auto.failed"]} ({ex.GetType().Name})");
             return false;
         }
     }
@@ -2693,19 +2681,23 @@
 
     private static double ClampPercent(double value) => Math.Clamp(value, 0, 100);
 
-    private static string FormatPanelPosition(HeroPanelPlacement placement, bool mobile) =>
+    private string FormatPanelPosition(HeroPanelPlacement placement, bool mobile) =>
         mobile
             ? placement.HasMobileCustomPosition
-                ? $"{placement.MobileX:0.#}%, {placement.MobileY:0.#}%"
-                : "기본 위치"
+                ? $"{Text["admin.position.mobile"]} {placement.MobileX:0.#}%, {placement.MobileY:0.#}%"
+                : Text["admin.position.mobile.default"]
             : placement.HasDesktopCustomPosition
-                ? $"{placement.DesktopX:0.#}%, {placement.DesktopY:0.#}%"
-                : "기본 위치";
+                ? $"{Text["admin.position.desktop"]} {placement.DesktopX:0.#}%, {placement.DesktopY:0.#}%"
+                : Text["admin.position.desktop.default"];
 
-    private static string FormatFloatingPosition(WeddingFloatingPosition position)
+    private string FormatFloatingPosition(WeddingFloatingPosition position)
     {
-        var mobile = position.HasMobile ? $"모바일 {position.MobileX:0.#}%, {position.MobileY:0.#}%" : "모바일 기본";
-        var desktop = position.HasDesktop ? $"PC {position.DesktopX:0.#}%, {position.DesktopY:0.#}%" : "PC 기본";
+        var mobile = position.HasMobile
+            ? $"{Text["admin.position.mobile"]} {position.MobileX:0.#}%, {position.MobileY:0.#}%"
+            : Text["admin.position.mobile.default"];
+        var desktop = position.HasDesktop
+            ? $"{Text["admin.position.desktop"]} {position.DesktopX:0.#}%, {position.DesktopY:0.#}%"
+            : Text["admin.position.desktop.default"];
         return $"{desktop} · {mobile}";
     }
 
@@ -2775,8 +2767,9 @@
     private async Task OnShareInvitation()
     {
         var url = new Uri(new Uri(Nav.BaseUri), Slug).ToString();
-        var result = await JS.InvokeAsync<string>("weddingInterop.shareOrCopy", url, $"{Vm.Config?.CoupleName} 청첩장");
-        Vm.SetStatusMessage(result == "shared" ? "공유 창을 열었습니다." : "청첩장 링크를 복사했습니다.");
+        var result = await JS.InvokeAsync<string>("weddingInterop.shareOrCopy", url,
+            string.Format(Text["admin.share.title"], Vm.Config?.CoupleName));
+        Vm.SetStatusMessage(result == "shared" ? Text["admin.share.result.shared"] : Text["admin.share.result.copied"]);
     }
 
     private async Task OnRemoveAdmin(string userId)

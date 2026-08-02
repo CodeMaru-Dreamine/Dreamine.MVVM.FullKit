@@ -9,12 +9,18 @@
 @using Wedding.Common
 @inject WeddingThankYou.ViewModels.InvitationViewModel Vm
 @inject WeddingThankYou.ViewModels.GuestbookViewModel VmGuest
+@inject ThankYouLocalization Text
 @inject IJSRuntime JS
 @implements IAsyncDisposable
 
-<PageTitle>@Vm.CoupleName 감사 인사</PageTitle>
+<PageTitle>@L("public.page.title", Vm.CoupleName)</PageTitle>
 
 <HeadContent>
+    <link rel="stylesheet" href="/css/wedding-layout-components.css?v=20260802-layout-parity-3" />
+    @if (Vm.Config is not null)
+    {
+        <style>.w-public-root{--w-hero-image-fit-desktop:@Vm.Config.HeroDesktopFit;--w-hero-image-fit-mobile:@Vm.Config.HeroMobileFit;--w-hero-image-position-desktop:@($"{Vm.Config.HeroDesktopFocusX}% {Vm.Config.HeroDesktopFocusY}%");--w-hero-image-position-mobile:@($"{Vm.Config.HeroMobileFocusX}% {Vm.Config.HeroMobileFocusY}%");--w-hero-image-crop-desktop-enabled:@(Vm.Config.HeroDesktopFit == "cover" ? 1 : 0);--w-hero-image-crop-desktop-x:@Vm.Config.HeroDesktopCrop.X;--w-hero-image-crop-desktop-y:@Vm.Config.HeroDesktopCrop.Y;--w-hero-image-crop-desktop-width:@Vm.Config.HeroDesktopCrop.Width;--w-hero-image-crop-desktop-height:@Vm.Config.HeroDesktopCrop.Height;--w-hero-image-crop-mobile-enabled:@(Vm.Config.HeroMobileFit == "cover" ? 1 : 0);--w-hero-image-crop-mobile-x:@Vm.Config.HeroMobileCrop.X;--w-hero-image-crop-mobile-y:@Vm.Config.HeroMobileCrop.Y;--w-hero-image-crop-mobile-width:@Vm.Config.HeroMobileCrop.Width;--w-hero-image-crop-mobile-height:@Vm.Config.HeroMobileCrop.Height;@if (Vm.ThemeName == WeddingThemeCatalog.CustomThemeKey){<text>--w-primary:@Vm.Config.CustomThemePrimary;--w-dark:@Vm.Config.CustomThemeDark;--w-secondary:@Vm.Config.CustomThemeAccent;--w-accent:@Vm.Config.CustomThemeAccent;--w-text:@Vm.Config.CustomThemeText;--w-muted-text:@Vm.Config.CustomThemeMutedText;--w-bg:@Vm.Config.CustomThemeBackground;--w-panel-bg:@Vm.Config.CustomThemePanel;--w-border:@Vm.Config.CustomThemeBorder;--w-button-bg:@Vm.Config.CustomThemeButtonBackground;--w-button-text:@Vm.Config.CustomThemeButtonText;--w-nav-bg:@Vm.Config.CustomThemePanel;--w-nav-text:@Vm.Config.CustomThemeText;</text>}}</style>
+    }
     <meta property="og:title" content="@Vm.OgTitle" />
     <meta property="og:description" content="@Vm.OgDescription" />
     <meta property="og:image" content="@(string.IsNullOrWhiteSpace(Vm.OgImageUrl) ? "/img/og-thankyou.png" : Vm.OgImageUrl)" />
@@ -29,7 +35,7 @@
 }
 else if (Vm.NotFound)
 {
-    <div class="w-notfound"><h1>404</h1><p>페이지를 찾을 수 없습니다.</p><a href="/">홈으로</a></div>
+    <div class="w-notfound"><h1>404</h1><p>@Text["public.notfound.message"]</p><a href="/">@Text["public.home"]</a></div>
 }
 else
 {
@@ -39,16 +45,17 @@ else
              data-drag-target="music"
              style="@Vm.MusicButtonStyle">
             <audio @ref="audioRef" src="@Vm.MusicUrl" loop preload="auto"></audio>
-            <button class="w-music-btn" @onclick="ToggleMusic" title="@(isMusicPlaying ? "음악 끄기" : "음악 켜기")">
+            <button class="w-music-btn" @onclick="ToggleMusic" title="@(isMusicPlaying ? Text["public.music.pause"] : Text["public.music.play"])"
+                    aria-label="@(isMusicPlaying ? Text["public.music.pause"] : Text["public.music.play"])">
                 @(isMusicPlaying ? "⏸" : "🎵")
             </button>
-            <span class="w-music-label">@(isMusicPlaying ? "재생 중" : "음악 켜기")</span>
+            <span class="w-music-label">@(isMusicPlaying ? Text["public.music.playing"] : Text["public.music.play"])</span>
         </div>
     }
 
     @if (UseTabs)
     {
-        <nav class="w-invite-tabs-bar" aria-label="감사장 메뉴">
+        <nav class="w-invite-tabs-bar" aria-label="@Text["public.menu"]">
             @foreach (var item in TabItems)
             {
                 <button class="@TabClass(item.Key)" @onclick="() => SetTab(item.Key)"><span>@item.Icon</span><small>@item.Label</small></button>
@@ -56,14 +63,17 @@ else
         </nav>
 
         <button class="w-invite-menu-fab @(_mobileTabMenuOpen ? "is-open" : "")"
-                @onclick="ToggleMobileTabMenu" aria-label="메뉴 열기">
+                @onclick="ToggleMobileTabMenu"
+                aria-label="@(_mobileTabMenuOpen ? Text["public.menu.close"] : Text["public.menu.open"])"
+                aria-expanded="@_mobileTabMenuOpen"
+                aria-controls="thankyou-mobile-menu">
             @(_mobileTabMenuOpen ? "✕" : "☰")
         </button>
 
         @if (_mobileTabMenuOpen)
         {
             <div class="w-invite-menu-backdrop" @onclick="ToggleMobileTabMenu"></div>
-            <nav class="w-invite-menu-sheet" aria-label="감사장 메뉴 (모바일)">
+            <nav id="thankyou-mobile-menu" class="w-invite-menu-sheet" aria-label="@Text["public.menu.mobile"]">
                 <div class="w-invite-menu-sheet__handle"></div>
                 <div class="w-invite-menu-sheet__grid">
                     @foreach (var item in TabItems)
@@ -77,13 +87,95 @@ else
         }
     }
 
-    @if (UseGalleryLayout)
+    @if (UseCardLayout)
+    {
+        var cardPages = CardPages;
+        <section class="wedding-card-experience" aria-label="@(L("public.card.aria", Vm.CoupleName))">
+            <LayoutTransitionSurface Presentation="LayoutPresentationMode.FlipCard" Transition="@CardTransition"
+                                     PageCount="@cardPages.Count" ActiveIndex="@_cardPageIndex"
+                                     ActiveIndexChanged="OnCardPageChanged" PageLabel="CardPageLabel"
+                                     AriaLabel="@(L("public.card.aria", Vm.CoupleName))">
+                <PageContent Context="pageIndex">
+                    @{ var cardPage = cardPages[Math.Clamp(pageIndex, 0, cardPages.Count - 1)]; }
+                    <article class="wedding-card-face">
+                        @if (cardPage is null)
+                        {
+                            <section class="wedding-card-cover w-hero--invite-positioned"
+                                     role="banner"
+                                     data-drag-container
+                                     data-hero-crop-container>
+                                @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
+                                {
+                                    <img class="wedding-card-cover__image wedding-card-cover__image--backdrop" src="@Vm.HeroImageUrl" alt="" aria-hidden="true" />
+                                    <img class="wedding-card-cover__image" data-hero-crop-image src="@Vm.HeroImageUrl" alt="@(L("public.hero.photo.alt", Vm.CoupleName))" />
+                                }
+                                else { <div class="wedding-card-cover__image wedding-card-cover__image--empty"></div> }
+                                <div class="wedding-card-cover__veil"></div><span class="wedding-card-cover__seal" aria-hidden="true">W</span>
+                                <div class="wedding-card-cover__panel wedding-card-cover__panel--top w-panel w-hero__top
+                                            w-hero-panel--dv-@Vm.HeroPanelVerticalDesktop
+                                            w-hero-panel--dh-@Vm.HeroPanelHorizontalDesktop
+                                            w-hero-panel--mv-@Vm.HeroPanelVerticalMobile
+                                            w-hero-panel--mh-@Vm.HeroPanelHorizontalMobile
+                                            @(Vm.HasCustomHeroTopPanelPosition ? "w-draggable-positioned" : "")
+                                            @(AdminPreview ? "w-design-draggable" : "")"
+                                     data-drag-target="heroTop"
+                                     @onpointerdown:stopPropagation
+                                     @onpointerup:stopPropagation
+                                     style="@Vm.HeroTopPanelStyle">
+                                    <p class="wedding-card-cover__kicker">@Vm.HeroTitle</p><h1>@Vm.CoupleName</h1>
+                                </div>
+                                <div class="wedding-card-cover__panel wedding-card-cover__panel--bottom w-panel w-hero__bottom
+                                            w-hero-panel--dv-bottom w-hero-panel--dh-center
+                                            w-hero-panel--mv-bottom w-hero-panel--mh-center
+                                            @(Vm.HasCustomHeroBottomPanelPosition ? "w-draggable-positioned" : "")
+                                            @(AdminPreview ? "w-design-draggable" : "")"
+                                     data-drag-target="heroBottom"
+                                     @onpointerdown:stopPropagation
+                                     @onpointerup:stopPropagation
+                                     style="@Vm.HeroBottomPanelStyle">
+                                    <p class="wedding-card-cover__date">@WeddingDateText <span>@Vm.WeddingTime</span></p>
+                                    @if (!string.IsNullOrWhiteSpace(Vm.VenueName)) { <p class="wedding-card-cover__venue">@Vm.VenueName</p> }
+                                </div>
+                            </section>
+                        }
+                        else
+                        {
+                            var highlight = ResolveCardHighlight(cardPage);
+                            <section class="wedding-card-sheet wedding-card-sheet--@cardPage">
+                                <header class="wedding-card-sheet__header"><span class="wedding-card-sheet__folio">@(pageIndex + 1). @Text["public.section.card"]</span><span class="wedding-card-sheet__icon">@(string.IsNullOrWhiteSpace(highlight?.Icon) ? WeddingSectionOrderCatalog.GetIcon(cardPage) : highlight.Icon)</span><h2>@(string.IsNullOrWhiteSpace(highlight?.Title) ? SectionLabel(cardPage) : highlight.Title)</h2>@if (!string.IsNullOrWhiteSpace(highlight?.Body)) { <p>@highlight.Body</p> }</header>
+                                <div class="wedding-card-sheet__content" role="region" tabindex="0">@RenderStandardSection(cardPage)</div>
+                                <footer class="wedding-card-sheet__footer"><span>@Vm.CoupleName</span><span>↕ @Text["public.scroll"]</span><span>@Text["public.thankyou"]</span></footer>
+                            </section>
+                        }
+                    </article>
+                </PageContent>
+            </LayoutTransitionSurface>
+            <p class="wedding-card-navigation__hint">@Text["public.card.navigation.hint"]</p>
+        </section>
+    }
+    else if (UsePhotoBookLayout)
+    {
+        var bookPages = PhotoBookReaderPages;
+        <section class="wedding-layout-photobook" aria-label="@(L("public.photobook.aria", Vm.CoupleName))">
+            <section class="wedding-photobook-pages"><header class="wedding-photobook-heading"><p class="wedding-layout-kicker">@Text["public.photobook.label"]</p><h2>@Text["public.photobook.title"]</h2></header>
+                <div class="wedding-photobook-reader">
+                    <LayoutTransitionSurface Presentation="LayoutPresentationMode.PagedBook" Transition="@PhotoBookTransition" PageCount="@bookPages.Count" ActiveIndex="@_bookPageIndex" ActiveIndexChanged="OnBookPageChanged" PageLabel="BookPageLabel" AriaLabel="@(L("public.photobook.aria", Vm.CoupleName))">
+                        <PageContent Context="pageIndex">@RenderPhotoBookReaderPage(bookPages[Math.Clamp(pageIndex, 0, bookPages.Count - 1)])</PageContent>
+                        <ReplicaContent Context="pageIndex">@RenderPhotoBookReplica(bookPages[Math.Clamp(pageIndex, 0, bookPages.Count - 1)])</ReplicaContent>
+                    </LayoutTransitionSurface>
+                </div>
+            </section>
+        </section>
+    }
+    else if (UseGalleryLayout)
     {
         <section class="wedding-layout-gallery w-layout-gallery">
             <section class="wedding-gallery-cover" role="banner">
                 @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
                 {
-                    <img class="wedding-gallery-cover__image" src="@Vm.HeroImageUrl" alt="@Vm.CoupleName 대표 사진" />
+                    <div class="wedding-gallery-cover__media" data-hero-crop-container>
+                        <img class="wedding-gallery-cover__image" data-hero-crop-image src="@Vm.HeroImageUrl" alt="@(L("public.hero.photo.alt", Vm.CoupleName))" />
+                    </div>
                 }
                 else
                 {
@@ -92,7 +184,7 @@ else
                 <div class="wedding-gallery-cover__panel">
                     <p class="wedding-layout-kicker">@Vm.HeroTitle</p>
                     <h1>@Vm.CoupleName</h1>
-                    <p>@Vm.WeddingDate.ToString("yyyy년 MM월 dd일"), 함께해 주셔서 감사합니다.</p>
+                    <p>@L("public.hero.date.thanks", WeddingDateText)</p>
                     @if (!string.IsNullOrWhiteSpace(Vm.VenueName))
                     {
                         <p class="wedding-layout-muted">@Vm.VenueName</p>
@@ -122,7 +214,10 @@ else
     <section class="w-hero w-hero--thankyou w-hero--thankyou-positioned w-hero--style-@Vm.ThankYouStyle w-hero--dh-@Vm.HeroPanelHorizontalDesktop w-hero--mh-@Vm.HeroPanelHorizontalMobile" role="banner">
         @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
         {
-            <div class="w-hero__bg" style="background-image:url('@Vm.HeroImageUrl')"></div>
+            <div class="w-hero__bg" data-hero-crop-container>
+                <img class="w-hero__image w-hero__image--backdrop" src="@Vm.HeroImageUrl" alt="" aria-hidden="true" />
+                <img class="w-hero__image w-hero__image--foreground" data-hero-crop-image src="@Vm.HeroImageUrl" alt="@(L("public.hero.photo.alt", Vm.CoupleName))" />
+            </div>
         }
         else
         {
@@ -133,9 +228,9 @@ else
             <div class="w-hero__top w-panel w-hero-panel--dv-@Vm.HeroPanelVerticalDesktop w-hero-panel--dh-@Vm.HeroPanelHorizontalDesktop w-hero-panel--mv-@Vm.HeroPanelVerticalMobile w-hero-panel--mh-@Vm.HeroPanelHorizontalMobile @(Vm.HasCustomHeroPanelPosition ? "w-draggable-positioned" : "") @(AdminPreview ? "w-design-draggable" : "")"
                  data-drag-target="heroThankYou"
                  style="@Vm.HeroPanelStyle">
-                <h1 class="w-hero__title">Thank You</h1>
+                <h1 class="w-hero__title">@Text["public.thankyou"]</h1>
                 <p class="w-hero__names">@Vm.CoupleName</p>
-                <p class="w-hero__date">@Vm.WeddingDate.ToString("yyyy년 MM월 dd일"), 소중한 자리에 함께해 주셔서 감사합니다.</p>
+                <p class="w-hero__date">@L("public.hero.date.thanks", WeddingDateText)</p>
             </div>
         </div>
     </section>
@@ -155,10 +250,10 @@ else
     <footer class="w-footer">
         @if (!string.IsNullOrWhiteSpace(Vm.InvitationUrl))
         {
-            <a href="@Vm.InvitationUrl" target="_blank" rel="noopener">청첩장 보기</a>
+            <a href="@Vm.InvitationUrl" target="_blank" rel="noopener">@Text["public.invitation.open"]</a>
             <span> · </span>
         }
-        <a href="/@Slug/admin" class="w-admin-link">⚙ 관리자</a>
+        <a href="@AdminUrl" class="w-admin-link">⚙ @Text["public.admin.open"]</a>
     </footer>
     @if (UsePremiumLayout)
     {
@@ -170,16 +265,16 @@ else
     }
     @if (videoLightboxOpen && Vm.VideoUrls.Count > 0)
     {
-        <div class="w-lightbox" role="dialog" tabindex="-1" @ref="vlbRef" @onkeydown="OnVideoKeyDown">
-            <button class="w-lb__close" @onclick="CloseVideoLightbox">✕</button>
+        <div class="w-lightbox" role="dialog" aria-modal="true" aria-label="@Text["public.video.title"]" tabindex="-1" @ref="vlbRef" @onkeydown="OnVideoKeyDown">
+            <button class="w-lb__close" @onclick="CloseVideoLightbox" aria-label="@Text["public.lightbox.close"]">✕</button>
             @if (Vm.VideoUrls.Count > 1)
             {
-                <button class="w-lb__prev" @onclick="VideoPrev">‹</button>
+                <button class="w-lb__prev" @onclick="VideoPrev" aria-label="@Text["public.video.previous"]">‹</button>
             }
             <video class="w-lb__video" src="@Vm.VideoUrls[videoLightboxIdx]" controls autoplay playsinline @onplay="PauseMusicForVideo"></video>
             @if (Vm.VideoUrls.Count > 1)
             {
-                <button class="w-lb__next" @onclick="VideoNext">›</button>
+                <button class="w-lb__next" @onclick="VideoNext" aria-label="@Text["public.video.next"]">›</button>
                 <span class="w-lb__counter">@(videoLightboxIdx + 1) / @Vm.VideoUrls.Count</span>
             }
         </div>
@@ -190,6 +285,9 @@ else
 @code {
     [Parameter] public string Slug { get; set; } = "";
     [SupplyParameterFromQuery(Name = "adminPreview")] public bool AdminPreview { get; set; }
+    [SupplyParameterFromQuery(Name = "lang")] public string? Language { get; set; }
+    private static readonly string[] SupportedLanguageCodes = ThankYouLocalization.Languages.Select(item => item.Code).ToArray();
+    private string AdminUrl => $"/{Slug}/admin?lang={Uri.EscapeDataString(Text.Language)}";
 
     private ElementReference lbRef;
     private ElementReference vlbRef;
@@ -206,12 +304,227 @@ else
     private bool shouldFocusVideoLightbox;
 
     private DotNetObjectReference<ThankYou>? _selfRef;
+    private string? _appliedDocumentLanguage;
+    private bool _themeNeedsApply = true;
 
     // ── 탭 스타일 상태 ─────────────────────────────────
     private string ActiveTab { get; set; } = "hero";
     private bool UseTabs => Vm.LayoutMode == WeddingLayoutMode.TabMenu;
     private bool UseGalleryLayout => Vm.LayoutMode == WeddingLayoutMode.Gallery;
     private bool UseStoryLayout => Vm.LayoutMode == WeddingLayoutMode.Story;
+    private bool UseCardLayout => Vm.LayoutMode == WeddingLayoutMode.Card;
+    private bool UsePhotoBookLayout => Vm.LayoutMode == WeddingLayoutMode.PhotoBook;
+    private int _cardPageIndex;
+    private int _bookPageIndex;
+    private static readonly LayoutTransitionDefinition CardTransition = new() { Kind = LayoutTransitionKind.FlipCard, DurationMilliseconds = 720, EnableSwipe = true, EnableKeyboard = true, ShowNavigation = true };
+    private static readonly LayoutTransitionDefinition PhotoBookTransition = new() { Kind = LayoutTransitionKind.PageTurn, DurationMilliseconds = 900, EnableSwipe = true, EnableKeyboard = true, ShowNavigation = true };
+    private IReadOnlyList<string?> CardPages => new string?[] { null }
+        .Concat(Vm.OrderedSections.Where(x => x != "hero" && IsAvailable(x)).Cast<string?>()).ToList();
+    private string L(string key, params object?[] arguments)
+        => arguments.Length == 0 ? Text[key] : string.Format(Text[key], arguments);
+    private string WeddingDateText => Text.FormatDate(Vm.WeddingDate);
+    private string SectionLabel(string section)
+    {
+        var key = $"public.section.{section.ToLowerInvariant()}";
+        var localized = Text[key];
+        return string.Equals(localized, key, StringComparison.OrdinalIgnoreCase)
+            ? WeddingSectionOrderCatalog.GetLabel(section)
+            : localized;
+    }
+    private Task OnCardPageChanged(int index) { _cardPageIndex = index; return Task.CompletedTask; }
+    private string CardPageLabel(int index) => CardPages[Math.Clamp(index, 0, CardPages.Count - 1)] is { } section
+        ? SectionLabel(section)
+        : Text["public.card.cover"];
+    private CardHighlight? ResolveCardHighlight(string section) => Vm.CardHighlights
+        .OrderBy(x => x.Order).FirstOrDefault(x => string.Equals(x.SectionKey, section, StringComparison.OrdinalIgnoreCase));
+    private sealed record PhotoBookReaderPage(
+        string Kind,
+        PhotoBookPage? PhotoPage = null,
+        string? Section = null,
+        PhotoInfo? Photo = null);
+
+    private IReadOnlyList<PhotoBookReaderPage> PhotoBookReaderPages => ResolvePhotoBookReaderPages();
+
+    private List<PhotoBookReaderPage> ResolvePhotoBookReaderPages()
+    {
+        var pages = new List<PhotoBookReaderPage>
+        {
+            new("cover"),
+        };
+
+        foreach (var section in Vm.OrderedSections.Where(section =>
+                     !string.Equals(section, "hero", StringComparison.OrdinalIgnoreCase)))
+        {
+            if (string.Equals(section, "gallery", StringComparison.OrdinalIgnoreCase))
+            {
+                pages.AddRange(ResolvePhotoBookPhotoPages());
+                continue;
+            }
+
+            if (IsAvailable(section))
+            {
+                pages.Add(new PhotoBookReaderPage("section", Section: section));
+            }
+        }
+
+        return pages;
+    }
+
+    private IEnumerable<PhotoBookReaderPage> ResolvePhotoBookPhotoPages()
+    {
+        var photos = Vm.AllPhotos;
+        var used = new HashSet<int>();
+        var result = new List<PhotoBookReaderPage>(Math.Max(Vm.PhotoBookPages.Count, photos.Count));
+
+        foreach (var configuredPage in Vm.PhotoBookPages.OrderBy(page => page.PageNumber))
+        {
+            var matchedIndex = FindPhotoBookPhotoIndex(configuredPage.PhotoFileName, used);
+            if (matchedIndex < 0)
+            {
+                matchedIndex = FindFirstUnusedPhotoBookPhotoIndex(used);
+            }
+
+            if (matchedIndex >= 0)
+            {
+                used.Add(matchedIndex);
+            }
+
+            result.Add(new PhotoBookReaderPage(
+                "photo",
+                configuredPage,
+                Photo: matchedIndex >= 0 ? photos[matchedIndex] : null));
+        }
+
+        var nextPageNumber = Math.Max(
+            1,
+            Vm.PhotoBookPages.Select(page => page.PageNumber).DefaultIfEmpty(0).Max() + 1);
+        for (var i = 0; i < photos.Count; i++)
+        {
+            if (used.Contains(i))
+            {
+                continue;
+            }
+
+            var pageNumber = nextPageNumber++;
+            result.Add(new PhotoBookReaderPage(
+                "photo",
+                new PhotoBookPage
+                {
+                    PageNumber = pageNumber,
+                    PhotoFileName = photos[i].FileName,
+                    Caption = L("public.page.number", pageNumber),
+                },
+                Photo: photos[i]));
+        }
+
+        return result;
+    }
+
+    private int FindPhotoBookPhotoIndex(string? fileName, HashSet<int> used)
+    {
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            return -1;
+        }
+
+        for (var i = 0; i < Vm.AllPhotos.Count; i++)
+        {
+            if (!used.Contains(i)
+                && string.Equals(Vm.AllPhotos[i].FileName, fileName, StringComparison.OrdinalIgnoreCase))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    private int FindFirstUnusedPhotoBookPhotoIndex(HashSet<int> used)
+    {
+        for (var i = 0; i < Vm.AllPhotos.Count; i++)
+        {
+            if (!used.Contains(i))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+    private Task OnBookPageChanged(int index) { _bookPageIndex = index; return Task.CompletedTask; }
+    private string BookPageLabel(int index)
+    {
+        var page = PhotoBookReaderPages[Math.Clamp(index, 0, PhotoBookReaderPages.Count - 1)];
+        return page.Kind == "cover"
+            ? Text["public.photobook.cover"]
+            : page.PhotoPage?.Caption ?? (page.Section is null ? Text["public.photobook.label"] : SectionLabel(page.Section));
+    }
+    private RenderFragment RenderPhotoBookReaderPage(PhotoBookReaderPage readerPage) => @<article class="wedding-photobook-page @(readerPage.Kind == "section" ? "wedding-photobook-page--section" : "")">
+        @if (readerPage.Kind == "cover")
+        {
+            <section class="wedding-photobook-cover w-hero--invite-positioned"
+                     role="banner"
+                     data-drag-container
+                     data-hero-crop-container>
+                @if (!string.IsNullOrWhiteSpace(Vm.HeroImageUrl))
+                {
+                    <img class="wedding-photobook-cover__image wedding-photobook-cover__image--backdrop" src="@Vm.HeroImageUrl" alt="" aria-hidden="true" />
+                    <img class="wedding-photobook-cover__image wedding-photobook-cover__image--foreground" data-hero-crop-image src="@Vm.HeroImageUrl" alt="@(L("public.hero.photo.alt", Vm.CoupleName))" />
+                }
+                else
+                {
+                    <div class="wedding-photobook-cover__image wedding-photobook-cover__image--empty"></div>
+                }
+                <div class="wedding-photobook-cover__veil"></div>
+                <div class="wedding-photobook-cover__panel">
+                    <div class="wedding-photobook-cover__copy wedding-photobook-cover__copy--top w-panel w-hero__top
+                                w-hero-panel--dv-@Vm.HeroPanelVerticalDesktop
+                                w-hero-panel--dh-@Vm.HeroPanelHorizontalDesktop
+                                w-hero-panel--mv-@Vm.HeroPanelVerticalMobile
+                                w-hero-panel--mh-@Vm.HeroPanelHorizontalMobile
+                                @(Vm.HasCustomHeroTopPanelPosition ? "w-draggable-positioned" : "")
+                                @(AdminPreview ? "w-design-draggable" : "")"
+                         data-drag-target="heroTop"
+                         @onpointerdown:stopPropagation
+                         @onpointerup:stopPropagation
+                         style="@Vm.HeroTopPanelStyle">
+                        <p class="wedding-layout-kicker">@Vm.HeroTitle</p><h1>@Vm.CoupleName</h1>
+                    </div>
+                    <div class="wedding-photobook-cover__copy wedding-photobook-cover__copy--bottom w-panel w-hero__bottom
+                                w-hero-panel--dv-bottom w-hero-panel--dh-center
+                                w-hero-panel--mv-bottom w-hero-panel--mh-center
+                                @(Vm.HasCustomHeroBottomPanelPosition ? "w-draggable-positioned" : "")
+                                @(AdminPreview ? "w-design-draggable" : "")"
+                         data-drag-target="heroBottom"
+                         @onpointerdown:stopPropagation
+                         @onpointerup:stopPropagation
+                         style="@Vm.HeroBottomPanelStyle">
+                        <p class="wedding-photobook-cover__date">@WeddingDateText</p>
+                        @if (!string.IsNullOrWhiteSpace(Vm.WeddingTime)) { <p class="wedding-layout-muted">@Vm.WeddingTime</p> }
+                        @if (!string.IsNullOrWhiteSpace(Vm.VenueName)) { <p class="wedding-photobook-cover__venue">@Vm.VenueName</p> }
+                    </div>
+                </div>
+            </section>
+        }
+        else if (readerPage.PhotoPage is { } bookPage)
+        {
+            var photo = readerPage.Photo;
+            <div class="wedding-photobook-sheet-content">
+                @if (photo is not null) { <button class="wedding-photobook-sheet__photo" type="button" @onclick="() => OpenPremiumPhoto(photo)" aria-label="@(L("public.gallery.photo.open", bookPage.PageNumber))"><img src="@photo.Url" alt="@bookPage.Caption" /></button> }
+                else { <div class="wedding-photobook-sheet__placeholder">@Text["public.photobook.photo.empty"]</div> }
+                <div class="wedding-photobook-sheet__copy"><p class="wedding-photobook-sheet__caption">@bookPage.Caption</p>@if (!string.IsNullOrWhiteSpace(bookPage.Body)) { <p class="wedding-photobook-sheet__body">@bookPage.Body</p> }</div><span class="wedding-photobook-sheet__number">@bookPage.PageNumber.ToString("00")</span>
+            </div>
+        }
+        else if (readerPage.Section is { } section)
+        {
+            <header class="wedding-photobook-section__header"><span class="wedding-photobook-section__folio">@Text["public.photobook.label"]</span><span class="wedding-photobook-section__icon">@WeddingSectionOrderCatalog.GetIcon(section)</span><h2>@SectionLabel(section)</h2></header><div class="wedding-photobook-section__content">@RenderStandardSection(section)</div><footer class="wedding-photobook-section__footer"><span>@Vm.CoupleName</span><span>↕ @Text["public.scroll"]</span><span>@Text["public.thankyou"]</span></footer>
+        }
+    </article>;
+    private RenderFragment RenderPhotoBookReplica(PhotoBookReaderPage readerPage) => @<div class="wedding-photobook-page wedding-photobook-page--replica">
+        @if (readerPage.Kind == "cover") { <div class="wedding-photobook-replica-cover"><span>@Text["public.thankyou"]</span><strong>@Vm.CoupleName</strong><small>@WeddingDateText</small></div> }
+        else if (readerPage.PhotoPage is { } bookPage) { <div class="wedding-photobook-replica-section"><span>@L("public.page.number", bookPage.PageNumber)</span><b>♡</b><h2>@bookPage.Caption</h2><p>@bookPage.Body</p><i></i><i></i><i></i></div> }
+        else { <div class="wedding-photobook-replica-section"><span>@Text["public.photobook.label"]</span><b>@WeddingSectionOrderCatalog.GetIcon(readerPage.Section ?? "message")</b><h2>@SectionLabel(readerPage.Section ?? "message")</h2><i></i><i></i><i></i></div> }
+    </div>;
 
     // ── Gallery 레이아웃 사진 표시 정책 ─────────────────────
     private const int GalleryInitialCount = 12;
@@ -323,28 +636,31 @@ else
                 builder.CloseElement();
                 builder.OpenElement(7, "p");
                 builder.AddAttribute(8, "class", "wedding-story-lede");
-                builder.AddContent(9, $"{Vm.WeddingDate:yyyy년 MM월 dd일}, 소중한 마음을 기억합니다.");
+                builder.AddContent(9, L("public.hero.date.thanks", WeddingDateText));
                 builder.CloseElement();
                 builder.OpenElement(10, "p");
-                builder.AddContent(11, string.IsNullOrWhiteSpace(Vm.Story) ? "두 사람의 이야기가 여기서부터 시작됩니다." : Vm.Story);
+                builder.AddContent(11, string.IsNullOrWhiteSpace(Vm.Story) ? Text["public.story.default.beginning"] : Vm.Story);
                 builder.CloseElement();
                 break;
             case 1:
                 builder.OpenElement(12, "p");
-                builder.AddContent(13, string.IsNullOrWhiteSpace(Vm.Story2) ? "쌓아온 시간을 담아 전해드립니다." : Vm.Story2);
+                builder.AddContent(13, string.IsNullOrWhiteSpace(Vm.Story2) ? Text["public.story.default.memories"] : Vm.Story2);
                 builder.CloseElement();
                 break;
             case 2:
                 builder.OpenElement(14, "p");
-                builder.AddContent(15, "함께해 주신 시간과 축복의 순간을 사진과 이야기로 천천히 전해드립니다.");
+                builder.AddContent(15, Text["public.story.default.blessings"]);
                 builder.CloseElement();
                 builder.OpenElement(16, "p");
-                builder.AddContent(17, "소중한 마음을 보내주신 모든 분들께 오래 기억될 감사의 인사를 남깁니다.");
+                builder.AddContent(17, Text["public.story.default.closing"]);
                 builder.CloseElement();
                 break;
             default:
                 builder.OpenElement(40, "p");
-                builder.AddContent(41, $"{Vm.WeddingDate:yyyy년 MM월 dd일}, {Vm.VenueName}에서의 결혼식을 많은 분들의 축복 속에 무사히 마쳤습니다. 따뜻한 마음과 귀한 발걸음을 보내주신 모든 분들께 진심으로 감사드립니다.");
+                builder.AddContent(41, DefaultOpeningText);
+                builder.CloseElement();
+                builder.OpenElement(42, "p");
+                builder.AddContent(43, Text["public.story.default.closing"]);
                 builder.CloseElement();
                 break;
         }
@@ -357,12 +673,16 @@ else
     private int StoryStripVisible => Math.Min(_storyStripVisible, StoryStripTotal);
     private void LoadMoreStoryStrip()
         => _storyStripVisible = Math.Min(_storyStripVisible + StoryStripPageSize, StoryStripTotal);
-    private bool UsePremiumLayout => UseGalleryLayout || UseStoryLayout;
+    private bool UsePremiumLayout => UseGalleryLayout || UseStoryLayout || UseCardLayout || UsePhotoBookLayout;
     private bool HasVideo => Vm.VideoUrls.Count > 0;
     private bool HasGallery => Vm.Gallery.Count > 0;
     private bool _mobileTabMenuOpen;
     private IReadOnlyList<TabItem> TabItems =>
-        [.. Vm.OrderedSections.Where(IsAvailable).Select(x => new TabItem(x, WeddingSectionOrderCatalog.GetIcon(x), WeddingSectionOrderCatalog.GetLabel(x)))];
+        [.. Vm.OrderedSections.Where(IsAvailable).Select(x => new TabItem(x, WeddingSectionOrderCatalog.GetIcon(x), SectionLabel(x)))];
+
+    private string DefaultOpeningText => string.IsNullOrWhiteSpace(Vm.VenueName)
+        ? L("public.hero.date.thanks", WeddingDateText)
+        : L("public.story.default.opening", WeddingDateText, Vm.VenueName);
 
     private sealed record TabItem(string Key, string Icon, string Label);
 
@@ -388,24 +708,59 @@ else
         _ => false,
     };
 
+    protected override void OnInitialized()
+    {
+        Text.Changed += OnLanguageChanged;
+    }
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
     protected override async Task OnParametersSetAsync()
     {
+        if (!string.IsNullOrWhiteSpace(Language))
+        {
+            Text.SetLanguage(Language);
+        }
+
         await Vm.LoadAsync(Slug);
         await VmGuest.InitializeAsync(Slug);
+        _themeNeedsApply = true;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await JS.InvokeVoidAsync("weddingInterop.applyTheme", Vm.ThemeName);
+            var persistedLanguage = await JS.InvokeAsync<string>(
+                "dreaminePortalPreferences.getLanguage",
+                SupportedLanguageCodes,
+                "ko",
+                "codemaru-language",
+                ".codemaru.co.kr");
+            Text.SetLanguage(persistedLanguage);
         }
+
+        if (!string.Equals(_appliedDocumentLanguage, Text.HtmlLanguage, StringComparison.Ordinal))
+        {
+            await JS.InvokeVoidAsync("weddingInterop.setDocumentLanguage", Text.HtmlLanguage);
+            _appliedDocumentLanguage = Text.HtmlLanguage;
+        }
+
+        if (Vm.IsLoaded && _themeNeedsApply)
+        {
+            await JS.InvokeVoidAsync("weddingInterop.applyTheme", Vm.ThemeName, Vm.ThemeCssVariables);
+            _themeNeedsApply = false;
+        }
+
+        if (Vm.IsLoaded)
+            await JS.InvokeVoidAsync("weddingInterop.initHeroCropTargets");
 
         if (Vm.IsLoaded && !string.IsNullOrWhiteSpace(Vm.MusicUrl) && !musicSyncInitialized)
         {
             _selfRef = DotNetObjectReference.Create(this);
             await JS.InvokeVoidAsync("weddingInterop.initMusicSync", _selfRef);
-            await JS.InvokeVoidAsync("weddingInterop.initMusicAutoplay");
+            if (!AdminPreview)
+                await JS.InvokeVoidAsync("weddingInterop.initMusicAutoplay");
             isMusicPlaying = await JS.InvokeAsync<bool>("weddingInterop.isMusicPlaying");
             musicSyncInitialized = true;
             StateHasChanged();
@@ -573,15 +928,9 @@ else
     };
 
     private RenderFragment RenderStandardMessage() => @<section class="w-thankyou-msg glass-panel w-invite-tab-page">
-        <h2 class="w-section-title">감사 인사</h2>
-        <p>
-            @Vm.WeddingDate.ToString("yyyy년 MM월 dd일"), @(Vm.VenueName)에서의 결혼식을<br />
-            많은 분들의 축복 속에 무사히 마쳤습니다. 🙇‍♂️🙇‍♀️
-        </p>
-        <p>
-            따뜻한 마음과 귀한 발걸음을 보내주신 모든 분들께<br />
-            진심으로 감사드립니다.
-        </p>
+        <h2 class="w-section-title">@Text["public.section.message"]</h2>
+        <p>@DefaultOpeningText</p>
+        <p>@Text["public.story.default.closing"]</p>
         @if (!string.IsNullOrWhiteSpace(Vm.Story))
         {
             <hr class="w-divider" />
@@ -591,16 +940,21 @@ else
         {
             <p>@Vm.Story2</p>
         }
+        @if (!string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml))
+        {
+            <hr class="w-divider" />
+            <div class="w-ceremony-note">@((MarkupString)Vm.CeremonyNoteHtml)</div>
+        }
     </section>;
 
     private RenderFragment RenderStandardVideo() => @<text>
         <section class="w-video w-invite-tab-page">
-            <h2 class="w-section-title">우리의 영상</h2>
+            <h2 class="w-section-title">@Text["public.video.title"]</h2>
             <div class="w-video__grid">
                 @for (int i = 0; i < Vm.VideoUrls.Count; i++)
                 {
                     var idx = i;
-                    <button type="button" class="w-video__item" @onclick="() => OpenVideoLightbox(idx)">
+                    <button type="button" class="w-video__item" @onclick="() => OpenVideoLightbox(idx)" aria-label="@(L("public.video.open", idx + 1))">
                         <video src="@Vm.VideoUrls[idx]" preload="metadata" muted playsinline></video>
                         <span class="w-video__play">▶</span>
                     </button>
@@ -611,19 +965,19 @@ else
 
     private RenderFragment RenderStandardGallery() => @<text>
         <section class="w-gallery w-invite-tab-page">
-            <h2 class="w-section-title">우리의 사진</h2>
+            <h2 class="w-section-title">@Text["public.gallery.title"]</h2>
             <div class="w-gallery__controls">
                 <button class="w-btn" @onclick="ToggleAutoPlay">
-                    @(isAutoPlaying ? "⏸ 정지" : "▶ 자동재생")
+                    @(isAutoPlaying ? Text["public.gallery.autoplay.stop"] : Text["public.gallery.autoplay.start"])
                 </button>
-                <span class="w-gallery__count">최근 @(Vm.Gallery.Count)장 / 전체 @(Vm.AllPhotos.Count)장</span>
+                <span class="w-gallery__count">@L("public.gallery.count.recent", Vm.Gallery.Count, Vm.AllPhotos.Count)</span>
             </div>
             <div class="w-gallery__grid">
                 @for (int i = 0; i < Vm.Gallery.Count; i++)
                 {
                     var idx = i;
-                    <button class="w-gallery__item" @onclick="() => OpenLightbox(idx)">
-                        <img src="@Vm.Gallery[idx].ThumbUrl" alt="사진 @(idx+1)" loading="lazy" />
+                    <button class="w-gallery__item" @onclick="() => OpenLightbox(idx)" aria-label="@(L("public.gallery.photo.open", idx + 1))">
+                        <img src="@Vm.Gallery[idx].ThumbUrl" alt="@(L("public.gallery.photo.alt", idx + 1))" loading="lazy" />
                     </button>
                 }
             </div>
@@ -631,12 +985,12 @@ else
 
         @if (Vm.LightboxOpen)
         {
-            <div class="w-lightbox" role="dialog" tabindex="-1" @ref="lbRef"
+            <div class="w-lightbox" role="dialog" aria-modal="true" aria-label="@Text["public.gallery.title"]" tabindex="-1" @ref="lbRef"
                  @onkeydown="OnKeyDown" @onpointerdown="OnPointerDown" @onpointerup="OnPointerUp">
-                <button class="w-lb__close" @onclick="CloseLightbox">✕</button>
-                <button class="w-lb__prev" @onclick="Vm.LightboxPrev">‹</button>
-                <img class="w-lb__img" src="@Vm.AllPhotos[Vm.LightboxIdx].Url" alt="사진 @(Vm.LightboxIdx+1)" />
-                <button class="w-lb__next" @onclick="Vm.LightboxNext">›</button>
+                <button class="w-lb__close" @onclick="CloseLightbox" aria-label="@Text["public.lightbox.close"]">✕</button>
+                <button class="w-lb__prev" @onclick="Vm.LightboxPrev" aria-label="@Text["public.lightbox.previous"]">‹</button>
+                <img class="w-lb__img" src="@Vm.AllPhotos[Vm.LightboxIdx].Url" alt="@(L("public.gallery.photo.alt", Vm.LightboxIdx + 1))" />
+                <button class="w-lb__next" @onclick="Vm.LightboxNext" aria-label="@Text["public.lightbox.next"]">›</button>
                 <span class="w-lb__counter">@(Vm.LightboxIdx+1) / @Vm.AllPhotos.Count</span>
             </div>
             <div class="w-lb__backdrop" @onclick="CloseLightbox"></div>
@@ -645,22 +999,22 @@ else
 
     private RenderFragment RenderPremiumGallery() => @<section class="wedding-gallery-section" id="gallery">
         <div class="wedding-layout-heading">
-            <p class="wedding-layout-kicker">Gallery</p>
-            <h2>감사의 순간들</h2>
+            <p class="wedding-layout-kicker">@Text["public.section.gallery"]</p>
+            <h2>@Text["public.gallery.moments.title"]</h2>
             @if (GalleryTotalCount > 0)
             {
-                <span>표시 @(GalleryVisibleCount)장 / 전체 @(GalleryTotalCount)장</span>
+                <span>@L("public.gallery.count.visible", GalleryVisibleCount, GalleryTotalCount)</span>
             }
         </div>
         @if (GalleryTotalCount == 0)
         {
-            <div class="wedding-gallery-empty">아직 등록된 사진이 없습니다.</div>
+            <div class="wedding-gallery-empty">@Text["public.gallery.empty"]</div>
         }
         else
         {
             <div class="w-gallery__controls">
                 <button class="w-btn" type="button" @onclick="TogglePremiumAutoPlay">
-                    @(premiumAutoPlaying ? "⏸ 정지" : "▶ 자동재생")
+                    @(premiumAutoPlaying ? Text["public.gallery.autoplay.stop"] : Text["public.gallery.autoplay.start"])
                 </button>
             </div>
             <div class="wedding-gallery-grid">
@@ -668,8 +1022,8 @@ else
                 {
                     var photoIndex = i;
                     <figure class="wedding-gallery-tile">
-                        <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photoIndex)" aria-label="사진 @(photoIndex + 1) 크게 보기">
-                            <img src="@Vm.AllPhotos[photoIndex].ThumbUrl" alt="사진 @(photoIndex + 1)" loading="lazy" />
+                        <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photoIndex)" aria-label="@(L("public.gallery.photo.open", photoIndex + 1))">
+                            <img src="@Vm.AllPhotos[photoIndex].ThumbUrl" alt="@(L("public.gallery.photo.alt", photoIndex + 1))" loading="lazy" />
                         </button>
                     </figure>
                 }
@@ -678,7 +1032,7 @@ else
             {
                 <div class="wedding-layout-more">
                     <button type="button" class="w-btn w-btn--primary" @onclick="LoadMoreGallery">
-                        사진 더 보기 (+@Math.Min(GalleryPageSize, GalleryTotalCount - GalleryVisibleCount))
+                        @L("public.gallery.more", Math.Min(GalleryPageSize, GalleryTotalCount - GalleryVisibleCount))
                     </button>
                 </div>
             }
@@ -686,8 +1040,8 @@ else
     </section>;
 
     private RenderFragment RenderThankYouMessage() => @<section class="wedding-story-section">
-        <h2>감사 인사</h2>
-        <p>@Vm.WeddingDate.ToString("yyyy년 MM월 dd일"), @(Vm.VenueName)에서의 결혼식을 많은 분들의 축복 속에 무사히 마쳤습니다.</p>
+        <h2>@Text["public.section.message"]</h2>
+        <p>@DefaultOpeningText</p>
         @if (!string.IsNullOrWhiteSpace(Vm.Story))
         {
             <p>@Vm.Story</p>
@@ -697,15 +1051,20 @@ else
             <hr class="w-divider" />
             <p>@Vm.Story2</p>
         }
+        @if (!string.IsNullOrWhiteSpace(Vm.CeremonyNoteHtml))
+        {
+            <hr class="w-divider" />
+            <div class="w-ceremony-note">@((MarkupString)Vm.CeremonyNoteHtml)</div>
+        }
     </section>;
 
     private RenderFragment RenderPremiumVideo() => @<section class="w-video">
-        <h2 class="w-section-title">우리의 영상</h2>
+        <h2 class="w-section-title">@Text["public.video.title"]</h2>
         <div class="w-video__grid">
             @for (int i = 0; i < Vm.VideoUrls.Count; i++)
             {
                 var idx = i;
-                <button type="button" class="w-video__item" @onclick="() => OpenVideoLightbox(idx)">
+                <button type="button" class="w-video__item" @onclick="() => OpenVideoLightbox(idx)" aria-label="@(L("public.video.open", idx + 1))">
                     <video src="@Vm.VideoUrls[idx]" preload="metadata" muted playsinline></video>
                     <span class="w-video__play">▶</span>
                 </button>
@@ -729,8 +1088,8 @@ else
                 @if (photo is not null)
                 {
                     <figure class="wedding-story-hero-photo @(isReverse ? "wedding-story-hero-photo--portrait" : "")">
-                        <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photo)" aria-label="@chapter.Title 사진 크게 보기">
-                            <img src="@photo.ThumbUrl" alt="@chapter.Title" loading="@(chapterIndex == 0 ? "eager" : "lazy")" />
+                        <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photo)" aria-label="@(L("public.story.photo.open", chapter.Title))">
+                            <img src="@photo.Url" alt="@chapter.Title" loading="@(chapterIndex == 0 ? "eager" : "lazy")" />
                         </button>
                     </figure>
                 }
@@ -743,13 +1102,13 @@ else
 
     private RenderFragment RenderStoryMomentStrip() => @<section class="wedding-story-moment-strip" id="gallery">
         <div class="wedding-layout-heading">
-            <p class="wedding-layout-kicker">Moments</p>
-            <h2>함께한 순간</h2>
-            <span>표시 @(StoryStripVisible)장 / 전체 @(StoryStripTotal)장</span>
+            <p class="wedding-layout-kicker">@Text["public.story.title"]</p>
+            <h2>@Text["public.story.moments.title"]</h2>
+            <span>@L("public.gallery.count.visible", StoryStripVisible, StoryStripTotal)</span>
         </div>
         <div class="w-gallery__controls">
             <button class="w-btn" type="button" @onclick="TogglePremiumAutoPlay">
-                @(premiumAutoPlaying ? "⏸ 정지" : "▶ 자동재생")
+                @(premiumAutoPlaying ? Text["public.gallery.autoplay.stop"] : Text["public.gallery.autoplay.start"])
             </button>
         </div>
         <div class="wedding-story-moment-strip__grid">
@@ -757,8 +1116,8 @@ else
             {
                 var photoIndex = i;
                 <figure>
-                    <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photoIndex)" aria-label="사진 @(photoIndex + 1) 크게 보기">
-                        <img src="@Vm.AllPhotos[photoIndex].ThumbUrl" alt="사진 @(photoIndex + 1)" loading="lazy" />
+                    <button type="button" class="wedding-photo-thumb" @onclick="() => OpenPremiumPhoto(photoIndex)" aria-label="@(L("public.gallery.photo.open", photoIndex + 1))">
+                        <img src="@Vm.AllPhotos[photoIndex].Url" alt="@(L("public.gallery.photo.alt", photoIndex + 1))" loading="lazy" />
                     </button>
                 </figure>
             }
@@ -767,21 +1126,21 @@ else
         {
             <div class="wedding-layout-more">
                 <button type="button" class="w-btn w-btn--primary" @onclick="LoadMoreStoryStrip">
-                    사진 더 보기 (+@Math.Min(StoryStripPageSize, StoryStripTotal - StoryStripVisible))
+                    @L("public.gallery.more", Math.Min(StoryStripPageSize, StoryStripTotal - StoryStripVisible))
                 </button>
             </div>
         }
     </section>;
 
     private RenderFragment RenderGuestbook() => @<section class="w-guestbook w-invite-tab-page">
-        <h2 class="w-section-title">📖 감사 방명록</h2>
+        <h2 class="w-section-title">📖 @Text["public.guestbook.title"]</h2>
         <div class="w-gb__form">
-            <input class="w-input" type="text" placeholder="이름" @bind="VmGuest.Name" />
-            <input class="w-input" type="text" placeholder="연락처 (선택)" @bind="VmGuest.Contact" />
-            <textarea class="w-input w-textarea" rows="4" placeholder="감사 메시지를 남겨주세요" @bind="VmGuest.Message"></textarea>
+            <input class="w-input" type="text" aria-label="@Text["public.guestbook.name"]" placeholder="@Text["public.guestbook.name"]" @bind="VmGuest.Name" />
+            <input class="w-input" type="text" aria-label="@Text["public.guestbook.contact.optional"]" placeholder="@Text["public.guestbook.contact.optional"]" @bind="VmGuest.Contact" />
+            <textarea class="w-input w-textarea" rows="4" aria-label="@Text["public.guestbook.message.placeholder"]" placeholder="@Text["public.guestbook.message.placeholder"]" @bind="VmGuest.Message"></textarea>
             <div class="w-gb__actions">
-                <button class="w-btn w-btn--primary" @onclick="OnGuestbookAdd" disabled="@VmGuest.IsSaving">등록</button>
-                <button class="w-btn" @onclick="OnGuestbookReload">새로고침</button>
+                <button class="w-btn w-btn--primary" @onclick="OnGuestbookAdd" disabled="@VmGuest.IsSaving">@Text["public.guestbook.submit"]</button>
+                <button class="w-btn" @onclick="OnGuestbookReload">@Text["public.guestbook.reload"]</button>
             </div>
             @if (!string.IsNullOrWhiteSpace(VmGuest.LastStatus))
             {
@@ -792,7 +1151,7 @@ else
             @foreach (var e in VmGuest.EntriesView)
             {
                 <li class="w-gb__entry">
-                    <div class="w-gb__meta"><strong>@e.Name</strong><span class="w-gb__date">@e.CreatedLocal.ToString("yyyy-MM-dd HH:mm")</span></div>
+                    <div class="w-gb__meta"><strong>@e.Name</strong><span class="w-gb__date">@Text.FormatDateTime(e.CreatedLocal)</span></div>
                     <div class="w-gb__msg">@e.Message</div>
                 </li>
             }
@@ -801,6 +1160,15 @@ else
 
     public async ValueTask DisposeAsync()
     {
+        Text.Changed -= OnLanguageChanged;
+        try
+        {
+            await JS.InvokeVoidAsync("weddingInterop.clearTheme");
+        }
+        catch (JSDisconnectedException)
+        {
+            // The circuit may already be gone during a full-page navigation.
+        }
         await StopAutoPlay();
         await StopPremiumAutoPlay();
         autoCts?.Dispose();
