@@ -2,10 +2,11 @@
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject SiteLocalization Text
+@inject NavigationManager Navigation
 
 <NavMenu @key="@($"nav-{Text.Language}")" />
 
-<main class="cm-body" @key="@($"body-{Text.Language}")">
+<main class="@BodyClass" @key="@($"body-{Text.Language}")">
     @Body
 </main>
 
@@ -28,9 +29,30 @@
 </a>
 
 @code {
-    protected override void OnInitialized() => Text.Changed += HandleLanguageChanged;
+    private string BodyClass => IsCardHybridPage
+        ? "cm-body cm-body--flush"
+        : "cm-body";
+
+    private bool IsCardHybridPage =>
+        string.Equals(
+            new Uri(Navigation.Uri).AbsolutePath.Trim('/'),
+            "cardhybrid",
+            StringComparison.OrdinalIgnoreCase);
+
+    protected override void OnInitialized()
+    {
+        Text.Changed += HandleLanguageChanged;
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
 
     private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
-    public void Dispose() => Text.Changed -= HandleLanguageChanged;
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args) =>
+        _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Text.Changed -= HandleLanguageChanged;
+        Navigation.LocationChanged -= HandleLocationChanged;
+    }
 }
