@@ -160,7 +160,7 @@ public sealed class FamilyHomeViewModel
         await _globalSettings.SaveAsync(
             new GlobalSettings { MaxImageSizeMb = MaxImageSizeMb, MaxVideoSizeMb = MaxVideoSizeMb }, ct)
             .ConfigureAwait(false);
-        StatusMessage = "✅ 전체 설정이 저장되었습니다.";
+        SetStatus("status.global.saved", isSuccess: true);
     }
 
     /// <summary>
@@ -201,7 +201,15 @@ public sealed class FamilyHomeViewModel
     public Task<bool> LoginAsync()
     {
         IsAuthenticated = DreaminePasswordHasher.VerifyPassword(LoginPassword, _opts.SuperAdminPassword);
-        StatusMessage = IsAuthenticated ? "" : "비밀번호가 틀렸습니다.";
+        if (IsAuthenticated)
+        {
+            ClearStatus();
+        }
+        else
+        {
+            SetStatus("status.login.failed", isSuccess: false);
+        }
+
         return Task.FromResult(IsAuthenticated);
     }
 
@@ -216,13 +224,22 @@ public sealed class FamilyHomeViewModel
     public IReadOnlyList<FamilyConfig> Tenants { get; private set; } = [];
     /// <summary>
     /// \if KO
-    /// <para>Status Message 값을 가져오거나 설정합니다.</para>
+    /// <para>현재 사용자 상태 메시지의 번역 키를 가져옵니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Gets or sets the status message value.</para>
+    /// <para>Gets the localization key for the current user-facing status.</para>
     /// \endif
     /// </summary>
-    public string StatusMessage { get; private set; } = "";
+    public string StatusKey { get; private set; } = "";
+
+    /// <summary>Gets the format arguments for <see cref="StatusKey"/>.</summary>
+    public object?[] StatusArguments { get; private set; } = [];
+
+    /// <summary>Gets whether the current status represents a successful operation.</summary>
+    public bool StatusIsSuccess { get; private set; }
+
+    /// <summary>Gets whether a user-facing status is currently available.</summary>
+    public bool HasStatus => !string.IsNullOrWhiteSpace(StatusKey);
     /// <summary>
     /// \if KO
     /// <para>Is Loaded 값을 가져오거나 설정합니다.</para>
@@ -260,6 +277,7 @@ public sealed class FamilyHomeViewModel
     /// \endif
     /// </summary>
     public string NewPassword { get; set; } = "";
+    public string NewViewerPassword { get; set; } = "";
 
     /// <summary>
     /// \if KO
@@ -290,7 +308,7 @@ public sealed class FamilyHomeViewModel
         Tenants = await _tenants.GetAllAsync(ct).ConfigureAwait(false);
         await LoadGlobalSettingsAsync(ct).ConfigureAwait(false);
         IsLoaded = true;
-        StatusMessage = "";
+        ClearStatus();
     }
 
     /// <summary>
@@ -330,28 +348,38 @@ public sealed class FamilyHomeViewModel
         var slug = NewSlug.Trim().ToLowerInvariant();
 
         if (string.IsNullOrWhiteSpace(slug))
-        { StatusMessage = "슬러그(URL ID)를 입력해주세요."; return false; }
+        { SetStatus("status.slug.required", isSuccess: false); return false; }
+
+        if (!FamilyAccessService.IsValidNewSlug(slug))
+        { SetStatus("status.slug.invalid", isSuccess: false); return false; }
 
         if (string.IsNullOrWhiteSpace(NewFamilyName))
-        { StatusMessage = "가족 이름을 입력해주세요."; return false; }
+        { SetStatus("status.family.required", isSuccess: false); return false; }
 
         if (string.IsNullOrWhiteSpace(NewPassword))
-        { StatusMessage = "어드민 비밀번호를 입력해주세요."; return false; }
+        { SetStatus("status.password.required", isSuccess: false); return false; }
 
         if (NewPassword.Length < 8)
-        { StatusMessage = "어드민 비밀번호는 8자 이상이어야 합니다."; return false; }
+        { SetStatus("status.password.short", isSuccess: false); return false; }
+
+        if (string.IsNullOrWhiteSpace(NewViewerPassword))
+        { SetStatus("status.viewer_password.required", isSuccess: false); return false; }
+
+        if (NewViewerPassword.Length < 8)
+        { SetStatus("status.viewer_password.short", isSuccess: false); return false; }
 
         if (slug == "admin")
-        { StatusMessage = "'admin'은 슬러그로 사용할 수 없습니다."; return false; }
+        { SetStatus("status.slug.reserved", isSuccess: false); return false; }
 
         if (await _tenants.ExistsAsync(slug, ct).ConfigureAwait(false))
-        { StatusMessage = $"이미 존재하는 슬러그입니다: {slug}"; return false; }
+        { SetStatus("status.slug.exists", isSuccess: false, slug); return false; }
 
         var config = new FamilyConfig
         {
             Slug = slug,
             FamilyName = NewFamilyName.Trim(),
             PasswordHash = DreaminePasswordHasher.HashPassword(NewPassword),
+            ViewerPasswordHash = DreaminePasswordHasher.HashPassword(NewViewerPassword),
             IsPublished = true
         };
 
@@ -379,8 +407,9 @@ public sealed class FamilyHomeViewModel
         NewSlug = "";
         NewFamilyName = "";
         NewPassword = "";
+        NewViewerPassword = "";
 
-        StatusMessage = $"✅ '{slug}' 앨범이 생성되었습니다.";
+        SetStatus("status.tenant.created", isSuccess: true, slug);
         return true;
     }
 
@@ -440,7 +469,7 @@ public sealed class FamilyHomeViewModel
         config.PinOrder = pinOrder;
         await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
         await LoadAsync(ct).ConfigureAwait(false);
-        StatusMessage = $"✅ '{slug}' 노출 설정 저장됨";
+        SetStatus("status.visibility.saved", isSuccess: true, slug);
     }
 
     /// <summary>
@@ -481,11 +510,11 @@ public sealed class FamilyHomeViewModel
         {
             await _tenants.DeleteAsync(slug, ct).ConfigureAwait(false);
             await LoadAsync(ct).ConfigureAwait(false);
-            StatusMessage = $"🗑 '{slug}' 삭제 완료.";
+            SetStatus("status.tenant.deleted", isSuccess: true, slug);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            StatusMessage = $"삭제 오류: {ex.Message}";
+            SetStatus("status.tenant.delete_failed", isSuccess: false);
         }
     }
 
@@ -536,7 +565,7 @@ public sealed class FamilyHomeViewModel
         config.MaxImageSizeMb = maxImageSizeMb;
         await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
         await LoadAsync(ct).ConfigureAwait(false);
-        StatusMessage = $"✅ '{slug}' 이미지 용량 제한 저장됨";
+        SetStatus("status.image_limit.saved", isSuccess: true, slug);
     }
 
     /// <summary>
@@ -586,6 +615,20 @@ public sealed class FamilyHomeViewModel
         config.MaxVideoSizeMb = maxVideoSizeMb;
         await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
         await LoadAsync(ct).ConfigureAwait(false);
-        StatusMessage = $"✅ '{slug}' 동영상 용량 제한 저장됨";
+        SetStatus("status.video_limit.saved", isSuccess: true, slug);
+    }
+
+    private void SetStatus(string key, bool isSuccess, params object?[] arguments)
+    {
+        StatusKey = key;
+        StatusArguments = arguments;
+        StatusIsSuccess = isSuccess;
+    }
+
+    private void ClearStatus()
+    {
+        StatusKey = "";
+        StatusArguments = [];
+        StatusIsSuccess = false;
     }
 }

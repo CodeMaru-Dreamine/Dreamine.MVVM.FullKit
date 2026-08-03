@@ -2,100 +2,108 @@
 @layout FamiliesApp.Blazor.Layout.FamilyLayout
 @namespace FamiliesApp.Blazor.Pages
 @rendermode InteractiveServer
+@implements IDisposable
 
 @inject FamilyAdminViewModel Vm
 @inject NavigationManager Nav
+@inject FamilyLocalization Text
 
-<PageTitle>어드민 — @(Vm.Config?.FamilyName ?? Slug)</PageTitle>
+<PageTitle>@Text["admin.user.title"] — @(Vm.Config?.FamilyName ?? Slug)</PageTitle>
 
-<div class="fa-page fa-admin">
+<div class="fa-user-admin">
+    <div class="fa-user-admin-preferences" aria-label="@Text["screen.settings"]">
+        <FamilyPreferences />
+    </div>
 
-    @if (!Vm.IsAuthenticated)
+<main class="fa-page fa-admin">
+
+    @if (!Vm.IsAuthenticatedFor(Slug))
     {
-        <!-- ── 로그인 ── -->
+        <!-- Sign-in -->
         <div class="fa-login-box">
             <h1 class="fa-login-box__title">👨‍👩‍👧‍👦 @Slug</h1>
             @if (Vm.IsSignedIn)
             {
-                <p class="fa-login-box__desc">현재 공용 로그인: <strong>@Vm.CurrentUserLabel</strong></p>
-                <p class="fa-login-box__desc">기존 어드민 비밀번호를 한 번 입력하면 이 가족 앨범이 현재 계정에 연결됩니다.</p>
+                <p class="fa-login-box__desc"><strong>@Text.Format("admin.user.shared.current", Vm.CurrentUserLabel)</strong></p>
+                <p class="fa-login-box__desc">@Text["admin.user.link.account"]</p>
             }
             else
             {
-                <p class="fa-login-box__desc">CodeMaru/Dreamine 계정으로 먼저 로그인하면, 기존 비밀번호 확인 후 이 가족 앨범을 계정에 연결할 수 있습니다.</p>
-                <a class="fa-btn fa-btn--ghost fa-btn--full" href="@LoginUrl">공용 로그인</a>
+                <p class="fa-login-box__desc">@Text["admin.user.login.first"]</p>
+                <a class="fa-btn fa-btn--ghost fa-btn--full" href="@LoginUrl">@Text["common.login"]</a>
             }
 
-            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            @if (!string.IsNullOrWhiteSpace(StatusText))
             {
-                <p class="fa-status fa-status--err">@Vm.StatusMessage</p>
+                <p class="fa-status @(Vm.StatusIsError ? "fa-status--err" : "fa-status--ok")">@StatusText</p>
             }
 
             <input class="fa-input" type="password"
                    value="@Vm.LoginPassword"
                    @oninput="OnPasswordInput"
-                   @onkeydown="OnLoginKey" placeholder="비밀번호" autocomplete="current-password" />
-            <button class="fa-btn fa-btn--primary fa-btn--full" @onclick="OnLogin">로그인</button>
+                   @onkeydown="OnLoginKey" placeholder="@Text["field.password"]" autocomplete="current-password" />
+            <button class="fa-btn fa-btn--primary fa-btn--full" @onclick="OnLogin">@Text["login"]</button>
         </div>
     }
     else
     {
-        <!-- ── 어드민 탭 ── -->
+        <!-- Administrator tabs -->
         <div class="fa-admin-header">
-            <h1>@(Vm.Config?.FamilyName ?? Slug) 어드민</h1>
-            <div style="display:flex;gap:8px;align-items:center;">
-                <button class="fa-btn fa-btn--ghost" @onclick="OnRefresh">🔄</button>
-                <a href="/@Slug" class="fa-btn fa-btn--ghost">앨범 보기 →</a>
+            <h1>@(Vm.Config?.FamilyName ?? Slug) @Text["admin.user.heading"]</h1>
+            <div class="fa-admin-header__actions">
+                <button class="fa-btn fa-btn--ghost" @onclick="OnRefresh" aria-label="@Text["common.refresh"]">🔄</button>
+                <a href="@AlbumUrl" class="fa-btn fa-btn--ghost">@Text["admin.user.open.album"] →</a>
             </div>
         </div>
 
-        @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+        @if (!string.IsNullOrWhiteSpace(StatusText))
         {
-            <p class="fa-status @(Vm.StatusMessage.StartsWith("✅") || Vm.StatusMessage.Contains("저장") || Vm.StatusMessage.Contains("추가") || Vm.StatusMessage.Contains("업로드") || Vm.StatusMessage.Contains("연결") || Vm.StatusMessage.Contains("삭제") ? "fa-status--ok" : "fa-status--err")">
-                @Vm.StatusMessage
+            <p class="fa-status @(Vm.StatusIsError ? "fa-status--err" : "fa-status--ok")">
+                @StatusText
             </p>
         }
         @if (Vm.IsSignedIn)
         {
-            <p class="fa-status fa-status--ok">공용 로그인: @Vm.CurrentUserLabel · @(Vm.IsOwner ? "대표 관리자" : "관리자")</p>
+            <p class="fa-status fa-status--ok">@Text.Format("admin.user.shared.current", Vm.CurrentUserLabel) · @(Vm.IsOwner ? Text["admin.role.owner"] : Text["admin.role.admin"])</p>
         }
 
         <div class="fa-tabs">
-            <button class="fa-tab @(activeTab == "post" ? "fa-tab--active" : "")" @onclick='() => SetTab("post")'>✏️ 포스트 작성</button>
-            <button class="fa-tab @(activeTab == "manage" ? "fa-tab--active" : "")" @onclick='() => SetTab("manage")'>📋 포스트 관리</button>
-            <button class="fa-tab @(activeTab == "albums" ? "fa-tab--active" : "")" @onclick='() => SetTab("albums")'>📂 앨범 관리</button>
-            <button class="fa-tab @(activeTab == "settings" ? "fa-tab--active" : "")" @onclick='() => SetTab("settings")'>⚙️ 기본 설정</button>
+            <button class="fa-tab @(activeTab == "post" ? "fa-tab--active" : "")" disabled="@Vm.IsUploading" @onclick='() => SetTabAsync("post")'>✏️ @Text["admin.user.tab.write"]</button>
+            <button class="fa-tab @(activeTab == "manage" ? "fa-tab--active" : "")" disabled="@Vm.IsUploading" @onclick='() => SetTabAsync("manage")'>📋 @Text["admin.user.tab.posts"]</button>
+            <button class="fa-tab @(activeTab == "albums" ? "fa-tab--active" : "")" disabled="@Vm.IsUploading" @onclick='() => SetTabAsync("albums")'>📂 @Text["admin.user.tab.albums"]</button>
+            <button class="fa-tab @(activeTab == "settings" ? "fa-tab--active" : "")" disabled="@Vm.IsUploading" @onclick='() => SetTabAsync("settings")'>⚙️ @Text["admin.user.tab.settings"]</button>
         </div>
 
-        <!-- ── 탭: 포스트 작성 ── -->
+        <!-- Write post -->
         @if (activeTab == "post")
         {
             var post = Vm.EditingPost;
             if (post is null)
             {
                 <div class="fa-tab-body">
-                    <button class="fa-btn fa-btn--primary" @onclick="Vm.NewPost">+ 새 포스트 작성</button>
+                    <button class="fa-btn fa-btn--primary" @onclick="Vm.NewPost">+ @Text["admin.user.post.new"]</button>
                 </div>
             }
             else
             {
                 <div class="fa-tab-body fa-post-editor">
                     <div class="fa-form__row">
-                        <label class="fa-label">제목</label>
-                        <input class="fa-input" @bind="post.Title" placeholder="포스트 제목" />
+                        <label class="fa-label">@Text["admin.user.post.title"]</label>
+                        <input class="fa-input" @bind="post.Title" @bind:event="oninput"
+                               placeholder="@Text["admin.user.post.title.placeholder"]" />
                     </div>
 
                     <div class="fa-form__row">
-                        <label class="fa-label">날짜</label>
+                        <label class="fa-label">@Text["admin.user.post.date"]</label>
                         <input class="fa-input" type="datetime-local"
                                value="@post.PostedAt.ToString("yyyy-MM-ddTHH:mm")"
                                @onchange="e => post.PostedAt = DateTime.Parse(e.Value?.ToString() ?? DateTime.Now.ToString())" />
                     </div>
 
                     <div class="fa-form__row">
-                        <label class="fa-label">앨범</label>
+                        <label class="fa-label">@Text["admin.user.post.album"]</label>
                         <select class="fa-input" @bind="post.AlbumId">
-                            <option value="">-- 앨범 없음 (타임라인만) --</option>
+                            <option value="">-- @Text["admin.user.post.no_album"] --</option>
                             @foreach (var album in Vm.Albums)
                             {
                                 <option value="@album.Id">@album.Name</option>
@@ -105,44 +113,43 @@
 
                     <div class="fa-form__row">
                         <label class="fa-label">
-                            내용
-                            <span class="fa-label__hint">Markdown 지원</span>
+                            @Text["admin.user.post.content"]
+                            <span class="fa-label__hint">@Text["admin.user.post.markdown"]</span>
                         </label>
                         <textarea class="fa-textarea fa-textarea--tall" @bind="post.Content"
-                                  placeholder="오늘의 이야기를 써주세요..." rows="8"></textarea>
+                                  @bind:event="oninput"
+                                  placeholder="@Text["admin.user.post.content.placeholder"]" rows="8"></textarea>
                     </div>
 
                     <div class="fa-form__row">
-                        <label class="fa-label">사진 / 동영상 업로드</label>
-                        <InputFile class="fa-input-file" multiple OnChange="OnFilesSelected" accept="image/*,video/*" />
-                        @if (Vm.PendingFiles.Count > 0)
-                        {
-                            <ul class="fa-file-list">
-                                @foreach (var f in Vm.PendingFiles)
-                                {
-                                    <li>📎 @f.Name (@(f.Size / 1024)KB)</li>
-                                }
-                            </ul>
-                        }
+                        <label class="fa-label">@Text["admin.user.post.upload"]</label>
+                        <DirectUploadInput Slug="@Slug"
+                                           Purpose="FamilyUploadPurpose.PostMedia"
+                                           PostSnapshot="@post"
+                                           Multiple="true"
+                                           MaxFiles="50"
+                                           AuthorizedAdminSlug="@Vm.AuthorizedAdminSlug"
+                                           OnUploadingChanged="OnDirectUploadingChanged"
+                                           OnCompleted="OnMediaUploadCompleted" />
                         <div class="fa-video-url-row">
-                            <span style="font-size:12px;color:var(--fa-text-muted);">이미지 URL</span>
-                            <input class="fa-input" style="flex:1;min-width:200px;" @bind="imageUrlInput"
-                                   placeholder="https://...이미지 URL" />
-                            <button class="fa-btn fa-btn--sm fa-btn--ghost" @onclick="OnAddImageUrl">+ 추가</button>
+                            <span class="fa-video-url-row__label">@Text["admin.user.post.image_url"]</span>
+                            <input class="fa-input fa-video-url-row__input" @bind="imageUrlInput"
+                                   placeholder="@Text["admin.user.post.image_url.placeholder"]" />
+                            <button class="fa-btn fa-btn--sm fa-btn--ghost" @onclick="OnAddImageUrl">+ @Text["common.add"]</button>
                         </div>
                         <div class="fa-video-url-row">
-                            <span style="font-size:12px;color:var(--fa-text-muted);">동영상 URL</span>
-                            <input class="fa-input" style="flex:1;min-width:200px;" @bind="videoUrlInput"
-                                   placeholder="https://...YouTube 또는 동영상 URL" />
-                            <button class="fa-btn fa-btn--sm fa-btn--ghost" @onclick="OnAddVideoUrl">+ 추가</button>
+                            <span class="fa-video-url-row__label">@Text["admin.user.post.video_url"]</span>
+                            <input class="fa-input fa-video-url-row__input" @bind="videoUrlInput"
+                                   placeholder="@Text["admin.user.post.video_url.placeholder"]" />
+                            <button class="fa-btn fa-btn--sm fa-btn--ghost" @onclick="OnAddVideoUrl">+ @Text["common.add"]</button>
                         </div>
                     </div>
 
-                    <!-- 기존 미디어 -->
+                    <!-- Existing media -->
                     @if (post.PhotoFileNames.Count + post.VideoFileNames.Count > 0)
                     {
                         <div class="fa-form__row">
-                            <label class="fa-label">등록된 미디어</label>
+                            <label class="fa-label">@Text["admin.user.post.registered"]</label>
                             <div class="fa-media-grid fa-media-grid--admin">
                                 @foreach (var fn in post.PhotoFileNames)
                                 {
@@ -155,7 +162,7 @@
                                             <span class="fa-media-item__url-badge">🔗</span>
                                         }
                                         <button class="fa-media-item__del"
-                                                @onclick="() => OnDeleteMedia(post.Id, fn)">✕</button>
+                                                @onclick="() => OnDeleteMedia(post.Id, fn)" aria-label="@Text["common.delete"]">✕</button>
                                     </div>
                                 }
                                 @foreach (var fn in post.VideoFileNames)
@@ -173,7 +180,7 @@
                                             <video src="@vidSrc" preload="metadata" controls></video>
                                         }
                                         <button class="fa-media-item__del"
-                                                @onclick="() => OnDeleteMedia(post.Id, fn)">✕</button>
+                                                @onclick="() => OnDeleteMedia(post.Id, fn)" aria-label="@Text["common.delete"]">✕</button>
                                     </div>
                                 }
                             </div>
@@ -183,38 +190,38 @@
                     <div class="fa-form__row fa-form__row--check">
                         <label>
                             <input type="checkbox" @bind="post.IsPinned" />
-                            📌 상단 고정
+                            📌 @Text["admin.user.post.pinned"]
                         </label>
                     </div>
                     <div class="fa-form__row fa-form__row--check">
                         <label style="gap:12px">
-                            이미지/동영상 위치
+                            @Text["admin.user.post.media_position"]
                             <label style="font-weight:normal;cursor:pointer">
                                 <input type="radio" name="mediaPos_@post.Id"
                                        checked="@(post.MediaPosition == MediaPosition.Top)"
                                        @onchange="() => post.MediaPosition = MediaPosition.Top" />
-                                📷 내용 위
+                                📷 @Text["admin.user.post.top"]
                             </label>
                             <label style="font-weight:normal;cursor:pointer">
                                 <input type="radio" name="mediaPos_@post.Id"
                                        checked="@(post.MediaPosition == MediaPosition.Bottom)"
                                        @onchange="() => post.MediaPosition = MediaPosition.Bottom" />
-                                📷 내용 아래
+                                📷 @Text["admin.user.post.bottom"]
                             </label>
                         </label>
                     </div>
 
                     <div class="fa-form__actions">
                         <button class="fa-btn fa-btn--primary" @onclick="OnSavePost" disabled="@Vm.IsUploading">
-                            @(Vm.IsUploading ? "업로드 중..." : "저장")
+                            @(Vm.IsUploading ? Text["common.uploading"] : Text["common.save"])
                         </button>
-                        <button class="fa-btn fa-btn--ghost" @onclick="Vm.CancelEdit">취소</button>
+                        <button class="fa-btn fa-btn--ghost" @onclick="OnCancelEdit" disabled="@Vm.IsUploading">@Text["common.cancel"]</button>
                     </div>
                 </div>
             }
         }
 
-        <!-- ── 탭: 포스트 관리 ── -->
+        <!-- Manage posts -->
         @if (activeTab == "manage")
         {
             var adminPageSize = Vm.Config?.PageSize ?? 20;
@@ -224,12 +231,12 @@
             <div class="fa-tab-body">
                 @if (Vm.Posts.Count == 0)
                 {
-                    <p class="fa-empty">등록된 포스트가 없습니다.</p>
+                    <p class="fa-empty">@Text["admin.user.post.empty"]</p>
                 }
                 else
                 {
-                    <div style="font-size:13px;color:var(--fa-text-muted);margin-bottom:8px;">
-                        전체 @Vm.Posts.Count 개 · 페이지 @managePage / @manageTotalPages
+                    <div class="fa-list-summary">
+                        @Text.Format("admin.user.post.summary", Vm.Posts.Count, managePage, manageTotalPages)
                     </div>
                     <div class="fa-post-list">
                         @foreach (var post in managePaged)
@@ -238,23 +245,23 @@
                                 <div class="fa-post-list__info">
                                     @if (post.IsPinned) { <span class="fa-pin-badge">📌</span> }
                                     <span class="fa-post-list__title">@post.Title</span>
-                                    <span class="fa-post-list__date">@post.PostedAt.ToString("yyyy.MM.dd")</span>
+                                    <span class="fa-post-list__date">@FormatDate(post.PostedAt)</span>
                                     <span class="fa-post-list__count">📷@post.PhotoFileNames.Count 🎬@post.VideoFileNames.Count</span>
                                 </div>
                                 <div class="fa-post-list__actions">
                                     <button class="fa-btn fa-btn--sm fa-btn--ghost"
-                                            @onclick="() => OnEditPost(post)">편집</button>
+                                            @onclick="() => OnEditPost(post)">@Text["common.edit"]</button>
                                     <button class="fa-btn fa-btn--sm fa-btn--danger"
-                                            @onclick="() => OnDeletePost(post.Id)">삭제</button>
+                                            @onclick="() => OnDeletePost(post.Id)">@Text["common.delete"]</button>
                                 </div>
                             </div>
                         }
                     </div>
                     @if (manageTotalPages > 1)
                     {
-                        <nav class="fa-pager" aria-label="포스트 관리 페이지">
+                        <nav class="fa-pager" aria-label="@Text["admin.user.post.pager"]">
                             <button class="fa-pager__btn" disabled="@(managePage <= 1)"
-                                    @onclick="() => managePage--">‹ 이전</button>
+                                    @onclick="() => managePage--">‹ @Text["common.previous"]</button>
                             @for (int p = Math.Max(1, managePage - 2); p <= Math.Min(manageTotalPages, managePage + 2); p++)
                             {
                                 var pg = p;
@@ -262,14 +269,14 @@
                                         @onclick="() => managePage = pg">@pg</button>
                             }
                             <button class="fa-pager__btn" disabled="@(managePage >= manageTotalPages)"
-                                    @onclick="() => managePage++">다음 ›</button>
+                                    @onclick="() => managePage++">@Text["common.next"] ›</button>
                         </nav>
                     }
                 }
             </div>
         }
 
-        <!-- ── 탭: 앨범 관리 ── -->
+        <!-- Manage albums -->
         @if (activeTab == "albums")
         {
             const int albumPageSize = 20;
@@ -279,9 +286,9 @@
             <div class="fa-tab-body">
                 <div class="fa-form">
                     <div class="fa-form__row fa-form__row--inline">
-                        <input class="fa-input" @bind="Vm.NewAlbumName" placeholder="앨범 이름 (예: 돌잔치)" />
-                        <input class="fa-input" @bind="Vm.NewAlbumDesc" placeholder="설명 (선택)" />
-                        <button class="fa-btn fa-btn--primary" @onclick="OnAddAlbum">+ 앨범 추가</button>
+                        <input class="fa-input" @bind="Vm.NewAlbumName" placeholder="@Text["admin.user.album.name.placeholder"]" />
+                        <input class="fa-input" @bind="Vm.NewAlbumDesc" placeholder="@Text["admin.user.album.description.placeholder"]" />
+                        <button class="fa-btn fa-btn--primary" @onclick="OnAddAlbum">+ @Text["admin.user.album.add"]</button>
                     </div>
                 </div>
 
@@ -297,15 +304,15 @@
                                     <span class="fa-album-admin-item__desc">@album.Description</span>
                                 }
                                 <button class="fa-btn fa-btn--sm fa-btn--danger"
-                                        @onclick="() => OnDeleteAlbum(album.Id)">삭제</button>
+                                        @onclick="() => OnDeleteAlbum(album.Id)">@Text["common.delete"]</button>
                             </div>
                         }
                     </div>
                     @if (albumTotalPages > 1)
                     {
-                        <nav class="fa-pager" aria-label="앨범 관리 페이지">
+                        <nav class="fa-pager" aria-label="@Text["admin.user.album.pager"]">
                             <button class="fa-pager__btn" disabled="@(albumPage <= 1)"
-                                    @onclick="() => albumPage--">‹ 이전</button>
+                                    @onclick="() => albumPage--">‹ @Text["common.previous"]</button>
                             @for (int p = Math.Max(1, albumPage - 2); p <= Math.Min(albumTotalPages, albumPage + 2); p++)
                             {
                                 var pg = p;
@@ -313,110 +320,147 @@
                                         @onclick="() => albumPage = pg">@pg</button>
                             }
                             <button class="fa-pager__btn" disabled="@(albumPage >= albumTotalPages)"
-                                    @onclick="() => albumPage++">다음 ›</button>
+                                    @onclick="() => albumPage++">@Text["common.next"] ›</button>
                         </nav>
                     }
                 }
                 else
                 {
-                    <p class="fa-empty">등록된 앨범이 없습니다.</p>
+                    <p class="fa-empty">@Text["admin.user.album.empty"]</p>
                 }
             </div>
         }
 
-        <!-- ── 탭: 기본 설정 ── -->
+        <!-- Settings -->
         @if (activeTab == "settings" && Vm.Config is not null)
         {
             var cfg = Vm.Config;
             <div class="fa-tab-body fa-settings">
                 <div class="fa-form__row">
-                    <label class="fa-label">가족 이름</label>
+                    <label class="fa-label">@Text["admin.user.settings.family"]</label>
                     <input class="fa-input" @bind="cfg.FamilyName" />
                 </div>
 
                 <div class="fa-form__row">
-                    <label class="fa-label">소개글</label>
-                    <textarea class="fa-textarea" @bind="cfg.Bio" rows="3" placeholder="가족 소개 한 줄"></textarea>
+                    <label class="fa-label">@Text["admin.user.settings.bio"]</label>
+                    <textarea class="fa-textarea" @bind="cfg.Bio" rows="3" placeholder="@Text["admin.user.settings.bio.placeholder"]"></textarea>
                 </div>
 
                 <div class="fa-form__row">
-                    <label class="fa-label">테마</label>
+                    <label class="fa-label">@Text["admin.user.settings.theme"]</label>
                     <select class="fa-input" @bind="cfg.ThemeName">
-                        <option value="warm">🍊 웜 (Warm)</option>
-                        <option value="mint">🌿 민트 (Mint)</option>
-                        <option value="lavender">💜 라벤더 (Lavender)</option>
-                        <option value="sky">🩵 스카이 (Sky)</option>
-                        <option value="peach">🍑 피치 (Peach)</option>
+                        <option value="warm">🍊 @Text["theme.warm"]</option>
+                        <option value="mint">🌿 @Text["theme.mint"]</option>
+                        <option value="lavender">💜 @Text["theme.lavender"]</option>
+                        <option value="sky">🩵 @Text["theme.sky"]</option>
+                        <option value="peach">🍑 @Text["theme.peach"]</option>
                     </select>
                 </div>
 
                 <div class="fa-form__row">
-                    <label class="fa-label">커버 이미지 업로드</label>
-                    <InputFile class="fa-input-file" OnChange="OnCoverSelected" accept="image/*" />
+                    <label class="fa-label">@Text["admin.user.settings.cover"]</label>
+                    <DirectUploadInput Slug="@Slug"
+                                       Purpose="FamilyUploadPurpose.Cover"
+                                       Accept="image/*,.heic,.heif,.avif"
+                                       AuthorizedAdminSlug="@Vm.AuthorizedAdminSlug"
+                                       OnUploadingChanged="OnDirectUploadingChanged"
+                                       OnCompleted="OnCoverUploadCompleted" />
                     @if (!string.IsNullOrWhiteSpace(cfg.CoverImageFileName))
                     {
                         <img class="fa-cover-preview"
-                             src="@Vm.GetCoverUrl(Slug, cfg.CoverImageFileName)" alt="커버" />
+                             src="@Vm.GetCoverUrl(Slug, cfg.CoverImageFileName)" alt="@Text["admin.user.settings.cover.alt"]" />
                     }
                 </div>
 
                 <div class="fa-form__row fa-form__row--check">
                     <label>
                         <input type="checkbox" @bind="cfg.AllowReactions" />
-                        ❤️ 방문자 반응(이모지) 허용
+                        ❤️ @Text["admin.user.settings.allow_reactions"]
                     </label>
                 </div>
 
                 <div class="fa-form__row fa-form__row--check">
                     <label>
                         <input type="checkbox" @bind="cfg.AllowComments" />
-                        💬 방문자 댓글 허용
+                        💬 @Text["admin.user.settings.allow_comments"]
                     </label>
                 </div>
 
                 <div class="fa-form__row fa-form__row--check">
                     <label>
                         <input type="checkbox" @bind="cfg.ShowOnHome" />
-                        🏠 홈 목록에 공개
+                        🏠 @Text["admin.user.settings.show_home"]
                     </label>
                 </div>
 
                 <div class="fa-form__row">
                     <label class="fa-label">
-                        페이지당 포스트 수
-                        <span class="fa-label__hint">타임라인·앨범에서 한 번에 표시되는 개수</span>
+                        @Text["admin.user.settings.page_size"]
+                        <span class="fa-label__hint">@Text["admin.user.settings.page_size.hint"]</span>
                     </label>
                     <select class="fa-input" style="max-width:160px"
                             value="@cfg.PageSize"
                             @onchange="OnPageSizeChanged">
-                        <option value="5">5개</option>
-                        <option value="10">10개</option>
-                        <option value="20">20개 (기본)</option>
-                        <option value="30">30개</option>
-                        <option value="50">50개</option>
-                        <option value="100">100개</option>
+                        <option value="5">@Text.Format("common.count", 5)</option>
+                        <option value="10">@Text.Format("common.count", 10)</option>
+                        <option value="20">@Text.Format("admin.user.settings.page_size.default", 20)</option>
+                        <option value="30">@Text.Format("common.count", 30)</option>
+                        <option value="50">@Text.Format("common.count", 50)</option>
+                        <option value="100">@Text.Format("common.count", 100)</option>
                     </select>
                 </div>
 
                 <div class="fa-form__row">
-                    <label class="fa-label">OG 제목 (링크 미리보기)</label>
-                    <input class="fa-input" @bind="cfg.OgTitle" placeholder="비우면 가족 이름 사용" />
+                    <label class="fa-label">@Text["admin.user.settings.og_title"]</label>
+                    <input class="fa-input" @bind="cfg.OgTitle" placeholder="@Text["admin.user.settings.og_title.placeholder"]" />
                 </div>
 
                 <div class="fa-form__row">
-                    <label class="fa-label">OG 설명</label>
+                    <label class="fa-label">@Text["admin.user.settings.og_description"]</label>
                     <input class="fa-input" @bind="cfg.OgDescription" />
                 </div>
 
                 <div class="fa-form__row">
-                    <label class="fa-label">어드민 비밀번호 (변경 시 입력)</label>
-                    <input class="fa-input" type="password" @bind="cfg.PasswordHash"
-                           placeholder="새 비밀번호" autocomplete="new-password" />
-                    <span class="fa-label__hint">비워두지 말고 항상 값을 입력해야 합니다. 저장하면 즉시 적용됩니다.</span>
+                    <label class="fa-label">@Text["admin.user.settings.og_image"]</label>
+                    @if (!string.IsNullOrWhiteSpace(cfg.OgImageFileName))
+                    {
+                        <div class="fa-og-preview">
+                            <img src="@OgPreviewUrl" alt="@Text["admin.user.settings.og_image.alt"]" />
+                            <button class="fa-btn fa-btn--sm fa-btn--ghost"
+                                    @onclick="() => cfg.OgImageFileName = string.Empty">✕ @Text["common.delete"]</button>
+                        </div>
+                    }
+                    <DirectUploadInput Slug="@Slug"
+                                       Purpose="FamilyUploadPurpose.OgImage"
+                                       Accept="image/jpeg,image/png,image/webp"
+                                       AuthorizedAdminSlug="@Vm.AuthorizedAdminSlug"
+                                       OnUploadingChanged="OnDirectUploadingChanged"
+                                       OnCompleted="OnOgImageUploadCompleted" />
+                    <span class="fa-label__hint">@Text["admin.user.settings.og_image.hint"]</span>
                 </div>
 
                 <div class="fa-form__row">
-                    <label class="fa-label">관리자 계정</label>
+                    <label class="fa-label">@Text["admin.user.settings.admin_password"]</label>
+                    <input class="fa-input" type="password" @bind="Vm.NewAdminPassword"
+                           @bind:event="oninput"
+                           placeholder="@Text["admin.user.settings.admin_password.placeholder"]" autocomplete="new-password" />
+                    <span class="fa-label__hint">@Text["admin.user.settings.admin_password.hint"]</span>
+                </div>
+
+                <div class="fa-form__row">
+                    <label class="fa-label">@Text["admin.user.settings.viewer_password"]</label>
+                    <input class="fa-input" type="password" @bind="Vm.NewViewerPassword"
+                           @bind:event="oninput"
+                           placeholder="@Text["admin.user.settings.viewer_password.placeholder"]" autocomplete="new-password" />
+                    <span class="fa-label__hint">@Text["admin.user.settings.viewer_password.hint"]</span>
+                    @if (Vm.Config is not null && FamilyAccessService.UsesLegacyAdminPassword(Vm.Config))
+                    {
+                        <span class="fa-access-lock__warning">@Text["access.legacy_warning"]</span>
+                    }
+                </div>
+
+                <div class="fa-form__row">
+                    <label class="fa-label">@Text["admin.user.settings.admins"]</label>
                     <div class="fa-album-admin-list">
                         @foreach (var admin in Vm.EffectiveAdminUsers)
                         {
@@ -427,7 +471,7 @@
                                     @(string.IsNullOrWhiteSpace(admin.DisplayName) ? admin.Provider : admin.DisplayName)
                                 </span>
                                 <span class="fa-album-admin-item__desc">
-                                    @(isOwner ? "대표 관리자" : "관리자")
+                                    @(isOwner ? Text["admin.role.owner"] : Text["admin.role.admin"])
                                     @if (!string.IsNullOrWhiteSpace(admin.Provider))
                                     {
                                         <span> · @admin.Provider</span>
@@ -440,34 +484,36 @@
                                 @if (Vm.IsOwner && !isOwner)
                                 {
                                     <button class="fa-btn fa-btn--sm fa-btn--danger"
-                                            @onclick="() => OnRemoveAdmin(admin.UserId)">삭제</button>
+                                            @onclick="() => OnRemoveAdmin(admin.UserId)">@Text["common.delete"]</button>
                                 }
                             </div>
                         }
                     </div>
-                    <span class="fa-label__hint">공용 로그인 상태에서 기존 어드민 비밀번호로 로그인하면 관리자 계정에 자동 추가됩니다.</span>
+                    <span class="fa-label__hint">@Text["admin.user.settings.admins.link.hint"]</span>
                 </div>
 
-                <button class="fa-btn fa-btn--primary" @onclick="OnSaveConfig">💾 설정 저장</button>
+                <button class="fa-btn fa-btn--primary" @onclick="OnSaveConfig" disabled="@Vm.IsUploading">
+                    @(Vm.IsUploading ? Text["common.uploading"] : $"💾 {Text["admin.user.settings.save"]}")
+                </button>
 
                 <hr class="fa-divider" />
 
                 <div class="fa-danger-zone">
-                    <h3>⚠️ 위험 구역</h3>
-                    <p>아래 작업은 되돌릴 수 없습니다.</p>
+                    <h3>⚠️ @Text["admin.user.settings.danger"]</h3>
+                    <p>@Text["admin.user.settings.danger.desc"]</p>
                     @if (!confirmDelete)
                     {
                         <button class="fa-btn fa-btn--danger" @onclick="() => confirmDelete = true">
-                            🗑 이 앨범 삭제
+                            🗑 @Text["admin.user.settings.delete_album"]
                         </button>
                     }
                     else
                     {
                         <div class="fa-delete-confirm">
-                            <p><strong>정말로 '@Slug' 앨범을 삭제할까요?</strong><br/>포스트·사진·동영상 모두 삭제됩니다.</p>
+                            <p><strong>@Text.Format("admin.user.settings.delete_confirm", Slug)</strong><br/>@Text["admin.user.settings.delete_contents"]</p>
                             <div class="fa-form__actions">
-                                <button class="fa-btn fa-btn--danger" @onclick="OnDeleteSelf">확인, 삭제</button>
-                                <button class="fa-btn fa-btn--ghost" @onclick="() => confirmDelete = false">취소</button>
+                                <button class="fa-btn fa-btn--danger" @onclick="OnDeleteSelf">@Text["admin.user.settings.confirm_delete"]</button>
+                                <button class="fa-btn fa-btn--ghost" @onclick="() => confirmDelete = false">@Text["common.cancel"]</button>
                             </div>
                         </div>
                     }
@@ -475,6 +521,7 @@
             </div>
         }
     }
+</main>
 </div>
 
 @code {
@@ -487,14 +534,20 @@
     private int managePage = 1;
     private int albumPage = 1;
 
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string StatusText => string.IsNullOrWhiteSpace(Vm.StatusKey)
+        ? string.Empty
+        : Text.Format(Vm.StatusKey, Vm.StatusArguments);
+
+    private string AlbumUrl => $"/{Uri.EscapeDataString(Slug)}?lang={Uri.EscapeDataString(Text.Language)}";
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}&lang={Uri.EscapeDataString(Text.Language)}";
+    private string FormatDate(DateTime value) => value.ToString("d", System.Globalization.CultureInfo.GetCultureInfo(Text.HtmlLanguage));
+    private string OgPreviewUrl => $"/og/families/{Uri.EscapeDataString(Slug)}?v={Uri.EscapeDataString(Vm.Config?.OgImageFileName ?? string.Empty)}";
+
+    protected override void OnInitialized() => Text.Changed += OnLanguageChanged;
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!Vm.IsLoaded && !Vm.IsAuthenticated)
-            await Vm.InitializeAsync(Slug);
-        if (!Vm.IsLoaded && Vm.IsAuthenticated)
-            await Vm.LoadAsync(Slug);
+        await Vm.InitializeAsync(Slug);
     }
 
     private void OnPasswordInput(ChangeEventArgs e) => Vm.LoginPassword = e.Value?.ToString() ?? string.Empty;
@@ -513,19 +566,33 @@
         if (e.Key == "Enter") await OnLogin();
     }
 
-    private void SetTab(string tab)
+    private async Task SetTabAsync(string tab)
     {
+        if (Vm.IsUploading)
+            return;
+
         activeTab = tab;
         managePage = 1;
         albumPage = 1;
-        if (tab != "post") Vm.CancelEdit();
+        if (tab != "post") await Vm.CancelEditAsync(Slug);
     }
 
-    private async Task OnFilesSelected(InputFileChangeEventArgs e)
+    private async Task OnCancelEdit()
     {
-        Vm.PendingFiles.Clear();
-        Vm.PendingFiles.AddRange(e.GetMultipleFiles(50));
-        await Vm.UploadPendingFilesAsync(Slug);
+        if (!Vm.IsUploading)
+            await Vm.CancelEditAsync(Slug);
+    }
+
+    private Task OnMediaUploadCompleted(IReadOnlyList<FamilyUploadResult> results)
+    {
+        Vm.ApplyDirectUploads(Slug, results);
+        return Task.CompletedTask;
+    }
+
+    private Task OnDirectUploadingChanged(bool isUploading)
+    {
+        Vm.SetDirectUploadState(isUploading);
+        return Task.CompletedTask;
     }
 
     private async Task OnSavePost()
@@ -584,9 +651,20 @@
         await Vm.DeleteAlbumAsync(Slug, albumId);
     }
 
-    private async Task OnCoverSelected(InputFileChangeEventArgs e)
+    private async Task OnCoverUploadCompleted(IReadOnlyList<FamilyUploadResult> results)
     {
-        await Vm.UploadCoverAsync(Slug, e.File);
+        if (results.Count > 0)
+        {
+            await Vm.ApplyDirectCoverUploadAsync(Slug, results[^1]);
+        }
+    }
+
+    private async Task OnOgImageUploadCompleted(IReadOnlyList<FamilyUploadResult> results)
+    {
+        if (results.Count > 0)
+        {
+            await Vm.ApplyDirectOgImageUploadAsync(Slug, results[^1]);
+        }
     }
 
     private async Task OnSaveConfig()
@@ -606,4 +684,8 @@
         await Vm.DeleteSelfAsync(Slug);
         Nav.NavigateTo("/");
     }
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Text.Changed -= OnLanguageChanged;
 }

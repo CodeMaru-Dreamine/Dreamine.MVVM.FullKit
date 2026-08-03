@@ -1,3 +1,4 @@
+using System.IO;
 using FamiliesApp.Models;
 using Microsoft.AspNetCore.Components.Forms;
 
@@ -13,6 +14,34 @@ namespace FamiliesApp.Services;
 /// </summary>
 public interface IMediaService
 {
+    /// <summary>Stores post media from a regular HTTP request stream.</summary>
+    Task<StoredMediaFile> UploadPostMediaAsync(
+        string slug,
+        string postId,
+        Stream content,
+        string originalFileName,
+        string contentType,
+        long size,
+        CancellationToken ct = default);
+
+    /// <summary>Stores a cover image from a regular HTTP request stream.</summary>
+    Task<StoredMediaFile> UploadCoverAsync(
+        string slug,
+        Stream content,
+        string originalFileName,
+        string contentType,
+        long size,
+        CancellationToken ct = default);
+
+    /// <summary>Stores the single image explicitly selected for public Open Graph previews.</summary>
+    Task<StoredMediaFile> UploadOgImageAsync(
+        string slug,
+        Stream content,
+        string originalFileName,
+        string contentType,
+        long size,
+        CancellationToken ct = default);
+
     /// <summary>
     /// \if KO
     /// <para>Upload Post Media Async 작업을 수행합니다.</para>
@@ -309,3 +338,6 @@ public interface IMediaService
     /// </returns>
     string GetCoverUrl(string slug, string fileName);
 }
+
+/// <summary>Describes a file after it has been stored in tenant media storage.</summary>
+public sealed record StoredMediaFile(string FileName, bool IsVideo, long SizeBytes);

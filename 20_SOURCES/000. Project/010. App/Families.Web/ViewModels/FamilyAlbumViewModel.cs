@@ -49,6 +49,9 @@ public sealed class FamilyAlbumViewModel
     /// \endif
     /// </summary>
     private readonly IMediaService _media;
+    private readonly FamilyUserContext _userContext;
+    private readonly FamilyAccessService _access;
+    private string _authorizedSlug = "";
 
     /// <summary>
     /// \if KO
@@ -91,12 +94,15 @@ public sealed class FamilyAlbumViewModel
     /// \endif
     /// </param>
     public FamilyAlbumViewModel(IFamilyTenantStore tenants, IPostStore posts,
-        IAlbumStore albums, IMediaService media)
+        IAlbumStore albums, IMediaService media, FamilyUserContext userContext,
+        FamilyAccessService access)
     {
         _tenants = tenants;
         _posts = posts;
         _albums = albums;
         _media = media;
+        _userContext = userContext;
+        _access = access;
     }
 
     /// <summary>
@@ -154,6 +160,7 @@ public sealed class FamilyAlbumViewModel
     /// \endif
     /// </summary>
     public bool NotFound { get; private set; }
+    public bool AccessDenied { get; private set; }
     /// <summary>
     /// \if KO
     /// <para>Current Page 값을 가져오거나 설정합니다.</para>
@@ -281,11 +288,15 @@ public sealed class FamilyAlbumViewModel
     {
         get
         {
-            if (Config is null) return "";
-            var fn = !string.IsNullOrWhiteSpace(Config.OgImageFileName)
-                ? Config.OgImageFileName
-                : Config.CoverImageFileName;
-            return string.IsNullOrWhiteSpace(fn) ? "" : _media.GetCoverUrl(Config.Slug, fn);
+            if (Config is null)
+            {
+                return "/img/og-platform.png";
+            }
+
+            var version = string.IsNullOrWhiteSpace(Config.OgImageFileName)
+                ? "default"
+                : Uri.EscapeDataString(Config.OgImageFileName);
+            return $"/og/families/{Uri.EscapeDataString(Config.Slug)}?v={version}";
         }
     }
 
@@ -421,8 +432,24 @@ public sealed class FamilyAlbumViewModel
     /// </returns>
     public async Task LoadAsync(string slug, CancellationToken ct = default)
     {
+        IsLoaded = false;
+        NotFound = false;
+        AccessDenied = false;
+        _authorizedSlug = "";
+        Posts = [];
+        Albums = [];
         Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
         if (Config is null) { NotFound = true; IsLoaded = true; return; }
+
+        var principal = await _userContext.GetPrincipalAsync().ConfigureAwait(false);
+        if (!_access.HasAccess(Config, principal))
+        {
+            AccessDenied = true;
+            IsLoaded = true;
+            return;
+        }
+
+        _authorizedSlug = Config.Slug;
 
         Albums = await _albums.GetAllAsync(slug, ct).ConfigureAwait(false);
         await LoadPageAsync(slug, 1, ct).ConfigureAwait(false);
@@ -471,6 +498,7 @@ public sealed class FamilyAlbumViewModel
     /// </returns>
     public async Task LoadPageAsync(string slug, int page, CancellationToken ct = default)
     {
+        if (AccessDenied || !string.Equals(slug, _authorizedSlug, StringComparison.Ordinal)) return;
         CurrentPage = page;
         var (items, total) = await _posts.GetPageAsync(slug, page, PageSize, ct).ConfigureAwait(false);
         Posts = items;
@@ -518,7 +546,9 @@ public sealed class FamilyAlbumViewModel
     /// \endif
     /// </returns>
     public async Task<IReadOnlyList<PostEntry>> GetAlbumPostsAsync(string slug, string albumId, CancellationToken ct = default)
-        => await _posts.GetByAlbumAsync(slug, albumId, ct).ConfigureAwait(false);
+        => AccessDenied || !string.Equals(slug, _authorizedSlug, StringComparison.Ordinal)
+            ? []
+            : await _posts.GetByAlbumAsync(slug, albumId, ct).ConfigureAwait(false);
 
     /// <summary>
     /// \if KO
@@ -570,5 +600,7 @@ public sealed class FamilyAlbumViewModel
     /// </returns>
     public async Task<(IReadOnlyList<PostEntry> Items, int TotalCount)> GetAlbumPageAsync(
         string slug, string albumId, int page, CancellationToken ct = default)
-        => await _posts.GetByAlbumPageAsync(slug, albumId, page, PageSize, ct).ConfigureAwait(false);
+        => AccessDenied || !string.Equals(slug, _authorizedSlug, StringComparison.Ordinal)
+            ? ([], 0)
+            : await _posts.GetByAlbumPageAsync(slug, albumId, page, PageSize, ct).ConfigureAwait(false);
 }

@@ -1,0 +1,258 @@
+@namespace FamiliesApp.Blazor
+@implements IAsyncDisposable
+@inject Microsoft.JSInterop.IJSRuntime JS
+@inject FamilyDirectUploadService DirectUploads
+@inject FamilyUserContext UserContext
+@inject FamilyLocalization Text
+
+<div class="family-direct-upload">
+    <label class="fa-local-file @CssClass" aria-disabled="@_uploading">
+    @if (Multiple)
+    {
+        <InputFile @key="_inputVersion"
+                   id="@_inputId"
+                   class="fa-local-file__native"
+                   multiple
+                   disabled="@_uploading"
+                   accept="@Accept"
+                   OnChange="UploadAsync" />
+    }
+    else
+    {
+        <InputFile @key="_inputVersion"
+                   id="@_inputId"
+                   class="fa-local-file__native"
+                   disabled="@_uploading"
+                   accept="@Accept"
+                   OnChange="UploadAsync" />
+    }
+        <span class="fa-local-file__button">@Text["file.choose"]</span>
+        <span class="fa-local-file__name" title="@SelectionLabel">@SelectionLabel</span>
+    </label>
+
+    @if (!string.IsNullOrWhiteSpace(_status))
+    {
+        <div class="fa-status @(_error ? "fa-status--err" : "fa-status--ok")"
+             role="status" aria-live="polite">
+            @_status
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Slug { get; set; } = string.Empty;
+    [Parameter] public FamilyUploadPurpose Purpose { get; set; } = FamilyUploadPurpose.PostMedia;
+    [Parameter] public PostEntry? PostSnapshot { get; set; }
+    [Parameter] public bool Multiple { get; set; }
+    [Parameter] public int MaxFiles { get; set; } = 50;
+    [Parameter] public string? AuthorizedAdminSlug { get; set; }
+    [Parameter] public string Accept { get; set; } = "image/*,video/*,.heic,.heif,.avif,.3gp,.3g2";
+    [Parameter] public string CssClass { get; set; } = string.Empty;
+    [Parameter] public EventCallback<IReadOnlyList<FamilyUploadResult>> OnCompleted { get; set; }
+    [Parameter] public EventCallback<bool> OnUploadingChanged { get; set; }
+
+    private readonly string _inputId = $"family-upload-{Guid.NewGuid():N}";
+    private Microsoft.JSInterop.DotNetObjectReference<DirectUploadInput>? _selfReference;
+    private bool _uploading;
+    private bool _error;
+    private string _status = string.Empty;
+    private string? _selectedFileLabel;
+    private int _inputVersion;
+
+    private string SelectionLabel => string.IsNullOrWhiteSpace(_selectedFileLabel)
+        ? Text["file.none_selected"]
+        : _selectedFileLabel;
+
+    private async Task UploadAsync(InputFileChangeEventArgs args)
+    {
+        if (_uploading)
+        {
+            return;
+        }
+
+        _uploading = true;
+        _selectedFileLabel = args.FileCount switch
+        {
+            0 => null,
+            1 => args.File.Name,
+            _ => Text.Format("common.count", args.FileCount)
+        };
+        var completed = new List<FamilyUploadResult>();
+        try
+        {
+            await OnUploadingChanged.InvokeAsync(true);
+            _error = false;
+            _status = Text["upload.checking"];
+            await InvokeAsync(StateHasChanged);
+
+            IReadOnlyList<IBrowserFile> files;
+            try
+            {
+                files = Multiple ? args.GetMultipleFiles(MaxFiles) : [args.File];
+            }
+            catch (InvalidOperationException)
+            {
+                throw new FamilyUploadClientException(
+                    string.Format(Text["upload.max_files"], MaxFiles));
+            }
+
+            if (files.Count == 0)
+            {
+                throw new FamilyUploadClientException(Text["upload.none_selected"]);
+            }
+
+            var user = await UserContext.GetCurrentAsync();
+            _selfReference ??= Microsoft.JSInterop.DotNetObjectReference.Create(this);
+            var messages = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["inputUnavailable"] = Text["upload.none_selected"],
+                ["requestTooLarge"] = Text["upload.proxy_limit"],
+                ["networkError"] = Text["upload.network_error"],
+                ["timeout"] = Text["upload.timeout"],
+                ["cancelled"] = Text["upload.cancelled"],
+                ["ticketExpired"] = Text["upload.ticket_expired"],
+                ["unauthorized"] = Text["upload.unauthorized"],
+                ["serverRejected"] = Text["upload.server_rejected"]
+            };
+
+            for (var index = 0; index < files.Count; index++)
+            {
+                try
+                {
+                    // Issue a capability immediately before this file starts. A batch can take
+                    // far longer than the ticket lifetime on a slow phone connection.
+                    var ticket = (await DirectUploads.IssueTicketsAsync(
+                        Slug,
+                        Purpose,
+                        PostSnapshot,
+                        1,
+                        user,
+                        AuthorizedAdminSlug))[0];
+
+                    _status = string.Format(Text["upload.preparing"], index + 1, files.Count);
+                    await InvokeAsync(StateHasChanged);
+                    var result = await JS.InvokeAsync<FamilyUploadResult>(
+                        "familyApp.uploadFileAt",
+                        new object?[]
+                        {
+                            _inputId, index, files.Count, ticket, _selfReference, messages
+                        });
+                    completed.Add(result);
+                    if (OnCompleted.HasDelegate)
+                    {
+                        await OnCompleted.InvokeAsync(new[] { result });
+                    }
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    _error = true;
+                    var detail = LocalizeFailure(ex);
+                    _status = completed.Count > 0
+                        ? string.Format(Text["upload.partial_failed"], completed.Count, detail)
+                        : string.Format(Text["upload.failed"], detail);
+                    break;
+                }
+            }
+
+            if (!_error)
+            {
+                _status = string.Format(Text["upload.completed"], completed.Count);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            _error = true;
+            _status = Text["upload.cancelled"];
+        }
+        catch (Exception ex)
+        {
+            _error = true;
+            _status = string.Format(Text["upload.failed"], LocalizeFailure(ex));
+        }
+        finally
+        {
+            _uploading = false;
+            await OnUploadingChanged.InvokeAsync(false);
+            _selectedFileLabel = null;
+            _inputVersion++;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    [Microsoft.JSInterop.JSInvokable]
+    public Task ReportUploadProgress(int index, int total, long loaded, long size)
+    {
+        var percent = size <= 0 ? 0 : Math.Clamp((int)(loaded * 100L / size), 0, 100);
+        _status = string.Format(
+            Text["upload.progress"],
+            index,
+            total,
+            percent,
+            FormatBytes(loaded),
+            FormatBytes(size));
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private static string FormatBytes(long bytes)
+    {
+        if (bytes >= 1024L * 1024L)
+        {
+            return $"{bytes / (1024d * 1024d):0.0} MB";
+        }
+
+        return $"{Math.Max(0, bytes) / 1024d:0} KB";
+    }
+
+    private string LocalizeFailure(Exception exception)
+    {
+        if (exception is FamilyUploadValidationException validation)
+        {
+            return validation.ErrorCode switch
+            {
+                FamilyUploadErrorCodes.Unauthorized => Text["upload.unauthorized"],
+                FamilyUploadErrorCodes.TooManyFiles => Text.Format("upload.max_files", 50),
+                FamilyUploadErrorCodes.AlbumMissing => Text["upload.album_missing"],
+                FamilyUploadErrorCodes.PostRequired => Text["upload.post_required"],
+                FamilyUploadErrorCodes.UploadCancelled => Text["upload.cancelled"],
+                _ => Text["upload.server_rejected"]
+            };
+        }
+
+        if (exception is FamilyUploadTicketException)
+        {
+            return Text["upload.ticket_expired"];
+        }
+
+        if (exception is FamilyUploadClientException clientException)
+        {
+            return clientException.Message;
+        }
+
+        if (exception is Microsoft.JSInterop.JSException jsException)
+        {
+            string[] safeMessageKeys =
+            [
+                "upload.none_selected", "upload.proxy_limit", "upload.network_error", "upload.timeout",
+                "upload.cancelled", "upload.ticket_expired", "upload.unauthorized", "upload.server_rejected"
+            ];
+            foreach (var key in safeMessageKeys)
+            {
+                var localizedMessage = Text[key];
+                if (jsException.Message.Contains(localizedMessage, StringComparison.Ordinal))
+                {
+                    return localizedMessage;
+                }
+            }
+        }
+
+        return Text["upload.server_rejected"];
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        _selfReference?.Dispose();
+        return ValueTask.CompletedTask;
+    }
+
+    private sealed class FamilyUploadClientException(string message) : Exception(message);
+}

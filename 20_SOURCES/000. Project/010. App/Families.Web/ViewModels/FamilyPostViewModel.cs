@@ -50,6 +50,9 @@ public sealed class FamilyPostViewModel
     /// \endif
     /// </summary>
     private readonly IMediaService _media;
+    private readonly FamilyUserContext _userContext;
+    private readonly FamilyAccessService _access;
+    private string _authorizedSlug = "";
 
     /// <summary>
     /// \if KO
@@ -103,12 +106,15 @@ public sealed class FamilyPostViewModel
     /// \endif
     /// </param>
     public FamilyPostViewModel(IFamilyTenantStore tenants, IPostStore posts,
-        IReactionStore reactions, IMediaService media)
+        IReactionStore reactions, IMediaService media, FamilyUserContext userContext,
+        FamilyAccessService access)
     {
         _tenants = tenants;
         _posts = posts;
         _reactions = reactions;
         _media = media;
+        _userContext = userContext;
+        _access = access;
     }
 
     /// <summary>
@@ -156,6 +162,7 @@ public sealed class FamilyPostViewModel
     /// \endif
     /// </summary>
     public bool NotFound { get; private set; }
+    public bool AccessDenied { get; private set; }
 
     /// <summary>
     /// \if KO
@@ -487,8 +494,23 @@ public sealed class FamilyPostViewModel
     /// </returns>
     public async Task LoadAsync(string slug, string postId, CancellationToken ct = default)
     {
+        IsLoaded = false;
+        NotFound = false;
+        AccessDenied = false;
+        _authorizedSlug = "";
+        Post = null;
         Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
         if (Config is null) { NotFound = true; IsLoaded = true; return; }
+
+        var principal = await _userContext.GetPrincipalAsync().ConfigureAwait(false);
+        if (!_access.HasAccess(Config, principal))
+        {
+            AccessDenied = true;
+            IsLoaded = true;
+            return;
+        }
+
+        _authorizedSlug = Config.Slug;
 
         Post = await _posts.GetAsync(slug, postId, ct).ConfigureAwait(false);
         if (Post is null) { NotFound = true; IsLoaded = true; return; }
@@ -539,7 +561,10 @@ public sealed class FamilyPostViewModel
     /// </returns>
     public async Task AddReactionAsync(string slug, string emoji, CancellationToken ct = default)
     {
-        if (Post is null || !AllowReactions) return;
+        if (AccessDenied || Post is null
+            || !string.Equals(slug, _authorizedSlug, StringComparison.Ordinal)
+            || !await RefreshAccessAsync(slug, ct).ConfigureAwait(false)
+            || !AllowReactions) return;
         await _reactions.AddReactionAsync(slug, Post.Id, emoji, ct).ConfigureAwait(false);
         Reactions = await _reactions.GetAsync(slug, Post.Id, ct).ConfigureAwait(false);
     }
@@ -578,7 +603,10 @@ public sealed class FamilyPostViewModel
     /// </returns>
     public async Task AddCommentAsync(string slug, CancellationToken ct = default)
     {
-        if (Post is null || !AllowComments || IsSavingComment) return;
+        if (AccessDenied || Post is null || IsSavingComment
+            || !string.Equals(slug, _authorizedSlug, StringComparison.Ordinal)
+            || !await RefreshAccessAsync(slug, ct).ConfigureAwait(false)
+            || !AllowComments) return;
         if (string.IsNullOrWhiteSpace(CommentAuthor)) { CommentStatus = "이름을 입력해주세요."; return; }
         if (string.IsNullOrWhiteSpace(CommentBody)) { CommentStatus = "댓글 내용을 입력해주세요."; return; }
 
@@ -644,8 +672,26 @@ public sealed class FamilyPostViewModel
     /// </returns>
     public async Task DeleteCommentAsync(string slug, string commentId, CancellationToken ct = default)
     {
-        if (Post is null) return;
+        if (AccessDenied || Post is null
+            || !string.Equals(slug, _authorizedSlug, StringComparison.Ordinal)
+            || !await RefreshAccessAsync(slug, ct).ConfigureAwait(false)) return;
         await _reactions.DeleteCommentAsync(slug, Post.Id, commentId, ct).ConfigureAwait(false);
         Reactions = await _reactions.GetAsync(slug, Post.Id, ct).ConfigureAwait(false);
+    }
+
+    private async Task<bool> RefreshAccessAsync(string slug, CancellationToken ct)
+    {
+        var currentConfig = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
+        var principal = await _userContext.GetPrincipalAsync().ConfigureAwait(false);
+        if (currentConfig is null || !_access.HasAccess(currentConfig, principal))
+        {
+            Config = currentConfig;
+            AccessDenied = true;
+            _authorizedSlug = string.Empty;
+            return false;
+        }
+
+        Config = currentConfig;
+        return true;
     }
 }

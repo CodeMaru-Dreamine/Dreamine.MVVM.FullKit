@@ -52,6 +52,7 @@ public sealed class FamilyAdminViewModel
     /// \endif
     /// </summary>
     private readonly IMediaService _media;
+    private readonly FamilyDirectUploadService _directUploads;
     /// <summary>
     /// \if KO
     /// <para>user Context 값을 보관합니다.</para>
@@ -61,6 +62,10 @@ public sealed class FamilyAdminViewModel
     /// \endif
     /// </summary>
     private readonly FamilyUserContext _userContext;
+    private string? _activeSlug;
+    private bool _editingWasNew;
+    private bool _editingHasDirectUploads;
+    private readonly HashSet<string> _deletedMedia = new(StringComparer.Ordinal);
 
     /// <summary>
     /// \if KO
@@ -111,13 +116,15 @@ public sealed class FamilyAdminViewModel
     /// \endif
     /// </param>
     public FamilyAdminViewModel(IFamilyTenantStore tenants, IPostStore posts,
-        IAlbumStore albums, IMediaService media, FamilyUserContext userContext)
+        IAlbumStore albums, IMediaService media, FamilyUserContext userContext,
+        FamilyDirectUploadService directUploads)
     {
         _tenants = tenants;
         _posts = posts;
         _albums = albums;
         _media = media;
         _userContext = userContext;
+        _directUploads = directUploads;
     }
 
     /// <summary>
@@ -165,6 +172,13 @@ public sealed class FamilyAdminViewModel
     /// \endif
     /// </summary>
     public bool IsAuthenticated { get; private set; }
+    /// <summary>The tenant slug bound to the current administrator session.</summary>
+    public string? AuthorizedAdminSlug { get; private set; }
+
+    /// <summary>Returns whether the current administrator session is valid for this tenant.</summary>
+    public bool IsAuthenticatedFor(string slug) =>
+        IsAuthenticated
+        && string.Equals(AuthorizedAdminSlug, slug, StringComparison.Ordinal);
     /// <summary>
     /// \if KO
     /// <para>Is Signed In 값을 가져오거나 설정합니다.</para>
@@ -192,15 +206,26 @@ public sealed class FamilyAdminViewModel
     /// \endif
     /// </summary>
     public bool IsOwner { get; private set; }
+    /// <summary>Gets the language-independent localization key for the current status.</summary>
+    public string StatusKey { get; private set; } = string.Empty;
+
+    /// <summary>Gets the format arguments associated with <see cref="StatusKey"/>.</summary>
+    public object?[] StatusArguments { get; private set; } = [];
+
+    /// <summary>Gets whether the current status represents an error or corrective warning.</summary>
+    public bool StatusIsError { get; private set; }
+
     /// <summary>
-    /// \if KO
-    /// <para>Status Message 값을 가져오거나 설정합니다.</para>
-    /// \endif
-    /// \if EN
-    /// <para>Gets or sets the status message value.</para>
-    /// \endif
+    /// Backward-compatible key-only alias. UI code should render <see cref="StatusKey"/>
+    /// through <see cref="FamilyLocalization.Format"/>.
     /// </summary>
-    public string StatusMessage { get; private set; } = "";
+    public string StatusMessage => StatusKey;
+
+    /// <summary>Returns the current status translated with the supplied localizer.</summary>
+    public string LocalizedStatus(FamilyLocalization text) =>
+        string.IsNullOrWhiteSpace(StatusKey)
+            ? string.Empty
+            : text.Format(StatusKey, StatusArguments);
     /// <summary>
     /// \if KO
     /// <para>Current User Label 값을 가져오거나 설정합니다.</para>
@@ -219,6 +244,23 @@ public sealed class FamilyAdminViewModel
     /// \endif
     /// </summary>
     public bool IsUploading { get; private set; }
+
+    /// <summary>Keeps editor save actions disabled while the browser owns an HTTP upload.</summary>
+    public void SetDirectUploadState(bool isUploading) => IsUploading = isUploading;
+
+    private void SetStatus(string key, bool isError = false, params object?[] arguments)
+    {
+        StatusKey = key;
+        StatusArguments = arguments;
+        StatusIsError = isError;
+    }
+
+    private void ClearStatus()
+    {
+        StatusKey = string.Empty;
+        StatusArguments = [];
+        StatusIsError = false;
+    }
     /// <summary>
     /// \if KO
     /// <para>Login Password 값을 가져오거나 설정합니다.</para>
@@ -228,6 +270,14 @@ public sealed class FamilyAdminViewModel
     /// \endif
     /// </summary>
     public string LoginPassword { get; set; } = "";
+
+    /// <summary>
+    /// Gets or sets a replacement administrator password entered for the current save only.
+    /// The stored password hash is never sent to the browser as a form value.
+    /// </summary>
+    public string NewAdminPassword { get; set; } = string.Empty;
+    /// <summary>A replacement family viewing password entered for the current save only.</summary>
+    public string NewViewerPassword { get; set; } = string.Empty;
     /// <summary>
     /// \if KO
     /// <para>Effective Admin Users 값을 가져옵니다.</para>
@@ -313,18 +363,24 @@ public sealed class FamilyAdminViewModel
     /// </returns>
     public async Task<bool> LoginAsync(string slug, CancellationToken ct = default)
     {
+        if (!string.Equals(_activeSlug, slug, StringComparison.Ordinal))
+        {
+            await DiscardNewDraftAsync(ct).ConfigureAwait(false);
+            ResetForSlug(slug);
+        }
+
         var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
-        if (config is null) { StatusMessage = "존재하지 않는 슬러그입니다."; return false; }
+        if (config is null) { SetStatus("status.admin.tenant_missing", true); return false; }
 
         var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
         await RefreshCurrentUserAsync().ConfigureAwait(false);
 
         if (IsAdminUser(config, user))
         {
-            IsAuthenticated = true;
+            GrantAccess(slug);
             IsLinkedToCurrentUser = true;
             IsOwner = IsOwnerUser(config, user);
-            StatusMessage = "";
+            ClearStatus();
             return true;
         }
 
@@ -332,9 +388,12 @@ public sealed class FamilyAdminViewModel
         IsAuthenticated = verification is not PasswordHashVerificationResult.Failed;
         if (!IsAuthenticated)
         {
-            StatusMessage = "비밀번호가 틀렸습니다.";
+            AuthorizedAdminSlug = null;
+            SetStatus("status.login.failed", true);
             return false;
         }
+
+        GrantAccess(slug);
 
         if (verification is PasswordHashVerificationResult.SuccessRehashNeeded && upgradedHash is not null)
         {
@@ -353,7 +412,7 @@ public sealed class FamilyAdminViewModel
             await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
             IsLinkedToCurrentUser = true;
             IsOwner = true;
-            StatusMessage = "CodeMaru/Dreamine 계정에 연결되었습니다. 다음부터는 공용 로그인으로 관리할 수 있습니다.";
+            SetStatus("status.admin.account_linked");
         }
         else if (user.IsAuthenticated)
         {
@@ -361,15 +420,15 @@ public sealed class FamilyAdminViewModel
             await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
             IsLinkedToCurrentUser = true;
             IsOwner = IsOwnerUser(config, user);
-            StatusMessage = "현재 CodeMaru/Dreamine 계정이 이 가족 앨범의 관리자로 추가되었습니다.";
+            SetStatus("status.admin.account_added");
         }
         else if (!user.IsAuthenticated && string.IsNullOrWhiteSpace(config.OwnerUserId))
         {
-            StatusMessage = "로그인은 성공했습니다. 공용 계정에 연결하려면 먼저 CodeMaru/Dreamine 로그인을 해주세요.";
+            SetStatus("status.admin.login_account_required", true);
         }
         else
         {
-            StatusMessage = "";
+            ClearStatus();
         }
 
         return IsAuthenticated;
@@ -409,7 +468,17 @@ public sealed class FamilyAdminViewModel
     /// </returns>
     public async Task InitializeAsync(string slug, CancellationToken ct = default)
     {
-        StatusMessage = "";
+        if (!string.Equals(_activeSlug, slug, StringComparison.Ordinal))
+        {
+            await DiscardNewDraftAsync(ct).ConfigureAwait(false);
+            ResetForSlug(slug);
+        }
+        else if (IsLoaded || IsAuthenticatedFor(slug))
+        {
+            return;
+        }
+
+        ClearStatus();
         await RefreshCurrentUserAsync().ConfigureAwait(false);
 
         var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
@@ -424,7 +493,7 @@ public sealed class FamilyAdminViewModel
 
         if (IsLinkedToCurrentUser)
         {
-            IsAuthenticated = true;
+            GrantAccess(slug);
             await LoadAsync(slug, ct).ConfigureAwait(false);
         }
     }
@@ -463,6 +532,11 @@ public sealed class FamilyAdminViewModel
     /// </returns>
     public async Task LoadAsync(string slug, CancellationToken ct = default)
     {
+        if (!IsAuthenticatedFor(slug))
+        {
+            throw new UnauthorizedAccessException("The administrator session is not valid for this tenant.");
+        }
+
         Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false)
                  ?? new FamilyConfig { Slug = slug };
         Posts = await _posts.GetAllAsync(slug, ct).ConfigureAwait(false);
@@ -508,17 +582,18 @@ public sealed class FamilyAdminViewModel
         {
             return;
         }
+        EnsureAuthorized(Config.Slug);
 
         var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
         if (!IsOwnerUser(Config, user))
         {
-            StatusMessage = "대표 관리자만 관리자를 삭제할 수 있습니다.";
+            SetStatus("status.admin.owner_required", true);
             return;
         }
 
         if (string.Equals(Config.OwnerUserId, userId, StringComparison.Ordinal))
         {
-            StatusMessage = "대표 관리자는 삭제할 수 없습니다.";
+            SetStatus("status.admin.owner_remove_forbidden", true);
             return;
         }
 
@@ -526,12 +601,12 @@ public sealed class FamilyAdminViewModel
             string.Equals(x.UserId, userId, StringComparison.Ordinal)) > 0;
         if (!removed)
         {
-            StatusMessage = "삭제할 관리자를 찾을 수 없습니다.";
+            SetStatus("status.admin.manager_missing", true);
             return;
         }
 
         await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
-        StatusMessage = "관리자가 삭제되었습니다.";
+        SetStatus("status.admin.manager_removed");
     }
 
     /// <summary>
@@ -782,13 +857,45 @@ public sealed class FamilyAdminViewModel
     public async Task SaveConfigAsync(CancellationToken ct = default)
     {
         if (Config is null) return;
+        EnsureAuthorized(Config.Slug);
+        if (IsUploading)
+        {
+            SetStatus("status.admin.upload_wait_settings", true);
+            return;
+        }
+
         try
         {
-            Config.PasswordHash = DreaminePasswordHasher.HashPlainTextForStorage(Config.PasswordHash);
+            if (!string.IsNullOrEmpty(NewAdminPassword))
+            {
+                if (NewAdminPassword.Length < 8)
+                {
+                    SetStatus("status.password.short", true);
+                    return;
+                }
+            }
+
+            if (!string.IsNullOrEmpty(NewViewerPassword) && NewViewerPassword.Length < 8)
+            {
+                SetStatus("status.viewer_password.short", true);
+                return;
+            }
+
+            // A new password is always plain text, even when its characters happen to look
+            // like a legacy hash. Only the persisted value may be normalized as existing data.
+            Config.PasswordHash = string.IsNullOrEmpty(NewAdminPassword)
+                ? DreaminePasswordHasher.HashPlainTextForStorage(Config.PasswordHash)
+                : DreaminePasswordHasher.HashPassword(NewAdminPassword);
+            if (!string.IsNullOrEmpty(NewViewerPassword))
+            {
+                Config.ViewerPasswordHash = DreaminePasswordHasher.HashPassword(NewViewerPassword);
+            }
             await _tenants.SaveAsync(Config, ct).ConfigureAwait(false);
-            StatusMessage = "설정이 저장되었습니다.";
+            NewAdminPassword = string.Empty;
+            NewViewerPassword = string.Empty;
+            SetStatus("status.admin.settings_saved");
         }
-        catch (Exception ex) { StatusMessage = $"저장 오류: {ex.Message}"; }
+        catch (Exception) { SetStatus("status.admin.save_failed", true); }
     }
 
     /// <summary>
@@ -802,8 +909,11 @@ public sealed class FamilyAdminViewModel
     public void NewPost()
     {
         EditingPost = new PostEntry { PostedAt = DateTime.Now };
+        _editingWasNew = true;
+        _editingHasDirectUploads = false;
+        _deletedMedia.Clear();
         PendingFiles.Clear();
-        StatusMessage = "";
+        ClearStatus();
     }
 
     /// <summary>
@@ -825,8 +935,11 @@ public sealed class FamilyAdminViewModel
     public void EditPost(PostEntry post)
     {
         EditingPost = post;
+        _editingWasNew = false;
+        _editingHasDirectUploads = false;
+        _deletedMedia.Clear();
         PendingFiles.Clear();
-        StatusMessage = "";
+        ClearStatus();
     }
 
     /// <summary>
@@ -837,13 +950,22 @@ public sealed class FamilyAdminViewModel
     /// <para>Determines whether cancel edit.</para>
     /// \endif
     /// </summary>
-    public void CancelEdit()
+    public async Task CancelEditAsync(string slug, CancellationToken ct = default)
     {
-        EditingPost = null;
-        PendingFiles.Clear();
+        var isActiveTenant = string.Equals(_activeSlug, slug, StringComparison.Ordinal);
+        var discardedUploadedDraft = isActiveTenant && _editingWasNew && _editingHasDirectUploads;
+        if (isActiveTenant)
+        {
+            await DiscardNewDraftAsync(ct).ConfigureAwait(false);
+        }
+
+        ResetEditor();
+        SetStatus(discardedUploadedDraft
+            ? "status.admin.draft_discarded"
+            : "status.admin.edit_cancelled");
     }
 
-    // 파일 선택 즉시 업로드 — 편집 상태 유지, 포스트 메타는 저장하지 않음
+    // Legacy Blazor-stream upload path. The UI now uses DirectUploadInput and HTTP multipart.
     /// <summary>
     /// \if KO
     /// <para>Upload Pending Files Async 작업을 수행합니다.</para>
@@ -878,6 +1000,7 @@ public sealed class FamilyAdminViewModel
     /// </returns>
     public async Task UploadPendingFilesAsync(string slug, CancellationToken ct = default)
     {
+        EnsureAuthorized(slug);
         if (EditingPost is null || PendingFiles.Count == 0) return;
         IsUploading = true;
         try
@@ -886,16 +1009,41 @@ public sealed class FamilyAdminViewModel
             {
                 var fn = await _media.UploadPostMediaAsync(slug, EditingPost.Id, file, ct).ConfigureAwait(false);
                 var ext = Path.GetExtension(fn).ToLowerInvariant();
-                if (ext is ".mp4" or ".webm" or ".mov" or ".m4v")
+                if (ext is ".mp4" or ".webm" or ".mov" or ".m4v" or ".3gp" or ".3g2")
                     EditingPost.VideoFileNames.Add(fn);
                 else
                     EditingPost.PhotoFileNames.Add(fn);
             }
             PendingFiles.Clear();
-            StatusMessage = "파일이 추가되었습니다.";
+            SetStatus("status.admin.file_added");
         }
-        catch (Exception ex) { StatusMessage = $"업로드 오류: {ex.Message}"; }
+        catch (Exception) { SetStatus("status.admin.upload_failed", true); }
         finally { IsUploading = false; }
+    }
+
+    /// <summary>Updates the active editor after HTTP uploads have already been committed.</summary>
+    public void ApplyDirectUploads(string slug, IReadOnlyList<FamilyUploadResult> results)
+    {
+        EnsureAuthorized(slug);
+        if (EditingPost is null)
+        {
+            return;
+        }
+
+        foreach (var result in results)
+        {
+            var names = result.IsVideo
+                ? EditingPost.VideoFileNames
+                : EditingPost.PhotoFileNames;
+            if (!names.Contains(result.FileName, StringComparer.Ordinal))
+            {
+                names.Add(result.FileName);
+            }
+        }
+
+        _editingHasDirectUploads |= results.Count > 0;
+        PendingFiles.Clear();
+        SetStatus("status.admin.files_saved", false, results.Count);
     }
 
     /// <summary>
@@ -932,19 +1080,42 @@ public sealed class FamilyAdminViewModel
     /// </returns>
     public async Task SavePostAsync(string slug, CancellationToken ct = default)
     {
+        EnsureAuthorized(slug);
         if (EditingPost is null) return;
+        if (IsUploading)
+        {
+            SetStatus("status.admin.upload_wait_post", true);
+            return;
+        }
+
         // 혹시 아직 대기 중인 파일이 있으면 먼저 업로드
         if (PendingFiles.Count > 0)
             await UploadPendingFilesAsync(slug, ct).ConfigureAwait(false);
         IsUploading = true;
         try
         {
-            await _posts.SaveAsync(slug, EditingPost, ct).ConfigureAwait(false);
+            // Read/merge/write is atomic with direct HTTP commits. Explicitly deleted media is
+            // excluded so a reconnect-safe merge cannot resurrect a removed file name.
+            var editor = EditingPost;
+            await _posts.MutateAsync(
+                slug,
+                editor.Id,
+                persisted =>
+                {
+                    if (persisted is not null)
+                    {
+                        MergeMissingMedia(editor.PhotoFileNames, persisted.PhotoFileNames, _deletedMedia);
+                        MergeMissingMedia(editor.VideoFileNames, persisted.VideoFileNames, _deletedMedia);
+                    }
+
+                    return editor;
+                },
+                ct).ConfigureAwait(false);
             Posts = await _posts.GetAllAsync(slug, ct).ConfigureAwait(false);
-            EditingPost = null;
-            StatusMessage = "포스트가 저장되었습니다. ✅";
+            ResetEditor();
+            SetStatus("status.admin.post_saved");
         }
-        catch (Exception ex) { StatusMessage = $"저장 오류: {ex.Message}"; }
+        catch (Exception) { SetStatus("status.admin.save_failed", true); }
         finally { IsUploading = false; }
     }
 
@@ -990,13 +1161,15 @@ public sealed class FamilyAdminViewModel
     /// </returns>
     public async Task DeletePostAsync(string slug, string postId, CancellationToken ct = default)
     {
+        EnsureAuthorized(slug);
         try
         {
-            await _posts.DeleteAsync(slug, postId, ct).ConfigureAwait(false);
+            await _directUploads.DeletePostAndBlockUploadsAsync(slug, postId, ct)
+                .ConfigureAwait(false);
             Posts = await _posts.GetAllAsync(slug, ct).ConfigureAwait(false);
-            StatusMessage = "포스트가 삭제되었습니다.";
+            SetStatus("status.admin.post_deleted");
         }
-        catch (Exception ex) { StatusMessage = $"삭제 오류: {ex.Message}"; }
+        catch (Exception) { SetStatus("status.admin.delete_failed", true); }
     }
 
     /// <summary>
@@ -1049,17 +1222,41 @@ public sealed class FamilyAdminViewModel
     /// </returns>
     public async Task DeletePostMediaAsync(string slug, string postId, string fileName, CancellationToken ct = default)
     {
+        EnsureAuthorized(slug);
         try
         {
-            await _media.DeletePostMediaAsync(slug, postId, fileName, ct).ConfigureAwait(false);
+            _deletedMedia.Add(fileName);
+            await _posts.MutateAsync(
+                slug,
+                postId,
+                persisted =>
+                {
+                    if (persisted is null)
+                    {
+                        return null;
+                    }
+
+                    persisted.PhotoFileNames.RemoveAll(name => string.Equals(name, fileName, StringComparison.Ordinal));
+                    persisted.VideoFileNames.RemoveAll(name => string.Equals(name, fileName, StringComparison.Ordinal));
+                    return persisted;
+                },
+                ct).ConfigureAwait(false);
+
+            if (!Uri.TryCreate(fileName, UriKind.Absolute, out var externalUri)
+                || (externalUri.Scheme != Uri.UriSchemeHttp && externalUri.Scheme != Uri.UriSchemeHttps))
+            {
+                await _media.DeletePostMediaAsync(slug, postId, fileName, ct).ConfigureAwait(false);
+            }
+
             if (EditingPost is not null)
             {
                 EditingPost.PhotoFileNames.Remove(fileName);
                 EditingPost.VideoFileNames.Remove(fileName);
             }
-            StatusMessage = "파일이 삭제되었습니다.";
+            Posts = await _posts.GetAllAsync(slug, ct).ConfigureAwait(false);
+            SetStatus("status.admin.file_deleted");
         }
-        catch (Exception ex) { StatusMessage = $"삭제 오류: {ex.Message}"; }
+        catch (Exception) { SetStatus("status.admin.delete_failed", true); }
     }
 
     /// <summary>
@@ -1104,15 +1301,132 @@ public sealed class FamilyAdminViewModel
     /// </returns>
     public async Task UploadCoverAsync(string slug, IBrowserFile file, CancellationToken ct = default)
     {
+        EnsureAuthorized(slug);
         IsUploading = true;
         try
         {
             await _media.UploadCoverAsync(slug, file, ct).ConfigureAwait(false);
             Config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false);
-            StatusMessage = "커버 이미지가 업로드되었습니다.";
+            SetStatus("status.admin.cover_uploaded");
         }
-        catch (Exception ex) { StatusMessage = $"업로드 오류: {ex.Message}"; }
+        catch (Exception) { SetStatus("status.admin.upload_failed", true); }
         finally { IsUploading = false; }
+    }
+
+    private static void MergeMissingMedia(
+        List<string> target,
+        IEnumerable<string> persisted,
+        IReadOnlySet<string> deletedMedia)
+    {
+        foreach (var fileName in persisted)
+        {
+            if (!deletedMedia.Contains(fileName)
+                && !target.Contains(fileName, StringComparer.Ordinal))
+            {
+                target.Add(fileName);
+            }
+        }
+    }
+
+    private void GrantAccess(string slug)
+    {
+        _activeSlug = slug;
+        AuthorizedAdminSlug = slug;
+        IsAuthenticated = true;
+    }
+
+    private void EnsureAuthorized(string slug)
+    {
+        if (!IsAuthenticatedFor(slug))
+        {
+            throw new UnauthorizedAccessException("The administrator session is not valid for this tenant.");
+        }
+    }
+
+    private void ResetForSlug(string slug)
+    {
+        _activeSlug = slug;
+        AuthorizedAdminSlug = null;
+        IsAuthenticated = false;
+        IsLinkedToCurrentUser = false;
+        IsOwner = false;
+        IsLoaded = false;
+        IsUploading = false;
+        LoginPassword = string.Empty;
+        NewAdminPassword = string.Empty;
+        NewViewerPassword = string.Empty;
+        Config = null;
+        Posts = [];
+        Albums = [];
+        ResetEditor();
+    }
+
+    private async Task DiscardNewDraftAsync(CancellationToken ct)
+    {
+        if (!_editingWasNew
+            || !_editingHasDirectUploads
+            || EditingPost is null
+            || string.IsNullOrWhiteSpace(_activeSlug))
+        {
+            return;
+        }
+
+        await _directUploads.DeletePostAndBlockUploadsAsync(_activeSlug, EditingPost.Id, ct)
+            .ConfigureAwait(false);
+    }
+
+    private void ResetEditor()
+    {
+        EditingPost = null;
+        PendingFiles.Clear();
+        _editingWasNew = false;
+        _editingHasDirectUploads = false;
+        _deletedMedia.Clear();
+    }
+
+    /// <summary>Reloads tenant configuration after a direct HTTP cover upload.</summary>
+    public Task ApplyDirectCoverUploadAsync(
+        string slug,
+        FamilyUploadResult result,
+        CancellationToken ct = default)
+    {
+        EnsureAuthorized(slug);
+        // Keep any unsaved settings currently being edited in the circuit. Reloading the
+        // complete config here would silently discard them after a cover upload.
+        if (Config is not null && !string.IsNullOrWhiteSpace(result.FileName))
+        {
+            Config.CoverImageFileName = result.FileName;
+        }
+
+        if (string.IsNullOrWhiteSpace(result.FileName))
+        {
+            SetStatus("status.admin.cover_reload_failed", true);
+        }
+        else
+        {
+            SetStatus("status.admin.cover_uploaded");
+        }
+        return Task.CompletedTask;
+    }
+
+    /// <summary>Updates the edited configuration after a direct HTTP share-preview upload.</summary>
+    public Task ApplyDirectOgImageUploadAsync(
+        string slug,
+        FamilyUploadResult result,
+        CancellationToken ct = default)
+    {
+        EnsureAuthorized(slug);
+        if (Config is not null && !string.IsNullOrWhiteSpace(result.FileName))
+        {
+            Config.OgImageFileName = result.FileName;
+        }
+
+        SetStatus(
+            string.IsNullOrWhiteSpace(result.FileName)
+                ? "status.admin.og_image_reload_failed"
+                : "status.admin.og_image_uploaded",
+            string.IsNullOrWhiteSpace(result.FileName));
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -1149,7 +1463,8 @@ public sealed class FamilyAdminViewModel
     /// </returns>
     public async Task AddAlbumAsync(string slug, CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(NewAlbumName)) { StatusMessage = "앨범 이름을 입력해주세요."; return; }
+        EnsureAuthorized(slug);
+        if (string.IsNullOrWhiteSpace(NewAlbumName)) { SetStatus("status.admin.album_name_required", true); return; }
         try
         {
             var album = new AlbumInfo { Name = NewAlbumName.Trim(), Description = NewAlbumDesc.Trim() };
@@ -1157,9 +1472,9 @@ public sealed class FamilyAdminViewModel
             Albums = await _albums.GetAllAsync(slug, ct).ConfigureAwait(false);
             NewAlbumName = "";
             NewAlbumDesc = "";
-            StatusMessage = "앨범이 추가되었습니다.";
+            SetStatus("status.admin.album_added");
         }
-        catch (Exception ex) { StatusMessage = $"앨범 추가 오류: {ex.Message}"; }
+        catch (Exception) { SetStatus("status.admin.album_add_failed", true); }
     }
 
     /// <summary>
@@ -1204,13 +1519,14 @@ public sealed class FamilyAdminViewModel
     /// </returns>
     public async Task DeleteAlbumAsync(string slug, string albumId, CancellationToken ct = default)
     {
+        EnsureAuthorized(slug);
         try
         {
             await _albums.DeleteAsync(slug, albumId, ct).ConfigureAwait(false);
             Albums = await _albums.GetAllAsync(slug, ct).ConfigureAwait(false);
-            StatusMessage = "앨범이 삭제되었습니다.";
+            SetStatus("status.admin.album_deleted");
         }
-        catch (Exception ex) { StatusMessage = $"앨범 삭제 오류: {ex.Message}"; }
+        catch (Exception) { SetStatus("status.admin.album_delete_failed", true); }
     }
 
     /// <summary>
@@ -1247,6 +1563,7 @@ public sealed class FamilyAdminViewModel
     /// </returns>
     public async Task DeleteSelfAsync(string slug, CancellationToken ct = default)
     {
+        EnsureAuthorized(slug);
         await _tenants.DeleteAsync(slug, ct).ConfigureAwait(false);
     }
 

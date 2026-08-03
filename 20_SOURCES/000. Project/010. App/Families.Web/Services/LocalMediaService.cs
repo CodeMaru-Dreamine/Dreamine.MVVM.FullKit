@@ -1,4 +1,5 @@
 using System.IO;
+using Dreamine.AppSecurity;
 using FamiliesApp.Models;
 using Microsoft.AspNetCore.Components.Forms;
 
@@ -41,7 +42,12 @@ public sealed class LocalMediaService : IMediaService
     /// <para>Stores the allowed image exts value.</para>
     /// \endif
     /// </summary>
-    private static readonly string[] AllowedImageExts = [".jpg", ".jpeg", ".png", ".webp", ".gif"];
+    private static readonly string[] AllowedImageExts =
+        [".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif", ".avif"];
+
+    // Social preview crawlers do not consistently decode camera-native HEIC/HEIF/AVIF.
+    // Keep the public OG surface to broadly supported web image formats.
+    private static readonly string[] AllowedOgImageExts = [".jpg", ".png", ".webp"];
     /// <summary>
     /// \if KO
     /// <para>Allowed Video Exts 값을 보관합니다.</para>
@@ -50,7 +56,25 @@ public sealed class LocalMediaService : IMediaService
     /// <para>Stores the allowed video exts value.</para>
     /// \endif
     /// </summary>
-    private static readonly string[] AllowedVideoExts = [".mp4", ".webm", ".mov", ".m4v"];
+    private static readonly string[] AllowedVideoExts = [".mp4", ".webm", ".mov", ".m4v", ".3gp", ".3g2"];
+
+    private static readonly Dictionary<string, string> ExtensionsByContentType =
+        new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["image/jpeg"] = ".jpg",
+            ["image/png"] = ".png",
+            ["image/webp"] = ".webp",
+            ["image/gif"] = ".gif",
+            ["image/heic"] = ".heic",
+            ["image/heif"] = ".heif",
+            ["image/avif"] = ".avif",
+            ["video/mp4"] = ".mp4",
+            ["video/webm"] = ".webm",
+            ["video/quicktime"] = ".mov",
+            ["video/x-m4v"] = ".m4v",
+            ["video/3gpp"] = ".3gp",
+            ["video/3gpp2"] = ".3g2"
+        };
 
     /// <summary>
     /// \if KO
@@ -208,30 +232,51 @@ public sealed class LocalMediaService : IMediaService
     /// </exception>
     public async Task<string> UploadPostMediaAsync(string slug, string postId, IBrowserFile file, CancellationToken ct = default)
     {
-        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
-        bool isVideo = Array.Exists(AllowedVideoExts, e => e == ext);
-        bool isImage = Array.Exists(AllowedImageExts, e => e == ext);
-
-        if (!isVideo && !isImage)
-            throw new InvalidOperationException($"허용되지 않는 파일 형식입니다: {ext}");
-
         var (imageLimit, videoLimit) = await GetLimitsAsync(slug, ct).ConfigureAwait(false);
-        var limit = isVideo ? videoLimit : imageLimit;
-        if (file.Size > limit)
-            throw new InvalidOperationException(isVideo
-                ? $"동영상은 {FormatLimit(videoLimit)} 이하여야 합니다."
-                : $"이미지는 {FormatLimit(imageLimit)} 이하여야 합니다.");
+        var descriptor = ResolveMediaDescriptor(file.Name, file.ContentType, allowVideo: true);
+        var limit = descriptor.IsVideo ? videoLimit : imageLimit;
+        await using var source = file.OpenReadStream(limit, ct);
+        var stored = await StorePostMediaAsync(
+            slug, postId, source, file.Name, file.ContentType, file.Size, ct).ConfigureAwait(false);
+        return stored.FileName;
+    }
 
-        var mediaDir = Path.Combine(_tenants.GetTenantDataPath(slug), "media", postId);
+    /// <inheritdoc />
+    public async Task<StoredMediaFile> UploadPostMediaAsync(
+        string slug,
+        string postId,
+        Stream content,
+        string originalFileName,
+        string contentType,
+        long size,
+        CancellationToken ct = default) =>
+        await StorePostMediaAsync(
+            slug, postId, content, originalFileName, contentType, size, ct).ConfigureAwait(false);
+
+    private async Task<StoredMediaFile> StorePostMediaAsync(
+        string slug,
+        string postId,
+        Stream content,
+        string originalFileName,
+        string contentType,
+        long size,
+        CancellationToken ct)
+    {
+        var descriptor = ResolveMediaDescriptor(originalFileName, contentType, allowVideo: true);
+        var (imageLimit, videoLimit) = await GetLimitsAsync(slug, ct).ConfigureAwait(false);
+        var limit = descriptor.IsVideo ? videoLimit : imageLimit;
+        ValidateFileSize(size, limit, descriptor.IsVideo ? "동영상" : "이미지");
+
+        var tenantRoot = _tenants.GetTenantDataPath(slug);
+        var mediaRoot = StoragePathGuard.ResolveUnderRoot(tenantRoot, "media");
+        var mediaDir = StoragePathGuard.ResolveIdentifierDirectory(
+            mediaRoot, postId, nameof(postId));
         Directory.CreateDirectory(mediaDir);
 
-        var fileName = $"{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}{ext}";
-        var destPath = Path.Combine(mediaDir, fileName);
-
-        await using var dest = File.Create(destPath);
-        await file.OpenReadStream(limit, ct).CopyToAsync(dest, ct).ConfigureAwait(false);
-
-        return fileName;
+        var fileName = $"{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}{descriptor.Extension}";
+        var destination = StoragePathGuard.ResolveUnderRoot(mediaDir, fileName);
+        await WriteAtomicallyAsync(content, destination, limit, ct).ConfigureAwait(false);
+        return new StoredMediaFile(fileName, descriptor.IsVideo, size);
     }
 
     /// <summary>
@@ -284,26 +329,121 @@ public sealed class LocalMediaService : IMediaService
     /// </exception>
     public async Task<string> UploadCoverAsync(string slug, IBrowserFile file, CancellationToken ct = default)
     {
-        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
-        if (!Array.Exists(AllowedImageExts, e => e == ext))
-            throw new InvalidOperationException($"허용되지 않는 이미지 형식입니다: {ext}");
-
         var (imageLimit, _) = await GetLimitsAsync(slug, ct).ConfigureAwait(false);
-        if (file.Size > imageLimit)
-            throw new InvalidOperationException($"커버 이미지는 {FormatLimit(imageLimit)} 이하여야 합니다.");
+        await using var source = file.OpenReadStream(imageLimit, ct);
+        var stored = await StoreCoverAsync(
+            slug, source, file.Name, file.ContentType, file.Size, ct).ConfigureAwait(false);
+        return stored.FileName;
+    }
 
-        var dir = _tenants.GetTenantDataPath(slug);
-        Directory.CreateDirectory(dir);
+    /// <inheritdoc />
+    public async Task<StoredMediaFile> UploadCoverAsync(
+        string slug,
+        Stream content,
+        string originalFileName,
+        string contentType,
+        long size,
+        CancellationToken ct = default) =>
+        await StoreCoverAsync(slug, content, originalFileName, contentType, size, ct)
+            .ConfigureAwait(false);
 
-        var fileName = $"cover{ext}";
-        await using var dest = File.Create(Path.Combine(dir, fileName));
-        await file.OpenReadStream(imageLimit, ct).CopyToAsync(dest, ct).ConfigureAwait(false);
+    private async Task<StoredMediaFile> StoreCoverAsync(
+        string slug,
+        Stream content,
+        string originalFileName,
+        string contentType,
+        long size,
+        CancellationToken ct)
+    {
+        var descriptor = ResolveMediaDescriptor(originalFileName, contentType, allowVideo: false);
+        var (imageLimit, _) = await GetLimitsAsync(slug, ct).ConfigureAwait(false);
+        ValidateFileSize(size, imageLimit, "커버 이미지");
 
-        var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false) ?? new Models.FamilyConfig { Slug = slug };
-        config.CoverImageFileName = fileName;
-        await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+        var tenantRoot = _tenants.GetTenantDataPath(slug);
+        Directory.CreateDirectory(tenantRoot);
+        var fileName = $"cover_{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}{descriptor.Extension}";
+        var destination = StoragePathGuard.ResolveUnderRoot(tenantRoot, fileName);
+        await WriteAtomicallyAsync(content, destination, imageLimit, ct).ConfigureAwait(false);
 
-        return fileName;
+        string? previousFileName = null;
+        try
+        {
+            var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false)
+                         ?? new FamilyConfig { Slug = slug };
+            previousFileName = config.CoverImageFileName;
+            config.CoverImageFileName = fileName;
+            await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+        }
+        catch
+        {
+            File.Delete(destination);
+            throw;
+        }
+
+        try
+        {
+            DeletePreviousCover(tenantRoot, previousFileName, fileName);
+        }
+        catch (IOException)
+        {
+            // The new cover is already committed. Stale cover cleanup is best-effort.
+        }
+        return new StoredMediaFile(fileName, IsVideo: false, SizeBytes: size);
+    }
+
+    /// <inheritdoc />
+    public async Task<StoredMediaFile> UploadOgImageAsync(
+        string slug,
+        Stream content,
+        string originalFileName,
+        string contentType,
+        long size,
+        CancellationToken ct = default)
+    {
+        var descriptor = ResolveMediaDescriptor(originalFileName, contentType, allowVideo: false);
+        if (!AllowedOgImageExts.Contains(descriptor.Extension, StringComparer.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Open Graph images must be JPEG, PNG, or WebP files.");
+        }
+        var (imageLimit, _) = await GetLimitsAsync(slug, ct).ConfigureAwait(false);
+        ValidateFileSize(size, imageLimit, "OG 이미지");
+
+        var tenantRoot = _tenants.GetTenantDataPath(slug);
+        Directory.CreateDirectory(tenantRoot);
+        var fileName = $"og_{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}{descriptor.Extension}";
+        var destination = StoragePathGuard.ResolveUnderRoot(tenantRoot, fileName);
+        await WriteAtomicallyAsync(content, destination, imageLimit, ct).ConfigureAwait(false);
+
+        string? previousFileName = null;
+        try
+        {
+            var config = await _tenants.GetAsync(slug, ct).ConfigureAwait(false)
+                         ?? throw new InvalidOperationException("The family album does not exist.");
+            previousFileName = config.OgImageFileName;
+            config.OgImageFileName = fileName;
+            await _tenants.SaveAsync(config, ct).ConfigureAwait(false);
+        }
+        catch
+        {
+            File.Delete(destination);
+            throw;
+        }
+
+        try
+        {
+            DeletePreviousOgImage(tenantRoot, previousFileName, fileName);
+        }
+        catch (Exception exception) when (
+            exception is IOException
+                or UnauthorizedAccessException
+                or ArgumentException
+                or InvalidOperationException
+                or NotSupportedException)
+        {
+            // The newly selected OG image is already committed. Stale OG cleanup is best-effort.
+        }
+
+        return new StoredMediaFile(fileName, IsVideo: false, SizeBytes: size);
     }
 
     /// <summary>
@@ -332,6 +472,149 @@ public sealed class LocalMediaService : IMediaService
     /// </returns>
     private static string FormatLimit(long bytes) =>
         bytes == long.MaxValue ? "무제한" : $"{bytes / (1024 * 1024)}MB";
+
+    private static (string Extension, bool IsVideo) ResolveMediaDescriptor(
+        string originalFileName,
+        string contentType,
+        bool allowVideo)
+    {
+        var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
+        var extensionIsImage = AllowedImageExts.Contains(extension, StringComparer.OrdinalIgnoreCase);
+        var extensionIsVideo = AllowedVideoExts.Contains(extension, StringComparer.OrdinalIgnoreCase);
+        if (!extensionIsImage && !extensionIsVideo)
+        {
+            if (!ExtensionsByContentType.TryGetValue(contentType ?? string.Empty, out extension))
+            {
+                throw new InvalidOperationException($"허용되지 않는 파일 형식입니다: {extension}");
+            }
+        }
+        else if (ExtensionsByContentType.TryGetValue(contentType ?? string.Empty, out var contentExtension))
+        {
+            var contentIsVideo = AllowedVideoExts.Contains(contentExtension, StringComparer.OrdinalIgnoreCase);
+            if (extensionIsVideo != contentIsVideo)
+            {
+                throw new InvalidOperationException("파일 확장자와 콘텐츠 형식이 일치하지 않습니다.");
+            }
+
+            // Prefer the MIME-derived extension so HEIC/AVIF data isn't served as JPEG merely
+            // because a mobile browser supplied a misleading camera-roll file name.
+            extension = contentExtension;
+        }
+
+        var isImage = AllowedImageExts.Contains(extension, StringComparer.OrdinalIgnoreCase);
+        var isVideo = AllowedVideoExts.Contains(extension, StringComparer.OrdinalIgnoreCase);
+        if (!isImage && !isVideo || isVideo && !allowVideo)
+        {
+            throw new InvalidOperationException("허용되지 않는 미디어 파일입니다.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(contentType)
+            && !string.Equals(contentType, "application/octet-stream", StringComparison.OrdinalIgnoreCase))
+        {
+            var expectedPrefix = isVideo ? "video/" : "image/";
+            if (!contentType.StartsWith(expectedPrefix, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("파일 확장자와 콘텐츠 형식이 일치하지 않습니다.");
+            }
+        }
+
+        return (extension, isVideo);
+    }
+
+    private static void ValidateFileSize(long size, long limit, string mediaLabel)
+    {
+        if (size <= 0)
+        {
+            throw new InvalidOperationException("빈 파일은 업로드할 수 없습니다.");
+        }
+
+        if (size > limit)
+        {
+            throw new InvalidOperationException($"{mediaLabel}는 {FormatLimit(limit)} 이하여야 합니다.");
+        }
+    }
+
+    private static async Task WriteAtomicallyAsync(
+        Stream source,
+        string destination,
+        long limit,
+        CancellationToken ct)
+    {
+        var temporaryPath = $"{destination}.{Guid.NewGuid():N}.upload";
+        try
+        {
+            await using (var target = new FileStream(
+                             temporaryPath,
+                             FileMode.CreateNew,
+                             FileAccess.Write,
+                             FileShare.None,
+                             81920,
+                             FileOptions.Asynchronous | FileOptions.SequentialScan))
+            {
+                var buffer = new byte[81920];
+                long totalBytes = 0;
+                int read;
+                while ((read = await source.ReadAsync(buffer.AsMemory(0, buffer.Length), ct)
+                           .ConfigureAwait(false)) > 0)
+                {
+                    totalBytes += read;
+                    if (totalBytes > limit)
+                    {
+                        throw new InvalidOperationException($"파일이 허용 용량 {FormatLimit(limit)}를 초과했습니다.");
+                    }
+
+                    await target.WriteAsync(buffer.AsMemory(0, read), ct).ConfigureAwait(false);
+                }
+            }
+
+            File.Move(temporaryPath, destination);
+        }
+        catch
+        {
+            File.Delete(temporaryPath);
+            throw;
+        }
+    }
+
+    private static void DeletePreviousCover(
+        string tenantRoot,
+        string? previousFileName,
+        string currentFileName)
+    {
+        if (string.IsNullOrWhiteSpace(previousFileName)
+            || string.Equals(previousFileName, currentFileName, StringComparison.Ordinal)
+            || !string.Equals(Path.GetFileName(previousFileName), previousFileName, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        var path = StoragePathGuard.ResolveUnderRoot(tenantRoot, previousFileName);
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+    }
+
+    private static void DeletePreviousOgImage(
+        string tenantRoot,
+        string? previousFileName,
+        string currentFileName)
+    {
+        if (string.IsNullOrWhiteSpace(previousFileName)
+            || string.Equals(previousFileName, currentFileName, StringComparison.Ordinal)
+            || !previousFileName.StartsWith("og_", StringComparison.Ordinal)
+            || !string.Equals(Path.GetFileName(previousFileName), previousFileName, StringComparison.Ordinal)
+            || !AllowedImageExts.Contains(Path.GetExtension(previousFileName), StringComparer.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var path = StoragePathGuard.ResolveUnderRoot(tenantRoot, previousFileName);
+        if (File.Exists(path))
+        {
+            File.Delete(path);
+        }
+    }
 
     /// <summary>
     /// \if KO
@@ -383,7 +666,14 @@ public sealed class LocalMediaService : IMediaService
     /// </returns>
     public Task DeletePostMediaAsync(string slug, string postId, string fileName, CancellationToken ct = default)
     {
-        var path = Path.Combine(_tenants.GetTenantDataPath(slug), "media", postId, fileName);
+        if (!string.Equals(Path.GetFileName(fileName), fileName, StringComparison.Ordinal))
+        {
+            throw new ArgumentException("The file name must be a single path segment.", nameof(fileName));
+        }
+
+        var mediaRoot = StoragePathGuard.ResolveUnderRoot(_tenants.GetTenantDataPath(slug), "media");
+        var postRoot = StoragePathGuard.ResolveIdentifierDirectory(mediaRoot, postId, nameof(postId));
+        var path = StoragePathGuard.ResolveUnderRoot(postRoot, fileName);
         if (File.Exists(path)) File.Delete(path);
         return Task.CompletedTask;
     }
@@ -430,7 +720,8 @@ public sealed class LocalMediaService : IMediaService
     /// </returns>
     public Task<IReadOnlyList<MediaInfo>> GetPostMediaAsync(string slug, string postId, CancellationToken ct = default)
     {
-        var dir = Path.Combine(_tenants.GetTenantDataPath(slug), "media", postId);
+        var mediaRoot = StoragePathGuard.ResolveUnderRoot(_tenants.GetTenantDataPath(slug), "media");
+        var dir = StoragePathGuard.ResolveIdentifierDirectory(mediaRoot, postId, nameof(postId));
         if (!Directory.Exists(dir)) return Task.FromResult<IReadOnlyList<MediaInfo>>([]);
 
         var list = Directory.GetFiles(dir)

@@ -6,6 +6,26 @@
 @inject FamilyAlbumViewModel Vm
 @inject NavigationManager Nav
 
+@if (Vm.IsLoaded && !Vm.NotFound)
+{
+    <PageTitle>@Vm.OgTitle</PageTitle>
+    <HeadContent>
+        <meta name="description" content="@Vm.OgDescription" />
+        <link rel="canonical" href="@CanonicalUrl" />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="@CanonicalUrl" />
+        <meta property="og:title" content="@Vm.OgTitle" />
+        <meta property="og:description" content="@Vm.OgDescription" />
+        <meta property="og:image" content="@OgImageUrl" />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="@Vm.OgTitle" />
+        <meta name="twitter:description" content="@Vm.OgDescription" />
+        <meta name="twitter:image" content="@OgImageUrl" />
+    </HeadContent>
+}
+
 @if (!Vm.IsLoaded)
 {
     <div class="fa-loading">불러오는 중...</div>
@@ -17,21 +37,12 @@ else if (Vm.NotFound)
         <a href="/" class="fa-btn fa-btn--ghost">홈으로 →</a>
     </div>
 }
+else if (Vm.AccessDenied)
+{
+    <FamilyUnlockPrompt Slug="@Slug" LegacyAdminPassword="@(Vm.Config is not null && FamilyAccessService.UsesLegacyAdminPassword(Vm.Config))" />
+}
 else
 {
-    <PageTitle>@Vm.FamilyName 가족 앨범</PageTitle>
-
-    <HeadContent>
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content="@Nav.Uri" />
-        <meta property="og:title" content="@Vm.OgTitle" />
-        <meta property="og:description" content="@Vm.OgDescription" />
-        @if (!string.IsNullOrWhiteSpace(Vm.OgImageUrl))
-        {
-            <meta property="og:image" content="@Vm.OgImageUrl" />
-        }
-    </HeadContent>
-
     <div class="fa-page fa-theme-@Vm.ThemeName">
 
         <!-- ── 커버 ── -->
@@ -166,6 +177,9 @@ else
 
 @code {
     [Parameter] public string Slug { get; set; } = "";
+
+    private string CanonicalUrl => Nav.ToAbsoluteUri($"/{Uri.EscapeDataString(Slug)}").AbsoluteUri;
+    private string OgImageUrl => Nav.ToAbsoluteUri(Vm.OgImageUrl).AbsoluteUri;
 
     protected override async Task OnParametersSetAsync()
     {

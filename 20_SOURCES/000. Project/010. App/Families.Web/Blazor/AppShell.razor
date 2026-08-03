@@ -1,13 +1,29 @@
 @namespace FamiliesApp.Blazor
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager Navigation
+@inject FamilyLocalization Text
 
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="@Text.HtmlLanguage">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="/css/family.css?v=20260707a" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E%F0%9F%8C%B2%3C/text%3E%3C/svg%3E" />
+    <script>
+        (() => {
+            const media = window.matchMedia('(prefers-color-scheme: dark)');
+            const syncSystemClass = event => document.documentElement.classList.toggle('system-dark', event.matches);
+            syncSystemClass(media);
+            media.addEventListener?.('change', syncSystemClass);
+            const cookie = document.cookie.split(';').map(x => x.trim()).find(x => x.startsWith('dreamine-theme='));
+            const saved = cookie ? decodeURIComponent(cookie.substring('dreamine-theme='.length)) : localStorage.getItem('codemaru-theme');
+            if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/family.css?v=20260803-user-admin-og-3" />
+    <link rel="stylesheet" href="/Families.Web.styles.css?v=20260803-admin-shell-1" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
@@ -16,7 +32,8 @@
 <body>
     <FamiliesApp.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
     <script src="/_framework/blazor.web.js" autostart="false"></script>
-    <script src="/js/family-interop.js"></script>
+    <script src="/_content/Dreamine.UI.Blazor/dreamine-portal.js?v=20260803-admin-shell-1"></script>
+    <script src="/js/family-interop.js?v=20260803-mobile-upload-1"></script>
     <script>
         Blazor.start({
             circuit: {
@@ -34,3 +51,14 @@
     </script>
 </body>
 </html>
+
+@code {
+    protected override void OnInitialized()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        if (query.TryGetValue("lang", out var language))
+        {
+            Text.SetLanguage(FamilyLocalization.NormalizeLanguageCode(language.ToString()));
+        }
+    }
+}
