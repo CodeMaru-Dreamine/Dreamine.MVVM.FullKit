@@ -96,10 +96,18 @@ public sealed class FamilyUserContext
     /// <para>The <c>Task&lt;FamilyCurrentUser&gt;</c> result produced by the get current async operation.</para>
     /// \endif
     /// </returns>
-    public async Task<FamilyCurrentUser> GetCurrentAsync()
+    public async Task<ClaimsPrincipal> GetPrincipalAsync()
     {
         var state = await _authenticationStateProvider.GetAuthenticationStateAsync().ConfigureAwait(false);
-        var principal = state.User;
+        return state.User;
+    }
+
+    public async Task<FamilyCurrentUser> GetCurrentAsync() =>
+        FromPrincipal(await GetPrincipalAsync().ConfigureAwait(false));
+
+    /// <summary>Builds the same tenant user identity for an HTTP request principal.</summary>
+    public static FamilyCurrentUser FromPrincipal(ClaimsPrincipal principal)
+    {
 
         if (principal.Identity?.IsAuthenticated != true)
         {

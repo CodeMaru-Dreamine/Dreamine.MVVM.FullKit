@@ -1,213 +1,734 @@
 @page "/admin"
-@layout FamiliesApp.Blazor.Layout.FamilyLayout
+@layout FamilySuperAdminLayout
 @namespace FamiliesApp.Blazor.Pages
 @rendermode InteractiveServer
+@implements IDisposable
 
+@using System.Globalization
+@using FamiliesApp.Blazor.Components
 @using FamiliesApp.Models
 @inject FamilyHomeViewModel Vm
+@inject IAlbumStore AlbumStore
+@inject IPostStore PostStore
+@inject IReactionStore ReactionStore
+@inject IMediaService Media
+@inject FamilyUserContext UserContext
+@inject FamilyLocalization Text
 @inject NavigationManager Nav
 
-<PageTitle>슈퍼 관리자 — Codemaru Family</PageTitle>
+<PageTitle>@Text["admin.dashboard"] — CodeMaru Families</PageTitle>
+<HeadContent>
+    <link rel="stylesheet" href="/css/families-superadmin.css?v=20260803" />
+</HeadContent>
 
-<div class="fa-page fa-admin">
-    <div class="fa-admin-header">
-        <h1>🔑 슈퍼 관리자</h1>
-        @if (Vm.IsAuthenticated)
-        {
-            <button class="fa-btn fa-btn--ghost" @onclick="OnRefresh">🔄 새로고침</button>
-        }
-    </div>
-
-    @if (!Vm.IsAuthenticated)
-    {
-        <div class="fa-login-box">
-            <p class="fa-login-box__desc">슈퍼 관리자 비밀번호</p>
-            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
-            {
-                <p class="fa-status fa-status--err">@Vm.StatusMessage</p>
-            }
-            <input class="fa-input" type="password"
-                   value="@Vm.LoginPassword"
-                   @oninput="OnPasswordInput"
-                   @onkeydown="OnLoginKey" placeholder="비밀번호" />
-            <button class="fa-btn fa-btn--primary fa-btn--full" @onclick="OnLogin">로그인</button>
+@if (!Vm.IsAuthenticated)
+{
+    <div class="families-admin-login">
+        <div class="families-admin-login__preferences">
+            <FamilyPreferences />
         </div>
-    }
-    else
-    {
-        @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
-        {
-            <p class="fa-status @(Vm.StatusMessage.StartsWith("✅") ? "fa-status--ok" : "fa-status--err")">
-                @Vm.StatusMessage
-            </p>
-        }
-
-        <div class="fa-superadmin-settings">
-            <h2>⚙ 전체 설정</h2>
-            <p class="fa-label__hint">모든 가족 앨범 계정에 공통으로 적용되는 업로드 용량 기본값입니다.</p>
-
-            <div class="fa-gs-fields">
-                <div class="fa-gs-field">
-                    <label class="fa-label">이미지(사진/커버) 최대 용량</label>
-                    <select class="fa-input" @bind="Vm.MaxImageSizeMb">
-                        <option value="10">10MB</option>
-                        <option value="20">20MB</option>
-                        <option value="50">50MB</option>
-                        <option value="0">무제한</option>
-                    </select>
-                </div>
-                <div class="fa-gs-field">
-                    <label class="fa-label">동영상 최대 용량</label>
-                    <select class="fa-input" @bind="Vm.MaxVideoSizeMb">
-                        <option value="200">200MB</option>
-                        <option value="500">500MB</option>
-                        <option value="1024">1GB</option>
-                        <option value="2048">2GB</option>
-                        <option value="0">무제한</option>
-                    </select>
-                </div>
+        <section class="families-admin-login__card" aria-labelledby="familiesAdminLoginTitle">
+            <div class="families-admin-login__brand">
+                <span class="families-admin-login__mark" aria-hidden="true">🌲</span>
+                <span><strong>CodeMaru</strong><em>Families</em></span>
+            </div>
+            <p class="families-admin-eyebrow">@Text["admin.super"]</p>
+            <h1 id="familiesAdminLoginTitle">@Text["admin"] @Text["login"]</h1>
+            <p class="families-admin-login__description">@Text["admin.login.desc"]</p>
+            @if (Vm.HasStatus)
+            {
+                <p class="families-admin-message families-admin-message--error" role="alert">@Text.Format(Vm.StatusKey, Vm.StatusArguments)</p>
+            }
+            <label class="families-admin-field">
+                <span>@Text["admin.super.password"]</span>
+                <input type="password"
+                       value="@Vm.LoginPassword"
+                       @oninput="OnPasswordInput"
+                       @onkeydown="OnLoginKey"
+                       autocomplete="current-password"
+                       placeholder="@Text["admin.password.placeholder"]" />
+            </label>
+            <button class="families-admin-button families-admin-button--primary families-admin-button--block"
+                    type="button"
+                    @onclick="OnLogin">
+                @Text["login"]
+            </button>
+            <a class="families-admin-login__back" href="/">← Families @Text["home"]</a>
+        </section>
+    </div>
+}
+else
+{
+    <div class="families-superadmin @(isSidebarCollapsed ? "families-superadmin--collapsed" : null)">
+        <aside id="familiesAdminSidebar" class="families-admin-sidebar @(isMobileMenuOpen ? "is-open" : null)">
+            <div class="families-admin-brand">
+                <span class="families-admin-brand__mark" aria-hidden="true">🌲</span>
+                <span class="families-admin-brand__copy"><strong>CodeMaru</strong><em>Families</em></span>
+                <button class="families-admin-icon-button families-admin-sidebar__collapse"
+                        type="button"
+                        title="@Text["admin.sidebar.toggle"]"
+                        @onclick="ToggleSidebar">
+                    @(isSidebarCollapsed ? "›" : "‹")
+                </button>
             </div>
 
-            <button class="fa-btn fa-btn--primary" style="margin-top:12px" @onclick="OnSaveGlobalSettings">💾 전체 설정 저장</button>
-        </div>
+            <nav class="families-admin-nav" aria-label="@Text["admin.menu.aria"]">
+                <button class="@NavClass("dashboard")" type="button" @onclick='() => SetMenu("dashboard")'>
+                    <span class="families-admin-nav__icon">⌂</span><span class="families-admin-nav__label">@Text["admin.dashboard"]</span>
+                </button>
+                <button class="@NavClass("albums")" type="button" @onclick='() => SetMenu("albums")'>
+                    <span class="families-admin-nav__icon">▧</span><span class="families-admin-nav__label">@Text["admin.albums"]</span>
+                </button>
+                <button class="@NavClass("posts")" type="button" @onclick='() => SetMenu("posts")'>
+                    <span class="families-admin-nav__icon">▤</span><span class="families-admin-nav__label">@Text["admin.posts"]</span>
+                </button>
+                <button class="@NavClass("comments")" type="button" @onclick='() => SetMenu("comments")'>
+                    <span class="families-admin-nav__icon">◌</span><span class="families-admin-nav__label">@Text["admin.comments"]</span>
+                    @if (TotalComments > 0) { <span class="families-admin-nav__count">@TotalComments</span> }
+                </button>
+                <button class="@NavClass("users")" type="button" @onclick='() => SetMenu("users")'>
+                    <span class="families-admin-nav__icon">♟</span><span class="families-admin-nav__label">@Text["admin.users"]</span>
+                </button>
+                <button class="@NavClass("reports")" type="button" @onclick='() => SetMenu("reports")'>
+                    <span class="families-admin-nav__icon">◇</span><span class="families-admin-nav__label">@Text["admin.reports"]</span>
+                </button>
+                <button class="@NavClass("settings")" type="button" @onclick='() => SetMenu("settings")'>
+                    <span class="families-admin-nav__icon">⚙</span><span class="families-admin-nav__label">@Text["admin.settings"]</span>
+                </button>
+            </nav>
 
-        <div class="fa-superadmin-list">
-            <h2>앨범 목록 (@(Vm.Tenants.Count)개)</h2>
-            @foreach (var t in Vm.Tenants.OrderByDescending(x => x.CreatedAt))
-            {
-                <div class="fa-sa-card">
-                    <!-- 1행: 슬러그 + 이름 + 날짜 + 버튼 -->
-                    <div class="fa-sa-card__top">
-                        <div class="fa-sa-card__title">
-                            <code class="fa-sa-card__slug">@t.Slug</code>
-                            <span class="fa-sa-card__name">@t.FamilyName</span>
-                            <span class="fa-sa-card__date">@t.CreatedAt.ToString("yy.MM.dd")</span>
-                        </div>
-                        <div class="fa-sa-card__btns">
-                            <a href="/@t.Slug" target="_blank" class="fa-btn fa-btn--sm fa-btn--ghost">보기</a>
-                            <a href="/@t.Slug/admin" target="_blank" class="fa-btn fa-btn--sm fa-btn--ghost">어드민</a>
-                            <button class="fa-btn fa-btn--sm fa-btn--danger"
-                                    @onclick="() => OnDelete(t.Slug)">삭제</button>
-                        </div>
-                    </div>
+            <a class="families-admin-help" href="https://codemaru.co.kr/contact" target="_blank" rel="noopener">
+                <span aria-hidden="true">☏</span>
+                <span class="families-admin-brand__copy"><strong>@Text["admin.help"]</strong><small>@Text["admin.help.desc"]</small></span>
+                <span class="families-admin-brand__copy">›</span>
+            </a>
+        </aside>
 
-                    <!-- 2행: 공개여부 + 우선순위 + 이미지 용량 + 동영상 용량 -->
-                    <div class="fa-sa-card__row">
-                        <!-- 공개 체크박스 -->
-                        <label class="fa-sa-ctrl">
-                            <input type="checkbox" checked="@t.ShowOnHome"
-                                   @onchange="e => OnShowOnHomeChange(t, e)" />
-                            <span class="@(t.ShowOnHome ? "fa-sa-public" : "fa-sa-private")">
-                                @(t.ShowOnHome ? "공개" : "비공개")
-                            </span>
-                        </label>
+        @if (isMobileMenuOpen)
+        {
+            <button class="families-admin-sidebar-backdrop" type="button" aria-label="@Text["admin.menu.close"]" @onclick="ToggleMobileMenu"></button>
+        }
 
-                        <!-- 우선순위 (공개일 때만) -->
-                        @if (t.ShowOnHome)
-                        {
-                            <label class="fa-sa-ctrl">
-                                <span class="fa-sa-lbl">우선순위</span>
-                                <input type="number" class="fa-sa-num" min="0" max="99"
-                                       value="@t.PinOrder"
-                                       @onchange="e => OnPinOrderChange(t, e)"
-                                       title="1=최우선, 0=자동 정렬" />
-                            </label>
-                        }
-
-                        <!-- 이미지 용량 -->
-                        <label class="fa-sa-ctrl">
-                            <span class="fa-sa-lbl">이미지</span>
-                            <select class="fa-sa-sel"
-                                    value="@(t.MaxImageSizeMb?.ToString() ?? "")"
-                                    @onchange="e => OnImageLimitChange(t, e)">
-                                <option value="">기본값</option>
-                                <option value="10">10MB</option>
-                                <option value="20">20MB</option>
-                                <option value="50">50MB</option>
-                                <option value="0">무제한</option>
-                            </select>
-                        </label>
-
-                        <!-- 동영상 용량 -->
-                        <label class="fa-sa-ctrl">
-                            <span class="fa-sa-lbl">동영상</span>
-                            <select class="fa-sa-sel"
-                                    value="@(t.MaxVideoSizeMb?.ToString() ?? "")"
-                                    @onchange="e => OnVideoLimitChange(t, e)">
-                                <option value="">기본값</option>
-                                <option value="200">200MB</option>
-                                <option value="500">500MB</option>
-                                <option value="1024">1GB</option>
-                                <option value="2048">2GB</option>
-                                <option value="0">무제한</option>
-                            </select>
-                        </label>
+        <main class="families-admin-main">
+            <header class="families-admin-topbar">
+                <div class="families-admin-title-group">
+                    <button class="families-admin-icon-button families-admin-mobile-menu"
+                            type="button"
+                            aria-label="@Text["admin.menu.open"]"
+                            aria-controls="familiesAdminSidebar"
+                            @onclick="ToggleMobileMenu">☰</button>
+                    <div>
+                        <p class="families-admin-eyebrow">@Text["admin.eyebrow"]</p>
+                        <h1>@MenuTitle</h1>
+                        <p>@MenuDescription</p>
                     </div>
                 </div>
+
+                <div class="families-admin-topbar__tools">
+                    <label class="families-admin-search">
+                        <span aria-hidden="true">⌕</span>
+                        <input value="@searchText"
+                               @oninput="OnSearchInput"
+                               placeholder="@Text["admin.search"]"
+                               aria-label="@Text["admin.search"]" />
+                        @if (!string.IsNullOrWhiteSpace(searchText))
+                        {
+                            <button type="button" aria-label="@Text["admin.search.clear"]" @onclick="ClearSearch">×</button>
+                        }
+                    </label>
+                    <FamilyPreferences />
+                    <button class="families-admin-icon-button families-admin-notification-button"
+                            type="button"
+                            aria-label="@Text["admin.notifications"]"
+                            @onclick="ToggleNotifications">
+                        ♧
+                        @if (ActionableCount > 0) { <span>@ActionableCount</span> }
+                    </button>
+                    <button class="families-admin-profile" type="button" @onclick="ToggleProfile">
+                        <span class="families-admin-profile__avatar">@AdminInitial</span>
+                        <span class="families-admin-profile__copy"><strong>@AdminName</strong><small>@Text["admin.super"]</small></span>
+                        <span aria-hidden="true">⌄</span>
+                    </button>
+                </div>
+
+                @if (showNotifications)
+                {
+                    <section class="families-admin-popover families-admin-popover--notifications">
+                        <header><strong>@Text["admin.notifications"]</strong><span>@FormatText("admin.count", ActionableCount)</span></header>
+                        @if (CleanupCandidates.Count == 0)
+                        {
+                            <p class="families-admin-popover__empty">@Text["admin.notifications.none"]</p>
+                        }
+                        else
+                        {
+                            @foreach (var item in CleanupCandidates.Take(5))
+                            {
+                                <button type="button" @onclick='() => OpenAlbumFromAlert(item.Config.Slug)'>
+                                    <span class="families-admin-alert-dot families-admin-alert-dot--warning"></span>
+                                    <span><strong>@item.Config.FamilyName</strong><small>@FormatText("admin.cleanup.age", AgeHours(item.Config.CreatedAt))</small></span>
+                                </button>
+                            }
+                        }
+                    </section>
+                }
+                @if (showProfile)
+                {
+                    <section class="families-admin-popover families-admin-popover--profile">
+                        <strong>@AdminName</strong>
+                        <small>@AdminEmail</small>
+                        <button type="button" @onclick="OnLogout">@Text["logout"]</button>
+                    </section>
+                }
+            </header>
+
+            @if (Vm.HasStatus)
+            {
+                <p class="families-admin-message @StatusMessageClass">
+                    @Text.Format(Vm.StatusKey, Vm.StatusArguments)
+                </p>
             }
-        </div>
-    }
-</div>
+            @if (!string.IsNullOrWhiteSpace(loadWarning))
+            {
+                <p class="families-admin-message families-admin-message--warning">@loadWarning</p>
+            }
+
+            @if (isDashboardLoading)
+            {
+                <div class="families-admin-loading" role="status"><span></span><p>@Text["admin.loading"]</p></div>
+            }
+            else if (activeMenu == "dashboard")
+            {
+                <section class="families-admin-summary-grid" aria-label="@Text["admin.summary.aria"]">
+                    <article class="families-admin-summary-card">
+                        <span class="families-admin-summary-card__icon">▧</span>
+                        <div><small>@Text["admin.total.albums"]</small><strong>@Snapshots.Count.ToString("N0")</strong><em>@Text["admin.registered.accounts"]</em></div>
+                    </article>
+                    <article class="families-admin-summary-card">
+                        <span class="families-admin-summary-card__icon">▣</span>
+                        <div><small>@Text["admin.public.albums"]</small><strong>@PublicAlbumCount.ToString("N0")</strong><em>@FormatText("admin.public.percent", PublicPercent)</em></div>
+                    </article>
+                    <article class="families-admin-summary-card">
+                        <span class="families-admin-summary-card__icon">▤</span>
+                        <div><small>@Text["admin.total.posts"]</small><strong>@TotalPosts.ToString("N0")</strong><em>@FormatText("admin.today.posts", TodayPosts)</em></div>
+                    </article>
+                    <article class="families-admin-summary-card">
+                        <span class="families-admin-summary-card__icon">◌</span>
+                        <div><small>@Text["admin.total.comments"]</small><strong>@TotalComments.ToString("N0")</strong><em>@FormatText("admin.comments.albums", CommentedAlbumCount)</em></div>
+                    </article>
+                </section>
+
+                <section class="families-admin-dashboard-grid">
+                    <article class="families-admin-panel families-admin-trend-panel">
+                        <header class="families-admin-panel__header">
+                            <div><h2>@Text["admin.recent.posts"]</h2><p>@Text["admin.recent.posts.desc"]</p></div>
+                            <span class="families-admin-pill">@Text["admin.days.seven"]</span>
+                        </header>
+                        <div class="families-admin-chart" role="img" aria-label="@Text["admin.chart.aria"]">
+                            <svg viewBox="0 0 700 230" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="familiesTrendFill" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0" stop-color="#f97316" stop-opacity=".25" />
+                                        <stop offset="1" stop-color="#f97316" stop-opacity="0" />
+                                    </linearGradient>
+                                </defs>
+                                <line x1="36" y1="184" x2="672" y2="184" class="families-admin-chart__axis" />
+                                <line x1="36" y1="126" x2="672" y2="126" class="families-admin-chart__grid" />
+                                <line x1="36" y1="68" x2="672" y2="68" class="families-admin-chart__grid" />
+                                <polygon points="@TrendAreaPoints" fill="url(#familiesTrendFill)" />
+                                <polyline points="@TrendPoints" class="families-admin-chart__line" />
+                                @foreach (var point in TrendChartPoints)
+                                {
+                                    <circle cx="@point.X" cy="@point.Y" r="5" class="families-admin-chart__dot"><title>@point.Label: @FormatText("admin.count", point.Count)</title></circle>
+                                    <foreignObject x="@(point.X - 30)" y="@(point.Y - 34)" width="60" height="22">
+                                        <div xmlns="http://www.w3.org/1999/xhtml" class="families-admin-chart__value">@point.Count</div>
+                                    </foreignObject>
+                                    <foreignObject x="@(point.X - 30)" y="194" width="60" height="22">
+                                        <div xmlns="http://www.w3.org/1999/xhtml" class="families-admin-chart__label">@point.Label</div>
+                                    </foreignObject>
+                                }
+                            </svg>
+                        </div>
+                    </article>
+
+                    <article class="families-admin-panel families-admin-visibility-panel">
+                        <header class="families-admin-panel__header"><div><h2>@Text["admin.visibility"]</h2><p>@Text["admin.visibility.desc"]</p></div></header>
+                        <div class="families-admin-visibility">
+                            <div class="families-admin-donut" style="@DonutStyle">
+                                <span><small>@Text["admin.all"]</small><strong>@Snapshots.Count</strong></span>
+                            </div>
+                            <dl>
+                                <div><dt><i class="is-public"></i>@Text["admin.public"]</dt><dd><strong>@PublicPercent%</strong> (@FormatText("admin.count", PublicAlbumCount))</dd></div>
+                                <div><dt><i class="is-private"></i>@Text["admin.private"]</dt><dd><strong>@PrivatePercent%</strong> (@FormatText("admin.count", PrivateAlbumCount))</dd></div>
+                            </dl>
+                        </div>
+                    </article>
+
+                    <article class="families-admin-panel families-admin-recent-panel">
+                        <header class="families-admin-panel__header">
+                            <div><h2>@Text["admin.recent.albums"]</h2><p>@Text["admin.recent.albums.desc"]</p></div>
+                            <button class="families-admin-button families-admin-button--outline" type="button" @onclick='() => SetMenu("albums")'>@Text["admin.view.all"]</button>
+                        </header>
+                        <div class="families-admin-table-wrap">
+                            <table class="families-admin-table">
+                                <thead><tr><th>@Text["admin.column.album"]</th><th>@Text["admin.column.owner"]</th><th>@Text["admin.column.visibility"]</th><th>@Text["admin.column.posts"]</th><th>@Text["admin.column.recent.activity"]</th><th>@Text["admin.column.manage"]</th></tr></thead>
+                                <tbody>
+                                    @foreach (var item in FilteredSnapshots.OrderByDescending(x => x.Config.CreatedAt).Take(5))
+                                    {
+                                        <tr>
+                                            <td><div class="families-admin-album-cell">@AlbumCover(item)<span><strong>@item.Config.FamilyName</strong><small>@item.Config.Slug · @item.Config.CreatedAt.ToString("yyyy-MM-dd")</small></span></div></td>
+                                            <td>@OwnerLabel(item.Config)</td>
+                                            <td><span class="families-admin-status @(item.Config.ShowOnHome ? "is-public" : "is-private")">@(item.Config.ShowOnHome ? Text["admin.public"] : Text["admin.private"])</span></td>
+                                            <td>@item.PostCount</td>
+                                            <td>@item.LatestActivity.ToString("yyyy-MM-dd")</td>
+                                            <td><a class="families-admin-icon-button" href="/@item.Config.Slug/admin" target="_blank" rel="noopener" title="@Text["admin.open.manage"]">⋮</a></td>
+                                        </tr>
+                                    }
+                                    @if (FilteredSnapshots.Count == 0) { <tr><td colspan="6"><div class="families-admin-empty-inline">@Text["admin.empty.search"]</div></td></tr> }
+                                </tbody>
+                            </table>
+                        </div>
+                    </article>
+
+                    <article class="families-admin-panel families-admin-needs-panel">
+                        <header class="families-admin-panel__header"><div><h2>@Text["admin.needs.attention"]</h2><p>@Text["admin.needs.desc"]</p></div></header>
+                        <button type="button" @onclick='() => OpenAlertMenu("comments")'>
+                            <span class="families-admin-needs-panel__icon is-red">◌</span><span><strong>@Text["admin.albums.with.comments"]</strong><small>@Text["admin.albums.with.comments.desc"]</small></span><b>@FormatText("admin.count", CommentedAlbumCount)</b><i>›</i>
+                        </button>
+                        <button type="button" @onclick='() => OpenAlertMenu("posts")'>
+                            <span class="families-admin-needs-panel__icon is-amber">▶</span><span><strong>@Text["admin.albums.with.videos"]</strong><small>@Text["admin.albums.with.videos.desc"]</small></span><b>@FormatText("admin.count", VideoAlbumCount)</b><i>›</i>
+                        </button>
+                        <button type="button" @onclick='() => OpenAlertMenu("albums")'>
+                            <span class="families-admin-needs-panel__icon is-blue">◷</span><span><strong>@Text["admin.cleanup.soon"]</strong><small>@Text["admin.cleanup.soon.desc"]</small></span><b>@FormatText("admin.count", CleanupCandidates.Count)</b><i>›</i>
+                        </button>
+                        <button class="families-admin-button families-admin-button--primary families-admin-button--block" type="button" @onclick="OpenCreateForm">＋ @Text["admin.create.album"]</button>
+                    </article>
+                </section>
+            }
+            else if (activeMenu == "albums")
+            {
+                <section class="families-admin-panel families-admin-management-panel">
+                    <header class="families-admin-panel__header">
+                        <div><h2>@Text["admin.accounts.title"]</h2><p>@Text["admin.accounts.desc"]</p></div>
+                        <div class="families-admin-inline-actions">
+                            <select class="families-admin-select" @bind="visibilityFilter" aria-label="@Text["admin.visibility.filter"]">
+                                <option value="all">@Text["admin.all"]</option><option value="public">@Text["admin.public"]</option><option value="private">@Text["admin.private"]</option>
+                            </select>
+                            <button class="families-admin-button families-admin-button--primary" type="button" @onclick="OpenCreateForm">＋ @Text["admin.create.album"]</button>
+                        </div>
+                    </header>
+
+                    @if (showCreateForm)
+                    {
+                        <div class="families-admin-create-panel">
+                            <div><h3>@Text["admin.create.album"]</h3><p>@Text["admin.create.album.desc"]</p></div>
+                            <label class="families-admin-field"><span>@Text["field.slug"]</span><input @bind="Vm.NewSlug" @bind:event="oninput" placeholder="family-name" /></label>
+                            <label class="families-admin-field"><span>@Text["field.family"]</span><input @bind="Vm.NewFamilyName" @bind:event="oninput" placeholder="@Text["field.family.placeholder"]" /></label>
+                            <label class="families-admin-field"><span>@Text["field.password"]</span><input type="password" @bind="Vm.NewPassword" @bind:event="oninput" placeholder="@Text["field.password.placeholder"]" /></label>
+                            <label class="families-admin-field"><span>@Text["field.viewer.password"]</span><input type="password" @bind="Vm.NewViewerPassword" @bind:event="oninput" placeholder="@Text["field.password.placeholder"]" /></label>
+                            <div class="families-admin-inline-actions">
+                                <button class="families-admin-button families-admin-button--outline" type="button" @onclick="CloseCreateForm">@Text["admin.cancel"]</button>
+                                <button class="families-admin-button families-admin-button--primary" type="button" @onclick="OnCreateTenant">@Text["admin.create"]</button>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="families-admin-table-wrap">
+                        <table class="families-admin-table families-admin-table--accounts">
+                            <thead><tr><th>@Text["admin.column.album"]</th><th>@Text["admin.column.owner"]</th><th>@Text["admin.column.home.visibility"]</th><th>@Text["admin.column.pin.order"]</th><th>@Text["admin.column.image.limit"]</th><th>@Text["admin.column.video.limit"]</th><th>@Text["admin.column.posts.comments"]</th><th>@Text["admin.column.links"]</th><th>@Text["admin.column.actions"]</th></tr></thead>
+                            <tbody>
+                                @foreach (var item in FilteredAccountSnapshots)
+                                {
+                                    <tr>
+                                        <td><div class="families-admin-album-cell">@AlbumCover(item)<span><strong>@item.Config.FamilyName</strong><small>@item.Config.Slug</small></span></div></td>
+                                        <td>@OwnerLabel(item.Config)</td>
+                                        <td><label class="families-admin-switch"><input type="checkbox" checked="@item.Config.ShowOnHome" @onchange="e => OnShowOnHomeChange(item.Config, e)" /><span></span><em>@(item.Config.ShowOnHome ? Text["admin.public"] : Text["admin.private"])</em></label></td>
+                                        <td><input class="families-admin-number" type="number" min="0" max="99" value="@item.Config.PinOrder" disabled="@(!item.Config.ShowOnHome)" @onchange="e => OnPinOrderChange(item.Config, e)" /></td>
+                                        <td><select class="families-admin-select" value="@(item.Config.MaxImageSizeMb?.ToString() ?? "")" @onchange="e => OnImageLimitChange(item.Config, e)"><option value="">@Text["admin.default"]</option><option value="10">10MB</option><option value="20">20MB</option><option value="50">50MB</option><option value="0">@Text["admin.unlimited"]</option></select></td>
+                                        <td><select class="families-admin-select" value="@(item.Config.MaxVideoSizeMb?.ToString() ?? "")" @onchange="e => OnVideoLimitChange(item.Config, e)"><option value="">@Text["admin.default"]</option><option value="200">200MB</option><option value="500">500MB</option><option value="1024">1GB</option><option value="2048">2GB</option><option value="0">@Text["admin.unlimited"]</option></select></td>
+                                        <td>@item.PostCount / @item.CommentCount</td>
+                                        <td><div class="families-admin-row-links"><a href="/@item.Config.Slug" target="_blank" rel="noopener">@Text["admin.view"]</a><a href="/@item.Config.Slug/admin" target="_blank" rel="noopener">@Text["admin.manage"]</a></div></td>
+                                        <td>
+                                            <button class="families-admin-button families-admin-button--danger families-admin-button--small" type="button" @onclick='() => OnDeleteRequested(item.Config.Slug)'>
+                                                @(deleteCandidate == item.Config.Slug ? Text["admin.delete.confirm"] : Text["admin.delete"])
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (FilteredAccountSnapshots.Count == 0) { <tr><td colspan="9"><div class="families-admin-empty-inline">@Text["admin.empty.albums"]</div></td></tr> }
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            }
+            else if (activeMenu == "posts")
+            {
+                <section class="families-admin-panel families-admin-management-panel">
+                    <header class="families-admin-panel__header"><div><h2>@Text["admin.all.posts"]</h2><p>@Text["admin.all.posts.desc"]</p></div><span class="families-admin-pill">@FormatText("admin.count", FilteredPostRows.Count)</span></header>
+                    <div class="families-admin-table-wrap"><table class="families-admin-table"><thead><tr><th>@Text["admin.column.posts"]</th><th>@Text["admin.column.album"]</th><th>@Text["admin.column.created"]</th><th>@Text["admin.column.media"]</th><th>@Text["admin.column.comments"]</th><th>@Text["admin.column.manage"]</th></tr></thead><tbody>
+                    @foreach (var row in FilteredPostRows.Take(200))
+                    {
+                        <tr><td><strong>@row.Post.Title</strong><small class="families-admin-cell-subtext">@TrimText(row.Post.Content, 72)</small></td><td>@row.Tenant.Config.FamilyName</td><td>@row.Post.PostedAt.ToString("yyyy-MM-dd HH:mm")</td><td>@FormatText("admin.media.counts", row.Post.PhotoFileNames.Count, row.Post.VideoFileNames.Count)</td><td>@row.CommentCount</td><td><a class="families-admin-button families-admin-button--outline families-admin-button--small" href="/@row.Tenant.Config.Slug/admin" target="_blank" rel="noopener">@Text["admin.open.manage"]</a></td></tr>
+                    }
+                    @if (FilteredPostRows.Count == 0) { <tr><td colspan="6"><div class="families-admin-empty-inline">@Text["admin.empty.posts"]</div></td></tr> }
+                    </tbody></table></div>
+                </section>
+            }
+            else if (activeMenu == "comments")
+            {
+                <section class="families-admin-panel families-admin-management-panel">
+                    <header class="families-admin-panel__header"><div><h2>@Text["admin.all.comments"]</h2><p>@Text["admin.all.comments.desc"]</p></div><span class="families-admin-pill">@FormatText("admin.count", FilteredCommentRows.Count)</span></header>
+                    <div class="families-admin-table-wrap"><table class="families-admin-table"><thead><tr><th>@Text["admin.column.author"]</th><th>@Text["admin.column.comment"]</th><th>@Text["admin.column.post.album"]</th><th>@Text["admin.column.created"]</th><th>@Text["admin.column.actions"]</th></tr></thead><tbody>
+                    @foreach (var row in FilteredCommentRows.Take(200))
+                    {
+                        <tr><td><strong>@row.Comment.AuthorName</strong></td><td>@row.Comment.Body</td><td><strong>@row.Post.Title</strong><small class="families-admin-cell-subtext">@row.Tenant.Config.FamilyName</small></td><td>@row.Comment.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td><td><button class="families-admin-button families-admin-button--danger families-admin-button--small" type="button" @onclick='() => OnDeleteComment(row)'>@Text["admin.delete"]</button></td></tr>
+                    }
+                    @if (FilteredCommentRows.Count == 0) { <tr><td colspan="5"><div class="families-admin-empty-inline">@Text["admin.empty.comments"]</div></td></tr> }
+                    </tbody></table></div>
+                </section>
+            }
+            else if (activeMenu == "users")
+            {
+                <section class="families-admin-panel families-admin-management-panel">
+                    <header class="families-admin-panel__header"><div><h2>@Text["admin.linked.admins"]</h2><p>@Text["admin.linked.admins.desc"]</p></div><span class="families-admin-pill">@FormatText("admin.count", FilteredUserRows.Count)</span></header>
+                    <div class="families-admin-table-wrap"><table class="families-admin-table"><thead><tr><th>@Text["admin.column.user"]</th><th>@Text["admin.column.email"]</th><th>@Text["admin.column.provider"]</th><th>@Text["admin.column.role"]</th><th>@Text["admin.column.album"]</th><th>@Text["admin.column.linked"]</th></tr></thead><tbody>
+                    @foreach (var row in FilteredUserRows.Take(200))
+                    {
+                        <tr><td><div class="families-admin-user-cell"><span>@Initial(row.DisplayName)</span><strong>@Fallback(row.DisplayName, Text["admin.name.missing"])</strong></div></td><td>@Fallback(row.Email, "-")</td><td>@Fallback(row.Provider, "-")</td><td><span class="families-admin-status is-neutral">@RoleLabel(row.Role)</span></td><td>@row.TenantName</td><td>@row.AddedAt.ToString("yyyy-MM-dd")</td></tr>
+                    }
+                    @if (FilteredUserRows.Count == 0) { <tr><td colspan="6"><div class="families-admin-empty-inline">@Text["admin.empty.users"]</div></td></tr> }
+                    </tbody></table></div>
+                </section>
+            }
+            else if (activeMenu == "reports")
+            {
+                <section class="families-admin-panel families-admin-empty-state">
+                    <span class="families-admin-empty-state__icon">◇</span>
+                    <h2>@Text["admin.reports.unavailable"]</h2>
+                    <p>@Text["admin.reports.unavailable.desc"]</p>
+                </section>
+            }
+            else if (activeMenu == "settings")
+            {
+                <section class="families-admin-panel families-admin-settings-panel">
+                    <header class="families-admin-panel__header"><div><h2>@Text["admin.upload.policy"]</h2><p>@Text["admin.upload.policy.desc"]</p></div></header>
+                    <div class="families-admin-settings-grid">
+                        <label class="families-admin-field"><span>@Text["admin.image.file.limit"]</span><select @bind="Vm.MaxImageSizeMb"><option value="10">10MB</option><option value="20">20MB</option><option value="50">50MB</option><option value="0">@Text["admin.unlimited"]</option></select><small>@Text["admin.image.file.limit.desc"]</small></label>
+                        <label class="families-admin-field"><span>@Text["admin.video.file.limit"]</span><select @bind="Vm.MaxVideoSizeMb"><option value="200">200MB</option><option value="500">500MB</option><option value="1024">1GB</option><option value="2048">2GB</option><option value="0">@Text["admin.unlimited"]</option></select><small>@Text["admin.video.file.limit.desc"]</small></label>
+                    </div>
+                    <button class="families-admin-button families-admin-button--primary" type="button" @onclick="OnSaveGlobalSettings">@Text["admin.save.all"]</button>
+                    <div class="families-admin-settings-note"><strong>@Text["admin.metrics.scope"]</strong><p>@Text["admin.metrics.scope.desc"]</p></div>
+                </section>
+            }
+
+            <footer class="families-admin-footer">© @DateTime.Now.Year CodeMaru Families. @Text["admin.footer.rights"]</footer>
+        </main>
+    </div>
+}
 
 @code {
+    private string activeMenu = "dashboard";
+    private string searchText = string.Empty;
+    private string visibilityFilter = "all";
+    private string? deleteCandidate;
+    private string? loadWarning;
+    private bool isDashboardLoading;
+    private bool isSidebarCollapsed;
+    private bool isMobileMenuOpen;
+    private bool showNotifications;
+    private bool showProfile;
+    private bool showCreateForm;
+    private FamilyCurrentUser currentUser = FamilyCurrentUser.Anonymous;
+    private IReadOnlyList<TenantSnapshot> Snapshots { get; set; } = [];
+
+    private int PublicAlbumCount => Snapshots.Count(x => x.Config.ShowOnHome);
+    private int PrivateAlbumCount => Math.Max(0, Snapshots.Count - PublicAlbumCount);
+    private int PublicPercent => Snapshots.Count == 0 ? 0 : (int)Math.Round(PublicAlbumCount * 100d / Snapshots.Count);
+    private int PrivatePercent => Math.Max(0, 100 - PublicPercent);
+    private int TotalPosts => Snapshots.Sum(x => x.PostCount);
+    private int TodayPosts => Snapshots.Sum(x => x.Posts.Count(p => p.PostedAt.Date == DateTime.Today));
+    private int TotalComments => Snapshots.Sum(x => x.CommentCount);
+    private int CommentedAlbumCount => Snapshots.Count(x => x.CommentCount > 0);
+    private int VideoAlbumCount => Snapshots.Count(x => x.VideoCount > 0);
+    private int ActionableCount => CleanupCandidates.Count;
+    private string DonutStyle => $"--family-public-angle:{(PublicPercent * 3.6).ToString(CultureInfo.InvariantCulture)}deg";
+    private string AdminName => currentUser.IsAuthenticated ? Fallback(currentUser.DisplayName, Text["admin"]) : Text["admin"];
+    private string AdminEmail => currentUser.IsAuthenticated ? Fallback(currentUser.Email, Text["admin.super"]) : Text["admin.super"];
+    private string AdminInitial => Initial(AdminName);
+    private string StatusMessageClass =>
+        Vm.StatusIsSuccess
+            ? "families-admin-message--success"
+            : "families-admin-message--error";
+
+    private string MenuTitle => activeMenu switch
+    {
+        "albums" => Text["admin.albums"], "posts" => Text["admin.posts"], "comments" => Text["admin.comments"],
+        "users" => Text["admin.users"], "reports" => Text["admin.reports"], "settings" => Text["admin.settings"],
+        _ => Text["admin.dashboard"]
+    };
+
+    private string MenuDescription => activeMenu switch
+    {
+        "albums" => Text["admin.desc.albums"],
+        "posts" => Text["admin.desc.posts"],
+        "comments" => Text["admin.desc.comments"],
+        "users" => Text["admin.desc.users"],
+        "reports" => Text["admin.desc.reports"],
+        "settings" => Text["admin.desc.settings"],
+        _ => Text["admin.desc.dashboard"]
+    };
+
+    private IReadOnlyList<TenantSnapshot> FilteredSnapshots => Snapshots.Where(MatchesTenant).ToArray();
+    private IReadOnlyList<TenantSnapshot> FilteredAccountSnapshots => FilteredSnapshots
+        .Where(x => visibilityFilter == "all" || (visibilityFilter == "public" ? x.Config.ShowOnHome : !x.Config.ShowOnHome))
+        .OrderByDescending(x => x.Config.CreatedAt).ToArray();
+    private IReadOnlyList<TenantSnapshot> CleanupCandidates => Snapshots
+        .Where(x => x.PostCount == 0 && x.Config.CreatedAt <= DateTime.Now.AddHours(-18))
+        .OrderBy(x => x.Config.CreatedAt).ToArray();
+
+    private IReadOnlyList<PostRow> AllPostRows => Snapshots.SelectMany(tenant => tenant.Posts.Select(post =>
+        new PostRow(tenant, post, tenant.Comments.Count(x => x.Post.Id == post.Id))))
+        .OrderByDescending(x => x.Post.PostedAt).ToArray();
+    private IReadOnlyList<PostRow> FilteredPostRows => AllPostRows.Where(x => Matches(
+        x.Post.Title, x.Post.Content, x.Tenant.Config.FamilyName, x.Tenant.Config.Slug)).ToArray();
+    private IReadOnlyList<CommentRow> FilteredCommentRows => Snapshots.SelectMany(x => x.Comments)
+        .Where(x => Matches(x.Comment.AuthorName, x.Comment.Body, x.Post.Title, x.Tenant.Config.FamilyName, x.Tenant.Config.Slug))
+        .OrderByDescending(x => x.Comment.CreatedAt).ToArray();
+    private IReadOnlyList<UserRow> FilteredUserRows => Snapshots.SelectMany(x => x.Users)
+        .Where(x => Matches(x.DisplayName, x.Email, x.Provider, x.Role, RoleLabel(x.Role), x.TenantName, x.Slug))
+        .OrderByDescending(x => x.AddedAt).ToArray();
+
+    private IReadOnlyList<DailyCount> DailyPostCounts => Enumerable.Range(0, 7)
+        .Select(offset => DateTime.Today.AddDays(offset - 6))
+        .Select(day => new DailyCount(day, Snapshots.Sum(x => x.Posts.Count(p => p.PostedAt.Date == day))))
+        .ToArray();
+    private IReadOnlyList<ChartPoint> TrendChartPoints
+    {
+        get
+        {
+            var values = DailyPostCounts;
+            var max = Math.Max(1, values.Max(x => x.Count));
+            return values.Select((item, index) => new ChartPoint(
+                54 + index * 101,
+                184 - item.Count * 116d / max,
+                item.Date.ToString("M/d"),
+                item.Count)).ToArray();
+        }
+    }
+    private string TrendPoints => string.Join(" ", TrendChartPoints.Select(x => $"{x.X.ToString(CultureInfo.InvariantCulture)},{x.Y.ToString(CultureInfo.InvariantCulture)}"));
+    private string TrendAreaPoints => $"54,184 {TrendPoints} 660,184";
+
     protected override async Task OnInitializedAsync()
     {
-        if (Vm.IsAuthenticated) await Vm.LoadAsync();
+        currentUser = await UserContext.GetCurrentAsync();
+        if (Vm.IsAuthenticated)
+        {
+            await RefreshAllAsync(reloadTenants: true);
+        }
     }
+
+    protected override void OnInitialized() => Text.Changed += OnLanguageChanged;
 
     private async Task OnLogin()
     {
-        var ok = await Vm.LoginAsync();
-        if (ok) await Vm.LoadAsync();
-    }
-
-    private async Task OnLoginKey(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter") await OnLogin();
-    }
-
-    private void OnPasswordInput(ChangeEventArgs e) => Vm.LoginPassword = e.Value?.ToString() ?? string.Empty;
-
-    private async Task OnRefresh() => await Vm.LoadAsync();
-
-    private async Task OnDelete(string slug)
-    {
-        await Vm.DeleteTenantAsync(slug);
-    }
-
-    private async Task OnSaveGlobalSettings()
-    {
-        await Vm.SaveGlobalSettingsAsync();
-    }
-
-    private async Task OnShowOnHomeChange(FamilyConfig t, ChangeEventArgs e)
-    {
-        t.ShowOnHome = (bool)(e.Value ?? false);
-        await Vm.SetDisplayAsync(t.Slug, t.ShowOnHome, t.PinOrder);
-        StateHasChanged();
-    }
-
-    private async Task OnPinOrderChange(FamilyConfig t, ChangeEventArgs e)
-    {
-        if (int.TryParse(e.Value?.ToString(), out var order))
+        if (await Vm.LoginAsync())
         {
-            t.PinOrder = Math.Max(0, order);
-            await Vm.SetDisplayAsync(t.Slug, t.ShowOnHome, t.PinOrder);
-            StateHasChanged();
+            await RefreshAllAsync(reloadTenants: true);
         }
     }
 
-    private async Task OnImageLimitChange(FamilyConfig t, ChangeEventArgs e)
+    private async Task RefreshAllAsync(bool reloadTenants)
     {
-        var raw = e.Value?.ToString();
-        int? maxMb = string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw);
-        await Vm.SetMaxImageSizeAsync(t.Slug, maxMb);
+        isDashboardLoading = true;
+        loadWarning = null;
+        try
+        {
+            if (reloadTenants) await Vm.LoadAsync();
+            var tasks = Vm.Tenants.Select(LoadTenantSnapshotAsync);
+            Snapshots = (await Task.WhenAll(tasks)).OrderByDescending(x => x.Config.CreatedAt).ToArray();
+        }
+        catch (Exception ex)
+        {
+            loadWarning = FormatText("admin.load.failed", ex.Message);
+        }
+        finally
+        {
+            isDashboardLoading = false;
+        }
     }
 
-    private async Task OnVideoLimitChange(FamilyConfig t, ChangeEventArgs e)
+    private async Task<TenantSnapshot> LoadTenantSnapshotAsync(FamilyConfig config)
+    {
+        var albumsTask = AlbumStore.GetAllAsync(config.Slug);
+        var postsTask = PostStore.GetAllAsync(config.Slug);
+        await Task.WhenAll(albumsTask, postsTask);
+        var albums = await albumsTask;
+        var posts = await postsTask;
+        var comments = new List<CommentRow>();
+
+        foreach (var post in posts)
+        {
+            try
+            {
+                var reaction = await ReactionStore.GetAsync(config.Slug, post.Id);
+                comments.AddRange(reaction.Comments.Select(comment => new CommentRow(null!, post, comment)));
+            }
+            catch
+            {
+                // A damaged per-post reaction file must not block the entire administrator dashboard.
+            }
+        }
+
+        var users = BuildUsers(config);
+        var latest = posts.Count == 0 ? config.CreatedAt : posts.Max(x => x.PostedAt);
+        var snapshot = new TenantSnapshot(config, albums, posts, [], users, latest);
+        snapshot.Comments = comments.Select(x => x with { Tenant = snapshot }).ToArray();
+        return snapshot;
+    }
+
+    private IReadOnlyList<UserRow> BuildUsers(FamilyConfig config)
+    {
+        var users = config.AdminUsers.Select(x => new UserRow(
+            x.UserId, x.Provider, x.Email, x.DisplayName, x.Role, x.AddedAt, config.FamilyName, config.Slug)).ToList();
+        if (!string.IsNullOrWhiteSpace(config.OwnerUserId) && !users.Any(x => x.UserId == config.OwnerUserId))
+        {
+            users.Add(new UserRow(config.OwnerUserId, config.OwnerProvider, config.OwnerEmail,
+                config.OwnerDisplayName, "owner", config.OwnerLinkedAt ?? config.CreatedAt, config.FamilyName, config.Slug));
+        }
+        return users;
+    }
+
+    private string RoleLabel(string? role) => role?.Trim().ToLowerInvariant() switch
+    {
+        "owner" => Text["admin.role.owner"],
+        "admin" or "administrator" => Text["admin.role.admin"],
+        _ => Fallback(role, Text["admin.role.admin"])
+    };
+
+    private RenderFragment AlbumCover(TenantSnapshot item) => builder =>
+    {
+        if (!string.IsNullOrWhiteSpace(item.Config.CoverImageFileName))
+        {
+            builder.OpenElement(0, "img");
+            builder.AddAttribute(1, "class", "families-admin-album-cover");
+            builder.AddAttribute(2, "src", Media.GetCoverUrl(item.Config.Slug, item.Config.CoverImageFileName));
+            builder.AddAttribute(3, "alt", "");
+            builder.CloseElement();
+        }
+        else
+        {
+            builder.OpenElement(0, "span");
+            builder.AddAttribute(1, "class", "families-admin-album-cover families-admin-album-cover--empty");
+            builder.AddContent(2, "▧");
+            builder.CloseElement();
+        }
+    };
+
+    private bool MatchesTenant(TenantSnapshot item) => Matches(item.Config.FamilyName, item.Config.Slug,
+        item.Config.OwnerDisplayName, item.Config.OwnerEmail, string.Join(' ', item.Posts.Select(x => x.Title)));
+    private bool Matches(params string?[] values) => string.IsNullOrWhiteSpace(searchText) || values.Any(value =>
+        value?.Contains(searchText.Trim(), StringComparison.OrdinalIgnoreCase) == true);
+    private string OwnerLabel(FamilyConfig item) => Fallback(item.OwnerDisplayName, Fallback(item.OwnerEmail, Text["admin.owner.unlinked"]));
+    private static string Fallback(string? value, string fallback) => string.IsNullOrWhiteSpace(value) ? fallback : value;
+    private static string Initial(string? value) => string.IsNullOrWhiteSpace(value) ? "A" : value.Trim()[0].ToString().ToUpperInvariant();
+    private string TrimText(string? value, int max) => string.IsNullOrWhiteSpace(value) ? Text["admin.content.empty"] : value.Length <= max ? value : value[..max] + "…";
+    private string FormatText(string key, params object?[] args) => Text.Format(key, args);
+    private static int AgeHours(DateTime createdAt) => Math.Max(0, (int)(DateTime.Now - createdAt).TotalHours);
+    private string NavClass(string menu) => $"families-admin-nav__item{(activeMenu == menu ? " is-active" : string.Empty)}";
+
+    private void SetMenu(string menu) { activeMenu = menu; isMobileMenuOpen = false; showNotifications = false; showProfile = false; }
+    private void OpenAlertMenu(string menu) => SetMenu(menu);
+    private void OpenAlbumFromAlert(string slug) { searchText = slug; SetMenu("albums"); }
+    private void ToggleSidebar() => isSidebarCollapsed = !isSidebarCollapsed;
+    private void ToggleMobileMenu() => isMobileMenuOpen = !isMobileMenuOpen;
+    private void ToggleNotifications() { showNotifications = !showNotifications; showProfile = false; }
+    private void ToggleProfile() { showProfile = !showProfile; showNotifications = false; }
+    private void OpenCreateForm() { SetMenu("albums"); showCreateForm = true; }
+    private void CloseCreateForm() => showCreateForm = false;
+    private void ClearSearch() => searchText = string.Empty;
+    private void OnSearchInput(ChangeEventArgs e) => searchText = e.Value?.ToString() ?? string.Empty;
+    private void OnPasswordInput(ChangeEventArgs e) => Vm.LoginPassword = e.Value?.ToString() ?? string.Empty;
+    private async Task OnLoginKey(KeyboardEventArgs e) { if (e.Key == "Enter") await OnLogin(); }
+    private async Task OnRefresh() => await RefreshAllAsync(reloadTenants: true);
+    private void OnLogout() => Nav.NavigateTo("/admin", forceLoad: true);
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Text.Changed -= OnLanguageChanged;
+
+    private async Task OnCreateTenant()
+    {
+        if (await Vm.CreateTenantAsync(currentUser))
+        {
+            showCreateForm = false;
+            await RefreshAllAsync(reloadTenants: false);
+        }
+    }
+
+    private async Task OnDeleteRequested(string slug)
+    {
+        if (deleteCandidate != slug) { deleteCandidate = slug; return; }
+        deleteCandidate = null;
+        await Vm.DeleteTenantAsync(slug);
+        await RefreshAllAsync(reloadTenants: false);
+    }
+
+    private async Task OnDeleteComment(CommentRow row)
+    {
+        await ReactionStore.DeleteCommentAsync(row.Tenant.Config.Slug, row.Post.Id, row.Comment.Id);
+        await RefreshAllAsync(reloadTenants: false);
+    }
+
+    private async Task OnSaveGlobalSettings() => await Vm.SaveGlobalSettingsAsync();
+
+    private async Task OnShowOnHomeChange(FamilyConfig item, ChangeEventArgs e)
+    {
+        item.ShowOnHome = e.Value is true || bool.TryParse(e.Value?.ToString(), out var value) && value;
+        await Vm.SetDisplayAsync(item.Slug, item.ShowOnHome, item.PinOrder);
+        await RefreshAllAsync(reloadTenants: false);
+    }
+
+    private async Task OnPinOrderChange(FamilyConfig item, ChangeEventArgs e)
+    {
+        if (!int.TryParse(e.Value?.ToString(), out var order)) return;
+        item.PinOrder = Math.Max(0, order);
+        await Vm.SetDisplayAsync(item.Slug, item.ShowOnHome, item.PinOrder);
+        await RefreshAllAsync(reloadTenants: false);
+    }
+
+    private async Task OnImageLimitChange(FamilyConfig item, ChangeEventArgs e)
     {
         var raw = e.Value?.ToString();
-        int? maxMb = string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw);
-        await Vm.SetMaxVideoSizeAsync(t.Slug, maxMb);
+        await Vm.SetMaxImageSizeAsync(item.Slug, string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw, CultureInfo.InvariantCulture));
+        await RefreshAllAsync(reloadTenants: false);
     }
+
+    private async Task OnVideoLimitChange(FamilyConfig item, ChangeEventArgs e)
+    {
+        var raw = e.Value?.ToString();
+        await Vm.SetMaxVideoSizeAsync(item.Slug, string.IsNullOrWhiteSpace(raw) ? null : int.Parse(raw, CultureInfo.InvariantCulture));
+        await RefreshAllAsync(reloadTenants: false);
+    }
+
+    private sealed class TenantSnapshot(
+        FamilyConfig config,
+        IReadOnlyList<AlbumInfo> albums,
+        IReadOnlyList<PostEntry> posts,
+        IReadOnlyList<CommentRow> comments,
+        IReadOnlyList<UserRow> users,
+        DateTime latestActivity)
+    {
+        public FamilyConfig Config { get; } = config;
+        public IReadOnlyList<AlbumInfo> Albums { get; } = albums;
+        public IReadOnlyList<PostEntry> Posts { get; } = posts;
+        public IReadOnlyList<CommentRow> Comments { get; set; } = comments;
+        public IReadOnlyList<UserRow> Users { get; } = users;
+        public DateTime LatestActivity { get; } = latestActivity;
+        public int PostCount => Posts.Count;
+        public int CommentCount => Comments.Count;
+        public int VideoCount => Posts.Sum(x => x.VideoFileNames.Count);
+    }
+
+    private sealed record PostRow(TenantSnapshot Tenant, PostEntry Post, int CommentCount);
+    private sealed record CommentRow(TenantSnapshot Tenant, PostEntry Post, CommentEntry Comment);
+    private sealed record UserRow(string UserId, string Provider, string Email, string DisplayName, string Role, DateTime AddedAt, string TenantName, string Slug);
+    private sealed record DailyCount(DateTime Date, int Count);
+    private sealed record ChartPoint(double X, double Y, string Label, int Count);
 }

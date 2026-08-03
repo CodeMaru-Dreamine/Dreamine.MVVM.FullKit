@@ -31,6 +31,72 @@ body {
     line-height: 1.6;
 }
 
+/* 포털 홈/관리자만 공통 화면 테마를 사용합니다. 가족 앨범 본문은 테넌트가
+   선택한 .fa-theme-* 팔레트를 유지하므로 시스템 다크 모드가 침범하지 않습니다. */
+.fa-portal-page {
+    min-height: 100vh;
+    padding-top: 62px;
+    background: var(--fa-bg);
+    color: var(--fa-text);
+    color-scheme: light;
+}
+
+/*
+ * The shared CodeMaru header must render identically on every portal.
+ * Families keeps a 15px/1.6 content baseline, while Wedding and ThankYou use
+ * the browser's 16px/normal baseline.  Stop that page baseline from leaking
+ * into the shared header without changing the family album typography.
+ */
+.fa-portal-page > .dreamine-portal-header {
+    font-size: 16px;
+    line-height: normal;
+}
+
+.fa-portal-page :is(#main-content, #create, #my-families) {
+    scroll-margin-top: 74px;
+}
+
+html[data-theme="dark"] .fa-portal-page,
+html.system-dark:not([data-theme]) .fa-portal-page {
+    --fa-bg: #0b1220;
+    --fa-surface: #111b2d;
+    --fa-border: #2b3b55;
+    --fa-text: #f3f6fb;
+    --fa-text-muted: #b8c4d6;
+    --fa-shadow: 0 8px 28px rgba(0, 0, 0, .28);
+    background: #0b1220;
+    color: #f3f6fb;
+    color-scheme: dark;
+}
+
+html[data-theme="dark"] .fa-portal-page :is(.fa-feature, .fa-create__box, .fa-album-card),
+html.system-dark:not([data-theme]) .fa-portal-page :is(.fa-feature, .fa-create__box, .fa-album-card) {
+    background: #111b2d;
+    color: #f3f6fb;
+    border-color: #2b3b55;
+}
+
+html[data-theme="dark"] .fa-portal-page :is(.fa-input, .fa-input-prefix),
+html.system-dark:not([data-theme]) .fa-portal-page :is(.fa-input, .fa-input-prefix) {
+    background: #0e1728;
+    color: #f3f6fb;
+    border-color: #34445f;
+}
+
+html[data-theme="dark"] .fa-portal-page :is(.fa-account, .fa-service-notice),
+html.system-dark:not([data-theme]) .fa-portal-page :is(.fa-account, .fa-service-notice) {
+    background: #152238;
+    color: #c8d3e3;
+    border-color: #2b3b55;
+}
+
+html[data-theme="dark"] .fa-portal-page .fa-btn--secondary,
+html.system-dark:not([data-theme]) .fa-portal-page .fa-btn--secondary {
+    background: #17243a;
+    color: #edf3fb;
+    border-color: #354663;
+}
+
 a { color: inherit; text-decoration: none; }
 
 /* ── #main-content 포커스 outline 제거 ── */
@@ -167,6 +233,8 @@ a { color: inherit; text-decoration: none; }
     margin: 0 auto;
     padding: 0 16px 60px;
 }
+
+.fa-portal-page .fa-hero__title { white-space: pre-line; }
 
 /* ── 로딩 / 404 ── */
 .fa-loading, .fa-notfound, .fa-empty {
@@ -525,6 +593,8 @@ a { color: inherit; text-decoration: none; }
 .fa-video-wrap--yt iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; border-radius: 10px; }
 /* 어드민 동영상 URL 입력 */
 .fa-video-url-row { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.fa-video-url-row__label { flex: 0 0 120px; color: var(--fa-text-muted); font-size: 12px; }
+.fa-video-url-row__input { flex: 1 1 240px; min-width: 0; }
 
 /* ── 반응 ── */
 .fa-reactions { margin-bottom: 28px; }
@@ -845,6 +915,304 @@ a { color: inherit; text-decoration: none; }
 .fa-danger-zone p { font-size: 13px; color: #7f1d1d; margin-bottom: 12px; }
 .fa-delete-confirm p { font-size: 13px; color: #7f1d1d; margin-bottom: 12px; }
 
+/* ── 가족별 사용자 관리자 화면 테마 ──
+   화면 테마는 /{slug}/admin 범위에서만 사용합니다. 공개 가족 앨범의
+   .fa-theme-* 팔레트는 테넌트가 선택한 색을 그대로 유지해야 합니다. */
+.fa-user-admin {
+    --fa-bg: #f7f5f0;
+    --fa-surface: #ffffff;
+    --fa-surface-soft: #fbfaf7;
+    --fa-border: #ded8cf;
+    --fa-text: #292521;
+    --fa-text-muted: #716a63;
+    --fa-shadow: 0 8px 28px rgba(50, 42, 34, .08);
+    --fa-admin-success-bg: #ecfdf3;
+    --fa-admin-success-border: #86d7a3;
+    --fa-admin-success-text: #166534;
+    --fa-admin-error-bg: #fff1f2;
+    --fa-admin-error-border: #fda4af;
+    --fa-admin-error-text: #b42318;
+    --fa-admin-danger-bg: #fff5f5;
+    --fa-admin-danger-border: #fca5a5;
+    --fa-admin-danger-text: #7f1d1d;
+    min-height: 100vh;
+    background: var(--fa-bg);
+    color: var(--fa-text);
+    color-scheme: light;
+}
+
+body:has(.fa-user-admin) {
+    background: #f7f5f0;
+    color: #292521;
+}
+
+.fa-user-admin-preferences {
+    position: relative;
+    z-index: 30;
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    margin: 0 0 16px;
+    padding: 10px 0;
+    color: var(--fa-text);
+    background: var(--fa-bg);
+    border-bottom: 1px solid var(--fa-border);
+}
+
+.fa-user-admin-preferences .dreamine-portal-preferences {
+    justify-content: flex-end;
+}
+
+.fa-admin-header__actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.fa-list-summary {
+    margin-bottom: 10px;
+    color: var(--fa-text-muted);
+    font-size: 13px;
+}
+
+.fa-local-file {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+    max-width: 100%;
+    min-height: 38px;
+    overflow: hidden;
+    color: var(--fa-text);
+    background: var(--fa-surface);
+    border: 1.5px solid var(--fa-border);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.fa-local-file__native {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    opacity: 0;
+}
+
+.fa-local-file__button {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 13px;
+    color: #fff;
+    background: var(--fa-primary);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.fa-local-file__name {
+    min-width: 0;
+    padding: 8px 12px;
+    overflow: hidden;
+    color: var(--fa-text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.fa-local-file:focus-within {
+    outline: 2px solid color-mix(in srgb, var(--fa-primary) 65%, transparent);
+    outline-offset: 2px;
+}
+
+.fa-local-file[aria-disabled="true"] {
+    cursor: not-allowed;
+    opacity: .62;
+}
+
+.fa-og-preview {
+    display: flex;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.fa-og-preview img {
+    width: min(100%, 320px);
+    aspect-ratio: 1200 / 630;
+    object-fit: cover;
+    border: 1px solid var(--fa-border);
+    border-radius: 10px;
+    background: var(--fa-surface-soft);
+}
+
+.fa-user-admin :is(.fa-login-box, .fa-post-list__item, .fa-album-admin-item) {
+    color: var(--fa-text);
+    background: var(--fa-surface);
+    border-color: var(--fa-border);
+}
+
+.fa-user-admin :is(.fa-input, .fa-textarea, select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"])) {
+    color: var(--fa-text);
+    background: var(--fa-surface);
+    border-color: var(--fa-border);
+    caret-color: var(--fa-text);
+}
+
+.fa-user-admin .fa-textarea,
+.fa-user-admin textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid var(--fa-border);
+    border-radius: 8px;
+    font: inherit;
+}
+
+.fa-user-admin :is(input, textarea)::placeholder {
+    color: color-mix(in srgb, var(--fa-text-muted) 82%, transparent);
+    opacity: 1;
+}
+
+.fa-user-admin :is(.fa-input, .fa-textarea, select, textarea, input):focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--fa-primary) 65%, transparent);
+    outline-offset: 1px;
+    border-color: var(--fa-primary);
+}
+
+.fa-user-admin :is(button, input, select, textarea):disabled {
+    color: var(--fa-text-muted);
+    cursor: not-allowed;
+    opacity: .62;
+}
+
+.fa-user-admin :is(input[type="checkbox"], input[type="radio"]) {
+    accent-color: var(--fa-primary);
+}
+
+.fa-user-admin :is(input[type="date"], input[type="datetime-local"]) {
+    color-scheme: light;
+}
+
+.fa-user-admin :is(.fa-tabs, .fa-divider) {
+    border-color: var(--fa-border);
+}
+
+.fa-user-admin .fa-tab:not(.fa-tab--active) {
+    color: var(--fa-text-muted);
+}
+
+.fa-user-admin .fa-tab:not(.fa-tab--active):hover,
+.fa-user-admin .fa-tab:not(.fa-tab--active):focus-visible {
+    color: var(--fa-text);
+    background: color-mix(in srgb, var(--fa-primary) 9%, var(--fa-surface));
+}
+
+.fa-user-admin :is(.fa-btn--ghost, .fa-pager__btn) {
+    color: var(--fa-text);
+    background: var(--fa-surface);
+    border-color: var(--fa-border);
+}
+
+.fa-user-admin .fa-status--ok {
+    color: var(--fa-admin-success-text);
+    background: var(--fa-admin-success-bg);
+    border: 1px solid var(--fa-admin-success-border);
+}
+
+.fa-user-admin .fa-status--err {
+    color: var(--fa-admin-error-text);
+    background: var(--fa-admin-error-bg);
+    border: 1px solid var(--fa-admin-error-border);
+}
+
+.fa-user-admin .fa-danger-zone {
+    color: var(--fa-admin-danger-text);
+    background: var(--fa-admin-danger-bg);
+    border-color: var(--fa-admin-danger-border);
+}
+
+.fa-user-admin .fa-danger-zone :is(h3, p),
+.fa-user-admin .fa-delete-confirm p {
+    color: var(--fa-admin-danger-text);
+}
+
+.fa-user-admin .fa-access-lock__warning {
+    color: #704b08;
+    background: #fff8e7;
+    border-color: #d9a441;
+}
+
+.fa-user-admin :is(code, .fa-media-item--video) {
+    border-color: var(--fa-border);
+}
+
+.fa-user-admin input:-webkit-autofill,
+.fa-user-admin input:-webkit-autofill:hover,
+.fa-user-admin input:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--fa-text);
+    box-shadow: 0 0 0 1000px var(--fa-surface) inset;
+    transition: background-color 9999s ease-out;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .fa-user-admin {
+    --fa-bg: #0b1220;
+    --fa-surface: #111b2d;
+    --fa-surface-soft: #17243a;
+    --fa-border: #34445f;
+    --fa-text: #f3f6fb;
+    --fa-text-muted: #b8c4d6;
+    --fa-shadow: 0 12px 32px rgba(0, 0, 0, .28);
+    --fa-admin-success-bg: #123524;
+    --fa-admin-success-border: #315f43;
+    --fa-admin-success-text: #9be7b5;
+    --fa-admin-error-bg: #3f171d;
+    --fa-admin-error-border: #7f3340;
+    --fa-admin-error-text: #fecdd3;
+    --fa-admin-danger-bg: #32191d;
+    --fa-admin-danger-border: #7f3340;
+    --fa-admin-danger-text: #fecdd3;
+    background: #0b1220;
+    color: #f3f6fb;
+    color-scheme: dark;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) body:has(.fa-user-admin) {
+    background: #0b1220;
+    color: #f3f6fb;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .fa-user-admin :is(input[type="date"], input[type="datetime-local"]) {
+    color-scheme: dark;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .fa-user-admin :is(input[type="date"], input[type="datetime-local"])::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.25);
+    opacity: .9;
+}
+
+:is(html[data-theme="dark"], html.system-dark:not([data-theme])) .fa-user-admin .fa-access-lock__warning {
+    color: #ffd98a;
+    background: #2d2515;
+    border-color: #8f6b26;
+}
+
+@media (max-width: 600px) {
+    .fa-video-url-row__label {
+        flex-basis: 100%;
+    }
+
+    .fa-user-admin-preferences {
+        position: sticky;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 9px 16px;
+        box-sizing: border-box;
+    }
+
+    .fa-user-admin-preferences .dreamine-portal-preferences {
+        width: 100%;
+    }
+}
+
 /* ── 가이드 페이지 ── */
 .fa-guide { padding-top: 8px; }
 .fa-guide__hero {
@@ -947,4 +1315,37 @@ a { color: inherit; text-decoration: none; }
     .fa-post-card__thumb { width: 80px; }
     .fa-lightbox__prev { left: 4px; }
     .fa-lightbox__next { right: 4px; }
+}
+/* Tenant-bound visitor access prompt. */
+.fa-access-lock {
+    width: min(92vw, 440px);
+    margin: clamp(56px, 10vh, 120px) auto;
+    padding: clamp(24px, 5vw, 38px);
+    border: 1px solid var(--fa-border, #e5ddd4);
+    border-radius: 22px;
+    background: var(--fa-card, #fff);
+    color: var(--fa-text, #2e2925);
+    box-shadow: 0 18px 55px rgba(33, 28, 24, .12);
+    text-align: center;
+}
+
+.fa-access-lock__icon { font-size: 2rem; }
+.fa-access-lock h1 { margin: 10px 0 8px; font-size: 1.5rem; }
+.fa-access-lock p { line-height: 1.6; }
+.fa-access-lock__form { display: grid; gap: 10px; margin: 22px 0 12px; text-align: left; }
+.fa-access-lock__warning {
+    display: block;
+    padding: 10px 12px;
+    border: 1px solid #d9a441;
+    border-radius: 10px;
+    background: #fff8e7;
+    color: #704b08;
+    font-size: .82rem;
+    line-height: 1.45;
+}
+
+html[data-theme="dark"] .fa-access-lock__warning,
+html.dark .fa-access-lock__warning {
+    background: #2d2515;
+    color: #ffd98a;
 }

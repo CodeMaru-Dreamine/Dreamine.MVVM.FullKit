@@ -17,6 +17,10 @@ else if (Vm.NotFound)
         <a href="/@Slug" class="fa-btn fa-btn--ghost">앨범으로 →</a>
     </div>
 }
+else if (Vm.AccessDenied)
+{
+    <FamilyUnlockPrompt Slug="@Slug" LegacyAdminPassword="@(Vm.Config is not null && FamilyAccessService.UsesLegacyAdminPassword(Vm.Config))" />
+}
 else
 {
     var post = Vm.Post!;

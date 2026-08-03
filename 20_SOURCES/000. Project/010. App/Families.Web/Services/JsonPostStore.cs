@@ -130,6 +130,55 @@ public sealed class JsonPostStore : IPostStore
     private string PostPath(string slug, string postId) =>
         StoragePathGuard.ResolveIdentifierFile(PostsDir(slug), postId, ".json", nameof(postId));
 
+    /// <inheritdoc />
+    public async Task<PostEntry?> MutateAsync(
+        string slug,
+        string postId,
+        Func<PostEntry?, PostEntry?> mutation,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(mutation);
+        var path = PostPath(slug, postId);
+
+        await _gate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            PostEntry? current = null;
+            if (File.Exists(path))
+            {
+                await using var input = File.OpenRead(path);
+                current = await JsonSerializer.DeserializeAsync<PostEntry>(input, _jsonOpts, ct)
+                    .ConfigureAwait(false);
+            }
+
+            var updated = mutation(current);
+            if (updated is null)
+            {
+                return current;
+            }
+
+            var dir = PostsDir(slug);
+            Directory.CreateDirectory(dir);
+            Directory.CreateDirectory(MediaDirectory(slug, updated.Id));
+            var tmp = StoragePathGuard.ResolveUnderRoot(
+                Path.GetDirectoryName(path)!,
+                $"{Path.GetFileName(path)}.tmp");
+
+            await using (var output = File.Create(tmp))
+            {
+                await JsonSerializer.SerializeAsync(output, updated, _jsonOpts, ct).ConfigureAwait(false);
+            }
+
+            File.Copy(tmp, path, overwrite: true);
+            File.Delete(tmp);
+            return updated;
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     /// <summary>
     /// \if KO
     /// <para>Async 값을 가져옵니다.</para>
@@ -445,25 +494,7 @@ public sealed class JsonPostStore : IPostStore
     /// </returns>
     public async Task SaveAsync(string slug, PostEntry post, CancellationToken ct = default)
     {
-        var dir = PostsDir(slug);
-        Directory.CreateDirectory(dir);
-        Directory.CreateDirectory(MediaDirectory(slug, post.Id));
-
-        var path = PostPath(slug, post.Id);
-        var tmp = StoragePathGuard.ResolveUnderRoot(
-            Path.GetDirectoryName(path)!,
-            $"{Path.GetFileName(path)}.tmp");
-
-        await _gate.WaitAsync(ct).ConfigureAwait(false);
-        try
-        {
-            await using (var fs = File.Create(tmp))
-                await JsonSerializer.SerializeAsync(fs, post, _jsonOpts, ct).ConfigureAwait(false);
-
-            File.Copy(tmp, path, overwrite: true);
-            File.Delete(tmp);
-        }
-        finally { _gate.Release(); }
+        await MutateAsync(slug, post.Id, _ => post, ct).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -506,15 +537,89 @@ public sealed class JsonPostStore : IPostStore
     /// <para>The <c>Task</c> result produced by the delete async operation.</para>
     /// \endif
     /// </returns>
-    public Task DeleteAsync(string slug, string postId, CancellationToken ct = default)
+    public async Task DeleteAsync(string slug, string postId, CancellationToken ct = default)
     {
-        var path = PostPath(slug, postId);
-        if (File.Exists(path)) File.Delete(path);
+        await _gate.WaitAsync(ct).ConfigureAwait(false);
+        try
+        {
+            var path = PostPath(slug, postId);
+            var mediaDir = MediaDirectory(slug, postId);
+            var deleteId = Guid.NewGuid().ToString("N");
+            var stagedPostPath = StoragePathGuard.ResolveUnderRoot(
+                Path.GetDirectoryName(path)!,
+                $"{Path.GetFileName(path)}.deleting-{deleteId}");
+            var stagedMediaDir = StoragePathGuard.ResolveUnderRoot(
+                Path.GetDirectoryName(mediaDir)!,
+                $"{Path.GetFileName(mediaDir)}.deleting-{deleteId}");
+            var postStaged = false;
+            var mediaStaged = false;
 
-        var mediaDir = MediaDirectory(slug, postId);
-        if (Directory.Exists(mediaDir)) Directory.Delete(mediaDir, recursive: true);
+            try
+            {
+                // Rename both active paths before destructive cleanup. A move either succeeds
+                // as one filesystem operation or leaves the source untouched, so an open media
+                // handle cannot first remove the JSON and then strand a half-deleted post.
+                if (Directory.Exists(mediaDir))
+                {
+                    Directory.Move(mediaDir, stagedMediaDir);
+                    mediaStaged = true;
+                }
 
-        return Task.CompletedTask;
+                if (File.Exists(path))
+                {
+                    File.Move(path, stagedPostPath);
+                    postStaged = true;
+                }
+            }
+            catch
+            {
+                TryRestoreFile(stagedPostPath, path, postStaged);
+                TryRestoreDirectory(stagedMediaDir, mediaDir, mediaStaged);
+                throw;
+            }
+
+            // The post is no longer visible to readers. Cleanup is best-effort because a
+            // transient antivirus/preview handle must not roll an already-consistent delete
+            // back into a partially visible state.
+            TryDeleteFile(stagedPostPath, postStaged);
+            TryDeleteDirectory(stagedMediaDir, mediaStaged);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private static void TryDeleteFile(string path, bool shouldDelete)
+    {
+        if (!shouldDelete) return;
+        try { File.Delete(path); }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    private static void TryDeleteDirectory(string path, bool shouldDelete)
+    {
+        if (!shouldDelete) return;
+        try { Directory.Delete(path, recursive: true); }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    private static void TryRestoreFile(string stagedPath, string activePath, bool shouldRestore)
+    {
+        if (!shouldRestore || !File.Exists(stagedPath) || File.Exists(activePath)) return;
+        try { File.Move(stagedPath, activePath); }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
+    }
+
+    private static void TryRestoreDirectory(string stagedPath, string activePath, bool shouldRestore)
+    {
+        if (!shouldRestore || !Directory.Exists(stagedPath) || Directory.Exists(activePath)) return;
+        try { Directory.Move(stagedPath, activePath); }
+        catch (IOException) { }
+        catch (UnauthorizedAccessException) { }
     }
 
     private string MediaDirectory(string slug, string postId)

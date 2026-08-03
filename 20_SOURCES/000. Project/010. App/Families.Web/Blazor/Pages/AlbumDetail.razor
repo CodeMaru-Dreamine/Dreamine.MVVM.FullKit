@@ -10,6 +10,10 @@
 {
     <div class="fa-loading">불러오는 중...</div>
 }
+else if (Vm.AccessDenied)
+{
+    <FamilyUnlockPrompt Slug="@Slug" LegacyAdminPassword="@(Vm.Config is not null && FamilyAccessService.UsesLegacyAdminPassword(Vm.Config))" />
+}
 else if (Vm.NotFound || currentAlbum is null)
 {
     <div class="fa-notfound">
@@ -97,6 +101,13 @@ else
     protected override async Task OnParametersSetAsync()
     {
         await Vm.LoadAsync(Slug);
+        if (Vm.AccessDenied || Vm.NotFound)
+        {
+            currentAlbum = null;
+            albumPosts = [];
+            totalCount = 0;
+            return;
+        }
         currentAlbum = Vm.Albums.FirstOrDefault(a => a.Id == AlbumId);
         await LoadPage(1);
     }

@@ -2,43 +2,74 @@
 @layout FamiliesApp.Blazor.Layout.FamilyLayout
 @namespace FamiliesApp.Blazor.Pages
 @rendermode InteractiveServer
+@implements IDisposable
 
 @inject FamilyHomeViewModel Vm
 @inject FamilyUserContext UserContext
 @inject NavigationManager Nav
+@inject FamilyLocalization Text
+@using Dreamine.UI.Blazor.Navigation
 
-<PageTitle>👨‍👩‍👧‍👦 무료 가족 앨범 — Codemaru Family</PageTitle>
+<PageTitle>@Text["page.title"]</PageTitle>
 
 <HeadContent>
-    <meta name="description" content="아이 탄생, 첫 걸음마, 가족 여행까지 — 소중한 순간을 가족 앨범으로 공유하세요" />
+    <meta name="description" content="@Text["seo.description"]" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="@Nav.Uri" />
-    <meta property="og:title" content="👨‍👩‍👧‍👦 무료 가족 앨범 — Codemaru Family" />
-    <meta property="og:description" content="아이 탄생, 첫 걸음마, 가족 여행까지 — 소중한 순간을 가족 앨범으로 공유하세요" />
+    <meta property="og:title" content="@Text["page.title"]" />
+    <meta property="og:description" content="@Text["seo.description"]" />
     <meta property="og:image" content="@(Nav.BaseUri.TrimEnd('/') + "/img/og-platform.png")" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
 </HeadContent>
 
-<div class="fa-page">
+<div class="fa-portal-page">
+    <DreaminePortalHeader BrandName="CodeMaru"
+                          BrandUrl="@CodeMaruHomeUrl"
+                          BrandImageUrl="/img/Codemaru_Bloom.jpg"
+                          BrandLightImageUrl="/img/Codemaru%20Bloom%20Light.jpg"
+                          Items="@PortalItems"
+                          ActiveKey="families"
+                          NavigationAriaLabel="@Text["nav.services"]"
+                          ToggleMenuLabel="@Text["nav.toggle"]"
+                          UseCodeMaruAppearance="true"
+                          Fixed="true"
+                          IsAuthenticated="@currentUser.IsAuthenticated"
+                          DisplayName="@NavUserLabel"
+                          ScreenSettingsLabel="@Text["screen.settings"]"
+                          LoginUrl="@LoginUrl"
+                          LoginLabel="@Text["login"]"
+                          AccountUrl="@AccountUrl"
+                          AccountLabel="@Text["account"]"
+                          SignoutUrl="@SignoutUrl"
+                          SignoutLabel="@Text["logout"]">
+        <Preferences>
+            <FamilyPreferences />
+        </Preferences>
+        <AdditionalUserActions>
+            <a href="#my-families"><span aria-hidden="true">▣</span> @Text["manage.mine"]</a>
+        </AdditionalUserActions>
+    </DreaminePortalHeader>
+
+    <main class="fa-page" id="main-content" tabindex="-1">
 
     <!-- ── 히어로 배너 ── -->
     <section class="fa-hero">
         <div class="fa-hero__inner">
-            <p class="fa-hero__badge">✨ 무료 가족 앨범</p>
-            <h1 class="fa-hero__title">소중한 순간을<br />가족 앨범으로 기록하세요</h1>
-            <p class="fa-hero__sub">사진·동영상·이야기 — 5분이면 완성</p>
+            <p class="fa-hero__badge">@Text["hero.badge"]</p>
+            <h1 class="fa-hero__title">@Text["hero.title"]</h1>
+            <p class="fa-hero__sub">@Text["hero.sub"]</p>
             <div class="fa-hero__actions">
-                <a href="#create" class="fa-btn fa-btn--primary">지금 무료로 만들기 →</a>
-                <a href="https://codemaru.co.kr" class="fa-btn fa-btn--secondary">CodeMaru 홈</a>
+                <a href="#create" class="fa-btn fa-btn--primary">@Text["create.now"]</a>
+                <a href="@CodeMaruHomeUrl" class="fa-btn fa-btn--secondary">@Text["codemaru.home"]</a>
                 @if (currentUser.IsAuthenticated)
                 {
-                    <a href="#my-families" class="fa-btn fa-btn--secondary">내 앨범 관리</a>
+                    <a href="#my-families" class="fa-btn fa-btn--secondary">@Text["manage.mine"]</a>
                 }
                 else if (hasLoadedCurrentUser)
                 {
-                    <a href="@LoginUrl" class="fa-btn fa-btn--secondary">로그인</a>
+                    <a href="@LoginUrl" class="fa-btn fa-btn--secondary">@Text["login"]</a>
                 }
             </div>
         </div>
@@ -46,42 +77,42 @@
 
     <!-- ── 서비스 안내 ── -->
     <div class="fa-service-notice">
-        <span>⚡ 무료 서비스 특성상 일시적인 접속 지연이 발생할 수 있습니다. 문의: <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a></span>
+        <span>@Text["service.notice"] <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a></span>
         <span class="fa-notice-sep">·</span>
-        <span>🗑 포스트 미등록 계정은 <strong>24시간 후 자동 삭제</strong>됩니다.</span>
+        <span>@Text["service.cleanup"]</span>
     </div>
 
     <!-- ── 기능 소개 ── -->
     <section class="fa-features">
         <div class="fa-feature">
             <span class="fa-feature__icon">📸</span>
-            <h3>사진 &amp; 동영상</h3>
-            <p>아기 첫 걸음마부터 가족 여행 영상까지 함께 업로드</p>
+            <h3>@Text["features.media"]</h3>
+            <p>@Text["features.media.desc"]</p>
         </div>
         <div class="fa-feature">
             <span class="fa-feature__icon">📖</span>
-            <h3>이야기 기록</h3>
-            <p>사진과 함께 그날의 이야기를 마크다운으로 작성</p>
+            <h3>@Text["features.story"]</h3>
+            <p>@Text["features.story.desc"]</p>
         </div>
         <div class="fa-feature">
             <span class="fa-feature__icon">🗂</span>
-            <h3>앨범 분류</h3>
-            <p>신생아·돌잔치·여행 등 앨범 폴더로 깔끔하게 정리</p>
+            <h3>@Text["features.albums"]</h3>
+            <p>@Text["features.albums.desc"]</p>
         </div>
         <div class="fa-feature">
             <span class="fa-feature__icon">❤️</span>
-            <h3>반응 &amp; 댓글</h3>
-            <p>가족·친지가 이모지 반응과 댓글로 함께 기뻐해요</p>
+            <h3>@Text["features.reactions"]</h3>
+            <p>@Text["features.reactions.desc"]</p>
         </div>
         <div class="fa-feature">
             <span class="fa-feature__icon">🔒</span>
-            <h3>비공개 설정</h3>
-            <p>외부에 공개하지 않고 가족끼리만 볼 수 있어요</p>
+            <h3>@Text["features.privacy"]</h3>
+            <p>@Text["features.privacy.desc"]</p>
         </div>
         <div class="fa-feature">
             <span class="fa-feature__icon">🎨</span>
-            <h3>5가지 테마</h3>
-            <p>웜·민트·라벤더·스카이·피치 테마 선택</p>
+            <h3>@Text["features.themes"]</h3>
+            <p>@Text["features.themes.desc"]</p>
         </div>
     </section>
 
@@ -91,35 +122,35 @@
             @if (currentUser.IsAuthenticated)
             {
                 <div class="fa-account">
-                    <span>공용 로그인</span>
+                    <span>@Text["common.login"]</span>
                     <strong>@CurrentUserLabel</strong>
-                    <a href="@AccountUrl" class="fa-account__link">내 계정</a>
-                    <a href="@SignoutUrl" class="fa-account__link">로그아웃</a>
+                    <a href="@AccountUrl" class="fa-account__link">@Text["account"]</a>
+                    <a href="@SignoutUrl" class="fa-account__link">@Text["logout"]</a>
                 </div>
             }
             else if (hasLoadedCurrentUser)
             {
                 <div class="fa-account fa-account--guest">
-                    <span>로그인하면 생성한 가족 앨범이 내 계정에 바로 연결됩니다.</span>
-                    <a href="@LoginUrl" class="fa-account__link">공용 로그인</a>
+                    <span>@Text["guest.account"]</span>
+                    <a href="@LoginUrl" class="fa-account__link">@Text["common.login"]</a>
                 </div>
             }
 
-            <h2 class="fa-create__title">무료로 시작하기</h2>
-            <p class="fa-create__desc">아래 정보를 입력하면 바로 가족 앨범이 생성됩니다.</p>
+            <h2 class="fa-create__title">@Text["start.title"]</h2>
+            <p class="fa-create__desc">@Text["start.desc"]</p>
 
-            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+            @if (Vm.HasStatus)
             {
-                <p class="fa-status @(Vm.StatusMessage.StartsWith("✅") ? "fa-status--ok" : "fa-status--err")">
-                    @Vm.StatusMessage
+                <p class="fa-status @(Vm.StatusIsSuccess ? "fa-status--ok" : "fa-status--err")">
+                    @Text.Format(Vm.StatusKey, Vm.StatusArguments)
                 </p>
             }
 
             <div class="fa-form">
                 <div class="fa-form__row">
                     <label class="fa-label">
-                        URL 주소
-                        <span class="fa-label__hint">영문·숫자·하이픈만 (예: kim-family)</span>
+                        @Text["field.slug"]
+                        <span class="fa-label__hint">@Text["field.slug.hint"]</span>
                     </label>
                     <div class="fa-input-prefix">
                         <span class="fa-prefix">@Nav.BaseUri</span>
@@ -133,27 +164,36 @@
                 </div>
 
                 <div class="fa-form__row">
-                    <label class="fa-label">가족 이름</label>
-                    <input class="fa-input" @bind="Vm.NewFamilyName" placeholder="김민수네 가족" />
+                    <label class="fa-label">
+                        @Text["field.viewer.password"]
+                        <span class="fa-label__hint">@Text["field.viewer.password.hint"]</span>
+                    </label>
+                    <input class="fa-input" type="password" @bind="Vm.NewViewerPassword"
+                           placeholder="@Text["field.password.placeholder"]" autocomplete="new-password" />
+                </div>
+
+                <div class="fa-form__row">
+                    <label class="fa-label">@Text["field.family"]</label>
+                    <input class="fa-input" @bind="Vm.NewFamilyName" placeholder="@Text["field.family.placeholder"]" />
                 </div>
 
                 <div class="fa-form__row">
                     <label class="fa-label">
-                        어드민 비밀번호
-                        <span class="fa-label__hint">앨범 편집 시 사용</span>
+                        @Text["field.password"]
+                        <span class="fa-label__hint">@Text["field.password.hint"]</span>
                     </label>
                     <input class="fa-input" type="password" @bind="Vm.NewPassword"
-                           placeholder="8자 이상 권장" autocomplete="new-password" />
+                           placeholder="@Text["field.password.placeholder"]" autocomplete="new-password" />
                 </div>
 
                 <button class="fa-btn fa-btn--primary fa-btn--full"
                         @onclick="OnCreate" disabled="@isCreating">
-                    @(isCreating ? "생성 중..." : "✨ 가족 앨범 만들기")
+                    @(isCreating ? Text["creating"] : Text["create.button"])
                 </button>
             </div>
 
             <p class="fa-create__notice">
-                생성 후 <code>/{슬러그}/admin</code> 에서 포스트 작성과 설정을 할 수 있습니다.
+                @Text["create.notice"]
             </p>
         </div>
     </section>
@@ -161,7 +201,7 @@
     @if (myAlbums.Count > 0)
     {
         <section class="fa-albums-list" id="my-families">
-            <h2 class="fa-albums-list__title">내 가족 앨범</h2>
+            <h2 class="fa-albums-list__title">@Text["my.albums"]</h2>
             <div class="fa-albums-list__grid">
                 @foreach (var t in myAlbums)
                 {
@@ -179,7 +219,7 @@
                         </div>
                         <div class="fa-album-card__body">
                             <div class="fa-album-card__name">@t.FamilyName</div>
-                            <div class="fa-album-card__bio">관리 열기 →</div>
+                            <div class="fa-album-card__bio">@Text["manage.open"]</div>
                         </div>
                     </a>
                 }
@@ -191,7 +231,7 @@
     @if (publicAlbums.Count > 0)
     {
         <section class="fa-albums-list">
-            <h2 class="fa-albums-list__title">👨‍👩‍👧‍👦 가족 앨범 목록</h2>
+            <h2 class="fa-albums-list__title">@Text["public.albums"]</h2>
             <div class="fa-albums-list__grid">
                 @foreach (var t in publicAlbums)
                 {
@@ -222,9 +262,10 @@
 
     <!-- ── 하단 ── -->
     <footer class="fa-footer">
-        <p>Powered by Codemaru Family · <a href="mailto:admin@codemaru.co.kr" class="fa-footer__contact">admin@codemaru.co.kr</a></p>
-        <a href="/admin" class="fa-admin-link">관리자</a>
+        <p>@Text["footer.powered"] · <a href="mailto:admin@codemaru.co.kr" class="fa-footer__contact">admin@codemaru.co.kr</a></p>
+        <a href="/admin" class="fa-admin-link">@Text["admin"]</a>
     </footer>
+    </main>
 </div>
 
 @code {
@@ -235,18 +276,47 @@
     private FamilyCurrentUser currentUser = FamilyCurrentUser.Anonymous;
     private bool hasLoadedCurrentUser;
 
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string AccountUrl => $"https://codemaru.co.kr/_identity/account?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string SignoutUrl => $"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string LoginUrl => IdentityUrl("login");
+    private string AccountUrl => IdentityUrl("account");
+    private string SignoutUrl => IdentityUrl("signout");
+    private string NavUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? Text["account"] : currentUser.DisplayName;
     private string CurrentUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName)
         ? currentUser.Provider
         : $"{currentUser.DisplayName} ({currentUser.Provider})";
+    private string CodeMaruHomeUrl => LocalizedUrl("https://codemaru.co.kr");
+    private IReadOnlyList<DreaminePortalNavigationItem> PortalItems =>
+    [
+        new("home", Text["home"], CodeMaruHomeUrl),
+        new("dreamine", "Dreamine", "https://dreamine.kr/", OpenInNewWindow: true),
+        new("cardhybrid", "CardHybrid", LocalizedUrl("https://codemaru.co.kr/cardhybrid")),
+        new("wedding", "Wedding", LocalizedUrl("https://wedding.codemaru.co.kr")),
+        new("thankyou", "ThankYou", LocalizedUrl("https://thankyou.codemaru.co.kr/")),
+        new("families", "Families", LocalizedUrl("https://families.codemaru.co.kr")),
+        new("portfolio", "Portfolio", LocalizedUrl("https://portfolio.codemaru.co.kr/")),
+        new("cctv", "CCTV", LocalizedUrl("https://cctvviewer.codemaru.co.kr")),
+        new("shop", "ShopStore", LocalizedUrl("https://shop.codemaru.co.kr/")),
+        new("contact", Text["contact"], LocalizedUrl("https://codemaru.co.kr/contact"))
+    ];
+
+    private string LocalizedUrl(string url)
+    {
+        char separator = url.Contains('?') ? '&' : '?';
+        return $"{url}{separator}lang={Uri.EscapeDataString(Text.Language)}";
+    }
+
+    private string IdentityUrl(string action)
+    {
+        Uri current = Nav.ToAbsoluteUri(Nav.Uri);
+        return $"/_identity/{action}?lang={Uri.EscapeDataString(Text.Language)}&returnUrl={Uri.EscapeDataString(current.PathAndQuery)}";
+    }
 
     protected override void OnInitialized()
     {
+        Text.Changed += OnTextChanged;
         Vm.NewSlug = "";
         Vm.NewFamilyName = "";
         Vm.NewPassword = "";
+        Vm.NewViewerPassword = "";
     }
 
     protected override async Task OnInitializedAsync()
@@ -290,11 +360,15 @@
                 await Task.Delay(1200);
                 Nav.NavigateTo($"/{slug}/admin");
             }
-            }
+        }
         finally { isCreating = false; }
     }
 
     private bool IsMyAlbum(FamilyConfig config) =>
         string.Equals(config.OwnerUserId, currentUser.Id, StringComparison.Ordinal)
         || config.AdminUsers.Any(x => string.Equals(x.UserId, currentUser.Id, StringComparison.Ordinal));
+
+    private void OnTextChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Text.Changed -= OnTextChanged;
 }

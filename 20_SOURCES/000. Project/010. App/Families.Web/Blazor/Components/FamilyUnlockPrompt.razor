@@ -1,0 +1,34 @@
+@inject FamilyLocalization Text
+@inject NavigationManager Nav
+
+<div class="fa-access-lock" role="region" aria-labelledby="family-access-title">
+    <div class="fa-access-lock__icon" aria-hidden="true">🔒</div>
+    <h1 id="family-access-title">@Text["access.title"]</h1>
+    <p>@Text["access.description"]</p>
+    @if (LegacyAdminPassword)
+    {
+        <p class="fa-access-lock__warning">@Text["access.legacy_warning"]</p>
+    }
+    @if (HasError)
+    {
+        <p class="fa-status fa-status--err">@Text["access.invalid"]</p>
+    }
+    <form method="post" action="/api/families/access/unlock" class="fa-access-lock__form">
+        <input type="hidden" name="slug" value="@Slug" />
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+        <label class="fa-label" for="family-viewer-password">@Text["access.password"]</label>
+        <input id="family-viewer-password" class="fa-input" type="password" name="password"
+               placeholder="@Text["access.password.placeholder"]" autocomplete="current-password" required autofocus />
+        <button class="fa-btn fa-btn--primary fa-btn--full" type="submit">@Text["access.submit"]</button>
+    </form>
+    <a class="fa-btn fa-btn--ghost fa-btn--full" href="@LoginUrl">@Text["access.login"]</a>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string Slug { get; set; } = "";
+    [Parameter] public bool LegacyAdminPassword { get; set; }
+
+    private bool HasError => new Uri(Nav.Uri).Query.Contains("accessError=1", StringComparison.OrdinalIgnoreCase);
+    private string ReturnUrl => new Uri(Nav.Uri).PathAndQuery;
+    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+}

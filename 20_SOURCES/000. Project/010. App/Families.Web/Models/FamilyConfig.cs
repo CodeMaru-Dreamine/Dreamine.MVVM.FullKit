@@ -65,6 +65,11 @@ public sealed class FamilyConfig
     /// </summary>
     public string PasswordHash { get; set; } = "";
     /// <summary>
+    /// Password used by family members to view this album. Existing records fall back to
+    /// <see cref="PasswordHash"/> until an independent viewer password is saved.
+    /// </summary>
+    public string ViewerPasswordHash { get; set; } = "";
+    /// <summary>
     /// \if KO
     /// <para>Is Published 값을 가져오거나 설정합니다.</para>
     /// \endif

@@ -13,6 +13,16 @@ namespace FamiliesApp.Services;
 public interface IPostStore
 {
     /// <summary>
+    /// Atomically reads and updates one post. Returning <see langword="null"/> leaves a
+    /// missing post unchanged. The callback must not perform blocking or asynchronous work.
+    /// </summary>
+    Task<PostEntry?> MutateAsync(
+        string slug,
+        string postId,
+        Func<PostEntry?, PostEntry?> mutation,
+        CancellationToken ct = default);
+
+    /// <summary>
     /// \if KO
     /// <para>Async 값을 가져옵니다.</para>
     /// \endif
