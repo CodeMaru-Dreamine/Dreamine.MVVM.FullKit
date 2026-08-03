@@ -1,4 +1,13 @@
 <Project>
+  <PropertyGroup>
+    <!--
+      Library repositories can keep test projects below a local tests folder.
+      Exclude that subtree from the parent SDK project's default item globs so
+      stale test obj files are never compiled into the production assembly.
+    -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**;**/tests/**</DefaultItemExcludes>
+  </PropertyGroup>
+
   <PropertyGroup Condition="!$(MSBuildProjectName.EndsWith('.Tests'))">
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
