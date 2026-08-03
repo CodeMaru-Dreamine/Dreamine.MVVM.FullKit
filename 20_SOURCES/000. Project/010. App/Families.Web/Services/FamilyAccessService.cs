@@ -123,7 +123,7 @@ public sealed class FamilyAccessService
                 HttpOnly = true,
                 IsEssential = true,
                 SameSite = SameSiteMode.Lax,
-                Secure = context.Request.IsHttps,
+                Secure = true,
                 Path = "/",
                 Expires = expiresAt
             });
