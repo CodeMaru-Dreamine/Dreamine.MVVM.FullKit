@@ -2,164 +2,253 @@
 @layout PortfolioApp.Blazor.Layout.PortfolioLayout
 @namespace PortfolioApp.Blazor.Pages
 @rendermode InteractiveServer
+@implements IDisposable
 
 @inject PortfolioHomeViewModel Vm
-@inject NavigationManager Nav
+@inject PortfolioLocalization Text
 
-<PageTitle>통합 어드민 — Codemaru Portfolio</PageTitle>
+<PageTitle>@Text["dashboard.super.title"] — CodeMaru</PageTitle>
 
-<div class="pf-page sa-page">
-
-    <div class="sa-header">
-        <div class="sa-header__title">
-            <span class="sa-header__icon">🧑‍💻</span>
-            <div>
-                <h1>Portfolio 통합 어드민</h1>
-                <p>등록된 포트폴리오 계정을 관리하고 노출 순서를 설정합니다.</p>
-            </div>
-        </div>
-    </div>
-
+<div class="pf-page portfolio-superadmin">
     @if (!Vm.IsAuthenticated)
     {
-        <div class="sa-login">
-            <h2>🔑 슈퍼 관리자 로그인</h2>
+        <div class="sa-login pa-login-card">
+            <div class="pa-login-card__mark"><i class="fas fa-chess-pawn"></i></div>
+            <p class="pa-eyebrow">CodeMaru Portfolio</p>
+            <h1>@Text["super.admin"]</h1>
+            <p>@Text["dashboard.super.sub"]</p>
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
-                <p class="pf-status pf-status--err">@Vm.StatusMessage</p>
+                <p class="pf-status pf-status--err">@LocalizedStatus</p>
             }
-            <input class="pf-input" type="password"
-                   value="@Vm.LoginPassword"
-                   @oninput="OnPasswordInput"
-                   @onkeydown="OnLoginKey"
-                   placeholder="슈퍼 관리자 비밀번호" />
-            <button class="pf-btn pf-btn--primary pf-btn--full" @onclick="OnLogin">로그인</button>
+            <label class="pf-label" for="superAdminPassword">@Text["admin.password"]</label>
+            <input id="superAdminPassword" class="pf-input" type="password"
+                   value="@Vm.LoginPassword" @oninput="OnPasswordInput" @onkeydown="OnLoginKey"
+                   placeholder="@Text["admin.password"]" autocomplete="current-password" />
+            <button class="pf-btn pf-btn--primary pf-btn--full" @onclick="OnLogin">@Text["login"]</button>
         </div>
     }
     else
     {
-        <!-- ── 새 포트폴리오 만들기 ── -->
-        <section class="sa-section">
-            <h2 class="sa-section__title">+ 새 포트폴리오 만들기</h2>
-            @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
-            {
-                <p class="pf-status @(Vm.StatusMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">
-                    @Vm.StatusMessage
-                </p>
-            }
-            <div class="sa-create-form">
-                <div class="pf-form__row">
-                    <label class="pf-label">슬러그 (URL ID)</label>
-                    <input class="pf-input" @bind="Vm.NewSlug" placeholder="예: gildong (영문·숫자·하이픈)" />
+        <div class="pa-super-shell">
+            <aside class="pa-super-sidebar">
+                <div class="pa-super-brand"><span><i class="fas fa-chess-pawn"></i></span><div><small>CodeMaru</small><strong>Portfolio</strong></div></div>
+                <nav aria-label="@Text["super.admin"]">
+                    <button class="@(section == "dashboard" ? "active" : null)" @onclick='() => section = "dashboard"'><i class="fas fa-table-cells-large"></i><span>@Text["dashboard"]</span></button>
+                    <button class="@(section == "portfolios" ? "active" : null)" @onclick='() => section = "portfolios"'><i class="far fa-folder"></i><span>@Text["stat.portfolios"]</span></button>
+                    <button class="@(section == "projects" ? "active" : null)" @onclick='() => section = "projects"'><i class="fas fa-layer-group"></i><span>@Text["projects"]</span></button>
+                    <button class="@(section == "ordering" ? "active" : null)" @onclick='() => section = "ordering"'><i class="fas fa-arrow-down-up-across-line"></i><span>@Ui("노출 순서", "Display order")</span></button>
+                    <button class="@(section == "settings" ? "active" : null)" @onclick='() => section = "settings"'><i class="fas fa-gear"></i><span>@Ui("서비스 설정", "Service settings")</span></button>
+                </nav>
+                <div class="pa-super-sidebar__footer">
+                    <a href="/"><i class="fas fa-house"></i> CodeMaru Portfolio</a>
                 </div>
-                <div class="pf-form__row">
-                    <label class="pf-label">소유자 이름</label>
-                    <input class="pf-input" @bind="Vm.NewOwnerName" placeholder="예: 홍길동" />
-                </div>
-                <div class="pf-form__row">
-                    <label class="pf-label">어드민 비밀번호</label>
-                    <input class="pf-input" type="password" @bind="Vm.NewPassword" placeholder="계정 어드민 접속 시 사용" />
-                </div>
-                <button class="pf-btn pf-btn--primary sa-create-btn" @onclick="OnCreate">포트폴리오 생성</button>
-            </div>
-        </section>
+            </aside>
 
-        <!-- ── 등록된 포트폴리오 목록 ── -->
-        <section class="sa-section">
-            <h2 class="sa-section__title">📋 등록된 포트폴리오 (@(Vm.Tenants.Count) 개)</h2>
+            <main class="pa-super-main">
+                <header class="pa-super-header">
+                    <div>
+                        <p class="pa-eyebrow">@Text["super.admin"]</p>
+                        <h1>@SectionTitle</h1>
+                        <p>@Text["dashboard.super.sub"]</p>
+                    </div>
+                    <div class="pa-super-toolbar">
+                        <label class="pa-search"><i class="fas fa-magnifying-glass"></i><input @bind="search" @bind:event="oninput" placeholder="@Text["search"]" /></label>
+                        <button class="pf-btn pf-btn--ghost" title="@Text["refresh"]" @onclick="OnRefresh"><i class="fas fa-rotate"></i></button>
+                        <button class="pa-admin-profile" type="button"><span>A</span><div><strong>Admin</strong><small>@Text["super.admin"]</small></div></button>
+                        <button class="pf-btn pf-btn--ghost" type="button" title="@Text["logout"]" @onclick="OnLogout"><i class="fas fa-right-from-bracket"></i> @Text["logout"]</button>
+                        <button class="pf-btn pf-btn--primary" @onclick="() => showCreate = !showCreate"><i class="fas fa-plus"></i> @Text["new.portfolio"]</button>
+                    </div>
+                </header>
 
-            <div class="sa-table-wrap">
-                <table class="sa-table">
-                    <thead>
-                        <tr>
-                            <th>슬러그</th>
-                            <th>소유자</th>
-                            <th>직함</th>
-                            <th>생성일</th>
-                            <th>테마</th>
-                            <th>프로젝트</th>
-                            <th>홈 노출</th>
-                            <th>핀 순서</th>
-                            <th>링크</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var t in Vm.Tenants.OrderBy(x => x.PinOrder == 0 ? int.MaxValue : x.PinOrder).ThenByDescending(x => x.CreatedAt))
-                        {
-                            var projCount = Vm.ProjectCounts.TryGetValue(t.Slug, out var c) ? c : 0;
-                            <tr>
-                                <td><span class="sa-slug">@t.Slug</span></td>
-                                <td>@t.OwnerName</td>
-                                <td class="sa-title">@(string.IsNullOrWhiteSpace(t.Title) ? "-" : t.Title)</td>
-                                <td class="sa-date">@t.CreatedAt.ToString("yy.MM.dd")</td>
-                                <td><span class="sa-theme-badge sa-theme--@t.ThemeName">@t.ThemeName</span></td>
-                                <td class="sa-center">
-                                    <span class="sa-count">@projCount 개</span>
-                                </td>
-                                <td class="sa-center">
-                                    <label class="sa-toggle">
-                                        <input type="checkbox" checked="@t.ShowOnHome"
-                                               @onchange="async e => { t.ShowOnHome = (bool)(e.Value ?? false); await Vm.SaveTenantAsync(t); }" />
-                                        <span class="sa-toggle__track"></span>
-                                    </label>
-                                </td>
-                                <td class="sa-center">
-                                    <input class="sa-pin-input" type="number" min="0" value="@t.PinOrder"
-                                           @onchange="async e => { if(int.TryParse(e.Value?.ToString(), out var v)) { t.PinOrder = v; await Vm.SaveTenantAsync(t); } }" />
-                                </td>
-                                <td>
-                                    <div class="sa-link-group">
-                                        <a href="/@t.Slug" target="_blank" class="pf-btn pf-btn--sm pf-btn--ghost">포트폴리오</a>
-                                        <a href="/@t.Slug/admin" target="_blank" class="pf-btn pf-btn--sm pf-btn--ghost">어드민</a>
-                                    </div>
-                                </td>
-                                <td>
-                                    <button class="pf-btn pf-btn--sm pf-btn--danger"
-                                            @onclick="() => OnDelete(t.Slug)">삭제</button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </section>
+                @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
+                {
+                    <p class="pf-status @(Vm.StatusMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">@LocalizedStatus</p>
+                }
 
-        <div class="sa-footer">
-            <button class="pf-btn pf-btn--ghost" @onclick="OnRefresh">🔄 새로고침</button>
+                @if (showCreate)
+                {
+                    <section class="pa-panel pa-create-drawer">
+                        <div class="pa-panel__heading"><div><p class="pa-eyebrow">Portfolio</p><h2>@Text["new.portfolio"]</h2></div><button class="pa-icon-btn" @onclick="() => showCreate = false" aria-label="@Text["cancel"]">×</button></div>
+                        <div class="pa-create-grid">
+                            <div class="pf-form__row"><label class="pf-label">@Text["url.address"]</label><input class="pf-input" @bind="Vm.NewSlug" placeholder="msjang" /></div>
+                            <div class="pf-form__row"><label class="pf-label">@Text["owner.name"]</label><input class="pf-input" @bind="Vm.NewOwnerName" /></div>
+                            <div class="pf-form__row"><label class="pf-label">@Text["admin.password"]</label><input class="pf-input" type="password" @bind="Vm.NewPassword" autocomplete="new-password" /></div>
+                            <button class="pf-btn pf-btn--primary" @onclick="OnCreate"><i class="fas fa-plus"></i> @Text["create.portfolio"]</button>
+                        </div>
+                    </section>
+                }
+
+                @if (section == "dashboard")
+                {
+                    <section class="pa-stat-grid pa-stat-grid--super">
+                        <article class="pa-stat-card"><span><i class="far fa-folder"></i></span><div><small>@Text["stat.portfolios"]</small><strong>@Vm.Tenants.Count</strong><em>@Ui("등록 계정", "registered accounts")</em></div></article>
+                        <article class="pa-stat-card"><span><i class="fas fa-layer-group"></i></span><div><small>@Text["stat.projects"]</small><strong>@TotalProjects</strong><em>@Ui("전체 포트폴리오 합계", "across all portfolios")</em></div></article>
+                        <article class="pa-stat-card"><span><i class="fas fa-house"></i></span><div><small>@Text["stat.featured"]</small><strong>@FeaturedCount</strong><em>@FeaturedPercent% @Ui("노출", "visible")</em></div></article>
+                        <article class="pa-stat-card"><span><i class="fas fa-palette"></i></span><div><small>@Ui("사용 중인 디자인", "Active designs")</small><strong>@ThemeCount</strong><em>@Ui("실제 선택된 테마", "themes in use")</em></div></article>
+                    </section>
+
+                    <section class="pa-super-dashboard-grid">
+                        <article class="pa-panel pa-distribution">
+                            <div class="pa-panel__heading"><div><p class="pa-eyebrow">Portfolio</p><h2>@Ui("서비스 구성", "Service overview")</h2></div></div>
+                            <div class="pa-distribution__content">
+                                <div class="pa-donut" style="--featured:@FeaturedPercent"><strong>@Vm.Tenants.Count</strong><small>@Text["stat.portfolios"]</small></div>
+                                <div class="pa-distribution__legend"><p><i class="public"></i><span>@Ui("홈 공개", "Featured")</span><strong>@FeaturedCount</strong></p><p><i class="private"></i><span>@Ui("비노출", "Not featured")</span><strong>@(Vm.Tenants.Count - FeaturedCount)</strong></p></div>
+                            </div>
+                        </article>
+                        <article class="pa-panel pa-theme-summary">
+                            <div class="pa-panel__heading"><h2>@Ui("디자인 분포", "Design distribution")</h2></div>
+                            @foreach (var theme in ThemeDistribution)
+                            {
+                                <div class="pa-progress-row"><span><i class="theme-@theme.Name"></i>@theme.Name</span><div><b style="width:@theme.Percent%"></b></div><strong>@theme.Count</strong></div>
+                            }
+                            @if (ThemeDistribution.Count == 0) { <p class="pf-empty">@Ui("데이터가 없습니다.", "No data yet.")</p> }
+                        </article>
+                    </section>
+
+                    <section class="pa-panel">
+                        <div class="pa-panel__heading"><div><p class="pa-eyebrow">Portfolio</p><h2>@Text["recent.portfolios"]</h2></div><button class="pf-btn pf-btn--sm pf-btn--ghost" @onclick='() => section = "portfolios"'>@Text["stat.portfolios"] →</button></div>
+                        <PortfolioTable Items="@FilteredTenants.Take(6).ToList()" ProjectCounts="@Vm.ProjectCounts" Compact="true" OnSave="SaveTenant" OnDelete="DeleteTenant" Text="@Text" />
+                    </section>
+                }
+                else if (section == "settings")
+                {
+                    <section class="pa-panel pa-service-settings">
+                        <div class="pa-panel__heading"><div><p class="pa-eyebrow">CodeMaru</p><h2>@Ui("서비스 설정", "Service settings")</h2></div></div>
+                        <div class="pa-service-info"><i class="fas fa-shield-halved"></i><div><strong>@Ui("실제 데이터 기준 운영", "Real-data administration")</strong><p>@Ui("대시보드 수치는 저장된 포트폴리오와 업무 사례만 집계하며 임의 방문 수를 만들지 않습니다.", "Dashboard figures are calculated only from saved portfolios and work items; no visit figures are fabricated.")</p></div></div>
+                        <div class="pa-service-info"><i class="fas fa-language"></i><div><strong>10 @Text["language"]</strong><p>한국어 · English · Español · Français · Italiano · Português · 日本語 · 简体中文 · 繁體中文 · Tiếng Việt</p></div></div>
+                    </section>
+                }
+                else
+                {
+                    <section class="pa-panel">
+                        <div class="pa-panel__heading"><div><p class="pa-eyebrow">Portfolio</p><h2>@SectionTitle</h2><p>@Ui("계정을 선택해 공개 상태와 콘텐츠 관리를 이어가세요.", "Select an account to continue managing visibility and content.")</p></div></div>
+                        <PortfolioTable Items="@FilteredTenants" ProjectCounts="@Vm.ProjectCounts" Compact="false" OnSave="SaveTenant" OnDelete="DeleteTenant" Text="@Text" />
+                    </section>
+                }
+            </main>
         </div>
     }
 </div>
 
 @code {
-    protected override async Task OnInitializedAsync()
-    {
-        if (Vm.IsAuthenticated) await Vm.LoadAsync();
-    }
+    private string section = "dashboard";
+    private string search = "";
+    private bool showCreate;
 
+    private int TotalProjects => Vm.ProjectCounts.Values.Sum();
+    private int FeaturedCount => Vm.Tenants.Count(item => item.ShowOnHome);
+    private int FeaturedPercent => Vm.Tenants.Count == 0 ? 0 : (int)Math.Round(FeaturedCount * 100d / Vm.Tenants.Count);
+    private int ThemeCount => Vm.Tenants.Select(item => item.ThemeName).Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase).Count();
+    private string SectionTitle => section switch
+    {
+        "portfolios" => Text["stat.portfolios"],
+        "projects" => Text["projects"],
+        "ordering" => Ui("노출 순서", "Display order"),
+        "settings" => Ui("서비스 설정", "Service settings"),
+        _ => Text["dashboard.super.title"]
+    };
+
+    private List<PortfolioConfig> FilteredTenants => Vm.Tenants
+        .Where(item => string.IsNullOrWhiteSpace(search)
+            || item.OwnerName.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || item.Slug.Contains(search, StringComparison.OrdinalIgnoreCase)
+            || item.Title.Contains(search, StringComparison.OrdinalIgnoreCase))
+        .OrderBy(item => item.PinOrder == 0 ? int.MaxValue : item.PinOrder)
+        .ThenByDescending(item => item.CreatedAt)
+        .ToList();
+
+    private List<ThemeSummary> ThemeDistribution => Vm.Tenants
+        .GroupBy(item => string.IsNullOrWhiteSpace(item.ThemeName) ? "dark" : item.ThemeName, StringComparer.OrdinalIgnoreCase)
+        .Select(group => new ThemeSummary(group.Key, group.Count(), Vm.Tenants.Count == 0 ? 0 : (int)Math.Round(group.Count() * 100d / Vm.Tenants.Count)))
+        .OrderByDescending(item => item.Count)
+        .ToList();
+
+    protected override void OnInitialized() => Text.Changed += HandleLanguageChanged;
+    protected override async Task OnInitializedAsync() { if (Vm.IsAuthenticated) await Vm.LoadSuperAdminAsync(); }
     private void OnPasswordInput(ChangeEventArgs e) => Vm.LoginPassword = e.Value?.ToString() ?? string.Empty;
-
-    private async Task OnLogin()
+    private async Task OnLogin() { if (await Vm.LoginAsync()) await Vm.LoadSuperAdminAsync(); }
+    private async Task OnLoginKey(KeyboardEventArgs e) { if (e.Key == "Enter") await OnLogin(); }
+    private async Task OnRefresh() => await Vm.LoadSuperAdminAsync();
+    private async Task OnCreate() { if (await Vm.CreateTenantAsSuperAdminAsync()) { await Vm.LoadSuperAdminAsync(); showCreate = false; } }
+    private async Task SaveTenant(PortfolioConfig config) => await Vm.SaveTenantAsync(config);
+    private async Task DeleteTenant(string slug) => await Vm.DeleteTenantAsync(slug);
+    private void OnLogout() { showCreate = false; Vm.LogoutSuperAdmin(); }
+    private string LocalizedStatus
     {
-        var ok = await Vm.LoginAsync();
-        if (ok) await Vm.LoadAsync();
+        get
+        {
+            string status = Vm.StatusMessage;
+            if (string.IsNullOrWhiteSpace(status)) return string.Empty;
+            if (status == "❌ URL 주소를 입력하세요.") return Local("status.url");
+            if (status == "❌ 이름을 입력하세요.") return Local("status.owner");
+            if (status == "❌ 비밀번호는 8자 이상이어야 합니다.") return Local("status.password");
+            if (status == "❌ URL 주소는 64자 이하의 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.") return Local("status.slug.format");
+            if (status == "❌ 포트폴리오 생성이 진행 중입니다. 잠시만 기다려 주세요.") return Local("status.create.busy");
+            if (status == "❌ 로그인 시도가 너무 많습니다. 15분 후 다시 시도해 주세요.") return Local("status.login.rate");
+            if (status == "❌ 이미 사용 중인 주소입니다.") return Local("status.used");
+            if (status == "❌ 비밀번호가 틀렸습니다.") return Local("status.login");
+            if (status.Contains("세션이 만료", StringComparison.Ordinal)) return Local("status.expired");
+
+            string? subject = ExtractQuotedValue(status);
+            if (subject is not null && status.Contains("생성되었습니다", StringComparison.Ordinal)) return string.Format(Local("status.created"), subject);
+            if (subject is not null && status.Contains("저장 완료", StringComparison.Ordinal)) return string.Format(Local("status.saved"), subject);
+            if (subject is not null && status.Contains("삭제 완료", StringComparison.Ordinal)) return string.Format(Local("status.deleted"), subject);
+            return status;
+        }
     }
 
-    private async Task OnLoginKey(KeyboardEventArgs e)
+    private string Ui(string korean, string english) => UiTexts.TryGetValue(korean, out string[]? values) ? Pick(values) : (Text.Language == "ko" ? korean : english);
+    private string Local(string key) => LocalTexts.TryGetValue(key, out string[]? values) ? Pick(values) : key;
+    private string Pick(string[] values)
     {
-        if (e.Key == "Enter") await OnLogin();
+        int index = Array.IndexOf(LanguageCodes, Text.Language);
+        return values[index < 0 ? 5 : index];
     }
-
-    private async Task OnRefresh() => await Vm.LoadAsync();
-
-    private async Task OnCreate()
+    private static string? ExtractQuotedValue(string value)
     {
-        var ok = await Vm.CreateTenantAsync();
-        if (ok) await Vm.LoadAsync();
+        int start = value.IndexOf('\'');
+        int end = start < 0 ? -1 : value.IndexOf('\'', start + 1);
+        return start >= 0 && end > start ? value[(start + 1)..end] : null;
     }
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Text.Changed -= HandleLanguageChanged;
 
-    private async Task OnDelete(string slug)
+    private sealed record ThemeSummary(string Name, int Count, int Percent);
+
+    private static readonly string[] LanguageCodes = ["en", "es", "fr", "it", "pt", "ko", "ja", "zh-hans", "zh-hant", "vi"];
+    private static readonly IReadOnlyDictionary<string, string[]> UiTexts = new Dictionary<string, string[]>(StringComparer.Ordinal)
     {
-        await Vm.DeleteTenantAsync(slug);
-    }
+        ["노출 순서"] = ["Display order", "Orden de visualización", "Ordre d’affichage", "Ordine di visualizzazione", "Ordem de exibição", "노출 순서", "表示順", "展示顺序", "顯示順序", "Thứ tự hiển thị"],
+        ["서비스 설정"] = ["Service settings", "Ajustes del servicio", "Paramètres du service", "Impostazioni servizio", "Configurações do serviço", "서비스 설정", "サービス設定", "服务设置", "服務設定", "Cài đặt dịch vụ"],
+        ["등록 계정"] = ["registered accounts", "cuentas registradas", "comptes enregistrés", "account registrati", "contas cadastradas", "등록 계정", "登録アカウント", "已登记账户", "已登記帳戶", "tài khoản đã đăng ký"],
+        ["전체 포트폴리오 합계"] = ["across all portfolios", "en todos los portafolios", "sur tous les portfolios", "in tutti i portfolio", "em todos os portfólios", "전체 포트폴리오 합계", "全ポートフォリオ合計", "全部作品集合计", "所有作品集合計", "trên tất cả hồ sơ"],
+        ["노출"] = ["visible", "visibles", "visibles", "visibili", "visíveis", "노출", "表示", "展示", "顯示", "hiển thị"],
+        ["사용 중인 디자인"] = ["Active designs", "Diseños activos", "Styles actifs", "Design attivi", "Designs ativos", "사용 중인 디자인", "使用中デザイン", "使用中的设计", "使用中的設計", "Thiết kế đang dùng"],
+        ["실제 선택된 테마"] = ["designs in use", "diseños en uso", "styles utilisés", "design in uso", "designs em uso", "실제 선택된 디자인", "実際に使用中のデザイン", "实际使用的设计", "實際使用的設計", "thiết kế đang sử dụng"],
+        ["서비스 구성"] = ["Service overview", "Resumen del servicio", "Vue du service", "Panoramica servizio", "Visão do serviço", "서비스 구성", "サービス概要", "服务概览", "服務概覽", "Tổng quan dịch vụ"],
+        ["홈 공개"] = ["Featured", "Destacados", "Mis en avant", "In evidenza", "Em destaque", "홈 공개", "ホーム掲載", "首页展示", "首頁顯示", "Nổi bật"],
+        ["비노출"] = ["Not featured", "No destacados", "Non affichés", "Non in evidenza", "Não destacados", "비노출", "非掲載", "未展示", "未顯示", "Không nổi bật"],
+        ["디자인 분포"] = ["Design distribution", "Distribución de diseños", "Répartition des styles", "Distribuzione design", "Distribuição de designs", "디자인 분포", "デザイン分布", "设计分布", "設計分布", "Phân bố thiết kế"],
+        ["데이터가 없습니다."] = ["No data yet.", "Aún no hay datos.", "Aucune donnée.", "Nessun dato.", "Ainda não há dados.", "데이터가 없습니다.", "データがありません。", "暂无数据。", "尚無資料。", "Chưa có dữ liệu."],
+        ["실제 데이터 기준 운영"] = ["Real-data administration", "Administración con datos reales", "Administration sur données réelles", "Gestione con dati reali", "Administração com dados reais", "실제 데이터 기준 운영", "実データによる運用", "基于真实数据运营", "以實際資料營運", "Quản trị bằng dữ liệu thực"],
+        ["대시보드 수치는 저장된 포트폴리오와 업무 사례만 집계하며 임의 방문 수를 만들지 않습니다."] = ["Dashboard figures use only saved portfolios and work samples; no visit counts are fabricated.", "Las cifras usan solo portafolios y trabajos guardados; no se inventan visitas.", "Les chiffres utilisent uniquement les portfolios et travaux enregistrés, sans visites fictives.", "I dati usano solo portfolio e lavori salvati, senza visite inventate.", "Os números usam apenas portfólios e trabalhos salvos, sem visitas inventadas.", "대시보드 수치는 저장된 포트폴리오와 업무 사례만 집계하며 임의 방문 수를 만들지 않습니다.", "保存済みのポートフォリオと実績のみを集計し、架空の訪問数は表示しません。", "面板仅统计已保存的作品集和案例，不生成虚假访问量。", "面板僅統計已儲存的作品集與案例，不產生虛假瀏覽量。", "Số liệu chỉ dùng hồ sơ và công việc đã lưu, không tạo lượt xem giả."],
+        ["계정을 선택해 공개 상태와 콘텐츠 관리를 이어가세요."] = ["Select an account to manage visibility and content.", "Selecciona una cuenta para gestionar visibilidad y contenido.", "Sélectionnez un compte pour gérer visibilité et contenu.", "Seleziona un account per gestire visibilità e contenuti.", "Selecione uma conta para gerenciar visibilidade e conteúdo.", "계정을 선택해 공개 상태와 콘텐츠 관리를 이어가세요.", "アカウントを選択して公開状態と内容を管理します。", "选择账户以管理公开状态和内容。", "選擇帳戶以管理公開狀態與內容。", "Chọn tài khoản để quản lý hiển thị và nội dung." ]
+    };
+
+    private static readonly IReadOnlyDictionary<string, string[]> LocalTexts = new Dictionary<string, string[]>(StringComparer.Ordinal)
+    {
+        ["status.url"] = ["❌ Enter a public address.", "❌ Introduce una dirección pública.", "❌ Saisissez une adresse publique.", "❌ Inserisci un indirizzo pubblico.", "❌ Informe um endereço público.", "❌ 공개 주소를 입력하세요.", "❌ 公開アドレスを入力してください。", "❌ 请输入公开地址。", "❌ 請輸入公開網址。", "❌ Nhập địa chỉ công khai."],
+        ["status.owner"] = ["❌ Enter a name or organization.", "❌ Introduce un nombre u organización.", "❌ Saisissez un nom ou une organisation.", "❌ Inserisci un nome o un’organizzazione.", "❌ Informe um nome ou organização.", "❌ 이름 또는 조직명을 입력하세요.", "❌ 氏名または組織名を入力してください。", "❌ 请输入姓名或组织名称。", "❌ 請輸入姓名或組織名稱。", "❌ Nhập tên hoặc tổ chức."],
+        ["status.password"] = ["❌ Use at least 8 characters.", "❌ Usa al menos 8 caracteres.", "❌ Utilisez au moins 8 caractères.", "❌ Usa almeno 8 caratteri.", "❌ Use pelo menos 8 caracteres.", "❌ 비밀번호는 8자 이상이어야 합니다.", "❌ 8文字以上入力してください。", "❌ 密码至少需要 8 个字符。", "❌ 密碼至少需要 8 個字元。", "❌ Dùng ít nhất 8 ký tự."],
+        ["status.slug.format"] = ["❌ Use up to 64 lowercase letters, numbers or hyphens.", "❌ Usa hasta 64 letras minúsculas, números o guiones.", "❌ Utilisez au maximum 64 lettres minuscules, chiffres ou tirets.", "❌ Usa fino a 64 lettere minuscole, numeri o trattini.", "❌ Use até 64 letras minúsculas, números ou hífens.", "❌ 주소에는 64자 이하의 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.", "❌ 64文字以内の英小文字・数字・ハイフンのみ使用できます。", "❌ 只能使用不超过 64 个小写字母、数字或连字符。", "❌ 只能使用不超過 64 個小寫英文字母、數字或連字號。", "❌ Chỉ dùng tối đa 64 chữ thường, số hoặc dấu gạch nối."],
+        ["status.create.busy"] = ["❌ Another portfolio is being created. Please wait.", "❌ Se está creando otro portafolio. Espera.", "❌ Un autre portfolio est en cours de création. Patientez.", "❌ È in corso la creazione di un altro portfolio. Attendi.", "❌ Outro portfólio está sendo criado. Aguarde.", "❌ 다른 포트폴리오 생성이 진행 중입니다. 잠시만 기다려 주세요.", "❌ 別のポートフォリオを作成中です。お待ちください。", "❌ 正在创建其他作品集，请稍候。", "❌ 正在建立其他作品集，請稍候。", "❌ Một hồ sơ khác đang được tạo. Vui lòng đợi."],
+        ["status.login.rate"] = ["❌ Too many sign-in attempts. Try again in 15 minutes.", "❌ Demasiados intentos de inicio de sesión. Inténtalo en 15 minutos.", "❌ Trop de tentatives de connexion. Réessayez dans 15 minutes.", "❌ Troppi tentativi di accesso. Riprova tra 15 minuti.", "❌ Muitas tentativas de login. Tente novamente em 15 minutos.", "❌ 로그인 시도가 너무 많습니다. 15분 후 다시 시도해 주세요.", "❌ ログイン試行回数が多すぎます。15分後にもう一度お試しください。", "❌ 登录尝试过多，请 15 分钟后重试。", "❌ 登入嘗試過多，請 15 分鐘後再試。", "❌ Có quá nhiều lần đăng nhập. Hãy thử lại sau 15 phút."],
+        ["status.used"] = ["❌ This public address is already in use.", "❌ Esta dirección ya está en uso.", "❌ Cette adresse est déjà utilisée.", "❌ Questo indirizzo è già in uso.", "❌ Este endereço já está em uso.", "❌ 이미 사용 중인 공개 주소입니다.", "❌ この公開アドレスは使用済みです。", "❌ 此公开地址已被使用。", "❌ 此公開網址已被使用。", "❌ Địa chỉ công khai này đã được dùng."],
+        ["status.login"] = ["❌ Incorrect password.", "❌ Contraseña incorrecta.", "❌ Mot de passe incorrect.", "❌ Password errata.", "❌ Senha incorreta.", "❌ 비밀번호가 올바르지 않습니다.", "❌ パスワードが正しくありません。", "❌ 密码不正确。", "❌ 密碼不正確。", "❌ Mật khẩu không đúng."],
+        ["status.expired"] = ["❌ The admin session expired. Sign in again.", "❌ La sesión de administrador caducó. Inicia sesión de nuevo.", "❌ La session administrateur a expiré. Reconnectez-vous.", "❌ La sessione amministratore è scaduta. Accedi di nuovo.", "❌ A sessão de administrador expirou. Entre novamente.", "❌ 관리자 세션이 만료되었습니다. 다시 로그인해 주세요.", "❌ 管理者セッションの有効期限が切れました。再度ログインしてください。", "❌ 管理员会话已过期，请重新登录。", "❌ 管理員工作階段已過期，請重新登入。", "❌ Phiên quản trị đã hết hạn. Hãy đăng nhập lại."],
+        ["status.created"] = ["✅ Portfolio '{0}' created.", "✅ Portafolio '{0}' creado.", "✅ Portfolio « {0} » créé.", "✅ Portfolio '{0}' creato.", "✅ Portfólio '{0}' criado.", "✅ '{0}' 포트폴리오를 만들었습니다.", "✅ ポートフォリオ「{0}」を作成しました。", "✅ 已创建作品集“{0}”。", "✅ 已建立作品集「{0}」。", "✅ Đã tạo hồ sơ '{0}'."],
+        ["status.saved"] = ["✅ '{0}' saved.", "✅ '{0}' guardado.", "✅ « {0} » enregistré.", "✅ '{0}' salvato.", "✅ '{0}' salvo.", "✅ '{0}' 저장을 완료했습니다.", "✅「{0}」を保存しました。", "✅ 已保存“{0}”。", "✅ 已儲存「{0}」。", "✅ Đã lưu '{0}'."],
+        ["status.deleted"] = ["✅ '{0}' deleted.", "✅ '{0}' eliminado.", "✅ « {0} » supprimé.", "✅ '{0}' eliminato.", "✅ '{0}' excluído.", "✅ '{0}' 삭제를 완료했습니다.", "✅「{0}」を削除しました。", "✅ 已删除“{0}”。", "✅ 已刪除「{0}」。", "✅ Đã xóa '{0}'."]
+    };
 }

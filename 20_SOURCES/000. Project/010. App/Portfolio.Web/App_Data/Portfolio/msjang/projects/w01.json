@@ -1,29 +1,44 @@
 {
   "Id": "w01",
   "Title": "VSLibrary",
-  "Description": "VSFrameWork 철학을 보존하면서도 바로 써먹는 DX를 목표로 한 경량 라이브러리 세트.",
-  "Tags": [],
+  "Description": "VSFrameWork \uCCA0\uD559\uC744 \uBCF4\uC874\uD558\uBA74\uC11C\uB3C4 \uBC14\uB85C \uC368\uBA39\uB294 DX\uB97C \uBAA9\uD45C\uB85C \uD55C \uACBD\uB7C9 \uB77C\uC774\uBE0C\uB7EC\uB9AC \uC138\uD2B8.",
+  "Tags": [
+    "C#",
+    ".NET 8",
+    "WPF",
+    "MVVM",
+    "WinForms",
+    "Blazor",
+    "SignalR",
+    "Threading",
+    "Socket",
+    "Doxygen"
+  ],
   "Year": 2025,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "fc3953dcc0a841b2b6bf5cc6991345c4.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 1,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/VSLibrary.png" ],
-  "WorkSubtitle": "VSFrameWork의 진입장벽을 낮추기 위해 설계한 실전형 C# 라이브러리 세트",
-  "WorkBullets": [
-      "VSFrameWork는 SOLID 원칙을 강하게 준수한 구조라 온보딩·러닝커브가 높음 → 현업 투입 전 가벼운 진입로 필요",
-      "의견 있는 기본값(Opinionated Defaults)과 단일 진입점 제공(AppHost, ServiceRegistry) — 설정보다 규약",
-      "Thread/Serial/Socket/Sync/Log 등 공통 모듈을 간결 API로 래핑 — 필요한 것만 바로 쓰는 사용성",
-      "MVVM 스타터 킷(Template/Scaffold): ViewModelBase, Command, Navigation, DI 프리셋 즉시 사용",
-      "점진적 마이그레이션 경로: 기존 WinForms/WPF 코드에서 단계적 치환 → 충분히 익숙해진 뒤 VSFrameWork로 승급",
-      "Blazor(.NET 8) + SignalR 연동 예제 제공 — 동일 ViewModel 구조 재사용 검증",
-      "문서 중심 온보딩(10분 Quickstart, Recipe, Doxygen API 문서)로 도입 비용 최소화"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "fc3953dcc0a841b2b6bf5cc6991345c4.png"
   ],
-  "WorkPeriod": "내부 장기 프로젝트(상시 개선)",
-  "WorkRole": "아키텍처 설계 · 핵심 라이브러리 개발 주도",
+  "WorkSubtitle": "VSFrameWork\uC758 \uC9C4\uC785\uC7A5\uBCBD\uC744 \uB0AE\uCD94\uAE30 \uC704\uD574 \uC124\uACC4\uD55C \uC2E4\uC804\uD615 C# \uB77C\uC774\uBE0C\uB7EC\uB9AC \uC138\uD2B8",
+  "WorkBullets": [
+    "VSFrameWork\uB294 SOLID \uC6D0\uCE59\uC744 \uAC15\uD558\uAC8C \uC900\uC218\uD55C \uAD6C\uC870\uB77C \uC628\uBCF4\uB529\u00B7\uB7EC\uB2DD\uCEE4\uBE0C\uAC00 \uB192\uC74C \u2192 \uD604\uC5C5 \uD22C\uC785 \uC804 \uAC00\uBCBC\uC6B4 \uC9C4\uC785\uB85C \uD544\uC694",
+    "\uC758\uACAC \uC788\uB294 \uAE30\uBCF8\uAC12(Opinionated Defaults)\uACFC \uB2E8\uC77C \uC9C4\uC785\uC810 \uC81C\uACF5(AppHost, ServiceRegistry) \u2014 \uC124\uC815\uBCF4\uB2E4 \uADDC\uC57D",
+    "Thread/Serial/Socket/Sync/Log \uB4F1 \uACF5\uD1B5 \uBAA8\uB4C8\uC744 \uAC04\uACB0 API\uB85C \uB798\uD551 \u2014 \uD544\uC694\uD55C \uAC83\uB9CC \uBC14\uB85C \uC4F0\uB294 \uC0AC\uC6A9\uC131",
+    "MVVM \uC2A4\uD0C0\uD130 \uD0B7(Template/Scaffold): ViewModelBase, Command, Navigation, DI \uD504\uB9AC\uC14B \uC989\uC2DC \uC0AC\uC6A9",
+    "\uC810\uC9C4\uC801 \uB9C8\uC774\uADF8\uB808\uC774\uC158 \uACBD\uB85C: \uAE30\uC874 WinForms/WPF \uCF54\uB4DC\uC5D0\uC11C \uB2E8\uACC4\uC801 \uCE58\uD658 \u2192 \uCDA9\uBD84\uD788 \uC775\uC219\uD574\uC9C4 \uB4A4 VSFrameWork\uB85C \uC2B9\uAE09",
+    "Blazor(.NET 8) \u002B SignalR \uC5F0\uB3D9 \uC608\uC81C \uC81C\uACF5 \u2014 \uB3D9\uC77C ViewModel \uAD6C\uC870 \uC7AC\uC0AC\uC6A9 \uAC80\uC99D",
+    "\uBB38\uC11C \uC911\uC2EC \uC628\uBCF4\uB529(10\uBD84 Quickstart, Recipe, Doxygen API \uBB38\uC11C)\uB85C \uB3C4\uC785 \uBE44\uC6A9 \uCD5C\uC18C\uD654"
+  ],
+  "WorkPeriod": "",
+  "WorkRole": "\uC544\uD0A4\uD14D\uCC98 \uC124\uACC4 \u00B7 \uD575\uC2EC \uB77C\uC774\uBE0C\uB7EC\uB9AC \uAC1C\uBC1C \uC8FC\uB3C4",
   "WorkTech": "C#, .NET 8, WPF, MVVM, WinForms, Blazor, SignalR, Doxygen",
-  "WorkCompany": "Vision Semicon (사내)"
+  "WorkCompany": "Vision Semicon (\uC0AC\uB0B4)"
 }

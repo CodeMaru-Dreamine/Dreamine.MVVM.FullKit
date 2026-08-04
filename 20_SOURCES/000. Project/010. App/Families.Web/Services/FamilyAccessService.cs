@@ -65,6 +65,14 @@ public sealed class FamilyAccessService
 
     public bool HasAccess(FamilyConfig config, ClaimsPrincipal principal)
     {
+        // 홈에 게시한 앨범은 페이지와 일반 미디어까지 공개합니다. 홈 카드만 노출하고
+        // /family-data 자산을 잠그면 커버가 깨지고 사용자는 공개 앨범에서도 암호를
+        // 요구받게 되므로, 공개 여부의 단일 기준을 ShowOnHome으로 사용합니다.
+        if (config.ShowOnHome)
+        {
+            return true;
+        }
+
         var current = FamilyUserContext.FromPrincipal(principal);
         if (current.IsAuthenticated
             && (string.Equals(config.OwnerUserId, current.Id, StringComparison.Ordinal)

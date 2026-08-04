@@ -1,26 +1,40 @@
 {
   "Id": "w20",
-  "Title": "PCB Depaneling Router Series (Inline) — 케이엠티",
-  "Description": "N社/K-1社 Inline 라우터 납품: 멀티축·스핀들·그래버·컨베이어 연동과 MySQL 로그/리포트 모듈 설계.",
-  "Tags": [],
+  "Title": "PCB Depaneling Router Series (Inline) \u2014 \uCF00\uC774\uC5E0\uD2F0",
+  "Description": "N\u793E/K-1\u793E Inline \uB77C\uC6B0\uD130 \uB0A9\uD488: \uBA40\uD2F0\uCD95\u00B7\uC2A4\uD540\uB4E4\u00B7\uADF8\uB798\uBC84\u00B7\uCEE8\uBCA0\uC774\uC5B4 \uC5F0\uB3D9\uACFC MySQL \uB85C\uADF8/\uB9AC\uD3EC\uD2B8 \uBAA8\uB4C8 \uC124\uACC4.",
+  "Tags": [
+    "C\u002B\u002B",
+    "MFC",
+    "Vision Alignment",
+    "PCB Depaneling",
+    "Motion Control",
+    "Spindle Control",
+    "MySQL",
+    "Equipment Control",
+    "Industrial Automation"
+  ],
   "Year": 2007,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "f62510b252f642ec80b33691577ef5de.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 20,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
-  "WorkSubtitle": "8~16축 모션·스핀들·그래버 연동 라우터 — GUI/Sequence + MySQL 로그/리포트",
-  "WorkBullets": [
-      "8·16축(서보/스텝) + I/O 128/128·128/64 기반 라우터 흐름 GUI/Sequence 지원",
-      "Picolo(Euresys) 프레임그래버 연동 — 화상/좌표/가이드 오버레이 표시",
-      "MySQL 기반 로그 저장·조회·리포팅 프로그램 개발(인쇄/CSV 내보내기)",
-      "MySQL 로깅/리포트 모듈은 졸업작품으로 확장하여 A+ 취득"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "f62510b252f642ec80b33691577ef5de.png"
   ],
-  "WorkPeriod": "2007.03 ~ 2007.12 (10개월)",
-  "WorkRole": "GUI/Sequence 제작 지원 · MySQL 로그/리포트 모듈 개발",
-  "WorkTech": "MFC, Euresys Picolo, MMC-Motion, MySQL, 8/16축, I/O 128/128",
-  "WorkCompany": "(주)케이엠티"
+  "WorkSubtitle": "8~16\uCD95 \uBAA8\uC158\u00B7\uC2A4\uD540\uB4E4\u00B7\uADF8\uB798\uBC84 \uC5F0\uB3D9 \uB77C\uC6B0\uD130 \u2014 GUI/Sequence \u002B MySQL \uB85C\uADF8/\uB9AC\uD3EC\uD2B8",
+  "WorkBullets": [
+    "8\u00B716\uCD95(\uC11C\uBCF4/\uC2A4\uD15D) \u002B I/O 128/128\u00B7128/64 \uAE30\uBC18 \uB77C\uC6B0\uD130 \uD750\uB984 GUI/Sequence \uC9C0\uC6D0",
+    "Picolo(Euresys) \uD504\uB808\uC784\uADF8\uB798\uBC84 \uC5F0\uB3D9 \u2014 \uD654\uC0C1/\uC88C\uD45C/\uAC00\uC774\uB4DC \uC624\uBC84\uB808\uC774 \uD45C\uC2DC",
+    "MySQL \uAE30\uBC18 \uB85C\uADF8 \uC800\uC7A5\u00B7\uC870\uD68C\u00B7\uB9AC\uD3EC\uD305 \uD504\uB85C\uADF8\uB7A8 \uAC1C\uBC1C(\uC778\uC1C4/CSV \uB0B4\uBCF4\uB0B4\uAE30)",
+    "MySQL \uB85C\uAE45/\uB9AC\uD3EC\uD2B8 \uBAA8\uB4C8\uC740 \uC878\uC5C5\uC791\uD488\uC73C\uB85C \uD655\uC7A5\uD558\uC5EC A\u002B \uCDE8\uB4DD"
+  ],
+  "WorkPeriod": "2007.03 ~ 2007.12 (10\uAC1C\uC6D4)",
+  "WorkRole": "GUI/Sequence \uC81C\uC791 \uC9C0\uC6D0 \u00B7 MySQL \uB85C\uADF8/\uB9AC\uD3EC\uD2B8 \uBAA8\uB4C8 \uAC1C\uBC1C",
+  "WorkTech": "MFC, Euresys Picolo, MMC-Motion, MySQL, 8/16\uCD95, I/O 128/128",
+  "WorkCompany": "(\uC8FC)\uCF00\uC774\uC5E0\uD2F0"
 }

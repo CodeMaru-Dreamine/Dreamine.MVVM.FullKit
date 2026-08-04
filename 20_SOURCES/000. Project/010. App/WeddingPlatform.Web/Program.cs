@@ -177,7 +177,8 @@ public static class Program
                     WeddingLayoutPolicyQueryStartupFilter>();
             };
 
-            options.AddDreamineIdentity(authOptions, usersDbPath);
+            // OAuth는 중앙 codemaru.co.kr 호스트에서만 처리합니다.
+            options.AddDreamineIdentity(authOptions.AsConsumer(), usersDbPath);
         });
 
         // OG 플랫폼 이미지 자동 생성 (없을 때만)

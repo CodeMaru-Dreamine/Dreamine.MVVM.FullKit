@@ -5,16 +5,17 @@
 
 @inject PortfolioHomeViewModel Vm
 @inject PortfolioUserContext UserContext
+@inject PortfolioLocalization Text
 @inject NavigationManager Nav
 
-<PageTitle>🧑‍💻 무료 포트폴리오 — Codemaru Portfolio</PageTitle>
+<PageTitle>@Text["page.title"]</PageTitle>
 
 <HeadContent>
-    <meta name="description" content="나만의 개발자 포트폴리오를 5분 만에 만들어보세요. 프로젝트, 이력서, 기술스택까지 한 곳에." />
+    <meta name="description" content="@Text["seo.description"]" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="@Nav.Uri" />
-    <meta property="og:title" content="🧑‍💻 무료 포트폴리오 — Codemaru Portfolio" />
-    <meta property="og:description" content="나만의 개발자 포트폴리오를 5분 만에 만들어보세요." />
+    <meta property="og:title" content="@Text["page.title"]" />
+    <meta property="og:description" content="@Text["seo.description"]" />
     <meta property="og:image" content="@(Nav.BaseUri.TrimEnd('/') + "/img/og-platform.png")" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
@@ -26,19 +27,19 @@
     <!-- ── 히어로 ── -->
     <section class="pf-hero">
         <div class="pf-hero__inner">
-            <p class="pf-hero__badge">✨ 무료 개발자 포트폴리오</p>
-            <h1 class="pf-hero__title">나만의 포트폴리오를<br /><span class="pf-hero__accent">5분 만에</span> 완성하세요</h1>
-            <p class="pf-hero__sub">프로젝트 · 이력서 · 기술스택 · 연락처 — 전부 한 곳에</p>
+            <p class="pf-hero__badge">@Text["hero.badge"]</p>
+            <h1 class="pf-hero__title">@HeroTitle</h1>
+            <p class="pf-hero__sub">@Text["hero.sub"]</p>
             <div class="pf-hero__actions">
-                <a href="#create" class="pf-btn pf-btn--primary">지금 무료로 만들기 →</a>
-                <a href="/guide" class="pf-btn pf-btn--ghost">사용법</a>
+                <a href="#create" class="pf-btn pf-btn--primary">@Text["create.now"]</a>
+                <a href="@LocalizedPath("/guide")" class="pf-btn pf-btn--ghost">@Text["guide"]</a>
                 @if (currentUser.IsAuthenticated)
                 {
-                    <a href="#my-portfolios" class="pf-btn pf-btn--ghost">내 포트폴리오 관리</a>
+                    <a href="#my-portfolios" class="pf-btn pf-btn--ghost">@Text["manage.mine"]</a>
                 }
                 else if (hasLoadedCurrentUser)
                 {
-                    <a href="@LoginUrl" class="pf-btn pf-btn--ghost">로그인</a>
+                    <a href="@LoginUrl" class="pf-btn pf-btn--ghost">@Text["login"]</a>
                 }
             </div>
         </div>
@@ -46,42 +47,42 @@
 
     <!-- ── 서비스 안내 ── -->
     <div class="pf-service-notice">
-        <span>⚡ 무료 서비스 특성상 일시적인 접속 지연이 발생할 수 있습니다.</span>
+        <span>@Text["service.notice"]</span>
         <span class="pf-notice-sep">·</span>
-        <span>🗑 프로젝트 미등록 계정은 <strong>24시간 후 자동 삭제</strong>됩니다.</span>
+        <span>🗑 @Text["service.cleanup"]</span>
     </div>
 
     <!-- ── 기능 소개 ── -->
     <section class="pf-features">
         <div class="pf-feature">
             <span class="pf-feature__icon">🛠️</span>
-            <h3>프로젝트 관리</h3>
-            <p>Personal / Work 카테고리로 구분해 프로젝트를 체계적으로 전시</p>
+            <h3>@Text["feature.projects"]</h3>
+            <p>@Text["feature.projects.desc"]</p>
         </div>
         <div class="pf-feature">
             <span class="pf-feature__icon">📄</span>
-            <h3>이력서</h3>
-            <p>경력, 학력, 기술스택을 깔끔한 카드 형태로 정리</p>
+            <h3>@Text["feature.career"]</h3>
+            <p>@Text["feature.career.desc"]</p>
         </div>
         <div class="pf-feature">
             <span class="pf-feature__icon">🔍</span>
-            <h3>검색 &amp; 필터</h3>
-            <p>태그·카테고리·키워드로 프로젝트 빠르게 탐색</p>
+            <h3>@Text["feature.search"]</h3>
+            <p>@Text["feature.search.desc"]</p>
         </div>
         <div class="pf-feature">
             <span class="pf-feature__icon">📬</span>
-            <h3>연락처</h3>
-            <p>방문자가 직접 메시지를 남길 수 있는 Contact 폼</p>
+            <h3>@Text["feature.message"]</h3>
+            <p>@Text["feature.message.desc"]</p>
         </div>
         <div class="pf-feature">
             <span class="pf-feature__icon">🎨</span>
-            <h3>5가지 테마</h3>
-            <p>Dark · Ocean · Forest · Minimal · Warm 테마 선택</p>
+            <h3>@Text["feature.themes"]</h3>
+            <p>@Local("feature.themes.desc")</p>
         </div>
         <div class="pf-feature">
             <span class="pf-feature__icon">🔗</span>
-            <h3>GitHub 연동</h3>
-            <p>GitHub · Live URL · 문서 링크를 프로젝트별로 등록</p>
+            <h3>@Text["feature.links"]</h3>
+            <p>@Local("feature.links.desc")</p>
         </div>
     </section>
 
@@ -91,35 +92,35 @@
             @if (currentUser.IsAuthenticated)
             {
                 <div class="pf-account">
-                    <span>공용 로그인</span>
+                    <span>@Local("shared.signin")</span>
                     <strong>@CurrentUserLabel</strong>
-                    <a href="@AccountUrl" class="pf-account__link">내 계정</a>
-                    <a href="@SignoutUrl" class="pf-account__link">로그아웃</a>
+                    <a href="@AccountUrl" class="pf-account__link">@Text["account"]</a>
+                    <a href="@SignoutUrl" class="pf-account__link">@Text["logout"]</a>
                 </div>
             }
             else if (hasLoadedCurrentUser)
             {
                 <div class="pf-account pf-account--guest">
-                    <span>로그인하면 생성한 포트폴리오가 내 계정에 바로 연결됩니다.</span>
-                    <a href="@LoginUrl" class="pf-account__link">공용 로그인</a>
+                    <span>@Local("signin.benefit")</span>
+                    <a href="@LoginUrl" class="pf-account__link">@Local("shared.signin")</a>
                 </div>
             }
 
-            <h2 class="pf-create__title">무료로 시작하기</h2>
-            <p class="pf-create__desc">아래 정보를 입력하면 바로 포트폴리오가 생성됩니다.</p>
+            <h2 class="pf-create__title">@Text["create.title"]</h2>
+            <p class="pf-create__desc">@Text["create.desc"]</p>
 
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
                 <p class="pf-status @(Vm.StatusMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">
-                    @Vm.StatusMessage
+                    @LocalizedStatusMessage
                 </p>
             }
 
             <div class="pf-form">
                 <div class="pf-form__row">
                     <label class="pf-label">
-                        URL 주소
-                        <span class="pf-label__hint">영문·숫자·하이픈만 (예: msjang)</span>
+                        @Text["url.address"]
+                        <span class="pf-label__hint">@Text["url.hint"] (msjang)</span>
                     </label>
                     <div class="pf-input-prefix">
                         <span class="pf-prefix" title="@Nav.BaseUri">@(new Uri(Nav.BaseUri).Authority)/</span>
@@ -133,27 +134,27 @@
                 </div>
 
                 <div class="pf-form__row">
-                    <label class="pf-label">이름</label>
-                    <input class="pf-input" @bind="Vm.NewOwnerName" placeholder="장민수" />
+                    <label class="pf-label">@Text["owner.name"]</label>
+                    <input class="pf-input" @bind="Vm.NewOwnerName" placeholder="@Text["owner.name"]" />
                 </div>
 
                 <div class="pf-form__row">
                     <label class="pf-label">
-                        어드민 비밀번호
-                        <span class="pf-label__hint">포트폴리오 편집 시 사용</span>
+                        @Text["admin.password"]
+                        <span class="pf-label__hint">@Text["admin.password.hint"]</span>
                     </label>
                     <input class="pf-input" type="password" @bind="Vm.NewPassword"
-                           placeholder="4자 이상" autocomplete="new-password" />
+                           placeholder="@Local("password.minimum")" autocomplete="new-password" />
                 </div>
 
                 <button class="pf-btn pf-btn--primary pf-btn--full"
                         @onclick="OnCreate" disabled="@isCreating">
-                    @(isCreating ? "생성 중..." : "🚀 포트폴리오 만들기")
+                    @(isCreating ? Text["creating"] : $"🚀 {Text["create.portfolio"]}")
                 </button>
             </div>
 
             <p class="pf-create__notice">
-                생성 후 <code>/{슬러그}/admin</code> 에서 프로젝트와 이력서를 편집할 수 있습니다.
+                @Local("after.create.prefix") <code>/my-portfolio/admin</code> @Local("after.create.suffix")
             </p>
         </div>
     </section>
@@ -161,22 +162,22 @@
     @if (currentUser.IsAuthenticated)
     {
         <section class="pf-list pf-list--mine" id="my-portfolios">
-            <h2 class="pf-list__title">내 포트폴리오</h2>
+            <h2 class="pf-list__title">@Text["my.portfolios"]</h2>
             @if (myPortfolios.Count == 0)
             {
-                <p class="pf-empty">아직 이 계정에 연결된 포트폴리오가 없습니다. 기존 포트폴리오가 있다면 <code>/{슬러그}/admin</code>에서 기존 비밀번호를 한 번 입력해 연결하세요.</p>
+                <p class="pf-empty">@Local("mine.empty.prefix") <code>/my-portfolio/admin</code> @Local("mine.empty.suffix")</p>
             }
             else
             {
                 <div class="pf-list__grid">
                     @foreach (var t in myPortfolios)
                     {
-                        <a href="/@t.Slug/admin" class="pf-card pf-card--manage">
+                        <a href="@LocalizedPath($"/{t.Slug}/admin")" class="pf-card pf-card--manage">
                             <div class="pf-card__body">
                                 <div class="pf-card__name">@t.OwnerName</div>
                                 <div class="pf-card__title">@t.Title</div>
                                 <div class="pf-card__bio">/@t.Slug/admin</div>
-                                <span class="pf-manage-link">관리 열기 →</span>
+                                <span class="pf-manage-link">@Local("manage.open")</span>
                             </div>
                         </a>
                     }
@@ -189,7 +190,7 @@
     @if (publicList.Count > 0)
     {
         <section class="pf-list">
-            <h2 class="pf-list__title">🧑‍💻 포트폴리오 목록</h2>
+            <h2 class="pf-list__title">🗂️ @Text["public.portfolios"]</h2>
             <div class="pf-list__grid">
                 @foreach (var t in publicList)
                 {
@@ -197,7 +198,7 @@
                         ? $"/portfolio-data/{t.Slug}/media/_profile/{Uri.EscapeDataString(t.ProfileImageFileName)}"
                         : null;
 
-                    <a href="/@t.Slug" class="pf-card">
+                    <a href="@LocalizedPath($"/{t.Slug}")" class="pf-card">
                         <div class="pf-card__avatar"
                              style="@(imgUrl != null ? $"background-image:url('{imgUrl}')" : "")">
                             @if (imgUrl == null)
@@ -220,8 +221,8 @@
     }
 
     <footer class="pf-footer">
-        <p>Powered by Codemaru Portfolio · <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a></p>
-        <a href="/admin" class="pf-admin-link">관리자</a>
+        <p>@Local("powered.by") CodeMaru Portfolio · <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a></p>
+        <a href="@LocalizedPath("/admin")" class="pf-admin-link">@Text["admin"]</a>
     </footer>
 </div>
 
@@ -233,12 +234,76 @@
     private PortfolioCurrentUser currentUser = PortfolioCurrentUser.Anonymous;
     private bool hasLoadedCurrentUser;
 
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string AccountUrl => $"https://codemaru.co.kr/_identity/account?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string SignoutUrl => $"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private static readonly string[] LanguageCodes =
+        ["en", "es", "fr", "it", "pt", "ko", "ja", "zh-hans", "zh-hant", "vi"];
+
+    private static readonly Dictionary<string, string[]> LocalTexts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["feature.themes.desc"] = ["Choose from five ready-made designs.", "Elige entre cinco diseños listos para usar.", "Choisissez parmi cinq styles prêts à l’emploi.", "Scegli tra cinque design pronti all’uso.", "Escolha entre cinco designs prontos.", "준비된 5가지 디자인 중에서 선택합니다.", "5種類のデザインから選べます。", "可从五种现成设计中选择。", "可從五種現成設計中選擇。", "Chọn một trong năm kiểu thiết kế có sẵn."],
+        ["feature.links.desc"] = ["Add websites, documents and reference links to each work sample.", "Añade sitios web, documentos y enlaces de referencia a cada trabajo.", "Ajoutez sites, documents et liens utiles à chaque réalisation.", "Aggiungi siti, documenti e link utili a ogni lavoro.", "Adicione sites, documentos e links úteis a cada trabalho.", "업무 사례마다 웹사이트, 문서, 참고 자료 링크를 등록합니다.", "実績ごとにWebサイト、資料、関連リンクを登録できます。", "可为每个案例添加网站、文档和参考链接。", "可為每個案例加入網站、文件與參考連結。", "Thêm trang web, tài liệu và liên kết tham khảo cho từng công việc."],
+        ["shared.signin"] = ["CodeMaru sign-in", "Inicio de sesión de CodeMaru", "Connexion CodeMaru", "Accesso CodeMaru", "Login CodeMaru", "CodeMaru 공용 로그인", "CodeMaru共通ログイン", "CodeMaru 统一登录", "CodeMaru 共用登入", "Đăng nhập CodeMaru"],
+        ["signin.benefit"] = ["Sign in to connect every portfolio you create to your account.", "Inicia sesión para vincular a tu cuenta cada portafolio que crees.", "Connectez-vous pour associer chaque portfolio créé à votre compte.", "Accedi per collegare al tuo account ogni portfolio creato.", "Entre para vincular à sua conta cada portfólio criado.", "로그인하면 새 포트폴리오가 내 계정에 바로 연결됩니다.", "ログインすると、作成したポートフォリオがアカウントに連携されます。", "登录后，新建作品集会直接关联到你的账户。", "登入後，新建作品集會直接連結到你的帳戶。", "Đăng nhập để liên kết hồ sơ mới với tài khoản của bạn."],
+        ["password.minimum"] = ["At least 8 characters", "Al menos 8 caracteres", "8 caractères minimum", "Almeno 8 caratteri", "Pelo menos 8 caracteres", "8자 이상", "8文字以上", "至少 8 个字符", "至少 8 個字元", "Ít nhất 8 ký tự"],
+        ["after.create.prefix"] = ["After creation, edit work and career information at", "Después de crearlo, edita trabajos y trayectoria en", "Après création, modifiez les travaux et le parcours dans", "Dopo la creazione, modifica lavori e carriera in", "Após criar, edite trabalhos e carreira em", "생성 후", "作成後、", "创建后，可在", "建立後，可在", "Sau khi tạo, hãy chỉnh sửa công việc và kinh nghiệm tại"],
+        ["after.create.suffix"] = [".", ".", ".", ".", ".", "에서 업무 사례와 경력 정보를 편집할 수 있습니다.", "で実績と経歴を編集できます。", "编辑工作案例和职业资料。", "編輯工作案例與職涯資料。", "."],
+        ["mine.empty.prefix"] = ["No portfolio is connected to this account yet. To connect an existing one, open", "Aún no hay portafolios vinculados. Para vincular uno existente, abre", "Aucun portfolio n’est encore associé. Pour en associer un, ouvrez", "Nessun portfolio è ancora collegato. Per collegarne uno esistente, apri", "Nenhum portfólio está vinculado. Para vincular um existente, abra", "아직 이 계정에 연결된 포트폴리오가 없습니다. 기존 포트폴리오가 있다면", "このアカウントに連携されたポートフォリオはまだありません。既存のものを連携するには", "此账户尚未关联作品集。要关联已有作品集，请打开", "此帳戶尚未連結作品集。若要連結既有作品集，請開啟", "Chưa có hồ sơ nào liên kết với tài khoản. Để liên kết hồ sơ có sẵn, hãy mở"],
+        ["mine.empty.suffix"] = ["and enter its current password once.", "e introduce una vez su contraseña actual.", "et saisissez une fois son mot de passe actuel.", "e inserisci una volta la password attuale.", "e informe uma vez a senha atual.", "에서 기존 비밀번호를 한 번 입력해 연결하세요.", "を開き、現在のパスワードを一度入力してください。", "并输入一次当前密码。", "並輸入一次目前密碼。", "và nhập mật khẩu hiện tại một lần."],
+        ["manage.open"] = ["Open management →", "Abrir gestión →", "Ouvrir la gestion →", "Apri gestione →", "Abrir gestão →", "관리 열기 →", "管理を開く →", "打开管理 →", "開啟管理 →", "Mở quản lý →"],
+        ["powered.by"] = ["Powered by", "Creado con", "Propulsé par", "Realizzato con", "Criado com", "서비스 제공", "提供", "技术支持", "技術支援", "Vận hành bởi"],
+        ["status.url"] = ["❌ Enter a public address.", "❌ Introduce una dirección pública.", "❌ Saisissez une adresse publique.", "❌ Inserisci un indirizzo pubblico.", "❌ Informe um endereço público.", "❌ 공개 주소를 입력하세요.", "❌ 公開アドレスを入力してください。", "❌ 请输入公开地址。", "❌ 請輸入公開網址。", "❌ Nhập địa chỉ công khai."],
+        ["status.owner"] = ["❌ Enter a name or organization.", "❌ Introduce un nombre u organización.", "❌ Saisissez un nom ou une organisation.", "❌ Inserisci un nome o un’organizzazione.", "❌ Informe um nome ou organização.", "❌ 이름 또는 조직명을 입력하세요.", "❌ 氏名または組織名を入力してください。", "❌ 请输入姓名或组织名称。", "❌ 請輸入姓名或組織名稱。", "❌ Nhập tên hoặc tổ chức."],
+        ["status.password"] = ["❌ The password must contain at least 8 characters.", "❌ La contraseña debe tener al menos 8 caracteres.", "❌ Le mot de passe doit contenir au moins 8 caractères.", "❌ La password deve contenere almeno 8 caratteri.", "❌ A senha deve ter pelo menos 8 caracteres.", "❌ 비밀번호는 8자 이상이어야 합니다.", "❌ パスワードは8文字以上必要です。", "❌ 密码必须至少包含 8 个字符。", "❌ 密碼必須至少包含 8 個字元。", "❌ Mật khẩu phải có ít nhất 8 ký tự."],
+        ["status.slug.format"] = ["❌ Use up to 64 lowercase letters, numbers or hyphens for the public address.", "❌ Usa hasta 64 letras minúsculas, números o guiones para la dirección pública.", "❌ Utilisez au maximum 64 lettres minuscules, chiffres ou tirets pour l’adresse publique.", "❌ Usa fino a 64 lettere minuscole, numeri o trattini per l’indirizzo pubblico.", "❌ Use até 64 letras minúsculas, números ou hífens no endereço público.", "❌ 공개 주소는 64자 이하의 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.", "❌ 公開アドレスには64文字以内の英小文字・数字・ハイフンのみ使用できます。", "❌ 公开地址只能使用不超过 64 个小写字母、数字或连字符。", "❌ 公開網址只能使用不超過 64 個小寫英文字母、數字或連字號。", "❌ Địa chỉ công khai chỉ được dùng tối đa 64 chữ thường, số hoặc dấu gạch nối."],
+        ["status.create.busy"] = ["❌ Another portfolio is being created. Please wait a moment.", "❌ Se está creando otro portafolio. Espera un momento.", "❌ Un autre portfolio est en cours de création. Patientez un instant.", "❌ È in corso la creazione di un altro portfolio. Attendi un momento.", "❌ Outro portfólio está sendo criado. Aguarde um momento.", "❌ 다른 포트폴리오 생성이 진행 중입니다. 잠시만 기다려 주세요.", "❌ 別のポートフォリオを作成中です。しばらくお待ちください。", "❌ 正在创建其他作品集，请稍候。", "❌ 正在建立其他作品集，請稍候。", "❌ Một hồ sơ khác đang được tạo. Vui lòng đợi một chút."],
+        ["status.create.rate"] = ["❌ Too many creation requests. Try again in one hour.", "❌ Hay demasiadas solicitudes de creación. Inténtalo de nuevo en una hora.", "❌ Trop de demandes de création. Réessayez dans une heure.", "❌ Troppe richieste di creazione. Riprova tra un’ora.", "❌ Muitas solicitações de criação. Tente novamente em uma hora.", "❌ 생성 요청이 너무 많습니다. 한 시간 후 다시 시도해 주세요.", "❌ 作成リクエストが多すぎます。1時間後にもう一度お試しください。", "❌ 创建请求过多，请一小时后重试。", "❌ 建立要求過多，請一小時後再試。", "❌ Có quá nhiều yêu cầu tạo. Hãy thử lại sau một giờ."],
+        ["status.used"] = ["❌ This address is already in use.", "❌ Esta dirección ya está en uso.", "❌ Cette adresse est déjà utilisée.", "❌ Questo indirizzo è già in uso.", "❌ Este endereço já está em uso.", "❌ 이미 사용 중인 주소입니다.", "❌ このアドレスはすでに使用されています。", "❌ 此地址已被使用。", "❌ 此網址已被使用。", "❌ Địa chỉ này đã được sử dụng."],
+        ["status.created"] = ["✅ Portfolio created.", "✅ Portafolio creado.", "✅ Portfolio créé.", "✅ Portfolio creato.", "✅ Portfólio criado.", "✅ 포트폴리오가 생성되었습니다.", "✅ ポートフォリオを作成しました。", "✅ 作品集已创建。", "✅ 作品集已建立。", "✅ Đã tạo hồ sơ."]
+    };
+
+    private MarkupString HeroTitle => new(Text["hero.title"].Replace("\n", "<br />", StringComparison.Ordinal));
+
+    private string LocalizedStatusMessage => Vm.StatusMessage switch
+    {
+        "❌ URL 주소를 입력하세요." => Local("status.url"),
+        "❌ 이름을 입력하세요." => Local("status.owner"),
+        "❌ 비밀번호는 8자 이상이어야 합니다." => Local("status.password"),
+        "❌ URL 주소는 64자 이하의 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다." => Local("status.slug.format"),
+        "❌ 포트폴리오 생성이 진행 중입니다. 잠시만 기다려 주세요." => Local("status.create.busy"),
+        "❌ 생성 요청이 너무 많습니다. 한 시간 후 다시 시도해 주세요." => Local("status.create.rate"),
+        "❌ 이미 사용 중인 주소입니다." => Local("status.used"),
+        _ when Vm.StatusMessage.StartsWith("✅", StringComparison.Ordinal) => Local("status.created"),
+        _ => Vm.StatusMessage
+    };
+
+    private string LoginUrl => IdentityUrl("login");
+    private string AccountUrl => IdentityUrl("account");
+    private string SignoutUrl => IdentityUrl("signout");
     private string CurrentUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName)
         ? currentUser.Provider
         : $"{currentUser.DisplayName} ({currentUser.Provider})";
+
+    private string Local(string key)
+    {
+        if (!LocalTexts.TryGetValue(key, out string[]? values))
+        {
+            return key;
+        }
+
+        int index = Array.IndexOf(LanguageCodes, Text.Language);
+        return values[index < 0 ? 5 : index];
+    }
+
+    private string LocalizedPath(string path)
+    {
+        string separator = path.Contains('?') ? "&" : "?";
+        return $"{path}{separator}lang={Uri.EscapeDataString(Text.Language)}";
+    }
+
+    private string IdentityUrl(string action)
+    {
+        Uri current = Nav.ToAbsoluteUri(Nav.Uri);
+        return Dreamine.Identity.DreamineIdentityPortal.CreateUrl(action, current.AbsoluteUri, Text.Language);
+    }
 
     protected override void OnInitialized()
     {
@@ -269,7 +334,7 @@
     {
         var raw = e.Value?.ToString() ?? "";
         var clean = new string(raw.ToLowerInvariant()
-            .Select(c => char.IsLetterOrDigit(c) || c == '-' ? c : '-').ToArray())
+            .Select(c => (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-' ? c : '-').ToArray())
             .Trim('-');
         Vm.NewSlug = clean;
         slugPreview = string.IsNullOrWhiteSpace(clean) ? "" : $"{Nav.BaseUri}{clean}";

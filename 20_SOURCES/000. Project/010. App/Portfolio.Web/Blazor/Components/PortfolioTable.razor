@@ -1,0 +1,59 @@
+@namespace PortfolioApp.Blazor.Components
+
+<div class="pa-table-wrap">
+    @if (Items.Count == 0)
+    {
+        <div class="pa-empty"><i class="far fa-folder-open"></i><p>@Ui("표시할 포트폴리오가 없습니다.", "No portfolios to display.")</p></div>
+    }
+    else
+    {
+        <table class="pa-table">
+            <thead><tr><th>@Text["portfolio"]</th><th>@Text["owner.name"]</th><th>@Text["stat.projects"]</th><th>@Ui("홈 노출", "Featured")</th><th>@Ui("표시 순서", "Order")</th><th>@Ui("최근 생성", "Created")</th><th>@Text["admin"]</th></tr></thead>
+            <tbody>
+            @foreach (var item in Items)
+            {
+                int count = ProjectCounts.TryGetValue(item.Slug, out int value) ? value : 0;
+                <tr>
+                    <td><div class="pa-portfolio-cell"><span>@Initial(item)</span><div><strong>@item.Slug</strong><small>@(string.IsNullOrWhiteSpace(item.Title) ? item.OwnerName : item.Title)</small></div></div></td>
+                    <td>@item.OwnerName</td>
+                    <td><b class="pa-count-badge">@count</b></td>
+                    <td><label class="sa-toggle"><input type="checkbox" checked="@item.ShowOnHome" @onchange="e => ToggleAsync(item, e)" /><span class="sa-toggle__track"></span></label></td>
+                    <td><input class="sa-pin-input" type="number" min="0" value="@item.PinOrder" @onchange="e => OrderAsync(item, e)" /></td>
+                    <td><time>@item.CreatedAt.ToString("yyyy.MM.dd")</time></td>
+                    <td><div class="pa-row-actions"><a href="@PublicUrl(item)" target="_blank" title="@Text["public.page"]"><i class="far fa-eye"></i></a><a href="@AdminUrl(item)" target="_blank" title="@Text["admin"]"><i class="fas fa-ellipsis-vertical"></i></a>@if (!Compact) { <button @onclick="() => OnDelete.InvokeAsync(item.Slug)" title="@Text["delete"]"><i class="far fa-trash-can"></i></button> }</div></td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<PortfolioConfig> Items { get; set; } = [];
+    [Parameter, EditorRequired] public IReadOnlyDictionary<string, int> ProjectCounts { get; set; } = new Dictionary<string, int>();
+    [Parameter] public bool Compact { get; set; }
+    [Parameter, EditorRequired] public EventCallback<PortfolioConfig> OnSave { get; set; }
+    [Parameter, EditorRequired] public EventCallback<string> OnDelete { get; set; }
+    [Parameter, EditorRequired] public PortfolioLocalization Text { get; set; } = null!;
+
+    private async Task ToggleAsync(PortfolioConfig item, ChangeEventArgs args) { item.ShowOnHome = args.Value as bool? ?? false; await OnSave.InvokeAsync(item); }
+    private async Task OrderAsync(PortfolioConfig item, ChangeEventArgs args) { if (int.TryParse(args.Value?.ToString(), out int value)) { item.PinOrder = value; await OnSave.InvokeAsync(item); } }
+    private static string Initial(PortfolioConfig item) => string.IsNullOrWhiteSpace(item.OwnerName) ? "P" : item.OwnerName.Trim()[0].ToString();
+    private string PublicUrl(PortfolioConfig item) => $"/{Uri.EscapeDataString(item.Slug)}?lang={Uri.EscapeDataString(Text.Language)}";
+    private string AdminUrl(PortfolioConfig item) => $"/{Uri.EscapeDataString(item.Slug)}/admin?lang={Uri.EscapeDataString(Text.Language)}";
+    private string Ui(string korean, string english)
+    {
+        if (!UiTexts.TryGetValue(korean, out string[]? values)) return Text.Language == "ko" ? korean : english;
+        int index = Array.IndexOf(LanguageCodes, Text.Language);
+        return values[index < 0 ? 5 : index];
+    }
+
+    private static readonly string[] LanguageCodes = ["en", "es", "fr", "it", "pt", "ko", "ja", "zh-hans", "zh-hant", "vi"];
+    private static readonly IReadOnlyDictionary<string, string[]> UiTexts = new Dictionary<string, string[]>(StringComparer.Ordinal)
+    {
+        ["표시할 포트폴리오가 없습니다."] = ["No portfolios to display.", "No hay portafolios para mostrar.", "Aucun portfolio à afficher.", "Nessun portfolio da mostrare.", "Nenhum portfólio para exibir.", "표시할 포트폴리오가 없습니다.", "表示するポートフォリオがありません。", "没有可显示的作品集。", "沒有可顯示的作品集。", "Không có hồ sơ để hiển thị."],
+        ["홈 노출"] = ["Featured", "Destacado", "Mis en avant", "In evidenza", "Destaque", "홈 노출", "ホーム掲載", "首页展示", "首頁顯示", "Nổi bật"],
+        ["표시 순서"] = ["Order", "Orden", "Ordre", "Ordine", "Ordem", "표시 순서", "表示順", "展示顺序", "顯示順序", "Thứ tự"],
+        ["최근 생성"] = ["Created", "Creado", "Créé", "Creato", "Criado", "최근 생성", "作成日", "创建日期", "建立日期", "Ngày tạo"]
+    };
+}

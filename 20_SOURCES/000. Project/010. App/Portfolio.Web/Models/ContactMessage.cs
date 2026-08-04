@@ -1,3 +1,5 @@
+using System.Net.Mail;
+
 namespace PortfolioApp.Models;
 
 /// <summary>
@@ -10,6 +12,10 @@ namespace PortfolioApp.Models;
 /// </summary>
 public class ContactMessage
 {
+    public const int MaxSenderNameLength = 100;
+    public const int MaxEmailLength = 254;
+    public const int MaxMessageLength = 4000;
+
     /// <summary>
     /// \if KO
     /// <para>Id 값을 가져오거나 설정합니다.</para>
@@ -64,4 +70,44 @@ public class ContactMessage
     /// \endif
     /// </summary>
     public bool IsRead { get; set; } = false;
+
+    /// <summary>Normalizes and validates untrusted public contact input before persistence.</summary>
+    public bool TryNormalizeForStorage(out string validationError)
+    {
+        SenderName = (SenderName ?? string.Empty).Trim();
+        Email = (Email ?? string.Empty).Trim();
+        Message = (Message ?? string.Empty).Trim();
+
+        if (SenderName.Length == 0)
+        {
+            validationError = "name.required";
+            return false;
+        }
+
+        if (Message.Length == 0)
+        {
+            validationError = "message.required";
+            return false;
+        }
+
+        if (SenderName.Length > MaxSenderNameLength ||
+            Email.Length > MaxEmailLength ||
+            Message.Length > MaxMessageLength)
+        {
+            validationError = "input.tooLong";
+            return false;
+        }
+
+        if (SenderName.Any(char.IsControl) ||
+            Email.Contains('\r') ||
+            Email.Contains('\n') ||
+            (!string.IsNullOrEmpty(Email) && !MailAddress.TryCreate(Email, out _)))
+        {
+            validationError = "input.invalid";
+            return false;
+        }
+
+        validationError = string.Empty;
+        return true;
+    }
 }

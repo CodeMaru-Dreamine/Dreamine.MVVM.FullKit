@@ -80,10 +80,10 @@ public sealed class FamilyConfig
     public bool IsPublished { get; set; } = true;
     /// <summary>
     /// \if KO
-    /// <para>Show On Home 값을 가져오거나 설정합니다.</para>
+    /// <para>Families 홈 노출 및 공개 열람 여부를 가져오거나 설정합니다.</para>
     /// \endif
     /// \if EN
-    /// <para>Gets or sets the show on home value.</para>
+    /// <para>Gets or sets whether the album is listed on Families home and publicly readable.</para>
     /// \endif
     /// </summary>
     public bool ShowOnHome { get; set; } = false;

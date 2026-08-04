@@ -1,17 +1,29 @@
 {
   "Id": "p04",
   "Title": "Dreamine",
-  "Description": "C# WPF MVVM 기반 프레임워크(Generator/DI/Navigation).",
-  "Tags": [ "C#", "WPF", "MVVM", "Framework" ],
+  "Description": "C# WPF MVVM \uAE30\uBC18 \uD504\uB808\uC784\uC6CC\uD06C(Generator/DI/Navigation).",
+  "Tags": [
+    "C#",
+    "WPF",
+    "MVVM",
+    "Framework"
+  ],
   "Year": 2025,
-  "Emoji": "💠",
-  "ImageFileName": "/portfolio-data/msjang/media/_cover/Dreamine_1200x630.png",
+  "Emoji": "\uD83D\uDCA0",
+  "ImageFileName": "dc2de150272748278367471215db37c9.png",
   "GitHub": "https://github.com/CodeMaru-Dreamine",
   "LiveUrl": null,
-  "DocUrl": null,
+  "DocUrl": "https://dreamine.kr/",
   "Category": "Personal",
   "SortOrder": 4,
-  "WorkImages": [],
+  "ImageBlurLevel": 0,
+  "VideoFileNames": [
+    "vid_5f19b4419d0c4c398015a9f32420d18b.mp4",
+    "https://youtu.be/lZupP7m0i1o?si=QKS6yaIF0eLfWiEI"
+  ],
+  "WorkImages": [
+    "dc2de150272748278367471215db37c9.png"
+  ],
   "WorkSubtitle": null,
   "WorkBullets": [],
   "WorkPeriod": null,

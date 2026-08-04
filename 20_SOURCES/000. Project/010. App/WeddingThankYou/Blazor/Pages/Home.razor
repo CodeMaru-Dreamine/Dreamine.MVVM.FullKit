@@ -278,7 +278,7 @@
         new("contact", Text["contact"], WithLanguage("https://codemaru.co.kr/contact"))
     ];
     private string IdentityUrl(string action) =>
-        $"https://codemaru.co.kr/_identity/{action}?lang={Uri.EscapeDataString(Text.Language)}&returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+        Dreamine.Identity.DreamineIdentityPortal.CreateUrl(action, Nav.Uri, Text.Language);
     private string CurrentUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName)
         ? currentUser.Provider
         : $"{currentUser.DisplayName} ({currentUser.Provider})";

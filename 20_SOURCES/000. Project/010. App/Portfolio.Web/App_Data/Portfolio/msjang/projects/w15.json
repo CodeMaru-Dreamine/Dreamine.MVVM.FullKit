@@ -1,25 +1,38 @@
 {
   "Id": "w15",
-  "Title": "Inline Aging System 통계 프로그램",
-  "Description": "Aging 공정 데이터의 저장·조회·보고 체계를 정비하고 CIM 연계 가능성을 검토.",
-  "Tags": [],
+  "Title": "Inline Aging System \uD1B5\uACC4 \uD504\uB85C\uADF8\uB7A8",
+  "Description": "Aging \uACF5\uC815 \uB370\uC774\uD130\uC758 \uC800\uC7A5\u00B7\uC870\uD68C\u00B7\uBCF4\uACE0 \uCCB4\uACC4\uB97C \uC815\uBE44\uD558\uACE0 CIM \uC5F0\uACC4 \uAC00\uB2A5\uC131\uC744 \uAC80\uD1A0.",
+  "Tags": [
+    "C\u002B\u002B",
+    "MFC",
+    "MySQL",
+    "SECS/GEM",
+    "CIM Integration",
+    "Aging Process",
+    "Production Statistics",
+    "Industrial Automation"
+  ],
   "Year": 2017,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "d6ebe0d94a69475d95158aec3f336626.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 15,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
-  "WorkSubtitle": "Aging 생산 데이터 통계·조회 + CIM 연계 검토",
-  "WorkBullets": [
-      "Aging 장비 생산 데이터 통계 및 CIM 연계를 위한 MFC 기반 UI",
-      "MySQL 연동으로 장비별 Slot 데이터(대략 32~64 Slot) 저장·조회 구현",
-      "SECS/GEM(X-COM) 인터페이스 테스트 및 메시지 송수신 흐름 검토"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "d6ebe0d94a69475d95158aec3f336626.png"
   ],
-  "WorkPeriod": "기간 내 일부 단계 참여",
-  "WorkRole": "MFC UI · 저장 포맷/리포트/이력 정비 · 메시지 흐름 검토",
+  "WorkSubtitle": "Aging \uC0DD\uC0B0 \uB370\uC774\uD130 \uD1B5\uACC4\u00B7\uC870\uD68C \u002B CIM \uC5F0\uACC4 \uAC80\uD1A0",
+  "WorkBullets": [
+    "Aging \uC7A5\uBE44 \uC0DD\uC0B0 \uB370\uC774\uD130 \uD1B5\uACC4 \uBC0F CIM \uC5F0\uACC4\uB97C \uC704\uD55C MFC \uAE30\uBC18 UI",
+    "MySQL \uC5F0\uB3D9\uC73C\uB85C \uC7A5\uBE44\uBCC4 Slot \uB370\uC774\uD130(\uB300\uB7B5 32~64 Slot) \uC800\uC7A5\u00B7\uC870\uD68C \uAD6C\uD604",
+    "SECS/GEM(X-COM) \uC778\uD130\uD398\uC774\uC2A4 \uD14C\uC2A4\uD2B8 \uBC0F \uBA54\uC2DC\uC9C0 \uC1A1\uC218\uC2E0 \uD750\uB984 \uAC80\uD1A0"
+  ],
+  "WorkPeriod": "\uAE30\uAC04 \uB0B4 \uC77C\uBD80 \uB2E8\uACC4 \uCC38\uC5EC",
+  "WorkRole": "MFC UI \u00B7 \uC800\uC7A5 \uD3EC\uB9F7/\uB9AC\uD3EC\uD2B8/\uC774\uB825 \uC815\uBE44 \u00B7 \uBA54\uC2DC\uC9C0 \uD750\uB984 \uAC80\uD1A0",
   "WorkTech": "VS2008 MFC, MySQL, SECS/GEM(X-COM)",
-  "WorkCompany": "㈜제이이노텍 / 중국 (B社)"
+  "WorkCompany": "\u321C\uC81C\uC774\uC774\uB178\uD14D / \uC911\uAD6D (B\u793E)"
 }

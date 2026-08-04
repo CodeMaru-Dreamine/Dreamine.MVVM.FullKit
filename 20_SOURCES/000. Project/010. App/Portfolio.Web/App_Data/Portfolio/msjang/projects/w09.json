@@ -1,26 +1,39 @@
 {
   "Id": "w09",
-  "Title": "DB 모니터링 · 작업지시(PLC 실시간) 프로그램",
-  "Description": "상위 설계자 요구에 맞추되, 구현/테스트/현장 대응 대부분 단독 처리.",
-  "Tags": [],
+  "Title": "DB \uBAA8\uB2C8\uD130\uB9C1 \u00B7 \uC791\uC5C5\uC9C0\uC2DC(PLC \uC2E4\uC2DC\uAC04) \uD504\uB85C\uADF8\uB7A8",
+  "Description": "\uC0C1\uC704 \uC124\uACC4\uC790 \uC694\uAD6C\uC5D0 \uB9DE\uCD94\uB418, \uAD6C\uD604/\uD14C\uC2A4\uD2B8/\uD604\uC7A5 \uB300\uC751 \uB300\uBD80\uBD84 \uB2E8\uB3C5 \uCC98\uB9AC.",
+  "Tags": [
+    "C#",
+    "WPF",
+    "PLC Communication",
+    "Work Order Management",
+    "Real-time Monitoring",
+    "Barcode",
+    "HMI",
+    "Industrial Automation"
+  ],
   "Year": 2023,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "2b79c2a3cc634d1d8eed1e1da2b39e2f.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 9,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/Humin1.png" ],
-  "WorkSubtitle": "MELSEC-Q/Omron PLC 실시간 연동 + 작업지시 편집",
-  "WorkBullets": [
-      "PLC 실시간 통신 및 현장 대응 중심 구현",
-      "Humintech 프로토콜 기반 작업지시 편집기(좌표/속성 편집·검증)",
-      "텍스트/음성(TTS) 알림, Barcode 연동",
-      "MES 연동 없이 오프라인 편집 가능, Material/Tool 상태 표시"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "2b79c2a3cc634d1d8eed1e1da2b39e2f.png"
   ],
-  "WorkPeriod": "개발·테스트·셋업",
-  "WorkRole": "현장 대응 중심 단독 구현",
-  "WorkTech": "C#, WPF(WinForms 스타일), MELSEC-Q, Omron PLC, TTS",
-  "WorkCompany": "㈜휴민로보틱스 / L社"
+  "WorkSubtitle": "MELSEC-Q/Omron PLC \uC2E4\uC2DC\uAC04 \uC5F0\uB3D9 \u002B \uC791\uC5C5\uC9C0\uC2DC \uD3B8\uC9D1",
+  "WorkBullets": [
+    "PLC \uC2E4\uC2DC\uAC04 \uD1B5\uC2E0 \uBC0F \uD604\uC7A5 \uB300\uC751 \uC911\uC2EC \uAD6C\uD604",
+    "Humintech \uD504\uB85C\uD1A0\uCF5C \uAE30\uBC18 \uC791\uC5C5\uC9C0\uC2DC \uD3B8\uC9D1\uAE30(\uC88C\uD45C/\uC18D\uC131 \uD3B8\uC9D1\u00B7\uAC80\uC99D)",
+    "\uD14D\uC2A4\uD2B8/\uC74C\uC131(TTS) \uC54C\uB9BC, Barcode \uC5F0\uB3D9",
+    "MES \uC5F0\uB3D9 \uC5C6\uC774 \uC624\uD504\uB77C\uC778 \uD3B8\uC9D1 \uAC00\uB2A5, Material/Tool \uC0C1\uD0DC \uD45C\uC2DC"
+  ],
+  "WorkPeriod": "\uAC1C\uBC1C\u00B7\uD14C\uC2A4\uD2B8\u00B7\uC14B\uC5C5",
+  "WorkRole": "\uD604\uC7A5 \uB300\uC751 \uC911\uC2EC \uB2E8\uB3C5 \uAD6C\uD604",
+  "WorkTech": "C#, WPF(WinForms \uC2A4\uD0C0\uC77C), MELSEC-Q, Omron PLC, TTS",
+  "WorkCompany": "\u321C\uD734\uBBFC\uB85C\uBCF4\uD2F1\uC2A4 / L\u793E"
 }

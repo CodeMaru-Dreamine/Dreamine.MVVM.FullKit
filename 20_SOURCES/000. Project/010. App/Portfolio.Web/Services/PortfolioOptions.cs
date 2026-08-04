@@ -32,6 +32,12 @@ public class PortfolioOptions
     /// </summary>
     public string SuperAdminPassword { get; set; } = string.Empty;
 
+    /// <summary>Maximum media bytes stored for one portfolio tenant.</summary>
+    public long MaxTenantMediaBytes { get; set; } = 1024L * 1024 * 1024;
+
+    /// <summary>Maximum number of uploaded video files stored for one tenant.</summary>
+    public int MaxTenantVideoCount { get; set; } = 50;
+
     /// <summary>
     /// \if KO
     /// <para>Resolved Data Path 값을 가져옵니다.</para>

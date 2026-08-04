@@ -192,6 +192,12 @@ public class JsonContactStore : IContactStore
     /// </returns>
     public async Task SaveAsync(string slug, ContactMessage msg)
     {
+        ArgumentNullException.ThrowIfNull(msg);
+        if (!msg.TryNormalizeForStorage(out string validationError))
+        {
+            throw new ArgumentException($"Invalid contact message: {validationError}", nameof(msg));
+        }
+
         Directory.CreateDirectory(Dir(slug));
         var json = JsonSerializer.Serialize(msg, _json);
         await File.WriteAllTextAsync(Path_(slug, msg.Id), json);

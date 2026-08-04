@@ -1,26 +1,44 @@
 {
   "Id": "w03",
   "Title": "VSMCS",
-  "Description": "다종 장비 상태 수집·통합·상위 보고(CIM) 시스템.",
-  "Tags": [],
+  "Description": "\uB2E4\uC911 \uC7A5\uBE44\uC758 \uC0C1\uD0DC, \uC54C\uB78C, \uACF5\uC815 \uC815\uBCF4\uB97C \uC2E4\uC2DC\uAC04\uC73C\uB85C \uC218\uC9D1\uD558\uACE0 \uC0C1\uC704 CIM\uC73C\uB85C \uBCF4\uACE0\uD558\uB294 WPF \uAE30\uBC18 \uC7A5\uBE44 \uBAA8\uB2C8\uD130\uB9C1 \uC2DC\uC2A4\uD15C\uC785\uB2C8\uB2E4.\n\nLoader, Unloader, Buffer, Plasma, OHT \uB4F1 \uC5EC\uB7EC \uC7A5\uBE44\uC758 \uD1B5\uC2E0 \uC0C1\uD0DC\uC640 \uC9C4\uD589 \uC815\uBCF4\uB97C \uD1B5\uD569 \uAD00\uB9AC\uD558\uBA70, VSFrameWork Libs\uB97C \uD65C\uC6A9\uD574 Serial, Thread, Sync \uAE30\uBC18\uC758 \uC218\uC9D1 \uAD6C\uC870\uB97C \uAD6C\uC131\uD588\uC2B5\uB2C8\uB2E4.",
+  "Tags": [
+    "C#",
+    "WPF",
+    "MVVM",
+    "VSFrameWork Libs",
+    "Serial",
+    "Thread",
+    "Sync",
+    "TCP/IP",
+    "CIM"
+  ],
   "Year": 2024,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "d280e997656e4fa4a5fe2a80492bab03.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 3,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/VsMcs.png" ],
-  "WorkSubtitle": "다종 장비 상태 수집·통합·상위 보고(CIM) 시스템",
-  "WorkBullets": [
-      "로더/오븐(8)/플라즈마(2)/버퍼/언로더/S-OHT 상태 수집",
-      "시퀀스 흐름에 맞춘 단일 보고 포맷으로 상위 CIM 전송",
-      "Polling/타이밍 동기화/이벤트 전파 구조 구현",
-      "단일 UI에서 전체 실시간 모니터링·알람 대응"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "d280e997656e4fa4a5fe2a80492bab03.png"
   ],
-  "WorkPeriod": "프로젝트 수행",
-  "WorkRole": "기획 → 개발 → 현장 세팅 단독 수행",
+  "WorkSubtitle": "\uB2E4\uC885 \uC7A5\uBE44 \uC0C1\uD0DC \uC218\uC9D1\u00B7\uD1B5\uD569\u00B7\uC0C1\uC704 \uBCF4\uACE0(CIM) \uC2DC\uC2A4\uD15C",
+  "WorkBullets": [
+    "Loader, Unloader, Buffer, Plasma, OHT \uB4F1 \uB2E4\uC911 \uC7A5\uBE44 \uC0C1\uD0DC \uC218\uC9D1 \uAD6C\uC870 \uAD6C\uD604",
+    "\uC7A5\uBE44\uBCC4 \uD1B5\uC2E0 \uC0C1\uD0DC, \uACF5\uC815 \uC0C1\uD0DC, \uC54C\uB78C \uC815\uBCF4\uB97C \uD1B5\uD569 \uBAA8\uB2C8\uD130\uB9C1 UI\uB85C \uAD6C\uC131",
+    "\uC2DC\uD000\uC2A4 \uD750\uB984\uC5D0 \uB9DE\uCD98 \uC54C\uB78C \uBC0F \uBCF4\uACE0 \uD3EC\uB9F7 \uAD6C\uC131",
+    "\uC0C1\uC704 CIM \uC804\uC1A1\uC744 \uC704\uD55C \uC0C1\uD0DC/\uC774\uBCA4\uD2B8 \uB370\uC774\uD130 \uB9E4\uD551 \uAD6C\uC870 \uAD6C\uD604",
+    "Polling, Timer, Event \uAE30\uBC18 \uB3D9\uAE30\uD654 \uBC0F \uC0C1\uD0DC \uAC31\uC2E0 \uAD6C\uC870 \uC124\uACC4",
+    "VSFrameWork Libs \uAE30\uBC18 Serial, Thread, Sync \uACF5\uD1B5 \uBAA8\uB4C8 \uC801\uC6A9",
+    "\uB2E8\uC77C UI\uC5D0\uC11C \uC804\uCCB4 \uC7A5\uBE44\uC758 \uC2E4\uC2DC\uAC04 \uC0C1\uD0DC \uD655\uC778 \uBC0F \uC54C\uB78C \uB300\uC751 \uAC00\uB2A5\uD558\uB3C4\uB85D \uAD6C\uC131",
+    "\uD604\uC7A5 \uC14B\uC5C5, \uD14C\uC2A4\uD2B8, \uC6B4\uC601 \uC548\uC815\uD654\uAE4C\uC9C0 \uB2E8\uB3C5 \uC218\uD589"
+  ],
+  "WorkPeriod": "2024",
+  "WorkRole": "\uAE30\uD68D \u2192 \uAC1C\uBC1C \u2192 \uD604\uC7A5 \uC138\uD305 \uB2E8\uB3C5 \uC218\uD589",
   "WorkTech": "C#, WPF, MVVM, VSFrameWork Libs(Serial/Thread/Sync)",
-  "WorkCompany": "중국 J社"
+  "WorkCompany": "Vision Semicon / \uC911\uAD6D J\u793E"
 }

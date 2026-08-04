@@ -2,91 +2,102 @@
 @namespace PortfolioApp.Blazor.Layout
 @implements IDisposable
 @inject PortfolioUserContext UserContext
+@inject PortfolioLocalization Text
 @inject NavigationManager Nav
 
-<header class="pf-topnav">
-    <a class="pf-topnav__brand" href="https://codemaru.co.kr">
-        <img class="pf-topnav__mark" src="/img/Codemaru_Bloom.jpg" alt="" />
-        <span>CodeMaru</span>
-    </a>
-    <nav id="pfTopnavMenu" class="pf-topnav__links @(isNavOpen ? "open" : null)" aria-label="CodeMaru 서비스">
-        <a href="https://codemaru.co.kr">Home</a>
-        <a href="https://dreamine.kr/" target="_blank" rel="noopener">Dreamine</a>
-        <a href="https://codemaru.co.kr/cardhybrid">CardHybrid</a>
-        <a href="https://wedding.codemaru.co.kr">Wedding</a>
-        <a href="https://thankyou.codemaru.co.kr/">ThankYou</a>
-        <a href="https://families.codemaru.co.kr">Families</a>
-        <a href="https://portfolio.codemaru.co.kr/" class="active" aria-current="page">Portfolio</a>
-        <a href="https://cctvviewer.codemaru.co.kr">CCTV</a>
-        <a href="https://shop.codemaru.co.kr/">ShopStore</a>
-        <a href="https://codemaru.co.kr/contact">Contact</a>
-        @if (!hasLoadedCurrentUser)
-        {
-            <span class="pf-topnav__auth pf-topnav__auth--pending" aria-hidden="true"></span>
-        }
-        else if (currentUser.IsAuthenticated)
-        {
-            <a class="pf-topnav__auth" href="@AccountUrl">@NavUserLabel</a>
-            <a class="pf-topnav__auth" href="@SignoutUrl">로그아웃</a>
-        }
-        else
-        {
-            <a class="pf-topnav__auth" href="@LoginUrl">로그인</a>
-        }
-    </nav>
-    <button class="pf-topnav__burger"
-            type="button"
-            @onclick="ToggleNav"
-            aria-label="메뉴 열기/닫기"
-            aria-expanded="@isNavOpen"
-            aria-controls="pfTopnavMenu">
-        <span></span><span></span><span></span>
-    </button>
-</header>
+<div class="pf-portal-shell">
+    <DreaminePortalHeader BrandName="CodeMaru"
+                          BrandUrl="@CodeMaruHomeUrl"
+                          BrandImageUrl="/img/Codemaru_Bloom.jpg"
+                          BrandLightImageUrl="/img/Codemaru%20Bloom%20Light.jpg"
+                          BrandImageAlt=""
+                          Items="@PortalItems"
+                          ActiveKey="portfolio"
+                          NavigationAriaLabel="CodeMaru services"
+                          ToggleMenuLabel="@Text["nav.toggle"]"
+                          UseCodeMaruAppearance="true"
+                          Fixed="true"
+                          IsAuthenticated="@currentUser.IsAuthenticated"
+                          DisplayName="@NavUserLabel"
+                          ScreenSettingsLabel="@Text["screen.settings"]"
+                          LoginUrl="@LoginUrl"
+                          LoginLabel="@Text["login"]"
+                          AccountUrl="@AccountUrl"
+                          AccountLabel="@Text["account"]"
+                          SignoutUrl="@SignoutUrl"
+                          SignoutLabel="@Text["logout"]">
+        <Preferences>
+            <PortfolioPreferences />
+        </Preferences>
+        <AdditionalUserActions>
+            <a href="@LocalizedPath("/guide")"><span aria-hidden="true">?</span> @Text["guide"]</a>
+            @if (currentUser.IsAuthenticated)
+            {
+                <a href="@LocalizedPath("/admin")"><span aria-hidden="true">⌁</span> @Text["admin"]</a>
+            }
+        </AdditionalUserActions>
+    </DreaminePortalHeader>
 
-<div id="main-content" tabindex="-1">
-    @Body
+    <div id="main-content" tabindex="-1">
+        @Body
+    </div>
 </div>
 
 @code {
     private PortfolioCurrentUser currentUser = PortfolioCurrentUser.Anonymous;
-    private bool hasLoadedCurrentUser;
-    private bool isNavOpen;
 
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string AccountUrl => $"https://codemaru.co.kr/_identity/account?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string SignoutUrl => $"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string NavUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? "내 계정" : currentUser.DisplayName;
+    private string LoginUrl => IdentityUrl("login");
+    private string AccountUrl => IdentityUrl("account");
+    private string SignoutUrl => IdentityUrl("signout");
+    private string NavUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? Text["account"] : currentUser.DisplayName;
+    private string CodeMaruHomeUrl => LocalizedUrl("https://codemaru.co.kr");
+
+    private IReadOnlyList<DreaminePortalNavigationItem> PortalItems =>
+    [
+        new("home", Text["home"], CodeMaruHomeUrl),
+        new("dreamine", "Dreamine", "https://dreamine.kr/", OpenInNewWindow: true),
+        new("cardhybrid", "CardHybrid", LocalizedUrl("https://codemaru.co.kr/cardhybrid")),
+        new("wedding", "Wedding", LocalizedUrl("https://wedding.codemaru.co.kr")),
+        new("thankyou", "ThankYou", LocalizedUrl("https://thankyou.codemaru.co.kr/")),
+        new("families", "Families", LocalizedUrl("https://families.codemaru.co.kr")),
+        new("portfolio", "Portfolio", LocalizedUrl("https://portfolio.codemaru.co.kr/")),
+        new("cctv", "CCTV", LocalizedUrl("https://cctvviewer.codemaru.co.kr")),
+        new("shop", "ShopStore", LocalizedUrl("https://shop.codemaru.co.kr/")),
+        new("contact", Text["contact"], LocalizedUrl("https://codemaru.co.kr/contact"))
+    ];
 
     protected override void OnInitialized()
     {
-        Nav.LocationChanged += OnLocationChanged;
+        Text.Changed += HandleLanguageChanged;
+        Nav.LocationChanged += HandleLocationChanged;
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync() => currentUser = await UserContext.GetCurrentAsync();
+
+    private string LocalizedPath(string path)
     {
-        currentUser = await UserContext.GetCurrentAsync();
-        hasLoadedCurrentUser = true;
+        char separator = path.Contains('?') ? '&' : '?';
+        return $"{path}{separator}lang={Uri.EscapeDataString(Text.Language)}";
     }
 
-    private void ToggleNav()
+    private string LocalizedUrl(string url)
     {
-        isNavOpen = !isNavOpen;
+        char separator = url.Contains('?') ? '&' : '?';
+        return $"{url}{separator}lang={Uri.EscapeDataString(Text.Language)}";
     }
 
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    private string IdentityUrl(string action)
     {
-        if (!isNavOpen)
-        {
-            return;
-        }
-
-        isNavOpen = false;
-        _ = InvokeAsync(StateHasChanged);
+        Uri current = Nav.ToAbsoluteUri(Nav.Uri);
+        return Dreamine.Identity.DreamineIdentityPortal.CreateUrl(action, current.AbsoluteUri, Text.Language);
     }
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args) => _ = InvokeAsync(StateHasChanged);
 
     public void Dispose()
     {
-        Nav.LocationChanged -= OnLocationChanged;
+        Text.Changed -= HandleLanguageChanged;
+        Nav.LocationChanged -= HandleLocationChanged;
     }
 }

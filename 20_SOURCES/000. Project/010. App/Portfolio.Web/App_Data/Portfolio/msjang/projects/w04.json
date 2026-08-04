@@ -1,27 +1,45 @@
 {
   "Id": "w04",
   "Title": "Conveyor Management System (CMS)",
-  "Description": "중국 S社 납품 CMS. DB 스키마/통신 구조 설계와 PLC·SECS/GEM 연동, 현장 세팅 지원.",
-  "Tags": [],
+  "Description": "\uC911\uAD6D S\u793E \uB0A9\uD488 CMS. DB \uC2A4\uD0A4\uB9C8/\uD1B5\uC2E0 \uAD6C\uC870 \uC124\uACC4\uC640 PLC\u00B7SECS/GEM \uC5F0\uB3D9, \uD604\uC7A5 \uC138\uD305 \uC9C0\uC6D0.",
+  "Tags": [
+    "C#",
+    "WinForms",
+    "Node.js",
+    "Oracle",
+    "PLC Communication",
+    "SECS/GEM",
+    "X-COM",
+    "CMS",
+    "Factory Automation",
+    "Equipment Control",
+    "CIM Integration",
+    "Backend",
+    "Field Setup"
+  ],
   "Year": 2023,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "76ca6d9eccc84579912bc0b7a41403df.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 4,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/CMS.png" ],
-  "WorkSubtitle": "장비 운영 데이터/연동을 위한 백엔드·통신 설계",
-  "WorkBullets": [
-      "Oracle DB 초기 세팅 및 장비 운영 데이터 테이블 구성",
-      "CIM 서버 연동을 위한 기본 통신 구조/시그널 매핑 설계 및 연계 지원",
-      "PLC-PC 통신 연동, 구간별 테스트 및 데이터 교환 포맷 준수",
-      "SECS/GEM(X-COM) 기반 메시지 흐름 파악 및 전달 구조 보조",
-      "프런트엔드(Node.js)는 별도 인력 담당, 로그인/캘린더 등 일부 세팅 대응"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "76ca6d9eccc84579912bc0b7a41403df.png"
   ],
-  "WorkPeriod": "2023.05 ~ 2023.11 (7개월)",
-  "WorkRole": "백엔드/DB·통신 구조 설계 및 현장 대응",
-  "WorkTech": "Oracle, C#, PLC 통신, SECS/GEM(X-COM), Node.js",
-  "WorkCompany": "제이이노텍 (SI·임시직/프리랜서)"
+  "WorkSubtitle": "\uC7A5\uBE44 \uC6B4\uC601 \uB370\uC774\uD130/\uC5F0\uB3D9\uC744 \uC704\uD55C \uBC31\uC5D4\uB4DC\u00B7\uD1B5\uC2E0 \uC124\uACC4",
+  "WorkBullets": [
+    "Oracle DB \uCD08\uAE30 \uC138\uD305 \uBC0F \uC7A5\uBE44 \uC6B4\uC601 \uB370\uC774\uD130 \uD14C\uC774\uBE14 \uAD6C\uC131",
+    "CIM \uC11C\uBC84 \uC5F0\uB3D9\uC744 \uC704\uD55C \uAE30\uBCF8 \uD1B5\uC2E0 \uAD6C\uC870/\uC2DC\uADF8\uB110 \uB9E4\uD551 \uC124\uACC4 \uBC0F \uC5F0\uACC4 \uC9C0\uC6D0",
+    "PLC-PC \uD1B5\uC2E0 \uC5F0\uB3D9, \uAD6C\uAC04\uBCC4 \uD14C\uC2A4\uD2B8 \uBC0F \uB370\uC774\uD130 \uAD50\uD658 \uD3EC\uB9F7 \uC900\uC218",
+    "SECS/GEM(X-COM) \uAE30\uBC18 \uBA54\uC2DC\uC9C0 \uD750\uB984 \uD30C\uC545 \uBC0F \uC804\uB2EC \uAD6C\uC870 \uBCF4\uC870",
+    "\uD504\uB7F0\uD2B8\uC5D4\uB4DC(Node.js)\uB294 \uBCC4\uB3C4 \uC778\uB825 \uB2F4\uB2F9, \uB85C\uADF8\uC778/\uCE98\uB9B0\uB354 \uB4F1 \uC77C\uBD80 \uC138\uD305 \uB300\uC751"
+  ],
+  "WorkPeriod": "2023.05 ~ 2023.11 (7\uAC1C\uC6D4)",
+  "WorkRole": "\uBC31\uC5D4\uB4DC/DB\u00B7\uD1B5\uC2E0 \uAD6C\uC870 \uC124\uACC4 \uBC0F \uD604\uC7A5 \uB300\uC751",
+  "WorkTech": "Oracle, C#, PLC \uD1B5\uC2E0, SECS/GEM(X-COM), Node.js",
+  "WorkCompany": "\uC81C\uC774\uC774\uB178\uD14D (SI\u00B7\uC784\uC2DC\uC9C1/\uD504\uB9AC\uB79C\uC11C)"
 }

@@ -928,7 +928,7 @@
 @code {
     [Parameter] public string Slug { get; set; } = "";
 
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string LoginUrl => Dreamine.Identity.DreamineIdentityPortal.CreateUrl("login", Nav.Uri);
 
     private string _selected = "basic";
     private bool _navOpen;

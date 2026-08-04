@@ -1,26 +1,40 @@
 {
   "Id": "w02",
   "Title": "VSFrameWork",
-  "Description": "비전세미콘 공통 C# 프레임워크(아키텍처/라이브러리 주도).",
-  "Tags": [],
+  "Description": "\uBE44\uC804\uC138\uBBF8\uCF58 \uACF5\uD1B5 C# \uD504\uB808\uC784\uC6CC\uD06C(\uC544\uD0A4\uD14D\uCC98/\uB77C\uC774\uBE0C\uB7EC\uB9AC \uC8FC\uB3C4).",
+  "Tags": [
+    "C#",
+    "WPF",
+    "MVVM",
+    "Automation UI",
+    "Equipment Software",
+    "Framework",
+    "Architecture",
+    "Recipe",
+    "Monitoring"
+  ],
   "Year": 2025,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "f951bffe266747d485ea3ab152c60122.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 2,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/VSFrameWork.png" ],
-  "WorkSubtitle": "비전세미콘 공통 C# 프레임워크(아키텍처/라이브러리 주도)",
-  "WorkBullets": [
-      "MVVM 구조: ViewModel 자동 생성, UI/로직 분리",
-      "Thread/Serial/Socket/Sync/Log 공용 모듈화(재사용성·유지보수성 향상)",
-      "WPF/WinForms/Blazor에서 동일 ViewModel 구조 재활용",
-      "Doxygen 기반 기술 가이드(HTML) 정리"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "f951bffe266747d485ea3ab152c60122.png"
   ],
-  "WorkPeriod": "장기 내부 프로젝트",
-  "WorkRole": "아키텍처 설계 · 라이브러리 모듈화 주도",
+  "WorkSubtitle": "\uBE44\uC804\uC138\uBBF8\uCF58 \uACF5\uD1B5 C# \uD504\uB808\uC784\uC6CC\uD06C(\uC544\uD0A4\uD14D\uCC98/\uB77C\uC774\uBE0C\uB7EC\uB9AC \uC8FC\uB3C4)",
+  "WorkBullets": [
+    "MVVM \uAD6C\uC870: ViewModel \uC790\uB3D9 \uC0DD\uC131, UI/\uB85C\uC9C1 \uBD84\uB9AC",
+    "Thread/Serial/Socket/Sync/Log \uACF5\uC6A9 \uBAA8\uB4C8\uD654(\uC7AC\uC0AC\uC6A9\uC131\u00B7\uC720\uC9C0\uBCF4\uC218\uC131 \uD5A5\uC0C1)",
+    "WPF/WinForms/Blazor\uC5D0\uC11C \uB3D9\uC77C ViewModel \uAD6C\uC870 \uC7AC\uD65C\uC6A9",
+    "Doxygen \uAE30\uBC18 \uAE30\uC220 \uAC00\uC774\uB4DC(HTML) \uC815\uB9AC"
+  ],
+  "WorkPeriod": "\uC7A5\uAE30 \uB0B4\uBD80 \uD504\uB85C\uC81D\uD2B8",
+  "WorkRole": "\uC544\uD0A4\uD14D\uCC98 \uC124\uACC4 \u00B7 \uB77C\uC774\uBE0C\uB7EC\uB9AC \uBAA8\uB4C8\uD654 \uC8FC\uB3C4",
   "WorkTech": "C#, WPF, MVVM, SignalR, Doxygen",
-  "WorkCompany": "Vision Semicon (사내)"
+  "WorkCompany": "Vision Semicon (\uC0AC\uB0B4)"
 }

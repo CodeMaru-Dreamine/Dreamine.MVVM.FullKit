@@ -2,12 +2,14 @@
 @layout PortfolioApp.Blazor.Layout.PortfolioLayout
 @namespace PortfolioApp.Blazor.Pages
 @rendermode InteractiveServer
+@implements IDisposable
 
 @inject PortfolioAdminViewModel Vm
 @inject NavigationManager Nav
+@inject PortfolioLocalization Text
 @using PortfolioApp.ViewModels
 
-<PageTitle>어드민 — @(Vm.Config?.OwnerName ?? Slug)</PageTitle>
+<PageTitle>@Text["admin"] — @(Vm.Config?.OwnerName ?? Slug)</PageTitle>
 
 <div class="pf-page pf-admin">
 
@@ -15,66 +17,119 @@
     {
         <div class="pf-login-box">
             <div class="pf-login-box__nav">
-                <a href="/" class="pf-login-box__home">← 홈</a>
-                <a href="/@Slug" class="pf-login-box__home">포트폴리오 보기 →</a>
+                <a href="/" class="pf-login-box__home">← @Text["home"]</a>
+                <a href="/@Slug" class="pf-login-box__home">@Text["public.page"] →</a>
             </div>
             <h1 class="pf-login-box__title">🧑‍💻 @Slug</h1>
             @if (Vm.IsSignedIn)
             {
-                <p class="pf-login-box__desc">현재 공용 로그인: <strong>@Vm.CurrentUserLabel</strong></p>
-                <p class="pf-login-box__desc">기존 관리자 비밀번호를 한 번 입력하면 이 계정이 포트폴리오 관리자로 추가됩니다.</p>
+                <p class="pf-login-box__desc">@A("shared.login.current"): <strong>@Vm.CurrentUserLabel</strong></p>
+                <p class="pf-login-box__desc">@A("shared.login.connect")</p>
             }
             else
             {
-                <p class="pf-login-box__desc">CodeMaru/Dreamine 계정으로 먼저 로그인하면, 기존 비밀번호 확인 후 이 포트폴리오를 계정에 연결할 수 있습니다.</p>
-                <a class="pf-btn pf-btn--ghost pf-btn--full" href="@LoginUrl">공용 로그인</a>
+                <p class="pf-login-box__desc">@A("shared.login.first")</p>
+                <a class="pf-btn pf-btn--ghost pf-btn--full" href="@LoginUrl">@A("shared.login")</a>
             }
             @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
             {
-                <p class="pf-status pf-status--err">@Vm.StatusMessage</p>
+                <p class="pf-status pf-status--err">@Status(Vm.StatusMessage)</p>
             }
             <input class="pf-input" type="password"
                    value="@Vm.LoginPassword"
                    @oninput="OnPasswordInput"
                    @onkeydown="OnLoginKey"
-                   placeholder="비밀번호" autocomplete="current-password" />
-            <button class="pf-btn pf-btn--primary pf-btn--full" @onclick="OnLogin">로그인</button>
+                   placeholder="@A("password")" autocomplete="current-password" />
+            <button class="pf-btn pf-btn--primary pf-btn--full" @onclick="OnLogin">@Text["login"]</button>
         </div>
     }
     else
     {
-        <div class="pf-admin-header">
-            <h1>@(Vm.Config?.OwnerName ?? Slug) 어드민</h1>
-            <div style="display:flex;gap:8px;align-items:center;">
-                <button class="pf-btn pf-btn--ghost" @onclick="OnRefresh">🔄</button>
-                <a href="/@Slug" class="pf-btn pf-btn--ghost">포트폴리오 보기 →</a>
-                <button class="pf-btn pf-btn--ghost" style="color:#f87171" @onclick="OnLogout">🚪 로그아웃</button>
-            </div>
-        </div>
+        <div class="pa-tenant-shell">
+            <aside class="pa-tenant-sidebar">
+                <div class="pa-tenant-brand">
+                    <span class="pa-tenant-brand__mark">@Initial</span>
+                    <div><strong>@(Vm.Config?.OwnerName ?? Slug)</strong><small>/@Slug</small></div>
+                </div>
+                <nav class="pa-tenant-nav" aria-label="@Text["admin"]">
+                    <button class="@(activeTab == "overview" ? "active" : null)" @onclick='() => SetTab("overview")'><i class="fas fa-table-cells-large"></i><span>@Text["overview"]</span></button>
+                    <button class="@(activeTab == "project" ? "active" : null)" @onclick='() => SetTab("project")'><i class="fas fa-folder-open"></i><span>@Text["projects"]</span></button>
+                    <button class="@(activeTab == "resume" ? "active" : null)" @onclick='() => SetTab("resume")'><i class="fas fa-file-lines"></i><span>@Text["career.profile"]</span></button>
+                    <button class="@(activeTab == "messages" ? "active" : null)" @onclick='() => SetTab("messages")'>
+                        <i class="fas fa-comment-dots"></i><span>@Text["messages"]</span>
+                        @if (UnreadCount > 0) { <b>@UnreadCount</b> }
+                    </button>
+                    <button class="@(activeTab == "design" ? "active" : null)" @onclick='() => SetTab("design")'><i class="fas fa-pen-nib"></i><span>@Text["design"]</span></button>
+                    <button class="@(activeTab == "settings" ? "active" : null)" @onclick='() => SetTab("settings")'><i class="fas fa-gear"></i><span>@Text["settings"]</span></button>
+                </nav>
+                <div class="pa-tenant-sidebar__footer">
+                    <a href="/@Slug"><i class="fas fa-arrow-up-right-from-square"></i> @Text["public.page"]</a>
+                    <button @onclick="OnLogout"><i class="fas fa-right-from-bracket"></i> @Text["logout"]</button>
+                </div>
+            </aside>
+
+            <main class="pa-tenant-main">
+                <header class="pa-tenant-header">
+                    <div>
+                        <p class="pa-eyebrow">Portfolio</p>
+                        <h1>@(Vm.Config?.OwnerName ?? Slug) @Text["portfolio"]</h1>
+                        <p>@Text["dashboard.tenant.sub"]</p>
+                    </div>
+                    <div class="pa-header-actions">
+                        <button class="pf-btn pf-btn--ghost" @onclick="OnRefresh"><i class="fas fa-rotate"></i> @Text["refresh"]</button>
+                        <a href="/@Slug" class="pf-btn pf-btn--primary"><i class="fas fa-arrow-up-right-from-square"></i> @Text["public.page"]</a>
+                    </div>
+                </header>
 
         @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
         {
             <p class="pf-status @(Vm.StatusMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">
-                @Vm.StatusMessage
+                @Status(Vm.StatusMessage)
             </p>
         }
         @if (Vm.IsSignedIn)
         {
-            <p class="pf-status pf-status--ok">공용 로그인: @Vm.CurrentUserLabel · @(Vm.IsOwner ? "대표 관리자" : "관리자")</p>
+            <p class="pf-status pf-status--ok">@A("shared.login"): @Vm.CurrentUserLabel · @(Vm.IsOwner ? A("role.owner") : A("role.admin"))</p>
         }
 
-        <div class="pf-tabs">
-            <button class="pf-tab @(activeTab == "project" ? "pf-tab--active" : "")" @onclick='() => SetTab("project")'>🛠️ 프로젝트</button>
-            <button class="pf-tab @(activeTab == "resume" ? "pf-tab--active" : "")" @onclick='() => SetTab("resume")'>📄 Resume</button>
-            <button class="pf-tab @(activeTab == "messages" ? "pf-tab--active" : "")" @onclick='() => SetTab("messages")'>
-                📬 메시지
-                @if (Vm.Messages.Count(m => !m.IsRead) > 0)
-                {
-                    <span class="pf-tab__badge">@Vm.Messages.Count(m => !m.IsRead)</span>
-                }
-            </button>
-            <button class="pf-tab @(activeTab == "settings" ? "pf-tab--active" : "")" @onclick='() => SetTab("settings")'>⚙️ 설정</button>
-        </div>
+        @if (activeTab == "overview")
+        {
+            <section class="pa-overview">
+                <div class="pa-stat-grid">
+                    <article class="pa-stat-card"><span><i class="fas fa-layer-group"></i></span><div><small>@Text["stat.projects"]</small><strong>@Vm.Projects.Count</strong></div></article>
+                    <article class="pa-stat-card"><span><i class="fas fa-globe"></i></span><div><small>@Text["stat.public"]</small><strong>@PublicProjectCount</strong></div></article>
+                    <article class="pa-stat-card"><span><i class="fas fa-message"></i></span><div><small>@Text["stat.unread"]</small><strong>@UnreadCount</strong></div></article>
+                    <article class="pa-stat-card"><span><i class="fas fa-circle-check"></i></span><div><small>@Text["stat.completion"]</small><strong>@CompletionPercent%</strong></div></article>
+                </div>
+                <div class="pa-overview-grid">
+                    <article class="pa-panel">
+                        <div class="pa-panel__heading"><div><p class="pa-eyebrow">Portfolio</p><h2>@Text["recent.projects"]</h2></div><button class="pf-btn pf-btn--sm pf-btn--ghost" @onclick='() => SetTab("project")'>@Text["projects"] →</button></div>
+                        @if (Vm.Projects.Count == 0)
+                        {
+                            <div class="pa-empty"><i class="fas fa-folder-open"></i><p>@Text["project.none"]</p><button class="pf-btn pf-btn--primary" @onclick="NewProjectFromOverview">+ @Text["new.project"]</button></div>
+                        }
+                        else
+                        {
+                            <div class="pa-recent-list">
+                                @foreach (var project in Vm.Projects.OrderBy(x => x.SortOrder == 0 ? int.MaxValue : x.SortOrder).Take(5))
+                                {
+                                    <button @onclick="() => EditProjectFromOverview(project)"><span>@project.Emoji</span><div><strong>@project.Title</strong><small>@CategoryLabel(project.Category) · @project.Year</small></div><i class="fas fa-chevron-right"></i></button>
+                                }
+                            </div>
+                        }
+                    </article>
+                    <article class="pa-panel pa-completion">
+                        <div class="pa-panel__heading"><h2>@Text["stat.completion"]</h2></div>
+                        <div class="pa-completion__ring" style="--value:@CompletionPercent"><strong>@CompletionPercent%</strong></div>
+                        <ul>
+                            <li class="@(HasBasicProfile ? "done" : null)">@Text["owner.name"]</li>
+                            <li class="@(Vm.Projects.Count > 0 ? "done" : null)">@Text["projects"]</li>
+                            <li class="@(HasCareerProfile ? "done" : null)">@Text["career.profile"]</li>
+                        </ul>
+                    </article>
+                </div>
+            </section>
+        }
 
         <!-- ── 탭: 프로젝트 ── -->
         @if (activeTab == "project")
@@ -82,11 +137,11 @@
             <div class="pf-tab-body">
                 @if (Vm.EditingProject == null)
                 {
-                    <button class="pf-btn pf-btn--primary" @onclick="Vm.NewProject">+ 새 프로젝트 추가</button>
+                    <button class="pf-btn pf-btn--primary" @onclick="Vm.NewProject">+ @Text["new.project"]</button>
 
                     @if (Vm.Projects.Count == 0)
                     {
-                        <p class="pf-empty">등록된 프로젝트가 없습니다.</p>
+                        <p class="pf-empty">@Text["project.none"]</p>
                     }
                     else
                     {
@@ -98,13 +153,13 @@
                                     <span class="pf-project-admin-item__title">@p.Title</span>
                                     <span class="pf-project-admin-item__year">@p.Year</span>
                                     <span class="pf-badge @(p.Category == ProjectCategory.Work ? "pf-badge--blue" : p.Category == ProjectCategory.Public ? "pf-badge--purple" : "pf-badge--green")">
-                                        @p.Category
+                                        @CategoryLabel(p.Category)
                                     </span>
                                     <div class="pf-project-admin-item__actions">
                                         <button class="pf-btn pf-btn--sm pf-btn--ghost"
-                                                @onclick="() => Vm.EditProject(p)">편집</button>
+                                                @onclick="() => Vm.EditProject(p)">@Text["edit"]</button>
                                         <button class="pf-btn pf-btn--sm pf-btn--danger"
-                                                @onclick="() => OnDeleteProject(p.Id)">삭제</button>
+                                                @onclick="() => OnDeleteProject(p.Id)">@Text["delete"]</button>
                                     </div>
                                 </div>
                             }
@@ -116,77 +171,77 @@
                     var proj = Vm.EditingProject;
                     <div class="pf-post-editor">
                         <div class="pf-form__row">
-                            <label class="pf-label">카테고리</label>
+                            <label class="pf-label">@Text["category"]</label>
                             <select class="pf-input" @bind="proj.Category">
-                                <option value="@ProjectCategory.Personal">Personal</option>
-                                <option value="@ProjectCategory.Work">Work</option>
-                                <option value="@ProjectCategory.Public">Public</option>
+                                <option value="@ProjectCategory.Personal">@Text["project.personal"]</option>
+                                <option value="@ProjectCategory.Work">@Text["project.work"]</option>
+                                <option value="@ProjectCategory.Public">@Text["project.public"]</option>
                             </select>
                         </div>
                         <div class="pf-form__row">
-                            <label class="pf-label">이모지</label>
+                            <label class="pf-label">@A("emoji")</label>
                             <input class="pf-input" @bind="proj.Emoji" style="max-width:80px" />
                         </div>
                         <div class="pf-form__row">
-                            <label class="pf-label">제목</label>
-                            <input class="pf-input" @bind="proj.Title" placeholder="프로젝트 제목" />
+                            <label class="pf-label">@A("title")</label>
+                            <input class="pf-input" @bind="proj.Title" placeholder="@A("work.title.placeholder")" />
                         </div>
                         <div class="pf-form__row">
-                            <label class="pf-label">설명</label>
+                            <label class="pf-label">@A("description")</label>
                             <textarea class="pf-textarea" @bind="proj.Description" rows="3"></textarea>
                         </div>
                         <div class="pf-form__row">
-                            <label class="pf-label">태그 <span class="pf-label__hint">쉼표로 구분 (예: C#, WPF, MVVM)</span></label>
+                            <label class="pf-label">@Text["tag"] <span class="pf-label__hint">@A("comma.hint")</span></label>
                             <input class="pf-input" value="@string.Join(", ", proj.Tags)"
                                    @onchange="OnTagsChange" />
                         </div>
                         <div class="pf-form__row">
-                            <label class="pf-label">연도</label>
+                            <label class="pf-label">@A("year")</label>
                             <input class="pf-input" type="number" @bind="proj.Year" style="max-width:100px" />
                         </div>
                         <div class="pf-form__row">
-                            <label class="pf-label">GitHub URL</label>
+                            <label class="pf-label">@A("source.link")</label>
                             <input class="pf-input" @bind="proj.GitHub" placeholder="https://github.com/..." />
                         </div>
                         <div class="pf-form__row">
-                            <label class="pf-label">Live URL</label>
+                            <label class="pf-label">@A("result.link")</label>
                             <input class="pf-input" @bind="proj.LiveUrl" placeholder="https://..." />
                         </div>
                         <div class="pf-form__row">
-                            <label class="pf-label">문서 URL</label>
+                            <label class="pf-label">@A("document.link")</label>
                             <input class="pf-input" @bind="proj.DocUrl" placeholder="https://..." />
                         </div>
                         <div class="pf-form__row">
-                            <label class="pf-label">순서 <span class="pf-label__hint">낮을수록 앞에 표시 (0=자동)</span></label>
+                            <label class="pf-label">@A("display.order") <span class="pf-label__hint">@A("display.order.hint")</span></label>
                             <input class="pf-input" type="number" @bind="proj.SortOrder" style="max-width:80px" />
                         </div>
 
                         @if (proj.Category == ProjectCategory.Work)
                         {
                             <hr class="pf-divider" />
-                            <h4>Work 전용 정보</h4>
+                            <h4>@A("work.extra")</h4>
                             <div class="pf-form__row">
-                                <label class="pf-label">부제 (한 줄 요약)</label>
+                                <label class="pf-label">@A("subtitle")</label>
                                 <input class="pf-input" @bind="proj.WorkSubtitle" />
                             </div>
                             <div class="pf-form__row">
-                                <label class="pf-label">기간</label>
+                                <label class="pf-label">@A("period")</label>
                                 <input class="pf-input" @bind="proj.WorkPeriod" placeholder="2023.01 ~ 2023.12" />
                             </div>
                             <div class="pf-form__row">
-                                <label class="pf-label">역할</label>
-                                <input class="pf-input" @bind="proj.WorkRole" placeholder="메인 개발자" />
+                                <label class="pf-label">@A("role")</label>
+                                <input class="pf-input" @bind="proj.WorkRole" placeholder="@A("role.placeholder")" />
                             </div>
                             <div class="pf-form__row">
-                                <label class="pf-label">회사/고객</label>
+                                <label class="pf-label">@A("organization.client")</label>
                                 <input class="pf-input" @bind="proj.WorkCompany" />
                             </div>
                             <div class="pf-form__row">
-                                <label class="pf-label">기술 스택 (텍스트)</label>
+                                <label class="pf-label">@Text["skills"]</label>
                                 <input class="pf-input" @bind="proj.WorkTech" placeholder="C#, WPF, SQL Server" />
                             </div>
                             <div class="pf-form__row">
-                                <label class="pf-label">주요 성과 <span class="pf-label__hint">줄바꿈으로 구분</span></label>
+                                <label class="pf-label">@Text["detail.results"] <span class="pf-label__hint">@A("line.hint")</span></label>
                                 <textarea class="pf-textarea" rows="4"
                                           value="@string.Join("\n", proj.WorkBullets)"
                                           @onchange="OnWorkBulletsChange"></textarea>
@@ -195,39 +250,39 @@
 
                         <!-- 이미지 블러 설정 -->
                         <div class="pf-form__row">
-                            <label class="pf-label">이미지 블러 <span class="pf-label__hint">사내 로고 등 식별 방지 (공개 뷰에만 적용)</span></label>
+                            <label class="pf-label">@A("image.blur") <span class="pf-label__hint">@A("image.blur.hint")</span></label>
                             <select class="pf-input" style="max-width:200px" @bind="proj.ImageBlurLevel">
-                                <option value="0">없음 (그대로 표시)</option>
-                                <option value="1">약하게 — 윤곽 보임</option>
-                                <option value="2">중간 — 색감만</option>
-                                <option value="3">강하게 — 식별 불가</option>
+                                <option value="0">@A("blur.none")</option>
+                                <option value="1">@A("blur.low")</option>
+                                <option value="2">@A("blur.medium")</option>
+                                <option value="3">@A("blur.high")</option>
                             </select>
                         </div>
 
                         <!-- 이미지 업로드 -->
                         <div class="pf-form__row">
-                            <label class="pf-label">이미지</label>
+                            <label class="pf-label">@Text["detail.gallery"]</label>
                             @if (proj.Category == ProjectCategory.Work)
                             {
                                 <div class="pf-img-guide">
-                                    <span class="pf-img-guide__badge pf-img-guide__badge--hero">히어로 1920×600</span>
-                                    <span class="pf-img-guide__badge">추가 이미지 1200×675</span>
-                                    <span class="pf-img-guide__tip">첫 번째 이미지가 상단 히어로 배너 · 최대 20MB</span>
+                                    <span class="pf-img-guide__badge pf-img-guide__badge--hero">@A("hero.image") 1920×600</span>
+                                    <span class="pf-img-guide__badge">@A("additional.image") 1200×675</span>
+                                    <span class="pf-img-guide__tip">@A("hero.image.hint")</span>
                                 </div>
                             }
                             else
                             {
                                 <div class="pf-img-guide">
-                                    <span class="pf-img-guide__badge pf-img-guide__badge--thumb">커버 1200×630</span>
-                                    <span class="pf-img-guide__tip">카드 썸네일 · 최대 20MB · 여러 장 가능</span>
+                                    <span class="pf-img-guide__badge pf-img-guide__badge--thumb">@A("cover.image") 1200×630</span>
+                                    <span class="pf-img-guide__tip">@A("cover.image.hint")</span>
                                 </div>
                             }
                             <div class="pf-media-input-row">
                                 <InputFile class="pf-input-file" multiple OnChange="OnFilesSelected" accept="image/*" />
-                                <span class="pf-media-input-or">또는 URL</span>
+                                <span class="pf-media-input-or">@A("or.url")</span>
                                 <div class="pf-url-add">
-                                    <input class="pf-input pf-input--sm" @bind="imageUrlInput" placeholder="https://...이미지URL" />
-                                    <button class="pf-btn pf-btn--sm pf-btn--ghost" @onclick="OnAddImageUrl">+ 추가</button>
+                                    <input class="pf-input pf-input--sm" @bind="imageUrlInput" placeholder="https://…" />
+                                    <button class="pf-btn pf-btn--sm pf-btn--ghost" @onclick="OnAddImageUrl">+ @Text["add"]</button>
                                 </div>
                             </div>
                             @if (Vm.PendingFiles.Count > 0)
@@ -251,7 +306,7 @@
                         @if (allImages.Length > 0)
                         {
                             <div class="pf-form__row">
-                                <label class="pf-label">등록된 이미지</label>
+                                <label class="pf-label">@A("uploaded.images")</label>
                                 <div class="pf-media-grid pf-media-grid--admin">
                                     @foreach (var img in allImages)
                                     {
@@ -267,13 +322,13 @@
 
                         <!-- 동영상 업로드 -->
                         <div class="pf-form__row">
-                            <label class="pf-label">동영상 <span class="pf-label__hint">여러 개 가능</span></label>
+                            <label class="pf-label">@Text["detail.video"] <span class="pf-label__hint">@A("multiple.allowed")</span></label>
                             <div class="pf-media-input-row">
                                 <InputFile class="pf-input-file" multiple OnChange="OnVideosSelected" accept="video/*" />
-                                <span class="pf-media-input-or">또는 URL</span>
+                                <span class="pf-media-input-or">@A("or.url")</span>
                                 <div class="pf-url-add">
-                                    <input class="pf-input pf-input--sm" @bind="videoUrlInput" placeholder="https://...동영상URL (mp4, youtube 등)" />
-                                    <button class="pf-btn pf-btn--sm pf-btn--ghost" @onclick="OnAddVideoUrl">+ 추가</button>
+                                    <input class="pf-input pf-input--sm" @bind="videoUrlInput" placeholder="https://… (MP4, YouTube)" />
+                                    <button class="pf-btn pf-btn--sm pf-btn--ghost" @onclick="OnAddVideoUrl">+ @Text["add"]</button>
                                 </div>
                             </div>
                             @if (Vm.PendingVideos.Count > 0)
@@ -290,15 +345,15 @@
                         @if (proj.VideoFileNames.Length > 0)
                         {
                             <div class="pf-form__row">
-                                <label class="pf-label">등록된 동영상</label>
+                                <label class="pf-label">@A("uploaded.videos")</label>
                                 <div class="pf-video-list pf-video-list--admin">
                                     @foreach (var vid in proj.VideoFileNames)
                                     {
                                         var adminVidUrl = Vm.GetVideoUrl(Slug, proj.Id, vid);
                                         <div class="pf-video-item">
-                                            @if (PortfolioPublicViewModel.IsYouTube(adminVidUrl))
+                                            @if (PortfolioPublicViewModel.TryGetYouTubeEmbedUrl(adminVidUrl, out var adminEmbedUrl))
                                             {
-                                                <iframe class="pf-video--admin pf-video--yt" src="@PortfolioPublicViewModel.GetYouTubeEmbedUrl(adminVidUrl)"
+                                                <iframe class="pf-video--admin pf-video--yt" src="@adminEmbedUrl"
                                                         frameborder="0" allowfullscreen
                                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
                                             }
@@ -316,9 +371,9 @@
 
                         <div class="pf-form__actions">
                             <button class="pf-btn pf-btn--primary" @onclick="OnSaveProject" disabled="@Vm.IsUploading">
-                                @(Vm.IsUploading ? "업로드 중..." : "저장")
+                                @(Vm.IsUploading ? A("uploading") : Text["save"])
                             </button>
-                            <button class="pf-btn pf-btn--ghost" @onclick="Vm.CancelEdit">취소</button>
+                            <button class="pf-btn pf-btn--ghost" @onclick="Vm.CancelEdit">@Text["cancel"]</button>
                         </div>
                     </div>
                 }
@@ -330,11 +385,11 @@
         {
             <div class="pf-tab-body">
 
-                <h3>🛠 기술 스택</h3>
+                <h3>🛠 @Text["skills"]</h3>
                 <div class="pf-form pf-form--inline">
-                    <input class="pf-input" @bind="Vm.NewSkillCategory" placeholder="카테고리 (예: Backend)" />
-                    <input class="pf-input" @bind="Vm.NewSkillNames" placeholder="기술 (쉼표 구분: C#, .NET, WPF)" />
-                    <button class="pf-btn pf-btn--primary" @onclick="Vm.AddSkillGroup">+ 추가</button>
+                    <input class="pf-input" @bind="Vm.NewSkillCategory" placeholder="@A("strength.category.placeholder")" />
+                    <input class="pf-input" @bind="Vm.NewSkillNames" placeholder="@A("strength.items.placeholder")" />
+                    <button class="pf-btn pf-btn--primary" @onclick="Vm.AddSkillGroup">+ @Text["add"]</button>
                 </div>
                 @foreach (var g in Vm.Resume.SkillGroups)
                 {
@@ -342,24 +397,24 @@
                         <strong>@g.Category</strong>
                         <span>@string.Join(", ", g.Skills)</span>
                         <button class="pf-btn pf-btn--sm pf-btn--danger"
-                                @onclick="() => Vm.RemoveSkillGroup(g)">삭제</button>
+                                @onclick="() => Vm.RemoveSkillGroup(g)">@Text["delete"]</button>
                     </div>
                 }
 
                 <hr class="pf-divider" />
 
-                <h3>💼 경력</h3>
+                <h3>💼 @Text["experience"]</h3>
                 @if (Vm.EditingExp == null)
                 {
-                    <button class="pf-btn pf-btn--primary" @onclick="Vm.NewExperience">+ 경력 추가</button>
+                    <button class="pf-btn pf-btn--primary" @onclick="Vm.NewExperience">+ @A("experience.add")</button>
                     @foreach (var exp in Vm.Resume.Experiences)
                     {
                         <div class="pf-exp-admin-item">
                             <strong>@exp.Company</strong> · @exp.Role · @exp.Period
                             <button class="pf-btn pf-btn--sm pf-btn--ghost"
-                                    @onclick="() => Vm.EditExperience(exp)">편집</button>
+                                    @onclick="() => Vm.EditExperience(exp)">@Text["edit"]</button>
                             <button class="pf-btn pf-btn--sm pf-btn--danger"
-                                    @onclick="() => Vm.RemoveExperience(exp)">삭제</button>
+                                    @onclick="() => Vm.RemoveExperience(exp)">@Text["delete"]</button>
                         </div>
                     }
                 }
@@ -367,37 +422,37 @@
                 {
                     var exp = Vm.EditingExp;
                     <div class="pf-post-editor">
-                        <div class="pf-form__row"><label class="pf-label">회사</label><input class="pf-input" @bind="exp.Company" /></div>
-                        <div class="pf-form__row"><label class="pf-label">역할</label><input class="pf-input" @bind="exp.Role" /></div>
-                        <div class="pf-form__row"><label class="pf-label">기간</label><input class="pf-input" @bind="exp.Period" placeholder="2020.01 ~ 2023.12" /></div>
-                        <div class="pf-form__row"><label class="pf-label">설명</label><textarea class="pf-textarea" @bind="exp.Description" rows="2"></textarea></div>
+                        <div class="pf-form__row"><label class="pf-label">@A("organization")</label><input class="pf-input" @bind="exp.Company" /></div>
+                        <div class="pf-form__row"><label class="pf-label">@A("role")</label><input class="pf-input" @bind="exp.Role" /></div>
+                        <div class="pf-form__row"><label class="pf-label">@A("period")</label><input class="pf-input" @bind="exp.Period" placeholder="2020.01 ~ 2023.12" /></div>
+                        <div class="pf-form__row"><label class="pf-label">@A("description")</label><textarea class="pf-textarea" @bind="exp.Description" rows="2"></textarea></div>
                         <div class="pf-form__row">
-                            <label class="pf-label">주요 성과 <span class="pf-label__hint">줄바꿈 구분</span></label>
+                            <label class="pf-label">@Text["detail.results"] <span class="pf-label__hint">@A("line.hint")</span></label>
                             <textarea class="pf-textarea" rows="4"
                                       value="@string.Join("\n", exp.Bullets)"
                                       @onchange="OnExpBulletsChange"></textarea>
                         </div>
                         <div class="pf-form__actions">
-                            <button class="pf-btn pf-btn--primary" @onclick="Vm.SaveExperience">저장</button>
-                            <button class="pf-btn pf-btn--ghost" @onclick="Vm.CancelExp">취소</button>
+                            <button class="pf-btn pf-btn--primary" @onclick="Vm.SaveExperience">@Text["save"]</button>
+                            <button class="pf-btn pf-btn--ghost" @onclick="Vm.CancelExp">@Text["cancel"]</button>
                         </div>
                     </div>
                 }
 
                 <hr class="pf-divider" />
 
-                <h3>🎓 학력</h3>
+                <h3>🎓 @Text["education"]</h3>
                 @if (Vm.EditingEdu == null)
                 {
-                    <button class="pf-btn pf-btn--primary" @onclick="Vm.NewEducation">+ 학력 추가</button>
+                    <button class="pf-btn pf-btn--primary" @onclick="Vm.NewEducation">+ @A("education.add")</button>
                     @foreach (var edu in Vm.Resume.Educations)
                     {
                         <div class="pf-exp-admin-item">
                             <strong>@edu.School</strong> · @edu.Degree · @edu.Period
                             <button class="pf-btn pf-btn--sm pf-btn--ghost"
-                                    @onclick="() => Vm.EditEducation(edu)">편집</button>
+                                    @onclick="() => Vm.EditEducation(edu)">@Text["edit"]</button>
                             <button class="pf-btn pf-btn--sm pf-btn--danger"
-                                    @onclick="() => Vm.RemoveEducation(edu)">삭제</button>
+                                    @onclick="() => Vm.RemoveEducation(edu)">@Text["delete"]</button>
                         </div>
                     }
                 }
@@ -405,18 +460,18 @@
                 {
                     var edu = Vm.EditingEdu;
                     <div class="pf-post-editor">
-                        <div class="pf-form__row"><label class="pf-label">학교</label><input class="pf-input" @bind="edu.School" /></div>
-                        <div class="pf-form__row"><label class="pf-label">전공/학위</label><input class="pf-input" @bind="edu.Degree" /></div>
-                        <div class="pf-form__row"><label class="pf-label">기간</label><input class="pf-input" @bind="edu.Period" placeholder="2010.03 ~ 2014.02" /></div>
+                        <div class="pf-form__row"><label class="pf-label">@A("school")</label><input class="pf-input" @bind="edu.School" /></div>
+                        <div class="pf-form__row"><label class="pf-label">@A("degree")</label><input class="pf-input" @bind="edu.Degree" /></div>
+                        <div class="pf-form__row"><label class="pf-label">@A("period")</label><input class="pf-input" @bind="edu.Period" placeholder="2010.03 ~ 2014.02" /></div>
                         <div class="pf-form__actions">
-                            <button class="pf-btn pf-btn--primary" @onclick="Vm.SaveEducation">저장</button>
-                            <button class="pf-btn pf-btn--ghost" @onclick="Vm.CancelEdu">취소</button>
+                            <button class="pf-btn pf-btn--primary" @onclick="Vm.SaveEducation">@Text["save"]</button>
+                            <button class="pf-btn pf-btn--ghost" @onclick="Vm.CancelEdu">@Text["cancel"]</button>
                         </div>
                     </div>
                 }
 
                 <hr class="pf-divider" />
-                <button class="pf-btn pf-btn--primary" @onclick="OnSaveResume">💾 Resume 저장</button>
+                <button class="pf-btn pf-btn--primary" @onclick="OnSaveResume">💾 @A("career.save")</button>
             </div>
         }
 
@@ -426,7 +481,7 @@
             <div class="pf-tab-body">
                 @if (Vm.Messages.Count == 0)
                 {
-                    <p class="pf-empty">받은 메시지가 없습니다.</p>
+                    <p class="pf-empty">@A("messages.none")</p>
                 }
                 else
                 {
@@ -442,7 +497,7 @@
                                 <span class="pf-message-item__date">@msg.SentAt.ToString("yy.MM.dd HH:mm")</span>
                                 @if (!msg.IsRead)
                                 {
-                                    <span class="pf-badge pf-badge--new">NEW</span>
+                                    <span class="pf-badge pf-badge--new">@A("new")</span>
                                 }
                             </div>
                             <p class="pf-message-item__body">@msg.Message</p>
@@ -450,14 +505,39 @@
                                 @if (!msg.IsRead)
                                 {
                                     <button class="pf-btn pf-btn--sm pf-btn--ghost"
-                                            @onclick="() => OnMarkRead(msg.Id)">읽음 처리</button>
+                                            @onclick="() => OnMarkRead(msg.Id)">@A("mark.read")</button>
                                 }
                                 <button class="pf-btn pf-btn--sm pf-btn--danger"
-                                        @onclick="() => OnDeleteMessage(msg.Id)">삭제</button>
+                                        @onclick="() => OnDeleteMessage(msg.Id)">@Text["delete"]</button>
                             </div>
                         </div>
                     }
                 }
+            </div>
+        }
+
+        @if (activeTab == "design" && Vm.Config is not null)
+        {
+            var designConfig = Vm.Config;
+            <div class="pf-tab-body pa-design-panel">
+                <div class="pa-panel__heading">
+                    <div><p class="pa-eyebrow">Portfolio</p><h2>@Text["design"]</h2></div>
+                    <a href="/@Slug" target="_blank" class="pf-btn pf-btn--ghost"><i class="fas fa-arrow-up-right-from-square"></i> @Text["public.page"]</a>
+                </div>
+                <p class="pf-muted">@A("design.public.hint")</p>
+                <div class="pa-theme-grid">
+                    @foreach (var theme in PortfolioThemes)
+                    {
+                        <button type="button" class="pa-theme-card @(designConfig.ThemeName == theme.Value ? "selected" : null)" @onclick="() => SelectPortfolioTheme(theme.Value)">
+                            <span class="pa-theme-card__preview theme-@theme.Value"><i></i><b></b><em></em></span>
+                            <strong>@A(theme.Label)</strong>
+                            @if (designConfig.ThemeName == theme.Value) { <small><i class="fas fa-check"></i> @A("applied")</small> }
+                        </button>
+                    }
+                </div>
+                <div class="pa-design-actions">
+                    <button class="pf-btn pf-btn--primary" @onclick="OnSaveConfig"><i class="fas fa-floppy-disk"></i> @Text["save"]</button>
+                </div>
             </div>
         }
 
@@ -467,11 +547,11 @@
             var cfg = Vm.Config;
             <div class="pf-tab-body pf-settings">
                 <div class="pf-form__row">
-                    <h3 style="margin-bottom:.8rem">관리자 계정</h3>
-                    <p class="pf-muted">공용 로그인 상태에서 기존 관리자 비밀번호를 입력하면 여러 계정이 같은 포트폴리오를 관리할 수 있습니다.</p>
+                    <h3 style="margin-bottom:.8rem">@A("admin.accounts")</h3>
+                    <p class="pf-muted">@A("admin.accounts.hint")</p>
                     @if (Vm.EffectiveAdminUsers.Count == 0)
                     {
-                        <p class="pf-muted">아직 공용 로그인에 연결된 관리자 계정이 없습니다.</p>
+                        <p class="pf-muted">@A("admin.accounts.none")</p>
                     }
                     else
                     {
@@ -481,7 +561,7 @@
                                 var isOwner = string.Equals(admin.Role, "Owner", StringComparison.OrdinalIgnoreCase);
                                 <div class="pf-admin-users__item">
                                     <div>
-                                        <strong>@(isOwner ? "대표 관리자" : "관리자")</strong>
+                                        <strong>@(isOwner ? A("role.owner") : A("role.admin"))</strong>
                                         <span>@(string.IsNullOrWhiteSpace(admin.DisplayName) ? admin.Provider : admin.DisplayName)</span>
                                         @if (!string.IsNullOrWhiteSpace(admin.Email))
                                         {
@@ -491,7 +571,7 @@
                                     </div>
                                     @if (Vm.IsOwner && !isOwner)
                                     {
-                                        <button class="pf-btn pf-btn--danger pf-btn--sm" @onclick="() => OnRemoveAdmin(admin.UserId)">삭제</button>
+                                        <button class="pf-btn pf-btn--danger pf-btn--sm" @onclick="() => OnRemoveAdmin(admin.UserId)">@Text["delete"]</button>
                                     }
                                 </div>
                             }
@@ -502,38 +582,38 @@
                 <hr class="pf-divider" />
 
                 <div class="pf-form__row">
-                    <label class="pf-label">이름</label>
+                    <label class="pf-label">@Text["owner.name"]</label>
                     <input class="pf-input" @bind="cfg.OwnerName" />
                 </div>
                 <div class="pf-form__row">
-                    <label class="pf-label">직함/타이틀</label>
-                    <input class="pf-input" @bind="cfg.Title" placeholder="C# · WPF · MVVM 개발자" />
+                    <label class="pf-label">@A("professional.title")</label>
+                    <input class="pf-input" @bind="cfg.Title" placeholder="@A("professional.title.placeholder")" />
                 </div>
                 <div class="pf-form__row">
-                    <label class="pf-label">한 줄 소개</label>
+                    <label class="pf-label">@A("short.intro")</label>
                     <textarea class="pf-textarea" @bind="cfg.Bio" rows="2"></textarea>
                 </div>
                 <div class="pf-form__row">
-                    <label class="pf-label">프로필 사진</label>
+                    <label class="pf-label">@A("profile.photo")</label>
                     <div class="pf-img-guide">
                         <span class="pf-img-guide__badge pf-img-guide__badge--profile">400×400</span>
-                        <span class="pf-img-guide__tip">정사각형 얼굴 사진 권장 · PNG/JPG · 최대 20MB · 원형으로 표시됩니다</span>
+                        <span class="pf-img-guide__tip">@A("profile.photo.hint")</span>
                     </div>
                     <InputFile class="pf-input-file" OnChange="OnProfileSelected" accept="image/*" />
                     @if (!string.IsNullOrWhiteSpace(cfg.ProfileImageFileName))
                     {
                         <img class="pf-cover-preview"
-                             src="@Vm.GetProfileImageUrl(Slug, cfg.ProfileImageFileName)" alt="프로필" />
+                             src="@Vm.GetProfileImageUrl(Slug, cfg.ProfileImageFileName)" alt="@A("profile.photo")" />
                     }
                 </div>
                 <div class="pf-form__row">
-                    <label class="pf-label">테마</label>
+                    <label class="pf-label">@Text["theme"]</label>
                     <select class="pf-input" @bind="cfg.ThemeName">
-                        <option value="dark">🌑 Dark</option>
-                        <option value="ocean">🌊 Ocean</option>
-                        <option value="forest">🌲 Forest</option>
-                        <option value="minimal">⬜ Minimal</option>
-                        <option value="warm">🍊 Warm</option>
+                        <option value="dark">🌑 @A("theme.dark")</option>
+                        <option value="ocean">🌊 @A("theme.ocean")</option>
+                        <option value="forest">🌲 @A("theme.forest")</option>
+                        <option value="minimal">⬜ @A("theme.minimal")</option>
+                        <option value="warm">🍊 @A("theme.warm")</option>
                     </select>
                 </div>
                 <div class="pf-form__row">
@@ -545,87 +625,89 @@
                     <input class="pf-input" @bind="cfg.LinkedInUrl" placeholder="https://linkedin.com/in/..." />
                 </div>
                 <div class="pf-form__row">
-                    <label class="pf-label">공개 이메일</label>
+                    <label class="pf-label">@A("public.email")</label>
                     <input class="pf-input" type="email" @bind="cfg.ContactEmail" />
                 </div>
                 <div class="pf-form__row pf-form__row--check">
                     <label>
                         <input type="checkbox" @bind="cfg.AllowContact" />
-                        📬 방문자 Contact 폼 허용
+                        📬 @A("contact.allow")
                     </label>
                 </div>
                 <div class="pf-form__row pf-form__row--check">
                     <label>
                         <input type="checkbox" @bind="cfg.ShowOnHome" />
-                        🏠 홈 목록에 공개
+                        🏠 @A("home.show")
                     </label>
                 </div>
                 <div class="pf-form__row">
-                    <label class="pf-label">OG 제목 (링크 미리보기)</label>
-                    <input class="pf-input" @bind="cfg.OgTitle" placeholder="비우면 이름 사용" />
+                    <label class="pf-label">@A("preview.title")</label>
+                    <input class="pf-input" @bind="cfg.OgTitle" placeholder="@A("preview.title.hint")" />
                 </div>
                 <div class="pf-form__row">
-                    <label class="pf-label">OG 설명</label>
+                    <label class="pf-label">@A("preview.description")</label>
                     <input class="pf-input" @bind="cfg.OgDescription" />
                 </div>
 
-                <button class="pf-btn pf-btn--primary" @onclick="OnSaveConfig">💾 설정 저장</button>
+                <button class="pf-btn pf-btn--primary" @onclick="OnSaveConfig">💾 @A("settings.save")</button>
 
                 <hr class="pf-divider" />
 
                 <div class="pf-form__row">
-                    <h3 style="margin-bottom:.8rem">🔑 비밀번호 변경</h3>
+                    <h3 style="margin-bottom:.8rem">🔑 @A("password.change")</h3>
                     <div class="pf-pw-change">
                         <div class="pf-form__row">
-                            <label class="pf-label">현재 비밀번호</label>
-                            <input class="pf-input" type="password" @bind="currentPw" placeholder="현재 비밀번호" />
+                            <label class="pf-label">@A("password.current")</label>
+                            <input class="pf-input" type="password" @bind="currentPw" placeholder="@A("password.current")" />
                         </div>
                         <div class="pf-form__row">
-                            <label class="pf-label">새 비밀번호 <span class="pf-label__hint">4자 이상</span></label>
-                            <input class="pf-input" type="password" @bind="newPw" placeholder="새 비밀번호" />
+                            <label class="pf-label">@A("password.new") <span class="pf-label__hint">@A("password.min8")</span></label>
+                            <input class="pf-input" type="password" @bind="newPw" placeholder="@A("password.new")" />
                         </div>
                         <div class="pf-form__row">
-                            <label class="pf-label">새 비밀번호 확인</label>
-                            <input class="pf-input" type="password" @bind="newPwConfirm" placeholder="다시 입력" />
+                            <label class="pf-label">@A("password.confirm")</label>
+                            <input class="pf-input" type="password" @bind="newPwConfirm" placeholder="@A("password.confirm.placeholder")" />
                         </div>
                         @if (!string.IsNullOrWhiteSpace(pwMessage))
                         {
-                            <p class="pf-status @(pwMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">@pwMessage</p>
+                            <p class="pf-status @(pwMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">@Status(pwMessage)</p>
                         }
-                        <button class="pf-btn pf-btn--primary" @onclick="OnChangePassword">🔑 비밀번호 변경</button>
+                        <button class="pf-btn pf-btn--primary" @onclick="OnChangePassword">🔑 @A("password.change")</button>
                     </div>
                 </div>
 
                 <hr class="pf-divider" />
 
                 <div class="pf-danger-zone">
-                    <h3>⚠️ 위험 구역</h3>
-                    <p>아래 작업은 되돌릴 수 없습니다.</p>
+                    <h3>⚠️ @A("danger.zone")</h3>
+                    <p>@A("danger.hint")</p>
                     @if (!confirmDelete)
                     {
                         <button class="pf-btn pf-btn--danger" @onclick="() => confirmDelete = true">
-                            🗑 이 포트폴리오 삭제
+                            🗑 @A("portfolio.delete")
                         </button>
                     }
                     else
                     {
                         <div class="pf-delete-confirm">
-                            <p><strong>정말로 '@Slug' 포트폴리오를 삭제할까요?</strong><br />모든 프로젝트·이미지·Resume가 삭제됩니다.</p>
+                            <p><strong>@string.Format(A("portfolio.delete.confirm"), Slug)</strong><br />@A("portfolio.delete.scope")</p>
                             <div class="pf-form__actions">
-                                <button class="pf-btn pf-btn--danger" @onclick="OnDeleteSelf">확인, 삭제</button>
-                                <button class="pf-btn pf-btn--ghost" @onclick="() => confirmDelete = false">취소</button>
+                                <button class="pf-btn pf-btn--danger" @onclick="OnDeleteSelf">@A("confirm.delete")</button>
+                                <button class="pf-btn pf-btn--ghost" @onclick="() => confirmDelete = false">@Text["cancel"]</button>
                             </div>
                         </div>
                     }
                 </div>
             </div>
         }
+            </main>
+        </div>
     }
 </div>
 
 @code {
     [Parameter] public string Slug { get; set; } = "";
-    private string activeTab = "project";
+    private string activeTab = "overview";
     private bool confirmDelete = false;
     private string currentPw = "";
     private string newPw = "";
@@ -634,12 +716,199 @@
     private string imageUrlInput = "";
     private string videoUrlInput = "";
 
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string LoginUrl => Dreamine.Identity.DreamineIdentityPortal.CreateUrl("login", Nav.Uri, Text.Language);
+    private int UnreadCount => Vm.Messages.Count(message => !message.IsRead);
+    private int PublicProjectCount => Vm.Projects.Count;
+    private bool HasBasicProfile => Vm.Config is { OwnerName.Length: > 0, Title.Length: > 0 };
+    private bool HasCareerProfile => Vm.Resume.SkillGroups.Count > 0 || Vm.Resume.Experiences.Count > 0 || Vm.Resume.Educations.Count > 0;
+    private int CompletionPercent => (HasBasicProfile ? 35 : 0) + (Vm.Projects.Count > 0 ? 40 : 0) + (HasCareerProfile ? 25 : 0);
+    private string Initial => string.IsNullOrWhiteSpace(Vm.Config?.OwnerName) ? "P" : Vm.Config.OwnerName.Trim()[0].ToString();
+    private static readonly (string Value, string Label)[] PortfolioThemes =
+    [
+        ("dark", "theme.dark"), ("ocean", "theme.ocean"), ("forest", "theme.forest"), ("minimal", "theme.minimal"), ("warm", "theme.warm")
+    ];
+
+    // Order: en, es, fr, it, pt, ko, ja, zh-Hans, zh-Hant, vi.
+    private static readonly Dictionary<string, string[]> AdminTexts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["shared.login.current"] = ["Current shared account", "Cuenta compartida actual", "Compte partagé actuel", "Account condiviso attuale", "Conta compartilhada atual", "현재 공용 로그인", "現在の共通アカウント", "当前共享账号", "目前共用帳號", "Tài khoản dùng chung hiện tại"],
+        ["shared.login.connect"] = ["Enter the existing admin password once to add this account as a portfolio manager.", "Introduce una vez la contraseña de administrador para añadir esta cuenta como gestora.", "Saisissez une fois le mot de passe administrateur pour ajouter ce compte comme gestionnaire.", "Inserisci una volta la password amministratore per aggiungere questo account come gestore.", "Digite uma vez a senha de administrador para adicionar esta conta como gestora.", "기존 관리자 비밀번호를 한 번 입력하면 이 계정이 포트폴리오 관리자로 추가됩니다.", "既存の管理者パスワードを一度入力すると、このアカウントが管理者に追加されます。", "输入一次现有管理员密码，即可将此账号添加为作品集管理员。", "輸入一次現有管理員密碼，即可將此帳號新增為作品集管理員。", "Nhập mật khẩu quản trị hiện tại một lần để thêm tài khoản này làm người quản lý."],
+        ["shared.login.first"] = ["Sign in with your CodeMaru/Dreamine account first, then confirm the existing password to connect this portfolio.", "Inicia sesión primero con CodeMaru/Dreamine y confirma la contraseña para vincular este portafolio.", "Connectez-vous d’abord avec CodeMaru/Dreamine puis confirmez le mot de passe pour lier ce portfolio.", "Accedi prima con CodeMaru/Dreamine, quindi conferma la password per collegare il portfolio.", "Entre primeiro com CodeMaru/Dreamine e confirme a senha para vincular o portfólio.", "CodeMaru/Dreamine 계정으로 먼저 로그인한 뒤 기존 비밀번호를 확인하면 이 포트폴리오를 계정에 연결할 수 있습니다.", "先にCodeMaru/Dreamineへログインし、既存のパスワードを確認すると、このポートフォリオを連携できます。", "请先登录 CodeMaru/Dreamine，再验证现有密码以关联此作品集。", "請先登入 CodeMaru/Dreamine，再驗證現有密碼以連結此作品集。", "Đăng nhập CodeMaru/Dreamine trước, sau đó xác nhận mật khẩu hiện tại để liên kết hồ sơ."],
+        ["shared.login"] = ["Shared sign-in", "Inicio de sesión compartido", "Connexion partagée", "Accesso condiviso", "Login compartilhado", "공용 로그인", "共通ログイン", "共享登录", "共用登入", "Đăng nhập dùng chung"],
+        ["password"] = ["Password", "Contraseña", "Mot de passe", "Password", "Senha", "비밀번호", "パスワード", "密码", "密碼", "Mật khẩu"],
+        ["role.owner"] = ["Primary manager", "Gestor principal", "Gestionnaire principal", "Gestore principale", "Gestor principal", "대표 관리자", "代表管理者", "主管理员", "主要管理員", "Quản trị chính"],
+        ["role.admin"] = ["Manager", "Gestor", "Gestionnaire", "Gestore", "Gestor", "관리자", "管理者", "管理员", "管理員", "Quản trị viên"],
+        ["emoji"] = ["Icon", "Icono", "Icône", "Icona", "Ícone", "아이콘", "アイコン", "图标", "圖示", "Biểu tượng"],
+        ["title"] = ["Title", "Título", "Titre", "Titolo", "Título", "제목", "タイトル", "标题", "標題", "Tiêu đề"],
+        ["work.title.placeholder"] = ["Work title", "Título del trabajo", "Titre de la réalisation", "Titolo del lavoro", "Título do trabalho", "업무 사례 제목", "実績タイトル", "案例标题", "案例標題", "Tiêu đề công việc"],
+        ["description"] = ["Description", "Descripción", "Description", "Descrizione", "Descrição", "설명", "説明", "说明", "說明", "Mô tả"],
+        ["comma.hint"] = ["Separate with commas (example: planning, Excel, design)", "Separa con comas (ej.: planificación, Excel, diseño)", "Séparez par des virgules (ex. : planification, Excel, design)", "Separa con virgole (es.: pianificazione, Excel, design)", "Separe por vírgulas (ex.: planejamento, Excel, design)", "쉼표로 구분 (예: 기획, Excel, 디자인)", "カンマ区切り（例：企画、Excel、デザイン）", "用逗号分隔（例如：策划、Excel、设计）", "以逗號分隔（例如：企劃、Excel、設計）", "Phân cách bằng dấu phẩy (ví dụ: lập kế hoạch, Excel, thiết kế)"],
+        ["year"] = ["Year", "Año", "Année", "Anno", "Ano", "연도", "年", "年份", "年份", "Năm"],
+        ["source.link"] = ["Source or reference link (optional)", "Enlace de fuente o referencia (opcional)", "Lien source ou référence (facultatif)", "Link sorgente o riferimento (facoltativo)", "Link de fonte ou referência (opcional)", "소스 또는 참고 링크 (선택)", "ソース・参考リンク（任意）", "源代码或参考链接（可选）", "原始碼或參考連結（選填）", "Liên kết nguồn hoặc tham khảo (không bắt buộc)"],
+        ["result.link"] = ["Result or service link", "Enlace al resultado o servicio", "Lien vers le résultat ou le service", "Link al risultato o servizio", "Link do resultado ou serviço", "결과물 또는 서비스 링크", "成果物・サービスのリンク", "成果或服务链接", "成果或服務連結", "Liên kết kết quả hoặc dịch vụ"],
+        ["document.link"] = ["Related document link", "Enlace al documento relacionado", "Lien vers un document associé", "Link al documento correlato", "Link do documento relacionado", "관련 문서 링크", "関連資料のリンク", "相关文档链接", "相關文件連結", "Liên kết tài liệu liên quan"],
+        ["display.order"] = ["Display order", "Orden de visualización", "Ordre d’affichage", "Ordine di visualizzazione", "Ordem de exibição", "표시 순서", "表示順", "显示顺序", "顯示順序", "Thứ tự hiển thị"],
+        ["display.order.hint"] = ["Lower numbers appear first (0 = automatic)", "Los números menores aparecen primero (0 = automático)", "Les petits nombres apparaissent en premier (0 = automatique)", "I numeri più bassi appaiono prima (0 = automatico)", "Números menores aparecem primeiro (0 = automático)", "낮은 숫자부터 표시 (0=자동)", "小さい数字ほど先に表示（0＝自動）", "数字越小越靠前（0=自动）", "數字越小越靠前（0=自動）", "Số nhỏ hơn hiển thị trước (0 = tự động)"],
+        ["work.extra"] = ["Additional work details", "Detalles adicionales del trabajo", "Informations complémentaires", "Dettagli aggiuntivi del lavoro", "Detalhes adicionais do trabalho", "업무 사례 추가 정보", "業務実績の追加情報", "工作案例附加信息", "工作案例附加資訊", "Thông tin công việc bổ sung"],
+        ["subtitle"] = ["Short summary", "Resumen breve", "Résumé court", "Breve riepilogo", "Resumo curto", "한 줄 요약", "短い要約", "简短摘要", "簡短摘要", "Tóm tắt ngắn"],
+        ["period"] = ["Period", "Periodo", "Période", "Periodo", "Período", "기간", "期間", "期间", "期間", "Thời gian"],
+        ["role"] = ["Role or responsibility", "Función o responsabilidad", "Rôle ou responsabilité", "Ruolo o responsabilità", "Função ou responsabilidade", "역할 또는 담당 업무", "役割・担当", "角色或职责", "角色或職責", "Vai trò hoặc trách nhiệm"],
+        ["role.placeholder"] = ["Example: planning lead", "Ej.: responsable de planificación", "Ex. : responsable de la planification", "Es.: responsabile pianificazione", "Ex.: responsável pelo planejamento", "예: 기획 담당", "例：企画担当", "例如：策划负责人", "例如：企劃負責人", "Ví dụ: phụ trách lập kế hoạch"],
+        ["organization.client"] = ["Organization or client", "Organización o cliente", "Organisation ou client", "Organizzazione o cliente", "Organização ou cliente", "소속 또는 고객", "所属・顧客", "机构或客户", "組織或客戶", "Tổ chức hoặc khách hàng"],
+        ["organization"] = ["Organization", "Organización", "Organisation", "Organizzazione", "Organização", "소속", "所属", "机构", "組織", "Tổ chức"],
+        ["line.hint"] = ["One item per line", "Un elemento por línea", "Un élément par ligne", "Una voce per riga", "Um item por linha", "한 줄에 하나씩 입력", "1行に1項目", "每行一项", "每行一項", "Mỗi dòng một mục"],
+        ["image.blur"] = ["Image privacy blur", "Desenfoque de privacidad", "Floutage de confidentialité", "Sfocatura per la privacy", "Desfoque de privacidade", "이미지 정보 보호 흐림", "プライバシーぼかし", "图片隐私模糊", "圖片隱私模糊", "Làm mờ bảo mật hình ảnh"],
+        ["image.blur.hint"] = ["Hide company logos or identifying details on the public page", "Oculta logotipos o datos identificativos en la página pública", "Masque les logos ou détails identifiants sur la page publique", "Nasconde loghi o dettagli identificativi nella pagina pubblica", "Oculta logotipos ou dados identificáveis na página pública", "공개 페이지에서 회사 로고 등 식별 정보를 가립니다", "公開ページで会社ロゴなどの識別情報を隠します", "在公开页面隐藏公司标志等识别信息", "在公開頁面隱藏公司標誌等識別資訊", "Ẩn logo công ty hoặc chi tiết nhận dạng trên trang công khai"],
+        ["blur.none"] = ["None — show as is", "Ninguno — mostrar tal cual", "Aucun — afficher tel quel", "Nessuno — mostra com’è", "Nenhum — mostrar como está", "없음 — 원본 표시", "なし — そのまま表示", "无 — 原样显示", "無 — 原樣顯示", "Không — hiển thị nguyên bản"],
+        ["blur.low"] = ["Light — outlines visible", "Ligero — contornos visibles", "Léger — contours visibles", "Leggera — contorni visibili", "Leve — contornos visíveis", "약하게 — 윤곽 표시", "弱 — 輪郭は見える", "轻度 — 可见轮廓", "輕度 — 可見輪廓", "Nhẹ — còn thấy đường nét"],
+        ["blur.medium"] = ["Medium — colors only", "Medio — solo colores", "Moyen — couleurs seulement", "Media — solo colori", "Médio — somente cores", "중간 — 색감만 표시", "中 — 色合いのみ", "中度 — 仅保留色彩", "中度 — 僅保留色彩", "Vừa — chỉ còn màu sắc"],
+        ["blur.high"] = ["Strong — not identifiable", "Fuerte — no identificable", "Fort — non identifiable", "Forte — non identificabile", "Forte — não identificável", "강하게 — 식별 불가", "強 — 識別不可", "强度 — 无法识别", "強度 — 無法識別", "Mạnh — không thể nhận dạng"],
+        ["hero.image"] = ["Wide header image", "Imagen panorámica de cabecera", "Image d’en-tête large", "Immagine intestazione ampia", "Imagem larga de cabeçalho", "상단 넓은 이미지", "上部ワイド画像", "顶部宽幅图片", "頂部寬幅圖片", "Ảnh đầu trang rộng"],
+        ["additional.image"] = ["Additional image", "Imagen adicional", "Image supplémentaire", "Immagine aggiuntiva", "Imagem adicional", "추가 이미지", "追加画像", "附加图片", "附加圖片", "Ảnh bổ sung"],
+        ["hero.image.hint"] = ["The first image appears at the top · up to 20 MB", "La primera imagen aparece arriba · hasta 20 MB", "La première image apparaît en haut · jusqu’à 20 Mo", "La prima immagine appare in alto · fino a 20 MB", "A primeira imagem aparece no topo · até 20 MB", "첫 번째 이미지가 상단에 표시 · 최대 20MB", "最初の画像を上部に表示・最大20MB", "第一张图片显示在顶部 · 最大 20MB", "第一張圖片顯示於頂部 · 最大 20MB", "Ảnh đầu tiên hiển thị ở đầu trang · tối đa 20 MB"],
+        ["cover.image"] = ["Card cover", "Portada de tarjeta", "Couverture de carte", "Copertina scheda", "Capa do cartão", "카드 표지", "カード表紙", "卡片封面", "卡片封面", "Ảnh bìa thẻ"],
+        ["cover.image.hint"] = ["Card thumbnail · up to 20 MB · multiple images allowed", "Miniatura de tarjeta · hasta 20 MB · admite varias imágenes", "Miniature de carte · jusqu’à 20 Mo · plusieurs images possibles", "Miniatura scheda · fino a 20 MB · più immagini consentite", "Miniatura do cartão · até 20 MB · várias imagens permitidas", "카드 미리보기 · 최대 20MB · 여러 장 가능", "カードのサムネイル・最大20MB・複数可", "卡片缩略图 · 最大 20MB · 可上传多张", "卡片縮圖 · 最大 20MB · 可上傳多張", "Ảnh thu nhỏ thẻ · tối đa 20 MB · cho phép nhiều ảnh"],
+        ["or.url"] = ["or link", "o enlace", "ou lien", "o link", "ou link", "또는 링크", "またはリンク", "或链接", "或連結", "hoặc liên kết"],
+        ["uploaded.images"] = ["Added images", "Imágenes añadidas", "Images ajoutées", "Immagini aggiunte", "Imagens adicionadas", "등록된 이미지", "登録済み画像", "已添加图片", "已新增圖片", "Hình ảnh đã thêm"],
+        ["multiple.allowed"] = ["Multiple files allowed", "Se permiten varios archivos", "Plusieurs fichiers possibles", "Sono consentiti più file", "Vários arquivos permitidos", "여러 파일 가능", "複数ファイル可", "可上传多个文件", "可上傳多個檔案", "Cho phép nhiều tệp"],
+        ["uploaded.videos"] = ["Added videos", "Vídeos añadidos", "Vidéos ajoutées", "Video aggiunti", "Vídeos adicionados", "등록된 동영상", "登録済み動画", "已添加视频", "已新增影片", "Video đã thêm"],
+        ["uploading"] = ["Uploading…", "Subiendo…", "Téléversement…", "Caricamento…", "Enviando…", "업로드 중…", "アップロード中…", "上传中…", "上傳中…", "Đang tải lên…"],
+        ["strength.category.placeholder"] = ["Area (example: planning)", "Área (ej.: planificación)", "Domaine (ex. : planification)", "Area (es.: pianificazione)", "Área (ex.: planejamento)", "분야 (예: 기획)", "分野（例：企画）", "领域（例如：策划）", "領域（例如：企劃）", "Lĩnh vực (ví dụ: lập kế hoạch)"],
+        ["strength.items.placeholder"] = ["Strengths or tools, separated by commas", "Fortalezas o herramientas, separadas por comas", "Compétences ou outils, séparés par des virgules", "Punti di forza o strumenti, separati da virgole", "Pontos fortes ou ferramentas, separados por vírgulas", "강점 또는 활용 도구 (쉼표로 구분)", "強み・使用ツール（カンマ区切り）", "优势或工具，用逗号分隔", "優勢或工具，以逗號分隔", "Thế mạnh hoặc công cụ, phân cách bằng dấu phẩy"],
+        ["experience.add"] = ["Add experience", "Añadir experiencia", "Ajouter une expérience", "Aggiungi esperienza", "Adicionar experiência", "경력 추가", "職歴を追加", "添加工作经历", "新增工作經歷", "Thêm kinh nghiệm"],
+        ["education.add"] = ["Add education", "Añadir formación", "Ajouter une formation", "Aggiungi formazione", "Adicionar formação", "학력 추가", "学歴を追加", "添加教育经历", "新增教育經歷", "Thêm học vấn"],
+        ["school"] = ["School or institution", "Centro educativo", "École ou établissement", "Scuola o istituto", "Escola ou instituição", "학교 또는 교육기관", "学校・教育機関", "学校或教育机构", "學校或教育機構", "Trường hoặc cơ sở đào tạo"],
+        ["degree"] = ["Field or qualification", "Área o titulación", "Domaine ou diplôme", "Indirizzo o qualifica", "Área ou qualificação", "전공 또는 학위", "専攻・学位", "专业或学位", "科系或學位", "Chuyên ngành hoặc bằng cấp"],
+        ["career.save"] = ["Save career information", "Guardar información profesional", "Enregistrer les informations de carrière", "Salva informazioni professionali", "Salvar informações profissionais", "경력 정보 저장", "キャリア情報を保存", "保存职业资料", "儲存職涯資料", "Lưu thông tin nghề nghiệp"],
+        ["messages.none"] = ["No messages received yet.", "Aún no hay mensajes.", "Aucun message reçu.", "Nessun messaggio ricevuto.", "Nenhuma mensagem recebida.", "아직 받은 메시지가 없습니다.", "受信メッセージはありません。", "暂无收到的消息。", "尚未收到訊息。", "Chưa có tin nhắn nào."],
+        ["new"] = ["New", "Nuevo", "Nouveau", "Nuovo", "Novo", "새 메시지", "新着", "新消息", "新訊息", "Mới"],
+        ["mark.read"] = ["Mark as read", "Marcar como leído", "Marquer comme lu", "Segna come letto", "Marcar como lida", "읽음 처리", "既読にする", "标为已读", "標示為已讀", "Đánh dấu đã đọc"],
+        ["design.public.hint"] = ["This design applies only to the public portfolio. It is saved separately from the admin screen’s light and dark modes.", "Este diseño solo se aplica al portafolio público y se guarda aparte del modo claro u oscuro del administrador.", "Ce design s’applique uniquement au portfolio public et est distinct des modes clair et sombre de l’administration.", "Questo design vale solo per il portfolio pubblico ed è separato dai temi chiaro e scuro dell’amministrazione.", "Este design vale apenas para o portfólio público e é separado dos modos claro e escuro da administração.", "공개 포트폴리오에만 적용되는 디자인입니다. 관리자 화면의 라이트·다크 모드와 별도로 저장됩니다.", "公開ポートフォリオ専用のデザインです。管理画面のライト・ダークモードとは別に保存されます。", "此设计仅用于公开作品集，与管理页面的浅色/深色模式分开保存。", "此設計僅用於公開作品集，與管理頁面的淺色／深色模式分開儲存。", "Thiết kế này chỉ áp dụng cho hồ sơ công khai và được lưu riêng với chế độ sáng/tối của trang quản trị."],
+        ["applied"] = ["In use", "En uso", "Utilisé", "In uso", "Em uso", "적용 중", "使用中", "使用中", "使用中", "Đang dùng"],
+        ["theme.dark"] = ["Dark", "Oscuro", "Sombre", "Scuro", "Escuro", "다크", "ダーク", "深色", "深色", "Tối"],
+        ["theme.ocean"] = ["Ocean", "Océano", "Océan", "Oceano", "Oceano", "오션", "オーシャン", "海洋", "海洋", "Đại dương"],
+        ["theme.forest"] = ["Forest", "Bosque", "Forêt", "Foresta", "Floresta", "포레스트", "フォレスト", "森林", "森林", "Rừng"],
+        ["theme.minimal"] = ["Minimal", "Minimal", "Minimal", "Minimale", "Minimal", "미니멀", "ミニマル", "简约", "簡約", "Tối giản"],
+        ["theme.warm"] = ["Warm", "Cálido", "Chaleureux", "Caldo", "Aconchegante", "웜", "ウォーム", "暖色", "暖色", "Ấm áp"],
+        ["admin.accounts"] = ["Manager accounts", "Cuentas de gestión", "Comptes gestionnaires", "Account di gestione", "Contas de gestão", "관리자 계정", "管理者アカウント", "管理员账号", "管理員帳號", "Tài khoản quản trị"],
+        ["admin.accounts.hint"] = ["After shared sign-in, enter the existing admin password to let multiple accounts manage this portfolio.", "Tras el inicio compartido, introduce la contraseña actual para que varias cuentas gestionen el portafolio.", "Après la connexion partagée, saisissez le mot de passe actuel pour autoriser plusieurs comptes.", "Dopo l’accesso condiviso, inserisci la password attuale per consentire la gestione a più account.", "Após o login compartilhado, informe a senha atual para permitir vários gestores.", "공용 로그인 후 기존 관리자 비밀번호를 입력하면 여러 계정이 같은 포트폴리오를 관리할 수 있습니다.", "共通ログイン後に既存の管理者パスワードを入力すると、複数アカウントで管理できます。", "共享登录后输入现有管理员密码，即可由多个账号共同管理。", "共用登入後輸入現有管理員密碼，即可由多個帳號共同管理。", "Sau khi đăng nhập dùng chung, nhập mật khẩu quản trị hiện tại để nhiều tài khoản cùng quản lý."],
+        ["admin.accounts.none"] = ["No manager account is connected yet.", "Aún no hay cuentas de gestión vinculadas.", "Aucun compte gestionnaire n’est encore lié.", "Nessun account di gestione è ancora collegato.", "Nenhuma conta de gestão está conectada.", "아직 공용 로그인에 연결된 관리자 계정이 없습니다.", "連携済みの管理者アカウントはありません。", "尚未关联管理员账号。", "尚未連結管理員帳號。", "Chưa có tài khoản quản trị nào được liên kết."],
+        ["professional.title"] = ["Role or professional title", "Función o título profesional", "Fonction ou titre professionnel", "Ruolo o titolo professionale", "Função ou título profissional", "직무 또는 직함", "職種・肩書き", "职位或职业头衔", "職務或職稱", "Vai trò hoặc chức danh"],
+        ["professional.title.placeholder"] = ["Example: office manager · planner · designer", "Ej.: administración · planificación · diseño", "Ex. : administration · planification · design", "Es.: amministrazione · pianificazione · design", "Ex.: administração · planejamento · design", "예: 사무행정 · 기획 · 디자이너", "例：事務・企画・デザイナー", "例如：行政管理 · 策划 · 设计", "例如：行政管理 · 企劃 · 設計", "Ví dụ: hành chính · lập kế hoạch · thiết kế"],
+        ["short.intro"] = ["Short introduction", "Presentación breve", "Courte présentation", "Breve presentazione", "Apresentação breve", "한 줄 소개", "短い紹介", "简短介绍", "簡短介紹", "Giới thiệu ngắn"],
+        ["profile.photo"] = ["Profile photo", "Foto de perfil", "Photo de profil", "Foto profilo", "Foto de perfil", "프로필 사진", "プロフィール写真", "头像", "個人照片", "Ảnh hồ sơ"],
+        ["profile.photo.hint"] = ["Square portrait recommended · PNG/JPG · up to 20 MB · displayed as a circle", "Se recomienda retrato cuadrado · PNG/JPG · hasta 20 MB · se muestra en círculo", "Portrait carré recommandé · PNG/JPG · jusqu’à 20 Mo · affiché en cercle", "Ritratto quadrato consigliato · PNG/JPG · fino a 20 MB · mostrato in cerchio", "Retrato quadrado recomendado · PNG/JPG · até 20 MB · exibido em círculo", "정사각형 인물 사진 권장 · PNG/JPG · 최대 20MB · 원형 표시", "正方形の顔写真を推奨・PNG/JPG・最大20MB・円形表示", "建议使用方形人像 · PNG/JPG · 最大 20MB · 圆形显示", "建議使用方形人像 · PNG/JPG · 最大 20MB · 圓形顯示", "Nên dùng ảnh chân dung vuông · PNG/JPG · tối đa 20 MB · hiển thị hình tròn"],
+        ["public.email"] = ["Public contact email", "Correo público de contacto", "E-mail public de contact", "Email pubblico di contatto", "E-mail público de contato", "공개 연락 이메일", "公開連絡先メール", "公开联系邮箱", "公開聯絡信箱", "Email liên hệ công khai"],
+        ["contact.allow"] = ["Allow visitor inquiry form", "Permitir formulario de consultas", "Autoriser le formulaire de contact", "Consenti modulo di contatto", "Permitir formulário de contato", "방문자 문의 양식 사용", "訪問者向けお問い合わせフォームを使用", "启用访客咨询表单", "啟用訪客洽詢表單", "Cho phép biểu mẫu liên hệ của khách"],
+        ["home.show"] = ["Show in the public portfolio list", "Mostrar en la lista pública", "Afficher dans la liste publique", "Mostra nell’elenco pubblico", "Mostrar na lista pública", "공개 포트폴리오 목록에 표시", "公開ポートフォリオ一覧に表示", "在公开作品集列表中显示", "顯示於公開作品集清單", "Hiển thị trong danh sách hồ sơ công khai"],
+        ["preview.title"] = ["Link preview title", "Título de vista previa del enlace", "Titre de l’aperçu du lien", "Titolo anteprima link", "Título da prévia do link", "링크 미리보기 제목", "リンクプレビューのタイトル", "链接预览标题", "連結預覽標題", "Tiêu đề xem trước liên kết"],
+        ["preview.title.hint"] = ["Leave blank to use the name", "Déjalo vacío para usar el nombre", "Laissez vide pour utiliser le nom", "Lascia vuoto per usare il nome", "Deixe em branco para usar o nome", "비우면 이름을 사용합니다", "空欄の場合は名前を使用", "留空则使用姓名", "留空則使用姓名", "Để trống để dùng tên"],
+        ["preview.description"] = ["Link preview description", "Descripción de vista previa", "Description de l’aperçu", "Descrizione anteprima", "Descrição da prévia", "링크 미리보기 설명", "リンクプレビューの説明", "链接预览说明", "連結預覽說明", "Mô tả xem trước liên kết"],
+        ["settings.save"] = ["Save portfolio settings", "Guardar configuración", "Enregistrer les paramètres", "Salva impostazioni", "Salvar configurações", "포트폴리오 설정 저장", "ポートフォリオ設定を保存", "保存作品集设置", "儲存作品集設定", "Lưu cài đặt hồ sơ"],
+        ["password.change"] = ["Change password", "Cambiar contraseña", "Modifier le mot de passe", "Cambia password", "Alterar senha", "비밀번호 변경", "パスワード変更", "修改密码", "變更密碼", "Đổi mật khẩu"],
+        ["password.current"] = ["Current password", "Contraseña actual", "Mot de passe actuel", "Password attuale", "Senha atual", "현재 비밀번호", "現在のパスワード", "当前密码", "目前密碼", "Mật khẩu hiện tại"],
+        ["password.new"] = ["New password", "Nueva contraseña", "Nouveau mot de passe", "Nuova password", "Nova senha", "새 비밀번호", "新しいパスワード", "新密码", "新密碼", "Mật khẩu mới"],
+        ["password.min8"] = ["At least 8 characters", "Al menos 8 caracteres", "Au moins 8 caractères", "Almeno 8 caratteri", "Pelo menos 8 caracteres", "8자 이상", "8文字以上", "至少 8 个字符", "至少 8 個字元", "Ít nhất 8 ký tự"],
+        ["password.confirm"] = ["Confirm new password", "Confirmar nueva contraseña", "Confirmer le nouveau mot de passe", "Conferma nuova password", "Confirmar nova senha", "새 비밀번호 확인", "新しいパスワードの確認", "确认新密码", "確認新密碼", "Xác nhận mật khẩu mới"],
+        ["password.confirm.placeholder"] = ["Enter it again", "Escríbela de nuevo", "Saisissez-le à nouveau", "Inseriscila di nuovo", "Digite novamente", "다시 입력", "もう一度入力", "再次输入", "再次輸入", "Nhập lại"],
+        ["danger.zone"] = ["Permanent actions", "Acciones permanentes", "Actions irréversibles", "Azioni permanenti", "Ações permanentes", "주의가 필요한 작업", "取り消せない操作", "不可撤销操作", "無法復原的操作", "Thao tác vĩnh viễn"],
+        ["danger.hint"] = ["The following action cannot be undone.", "La siguiente acción no se puede deshacer.", "L’action suivante est irréversible.", "L’azione seguente non può essere annullata.", "A ação abaixo não pode ser desfeita.", "아래 작업은 되돌릴 수 없습니다.", "次の操作は元に戻せません。", "以下操作无法撤销。", "以下操作無法復原。", "Thao tác dưới đây không thể hoàn tác."],
+        ["portfolio.delete"] = ["Delete this portfolio", "Eliminar este portafolio", "Supprimer ce portfolio", "Elimina questo portfolio", "Excluir este portfólio", "이 포트폴리오 삭제", "このポートフォリオを削除", "删除此作品集", "刪除此作品集", "Xóa hồ sơ này"],
+        ["portfolio.delete.confirm"] = ["Delete the ‘{0}’ portfolio?", "¿Eliminar el portafolio «{0}»?", "Supprimer le portfolio « {0} » ?", "Eliminare il portfolio ‘{0}’?", "Excluir o portfólio “{0}”?", "‘{0}’ 포트폴리오를 정말 삭제할까요?", "「{0}」ポートフォリオを削除しますか？", "确定删除“{0}”作品集吗？", "確定刪除「{0}」作品集嗎？", "Xóa hồ sơ “{0}”?"],
+        ["portfolio.delete.scope"] = ["All work entries, images and career information will be deleted.", "Se eliminarán todos los trabajos, imágenes e información profesional.", "Tous les travaux, images et informations de carrière seront supprimés.", "Tutti i lavori, le immagini e le informazioni professionali verranno eliminati.", "Todos os trabalhos, imagens e informações profissionais serão excluídos.", "모든 업무 사례, 이미지와 경력 정보가 삭제됩니다.", "すべての実績、画像、キャリア情報が削除されます。", "所有工作案例、图片和职业资料都将被删除。", "所有工作案例、圖片與職涯資料都將刪除。", "Tất cả công việc, hình ảnh và thông tin nghề nghiệp sẽ bị xóa."],
+        ["confirm.delete"] = ["Yes, delete", "Sí, eliminar", "Oui, supprimer", "Sì, elimina", "Sim, excluir", "확인 후 삭제", "削除する", "确认删除", "確認刪除", "Xác nhận xóa"],
+        ["status.portfolio.notfound"] = ["❌ Portfolio not found.", "❌ Portafolio no encontrado.", "❌ Portfolio introuvable.", "❌ Portfolio non trovato.", "❌ Portfólio não encontrado.", "❌ 존재하지 않는 포트폴리오입니다.", "❌ ポートフォリオが見つかりません。", "❌ 找不到作品集。", "❌ 找不到作品集。", "❌ Không tìm thấy hồ sơ."],
+        ["status.password.wrong"] = ["❌ Incorrect password.", "❌ Contraseña incorrecta.", "❌ Mot de passe incorrect.", "❌ Password errata.", "❌ Senha incorreta.", "❌ 비밀번호가 틀렸습니다.", "❌ パスワードが正しくありません。", "❌ 密码错误。", "❌ 密碼錯誤。", "❌ Mật khẩu không đúng."],
+        ["status.login.rate"] = ["❌ Too many sign-in attempts. Try again in 15 minutes.", "❌ Demasiados intentos de inicio de sesión. Inténtalo en 15 minutos.", "❌ Trop de tentatives de connexion. Réessayez dans 15 minutes.", "❌ Troppi tentativi di accesso. Riprova tra 15 minuti.", "❌ Muitas tentativas de login. Tente novamente em 15 minutos.", "❌ 로그인 시도가 너무 많습니다. 15분 후 다시 시도해 주세요.", "❌ ログイン試行回数が多すぎます。15分後にもう一度お試しください。", "❌ 登录尝试过多，请 15 分钟后重试。", "❌ 登入嘗試過多，請 15 分鐘後再試。", "❌ Có quá nhiều lần đăng nhập. Hãy thử lại sau 15 phút."],
+        ["status.media.space"] = ["❌ Media storage is full. Delete existing files and try again.", "❌ El almacenamiento multimedia está lleno. Elimina archivos y vuelve a intentarlo.", "❌ L’espace média est plein. Supprimez des fichiers puis réessayez.", "❌ Lo spazio multimediale è pieno. Elimina alcuni file e riprova.", "❌ O armazenamento de mídia está cheio. Exclua arquivos e tente novamente.", "❌ 미디어 저장 공간을 모두 사용했습니다. 기존 파일을 삭제한 뒤 다시 시도해 주세요.", "❌ メディア保存容量を使い切りました。既存ファイルを削除して再度お試しください。", "❌ 媒体存储空间已满，请删除现有文件后重试。", "❌ 媒體儲存空間已滿，請刪除現有檔案後再試。", "❌ Bộ nhớ nội dung đã đầy. Hãy xóa tệp cũ rồi thử lại."],
+        ["status.media.videos"] = ["❌ The video limit has been reached. Delete an existing video and try again.", "❌ Se alcanzó el límite de vídeos. Elimina uno y vuelve a intentarlo.", "❌ La limite de vidéos est atteinte. Supprimez une vidéo puis réessayez.", "❌ È stato raggiunto il limite dei video. Eliminane uno e riprova.", "❌ O limite de vídeos foi atingido. Exclua um vídeo e tente novamente.", "❌ 저장 가능한 동영상 개수를 초과했습니다. 기존 동영상을 삭제한 뒤 다시 시도해 주세요.", "❌ 保存可能な動画数の上限に達しました。既存の動画を削除して再度お試しください。", "❌ 已达到视频数量上限，请删除现有视频后重试。", "❌ 已達影片數量上限，請刪除現有影片後再試。", "❌ Đã đạt giới hạn video. Hãy xóa video cũ rồi thử lại."],
+        ["status.media.size"] = ["❌ The selected file is empty or too large.", "❌ El archivo seleccionado está vacío o es demasiado grande.", "❌ Le fichier sélectionné est vide ou trop volumineux.", "❌ Il file selezionato è vuoto o troppo grande.", "❌ O arquivo selecionado está vazio ou é grande demais.", "❌ 선택한 파일이 비어 있거나 허용 용량을 초과했습니다.", "❌ 選択したファイルが空か、許容サイズを超えています。", "❌ 所选文件为空或超过大小限制。", "❌ 所選檔案為空或超過大小限制。", "❌ Tệp đã chọn trống hoặc quá lớn."],
+        ["status.media.type"] = ["❌ This file type is not supported.", "❌ Este tipo de archivo no es compatible.", "❌ Ce type de fichier n’est pas pris en charge.", "❌ Questo tipo di file non è supportato.", "❌ Este tipo de arquivo não é compatível.", "❌ 지원하지 않는 파일 형식입니다.", "❌ このファイル形式には対応していません。", "❌ 不支持此文件类型。", "❌ 不支援此檔案類型。", "❌ Loại tệp này không được hỗ trợ."],
+        ["status.owner.connected"] = ["✅ Connected to your CodeMaru/Dreamine account as the primary manager.", "✅ Conectado a CodeMaru/Dreamine como gestor principal.", "✅ Compte CodeMaru/Dreamine lié comme gestionnaire principal.", "✅ Collegato a CodeMaru/Dreamine come gestore principale.", "✅ Conectado ao CodeMaru/Dreamine como gestor principal.", "✅ CodeMaru/Dreamine 계정에 대표 관리자로 연결되었습니다.", "✅ CodeMaru/Dreamineアカウントに代表管理者として連携しました。", "✅ 已作为主管理员关联 CodeMaru/Dreamine 账号。", "✅ 已以主要管理員身分連結 CodeMaru/Dreamine 帳號。", "✅ Đã liên kết CodeMaru/Dreamine với vai trò quản trị chính."],
+        ["status.admin.connected"] = ["✅ This CodeMaru/Dreamine account was added as a manager.", "✅ Esta cuenta CodeMaru/Dreamine se añadió como gestora.", "✅ Ce compte CodeMaru/Dreamine a été ajouté comme gestionnaire.", "✅ Questo account CodeMaru/Dreamine è stato aggiunto come gestore.", "✅ Esta conta CodeMaru/Dreamine foi adicionada como gestora.", "✅ 현재 CodeMaru/Dreamine 계정이 이 포트폴리오의 관리자로 추가되었습니다.", "✅ 現在のCodeMaru/Dreamineアカウントを管理者に追加しました。", "✅ 当前 CodeMaru/Dreamine 账号已添加为管理员。", "✅ 目前 CodeMaru/Dreamine 帳號已新增為管理員。", "✅ Tài khoản CodeMaru/Dreamine hiện tại đã được thêm làm quản trị viên."],
+        ["status.login.linkhint"] = ["✅ Signed in. Sign in to CodeMaru/Dreamine to connect a shared account.", "✅ Sesión iniciada. Inicia sesión en CodeMaru/Dreamine para vincular una cuenta compartida.", "✅ Connexion réussie. Connectez-vous à CodeMaru/Dreamine pour lier un compte partagé.", "✅ Accesso riuscito. Accedi a CodeMaru/Dreamine per collegare un account condiviso.", "✅ Login realizado. Entre no CodeMaru/Dreamine para vincular uma conta compartilhada.", "✅ 로그인 성공. 공용 계정에 연결하려면 먼저 CodeMaru/Dreamine 로그인을 해주세요.", "✅ ログインしました。共通アカウントに連携するにはCodeMaru/Dreamineへログインしてください。", "✅ 登录成功。如需关联共享账号，请先登录 CodeMaru/Dreamine。", "✅ 登入成功。如需連結共用帳號，請先登入 CodeMaru/Dreamine。", "✅ Đăng nhập thành công. Hãy đăng nhập CodeMaru/Dreamine để liên kết tài khoản dùng chung."],
+        ["status.title.required"] = ["❌ Enter a title.", "❌ Introduce un título.", "❌ Saisissez un titre.", "❌ Inserisci un titolo.", "❌ Informe um título.", "❌ 제목을 입력하세요.", "❌ タイトルを入力してください。", "❌ 请输入标题。", "❌ 請輸入標題。", "❌ Hãy nhập tiêu đề."],
+        ["status.saved"] = ["✅ Saved.", "✅ Guardado.", "✅ Enregistré.", "✅ Salvato.", "✅ Salvo.", "✅ 저장되었습니다.", "✅ 保存しました。", "✅ 已保存。", "✅ 已儲存。", "✅ Đã lưu."],
+        ["status.deleted"] = ["✅ Deleted.", "✅ Eliminado.", "✅ Supprimé.", "✅ Eliminato.", "✅ Excluído.", "✅ 삭제 완료.", "✅ 削除しました。", "✅ 已删除。", "✅ 已刪除。", "✅ Đã xóa."],
+        ["status.career.saved"] = ["✅ Career information saved.", "✅ Información profesional guardada.", "✅ Informations de carrière enregistrées.", "✅ Informazioni professionali salvate.", "✅ Informações profissionais salvas.", "✅ 경력 정보 저장 완료.", "✅ キャリア情報を保存しました。", "✅ 职业资料已保存。", "✅ 職涯資料已儲存。", "✅ Đã lưu thông tin nghề nghiệp."],
+        ["status.settings.saved"] = ["✅ Settings saved.", "✅ Configuración guardada.", "✅ Paramètres enregistrés.", "✅ Impostazioni salvate.", "✅ Configurações salvas.", "✅ 설정이 저장되었습니다.", "✅ 設定を保存しました。", "✅ 设置已保存。", "✅ 設定已儲存。", "✅ Đã lưu cài đặt."],
+        ["status.owner.only"] = ["❌ Only the primary manager can remove manager accounts.", "❌ Solo el gestor principal puede eliminar cuentas de gestión.", "❌ Seul le gestionnaire principal peut supprimer des comptes.", "❌ Solo il gestore principale può rimuovere gli account.", "❌ Apenas o gestor principal pode remover contas.", "❌ 대표 관리자만 관리자 계정을 삭제할 수 있습니다.", "❌ 管理者アカウントを削除できるのは代表管理者のみです。", "❌ 仅主管理员可删除管理员账号。", "❌ 僅主要管理員可刪除管理員帳號。", "❌ Chỉ quản trị chính mới có thể xóa tài khoản quản trị."],
+        ["status.owner.protected"] = ["❌ The primary manager cannot be removed.", "❌ No se puede eliminar al gestor principal.", "❌ Le gestionnaire principal ne peut pas être supprimé.", "❌ Il gestore principale non può essere rimosso.", "❌ O gestor principal não pode ser removido.", "❌ 대표 관리자는 삭제할 수 없습니다.", "❌ 代表管理者は削除できません。", "❌ 无法删除主管理员。", "❌ 無法刪除主要管理員。", "❌ Không thể xóa quản trị chính."],
+        ["status.admin.notfound"] = ["❌ Manager account not found.", "❌ Cuenta de gestión no encontrada.", "❌ Compte gestionnaire introuvable.", "❌ Account di gestione non trovato.", "❌ Conta de gestão não encontrada.", "❌ 삭제할 관리자를 찾을 수 없습니다.", "❌ 対象の管理者が見つかりません。", "❌ 找不到要删除的管理员。", "❌ 找不到要刪除的管理員。", "❌ Không tìm thấy quản trị viên cần xóa."],
+        ["status.admin.deleted"] = ["✅ Manager account removed.", "✅ Cuenta de gestión eliminada.", "✅ Compte gestionnaire supprimé.", "✅ Account di gestione rimosso.", "✅ Conta de gestão removida.", "✅ 관리자 계정이 삭제되었습니다.", "✅ 管理者アカウントを削除しました。", "✅ 管理员账号已删除。", "✅ 管理員帳號已刪除。", "✅ Đã xóa tài khoản quản trị."],
+        ["status.settings.loadfirst"] = ["❌ Load the settings first.", "❌ Carga primero la configuración.", "❌ Chargez d’abord les paramètres.", "❌ Carica prima le impostazioni.", "❌ Carregue as configurações primeiro.", "❌ 설정을 먼저 불러오세요.", "❌ 先に設定を読み込んでください。", "❌ 请先加载设置。", "❌ 請先載入設定。", "❌ Hãy tải cài đặt trước."],
+        ["status.currentpw.wrong"] = ["❌ The current password is incorrect.", "❌ La contraseña actual es incorrecta.", "❌ Le mot de passe actuel est incorrect.", "❌ La password attuale è errata.", "❌ A senha atual está incorreta.", "❌ 현재 비밀번호가 틀렸습니다.", "❌ 現在のパスワードが正しくありません。", "❌ 当前密码错误。", "❌ 目前密碼錯誤。", "❌ Mật khẩu hiện tại không đúng."],
+        ["status.newpw.min8"] = ["❌ The new password must have at least 8 characters.", "❌ La nueva contraseña debe tener al menos 8 caracteres.", "❌ Le nouveau mot de passe doit contenir au moins 8 caractères.", "❌ La nuova password deve avere almeno 8 caratteri.", "❌ A nova senha deve ter pelo menos 8 caracteres.", "❌ 새 비밀번호는 8자 이상이어야 합니다.", "❌ 新しいパスワードは8文字以上にしてください。", "❌ 新密码至少需要 8 个字符。", "❌ 新密碼至少需要 8 個字元。", "❌ Mật khẩu mới phải có ít nhất 8 ký tự."],
+        ["status.newpw.mismatch"] = ["❌ The new passwords do not match.", "❌ Las nuevas contraseñas no coinciden.", "❌ Les nouveaux mots de passe ne correspondent pas.", "❌ Le nuove password non coincidono.", "❌ As novas senhas não coincidem.", "❌ 새 비밀번호가 일치하지 않습니다.", "❌ 新しいパスワードが一致しません。", "❌ 两次输入的新密码不一致。", "❌ 兩次輸入的新密碼不一致。", "❌ Mật khẩu mới không khớp."],
+        ["status.pw.changed"] = ["✅ Password changed.", "✅ Contraseña cambiada.", "✅ Mot de passe modifié.", "✅ Password modificata.", "✅ Senha alterada.", "✅ 비밀번호가 변경되었습니다.", "✅ パスワードを変更しました。", "✅ 密码已修改。", "✅ 密碼已變更。", "✅ Đã đổi mật khẩu."],
+        ["status.message.deleted"] = ["✅ Message deleted.", "✅ Mensaje eliminado.", "✅ Message supprimé.", "✅ Messaggio eliminato.", "✅ Mensagem excluída.", "✅ 메시지 삭제 완료.", "✅ メッセージを削除しました。", "✅ 消息已删除。", "✅ 訊息已刪除。", "✅ Đã xóa tin nhắn."],
+        ["status.error.generic"] = ["❌ The request could not be completed.", "❌ No se pudo completar la solicitud.", "❌ La demande n’a pas pu être traitée.", "❌ Impossibile completare la richiesta.", "❌ Não foi possível concluir a solicitação.", "❌ 요청을 완료하지 못했습니다.", "❌ 処理を完了できませんでした。", "❌ 无法完成请求。", "❌ 無法完成要求。", "❌ Không thể hoàn tất yêu cầu."],
+        ["status.done.generic"] = ["✅ Completed.", "✅ Completado.", "✅ Terminé.", "✅ Completato.", "✅ Concluído.", "✅ 완료되었습니다.", "✅ 完了しました。", "✅ 已完成。", "✅ 已完成。", "✅ Đã hoàn tất."],
+    };
+
+    private static readonly Dictionary<string, string> StatusKeys = new(StringComparer.Ordinal)
+    {
+        ["❌ 존재하지 않는 포트폴리오입니다."] = "status.portfolio.notfound",
+        ["❌ 비밀번호가 틀렸습니다."] = "status.password.wrong",
+        ["❌ 로그인 시도가 너무 많습니다. 15분 후 다시 시도해 주세요."] = "status.login.rate",
+        ["✅ CodeMaru/Dreamine 계정에 대표 관리자로 연결되었습니다."] = "status.owner.connected",
+        ["✅ 현재 CodeMaru/Dreamine 계정이 이 포트폴리오의 관리자로 추가되었습니다."] = "status.admin.connected",
+        ["✅ 로그인 성공. 공용 계정에 연결하려면 먼저 CodeMaru/Dreamine 로그인을 해주세요."] = "status.login.linkhint",
+        ["❌ 제목을 입력하세요."] = "status.title.required",
+        ["✅ 저장되었습니다."] = "status.saved",
+        ["✅ 삭제 완료."] = "status.deleted",
+        ["✅ Resume 저장 완료."] = "status.career.saved",
+        ["✅ 설정이 저장되었습니다."] = "status.settings.saved",
+        ["❌ 대표 관리자만 관리자 계정을 삭제할 수 있습니다."] = "status.owner.only",
+        ["❌ 대표 관리자는 삭제할 수 없습니다."] = "status.owner.protected",
+        ["❌ 삭제할 관리자를 찾을 수 없습니다."] = "status.admin.notfound",
+        ["✅ 관리자 계정이 삭제되었습니다."] = "status.admin.deleted",
+        ["❌ 설정을 먼저 불러오세요."] = "status.settings.loadfirst",
+        ["❌ 현재 비밀번호가 틀렸습니다."] = "status.currentpw.wrong",
+        ["❌ 새 비밀번호는 8자 이상이어야 합니다."] = "status.newpw.min8",
+        ["❌ 새 비밀번호가 일치하지 않습니다."] = "status.newpw.mismatch",
+        ["✅ 비밀번호가 변경되었습니다."] = "status.pw.changed",
+        ["✅ 메시지 삭제 완료."] = "status.message.deleted",
+    };
+
+    private int AdminLanguageIndex => Text.Language.Trim().ToLowerInvariant() switch
+    {
+        "es" => 1,
+        "fr" => 2,
+        "it" => 3,
+        "pt" or "pt-br" or "pt-pt" => 4,
+        "ko" => 5,
+        "ja" => 6,
+        "zh-hans" or "zh-cn" or "zh-sg" => 7,
+        "zh-hant" or "zh-tw" or "zh-hk" => 8,
+        "vi" => 9,
+        _ => 0,
+    };
+
+    private string A(string key) => AdminTexts.TryGetValue(key, out var values) && values.Length == 10
+        ? values[AdminLanguageIndex]
+        : key;
+
+    private string Status(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+        if (StatusKeys.TryGetValue(value, out var key)) return A(key);
+        if (value.Contains("미디어 저장 공간", StringComparison.Ordinal)) return A("status.media.space");
+        if (value.Contains("동영상 개수", StringComparison.Ordinal)) return A("status.media.videos");
+        if (value.Contains("must be between 1 byte", StringComparison.OrdinalIgnoreCase)) return A("status.media.size");
+        if (value.Contains("file type is not allowed", StringComparison.OrdinalIgnoreCase)) return A("status.media.type");
+        if (AdminLanguageIndex == 5) return value;
+        if (value.StartsWith("❌", StringComparison.Ordinal)) return A("status.error.generic");
+        if (value.StartsWith("✅", StringComparison.Ordinal)) return A("status.done.generic");
+        return value;
+    }
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!Vm.IsLoaded) await Vm.InitializeAsync(Slug);
+        if (!Vm.IsLoadedFor(Slug)) await Vm.InitializeAsync(Slug);
     }
+
+    protected override void OnInitialized() => Text.Changed += HandleLanguageChanged;
 
     private void OnPasswordInput(ChangeEventArgs e) => Vm.LoginPassword = e.Value?.ToString() ?? string.Empty;
 
@@ -655,6 +924,32 @@
     }
 
     private void SetTab(string tab) { activeTab = tab; Vm.CancelEdit(); }
+
+    private void NewProjectFromOverview()
+    {
+        activeTab = "project";
+        Vm.NewProject();
+    }
+
+    private void EditProjectFromOverview(ProjectItem project)
+    {
+        activeTab = "project";
+        Vm.EditProject(project);
+    }
+
+    private string CategoryLabel(ProjectCategory category) => category switch
+    {
+        ProjectCategory.Work => Text["project.work"],
+        ProjectCategory.Public => Text["project.public"],
+        _ => Text["project.personal"]
+    };
+
+    private void SelectPortfolioTheme(string theme)
+    {
+        if (Vm.Config is not null) Vm.Config.ThemeName = theme;
+    }
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
     private async Task OnRefresh() => await Vm.LoadAsync(Slug);
 
@@ -776,4 +1071,6 @@
             .Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
     }
+
+    public void Dispose() => Text.Changed -= HandleLanguageChanged;
 }

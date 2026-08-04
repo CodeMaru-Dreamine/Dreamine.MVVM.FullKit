@@ -4,6 +4,7 @@ using Dreamine.Hybrid.Wpf.Hosting;
 using Dreamine.Identity;
 using Dreamine.Identity.Options;
 using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -68,13 +69,22 @@ public static class Program
             options.SharedServiceTypes.Add(typeof(IResumeStore));
             options.SharedServiceTypes.Add(typeof(IContactStore));
             options.SharedServiceTypes.Add(typeof(IMediaService));
-            options.AddPhysicalStaticFiles(opts.ResolvedDataPath, "/portfolio-data");
+            var previousPipeline = options.ConfigurePipeline;
+            options.ConfigurePipeline = app =>
+            {
+                previousPipeline?.Invoke(app);
+                app.UsePortfolioMedia(opts);
+            };
 
             options.ConfigureServices = services =>
             {
                 services.AddServerSideBlazor().AddHubOptions(o =>
                 {
-                    o.MaximumReceiveMessageSize = null;
+                    // This is the maximum size of a single SignalR message, not
+                    // the uploaded file. Browser-file streams remain chunked, so
+                    // an 8 MiB ceiling supports mobile media uploads without an
+                    // unbounded circuit allocation.
+                    o.MaximumReceiveMessageSize = 8 * 1024 * 1024;
                     o.ClientTimeoutInterval = TimeSpan.FromMinutes(10);
                     o.HandshakeTimeout = TimeSpan.FromMinutes(2);
                     o.KeepAliveInterval = TimeSpan.FromSeconds(10);
@@ -86,6 +96,14 @@ public static class Program
                     o.Cookie.SecurePolicy = Microsoft.AspNetCore.Http.CookieSecurePolicy.SameAsRequest;
                 });
 
+                services.AddHttpContextAccessor();
+                services.AddSingleton<PortfolioContactRateLimiter>();
+                services.AddSingleton<PortfolioTenantCreationLimiter>();
+                services.AddSingleton<PortfolioLoginRateLimiter>();
+                services.AddScoped<PortfolioCircuitClientContext>();
+                services.AddScoped<CircuitHandler>(serviceProvider =>
+                    serviceProvider.GetRequiredService<PortfolioCircuitClientContext>());
+
                 services.Configure<CircuitOptions>(o =>
                 {
                     o.DisconnectedCircuitMaxRetained = 100;
@@ -95,9 +113,12 @@ public static class Program
                 });
 
                 services.AddScoped<PortfolioUserContext>();
+                services.AddScoped<PortfolioLocalization>();
             };
 
-            options.AddDreamineIdentity(authOptions, usersDbPath);
+            // Portfolio is an Identity consumer. OAuth challenges and callbacks belong to
+            // the central codemaru.co.kr host; this app only reads the shared cookie.
+            options.AddDreamineIdentity(authOptions.AsConsumer(), usersDbPath);
         });
 
         builder.Build().RunDreamineWpfApp<App>();
@@ -232,4 +253,5 @@ public static class Program
             ? configuredPath
             : Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, configuredPath));
     }
+
 }

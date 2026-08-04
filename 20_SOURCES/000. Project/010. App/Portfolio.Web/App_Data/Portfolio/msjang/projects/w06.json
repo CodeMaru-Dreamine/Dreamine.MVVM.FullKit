@@ -1,26 +1,41 @@
 {
   "Id": "w06",
-  "Title": "RESU TRUST Pack Line (PC 제어)",
-  "Description": "PC 직접제어 기반 대형 라인 구축. 이후 프레임워크 설계 철학의 토대가 된 프로젝트.",
-  "Tags": [],
+  "Title": "RESU TRUST Pack Line (PC \uC81C\uC5B4)",
+  "Description": "PC \uC9C1\uC811\uC81C\uC5B4 \uAE30\uBC18 \uB300\uD615 \uB77C\uC778 \uAD6C\uCD95. \uC774\uD6C4 \uD504\uB808\uC784\uC6CC\uD06C \uC124\uACC4 \uCCA0\uD559\uC758 \uD1A0\uB300\uAC00 \uB41C \uD504\uB85C\uC81D\uD2B8.",
+  "Tags": [
+    "C#",
+    "WinForms",
+    "PC Control",
+    "Mitsubishi iQ",
+    "MELSEC",
+    "Ethernet Communication",
+    "Fuji Inverter",
+    "Equipment Control",
+    "Factory Automation",
+    "Control Architecture"
+  ],
   "Year": 2023,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "fe1f0d81a0c248258dea4ee7001d6209.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 6,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/ResuTrust.png" ],
-  "WorkSubtitle": "PLC 미사용, PC 3대 i9 기반 20~30축 직접 제어 라인",
-  "WorkBullets": [
-      "PLC 없이 PC(i9) 3대가 전체 장비(20~30축)를 직접 제어하도록 설계",
-      "WinForms 기반 3개 프로그램을 구조/패턴 통합 → 재사용성 및 유지보수성 확보",
-      "8대 장비 구성의 대형 라인(60억 규모) 통합 운전",
-      "Dreamine/VSFrameWork 철학의 전단계 — 동기 흐름/장치 유닛 분리/인터페이스 구성 개념 정립"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "fe1f0d81a0c248258dea4ee7001d6209.png"
   ],
-  "WorkPeriod": "현장 구축 및 테스트 포함",
-  "WorkRole": "PC 기반 제어 아키텍처 · 통신/인터페이스 설계",
-  "WorkTech": "C#, WinForms, Mitsubishi J4(광통신+Ethernet), Fuji Inverter",
-  "WorkCompany": "㈜휴민로보틱스 / P社"
+  "WorkSubtitle": "PLC \uBBF8\uC0AC\uC6A9, PC 3\uB300 i9 \uAE30\uBC18 20~30\uCD95 \uC9C1\uC811 \uC81C\uC5B4 \uB77C\uC778",
+  "WorkBullets": [
+    "PLC \uC5C6\uC774 PC(i9) 3\uB300\uAC00 \uC804\uCCB4 \uC7A5\uBE44(20~30\uCD95)\uB97C \uC9C1\uC811 \uC81C\uC5B4\uD558\uB3C4\uB85D \uC124\uACC4",
+    "WinForms \uAE30\uBC18 3\uAC1C \uD504\uB85C\uADF8\uB7A8\uC744 \uAD6C\uC870/\uD328\uD134 \uD1B5\uD569 \u2192 \uC7AC\uC0AC\uC6A9\uC131 \uBC0F \uC720\uC9C0\uBCF4\uC218\uC131 \uD655\uBCF4",
+    "8\uB300 \uC7A5\uBE44 \uAD6C\uC131\uC758 \uB300\uD615 \uB77C\uC778(60\uC5B5 \uADDC\uBAA8) \uD1B5\uD569 \uC6B4\uC804",
+    "Dreamine/VSFrameWork \uCCA0\uD559\uC758 \uC804\uB2E8\uACC4 \u2014 \uB3D9\uAE30 \uD750\uB984/\uC7A5\uCE58 \uC720\uB2DB \uBD84\uB9AC/\uC778\uD130\uD398\uC774\uC2A4 \uAD6C\uC131 \uAC1C\uB150 \uC815\uB9BD"
+  ],
+  "WorkPeriod": "\uD604\uC7A5 \uAD6C\uCD95 \uBC0F \uD14C\uC2A4\uD2B8 \uD3EC\uD568",
+  "WorkRole": "PC \uAE30\uBC18 \uC81C\uC5B4 \uC544\uD0A4\uD14D\uCC98 \u00B7 \uD1B5\uC2E0/\uC778\uD130\uD398\uC774\uC2A4 \uC124\uACC4",
+  "WorkTech": "C#, WinForms, Mitsubishi J4(\uAD11\uD1B5\uC2E0\u002BEthernet), Fuji Inverter",
+  "WorkCompany": "\u321C\uD734\uBBFC\uB85C\uBCF4\uD2F1\uC2A4 / P\u793E"
 }

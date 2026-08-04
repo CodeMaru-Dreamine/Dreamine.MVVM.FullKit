@@ -1,26 +1,39 @@
 {
   "Id": "w17",
-  "Title": "Dispenser 제어 / SI Lens Bonding Support",
-  "Description": "비전 얼라인과 다축 모션을 결합한 Dispenser 제어. 시퀀스/GUI 일체 개발과 데모까지 담당.",
-  "Tags": [],
+  "Title": "Dispenser \uC81C\uC5B4 / SI Lens Bonding Support",
+  "Description": "\uBE44\uC804 \uC5BC\uB77C\uC778\uACFC \uB2E4\uCD95 \uBAA8\uC158\uC744 \uACB0\uD569\uD55C Dispenser \uC81C\uC5B4. \uC2DC\uD000\uC2A4/GUI \uC77C\uCCB4 \uAC1C\uBC1C\uACFC \uB370\uBAA8\uAE4C\uC9C0 \uB2F4\uB2F9.",
+  "Tags": [
+    "C\u002B\u002B",
+    "MFC",
+    "Visual C\u002B\u002B 6.0",
+    "Dispenser Control",
+    "Vision Alignment",
+    "Motion Control",
+    "Sequence Control",
+    "Industrial Automation"
+  ],
   "Year": 2013,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "3274977cb2df4c9eb9cf6e9457ac7a69.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 17,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
-  "WorkSubtitle": "다축 모션 + 비전(Euresys) 연동 Dispenser 제어",
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "3274977cb2df4c9eb9cf6e9457ac7a69.png"
+  ],
+  "WorkSubtitle": "\uB2E4\uCD95 \uBAA8\uC158 \u002B \uBE44\uC804(Euresys) \uC5F0\uB3D9 Dispenser \uC81C\uC5B4",
   "WorkBullets": [
-      "8축(서보·스텝), I/O(32/32) 구성 — 일부 장비는 12축(8축+4축 서보·스텝) 운용",
-      "Euresys 라이브러리 연동(Find/얼라인 기능)로 시각 보정 및 포지셔닝",
-      "IPS-Motion Board(MCX314) 기반 다축 제어 시퀀스 구현",
-      "전체 공정 흐름 UI/상태 표시 GUI 제작, Intel DEMO 진행"
+    "8\uCD95(\uC11C\uBCF4\u00B7\uC2A4\uD15D), I/O(32/32) \uAD6C\uC131 \u2014 \uC77C\uBD80 \uC7A5\uBE44\uB294 12\uCD95(8\uCD95\u002B4\uCD95 \uC11C\uBCF4\u00B7\uC2A4\uD15D) \uC6B4\uC6A9",
+    "Euresys \uB77C\uC774\uBE0C\uB7EC\uB9AC \uC5F0\uB3D9(Find/\uC5BC\uB77C\uC778 \uAE30\uB2A5)\uB85C \uC2DC\uAC01 \uBCF4\uC815 \uBC0F \uD3EC\uC9C0\uC154\uB2DD",
+    "IPS-Motion Board(MCX314) \uAE30\uBC18 \uB2E4\uCD95 \uC81C\uC5B4 \uC2DC\uD000\uC2A4 \uAD6C\uD604",
+    "\uC804\uCCB4 \uACF5\uC815 \uD750\uB984 UI/\uC0C1\uD0DC \uD45C\uC2DC GUI \uC81C\uC791, Intel DEMO \uC9C4\uD589"
   ],
   "WorkPeriod": "2012.01 ~ 2013.12",
-  "WorkRole": "GUI 및 Sequence 설계/구현, 데모 지원",
-  "WorkTech": "MFC, C++(Interop), IPS-Motion(MCX314), Euresys, 8/12축, I/O 32/32",
-  "WorkCompany": "(주)아이피에스시스템 · 상품개발부1팀(대리)"
+  "WorkRole": "GUI \uBC0F Sequence \uC124\uACC4/\uAD6C\uD604, \uB370\uBAA8 \uC9C0\uC6D0",
+  "WorkTech": "MFC, C\u002B\u002B(Interop), IPS-Motion(MCX314), Euresys, 8/12\uCD95, I/O 32/32",
+  "WorkCompany": "(\uC8FC)\uC544\uC774\uD53C\uC5D0\uC2A4\uC2DC\uC2A4\uD15C \u00B7 \uC0C1\uD488\uAC1C\uBC1C\uBD801\uD300(\uB300\uB9AC)"
 }

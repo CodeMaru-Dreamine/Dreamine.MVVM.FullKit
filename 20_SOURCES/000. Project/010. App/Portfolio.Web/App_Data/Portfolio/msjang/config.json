@@ -1,18 +1,33 @@
 {
   "Slug": "msjang",
-  "OwnerName": "장민수",
-  "Title": ".NET / WPF / Blazor 풀스택 개발자",
-  "Bio": "WPF·Blazor 하이브리드 앱과 멀티테넌트 플랫폼을 설계·개발합니다.\n개발 생산성을 높이는 도구와 아키텍처를 좋아합니다.",
-  "ProfileImageFileName": "",
+  "OwnerName": "\uC7A5\uBBFC\uC218",
+  "Title": ".NET / WPF / Blazor \uD480\uC2A4\uD0DD \uAC1C\uBC1C\uC790",
+  "Bio": "WPF\u00B7Blazor \uD558\uC774\uBE0C\uB9AC\uB4DC \uC571\uACFC \uBA40\uD2F0\uD14C\uB10C\uD2B8 \uD50C\uB7AB\uD3FC\uC744 \uC124\uACC4\u00B7\uAC1C\uBC1C\uD569\uB2C8\uB2E4.\n\uAC1C\uBC1C \uC0DD\uC0B0\uC131\uC744 \uB192\uC774\uB294 \uB3C4\uAD6C\uC640 \uC544\uD0A4\uD14D\uCC98\uB97C \uC88B\uC544\uD569\uB2C8\uB2E4.",
+  "ProfileImageFileName": "profile.png",
   "ThemeName": "dark",
-  "PasswordHash": "f931c308fc5b60b421c09969912839dff2776957d98b8d2f91c554ed8fc80f78",
+  "PasswordHash": "14df7ded98e7801da3263c0945f0137e3a34fdc6d9be2fccffcaa0b3c530adb1",
+  "OwnerUserId": "oauth-2",
+  "OwnerProvider": "Google",
+  "OwnerEmail": "togood1983@gmail.com",
+  "OwnerDisplayName": "\uC7A5\uBBFC\uC218",
+  "OwnerLinkedAt": "2026-07-07T16:57:15.0654338+09:00",
+  "AdminUsers": [
+    {
+      "UserId": "oauth-2",
+      "Provider": "Google",
+      "Email": "togood1983@gmail.com",
+      "DisplayName": "\uC7A5\uBBFC\uC218",
+      "Role": "Owner",
+      "AddedAt": "2026-07-07T16:57:15.0657356+09:00"
+    }
+  ],
   "ShowOnHome": true,
-  "PinOrder": 1,
+  "PinOrder": 2,
   "CreatedAt": "2026-06-16T00:00:00",
   "GithubUrl": "https://github.com/CodeMaru-Dreamine",
   "LinkedInUrl": "",
   "ContactEmail": "togood1983@gmail.com",
   "AllowContact": true,
-  "OgTitle": "장민수 — .NET / Blazor 개발자 포트폴리오",
-  "OgDescription": "WPF·Blazor 하이브리드 앱과 멀티테넌트 플랫폼을 설계·개발하는 풀스택 개발자입니다."
+  "OgTitle": "\uC7A5\uBBFC\uC218 \u2014 .NET / Blazor \uAC1C\uBC1C\uC790 \uD3EC\uD2B8\uD3F4\uB9AC\uC624",
+  "OgDescription": "WPF\u00B7Blazor \uD558\uC774\uBE0C\uB9AC\uB4DC \uC571\uACFC \uBA40\uD2F0\uD14C\uB10C\uD2B8 \uD50C\uB7AB\uD3FC\uC744 \uC124\uACC4\u00B7\uAC1C\uBC1C\uD558\uB294 \uD480\uC2A4\uD0DD \uAC1C\uBC1C\uC790\uC785\uB2C8\uB2E4."
 }

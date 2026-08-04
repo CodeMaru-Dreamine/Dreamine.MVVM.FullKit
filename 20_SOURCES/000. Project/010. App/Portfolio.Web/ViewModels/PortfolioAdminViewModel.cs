@@ -70,6 +70,15 @@ public class PortfolioAdminViewModel
     /// \endif
     /// </summary>
     private readonly PortfolioUserContext _userContext;
+    private readonly PortfolioLoginRateLimiter _loginRateLimiter;
+    private readonly PortfolioCircuitClientContext _clientContext;
+
+    // A Blazor Server scoped view model lives for the whole circuit.  Bind the
+    // local admin session to the exact tenant that was authenticated so route
+    // parameter changes cannot reuse another tenant's authorization.
+    private string? _authenticatedSlug;
+    private string? _loadedSlug;
+    private bool _sessionUsesTenantPassword;
 
     /// <summary>
     /// \if KO
@@ -330,7 +339,9 @@ public class PortfolioAdminViewModel
         IResumeStore resumes,
         IContactStore contacts,
         IMediaService media,
-        PortfolioUserContext userContext)
+        PortfolioUserContext userContext,
+        PortfolioLoginRateLimiter loginRateLimiter,
+        PortfolioCircuitClientContext clientContext)
     {
         _tenants = tenants;
         _projects = projects;
@@ -338,6 +349,8 @@ public class PortfolioAdminViewModel
         _contacts = contacts;
         _media = media;
         _userContext = userContext;
+        _loginRateLimiter = loginRateLimiter;
+        _clientContext = clientContext;
     }
 
     /// <summary>
@@ -366,10 +379,16 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task InitializeAsync(string slug)
     {
+        string normalizedSlug = NormalizeSlug(slug);
+        if (!string.Equals(_authenticatedSlug, normalizedSlug, StringComparison.Ordinal))
+        {
+            ResetTenantSession();
+        }
+
         StatusMessage = "";
         await RefreshCurrentUserAsync().ConfigureAwait(false);
 
-        var cfg = await _tenants.GetAsync(slug).ConfigureAwait(false);
+        var cfg = await _tenants.GetAsync(normalizedSlug).ConfigureAwait(false);
         if (cfg is null)
         {
             return;
@@ -383,7 +402,9 @@ public class PortfolioAdminViewModel
         if (IsLinkedToCurrentUser)
         {
             IsAuthenticated = true;
-            await LoadAsync(slug).ConfigureAwait(false);
+            _authenticatedSlug = normalizedSlug;
+            _sessionUsesTenantPassword = false;
+            await LoadAsync(normalizedSlug).ConfigureAwait(false);
         }
     }
 
@@ -413,7 +434,13 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task<bool> LoginAsync(string slug)
     {
-        var cfg = await _tenants.GetAsync(slug);
+        string normalizedSlug = NormalizeSlug(slug);
+        if (!string.Equals(_authenticatedSlug, normalizedSlug, StringComparison.Ordinal))
+        {
+            ResetTenantSession();
+        }
+
+        var cfg = await _tenants.GetAsync(normalizedSlug);
         if (cfg == null) { StatusMessage = "❌ 존재하지 않는 포트폴리오입니다."; return false; }
 
         var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
@@ -422,6 +449,8 @@ public class PortfolioAdminViewModel
         if (IsAdminUser(cfg, user))
         {
             IsAuthenticated = true;
+            _authenticatedSlug = normalizedSlug;
+            _sessionUsesTenantPassword = false;
             IsLinkedToCurrentUser = true;
             IsOwner = IsOwnerUser(cfg, user);
             EffectiveAdminUsers = BuildEffectiveAdminUsers(cfg);
@@ -429,9 +458,19 @@ public class PortfolioAdminViewModel
             return true;
         }
 
+        if (!_loginRateLimiter.TryBeginAttempt(
+                "tenant-admin", _clientContext.RemoteIpAddress, normalizedSlug, permitLimit: 5))
+        {
+            StatusMessage = "❌ 로그인 시도가 너무 많습니다. 15분 후 다시 시도해 주세요.";
+            return false;
+        }
+
         var verification = DreaminePasswordHasher.VerifyPassword(LoginPassword, cfg.PasswordHash, out var upgradedHash);
         if (verification is PasswordHashVerificationResult.Failed) { StatusMessage = "❌ 비밀번호가 틀렸습니다."; return false; }
+        _loginRateLimiter.Reset("tenant-admin", _clientContext.RemoteIpAddress, normalizedSlug);
         IsAuthenticated = true;
+        _authenticatedSlug = normalizedSlug;
+        _sessionUsesTenantPassword = true;
 
         if (verification is PasswordHashVerificationResult.SuccessRehashNeeded && upgradedHash is not null)
         {
@@ -500,16 +539,20 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task LoadAsync(string slug)
     {
-        Config = await _tenants.GetAsync(slug);
+        string normalizedSlug = NormalizeSlug(slug);
+        if (!await EnsureTenantAccessAsync(normalizedSlug).ConfigureAwait(false)) return;
+
+        Config = await _tenants.GetAsync(normalizedSlug);
         if (Config == null) return;
         EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
-        Projects = await _projects.GetAllAsync(slug);
-        Resume = await _resumes.GetAsync(slug);
-        Messages = await _contacts.GetAllAsync(slug);
+        Projects = await _projects.GetAllAsync(normalizedSlug);
+        Resume = await _resumes.GetAsync(normalizedSlug);
+        Messages = await _contacts.GetAllAsync(normalizedSlug);
         // 기존 데이터 마이그레이션: ImageFileName → WorkImages
         foreach (var p in Projects.Where(p =>
             !string.IsNullOrWhiteSpace(p.ImageFileName) && p.WorkImages.Length == 0))
             p.WorkImages = [p.ImageFileName!];
+        _loadedSlug = normalizedSlug;
         IsLoaded = true;
     }
 
@@ -522,7 +565,18 @@ public class PortfolioAdminViewModel
     /// <para>Performs the logout operation.</para>
     /// \endif
     /// </summary>
-    public void Logout() { IsAuthenticated = false; IsLoaded = false; LoginPassword = ""; StatusMessage = ""; EditingProject = null; }
+    public void Logout() => ResetTenantSession();
+
+    /// <summary>Returns whether this circuit has loaded the requested tenant.</summary>
+    public bool IsLoadedFor(string slug) =>
+        IsLoaded &&
+        IsAuthenticatedFor(slug) &&
+        string.Equals(_loadedSlug, NormalizeSlug(slug), StringComparison.Ordinal);
+
+    /// <summary>Returns whether this circuit is authenticated for the requested tenant.</summary>
+    public bool IsAuthenticatedFor(string slug) =>
+        IsAuthenticated &&
+        string.Equals(_authenticatedSlug, NormalizeSlug(slug), StringComparison.Ordinal);
 
     /// <summary>
     /// \if KO
@@ -586,6 +640,7 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task SaveProjectAsync(string slug)
     {
+        if (!await EnsureTenantAccessAsync(slug).ConfigureAwait(false)) return;
         if (EditingProject == null) return;
         StatusMessage = "";
         if (string.IsNullOrWhiteSpace(EditingProject.Title)) { StatusMessage = "❌ 제목을 입력하세요."; return; }
@@ -593,33 +648,44 @@ public class PortfolioAdminViewModel
         if (PendingFiles.Count > 0 || PendingVideos.Count > 0)
         {
             IsUploading = true;
-            foreach (var f in PendingFiles)
+            try
             {
-                var saved = await _media.SaveAsync(slug, EditingProject.Id, f);
-                if (EditingProject.Category == ProjectCategory.Work)
+                foreach (var f in PendingFiles)
                 {
-                    if (!EditingProject.WorkImages.Contains(saved))
-                        EditingProject.WorkImages = [.. EditingProject.WorkImages, saved];
-                    if (EditingProject.ImageFileName == null)
-                        EditingProject.ImageFileName = saved;
+                    var saved = await _media.SaveAsync(slug, EditingProject.Id, f);
+                    if (EditingProject.Category == ProjectCategory.Work)
+                    {
+                        if (!EditingProject.WorkImages.Contains(saved))
+                            EditingProject.WorkImages = [.. EditingProject.WorkImages, saved];
+                        if (EditingProject.ImageFileName == null)
+                            EditingProject.ImageFileName = saved;
+                    }
+                    else
+                    {
+                        // Personal / Public: WorkImages에 모아두고 첫 번째를 커버로
+                        if (!EditingProject.WorkImages.Contains(saved))
+                            EditingProject.WorkImages = [.. EditingProject.WorkImages, saved];
+                        EditingProject.ImageFileName ??= saved;
+                    }
                 }
-                else
+                foreach (var v in PendingVideos)
                 {
-                    // Personal / Public: WorkImages에 모아두고 첫 번째를 커버로
-                    if (!EditingProject.WorkImages.Contains(saved))
-                        EditingProject.WorkImages = [.. EditingProject.WorkImages, saved];
-                    EditingProject.ImageFileName ??= saved;
+                    var saved = await _media.SaveVideoAsync(slug, EditingProject.Id, v);
+                    if (!EditingProject.VideoFileNames.Contains(saved))
+                        EditingProject.VideoFileNames = [.. EditingProject.VideoFileNames, saved];
                 }
+                PendingFiles.Clear();
+                PendingVideos.Clear();
             }
-            foreach (var v in PendingVideos)
+            catch (InvalidOperationException exception)
             {
-                var saved = await _media.SaveVideoAsync(slug, EditingProject.Id, v);
-                if (!EditingProject.VideoFileNames.Contains(saved))
-                    EditingProject.VideoFileNames = [.. EditingProject.VideoFileNames, saved];
+                StatusMessage = $"❌ {exception.Message}";
+                return;
             }
-            PendingFiles.Clear();
-            PendingVideos.Clear();
-            IsUploading = false;
+            finally
+            {
+                IsUploading = false;
+            }
         }
 
         // ImageFileName이 있지만 WorkImages가 비어있으면 자동 포함
@@ -667,6 +733,7 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task DeleteProjectAsync(string slug, string projectId)
     {
+        if (!await EnsureTenantAccessAsync(slug).ConfigureAwait(false)) return;
         await _projects.DeleteAsync(slug, projectId);
         Projects = await _projects.GetAllAsync(slug);
         StatusMessage = "✅ 삭제 완료.";
@@ -714,6 +781,7 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task DeleteProjectMediaAsync(string slug, string projectId, string fileName)
     {
+        if (!await EnsureTenantAccessAsync(slug).ConfigureAwait(false)) return;
         await _media.DeleteAsync(slug, projectId, fileName);
         if (EditingProject != null)
             EditingProject.WorkImages = EditingProject.WorkImages.Where(f => f != fileName).ToArray();
@@ -753,6 +821,7 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task DeleteProjectCoverAsync(string slug, string projectId)
     {
+        if (!await EnsureTenantAccessAsync(slug).ConfigureAwait(false)) return;
         if (EditingProject == null || string.IsNullOrWhiteSpace(EditingProject.ImageFileName)) return;
         var fn = EditingProject.ImageFileName;
         if (!fn.StartsWith('/'))
@@ -802,6 +871,7 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task DeleteProjectVideoAsync(string slug, string projectId, string fileName)
     {
+        if (!await EnsureTenantAccessAsync(slug).ConfigureAwait(false)) return;
         await _media.DeleteAsync(slug, projectId, fileName);
         if (EditingProject != null)
             EditingProject.VideoFileNames = EditingProject.VideoFileNames.Where(f => f != fileName).ToArray();
@@ -1025,6 +1095,7 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task SaveResumeAsync(string slug)
     {
+        if (!await EnsureTenantAccessAsync(slug).ConfigureAwait(false)) return;
         await _resumes.SaveAsync(slug, Resume);
         StatusMessage = "✅ Resume 저장 완료.";
     }
@@ -1220,6 +1291,7 @@ public class PortfolioAdminViewModel
     public async Task SaveConfigAsync()
     {
         if (Config == null) return;
+        if (!await EnsureTenantAccessAsync(Config.Slug).ConfigureAwait(false)) return;
         Config.PasswordHash = DreaminePasswordHasher.HashPlainTextForStorage(Config.PasswordHash);
         await _tenants.SaveAsync(Config);
         EffectiveAdminUsers = BuildEffectiveAdminUsers(Config);
@@ -1253,6 +1325,7 @@ public class PortfolioAdminViewModel
     public async Task RemoveAdminAsync(string userId)
     {
         if (Config is null) return;
+        if (!await EnsureTenantAccessAsync(Config.Slug).ConfigureAwait(false)) return;
         var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
         if (!IsOwnerUser(Config, user))
         {
@@ -1328,6 +1401,7 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task<bool> ChangePasswordAsync(string slug, string current, string next, string confirm)
     {
+        if (!await EnsureTenantAccessAsync(slug).ConfigureAwait(false)) return false;
         if (Config == null) { StatusMessage = "❌ 설정을 먼저 불러오세요."; return false; }
         if (!DreaminePasswordHasher.VerifyPassword(current, Config.PasswordHash)) { StatusMessage = "❌ 현재 비밀번호가 틀렸습니다."; return false; }
         if (next.Length < 8) { StatusMessage = "❌ 새 비밀번호는 8자 이상이어야 합니다."; return false; }
@@ -1372,11 +1446,22 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task UploadProfileImageAsync(string slug, IBrowserFile file)
     {
+        if (!await EnsureTenantAccessAsync(slug).ConfigureAwait(false)) return;
         if (Config == null) return;
         IsUploading = true;
-        var saved = await _media.SaveProfileImageAsync(slug, file);
-        Config.ProfileImageFileName = saved;
-        IsUploading = false;
+        try
+        {
+            var saved = await _media.SaveProfileImageAsync(slug, file);
+            Config.ProfileImageFileName = saved;
+        }
+        catch (InvalidOperationException exception)
+        {
+            StatusMessage = $"❌ {exception.Message}";
+        }
+        finally
+        {
+            IsUploading = false;
+        }
     }
 
     // ── 연락처 메시지 ────────────────────────────────────────────
@@ -1414,6 +1499,7 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task MarkReadAsync(string slug, string msgId)
     {
+        if (!await EnsureTenantAccessAsync(slug).ConfigureAwait(false)) return;
         await _contacts.MarkReadAsync(slug, msgId);
         Messages = await _contacts.GetAllAsync(slug);
     }
@@ -1452,6 +1538,7 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task DeleteMessageAsync(string slug, string msgId)
     {
+        if (!await EnsureTenantAccessAsync(slug).ConfigureAwait(false)) return;
         await _contacts.DeleteAsync(slug, msgId);
         Messages = await _contacts.GetAllAsync(slug);
         StatusMessage = "✅ 메시지 삭제 완료.";
@@ -1484,9 +1571,74 @@ public class PortfolioAdminViewModel
     /// </returns>
     public async Task DeleteSelfAsync(string slug)
     {
+        if (!await EnsureTenantAccessAsync(slug).ConfigureAwait(false)) return;
         await _tenants.DeleteAsync(slug);
-        IsAuthenticated = false;
+        ResetTenantSession();
     }
+
+    private async Task<bool> EnsureTenantAccessAsync(string slug)
+    {
+        string normalizedSlug = NormalizeSlug(slug);
+        if (!IsAuthenticatedFor(normalizedSlug))
+        {
+            DenyTenantAccess();
+            return false;
+        }
+
+        PortfolioConfig? config = await _tenants.GetAsync(normalizedSlug).ConfigureAwait(false);
+        if (config is null)
+        {
+            DenyTenantAccess();
+            return false;
+        }
+
+        // Identity-linked sessions are revalidated against the persisted tenant
+        // before every load or mutation. Password sessions are already bound to
+        // the exact slug above and cannot be carried to another tenant.
+        if (!_sessionUsesTenantPassword)
+        {
+            PortfolioCurrentUser user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+            if (!IsAdminUser(config, user))
+            {
+                DenyTenantAccess();
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void DenyTenantAccess()
+    {
+        ResetTenantSession();
+        StatusMessage = "❌ 관리자 인증이 만료되었거나 이 포트폴리오에 대한 권한이 없습니다.";
+    }
+
+    private void ResetTenantSession()
+    {
+        IsAuthenticated = false;
+        IsLoaded = false;
+        IsLinkedToCurrentUser = false;
+        IsOwner = false;
+        _authenticatedSlug = null;
+        _loadedSlug = null;
+        _sessionUsesTenantPassword = false;
+        LoginPassword = "";
+        StatusMessage = "";
+        Config = null;
+        Projects = [];
+        Resume = new ResumeInfo();
+        Messages = [];
+        EffectiveAdminUsers = [];
+        EditingProject = null;
+        EditingExp = null;
+        EditingEdu = null;
+        PendingFiles.Clear();
+        PendingVideos.Clear();
+        IsUploading = false;
+    }
+
+    private static string NormalizeSlug(string slug) => slug.Trim().ToLowerInvariant();
 
     /// <summary>
     /// \if KO

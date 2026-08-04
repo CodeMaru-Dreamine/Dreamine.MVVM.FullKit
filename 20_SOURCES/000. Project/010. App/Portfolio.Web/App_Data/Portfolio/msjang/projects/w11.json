@@ -1,26 +1,40 @@
 {
   "Id": "w11",
-  "Title": "모니터링 시스템",
-  "Description": "품질/라인 모니터링과 데이터 시각화를 한 번에 해결하는 현장 대응 솔루션.",
-  "Tags": [],
+  "Title": "\uBAA8\uB2C8\uD130\uB9C1 \uC2DC\uC2A4\uD15C",
+  "Description": "\uD488\uC9C8/\uB77C\uC778 \uBAA8\uB2C8\uD130\uB9C1\uACFC \uB370\uC774\uD130 \uC2DC\uAC01\uD654\uB97C \uD55C \uBC88\uC5D0 \uD574\uACB0\uD558\uB294 \uD604\uC7A5 \uB300\uC751 \uC194\uB8E8\uC158.",
+  "Tags": [
+    "C#",
+    "WPF",
+    "MVVM",
+    "PLC Communication",
+    "Oracle DB",
+    "Real-time Data Logging",
+    "Trend Visualization",
+    "Quality Monitoring",
+    "Industrial Automation"
+  ],
   "Year": 2023,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "bb1a3695cf5342c4a6aacfa6652e86ec.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 11,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/Humin1.png" ],
-  "WorkSubtitle": "WPF 실시간 수집·저장·트렌드 시각화 + NG/OK 판단",
-  "WorkBullets": [
-      "PLC에서 2~4초 간격 수신 데이터를 실시간 저장(Oracle)",
-      "전압/전류/두께 등 멀티 채널 트렌드 그래프 자동 생성",
-      "라인별 NG/OK 판단 및 컬러 피드백(빨간=NG/초록=OK)",
-      "ViewModel 기반 UI 구조 — 신규 라인 확장 시 최소 변경"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "bb1a3695cf5342c4a6aacfa6652e86ec.png"
   ],
-  "WorkPeriod": "설치/테스트 완료",
-  "WorkRole": "단독 설계·개발·설치",
+  "WorkSubtitle": "WPF \uC2E4\uC2DC\uAC04 \uC218\uC9D1\u00B7\uC800\uC7A5\u00B7\uD2B8\uB80C\uB4DC \uC2DC\uAC01\uD654 \u002B NG/OK \uD310\uB2E8",
+  "WorkBullets": [
+    "PLC\uC5D0\uC11C 2~4\uCD08 \uAC04\uACA9 \uC218\uC2E0 \uB370\uC774\uD130\uB97C \uC2E4\uC2DC\uAC04 \uC800\uC7A5(Oracle)",
+    "\uC804\uC555/\uC804\uB958/\uB450\uAED8 \uB4F1 \uBA40\uD2F0 \uCC44\uB110 \uD2B8\uB80C\uB4DC \uADF8\uB798\uD504 \uC790\uB3D9 \uC0DD\uC131",
+    "\uB77C\uC778\uBCC4 NG/OK \uD310\uB2E8 \uBC0F \uCEEC\uB7EC \uD53C\uB4DC\uBC31(\uBE68\uAC04=NG/\uCD08\uB85D=OK)",
+    "ViewModel \uAE30\uBC18 UI \uAD6C\uC870 \u2014 \uC2E0\uADDC \uB77C\uC778 \uD655\uC7A5 \uC2DC \uCD5C\uC18C \uBCC0\uACBD"
+  ],
+  "WorkPeriod": "\uC124\uCE58/\uD14C\uC2A4\uD2B8 \uC644\uB8CC",
+  "WorkRole": "\uB2E8\uB3C5 \uC124\uACC4\u00B7\uAC1C\uBC1C\u00B7\uC124\uCE58",
   "WorkTech": "C#, WPF, MELSEC-Q PLC, Oracle DB",
-  "WorkCompany": "㈜휴민로보틱스 / L社"
+  "WorkCompany": "\u321C\uD734\uBBFC\uB85C\uBCF4\uD2F1\uC2A4 / L\u793E"
 }
