@@ -1,0 +1,509 @@
+@page "/{Slug}/projects/{ProjectId}"
+@layout PortfolioApp.Blazor.Layout.PortfolioLayout
+@namespace PortfolioApp.Blazor.Pages
+@implements IDisposable
+
+@inject IPortfolioTenantStore TenantStore
+@inject IProjectStore ProjectStore
+@inject IMediaService Media
+@inject PortfolioLocalization Text
+@inject NavigationManager Navigation
+
+<PageTitle>@DocumentTitle</PageTitle>
+
+@if (_config is not null && _project is not null)
+{
+    <HeadContent>
+        <meta name="description" content="@MetaDescription" />
+        <link rel="canonical" href="@CanonicalUrl" />
+        <meta property="og:title" content="@DocumentTitle" />
+        <meta property="og:description" content="@MetaDescription" />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content="@CanonicalUrl" />
+        @if (!string.IsNullOrWhiteSpace(OgImageUrl))
+        {
+            <meta property="og:image" content="@OgImageUrl" />
+        }
+        <meta name="twitter:card" content="@(string.IsNullOrWhiteSpace(OgImageUrl) ? "summary" : "summary_large_image")" />
+        <meta name="twitter:title" content="@DocumentTitle" />
+        <meta name="twitter:description" content="@MetaDescription" />
+        @if (!string.IsNullOrWhiteSpace(OgImageUrl))
+        {
+            <meta name="twitter:image" content="@OgImageUrl" />
+        }
+    </HeadContent>
+}
+
+<main class="pf-page pf-portfolio theme-@ThemeName pf-detail">
+    <div class="pf-detail__container">
+        @if (!_loaded)
+        {
+            <div class="pf-detail__loading" role="status" aria-live="polite">
+                <span class="pf-detail__loading-mark" aria-hidden="true"></span>
+            </div>
+        }
+        else if (_config is null || _project is null)
+        {
+            <section class="pf-detail__not-found">
+                <span class="pf-detail__not-found-code">404</span>
+                <p>@Text["project.none"]</p>
+                <a class="pf-detail__back pf-detail__back--center" href="@BackUrl" data-enhance-nav="false">
+                    <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                    @Text["detail.back"]
+                </a>
+            </section>
+        }
+        else
+        {
+            var project = _project;
+
+            <a class="pf-detail__back" href="@BackUrl" data-enhance-nav="false">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                @Text["detail.back"]
+            </a>
+
+            <article>
+                <header class="pf-detail__hero">
+                    <div class="pf-detail__eyebrow">
+                        <span>@CategoryLabel</span>
+                        <span aria-hidden="true">·</span>
+                        <time>@project.Year</time>
+                    </div>
+                    <h1 class="pf-detail__title">
+                        @if (!string.IsNullOrWhiteSpace(project.Emoji))
+                        {
+                            <span class="pf-detail__emoji" aria-hidden="true">@project.Emoji</span>
+                        }
+                        @project.Title
+                    </h1>
+                    @if (!string.IsNullOrWhiteSpace(project.WorkSubtitle))
+                    {
+                        <p class="pf-detail__subtitle">@project.WorkSubtitle</p>
+                    }
+
+                    @if (project.Tags is { Length: > 0 })
+                    {
+                        <div class="pf-detail__tags">
+                            @foreach (var tag in project.Tags.Where(tag => !string.IsNullOrWhiteSpace(tag)))
+                            {
+                                <span class="pf-detail__tag">@tag</span>
+                            }
+                        </div>
+                    }
+
+                    @if (HasWorkMetadata)
+                    {
+                        <div class="pf-detail__meta">
+                            @if (!string.IsNullOrWhiteSpace(project.WorkPeriod))
+                            {
+                                <span><i class="far fa-calendar" aria-hidden="true"></i>@project.WorkPeriod</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(project.WorkRole))
+                            {
+                                <span><i class="far fa-user" aria-hidden="true"></i>@project.WorkRole</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(project.WorkCompany))
+                            {
+                                <span><i class="far fa-building" aria-hidden="true"></i>@project.WorkCompany</span>
+                            }
+                        </div>
+                    }
+                </header>
+
+                @if (!string.IsNullOrWhiteSpace(project.Description))
+                {
+                    <section class="pf-detail__section" aria-labelledby="project-overview-heading">
+                        <h2 id="project-overview-heading">@Text["detail.overview"]</h2>
+                        <div class="pf-detail__prose">@project.Description</div>
+                    </section>
+                }
+
+                @if (project.WorkBullets is { Length: > 0 } &&
+                    project.WorkBullets.Any(item => !string.IsNullOrWhiteSpace(item)))
+                {
+                    <section class="pf-detail__section" aria-labelledby="project-results-heading">
+                        <h2 id="project-results-heading">@Text["detail.results"]</h2>
+                        <ul class="pf-detail__results">
+                            @foreach (var item in project.WorkBullets.Where(item => !string.IsNullOrWhiteSpace(item)))
+                            {
+                                <li>@item</li>
+                            }
+                        </ul>
+                    </section>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(project.WorkTech))
+                {
+                    <section class="pf-detail__section" aria-labelledby="project-tools-heading">
+                        <h2 id="project-tools-heading">@Text["detail.tools"]</h2>
+                        <p class="pf-detail__tools">@project.WorkTech</p>
+                    </section>
+                }
+
+                @if (ProjectImages.Count > 0)
+                {
+                    <section class="pf-detail__section" aria-labelledby="project-gallery-heading">
+                        <h2 id="project-gallery-heading">@Text["detail.gallery"]</h2>
+                        <div class="pf-detail__gallery">
+                            @for (var index = 0; index < ProjectImages.Count; index++)
+                            {
+                                var imageName = ProjectImages[index];
+                                var imageIndex = index;
+                                <button type="button"
+                                        class="pf-detail__image-frame"
+                                        aria-label="@string.Format(Text["lightbox.open"], imageIndex + 1)"
+                                        @onclick="() => OpenLightbox(imageIndex)">
+                                    <img class="pf-detail__image @BlurClass"
+                                         src="@GetMediaUrl(imageName)"
+                                         alt="@($"{project.Title} {index + 1}")"
+                                         loading="@(index == 0 ? "eager" : "lazy")" />
+                                    <span class="pf-detail__image-zoom" aria-hidden="true">
+                                        <i class="fas fa-magnifying-glass-plus"></i>
+                                    </span>
+                                </button>
+                            }
+                        </div>
+                    </section>
+                }
+
+                @if (project.VideoFileNames is { Length: > 0 } &&
+                    project.VideoFileNames.Any(item => !string.IsNullOrWhiteSpace(item)))
+                {
+                    <section class="pf-detail__section" aria-labelledby="project-video-heading">
+                        <h2 id="project-video-heading">@Text["detail.video"]</h2>
+                        <div class="pf-detail__videos">
+                            @foreach (var videoName in project.VideoFileNames.Where(item => !string.IsNullOrWhiteSpace(item)))
+                            {
+                                var videoUrl = GetMediaUrl(videoName);
+                                var videoTitle = $"{project.Title} · {Text["detail.video"]}";
+                                @if (PortfolioPublicViewModel.TryGetYouTubeEmbedUrl(videoUrl, out var embedUrl))
+                                {
+                                    <iframe class="pf-detail__video pf-detail__video--embed"
+                                            src="@embedUrl"
+                                            title="@videoTitle"
+                                            loading="lazy"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                            allowfullscreen></iframe>
+                                }
+                                else
+                                {
+                                    <video class="pf-detail__video"
+                                           src="@videoUrl"
+                                           controls
+                                           preload="metadata"
+                                           playsinline></video>
+                                }
+                            }
+                        </div>
+                    </section>
+                }
+
+                @if (ExternalLinks.Count > 0)
+                {
+                    <section class="pf-detail__section" aria-labelledby="project-links-heading">
+                        <h2 id="project-links-heading">@Text["detail.links"]</h2>
+                        <div class="pf-detail__links">
+                            @foreach (var link in ExternalLinks)
+                            {
+                                <a href="@link.Url" target="_blank" rel="noopener noreferrer">
+                                    <i class="@link.Icon" aria-hidden="true"></i>
+                                    <span>@link.Label</span>
+                                    <i class="fas fa-arrow-up-right-from-square pf-detail__link-arrow" aria-hidden="true"></i>
+                                </a>
+                            }
+                        </div>
+                    </section>
+                }
+            </article>
+        }
+    </div>
+
+    @if (_lightboxIndex is int lightboxIndex &&
+         _project is not null &&
+         lightboxIndex >= 0 &&
+         lightboxIndex < ProjectImages.Count)
+    {
+        <div class="pf-detail__lightbox"
+             role="dialog"
+             aria-modal="true"
+             aria-label="@Text["detail.gallery"]"
+             tabindex="-1"
+             @ref="_lightboxElement"
+             @onclick="CloseLightbox"
+             @onkeydown="HandleLightboxKeyDown">
+            <button type="button"
+                    class="pf-detail__lightbox-close"
+                    aria-label="@Text["lightbox.close"]"
+                    @onclick="CloseLightbox"
+                    @onclick:stopPropagation="true">
+                <i class="fas fa-xmark" aria-hidden="true"></i>
+            </button>
+
+            @if (ProjectImages.Count > 1)
+            {
+                <button type="button"
+                        class="pf-detail__lightbox-nav pf-detail__lightbox-nav--previous"
+                        aria-label="@Text["lightbox.previous"]"
+                        @onclick="() => MoveLightbox(-1)"
+                        @onclick:stopPropagation="true">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+            }
+
+            <figure class="pf-detail__lightbox-figure"
+                    @onclick="IgnoreLightboxClick"
+                    @onclick:stopPropagation="true">
+                <img class="pf-detail__lightbox-image @BlurClass"
+                     src="@GetMediaUrl(ProjectImages[lightboxIndex])"
+                     alt="@($"{_project.Title} {lightboxIndex + 1}")" />
+                <figcaption>@(lightboxIndex + 1) / @ProjectImages.Count</figcaption>
+            </figure>
+
+            @if (ProjectImages.Count > 1)
+            {
+                <button type="button"
+                        class="pf-detail__lightbox-nav pf-detail__lightbox-nav--next"
+                        aria-label="@Text["lightbox.next"]"
+                        @onclick="() => MoveLightbox(1)"
+                        @onclick:stopPropagation="true">
+                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </button>
+            }
+        </div>
+    }
+</main>
+
+@code {
+    [Parameter] public string Slug { get; set; } = "";
+    [Parameter] public string ProjectId { get; set; } = "";
+
+    private PortfolioConfig? _config;
+    private ProjectItem? _project;
+    private bool _loaded;
+    private int? _lightboxIndex;
+    private bool _focusLightbox;
+    private ElementReference _lightboxElement;
+
+    private string DocumentTitle => _project is null
+        ? "Portfolio"
+        : $"{_project.Title} — {(_config?.OwnerName ?? "Portfolio")}";
+
+    private string MetaDescription => BuildMetaDescription();
+    private string ThemeName => NormalizeTheme(_config?.ThemeName);
+    private string CanonicalUrl => Navigation.ToAbsoluteUri(
+        $"/{Uri.EscapeDataString(Slug)}/projects/{Uri.EscapeDataString(ProjectId)}").ToString();
+    private string BackUrl => $"/{Uri.EscapeDataString(Slug)}?lang={Uri.EscapeDataString(Text.Language)}";
+    private string CategoryLabel => _project?.Category switch
+    {
+        ProjectCategory.Work => Text["project.work"],
+        ProjectCategory.Public => Text["project.public"],
+        _ => Text["project.personal"]
+    };
+
+    private bool HasWorkMetadata => _project is not null &&
+        (!string.IsNullOrWhiteSpace(_project.WorkPeriod)
+         || !string.IsNullOrWhiteSpace(_project.WorkRole)
+         || !string.IsNullOrWhiteSpace(_project.WorkCompany));
+
+    private string BlurClass => $"pf-detail__media--blur-{Math.Clamp(_project?.ImageBlurLevel ?? 0, 0, 3)}";
+
+    private IReadOnlyList<string> ProjectImages
+    {
+        get
+        {
+            if (_project is null) return [];
+
+            return (_project.WorkImages ?? [])
+                .Append(_project.ImageFileName ?? "")
+                .Where(item => !string.IsNullOrWhiteSpace(item))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+    }
+
+    private IReadOnlyList<ProjectExternalLink> ExternalLinks
+    {
+        get
+        {
+            if (_project is null) return [];
+
+            var links = new List<ProjectExternalLink>();
+            AddExternalLink(links, _project.GitHub, "GitHub", "fab fa-github");
+            AddExternalLink(links, _project.LiveUrl, null, "fas fa-arrow-up-right-from-square");
+            AddExternalLink(links, _project.DocUrl, Text["feature.links"], "far fa-file-lines");
+            return links;
+        }
+    }
+
+    private string OgImageUrl
+    {
+        get
+        {
+            string? image = ProjectImages.FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(image))
+            {
+                return ToAbsoluteUrl(GetMediaUrl(image));
+            }
+
+            if (_config is not null && !string.IsNullOrWhiteSpace(_config.ProfileImageFileName))
+            {
+                string profileUrl = IsSafeMediaUrl(_config.ProfileImageFileName)
+                    ? _config.ProfileImageFileName
+                    : Media.GetProfileImageUrl(Slug, _config.ProfileImageFileName);
+                return ToAbsoluteUrl(profileUrl);
+            }
+
+            return "";
+        }
+    }
+
+    protected override void OnInitialized() => Text.Changed += HandleLanguageChanged;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        _loaded = false;
+        _config = null;
+        _project = null;
+        _lightboxIndex = null;
+
+        try
+        {
+            _config = await TenantStore.GetAsync(Slug);
+            if (_config is not null)
+            {
+                _project = await ProjectStore.GetAsync(Slug, ProjectId);
+            }
+        }
+        catch (Exception exception) when (exception is ArgumentException
+                                          or InvalidOperationException
+                                          or IOException
+                                          or UnauthorizedAccessException
+                                          or System.Text.Json.JsonException)
+        {
+            _config = null;
+            _project = null;
+        }
+
+        _loaded = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!_focusLightbox)
+        {
+            return;
+        }
+
+        _focusLightbox = false;
+        await _lightboxElement.FocusAsync();
+    }
+
+    private void OpenLightbox(int index)
+    {
+        if (index < 0 || index >= ProjectImages.Count)
+        {
+            return;
+        }
+
+        _lightboxIndex = index;
+        _focusLightbox = true;
+    }
+
+    private void CloseLightbox() => _lightboxIndex = null;
+
+    private void MoveLightbox(int direction)
+    {
+        if (_lightboxIndex is not int currentIndex || ProjectImages.Count == 0)
+        {
+            return;
+        }
+
+        _lightboxIndex = (currentIndex + direction + ProjectImages.Count) % ProjectImages.Count;
+        _focusLightbox = true;
+    }
+
+    private void HandleLightboxKeyDown(KeyboardEventArgs args)
+    {
+        switch (args.Key)
+        {
+            case "Escape":
+                CloseLightbox();
+                break;
+            case "ArrowLeft":
+                MoveLightbox(-1);
+                break;
+            case "ArrowRight":
+                MoveLightbox(1);
+                break;
+        }
+    }
+
+    private static void IgnoreLightboxClick(MouseEventArgs _) { }
+
+    private string GetMediaUrl(string value) => IsSafeMediaUrl(value)
+        ? value
+        : Media.GetMediaUrl(Slug, ProjectId, value);
+
+    private static bool IsSafeMediaUrl(string value)
+    {
+        if (value.StartsWith("/", StringComparison.Ordinal) &&
+            !value.StartsWith("//", StringComparison.Ordinal))
+        {
+            return true;
+        }
+
+        return Uri.TryCreate(value, UriKind.Absolute, out Uri? uri) &&
+               (uri.Scheme == Uri.UriSchemeHttp || uri.Scheme == Uri.UriSchemeHttps);
+    }
+
+    private string ToAbsoluteUrl(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out Uri? absolute)
+            ? absolute.ToString()
+            : Navigation.ToAbsoluteUri(url).ToString();
+
+    private string BuildMetaDescription()
+    {
+        string source = !string.IsNullOrWhiteSpace(_project?.Description)
+            ? _project.Description
+            : !string.IsNullOrWhiteSpace(_config?.Bio)
+                ? _config.Bio
+                : Text["seo.description"];
+        string normalized = string.Join(" ", source.Split(
+            [' ', '\r', '\n', '\t'], StringSplitOptions.RemoveEmptyEntries));
+        if (normalized.Length <= 220) return normalized;
+        return $"{normalized[..217]}…";
+    }
+
+    private static string NormalizeTheme(string? theme) => theme?.Trim().ToLowerInvariant() switch
+    {
+        "ocean" or "theme-ocean" => "ocean",
+        "forest" or "theme-forest" => "forest",
+        "minimal" or "theme-minimal" => "minimal",
+        "warm" or "theme-warm" => "warm",
+        _ => "dark"
+    };
+
+    private static void AddExternalLink(
+        ICollection<ProjectExternalLink> links,
+        string? value,
+        string? fallbackLabel,
+        string icon)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out Uri? uri) ||
+            (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+        {
+            return;
+        }
+
+        string label = string.IsNullOrWhiteSpace(fallbackLabel)
+            ? uri.Host.Replace("www.", "", StringComparison.OrdinalIgnoreCase)
+            : fallbackLabel;
+        links.Add(new(uri.ToString(), label, icon));
+    }
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Text.Changed -= HandleLanguageChanged;
+
+    private sealed record ProjectExternalLink(string Url, string Label, string Icon);
+}

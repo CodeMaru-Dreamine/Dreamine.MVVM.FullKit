@@ -50,6 +50,11 @@ public class PortfolioHomeViewModel
     /// \endif
     /// </summary>
     private readonly PortfolioUserContext _userContext;
+    private readonly PortfolioTenantCreationLimiter _tenantCreationLimiter;
+    private readonly PortfolioCircuitClientContext _clientContext;
+    private readonly PortfolioLoginRateLimiter _loginRateLimiter;
+    private static readonly TimeSpan SuperAdminSessionLifetime = TimeSpan.FromMinutes(30);
+    private DateTimeOffset? _superAdminAuthenticatedUntil;
 
     /// <summary>
     /// \if KO
@@ -86,7 +91,18 @@ public class PortfolioHomeViewModel
     /// <para>Gets or sets the is authenticated value.</para>
     /// \endif
     /// </summary>
-    public bool IsAuthenticated { get; private set; }
+    public bool IsAuthenticated
+    {
+        get
+        {
+            if (_superAdminAuthenticatedUntil is null) return false;
+            if (_superAdminAuthenticatedUntil > DateTimeOffset.UtcNow) return true;
+
+            ClearSuperAdminSession();
+            StatusMessage = "❌ 관리자 세션이 만료되었습니다. 다시 로그인해 주세요.";
+            return false;
+        }
+    }
     /// <summary>
     /// \if KO
     /// <para>Login Password 값을 가져오거나 설정합니다.</para>
@@ -170,12 +186,18 @@ public class PortfolioHomeViewModel
         IPortfolioTenantStore tenants,
         IProjectStore projects,
         PortfolioOptions opts,
-        PortfolioUserContext userContext)
+        PortfolioUserContext userContext,
+        PortfolioTenantCreationLimiter tenantCreationLimiter,
+        PortfolioCircuitClientContext clientContext,
+        PortfolioLoginRateLimiter loginRateLimiter)
     {
         _tenants = tenants;
         _projects = projects;
         _opts = opts;
         _userContext = userContext;
+        _tenantCreationLimiter = tenantCreationLimiter;
+        _clientContext = clientContext;
+        _loginRateLimiter = loginRateLimiter;
     }
 
     /// <summary>
@@ -222,51 +244,81 @@ public class PortfolioHomeViewModel
     /// <para>The <c>Task&lt;bool&gt;</c> result produced by the create tenant async operation.</para>
     /// \endif
     /// </returns>
-    public async Task<bool> CreateTenantAsync()
+    public Task<bool> CreateTenantAsync() => CreateTenantCoreAsync(enforcePublicLimit: true);
+
+    private async Task<bool> CreateTenantCoreAsync(bool enforcePublicLimit)
     {
-        StatusMessage = "";
-        if (string.IsNullOrWhiteSpace(NewSlug))   { StatusMessage = "❌ URL 주소를 입력하세요."; return false; }
-        if (string.IsNullOrWhiteSpace(NewOwnerName)) { StatusMessage = "❌ 이름을 입력하세요."; return false; }
-        if (NewPassword.Length < 8)               { StatusMessage = "❌ 비밀번호는 8자 이상이어야 합니다."; return false; }
-
-        var slug = NewSlug.Trim().ToLowerInvariant();
-        var existing = await _tenants.GetAsync(slug);
-        if (existing != null) { StatusMessage = "❌ 이미 사용 중인 주소입니다."; return false; }
-
-        var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
-        var cfg = new PortfolioConfig
+        if (!await _tenantCreationLimiter.TryEnterCreationAsync().ConfigureAwait(false))
         {
-            Slug = slug,
-            OwnerName = NewOwnerName.Trim(),
-            Title = "개발자",
-            Bio = "",
-            ThemeName = "dark",
-            PasswordHash = DreaminePasswordHasher.HashPassword(NewPassword),
-            ShowOnHome = true,
-            CreatedAt = DateTime.Now,
-        };
-
-        if (user.IsAuthenticated)
-        {
-            cfg.OwnerUserId = user.Id;
-            cfg.OwnerProvider = user.Provider;
-            cfg.OwnerEmail = user.Email;
-            cfg.OwnerDisplayName = user.DisplayName;
-            cfg.OwnerLinkedAt = DateTime.Now;
-            cfg.AdminUsers.Add(new PortfolioAdminUser
-            {
-                UserId = user.Id,
-                Provider = user.Provider,
-                Email = user.Email,
-                DisplayName = user.DisplayName,
-                Role = "Owner",
-                AddedAt = DateTime.Now
-            });
+            StatusMessage = "❌ 포트폴리오 생성이 진행 중입니다. 잠시만 기다려 주세요.";
+            return false;
         }
 
-        await _tenants.SaveAsync(cfg);
-        StatusMessage = $"✅ '{slug}' 포트폴리오가 생성되었습니다!";
-        return true;
+        try
+        {
+            StatusMessage = "";
+            if (string.IsNullOrWhiteSpace(NewSlug))   { StatusMessage = "❌ URL 주소를 입력하세요."; return false; }
+            if (string.IsNullOrWhiteSpace(NewOwnerName)) { StatusMessage = "❌ 이름을 입력하세요."; return false; }
+            if (NewPassword.Length < 8)               { StatusMessage = "❌ 비밀번호는 8자 이상이어야 합니다."; return false; }
+
+            var slug = NewSlug.Trim().ToLowerInvariant();
+            if (slug.Length > 64 || slug.Any(character =>
+                    !(character is >= 'a' and <= 'z') &&
+                    !(character is >= '0' and <= '9') &&
+                    character != '-'))
+            {
+                StatusMessage = "❌ URL 주소는 64자 이하의 영문 소문자, 숫자, 하이픈(-)만 사용할 수 있습니다.";
+                return false;
+            }
+            if (enforcePublicLimit && !_tenantCreationLimiter.TryAcquire(
+                    _clientContext.RemoteIpAddress, slug, NewOwnerName))
+            {
+                StatusMessage = "❌ 생성 요청이 너무 많습니다. 한 시간 후 다시 시도해 주세요.";
+                return false;
+            }
+
+            var existing = await _tenants.GetAsync(slug);
+            if (existing != null) { StatusMessage = "❌ 이미 사용 중인 주소입니다."; return false; }
+
+            var user = await _userContext.GetCurrentAsync().ConfigureAwait(false);
+            var cfg = new PortfolioConfig
+            {
+                Slug = slug,
+                OwnerName = NewOwnerName.Trim(),
+                Title = "개발자",
+                Bio = "",
+                ThemeName = "dark",
+                PasswordHash = DreaminePasswordHasher.HashPassword(NewPassword),
+                ShowOnHome = true,
+                CreatedAt = DateTime.Now,
+            };
+
+            if (user.IsAuthenticated)
+            {
+                cfg.OwnerUserId = user.Id;
+                cfg.OwnerProvider = user.Provider;
+                cfg.OwnerEmail = user.Email;
+                cfg.OwnerDisplayName = user.DisplayName;
+                cfg.OwnerLinkedAt = DateTime.Now;
+                cfg.AdminUsers.Add(new PortfolioAdminUser
+                {
+                    UserId = user.Id,
+                    Provider = user.Provider,
+                    Email = user.Email,
+                    DisplayName = user.DisplayName,
+                    Role = "Owner",
+                    AddedAt = DateTime.Now
+                });
+            }
+
+            await _tenants.SaveAsync(cfg);
+            StatusMessage = $"✅ '{slug}' 포트폴리오가 생성되었습니다!";
+            return true;
+        }
+        finally
+        {
+            _tenantCreationLimiter.ExitCreation();
+        }
     }
 
     /// <summary>
@@ -287,14 +339,45 @@ public class PortfolioHomeViewModel
     /// </returns>
     public Task<bool> LoginAsync()
     {
+        if (!_loginRateLimiter.TryBeginAttempt(
+                "superadmin", _clientContext.RemoteIpAddress, "portfolio", permitLimit: 3))
+        {
+            StatusMessage = "❌ 로그인 시도가 너무 많습니다. 15분 후 다시 시도해 주세요.";
+            return Task.FromResult(false);
+        }
+
         if (DreaminePasswordHasher.VerifyPassword(LoginPassword, _opts.SuperAdminPassword))
         {
-            IsAuthenticated = true;
+            _loginRateLimiter.Reset("superadmin", _clientContext.RemoteIpAddress, "portfolio");
+            _superAdminAuthenticatedUntil = DateTimeOffset.UtcNow.Add(SuperAdminSessionLifetime);
+            LoginPassword = "";
             StatusMessage = "";
             return Task.FromResult(true);
         }
         StatusMessage = "❌ 비밀번호가 틀렸습니다.";
         return Task.FromResult(false);
+    }
+
+    /// <summary>Ends the local super-admin session and clears sensitive state.</summary>
+    public void LogoutSuperAdmin()
+    {
+        ClearSuperAdminSession();
+        StatusMessage = "";
+    }
+
+    /// <summary>Loads service-wide data only while the super-admin session is active.</summary>
+    public async Task<bool> LoadSuperAdminAsync()
+    {
+        if (!EnsureSuperAdminSession()) return false;
+        await LoadAsync().ConfigureAwait(false);
+        return true;
+    }
+
+    /// <summary>Creates a tenant from the super-admin screen with an explicit session check.</summary>
+    public async Task<bool> CreateTenantAsSuperAdminAsync()
+    {
+        if (!EnsureSuperAdminSession()) return false;
+        return await CreateTenantCoreAsync(enforcePublicLimit: false).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -323,6 +406,7 @@ public class PortfolioHomeViewModel
     /// </returns>
     public async Task SaveTenantAsync(PortfolioConfig cfg)
     {
+        if (!EnsureSuperAdminSession()) return;
         await _tenants.SaveAsync(cfg);
         StatusMessage = $"✅ '{cfg.Slug}' 저장 완료.";
     }
@@ -353,9 +437,29 @@ public class PortfolioHomeViewModel
     /// </returns>
     public async Task DeleteTenantAsync(string slug)
     {
+        if (!EnsureSuperAdminSession()) return;
         await _tenants.DeleteAsync(slug);
         await LoadAsync();
         StatusMessage = $"✅ '{slug}' 삭제 완료.";
+    }
+
+    private bool EnsureSuperAdminSession()
+    {
+        if (IsAuthenticated) return true;
+        if (string.IsNullOrWhiteSpace(StatusMessage))
+        {
+            StatusMessage = "❌ 관리자 세션이 만료되었습니다. 다시 로그인해 주세요.";
+        }
+        return false;
+    }
+
+    private void ClearSuperAdminSession()
+    {
+        _superAdminAuthenticatedUntil = null;
+        LoginPassword = "";
+        NewPassword = "";
+        Tenants = [];
+        ProjectCounts = [];
     }
 
 }

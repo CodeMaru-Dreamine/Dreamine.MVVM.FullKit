@@ -1435,7 +1435,7 @@
         get
         {
             var current = Nav.ToAbsoluteUri(Nav.Uri);
-            return $"/_identity/login?lang={Uri.EscapeDataString(Text.Language)}&returnUrl={Uri.EscapeDataString(current.PathAndQuery)}";
+            return Dreamine.Identity.DreamineIdentityPortal.CreateUrl("login", current.AbsoluteUri, Text.Language);
         }
     }
 

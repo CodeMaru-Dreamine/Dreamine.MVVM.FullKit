@@ -1,26 +1,40 @@
 {
   "Id": "w13",
-  "Title": "CIM 연동 및 통계 시스템",
-  "Description": "현장 운영 안정성과 데이터 흐름 파악에 집중한 CIM 연동/상태·통계 UI 구축 지원.",
-  "Tags": [],
+  "Title": "CIM \uC5F0\uB3D9 \uBC0F \uD1B5\uACC4 \uC2DC\uC2A4\uD15C",
+  "Description": "\uD604\uC7A5 \uC6B4\uC601 \uC548\uC815\uC131\uACFC \uB370\uC774\uD130 \uD750\uB984 \uD30C\uC545\uC5D0 \uC9D1\uC911\uD55C CIM \uC5F0\uB3D9/\uC0C1\uD0DC\u00B7\uD1B5\uACC4 UI \uAD6C\uCD95 \uC9C0\uC6D0.",
+  "Tags": [
+    "C#",
+    "WinForms",
+    "CIM Integration",
+    "SECS/GEM",
+    "X-COM",
+    "Equipment Integration",
+    "Data Mapping",
+    "Status Monitoring",
+    "Industrial Automation"
+  ],
   "Year": 2019,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "b6c85aaf905347a6bc7d8eb37568993e.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 13,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
-  "WorkSubtitle": "장비↔PC 데이터 연동 + 상위 CIM 인터페이스 + 상태/통계 UI",
-  "WorkBullets": [
-      "장비↔PC 간 데이터 통신 연동과 상위 CIM 연결, 시그널 맵 조율",
-      "WinForms UI 수정 및 장비 상태/진행 현황 표시 기능 보조",
-      "Oracle/MySQL/MSSQL 등 고객사 DB 스키마 차이에 따른 테이블 구성 대응",
-      "SECS/GEM(X-COM) 메시지 흐름 분석·테스트 및 일부 메시지 정의/검증"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "b6c85aaf905347a6bc7d8eb37568993e.png"
   ],
-  "WorkPeriod": "2017.08 ~ 2019.09 (부분 참여)",
-  "WorkRole": "통신/시그널 맵핑 · 상태표시 UI · DB 스키마 대응",
+  "WorkSubtitle": "\uC7A5\uBE44\u2194PC \uB370\uC774\uD130 \uC5F0\uB3D9 \u002B \uC0C1\uC704 CIM \uC778\uD130\uD398\uC774\uC2A4 \u002B \uC0C1\uD0DC/\uD1B5\uACC4 UI",
+  "WorkBullets": [
+    "\uC7A5\uBE44\u2194PC \uAC04 \uB370\uC774\uD130 \uD1B5\uC2E0 \uC5F0\uB3D9\uACFC \uC0C1\uC704 CIM \uC5F0\uACB0, \uC2DC\uADF8\uB110 \uB9F5 \uC870\uC728",
+    "WinForms UI \uC218\uC815 \uBC0F \uC7A5\uBE44 \uC0C1\uD0DC/\uC9C4\uD589 \uD604\uD669 \uD45C\uC2DC \uAE30\uB2A5 \uBCF4\uC870",
+    "Oracle/MySQL/MSSQL \uB4F1 \uACE0\uAC1D\uC0AC DB \uC2A4\uD0A4\uB9C8 \uCC28\uC774\uC5D0 \uB530\uB978 \uD14C\uC774\uBE14 \uAD6C\uC131 \uB300\uC751",
+    "SECS/GEM(X-COM) \uBA54\uC2DC\uC9C0 \uD750\uB984 \uBD84\uC11D\u00B7\uD14C\uC2A4\uD2B8 \uBC0F \uC77C\uBD80 \uBA54\uC2DC\uC9C0 \uC815\uC758/\uAC80\uC99D"
+  ],
+  "WorkPeriod": "2017.08 ~ 2019.09 (\uBD80\uBD84 \uCC38\uC5EC)",
+  "WorkRole": "\uD1B5\uC2E0/\uC2DC\uADF8\uB110 \uB9F5\uD551 \u00B7 \uC0C1\uD0DC\uD45C\uC2DC UI \u00B7 DB \uC2A4\uD0A4\uB9C8 \uB300\uC751",
   "WorkTech": "C#, WinForms, Oracle/MySQL/MSSQL, SECS/GEM(X-COM)",
-  "WorkCompany": "㈜제이이노텍 / 중국 (B社, T社)"
+  "WorkCompany": "\u321C\uC81C\uC774\uC774\uB178\uD14D / \uC911\uAD6D (B\u793E, T\u793E)"
 }

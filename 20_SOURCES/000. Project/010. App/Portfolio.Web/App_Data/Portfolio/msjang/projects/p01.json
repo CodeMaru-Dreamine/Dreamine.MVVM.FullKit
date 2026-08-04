@@ -1,17 +1,25 @@
 {
   "Id": "p01",
   "Title": "ShopStore",
-  "Description": "농산물부터 소프트웨어까지, Toss 간편결제로 빠르고 안전한 구매가 가능한 통합 상점 플랫폼.",
-  "Tags": [ "Blazor", "TossPayments", "E-Commerce", "Dreamine" ],
+  "Description": "\uB18D\uC0B0\uBB3C\uBD80\uD130 \uC18C\uD504\uD2B8\uC6E8\uC5B4\uAE4C\uC9C0, Toss \uAC04\uD3B8\uACB0\uC81C\uB85C \uBE60\uB974\uACE0 \uC548\uC804\uD55C \uAD6C\uB9E4\uAC00 \uAC00\uB2A5\uD55C \uD1B5\uD569 \uC0C1\uC810 \uD50C\uB7AB\uD3FC.",
+  "Tags": [
+    "Blazor",
+    "TossPayments",
+    "E-Commerce",
+    "Dreamine"
+  ],
   "Year": 2025,
-  "Emoji": "🛒",
-  "ImageFileName": "/portfolio-data/msjang/media/_cover/ShopStore_1200x630.png",
-  "GitHub": null,
+  "Emoji": "\uD83D\uDED2",
+  "ImageFileName": "716a99444ae64422a6c0d3cf0344d909.png",
+  "GitHub": "https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit",
   "LiveUrl": "https://shop.codemaru.co.kr",
-  "DocUrl": null,
-  "Category": "Personal",
+  "DocUrl": "https://blog.naver.com/pro083/224316934501",
+  "Category": "Public",
   "SortOrder": 1,
-  "WorkImages": [],
+  "VideoFileNames": [],
+  "WorkImages": [
+    "a3e7f7254b8047cb93b251d0f79624e9.png"
+  ],
   "WorkSubtitle": null,
   "WorkBullets": [],
   "WorkPeriod": null,

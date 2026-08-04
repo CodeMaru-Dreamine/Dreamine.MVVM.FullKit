@@ -1,0 +1,108 @@
+@namespace PortfolioApp.Blazor.Components
+@inject NavigationManager Navigation
+
+<article class="pf-project-card pf-project-card--summary">
+    <a class="pf-project-card__stretched"
+       href="@DetailUrl"
+       data-enhance-nav="false"
+       @onclick="OpenDetails"
+       @onclick:preventDefault="true"
+       aria-label="@DetailAriaLabel"></a>
+
+    @if (!string.IsNullOrWhiteSpace(CoverImage))
+    {
+        <div class="pf-project-card__cover">
+            <img src="@Vm.GetImageUrl(Slug, Project.Id, CoverImage)"
+                 alt="@Project.Title"
+                 loading="lazy"
+                 style="@BlurStyle(Project.ImageBlurLevel)" />
+        </div>
+    }
+    else
+    {
+        <div class="pf-project-card__cover pf-project-card__cover--empty" aria-hidden="true">
+            <span>@Project.Emoji</span>
+        </div>
+    }
+
+    <div class="pf-project-card__body">
+        <div class="pf-project-card__eyebrow">
+            <span>@Project.Year</span>
+        </div>
+
+        <h3>@Project.Emoji @Project.Title</h3>
+
+        @if (!string.IsNullOrWhiteSpace(SummaryText))
+        {
+            <p class="pf-project-card__description">@SummaryText</p>
+        }
+
+        @if (Project.Tags.Length > 0)
+        {
+            <div class="pf-project-card__tags" aria-label="@(Text["detail.tools"])">
+                @foreach (string tag in Project.Tags.Take(4))
+                {
+                    <span>@tag</span>
+                }
+            </div>
+        }
+
+        <div class="pf-project-card__footer">
+            <span class="pf-project-card__more">@Text["view.details"] <i class="fas fa-arrow-right"></i></span>
+            <div class="pf-project-card__links">
+                @if (SafeExternalUrl(Project.LiveUrl) is { } liveUrl)
+                {
+                    <a href="@liveUrl" target="_blank" rel="noopener noreferrer" aria-label="@(Text["public.page"])">
+                        <i class="fas fa-arrow-up-right-from-square"></i>
+                    </a>
+                }
+                @if (SafeExternalUrl(Project.DocUrl) is { } docUrl)
+                {
+                    <a href="@docUrl" target="_blank" rel="noopener noreferrer" aria-label="@(Text["detail.links"])">
+                        <i class="fas fa-file-lines"></i>
+                    </a>
+                }
+                @if (SafeExternalUrl(Project.GitHub) is { } githubUrl)
+                {
+                    <a href="@githubUrl" target="_blank" rel="noopener noreferrer" aria-label="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</article>
+
+@code {
+    [Parameter, EditorRequired] public ProjectItem Project { get; set; } = default!;
+    [Parameter, EditorRequired] public string Slug { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public PortfolioPublicViewModel Vm { get; set; } = default!;
+    [Parameter, EditorRequired] public PortfolioLocalization Text { get; set; } = default!;
+
+    private string? CoverImage =>
+        Project.WorkImages.FirstOrDefault() ?? Project.ImageFileName;
+    private string SummaryText =>
+        !string.IsNullOrWhiteSpace(Project.WorkSubtitle)
+            ? Project.WorkSubtitle
+            : Project.Description;
+    private string DetailUrl => $"/{Uri.EscapeDataString(Slug)}/projects/{Uri.EscapeDataString(Project.Id)}?lang={Uri.EscapeDataString(Text.Language)}";
+    private string DetailAriaLabel => $"{Project.Title} · {Text["view.details"]}";
+
+    private void OpenDetails() => Navigation.NavigateTo(DetailUrl, forceLoad: true);
+
+    private static string? SafeExternalUrl(string? value)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out Uri? uri))
+            return null;
+
+        return uri.Scheme is "http" or "https" ? uri.AbsoluteUri : null;
+    }
+
+    private static string BlurStyle(int level) => level switch
+    {
+        1 => "filter:blur(4px);",
+        2 => "filter:blur(8px);",
+        3 => "filter:blur(16px);",
+        _ => string.Empty
+    };
+}

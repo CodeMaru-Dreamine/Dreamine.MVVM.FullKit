@@ -1,25 +1,40 @@
 {
   "Id": "w14",
-  "Title": "OHT 제어 및 CIM 연동 시스템",
-  "Description": "장비 제어 UI와 통신 로직 보강을 통해 CIM 연동의 실사용 흐름을 안정화.",
-  "Tags": [],
+  "Title": "OHT \uC81C\uC5B4 \uBC0F CIM \uC5F0\uB3D9 \uC2DC\uC2A4\uD15C",
+  "Description": "\uC7A5\uBE44 \uC81C\uC5B4 UI\uC640 \uD1B5\uC2E0 \uB85C\uC9C1 \uBCF4\uAC15\uC744 \uD1B5\uD574 CIM \uC5F0\uB3D9\uC758 \uC2E4\uC0AC\uC6A9 \uD750\uB984\uC744 \uC548\uC815\uD654.",
+  "Tags": [
+    "C#",
+    "WinForms",
+    "Node.js",
+    "SignalR",
+    "OHT",
+    "Vehicle Control",
+    "CIM Integration",
+    "SECS/GEM",
+    "Equipment Control",
+    "Material Handling"
+  ],
   "Year": 2018,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "b87ddc9a636e49d0aa4300631b5137d7.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 14,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/OHT.png" ],
-  "WorkSubtitle": "OHT 상태 UI + 통신 로직 보강 + CIM 연동 흐름",
-  "WorkBullets": [
-      "FA 장비 연동 UI로 OHT 상태 표시/제어 흐름 구성",
-      "C++ 기반 모션보드 펌웨어/PC 간 통신 연동 로직 일부 수정·검증",
-      "SECS/GEM(X-COM) 메시지 구성 보조 및 장비 상태 흐름 검토"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "b87ddc9a636e49d0aa4300631b5137d7.png"
   ],
-  "WorkPeriod": "기간 내 일부 단계 참여",
-  "WorkRole": "WinForms UI · C++ 연동 로직 보완 · 메시지 정의 지원",
-  "WorkTech": "VS2015 C# WinForms, C++ 확장 DLL, SECS/GEM(X-COM)",
-  "WorkCompany": "㈜제이이노텍 / 중국 (B社)"
+  "WorkSubtitle": "OHT \uC0C1\uD0DC UI \u002B \uD1B5\uC2E0 \uB85C\uC9C1 \uBCF4\uAC15 \u002B CIM \uC5F0\uB3D9 \uD750\uB984",
+  "WorkBullets": [
+    "FA \uC7A5\uBE44 \uC5F0\uB3D9 UI\uB85C OHT \uC0C1\uD0DC \uD45C\uC2DC/\uC81C\uC5B4 \uD750\uB984 \uAD6C\uC131",
+    "C\u002B\u002B \uAE30\uBC18 \uBAA8\uC158\uBCF4\uB4DC \uD38C\uC6E8\uC5B4/PC \uAC04 \uD1B5\uC2E0 \uC5F0\uB3D9 \uB85C\uC9C1 \uC77C\uBD80 \uC218\uC815\u00B7\uAC80\uC99D",
+    "SECS/GEM(X-COM) \uBA54\uC2DC\uC9C0 \uAD6C\uC131 \uBCF4\uC870 \uBC0F \uC7A5\uBE44 \uC0C1\uD0DC \uD750\uB984 \uAC80\uD1A0"
+  ],
+  "WorkPeriod": "\uAE30\uAC04 \uB0B4 \uC77C\uBD80 \uB2E8\uACC4 \uCC38\uC5EC",
+  "WorkRole": "WinForms UI \u00B7 C\u002B\u002B \uC5F0\uB3D9 \uB85C\uC9C1 \uBCF4\uC644 \u00B7 \uBA54\uC2DC\uC9C0 \uC815\uC758 \uC9C0\uC6D0",
+  "WorkTech": "VS2015 C# WinForms, C\u002B\u002B \uD655\uC7A5 DLL, SECS/GEM(X-COM)",
+  "WorkCompany": "\u321C\uC81C\uC774\uC774\uB178\uD14D / \uC911\uAD6D (B\u793E)"
 }

@@ -539,7 +539,7 @@
         : Text.Format(Vm.StatusKey, Vm.StatusArguments);
 
     private string AlbumUrl => $"/{Uri.EscapeDataString(Slug)}?lang={Uri.EscapeDataString(Text.Language)}";
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}&lang={Uri.EscapeDataString(Text.Language)}";
+    private string LoginUrl => Dreamine.Identity.DreamineIdentityPortal.CreateUrl("login", Nav.Uri, Text.Language);
     private string FormatDate(DateTime value) => value.ToString("d", System.Globalization.CultureInfo.GetCultureInfo(Text.HtmlLanguage));
     private string OgPreviewUrl => $"/og/families/{Uri.EscapeDataString(Slug)}?v={Uri.EscapeDataString(Vm.Config?.OgImageFileName ?? string.Empty)}";
 

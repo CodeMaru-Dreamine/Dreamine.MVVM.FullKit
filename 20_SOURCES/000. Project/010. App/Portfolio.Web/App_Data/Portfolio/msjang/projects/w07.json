@@ -1,26 +1,39 @@
 {
   "Id": "w07",
-  "Title": "DB 모니터링 · 작업지시 프로그램",
-  "Description": "단순 기능이지만 MVVM 아키텍처를 도입한 첫 상용 프로젝트.",
-  "Tags": [],
+  "Title": "DB \uBAA8\uB2C8\uD130\uB9C1 \u00B7 \uC791\uC5C5\uC9C0\uC2DC \uD504\uB85C\uADF8\uB7A8",
+  "Description": "\uB2E8\uC21C \uAE30\uB2A5\uC774\uC9C0\uB9CC MVVM \uC544\uD0A4\uD14D\uCC98\uB97C \uB3C4\uC785\uD55C \uCCAB \uC0C1\uC6A9 \uD504\uB85C\uC81D\uD2B8.",
+  "Tags": [
+    "C#",
+    "WPF",
+    "MVVM",
+    "MariaDB",
+    "Work Order Management",
+    "History Search",
+    "Data Validation",
+    "Desktop Application"
+  ],
   "Year": 2023,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "7cbdc6a8f67346ec8725b46249473d57.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 7,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/Humin3.png" ],
-  "WorkSubtitle": "MVVM 초도 적용: 이력·작업지시 조회/검증 UI",
-  "WorkBullets": [
-      "VS2019 + C# WPF, MVVM 구조 실전 적용",
-      "제품 이력 조회/작업결과 로그/작업지시 항목 조회 기능",
-      "바코드 기반 이력 추적 및 테이블 상태 확인",
-      "MariaDB 연동으로 현장 데이터 입력/조회"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "7cbdc6a8f67346ec8725b46249473d57.png"
   ],
-  "WorkPeriod": "단기 구축",
-  "WorkRole": "WPF 앱 설계·개발",
+  "WorkSubtitle": "MVVM \uCD08\uB3C4 \uC801\uC6A9: \uC774\uB825\u00B7\uC791\uC5C5\uC9C0\uC2DC \uC870\uD68C/\uAC80\uC99D UI",
+  "WorkBullets": [
+    "VS2019 \u002B C# WPF, MVVM \uAD6C\uC870 \uC2E4\uC804 \uC801\uC6A9",
+    "\uC81C\uD488 \uC774\uB825 \uC870\uD68C/\uC791\uC5C5\uACB0\uACFC \uB85C\uADF8/\uC791\uC5C5\uC9C0\uC2DC \uD56D\uBAA9 \uC870\uD68C \uAE30\uB2A5",
+    "\uBC14\uCF54\uB4DC \uAE30\uBC18 \uC774\uB825 \uCD94\uC801 \uBC0F \uD14C\uC774\uBE14 \uC0C1\uD0DC \uD655\uC778",
+    "MariaDB \uC5F0\uB3D9\uC73C\uB85C \uD604\uC7A5 \uB370\uC774\uD130 \uC785\uB825/\uC870\uD68C"
+  ],
+  "WorkPeriod": "",
+  "WorkRole": "WPF \uC571 \uC124\uACC4\u00B7\uAC1C\uBC1C",
   "WorkTech": "C#, WPF, MVVM, MariaDB",
-  "WorkCompany": "㈜휴민로보틱스 / G社"
+  "WorkCompany": "\u321C\uD734\uBBFC\uB85C\uBCF4\uD2F1\uC2A4 / G\u793E"
 }

@@ -1,27 +1,40 @@
 {
   "Id": "w16",
-  "Title": "Burn-In Sorter 시리즈 (JTS-30K/80×0/70×0/32xx)",
-  "Description": "JTS-30K/80x0/70x0/32xx Burn-In Sorter 제품군에 대해 시퀀스·GUI·통신을 안전하게 확장하고 현장 커스터마이징/유지보수를 장기 수행.",
-  "Tags": [],
+  "Title": "Burn-In Sorter \uC2DC\uB9AC\uC988 (JTS-30K/80\u00D70/70\u00D70/32xx)",
+  "Description": "JTS-30K/80x0/70x0/32xx Burn-In Sorter \uC81C\uD488\uAD70\uC5D0 \uB300\uD574 \uC2DC\uD000\uC2A4\u00B7GUI\u00B7\uD1B5\uC2E0\uC744 \uC548\uC804\uD558\uAC8C \uD655\uC7A5\uD558\uACE0 \uD604\uC7A5 \uCEE4\uC2A4\uD130\uB9C8\uC774\uC9D5/\uC720\uC9C0\uBCF4\uC218\uB97C \uC7A5\uAE30 \uC218\uD589.",
+  "Tags": [
+    "C\u002B\u002BBuilder",
+    "C\u002B\u002B",
+    "SECS/GEM",
+    "Motion Control",
+    "I/O Control",
+    "Sequence Control",
+    "Burn-In Sorter",
+    "Industrial Automation"
+  ],
   "Year": 2017,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "c8fb66a878664519a9194a5476d2ee89.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 16,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
-  "WorkSubtitle": "C++Builder 기반 제어/시퀀스 & GUI — 레거시 확장과 현장 커스터마이징",
-  "WorkBullets": [
-      "대량 납품된 Burn-In Sorter 제품군의 안정 운용과 고객 커스터마이징 대응",
-      "기존 C++Builder 5/6 레거시 코드에 신규 기능·GUI 추가 및 장기 유지보수",
-      "SECS/GEM(X-COM) 메시지 맵/상태 플로우 파악 및 인터페이스 보조/반영",
-      "I/O 216/272 → 680/792ch까지 구성 대응, AJIN Motion 및 주변장치 제어",
-      "현장 셋업/검증·장애 대응·로그 분석으로 안정화, 운영자 편의 기능 다수 추가"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "c8fb66a878664519a9194a5476d2ee89.png"
   ],
-  "WorkPeriod": "2014.05 ~ 2017.08 (3년 4개월)",
-  "WorkRole": "시퀀스/GUI 추가 기능 개발 · 유지보수 · 현장 커스터마이징",
-  "WorkTech": "C++(C++Builder 5/6), SECS/GEM(X-COM), AJIN Motion, I/O 216~792ch",
-  "WorkCompany": "㈜제이티 · 제어팀(책임연구원)"
+  "WorkSubtitle": "C\u002B\u002BBuilder \uAE30\uBC18 \uC81C\uC5B4/\uC2DC\uD000\uC2A4 \u0026 GUI \u2014 \uB808\uAC70\uC2DC \uD655\uC7A5\uACFC \uD604\uC7A5 \uCEE4\uC2A4\uD130\uB9C8\uC774\uC9D5",
+  "WorkBullets": [
+    "\uB300\uB7C9 \uB0A9\uD488\uB41C Burn-In Sorter \uC81C\uD488\uAD70\uC758 \uC548\uC815 \uC6B4\uC6A9\uACFC \uACE0\uAC1D \uCEE4\uC2A4\uD130\uB9C8\uC774\uC9D5 \uB300\uC751",
+    "\uAE30\uC874 C\u002B\u002BBuilder 5/6 \uB808\uAC70\uC2DC \uCF54\uB4DC\uC5D0 \uC2E0\uADDC \uAE30\uB2A5\u00B7GUI \uCD94\uAC00 \uBC0F \uC7A5\uAE30 \uC720\uC9C0\uBCF4\uC218",
+    "SECS/GEM(X-COM) \uBA54\uC2DC\uC9C0 \uB9F5/\uC0C1\uD0DC \uD50C\uB85C\uC6B0 \uD30C\uC545 \uBC0F \uC778\uD130\uD398\uC774\uC2A4 \uBCF4\uC870/\uBC18\uC601",
+    "I/O 216/272 \u2192 680/792ch\uAE4C\uC9C0 \uAD6C\uC131 \uB300\uC751, AJIN Motion \uBC0F \uC8FC\uBCC0\uC7A5\uCE58 \uC81C\uC5B4",
+    "\uD604\uC7A5 \uC14B\uC5C5/\uAC80\uC99D\u00B7\uC7A5\uC560 \uB300\uC751\u00B7\uB85C\uADF8 \uBD84\uC11D\uC73C\uB85C \uC548\uC815\uD654, \uC6B4\uC601\uC790 \uD3B8\uC758 \uAE30\uB2A5 \uB2E4\uC218 \uCD94\uAC00"
+  ],
+  "WorkPeriod": "2014.05 ~ 2017.08 (3\uB144 4\uAC1C\uC6D4)",
+  "WorkRole": "\uC2DC\uD000\uC2A4/GUI \uCD94\uAC00 \uAE30\uB2A5 \uAC1C\uBC1C \u00B7 \uC720\uC9C0\uBCF4\uC218 \u00B7 \uD604\uC7A5 \uCEE4\uC2A4\uD130\uB9C8\uC774\uC9D5",
+  "WorkTech": "C\u002B\u002B(C\u002B\u002BBuilder 5/6), SECS/GEM(X-COM), AJIN Motion, I/O 216~792ch",
+  "WorkCompany": "\u321C\uC81C\uC774\uD2F0 \u00B7 \uC81C\uC5B4\uD300(\uCC45\uC784\uC5F0\uAD6C\uC6D0)"
 }

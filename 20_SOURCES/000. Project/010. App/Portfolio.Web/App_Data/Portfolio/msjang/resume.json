@@ -2,114 +2,160 @@
   "SkillGroups": [
     {
       "Category": "Language / UI",
-      "Skills": [ "C#", "C++", "WPF", "WinForms", "MVVM", "XAML", "Blazor" ]
+      "Skills": [
+        "C#",
+        "C\u002B\u002B",
+        "WPF",
+        "WinForms",
+        "MVVM",
+        "XAML",
+        "Blazor"
+      ]
     },
     {
       "Category": "Framework / Tools",
-      "Skills": [ ".NET 8", "Visual Studio", "SignalR", "Source Generator", "Doxygen" ]
+      "Skills": [
+        ".NET 8",
+        "Visual Studio",
+        "SignalR",
+        "Source Generator",
+        "Doxygen"
+      ]
     },
     {
       "Category": "Automation / Sequence",
-      "Skills": [ "Motion Control", "SECS/GEM", "MELSEC", "PLC", "FSM", "Serial Communication", "TCP/IP" ]
+      "Skills": [
+        "Motion Control",
+        "SECS/GEM",
+        "MELSEC",
+        "PLC",
+        "FSM",
+        "Serial Communication",
+        "TCP/IP"
+      ]
     },
     {
       "Category": "Database",
-      "Skills": [ "SQLite", "MySQL", "Oracle", "MSSQL", "MariaDB" ]
+      "Skills": [
+        "SQLite",
+        "MySQL",
+        "Oracle",
+        "MSSQL",
+        "MariaDB"
+      ]
     },
     {
       "Category": "DevOps / Docs",
-      "Skills": [ "Git", "GitHub", "Doxygen", "Redmine", "Markdown" ]
+      "Skills": [
+        "Git",
+        "GitHub",
+        "Doxygen",
+        "Redmine",
+        "Markdown"
+      ]
     }
   ],
   "Experiences": [
     {
-      "Company": "비전세미콘(주)",
-      "Role": "S/W팀 · 수석연구원 · 프로그램설계",
-      "Period": "2024.03 ~ 재직중",
-      "Description": "VSFrameWork / VSLibrary 아키텍처 설계 및 라이브러리 모듈화 주도.",
+      "Id": "5bf0675c12c2466482143c266064f5c6",
+      "Company": "\uBE44\uC804\uC138\uBBF8\uCF58(\uC8FC)",
+      "Role": "S/W\uD300 \u00B7 \uC218\uC11D\uC5F0\uAD6C\uC6D0 \u00B7 \uD504\uB85C\uADF8\uB7A8\uC124\uACC4",
+      "Period": "2024.03 ~ 2026.03.31",
+      "Description": "VSFrameWork / VSLibrary \uC544\uD0A4\uD14D\uCC98 \uC124\uACC4 \uBC0F \uB77C\uC774\uBE0C\uB7EC\uB9AC \uBAA8\uB4C8\uD654 \uC8FC\uB3C4.",
       "Bullets": [
-        "VSFrameWork 공통 C# 프레임워크 아키텍처 설계 및 라이브러리 모듈화 주도",
-        "VSLibrary 경량 진입점 라이브러리 설계(Opinionated Defaults, AppHost, ServiceRegistry)",
-        "MVVM 스타터 킷 / Blazor+SignalR 연동 예제 / Doxygen 문서화 체계 구축"
+        "VSFrameWork \uACF5\uD1B5 C# \uD504\uB808\uC784\uC6CC\uD06C \uC544\uD0A4\uD14D\uCC98 \uC124\uACC4 \uBC0F \uB77C\uC774\uBE0C\uB7EC\uB9AC \uBAA8\uB4C8\uD654 \uC8FC\uB3C4",
+        "VSLibrary \uACBD\uB7C9 \uC9C4\uC785\uC810 \uB77C\uC774\uBE0C\uB7EC\uB9AC \uC124\uACC4(Opinionated Defaults, AppHost, ServiceRegistry)",
+        "MVVM \uC2A4\uD0C0\uD130 \uD0B7 / Blazor\u002BSignalR \uC5F0\uB3D9 \uC608\uC81C / Doxygen \uBB38\uC11C\uD654 \uCCB4\uACC4 \uAD6C\uCD95"
       ]
     },
     {
-      "Company": "제이이노텍",
-      "Role": "SI · 임시직/프리랜서",
-      "Period": "2023.05 ~ 2023.11 (7개월)",
-      "Description": "CMS(Conveyor Management System) DB 스키마/통신 구조 설계 및 PLC·SECS/GEM 연동.",
+      "Id": "4321c949642245869438cdf2a67eb4df",
+      "Company": "\uC81C\uC774\uC774\uB178\uD14D",
+      "Role": "SI \u00B7 \uC784\uC2DC\uC9C1/\uD504\uB9AC\uB79C\uC11C",
+      "Period": "2023.05 ~ 2023.11 (7\uAC1C\uC6D4)",
+      "Description": "CMS(Conveyor Management System) DB \uC2A4\uD0A4\uB9C8/\uD1B5\uC2E0 \uAD6C\uC870 \uC124\uACC4 \uBC0F PLC\u00B7SECS/GEM \uC5F0\uB3D9.",
       "Bullets": []
     },
     {
-      "Company": "이티에스",
-      "Role": "S/W팀 · 임시직/프리랜서",
-      "Period": "2023.02 ~ 2023.04 (3개월)",
-      "Description": "MTP(베트남 S社 납품) Task 기반 비동기 구조 개선 및 PLC/SECS-GEM 지원.",
+      "Id": "2e71b49b36174922a7270c6d6d835fd3",
+      "Company": "\uC774\uD2F0\uC5D0\uC2A4",
+      "Role": "S/W\uD300 \u00B7 \uC784\uC2DC\uC9C1/\uD504\uB9AC\uB79C\uC11C",
+      "Period": "2023.02 ~ 2023.04 (3\uAC1C\uC6D4)",
+      "Description": "MTP(\uBCA0\uD2B8\uB0A8 S\u793E \uB0A9\uD488) Task \uAE30\uBC18 \uBE44\uB3D9\uAE30 \uAD6C\uC870 \uAC1C\uC120 \uBC0F PLC/SECS-GEM \uC9C0\uC6D0.",
       "Bullets": []
     },
     {
-      "Company": "(주)휴민로보틱스",
-      "Role": "S/W팀 · 과장 · 자동제어",
-      "Period": "2020.02 ~ 2023.02 (3년 1개월)",
-      "Description": "PC 직접제어 대형 라인(RESU TRUST), WPF MVVM 모니터링/작업지시 시스템 다수 구축.",
+      "Id": "f526b5c8f22142d8b39b8d522fc7f4d3",
+      "Company": "(\uC8FC)\uD734\uBBFC\uB85C\uBCF4\uD2F1\uC2A4",
+      "Role": "S/W\uD300 \u00B7 \uACFC\uC7A5 \u00B7 \uC790\uB3D9\uC81C\uC5B4",
+      "Period": "2020.02 ~ 2023.02 (3\uB144 1\uAC1C\uC6D4)",
+      "Description": "PC \uC9C1\uC811\uC81C\uC5B4 \uB300\uD615 \uB77C\uC778(RESU TRUST), WPF MVVM \uBAA8\uB2C8\uD130\uB9C1/\uC791\uC5C5\uC9C0\uC2DC \uC2DC\uC2A4\uD15C \uB2E4\uC218 \uAD6C\uCD95.",
       "Bullets": [
-        "RESU TRUST Pack Line — PLC 없이 PC(i9) 3대로 20~30축 직접 제어(60억 규모)",
-        "WPF MVVM 기반 DB 모니터링·작업지시·Stock 제어·CIM UI 프로그램 다수 개발",
-        "Dreamine/VSFrameWork 철학의 토대 — 장치 유닛 분리/인터페이스 구성 개념 정립"
+        "RESU TRUST Pack Line \u2014 PLC \uC5C6\uC774 PC(i9) 3\uB300\uB85C 20~30\uCD95 \uC9C1\uC811 \uC81C\uC5B4(60\uC5B5 \uADDC\uBAA8)",
+        "WPF MVVM \uAE30\uBC18 DB \uBAA8\uB2C8\uD130\uB9C1\u00B7\uC791\uC5C5\uC9C0\uC2DC\u00B7Stock \uC81C\uC5B4\u00B7CIM UI \uD504\uB85C\uADF8\uB7A8 \uB2E4\uC218 \uAC1C\uBC1C",
+        "Dreamine/VSFrameWork \uCCA0\uD559\uC758 \uD1A0\uB300 \u2014 \uC7A5\uCE58 \uC720\uB2DB \uBD84\uB9AC/\uC778\uD130\uD398\uC774\uC2A4 \uAD6C\uC131 \uAC1C\uB150 \uC815\uB9BD"
       ]
     },
     {
-      "Company": "(주)제이이노텍",
-      "Role": "SI팀 · 과장",
-      "Period": "2017.08 ~ 2019.09 (2년 2개월)",
-      "Description": "중국 B社/T社 CIM 연동 및 통계 시스템, OHT 제어 시스템 구축 지원.",
+      "Id": "1d1a399f9c134b80abaa4fc46c5840a3",
+      "Company": "(\uC8FC)\uC81C\uC774\uC774\uB178\uD14D",
+      "Role": "SI\uD300 \u00B7 \uACFC\uC7A5",
+      "Period": "2017.08 ~ 2019.09 (2\uB144 2\uAC1C\uC6D4)",
+      "Description": "\uC911\uAD6D B\u793E/T\u793E CIM \uC5F0\uB3D9 \uBC0F \uD1B5\uACC4 \uC2DC\uC2A4\uD15C, OHT \uC81C\uC5B4 \uC2DC\uC2A4\uD15C \uAD6C\uCD95 \uC9C0\uC6D0.",
       "Bullets": []
     },
     {
-      "Company": "(주)제이티",
-      "Role": "제어팀 · 책임연구원",
-      "Period": "2014.05 ~ 2017.08 (3년 4개월)",
-      "Description": "Burn-In Sorter 시리즈(JTS-30K/80×0/70×0/32xx) C++Builder 기반 장기 유지보수 및 기능 확장.",
+      "Id": "b1be593c9e7942aeab877f2b94d196b1",
+      "Company": "(\uC8FC)\uC81C\uC774\uD2F0",
+      "Role": "\uC81C\uC5B4\uD300 \u00B7 \uCC45\uC784\uC5F0\uAD6C\uC6D0",
+      "Period": "2014.05 ~ 2017.08 (3\uB144 4\uAC1C\uC6D4)",
+      "Description": "Burn-In Sorter \uC2DC\uB9AC\uC988(JTS-30K/80\u00D70/70\u00D70/32xx) C\u002B\u002BBuilder \uAE30\uBC18 \uC7A5\uAE30 \uC720\uC9C0\uBCF4\uC218 \uBC0F \uAE30\uB2A5 \uD655\uC7A5.",
       "Bullets": []
     },
     {
-      "Company": "(주)아이피에스시스템",
-      "Role": "상품개발부1팀 · 대리",
-      "Period": "2012.01 ~ 2013.12 (2년)",
-      "Description": "Dispenser 제어(다축 모션+비전 연동), 두께측정 제어, 자동 가접기 제어 개발.",
+      "Id": "e7bd98954bc84d61a0380fc56ab261e2",
+      "Company": "(\uC8FC)\uC544\uC774\uD53C\uC5D0\uC2A4\uC2DC\uC2A4\uD15C",
+      "Role": "\uC0C1\uD488\uAC1C\uBC1C\uBD801\uD300 \u00B7 \uB300\uB9AC",
+      "Period": "2012.01 ~ 2013.12 (2\uB144)",
+      "Description": "Dispenser \uC81C\uC5B4(\uB2E4\uCD95 \uBAA8\uC158\u002B\uBE44\uC804 \uC5F0\uB3D9), \uB450\uAED8\uCE21\uC815 \uC81C\uC5B4, \uC790\uB3D9 \uAC00\uC811\uAE30 \uC81C\uC5B4 \uAC1C\uBC1C.",
       "Bullets": []
     },
     {
-      "Company": "(주)엠에스셀텍",
-      "Role": "R&D S/W · 주임연구원",
-      "Period": "2008.07 ~ 2011.10 (3년 4개월)",
-      "Description": "Multi/Input LCD Tester 시리즈 유지보수·현장 대응·해외 설치(중국/슬로바키아).",
+      "Id": "c4b553c98dbc48fa901f6416ddf336c2",
+      "Company": "(\uC8FC)\uC5E0\uC5D0\uC2A4\uC140\uD14D",
+      "Role": "R\u0026D S/W \u00B7 \uC8FC\uC784\uC5F0\uAD6C\uC6D0",
+      "Period": "2008.07 ~ 2011.10 (3\uB144 4\uAC1C\uC6D4)",
+      "Description": "Multi/Input LCD Tester \uC2DC\uB9AC\uC988 \uC720\uC9C0\uBCF4\uC218\u00B7\uD604\uC7A5 \uB300\uC751\u00B7\uD574\uC678 \uC124\uCE58(\uC911\uAD6D/\uC2AC\uB85C\uBC14\uD0A4\uC544).",
       "Bullets": []
     },
     {
-      "Company": "엠에스테크",
-      "Role": "S/W팀 · 사원",
-      "Period": "2008.01 ~ 2008.07 (7개월)",
-      "Description": "PCB Depaneling Router Inline 시리즈 UI/시퀀스 보조 및 장치 연동.",
+      "Id": "5cc0742dfe104d17958eff111b44b5d9",
+      "Company": "\uC5E0\uC5D0\uC2A4\uD14C\uD06C",
+      "Role": "S/W\uD300 \u00B7 \uC0AC\uC6D0",
+      "Period": "2008.01 ~ 2008.07 (7\uAC1C\uC6D4)",
+      "Description": "PCB Depaneling Router Inline \uC2DC\uB9AC\uC988 UI/\uC2DC\uD000\uC2A4 \uBCF4\uC870 \uBC0F \uC7A5\uCE58 \uC5F0\uB3D9.",
       "Bullets": []
     },
     {
-      "Company": "(주)케이엠티",
-      "Role": "연구 · 연구원",
-      "Period": "2007.03 ~ 2007.12 (10개월)",
-      "Description": "PCB Depaneling Router Inline 시리즈 GUI/Sequence 지원 및 MySQL 로그/리포트 모듈 개발.",
+      "Id": "9d0056e068374b008762035178584ff6",
+      "Company": "(\uC8FC)\uCF00\uC774\uC5E0\uD2F0",
+      "Role": "\uC5F0\uAD6C \u00B7 \uC5F0\uAD6C\uC6D0",
+      "Period": "2007.03 ~ 2007.12 (10\uAC1C\uC6D4)",
+      "Description": "PCB Depaneling Router Inline \uC2DC\uB9AC\uC988 GUI/Sequence \uC9C0\uC6D0 \uBC0F MySQL \uB85C\uADF8/\uB9AC\uD3EC\uD2B8 \uBAA8\uB4C8 \uAC1C\uBC1C.",
       "Bullets": []
     }
   ],
   "Educations": [
     {
-      "School": "아주자동차대학",
-      "Degree": "디지털정보통신학과 · 전문학사",
+      "Id": "871ab943ec404e14877fe422f675a3cd",
+      "School": "\uC544\uC8FC\uC790\uB3D9\uCC28\uB300\uD559",
+      "Degree": "\uB514\uC9C0\uD138\uC815\uBCF4\uD1B5\uC2E0\uD559\uACFC \u00B7 \uC804\uBB38\uD559\uC0AC",
       "Period": "2002.03 ~ 2008.02"
     },
     {
-      "School": "청양정산고등학교",
-      "Degree": "인문계 · 졸업",
+      "Id": "d031e67bf19c404083cee1ce55eea1ac",
+      "School": "\uCCAD\uC591\uC815\uC0B0\uACE0\uB4F1\uD559\uAD50",
+      "Degree": "\uC778\uBB38\uACC4 \u00B7 \uC878\uC5C5",
       "Period": "1999.03 ~ 2002.02"
     }
   ]

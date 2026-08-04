@@ -1,26 +1,41 @@
 {
   "Id": "w05",
-  "Title": "MTP (베트남 S社 납품)",
-  "Description": "단기 투입으로 비동기(Task) 구조와 통신 로직 품질을 개선하고, CIM/PLC 연계 구간의 안정성을 보강.",
-  "Tags": [],
+  "Title": "MTP (\uBCA0\uD2B8\uB0A8 S\u793E \uB0A9\uD488)",
+  "Description": "\uB2E8\uAE30 \uD22C\uC785\uC73C\uB85C \uBE44\uB3D9\uAE30(Task) \uAD6C\uC870\uC640 \uD1B5\uC2E0 \uB85C\uC9C1 \uD488\uC9C8\uC744 \uAC1C\uC120\uD558\uACE0, CIM/PLC \uC5F0\uACC4 \uAD6C\uAC04\uC758 \uC548\uC815\uC131\uC744 \uBCF4\uAC15.",
+  "Tags": [
+    "C#",
+    "WinForms",
+    ".NET",
+    "Task/Async",
+    "PLC Communication",
+    "SECS/GEM",
+    "CIM Integration",
+    "Equipment Integration",
+    "Factory Automation",
+    "Communication Stability"
+  ],
   "Year": 2023,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "b06065e152f242318f00b0c7e075e8f1.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 5,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
-  "WorkSubtitle": "기존 프로젝트 구조 정리 · Task 기반 비동기 개선 · PLC/SECS-GEM 지원",
-  "WorkBullets": [
-      "기존 소스 구조 정리 및 Task 기반 비동기 처리 구조 재검토",
-      "과도한 Task 생성에 따른 리소스 낭비 해결(스레드/큐 관리, 취소/예외 처리 정비)",
-      "MELSEC Q PLC ↔ PC 연동 구간 일부 로직 테스트 및 데이터 포맷 검토",
-      "SECS/GEM 기반 CIM 소스 분석 및 파라미터 전달 방식 일부 수정"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "b06065e152f242318f00b0c7e075e8f1.png"
   ],
-  "WorkPeriod": "2023.02 ~ 2023.04 (3개월)",
-  "WorkRole": "구조 개선 · 성능/자원 최적화 · 통신 로직 검토",
+  "WorkSubtitle": "\uAE30\uC874 \uD504\uB85C\uC81D\uD2B8 \uAD6C\uC870 \uC815\uB9AC \u00B7 Task \uAE30\uBC18 \uBE44\uB3D9\uAE30 \uAC1C\uC120 \u00B7 PLC/SECS-GEM \uC9C0\uC6D0",
+  "WorkBullets": [
+    "\uAE30\uC874 \uC18C\uC2A4 \uAD6C\uC870 \uC815\uB9AC \uBC0F Task \uAE30\uBC18 \uBE44\uB3D9\uAE30 \uCC98\uB9AC \uAD6C\uC870 \uC7AC\uAC80\uD1A0",
+    "\uACFC\uB3C4\uD55C Task \uC0DD\uC131\uC5D0 \uB530\uB978 \uB9AC\uC18C\uC2A4 \uB0AD\uBE44 \uD574\uACB0(\uC2A4\uB808\uB4DC/\uD050 \uAD00\uB9AC, \uCDE8\uC18C/\uC608\uC678 \uCC98\uB9AC \uC815\uBE44)",
+    "MELSEC Q PLC \u2194 PC \uC5F0\uB3D9 \uAD6C\uAC04 \uC77C\uBD80 \uB85C\uC9C1 \uD14C\uC2A4\uD2B8 \uBC0F \uB370\uC774\uD130 \uD3EC\uB9F7 \uAC80\uD1A0",
+    "SECS/GEM \uAE30\uBC18 CIM \uC18C\uC2A4 \uBD84\uC11D \uBC0F \uD30C\uB77C\uBBF8\uD130 \uC804\uB2EC \uBC29\uC2DD \uC77C\uBD80 \uC218\uC815"
+  ],
+  "WorkPeriod": "2023.02 ~ 2023.04 (3\uAC1C\uC6D4)",
+  "WorkRole": "\uAD6C\uC870 \uAC1C\uC120 \u00B7 \uC131\uB2A5/\uC790\uC6D0 \uCD5C\uC801\uD654 \u00B7 \uD1B5\uC2E0 \uB85C\uC9C1 \uAC80\uD1A0",
   "WorkTech": "C#, .NET, Task/Async, MELSEC Q PLC, SECS/GEM(CIM)",
-  "WorkCompany": "이테에스 (S/W팀 · 임시직/프리랜서)"
+  "WorkCompany": "\uC774\uD14C\uC5D0\uC2A4 (S/W\uD300 \u00B7 \uC784\uC2DC\uC9C1/\uD504\uB9AC\uB79C\uC11C)"
 }

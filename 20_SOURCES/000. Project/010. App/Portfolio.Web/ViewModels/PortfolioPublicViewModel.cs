@@ -58,6 +58,10 @@ public class PortfolioPublicViewModel
     /// \endif
     /// </summary>
     private readonly IMediaService _media;
+    private readonly PortfolioContactRateLimiter _contactRateLimiter;
+    private readonly PortfolioCircuitClientContext _clientContext;
+    private readonly SemaphoreSlim _contactSubmissionGate = new(1, 1);
+    private DateTimeOffset _nextContactSubmissionAt = DateTimeOffset.MinValue;
 
     /// <summary>
     /// \if KO
@@ -133,6 +137,7 @@ public class PortfolioPublicViewModel
     /// \endif
     /// </summary>
     public string ContactMessage { get; set; } = "";
+    public bool IsSendingContact { get; private set; }
 
     // 필터/검색
     /// <summary>
@@ -286,13 +291,17 @@ public class PortfolioPublicViewModel
         IProjectStore projects,
         IResumeStore resumes,
         IContactStore contacts,
-        IMediaService media)
+        IMediaService media,
+        PortfolioContactRateLimiter contactRateLimiter,
+        PortfolioCircuitClientContext clientContext)
     {
         _tenants = tenants;
         _projects = projects;
         _resumes = resumes;
         _contacts = contacts;
         _media = media;
+        _contactRateLimiter = contactRateLimiter;
+        _clientContext = clientContext;
     }
 
     /// <summary>
@@ -326,19 +335,30 @@ public class PortfolioPublicViewModel
         Projects = [];
         Resume = new();
 
-        Config = await _tenants.GetAsync(slug);
-        if (Config == null)
+        try
         {
+            Config = await _tenants.GetAsync(slug);
+            if (Config == null)
+            {
+                HasLoaded = true;
+                return;
+            }
+
+            Projects = await _projects.GetAllAsync(slug);
+            Resume = await _resumes.GetAsync(slug);
+            // 기존 데이터 마이그레이션: ImageFileName → WorkImages (표시 전용, 저장 안 함)
+            foreach (var p in Projects.Where(p =>
+                !string.IsNullOrWhiteSpace(p.ImageFileName) && p.WorkImages.Length == 0))
+                p.WorkImages = [p.ImageFileName!];
+        }
+        catch (ArgumentException)
+        {
+            Config = null;
+            Projects = [];
+            Resume = new();
             HasLoaded = true;
             return;
         }
-
-        Projects = await _projects.GetAllAsync(slug);
-        Resume = await _resumes.GetAsync(slug);
-        // 기존 데이터 마이그레이션: ImageFileName → WorkImages (표시 전용, 저장 안 함)
-        foreach (var p in Projects.Where(p =>
-            !string.IsNullOrWhiteSpace(p.ImageFileName) && p.WorkImages.Length == 0))
-            p.WorkImages = [p.ImageFileName!];
 
         HasLoaded = true;
     }
@@ -497,7 +517,7 @@ public class PortfolioPublicViewModel
     /// \endif
     /// </returns>
     public static bool IsYouTube(string url) =>
-        url.Contains("youtube.com") || url.Contains("youtu.be");
+        TryGetYouTubeEmbedUrl(url, out _);
 
     /// <summary>
     /// \if KO
@@ -523,15 +543,55 @@ public class PortfolioPublicViewModel
     /// <para>The <c>string</c> result produced by the get you tube embed url operation.</para>
     /// \endif
     /// </returns>
-    public static string GetYouTubeEmbedUrl(string url)
+    public static string GetYouTubeEmbedUrl(string url) =>
+        TryGetYouTubeEmbedUrl(url, out string embedUrl) ? embedUrl : string.Empty;
+
+    /// <summary>Safely parses a supported YouTube URL into a privacy-enhanced embed URL.</summary>
+    public static bool TryGetYouTubeEmbedUrl(string? url, out string embedUrl)
     {
-        // youtu.be/ID 또는 youtube.com/watch?v=ID → /embed/ID
-        var id = "";
-        if (url.Contains("youtu.be/"))
-            id = url.Split("youtu.be/")[1].Split('?')[0].Split('&')[0];
-        else if (url.Contains("v="))
-            id = url.Split("v=")[1].Split('&')[0].Split('?')[0];
-        return string.IsNullOrWhiteSpace(id) ? url : $"https://www.youtube.com/embed/{id}";
+        embedUrl = string.Empty;
+        if (!Uri.TryCreate(url, UriKind.Absolute, out Uri? uri) ||
+            uri.Scheme is not ("http" or "https"))
+        {
+            return false;
+        }
+
+        string host = uri.IdnHost.TrimEnd('.').ToLowerInvariant();
+        string[] segments = uri.AbsolutePath
+            .Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        string? id = null;
+
+        if (host == "youtu.be")
+        {
+            id = segments.FirstOrDefault();
+        }
+        else if (host is "youtube.com" or "www.youtube.com" or "m.youtube.com")
+        {
+            if (segments.Length == 1 && string.Equals(segments[0], "watch", StringComparison.OrdinalIgnoreCase))
+            {
+                id = uri.Query.TrimStart('?')
+                    .Split('&', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(part => part.Split('=', 2))
+                    .Where(pair => pair.Length == 2 && string.Equals(pair[0], "v", StringComparison.OrdinalIgnoreCase))
+                    .Select(pair => Uri.UnescapeDataString(pair[1]))
+                    .FirstOrDefault();
+            }
+            else if (segments.Length >= 2 &&
+                     (string.Equals(segments[0], "embed", StringComparison.OrdinalIgnoreCase) ||
+                      string.Equals(segments[0], "shorts", StringComparison.OrdinalIgnoreCase)))
+            {
+                id = segments[1];
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(id) || id.Length is < 6 or > 64 ||
+            id.Any(character => !char.IsLetterOrDigit(character) && character is not ('-' or '_')))
+        {
+            return false;
+        }
+
+        embedUrl = $"https://www.youtube-nocookie.com/embed/{id}";
+        return true;
     }
 
     /// <summary>
@@ -622,20 +682,63 @@ public class PortfolioPublicViewModel
     /// </returns>
     public async Task<bool> SendContactAsync(string slug)
     {
-        StatusMessage = "";
-        if (string.IsNullOrWhiteSpace(ContactName)) { StatusMessage = "❌ 이름을 입력하세요."; return false; }
-        if (string.IsNullOrWhiteSpace(ContactMessage)) { StatusMessage = "❌ 메시지를 입력하세요."; return false; }
-
-        var msg = new ContactMessage
+        if (!await _contactSubmissionGate.WaitAsync(0).ConfigureAwait(false))
         {
-            SenderName = ContactName.Trim(),
-            Email = ContactEmail.Trim(),
-            Message = ContactMessage.Trim(),
-            SentAt = DateTime.Now,
-        };
-        await _contacts.SaveAsync(slug, msg);
-        ContactName = ContactEmail = ContactMessage = "";
-        StatusMessage = "✅ 메시지가 전송되었습니다.";
-        return true;
+            StatusMessage = "❌ 잠시 후 다시 시도해 주세요.";
+            return false;
+        }
+
+        try
+        {
+            StatusMessage = "";
+            if (DateTimeOffset.UtcNow < _nextContactSubmissionAt)
+            {
+                StatusMessage = "❌ 잠시 후 다시 시도해 주세요.";
+                return false;
+            }
+
+            var msg = new ContactMessage
+            {
+                SenderName = ContactName,
+                Email = ContactEmail,
+                Message = ContactMessage,
+                SentAt = DateTime.Now,
+            };
+
+            if (!msg.TryNormalizeForStorage(out string validationError))
+            {
+                StatusMessage = validationError switch
+                {
+                    "name.required" => "❌ 이름을 입력하세요.",
+                    "message.required" => "❌ 메시지를 입력하세요.",
+                    "input.tooLong" => "❌ 입력 가능한 글자 수를 초과했습니다.",
+                    _ => "❌ 이메일 또는 입력 내용을 확인해 주세요."
+                };
+                return false;
+            }
+
+            if (!_contactRateLimiter.TryAcquire(
+                    slug,
+                    _clientContext.RemoteIpAddress,
+                    msg.Email,
+                    msg.SenderName,
+                    out _))
+            {
+                StatusMessage = "❌ 잠시 후 다시 시도해 주세요.";
+                return false;
+            }
+
+            IsSendingContact = true;
+            await _contacts.SaveAsync(slug, msg).ConfigureAwait(false);
+            _nextContactSubmissionAt = DateTimeOffset.UtcNow.AddSeconds(15);
+            ContactName = ContactEmail = ContactMessage = "";
+            StatusMessage = "✅ 메시지가 전송되었습니다.";
+            return true;
+        }
+        finally
+        {
+            IsSendingContact = false;
+            _contactSubmissionGate.Release();
+        }
     }
 }

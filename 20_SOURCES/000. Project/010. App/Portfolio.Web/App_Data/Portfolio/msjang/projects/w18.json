@@ -1,25 +1,39 @@
 {
   "Id": "w18",
   "Title": "Multi/Input LCD Tester Series (StandAlone/Inline)",
-  "Description": "테스터 시리즈 유지보수·현장 대응 중심 역할. UI·통신 소규모 개선과 해외 설치/검증을 다수 수행.",
-  "Tags": [],
+  "Description": "\uD14C\uC2A4\uD130 \uC2DC\uB9AC\uC988 \uC720\uC9C0\uBCF4\uC218\u00B7\uD604\uC7A5 \uB300\uC751 \uC911\uC2EC \uC5ED\uD560. UI\u00B7\uD1B5\uC2E0 \uC18C\uADDC\uBAA8 \uAC1C\uC120\uACFC \uD574\uC678 \uC124\uCE58/\uAC80\uC99D\uC744 \uB2E4\uC218 \uC218\uD589.",
+  "Tags": [
+    "C\u002B\u002B",
+    "MFC",
+    "WinForms",
+    "ATL/COM",
+    "RS-232",
+    "PLC Communication",
+    "LCD Tester",
+    "Legacy System Maintenance",
+    "Field Support"
+  ],
   "Year": 2011,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "45dd484e0bde48d1bdd2832895e7f0bc.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 18,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
-  "WorkSubtitle": "유지보수·현장 대응 중심 — GUI 튜닝/소규모 기능 추가 및 배포",
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "45dd484e0bde48d1bdd2832895e7f0bc.png"
+  ],
+  "WorkSubtitle": "\uC720\uC9C0\uBCF4\uC218\u00B7\uD604\uC7A5 \uB300\uC751 \uC911\uC2EC \u2014 GUI \uD29C\uB2DD/\uC18C\uADDC\uBAA8 \uAE30\uB2A5 \uCD94\uAC00 \uBC0F \uBC30\uD3EC",
   "WorkBullets": [
-      "선임(사수) 주도 코드베이스를 기반으로 유지보수·배포·현장 이슈 대응을 담당",
-      "사용자 요청 기능 소규모 추가(리본 스타일 UI, 항목/옵션 실시간 추가/삭제 등)",
-      "중국/슬로바키아 등 해외 납품 장비의 설치·검증·장애 대응 출장 수행"
+    "\uC120\uC784(\uC0AC\uC218) \uC8FC\uB3C4 \uCF54\uB4DC\uBCA0\uC774\uC2A4\uB97C \uAE30\uBC18\uC73C\uB85C \uC720\uC9C0\uBCF4\uC218\u00B7\uBC30\uD3EC\u00B7\uD604\uC7A5 \uC774\uC288 \uB300\uC751\uC744 \uB2F4\uB2F9",
+    "\uC0AC\uC6A9\uC790 \uC694\uCCAD \uAE30\uB2A5 \uC18C\uADDC\uBAA8 \uCD94\uAC00(\uB9AC\uBCF8 \uC2A4\uD0C0\uC77C UI, \uD56D\uBAA9/\uC635\uC158 \uC2E4\uC2DC\uAC04 \uCD94\uAC00/\uC0AD\uC81C \uB4F1)",
+    "\uC911\uAD6D/\uC2AC\uB85C\uBC14\uD0A4\uC544 \uB4F1 \uD574\uC678 \uB0A9\uD488 \uC7A5\uBE44\uC758 \uC124\uCE58\u00B7\uAC80\uC99D\u00B7\uC7A5\uC560 \uB300\uC751 \uCD9C\uC7A5 \uC218\uD589"
   ],
   "WorkPeriod": "2008.07 ~ 2011.10",
-  "WorkRole": "운영/배포·현장 이슈 대응·소규모 기능 추가",
-  "WorkTech": "MFC, .NET, WinForms, ATL/COM, RS-232/IRDA, PLC 연동",
-  "WorkCompany": "㈜엠에스셀텍 (R&D S/W · 주임연구원)"
+  "WorkRole": "\uC6B4\uC601/\uBC30\uD3EC\u00B7\uD604\uC7A5 \uC774\uC288 \uB300\uC751\u00B7\uC18C\uADDC\uBAA8 \uAE30\uB2A5 \uCD94\uAC00",
+  "WorkTech": "MFC, .NET, WinForms, ATL/COM, RS-232/IRDA, PLC \uC5F0\uB3D9",
+  "WorkCompany": "\u321C\uC5E0\uC5D0\uC2A4\uC140\uD14D (R\u0026D S/W \u00B7 \uC8FC\uC784\uC5F0\uAD6C\uC6D0)"
 }

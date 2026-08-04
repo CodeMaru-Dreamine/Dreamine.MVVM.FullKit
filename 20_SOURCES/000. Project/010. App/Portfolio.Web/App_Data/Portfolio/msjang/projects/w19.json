@@ -1,26 +1,40 @@
 {
   "Id": "w19",
-  "Title": "PCB Depaneling Router Series (Inline) — 엠에스테크",
-  "Description": "입사 초기 주니어로서 Depaneling Router 시리즈의 UI/시퀀스 보조와 장치 연동, 현장 배포·유지보수를 수행.",
-  "Tags": [],
+  "Title": "PCB Depaneling Router Series (Inline) \u2014 \uC5E0\uC5D0\uC2A4\uD14C\uD06C",
+  "Description": "\uC785\uC0AC \uCD08\uAE30 \uC8FC\uB2C8\uC5B4\uB85C\uC11C Depaneling Router \uC2DC\uB9AC\uC988\uC758 UI/\uC2DC\uD000\uC2A4 \uBCF4\uC870\uC640 \uC7A5\uCE58 \uC5F0\uB3D9, \uD604\uC7A5 \uBC30\uD3EC\u00B7\uC720\uC9C0\uBCF4\uC218\uB97C \uC218\uD589.",
+  "Tags": [
+    "VB.NET",
+    "C\u002B\u002B COM",
+    "OpenCV",
+    "RS-232",
+    "Motion Control",
+    "Spindle Control",
+    "PCB Depaneling",
+    "Equipment Control",
+    "Industrial Automation"
+  ],
   "Year": 2008,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "157106684eb3476cb7f2d08a6335259a.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 19,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/NoImage.png" ],
-  "WorkSubtitle": "C++/VB 제어·UI 보조 — 스핀들/다축/카메라·로봇 연동",
-  "WorkBullets": [
-      "20축(서보/스텝) + I/O(128/64) 기반 라우터 제어 환경 운용",
-      "VB2005로 다국어 지원 사용자 UI 및 항목 실시간 추가/삭제 기능 구현",
-      "USB Camera + OpenCV 오버레이로 상태/가이드 정보 화면 표시",
-      "로봇 컨트롤러(다사 등)와 RS-232 연동, 납품사 맞춤 GUI 제작"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "157106684eb3476cb7f2d08a6335259a.png"
   ],
-  "WorkPeriod": "2008.01 ~ 2008.07 (7개월)",
-  "WorkRole": "UI/시퀀스 보조 · 장치 연동 · 현장 배포",
-  "WorkTech": "VB2005, C++(COM), RS-232, OpenCV, Comizoa Motion, Kavo Spindle x8, 20축",
-  "WorkCompany": "엠에스테크 (S/W팀 · 사원)"
+  "WorkSubtitle": "C\u002B\u002B/VB \uC81C\uC5B4\u00B7UI \uBCF4\uC870 \u2014 \uC2A4\uD540\uB4E4/\uB2E4\uCD95/\uCE74\uBA54\uB77C\u00B7\uB85C\uBD07 \uC5F0\uB3D9",
+  "WorkBullets": [
+    "20\uCD95(\uC11C\uBCF4/\uC2A4\uD15D) \u002B I/O(128/64) \uAE30\uBC18 \uB77C\uC6B0\uD130 \uC81C\uC5B4 \uD658\uACBD \uC6B4\uC6A9",
+    "VB2005\uB85C \uB2E4\uAD6D\uC5B4 \uC9C0\uC6D0 \uC0AC\uC6A9\uC790 UI \uBC0F \uD56D\uBAA9 \uC2E4\uC2DC\uAC04 \uCD94\uAC00/\uC0AD\uC81C \uAE30\uB2A5 \uAD6C\uD604",
+    "USB Camera \u002B OpenCV \uC624\uBC84\uB808\uC774\uB85C \uC0C1\uD0DC/\uAC00\uC774\uB4DC \uC815\uBCF4 \uD654\uBA74 \uD45C\uC2DC",
+    "\uB85C\uBD07 \uCEE8\uD2B8\uB864\uB7EC(\uB2E4\uC0AC \uB4F1)\uC640 RS-232 \uC5F0\uB3D9, \uB0A9\uD488\uC0AC \uB9DE\uCDA4 GUI \uC81C\uC791"
+  ],
+  "WorkPeriod": "2008.01 ~ 2008.07 (7\uAC1C\uC6D4)",
+  "WorkRole": "UI/\uC2DC\uD000\uC2A4 \uBCF4\uC870 \u00B7 \uC7A5\uCE58 \uC5F0\uB3D9 \u00B7 \uD604\uC7A5 \uBC30\uD3EC",
+  "WorkTech": "VB2005, C\u002B\u002B(COM), RS-232, OpenCV, Comizoa Motion, Kavo Spindle x8, 20\uCD95",
+  "WorkCompany": "\uC5E0\uC5D0\uC2A4\uD14C\uD06C (S/W\uD300 \u00B7 \uC0AC\uC6D0)"
 }

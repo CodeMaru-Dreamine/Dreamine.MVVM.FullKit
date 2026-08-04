@@ -30,5 +30,5 @@
 
     private bool HasError => new Uri(Nav.Uri).Query.Contains("accessError=1", StringComparison.OrdinalIgnoreCase);
     private string ReturnUrl => new Uri(Nav.Uri).PathAndQuery;
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string LoginUrl => Dreamine.Identity.DreamineIdentityPortal.CreateUrl("login", Nav.Uri, Text.Language);
 }

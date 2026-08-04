@@ -307,7 +307,7 @@
     private string IdentityUrl(string action)
     {
         Uri current = Nav.ToAbsoluteUri(Nav.Uri);
-        return $"/_identity/{action}?lang={Uri.EscapeDataString(Text.Language)}&returnUrl={Uri.EscapeDataString(current.PathAndQuery)}";
+        return Dreamine.Identity.DreamineIdentityPortal.CreateUrl(action, current.AbsoluteUri, Text.Language);
     }
 
     protected override void OnInitialized()

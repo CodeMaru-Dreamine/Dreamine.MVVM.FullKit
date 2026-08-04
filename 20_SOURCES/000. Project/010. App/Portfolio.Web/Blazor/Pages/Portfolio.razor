@@ -1,63 +1,75 @@
 @page "/{Slug}"
 @layout PortfolioApp.Blazor.Layout.PortfolioLayout
 @namespace PortfolioApp.Blazor.Pages
-@rendermode @(new InteractiveServerRenderMode(prerender: false))
+@rendermode @(new InteractiveServerRenderMode(prerender: true))
+@implements IDisposable
 
 @inject PortfolioPublicViewModel Vm
+@inject PortfolioLocalization Text
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 
 <PageTitle>@(Vm.Config?.OwnerName ?? Slug) — Portfolio</PageTitle>
 
-@if (Vm.Config != null)
+@if (Vm.Config is { } metadata)
 {
-    var cfg = Vm.Config;
-    var ogTitle = string.IsNullOrWhiteSpace(cfg.OgTitle) ? $"{cfg.OwnerName} — Portfolio" : cfg.OgTitle;
-    var ogDesc = string.IsNullOrWhiteSpace(cfg.OgDescription) ? cfg.Bio : cfg.OgDescription;
+    string pageTitle = string.IsNullOrWhiteSpace(metadata.OgTitle) ? $"{metadata.OwnerName} — Portfolio" : metadata.OgTitle;
+    string description = string.IsNullOrWhiteSpace(metadata.OgDescription) ? metadata.Bio : metadata.OgDescription;
+    string? imageUrl = GetSocialImageUrl(metadata);
 
     <HeadContent>
-        <meta property="og:title" content="@ogTitle" />
-        <meta property="og:description" content="@ogDesc" />
+        <meta name="description" content="@description" />
+        <link rel="canonical" href="@Nav.Uri" />
+        <meta property="og:title" content="@pageTitle" />
+        <meta property="og:description" content="@description" />
         <meta property="og:type" content="website" />
         <meta property="og:url" content="@Nav.Uri" />
+        @if (!string.IsNullOrWhiteSpace(imageUrl))
+        {
+            <meta property="og:image" content="@imageUrl" />
+            <meta name="twitter:card" content="summary_large_image" />
+            <meta name="twitter:image" content="@imageUrl" />
+        }
+        <meta name="twitter:title" content="@pageTitle" />
+        <meta name="twitter:description" content="@description" />
     </HeadContent>
 }
 
 <div class="pf-page pf-portfolio theme-@(Vm.Config?.ThemeName ?? "dark")">
-
     @if (!Vm.HasLoaded)
     {
-        <div class="pf-loading">
+        <div class="pf-loading" aria-live="polite">
             <div class="pf-loading__mark"></div>
         </div>
     }
-    else if (Vm.Config == null)
+    else if (Vm.Config is null)
     {
         <div class="pf-not-found">
             <h1>404</h1>
-            <p>존재하지 않는 포트폴리오입니다.</p>
-            <a href="/" class="pf-btn pf-btn--primary">홈으로</a>
+            <p>@Text["notfound.portfolio"]</p>
+            <a href="@HomePath" class="pf-btn pf-btn--primary">@Text["home"]</a>
         </div>
     }
     else
     {
-        var cfg = Vm.Config;
+        PortfolioConfig cfg = Vm.Config;
 
-        <!-- ── 네비바 ── -->
-        <nav class="pf-nav pf-nav--portfolio">
-            <a href="/" class="pf-nav__brand"><span class="pf-nav__brand-icon">🧑‍💻</span> <span class="pf-nav__brand-text">@cfg.OwnerName</span></a>
+        <nav class="pf-nav pf-nav--portfolio" aria-label="Portfolio">
+            <a href="@PortfolioPath" class="pf-nav__brand">
+                <span class="pf-nav__brand-icon">●</span>
+                <span class="pf-nav__brand-text">@cfg.OwnerName</span>
+            </a>
             <div class="pf-nav__links">
-                <a href="#" @onclick="ScrollToProjects" @onclick:preventDefault class="pf-nav__link">Projects</a>
-                <a href="#" @onclick="ScrollToResume" @onclick:preventDefault class="pf-nav__link">Resume</a>
+                <a href="#" @onclick="ScrollToProjects" @onclick:preventDefault class="pf-nav__link">@Text["projects"]</a>
+                <a href="#" @onclick="ScrollToResume" @onclick:preventDefault class="pf-nav__link">@Text["career.profile"]</a>
                 @if (cfg.AllowContact)
                 {
-                    <a href="#" @onclick="ScrollToContact" @onclick:preventDefault class="pf-nav__link">Contact</a>
+                    <a href="#" @onclick="ScrollToContact" @onclick:preventDefault class="pf-nav__link">@Text["contact"]</a>
                 }
-                <a href="/@Slug/admin" class="pf-nav__link pf-nav__link--ghost">Admin</a>
+                <a href="@AdminPath" class="pf-nav__link pf-nav__link--ghost">@Text["admin"]</a>
             </div>
         </nav>
 
-        <!-- ── 히어로 ── -->
         <section class="pf-profile-hero">
             <div class="pf-profile-hero__inner">
                 @if (!string.IsNullOrWhiteSpace(cfg.ProfileImageFileName))
@@ -68,7 +80,7 @@
                 }
                 else
                 {
-                    <div class="pf-profile-hero__avatar pf-profile-hero__avatar--empty">🧑‍💻</div>
+                    <div class="pf-profile-hero__avatar pf-profile-hero__avatar--empty" aria-hidden="true">@Initial(cfg.OwnerName)</div>
                 }
                 <div class="pf-profile-hero__meta">
                     <h1 class="pf-profile-hero__name">@cfg.OwnerName</h1>
@@ -78,374 +90,117 @@
                         <p class="pf-profile-hero__bio">@cfg.Bio</p>
                     }
                     <div class="pf-profile-hero__links">
-                        @if (!string.IsNullOrWhiteSpace(cfg.GithubUrl))
+                        @if (SafeExternalUrl(cfg.GithubUrl) is { } githubUrl)
                         {
-                            <a href="@cfg.GithubUrl" target="_blank" class="pf-social-link">
-                                <i class="fab fa-github"></i> GitHub
-                            </a>
+                            <a href="@githubUrl" target="_blank" rel="noopener noreferrer" class="pf-social-link"><i class="fab fa-github"></i> GitHub</a>
                         }
-                        @if (!string.IsNullOrWhiteSpace(cfg.LinkedInUrl))
+                        @if (SafeExternalUrl(cfg.LinkedInUrl) is { } linkedInUrl)
                         {
-                            <a href="@cfg.LinkedInUrl" target="_blank" class="pf-social-link">
-                                <i class="fab fa-linkedin"></i> LinkedIn
-                            </a>
+                            <a href="@linkedInUrl" target="_blank" rel="noopener noreferrer" class="pf-social-link"><i class="fab fa-linkedin"></i> LinkedIn</a>
                         }
                         @if (!string.IsNullOrWhiteSpace(cfg.ContactEmail))
                         {
-                            <a href="mailto:@cfg.ContactEmail" class="pf-social-link">
-                                <i class="fas fa-envelope"></i> @cfg.ContactEmail
-                            </a>
+                            <a href="mailto:@cfg.ContactEmail" class="pf-social-link"><i class="fas fa-envelope"></i> @cfg.ContactEmail</a>
                         }
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- ── Projects ── -->
         <section class="pf-section" id="projects">
             <div class="pf-section__header">
-                <h2><i class="fas fa-diagram-project"></i> Projects</h2>
+                <h2><i class="fas fa-layer-group"></i> @Text["projects"]</h2>
             </div>
 
-            <!-- 검색/필터 -->
             <div class="pf-toolbar">
                 <div class="pf-tool pf-tool--search">
                     <i class="fas fa-magnifying-glass"></i>
-                    <input class="pf-input" placeholder="검색: 제목/설명/태그…"
+                    <input class="pf-input" aria-label="@(Text["search"])" placeholder="@(Text["filter.search"])"
                            value="@Vm.Query" @oninput="OnQueryInput" />
                 </div>
                 <div class="pf-tool">
-                    <label>태그</label>
+                    <label>@Text["tag"]</label>
                     <select class="pf-input" @bind="Vm.SelectedTag">
-                        <option value="">모든 태그</option>
-                        @foreach (var t in Vm.AllTags)
+                        <option value="">@Text["all.tags"]</option>
+                        @foreach (string tag in Vm.AllTags)
                         {
-                            <option value="@t">@t</option>
+                            <option value="@tag">@tag</option>
                         }
                     </select>
                 </div>
                 <div class="pf-tool">
-                    <label>카테고리</label>
+                    <label>@Text["category"]</label>
                     <select class="pf-input" @bind="Vm.SelectedCategory">
-                        <option value="">모두</option>
-                        <option value="Personal">Personal</option>
-                        <option value="Work">Work</option>
-                        <option value="Public">Public</option>
+                        <option value="">@Text["all"]</option>
+                        <option value="Personal">@Text["project.personal"]</option>
+                        <option value="Work">@Text["project.work"]</option>
+                        <option value="Public">@Text["project.public"]</option>
                     </select>
                 </div>
             </div>
 
-            <!-- Personal -->
             @if (Vm.Personal.Count > 0)
             {
-                <h3 class="pf-sub-header">Personal</h3>
-                <div class="pf-project-grid">
-                    @foreach (var p in Vm.Personal)
-                    {
-                        var personalImgs = p.WorkImages.Length > 0 ? p.WorkImages : (!string.IsNullOrWhiteSpace(p.ImageFileName) ? [p.ImageFileName] : []);
-                        var personalBlur = BlurStyle(p.ImageBlurLevel);
-                        <div class="pf-project-card">
-                            @if (personalImgs.Length > 1)
-                            {
-                                <div class="pf-project-card__gallery">
-                                    @foreach (var img in personalImgs)
-                                    {
-                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" style="@personalBlur" />
-                                    }
-                                </div>
-                            }
-                            else if (personalImgs.Length == 1)
-                            {
-                                <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, personalImgs[0])');@personalBlur">
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="pf-project-card__thumb pf-project-card__thumb--empty">
-                                    <span>@p.Emoji</span>
-                                </div>
-                            }
-                            <div class="pf-project-card__body">
-                                <div class="pf-project-card__year">@p.Year</div>
-                                <h4 class="pf-project-card__title">@p.Title</h4>
-                                <p class="pf-project-card__desc">@p.Description</p>
-                                <div class="pf-project-card__tags">
-                                    @foreach (var tag in p.Tags)
-                                    {
-                                        <span class="pf-tag">@tag</span>
-                                    }
-                                </div>
-                                <div class="pf-project-card__links">
-                                    @if (!string.IsNullOrWhiteSpace(p.GitHub))
-                                    {
-                                        <a href="@p.GitHub" target="_blank" class="pf-link-btn">
-                                            <i class="fab fa-github"></i> GitHub
-                                        </a>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(p.LiveUrl))
-                                    {
-                                        <a href="@p.LiveUrl" target="_blank" class="pf-link-btn">
-                                            <i class="fas fa-external-link-alt"></i> Live
-                                        </a>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(p.DocUrl))
-                                    {
-                                        <a href="@p.DocUrl" target="_blank" class="pf-link-btn">
-                                            <i class="fas fa-book"></i> Docs
-                                        </a>
-                                    }
-                                </div>
-                                @if (p.VideoFileNames.Length > 0)
-                                {
-                                    <div class="pf-video-list">
-                                        @foreach (var vid in p.VideoFileNames)
-                                        {
-                                            var vidUrl = Vm.GetVideoUrl(Slug, p.Id, vid);
-                                            @if (PortfolioPublicViewModel.IsYouTube(vidUrl))
-                                            {
-                                                <iframe class="pf-video pf-video--yt" src="@PortfolioPublicViewModel.GetYouTubeEmbedUrl(vidUrl)"
-                                                        frameborder="0" allowfullscreen
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-                                            }
-                                            else
-                                            {
-                                                <video src="@vidUrl" controls class="pf-video" preload="metadata"></video>
-                                            }
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    }
+                <div class="pf-category">
+                    <h3 class="pf-category__title">@Text["project.personal"]</h3>
+                    <div class="pf-grid pf-grid--projects">
+                        @foreach (ProjectItem project in Vm.Personal)
+                        {
+                            <PortfolioProjectCard @key="project.Id" Project="project" Slug="@Slug" Vm="Vm" Text="Text" />
+                        }
+                    </div>
                 </div>
             }
 
-            <!-- Work -->
             @if (Vm.Work.Count > 0)
             {
-                <h3 class="pf-sub-header">Work</h3>
-                <div class="pf-project-grid">
-                    @foreach (var p in Vm.Work)
-                    {
-                        var workImgs = p.WorkImages.Length > 0 ? p.WorkImages : (!string.IsNullOrWhiteSpace(p.ImageFileName) ? [p.ImageFileName] : []);
-                        var workBlur = BlurStyle(p.ImageBlurLevel);
-                        <div class="pf-project-card pf-project-card--work">
-                            @if (workImgs.Length > 1)
-                            {
-                                <div class="pf-project-card__gallery" style="position:relative;">
-                                    @foreach (var img in workImgs)
-                                    {
-                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" style="@workBlur" />
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(p.WorkPeriod))
-                                    {
-                                        <span class="pf-work-period-badge" style="position:absolute;top:.5rem;left:.5rem;">@p.WorkPeriod</span>
-                                    }
-                                </div>
-                            }
-                            else if (workImgs.Length == 1)
-                            {
-                                <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, workImgs[0])');@workBlur">
-                                    @if (!string.IsNullOrWhiteSpace(p.WorkPeriod))
-                                    {
-                                        <span class="pf-work-period-badge">@p.WorkPeriod</span>
-                                    }
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="pf-project-card__thumb pf-project-card__thumb--empty">
-                                    <span>@p.Emoji</span>
-                                    @if (!string.IsNullOrWhiteSpace(p.WorkPeriod))
-                                    {
-                                        <span class="pf-work-period-badge">@p.WorkPeriod</span>
-                                    }
-                                </div>
-                            }
-                            <div class="pf-project-card__body">
-                                <div class="pf-project-card__year">@p.Year</div>
-                                <h4 class="pf-project-card__title">@p.Emoji @p.Title</h4>
-                                @if (!string.IsNullOrWhiteSpace(p.WorkSubtitle))
-                                {
-                                    <p class="pf-work-card__subtitle">@p.WorkSubtitle</p>
-                                }
-                                <p class="pf-project-card__desc">@p.Description</p>
-                                @if (p.WorkBullets.Length > 0)
-                                {
-                                    <ul class="pf-work-card__bullets pf-work-card__bullets--compact">
-                                        @foreach (var b in p.WorkBullets.Take(3))
-                                        {
-                                            <li>@b</li>
-                                        }
-                                        @if (p.WorkBullets.Length > 3)
-                                        {
-                                            <li class="pf-work-card__bullets-more">+@(p.WorkBullets.Length - 3)개 더보기</li>
-                                        }
-                                    </ul>
-                                }
-                                @if (!string.IsNullOrWhiteSpace(p.WorkTech))
-                                {
-                                    <p class="pf-work-card__tech"><strong>Tech:</strong> @p.WorkTech</p>
-                                }
-                                <div class="pf-project-card__tags">
-                                    @foreach (var tag in p.Tags.Take(4))
-                                    {
-                                        <span class="pf-tag">@tag</span>
-                                    }
-                                </div>
-                                <div class="pf-project-card__links">
-                                    @if (!string.IsNullOrWhiteSpace(p.GitHub))
-                                    {
-                                        <a href="@p.GitHub" target="_blank" class="pf-link-btn">
-                                            <i class="fab fa-github"></i> GitHub
-                                        </a>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(p.LiveUrl))
-                                    {
-                                        <a href="@p.LiveUrl" target="_blank" class="pf-link-btn">
-                                            <i class="fas fa-external-link-alt"></i> Live
-                                        </a>
-                                    }
-                                </div>
-                                @if (p.VideoFileNames.Length > 0)
-                                {
-                                    <div class="pf-video-list">
-                                        @foreach (var vid in p.VideoFileNames)
-                                        {
-                                            var vidUrl = Vm.GetVideoUrl(Slug, p.Id, vid);
-                                            @if (PortfolioPublicViewModel.IsYouTube(vidUrl))
-                                            {
-                                                <iframe class="pf-video pf-video--yt" src="@PortfolioPublicViewModel.GetYouTubeEmbedUrl(vidUrl)"
-                                                        frameborder="0" allowfullscreen
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-                                            }
-                                            else
-                                            {
-                                                <video src="@vidUrl" controls class="pf-video" preload="metadata"></video>
-                                            }
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    }
+                <div class="pf-category">
+                    <h3 class="pf-category__title">@Text["project.work"]</h3>
+                    <div class="pf-grid pf-grid--projects">
+                        @foreach (ProjectItem project in Vm.Work)
+                        {
+                            <PortfolioProjectCard @key="project.Id" Project="project" Slug="@Slug" Vm="Vm" Text="Text" />
+                        }
+                    </div>
                 </div>
             }
 
-            <!-- Public -->
             @if (Vm.Public.Count > 0)
             {
-                <h3 class="pf-sub-header">Public</h3>
-                <div class="pf-project-grid">
-                    @foreach (var p in Vm.Public)
-                    {
-                        var publicImgs = p.WorkImages.Length > 0 ? p.WorkImages : (!string.IsNullOrWhiteSpace(p.ImageFileName) ? [p.ImageFileName] : []);
-                        var publicBlur = BlurStyle(p.ImageBlurLevel);
-                        <div class="pf-project-card">
-                            @if (publicImgs.Length > 1)
-                            {
-                                <div class="pf-project-card__gallery">
-                                    @foreach (var img in publicImgs)
-                                    {
-                                        <img src="@Vm.GetImageUrl(Slug, p.Id, img)" alt="" class="pf-project-card__gallery-img" loading="lazy" style="@publicBlur" />
-                                    }
-                                </div>
-                            }
-                            else if (publicImgs.Length == 1)
-                            {
-                                <div class="pf-project-card__thumb"
-                                     style="background-image:url('@Vm.GetImageUrl(Slug, p.Id, publicImgs[0])');@publicBlur">
-                                </div>
-                            }
-                            else
-                            {
-                                <div class="pf-project-card__thumb pf-project-card__thumb--empty">
-                                    <span>@p.Emoji</span>
-                                </div>
-                            }
-                            <div class="pf-project-card__body">
-                                <div class="pf-project-card__year">@p.Year</div>
-                                <h4 class="pf-project-card__title">@p.Title</h4>
-                                <p class="pf-project-card__desc">@p.Description</p>
-                                <div class="pf-project-card__tags">
-                                    @foreach (var tag in p.Tags)
-                                    {
-                                        <span class="pf-tag">@tag</span>
-                                    }
-                                </div>
-                                <div class="pf-project-card__links">
-                                    @if (!string.IsNullOrWhiteSpace(p.GitHub))
-                                    {
-                                        <a href="@p.GitHub" target="_blank" class="pf-link-btn">
-                                            <i class="fab fa-github"></i> GitHub
-                                        </a>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(p.LiveUrl))
-                                    {
-                                        <a href="@p.LiveUrl" target="_blank" class="pf-link-btn">
-                                            <i class="fas fa-external-link-alt"></i> Live
-                                        </a>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(p.DocUrl))
-                                    {
-                                        <a href="@p.DocUrl" target="_blank" class="pf-link-btn">
-                                            <i class="fas fa-book"></i> Docs
-                                        </a>
-                                    }
-                                </div>
-                                @if (p.VideoFileNames.Length > 0)
-                                {
-                                    <div class="pf-video-list">
-                                        @foreach (var vid in p.VideoFileNames)
-                                        {
-                                            var vidUrl = Vm.GetVideoUrl(Slug, p.Id, vid);
-                                            @if (PortfolioPublicViewModel.IsYouTube(vidUrl))
-                                            {
-                                                <iframe class="pf-video pf-video--yt" src="@PortfolioPublicViewModel.GetYouTubeEmbedUrl(vidUrl)"
-                                                        frameborder="0" allowfullscreen
-                                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-                                            }
-                                            else
-                                            {
-                                                <video src="@vidUrl" controls class="pf-video" preload="metadata"></video>
-                                            }
-                                        }
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    }
+                <div class="pf-category">
+                    <h3 class="pf-category__title">@Text["project.public"]</h3>
+                    <div class="pf-grid pf-grid--projects">
+                        @foreach (ProjectItem project in Vm.Public)
+                        {
+                            <PortfolioProjectCard @key="project.Id" Project="project" Slug="@Slug" Vm="Vm" Text="Text" />
+                        }
+                    </div>
                 </div>
             }
 
             @if (Vm.Personal.Count == 0 && Vm.Work.Count == 0 && Vm.Public.Count == 0)
             {
-                <p class="pf-empty">등록된 프로젝트가 없습니다.</p>
+                <p class="pf-empty">@Text["project.none"]</p>
             }
         </section>
 
-        <!-- ── Resume ── -->
-        @if (Vm.Resume.SkillGroups.Count > 0 || Vm.Resume.Experiences.Count > 0 || Vm.Resume.Educations.Count > 0)
+        @if (HasCareer)
         {
             <section class="pf-section" id="resume">
-                <div class="pf-section__header">
-                    <h2><i class="fas fa-file-lines"></i> Resume</h2>
-                </div>
+                <div class="pf-section__header"><h2><i class="fas fa-id-card"></i> @Text["career.profile"]</h2></div>
 
                 @if (Vm.Resume.SkillGroups.Count > 0)
                 {
                     <div class="pf-resume-block">
-                        <h3 class="pf-resume-block__title">🛠 기술 스택</h3>
-                        @foreach (var g in Vm.Resume.SkillGroups)
+                        <h3 class="pf-resume-block__title">@Text["skills"]</h3>
+                        @foreach (SkillGroup group in Vm.Resume.SkillGroups)
                         {
                             <div class="pf-skill-group">
-                                <span class="pf-skill-group__label">@g.Category</span>
+                                <span class="pf-skill-group__label">@group.Category</span>
                                 <div class="pf-skill-chips">
-                                    @foreach (var s in g.Skills)
+                                    @foreach (string skill in group.Skills)
                                     {
-                                        <span class="pf-skill-chip">@s</span>
+                                        <span class="pf-skill-chip">@skill</span>
                                     }
                                 </div>
                             </div>
@@ -456,25 +211,25 @@
                 @if (Vm.Resume.Experiences.Count > 0)
                 {
                     <div class="pf-resume-block">
-                        <h3 class="pf-resume-block__title">💼 경력</h3>
-                        @foreach (var exp in Vm.Resume.Experiences)
+                        <h3 class="pf-resume-block__title">@Text["experience"]</h3>
+                        @foreach (ExperienceItem experience in Vm.Resume.Experiences)
                         {
                             <div class="pf-exp-card">
                                 <div class="pf-exp-card__header">
-                                    <strong>@exp.Company</strong>
-                                    <span class="pf-exp-card__role">@exp.Role</span>
-                                    <span class="pf-exp-card__period">@exp.Period</span>
+                                    <strong>@experience.Company</strong>
+                                    <span class="pf-exp-card__role">@experience.Role</span>
+                                    <span class="pf-exp-card__period">@experience.Period</span>
                                 </div>
-                                @if (!string.IsNullOrWhiteSpace(exp.Description))
+                                @if (!string.IsNullOrWhiteSpace(experience.Description))
                                 {
-                                    <p class="pf-exp-card__desc">@exp.Description</p>
+                                    <p class="pf-exp-card__desc">@experience.Description</p>
                                 }
-                                @if (exp.Bullets.Count > 0)
+                                @if (experience.Bullets.Count > 0)
                                 {
                                     <ul class="pf-exp-card__bullets">
-                                        @foreach (var b in exp.Bullets)
+                                        @foreach (string item in experience.Bullets)
                                         {
-                                            <li>@b</li>
+                                            <li>@item</li>
                                         }
                                     </ul>
                                 }
@@ -486,13 +241,13 @@
                 @if (Vm.Resume.Educations.Count > 0)
                 {
                     <div class="pf-resume-block">
-                        <h3 class="pf-resume-block__title">🎓 학력</h3>
-                        @foreach (var edu in Vm.Resume.Educations)
+                        <h3 class="pf-resume-block__title">@Text["education"]</h3>
+                        @foreach (EducationItem education in Vm.Resume.Educations)
                         {
                             <div class="pf-edu-card">
-                                <strong>@edu.School</strong>
-                                <span class="pf-edu-card__degree">@edu.Degree</span>
-                                <span class="pf-edu-card__period">@edu.Period</span>
+                                <strong>@education.School</strong>
+                                <span class="pf-edu-card__degree">@education.Degree</span>
+                                <span class="pf-edu-card__period">@education.Period</span>
                             </div>
                         }
                     </div>
@@ -500,73 +255,102 @@
             </section>
         }
 
-        <!-- ── Contact ── -->
         @if (cfg.AllowContact)
         {
             <section class="pf-section" id="contact">
-                <div class="pf-section__header">
-                    <h2><i class="fas fa-envelope"></i> Contact</h2>
-                </div>
-
+                <div class="pf-section__header"><h2><i class="fas fa-envelope"></i> @Text["contact"]</h2></div>
                 @if (!string.IsNullOrWhiteSpace(Vm.StatusMessage))
                 {
-                    <p class="pf-status @(Vm.StatusMessage.StartsWith("✅") ? "pf-status--ok" : "pf-status--err")">
-                        @Vm.StatusMessage
-                    </p>
+                    <p class="pf-status @(Vm.StatusMessage.StartsWith("✅", StringComparison.Ordinal) ? "pf-status--ok" : "pf-status--err")">@LocalizedContactStatus</p>
                 }
-
                 <div class="pf-contact-form">
                     <div class="pf-form__row">
-                        <label class="pf-label">이름</label>
-                        <input class="pf-input" @bind="Vm.ContactName" placeholder="홍길동" />
+                        <label class="pf-label">@Text["name"]</label>
+                        <input class="pf-input" autocomplete="name" maxlength="100" required @bind="Vm.ContactName" />
                     </div>
                     <div class="pf-form__row">
-                        <label class="pf-label">이메일 (선택)</label>
-                        <input class="pf-input" type="email" @bind="Vm.ContactEmail" placeholder="hong@example.com" />
+                        <label class="pf-label">@Text["email.optional"]</label>
+                        <input class="pf-input" type="email" autocomplete="email" maxlength="254" @bind="Vm.ContactEmail" />
                     </div>
                     <div class="pf-form__row">
-                        <label class="pf-label">메시지</label>
-                        <textarea class="pf-textarea" @bind="Vm.ContactMessage" rows="4"
-                                  placeholder="안녕하세요! 협업 제안 드리고 싶습니다…"></textarea>
+                        <label class="pf-label">@Text["message"]</label>
+                        <textarea class="pf-textarea" @bind="Vm.ContactMessage" rows="4" maxlength="4000" required placeholder="@(Text["contact.placeholder"])"></textarea>
                     </div>
-                    <button class="pf-btn pf-btn--primary" @onclick="OnSendContact">📬 메시지 보내기</button>
+                    <button class="pf-btn pf-btn--primary" disabled="@Vm.IsSendingContact" @onclick="OnSendContact"><i class="fas fa-paper-plane"></i> @Text["send"]</button>
                 </div>
             </section>
         }
 
         <footer class="pf-footer">
-            <p>@cfg.OwnerName · Powered by <a href="/">Codemaru Portfolio</a></p>
+            <p>@cfg.OwnerName · Powered by <a href="@HomePath">CodeMaru Portfolio</a></p>
         </footer>
     }
 </div>
 
 @code {
-    [Parameter] public string Slug { get; set; } = "";
+    [Parameter] public string Slug { get; set; } = string.Empty;
 
-    private static string BlurStyle(int level) => level switch
+    private string LanguageQuery => $"?lang={Uri.EscapeDataString(Text.Language)}";
+    private string HomePath => $"/{LanguageQuery}";
+    private string PortfolioPath => $"/{Slug}{LanguageQuery}";
+    private string AdminPath => $"/{Slug}/admin{LanguageQuery}";
+    private bool HasCareer => Vm.Resume.SkillGroups.Count > 0 || Vm.Resume.Experiences.Count > 0 || Vm.Resume.Educations.Count > 0;
+    private string LocalizedContactStatus => Vm.StatusMessage.StartsWith("✅", StringComparison.Ordinal)
+        ? Text["contact.success"]
+        : Vm.StatusMessage.Contains("잠시 후", StringComparison.Ordinal)
+            ? Text["contact.rate"]
+        : Vm.StatusMessage.Contains("글자 수", StringComparison.Ordinal)
+            ? Text["contact.too.long"]
+        : Vm.StatusMessage.Contains("이메일 또는", StringComparison.Ordinal)
+            ? Text["contact.invalid"]
+        : Vm.StatusMessage.Contains("이름", StringComparison.Ordinal) || Vm.StatusMessage.Contains("메시지", StringComparison.Ordinal)
+            ? Text["contact.required"]
+            : Vm.StatusMessage;
+
+    protected override void OnInitialized()
     {
-        1 => "filter:blur(4px);",
-        2 => "filter:blur(8px);",
-        3 => "filter:blur(16px);",
-        _ => ""
-    };
+        Text.Changed += OnLanguageChanged;
+    }
 
     protected override async Task OnParametersSetAsync()
     {
         await Vm.LoadAsync(Slug);
     }
 
-    private Task ScrollTo(string id) =>
-        JS.InvokeVoidAsync("eval", $"document.getElementById('{id}')?.scrollIntoView({{behavior:'smooth'}})").AsTask();
+    private string? GetSocialImageUrl(PortfolioConfig config)
+    {
+        ProjectItem? coverProject = Vm.Projects.FirstOrDefault(project =>
+            !string.IsNullOrWhiteSpace(project.WorkImages.FirstOrDefault() ?? project.ImageFileName));
+        string? coverFileName = coverProject?.WorkImages.FirstOrDefault() ?? coverProject?.ImageFileName;
+        string? relativeUrl = !string.IsNullOrWhiteSpace(config.ProfileImageFileName)
+            ? Vm.GetProfileImageUrl(Slug, config.ProfileImageFileName)
+            : coverProject is null || string.IsNullOrWhiteSpace(coverFileName)
+                ? null
+                : Vm.GetImageUrl(Slug, coverProject.Id, coverFileName);
 
+        return string.IsNullOrWhiteSpace(relativeUrl) ? null : Nav.ToAbsoluteUri(relativeUrl).ToString();
+    }
+
+    private static string Initial(string value) => string.IsNullOrWhiteSpace(value) ? "P" : value.Trim()[0].ToString();
+
+    private static string? SafeExternalUrl(string? value)
+    {
+        if (!Uri.TryCreate(value, UriKind.Absolute, out Uri? uri))
+            return null;
+
+        return uri.Scheme is "http" or "https" ? uri.AbsoluteUri : null;
+    }
+
+    private Task ScrollTo(string id) => JS.InvokeVoidAsync("portfolioInterop.scrollToId", id).AsTask();
     private Task ScrollToProjects() => ScrollTo("projects");
     private Task ScrollToResume() => ScrollTo("resume");
     private Task ScrollToContact() => ScrollTo("contact");
+    private void OnQueryInput(ChangeEventArgs args) => Vm.Query = args.Value?.ToString() ?? string.Empty;
+    private Task OnSendContact() => Vm.SendContactAsync(Slug);
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
-    private void OnQueryInput(ChangeEventArgs e) => Vm.Query = e.Value?.ToString() ?? string.Empty;
-
-    private async Task OnSendContact()
+    public void Dispose()
     {
-        await Vm.SendContactAsync(Slug);
+        Text.Changed -= OnLanguageChanged;
     }
 }

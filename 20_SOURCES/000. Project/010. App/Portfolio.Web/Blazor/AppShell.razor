@@ -1,19 +1,65 @@
 @namespace PortfolioApp.Blazor
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.WebUtilities
+@inject NavigationManager Navigation
+@inject PortfolioLocalization Text
 
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="@Text.HtmlLanguage">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="/css/portfolio.css" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ctext y='52' font-size='52'%3E%F0%9F%A7%91%F0%9F%8F%BB%F0%9F%92%BB%3C/text%3E%3C/svg%3E" />
+    <script>
+        (() => {
+            const media = window.matchMedia('(prefers-color-scheme: dark)');
+            const syncSystemClass = event => document.documentElement.classList.toggle('system-dark', event.matches);
+            syncSystemClass(media);
+            media.addEventListener?.('change', syncSystemClass);
+            const cookie = document.cookie.split(';').map(x => x.trim()).find(x => x.startsWith('dreamine-theme='));
+            const saved = cookie ? decodeURIComponent(cookie.substring('dreamine-theme='.length)) : localStorage.getItem('codemaru-theme');
+            if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+        })();
+    </script>
+    <link rel="stylesheet" href="/css/portfolio.css?v=20260803-admin-detail-i18n-1" />
+    <link rel="stylesheet" href="/css/portfolio-detail.css?v=20260803-project-detail-1" />
+    <link rel="stylesheet" href="/css/portfolio-admin.css?v=20260803-admin-detail-i18n-1" />
+    <link rel="stylesheet" href="/Portfolio.Web.styles.css?v=20260803-admin-detail-i18n-1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous" />
     <HeadOutlet />
 </head>
 <body>
     <PortfolioApp.Blazor.Routes @rendermode="new InteractiveServerRenderMode(prerender: true)" />
-    <script src="/_framework/blazor.web.js"></script>
-    <script src="/js/portfolio-interop.js"></script>
+    <script src="/_framework/blazor.web.js" autostart="false"></script>
+    <script src="/_content/Dreamine.UI.Blazor/dreamine-portal.js?v=20260803-admin-detail-i18n-1"></script>
+    <script src="/js/portfolio-interop.js?v=20260803-admin-detail-i18n-1"></script>
+    <script>
+        Blazor.start({
+            circuit: {
+                reconnectionOptions: {
+                    maxRetries: 10,
+                    retryIntervalMilliseconds: previousAttempts => Math.min(1000 * Math.pow(2, previousAttempts), 30000)
+                },
+                configureSignalR: builder => builder
+                    .withUrl('/_blazor', { transport: 7 })
+                    .withAutomaticReconnect([0, 1000, 2000, 5000, 10000, 15000, 30000, 30000, 30000, 30000])
+            }
+        });
+    </script>
 </body>
 </html>
+
+@code {
+    protected override void OnInitialized()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        if (query.TryGetValue("lang", out var language))
+        {
+            Text.SetLanguage(PortfolioLocalization.NormalizeLanguageCode(language.ToString()));
+        }
+    }
+}

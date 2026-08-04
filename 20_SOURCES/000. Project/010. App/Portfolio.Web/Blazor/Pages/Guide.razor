@@ -2,146 +2,172 @@
 @layout PortfolioApp.Blazor.Layout.PortfolioLayout
 @namespace PortfolioApp.Blazor.Pages
 
-<PageTitle>사용법 — Codemaru Portfolio</PageTitle>
+@inject PortfolioLocalization Text
+
+<PageTitle>@Text["guide"] — CodeMaru Portfolio</PageTitle>
 
 <div class="pf-page pf-guide">
-    <nav class="pf-nav">
-        <a href="/" class="pf-nav__brand">🧑‍💻 Codemaru Portfolio</a>
-        <div class="pf-nav__links">
-            <a href="/" class="pf-nav__link">홈</a>
-            <a href="#create" class="pf-nav__link pf-nav__link--cta">시작하기 →</a>
-        </div>
-    </nav>
-
     <div class="pf-guide__inner">
-        <h1 class="pf-guide__title">📖 사용법 가이드</h1>
+        <h1 class="pf-guide__title">📖 @Text["guide"]</h1>
 
-        <!-- 빠른 시작 -->
+        <h2 class="pf-guide__section-title">@Local("quick.title")</h2>
         <ol class="pf-guide__steps">
             <li>
-                <strong>포트폴리오 생성</strong>
-                <p>홈 화면에서 URL 주소(예: <code>msjang</code>), 이름, 비밀번호를 입력하고 만들기 버튼을 누르세요.</p>
+                <strong>@Text["create.portfolio"]</strong>
+                <p>@Text["create.desc"]</p>
             </li>
             <li>
-                <strong>어드민 접속</strong>
-                <p><code>/{슬러그}/admin</code> 주소로 이동해 비밀번호로 로그인하세요.</p>
+                <strong>@Text["admin"]</strong>
+                <p>@Local("admin.desc")</p>
             </li>
             <li>
-                <strong>프로젝트 등록</strong>
-                <p>🛠️ 프로젝트 탭에서 Personal · Work · Public 카테고리를 선택해 프로젝트를 추가하세요. 이미지, 동영상, GitHub, Live URL도 함께 등록할 수 있습니다.</p>
+                <strong>@Text["projects"]</strong>
+                <p>@Text["feature.projects.desc"]</p>
             </li>
             <li>
-                <strong>Resume 작성</strong>
-                <p>📄 Resume 탭에서 기술 스택, 경력, 학력을 입력하고 저장하세요.</p>
+                <strong>@Text["career.profile"]</strong>
+                <p>@Text["feature.career.desc"]</p>
             </li>
             <li>
-                <strong>프로필 설정</strong>
-                <p>⚙️ 설정 탭에서 프로필 사진, 직함, 소개글, 테마, GitHub/LinkedIn 링크를 설정하세요.</p>
+                <strong>@Text["settings"]</strong>
+                <p>@Local("settings.desc")</p>
             </li>
             <li>
-                <strong>공유</strong>
-                <p><code>/{슬러그}</code> 주소를 공유하면 방문자가 포트폴리오를 볼 수 있습니다. KakaoTalk 링크 미리보기도 지원합니다.</p>
+                <strong>@Text["public.page"]</strong>
+                <p>@Local("share.desc")</p>
             </li>
         </ol>
 
-        <!-- 이미지 가이드 -->
-        <h2 class="pf-guide__section-title">🖼 이미지 최적 사이즈 가이드</h2>
-        <p class="pf-guide__section-desc">이미지 크기가 맞지 않으면 잘리거나 흐릿하게 보일 수 있습니다. 아래 권장 사이즈를 사용하면 가장 선명하게 표시됩니다.</p>
+        <h2 class="pf-guide__section-title">🖼️ @Local("media.title")</h2>
+        <p class="pf-guide__section-desc">@Local("media.desc")</p>
 
         <div class="pf-guide__img-table">
             <div class="pf-guide__img-row pf-guide__img-row--header">
-                <span>이미지 용도</span>
-                <span>권장 크기</span>
-                <span>비율</span>
-                <span>설명</span>
+                <span>@Local("table.use")</span>
+                <span>@Local("table.size")</span>
+                <span>@Local("table.ratio")</span>
+                <span>@Local("table.note")</span>
             </div>
             <div class="pf-guide__img-row">
-                <span><span class="pf-img-guide__badge pf-img-guide__badge--profile" style="font-size:.75rem">프로필 사진</span></span>
+                <span><span class="pf-img-guide__badge pf-img-guide__badge--profile" style="font-size:.75rem">@Local("profile.label")</span></span>
                 <span class="pf-guide__img-size">400 × 400</span>
                 <span class="pf-guide__img-ratio">1 : 1</span>
-                <span class="pf-guide__img-desc">원형으로 잘려 표시됨. 얼굴이 중앙에 오도록 촬영.</span>
+                <span class="pf-guide__img-desc">@Local("profile.desc")</span>
             </div>
             <div class="pf-guide__img-row">
-                <span><span class="pf-img-guide__badge pf-img-guide__badge--thumb" style="font-size:.75rem">Personal / Public 커버</span></span>
+                <span><span class="pf-img-guide__badge pf-img-guide__badge--thumb" style="font-size:.75rem">@Local("cover.label")</span></span>
                 <span class="pf-guide__img-size">1200 × 630</span>
                 <span class="pf-guide__img-ratio">16 : 9</span>
-                <span class="pf-guide__img-desc">카드 썸네일로 표시됨. OG(SNS) 이미지로도 활용.</span>
+                <span class="pf-guide__img-desc">@Local("cover.desc")</span>
             </div>
             <div class="pf-guide__img-row">
-                <span><span class="pf-img-guide__badge pf-img-guide__badge--hero" style="font-size:.75rem">Work 히어로 배너</span></span>
+                <span><span class="pf-img-guide__badge pf-img-guide__badge--hero" style="font-size:.75rem">@Local("banner.label")</span></span>
                 <span class="pf-guide__img-size">1920 × 600</span>
                 <span class="pf-guide__img-ratio">16 : 5</span>
-                <span class="pf-guide__img-desc">Work 카드 상단 와이드 배너. 첫 번째 이미지가 사용됨.</span>
+                <span class="pf-guide__img-desc">@Local("banner.desc")</span>
             </div>
             <div class="pf-guide__img-row">
-                <span><span class="pf-img-guide__badge" style="font-size:.75rem">Work 추가 이미지</span></span>
+                <span><span class="pf-img-guide__badge" style="font-size:.75rem">@Local("gallery.label")</span></span>
                 <span class="pf-guide__img-size">1200 × 675</span>
                 <span class="pf-guide__img-ratio">16 : 9</span>
-                <span class="pf-guide__img-desc">히어로 아래 갤러리로 표시됨. 두 번째 이미지부터 해당.</span>
+                <span class="pf-guide__img-desc">@Local("gallery.desc")</span>
+            </div>
+            <div class="pf-guide__img-row">
+                <span><span class="pf-img-guide__badge" style="font-size:.75rem">@Text["detail.video"]</span></span>
+                <span class="pf-guide__img-size">≤ 500 MB</span>
+                <span class="pf-guide__img-ratio">16 : 9</span>
+                <span class="pf-guide__img-desc">@Local("video.desc")</span>
             </div>
         </div>
 
         <div class="pf-guide__tip-box">
-            <strong>💡 팁</strong>
+            <strong>💡 @Local("tips.title")</strong>
             <ul>
-                <li>파일 형식은 <strong>PNG · JPG · WebP</strong> 모두 지원합니다.</li>
-                <li>최대 업로드 크기는 이미지 <strong>20MB</strong>, 동영상 <strong>500MB</strong>입니다.</li>
-                <li>배경이 있는 이미지보다 <strong>여백 없이 꽉 찬 이미지</strong>가 썸네일에 더 잘 어울립니다.</li>
-                <li>Work 히어로 배너는 세로 중앙이 보이므로 중요 요소를 <strong>상하 여백 150px</strong> 안에 배치하세요.</li>
-                <li>Figma, Canva, Adobe Express 등 무료 툴에서 위 사이즈로 캔버스를 만들면 편리합니다.</li>
+                <li>@Local("tips.formats")</li>
+                <li>@Local("tips.limits")</li>
+                <li>@Local("tips.crop")</li>
             </ul>
         </div>
 
-        <!-- 동영상 가이드 -->
-        <h2 class="pf-guide__section-title">🎬 동영상 가이드</h2>
-        <div class="pf-guide__tip-box">
-            <ul>
-                <li>지원 형식: <strong>MP4 (H.264)</strong> 권장 · WebM · MOV 등 브라우저 지원 형식</li>
-                <li>최대 파일 크기: <strong>500MB</strong> per 파일, 프로젝트당 여러 개 업로드 가능</li>
-                <li>권장 해상도: <strong>1920×1080 (Full HD)</strong> 또는 <strong>1280×720 (HD)</strong></li>
-                <li>용량을 줄이려면 <strong>HandBrake</strong>(무료)로 CRF 23~26, H.264로 인코딩하세요.</li>
-                <li>프로젝트 시연 화면 녹화에는 <strong>OBS Studio</strong>(무료)를 추천합니다.</li>
-            </ul>
-        </div>
-
-        <!-- 카테고리 가이드 -->
-        <h2 class="pf-guide__section-title">🏷 카테고리 사용 기준</h2>
+        <h2 class="pf-guide__section-title">🏷️ @Local("categories.title")</h2>
         <div class="pf-guide__cat-grid">
             <div class="pf-guide__cat-card">
-                <div class="pf-guide__cat-badge pf-guide__cat-badge--personal">Personal</div>
-                <p>개인 취미·학습·사이드 프로젝트. 자유 형식 카드로 표시됩니다.</p>
+                <div class="pf-guide__cat-badge pf-guide__cat-badge--personal">@Text["project.personal"]</div>
+                <p>@Local("category.personal.desc")</p>
             </div>
             <div class="pf-guide__cat-card">
-                <div class="pf-guide__cat-badge pf-guide__cat-badge--work">Work</div>
-                <p>실제 업무·고객 프로젝트. 기간·역할·성과 등 상세 정보를 입력할 수 있습니다.</p>
+                <div class="pf-guide__cat-badge pf-guide__cat-badge--work">@Text["project.work"]</div>
+                <p>@Local("category.work.desc")</p>
             </div>
             <div class="pf-guide__cat-card">
-                <div class="pf-guide__cat-badge pf-guide__cat-badge--public">Public</div>
-                <p>오픈소스·공개 배포 프로젝트. Personal과 같은 카드 형식으로 표시됩니다.</p>
+                <div class="pf-guide__cat-badge pf-guide__cat-badge--public">@Text["project.public"]</div>
+                <p>@Local("category.public.desc")</p>
             </div>
         </div>
 
-        <!-- FAQ -->
-        <h2 class="pf-guide__faq-title">❓ 자주 묻는 질문</h2>
+        <h2 class="pf-guide__faq-title">❓ @Local("faq.title")</h2>
         <dl class="pf-guide__faq">
-            <dt>비밀번호를 잊어버렸어요.</dt>
-            <dd>비밀번호 찾기 기능은 없습니다. 슈퍼관리자(<code>/admin</code>)에게 문의하세요.</dd>
-            <dt>포트폴리오가 자동 삭제됐어요.</dt>
-            <dd>프로젝트를 하나도 등록하지 않은 계정은 생성 후 24시간이 지나면 자동 삭제됩니다.</dd>
-            <dt>Work 카드와 Personal 카드가 다르게 보이나요?</dt>
-            <dd>Work 프로젝트는 상세 설명 카드(기간·역할·성과·이미지 갤러리) 형태로 표시됩니다.</dd>
-            <dt>포트폴리오를 비공개로 설정하려면?</dt>
-            <dd>설정 탭에서 <strong>홈 목록에 공개</strong> 체크를 해제하면 목록에서 숨겨집니다. URL을 알면 여전히 접근 가능합니다.</dd>
-            <dt>이미지를 올렸는데 흐릿하게 보여요.</dt>
-            <dd>권장 사이즈보다 작은 이미지를 올리면 늘어나 흐릿해집니다. 위 표의 권장 크기 이상으로 준비해 주세요.</dd>
-            <dt>동영상이 재생되지 않아요.</dt>
-            <dd>MP4 (H.264) 형식을 사용하세요. MOV나 AVI는 브라우저에 따라 재생이 안 될 수 있습니다.</dd>
-            <dt>포트폴리오를 삭제하려면?</dt>
-            <dd>어드민 → 설정 탭 맨 아래 <strong>위험 구역</strong>에서 삭제할 수 있습니다.</dd>
+            <dt>@Local("faq.password.q")</dt>
+            <dd>@Local("faq.password.a")</dd>
+            <dt>@Local("faq.visibility.q")</dt>
+            <dd>@Local("faq.visibility.a")</dd>
         </dl>
 
         <div class="pf-guide__contact">
-            문의: <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a>
+            @Text["contact"]: <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a>
         </div>
     </div>
 </div>
+
+@code {
+    private static readonly string[] LanguageCodes =
+        ["en", "es", "fr", "it", "pt", "ko", "ja", "zh-hans", "zh-hant", "vi"];
+
+    private static readonly Dictionary<string, string[]> LocalTexts = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["quick.title"] = ["Quick start", "Inicio rápido", "Démarrage rapide", "Avvio rapido", "Início rápido", "빠른 시작", "クイックスタート", "快速开始", "快速開始", "Bắt đầu nhanh"],
+        ["admin.desc"] = ["Open /sample/admin and enter the password you chose when creating the portfolio.", "Abre /sample/admin e introduce la contraseña elegida al crear el portafolio.", "Ouvrez /sample/admin et saisissez le mot de passe choisi lors de la création.", "Apri /sample/admin e inserisci la password scelta durante la creazione.", "Abra /sample/admin e informe a senha escolhida ao criar o portfólio.", "/sample/admin을 열고 포트폴리오를 만들 때 정한 비밀번호를 입력합니다.", "/sample/adminを開き、作成時に設定したパスワードを入力します。", "打开 /sample/admin，并输入创建作品集时设置的密码。", "開啟 /sample/admin，並輸入建立作品集時設定的密碼。", "Mở /sample/admin và nhập mật khẩu đã chọn khi tạo hồ sơ."],
+        ["settings.desc"] = ["Add a profile image, role, introduction, design and contact links.", "Añade imagen de perfil, cargo, presentación, diseño y enlaces de contacto.", "Ajoutez photo, fonction, présentation, design et liens de contact.", "Aggiungi immagine, ruolo, presentazione, design e contatti.", "Adicione foto, função, apresentação, design e links de contato.", "프로필 사진, 역할, 소개글, 디자인과 연락처 링크를 설정합니다.", "プロフィール画像、役割、紹介文、デザイン、連絡先を設定します。", "设置头像、职位、简介、设计和联系方式。", "設定大頭照、職務、簡介、設計與聯絡方式。", "Thêm ảnh đại diện, vai trò, giới thiệu, thiết kế và liên hệ."],
+        ["share.desc"] = ["Share /sample so visitors can view your portfolio and its link preview.", "Comparte /sample para que otros vean el portafolio y su vista previa.", "Partagez /sample pour afficher le portfolio et son aperçu de lien.", "Condividi /sample per mostrare il portfolio e l’anteprima del link.", "Compartilhe /sample para exibir o portfólio e a prévia do link.", "/sample 주소를 공유하면 방문자가 포트폴리오와 링크 미리보기를 볼 수 있습니다.", "/sampleを共有すると、ポートフォリオとリンクプレビューを見てもらえます。", "分享 /sample 后，访客可查看作品集和链接预览。", "分享 /sample 後，訪客可查看作品集與連結預覽。", "Chia sẻ /sample để người xem mở hồ sơ và bản xem trước liên kết."],
+        ["media.title"] = ["Image and video guide", "Guía de imágenes y vídeo", "Guide des images et vidéos", "Guida immagini e video", "Guia de imagens e vídeos", "이미지·동영상 안내", "画像・動画ガイド", "图片与视频指南", "圖片與影片指南", "Hướng dẫn hình ảnh và video"],
+        ["media.desc"] = ["Use the recommended sizes below for clear cards on both computers and phones.", "Usa los tamaños recomendados para obtener tarjetas nítidas en ordenador y móvil.", "Utilisez les tailles recommandées pour des cartes nettes sur ordinateur et mobile.", "Usa le dimensioni consigliate per schede nitide su computer e telefono.", "Use os tamanhos recomendados para cartões nítidos no computador e celular.", "PC와 휴대폰에서 선명하게 보이도록 아래 권장 크기를 사용하세요.", "パソコンとスマートフォンで鮮明に表示するため、推奨サイズを使用してください。", "请使用以下推荐尺寸，以便在电脑和手机上清晰显示。", "請使用以下建議尺寸，以便在電腦與手機上清楚顯示。", "Dùng kích thước đề xuất để hiển thị rõ trên máy tính và điện thoại."],
+        ["table.use"] = ["Use", "Uso", "Usage", "Uso", "Uso", "용도", "用途", "用途", "用途", "Mục đích"],
+        ["table.size"] = ["Recommended size", "Tamaño recomendado", "Taille conseillée", "Dimensione consigliata", "Tamanho recomendado", "권장 크기", "推奨サイズ", "推荐尺寸", "建議尺寸", "Kích thước đề xuất"],
+        ["table.ratio"] = ["Ratio", "Proporción", "Ratio", "Rapporto", "Proporção", "비율", "比率", "比例", "比例", "Tỷ lệ"],
+        ["table.note"] = ["How it is shown", "Cómo se muestra", "Affichage", "Come appare", "Como aparece", "표시 방식", "表示方法", "显示方式", "顯示方式", "Cách hiển thị"],
+        ["profile.label"] = ["Profile photo", "Foto de perfil", "Photo de profil", "Foto profilo", "Foto de perfil", "프로필 사진", "プロフィール画像", "头像", "大頭照", "Ảnh đại diện"],
+        ["profile.desc"] = ["Shown in a circle; keep the face or logo near the center.", "Se muestra en círculo; centra el rostro o logotipo.", "Affichée en cercle ; centrez le visage ou le logo.", "Mostrata in cerchio; centra il volto o il logo.", "Exibida em círculo; mantenha rosto ou marca no centro.", "원형으로 표시되므로 얼굴이나 로고를 중앙에 배치하세요.", "円形で表示されるため、顔やロゴを中央に配置します。", "将以圆形显示，请把人脸或标志放在中央。", "將以圓形顯示，請將人臉或標誌置於中央。", "Hiển thị dạng tròn; đặt khuôn mặt hoặc logo ở giữa."],
+        ["cover.label"] = ["Representative image", "Imagen representativa", "Image principale", "Immagine principale", "Imagem principal", "대표 이미지", "代表画像", "代表图片", "代表圖片", "Ảnh đại diện công việc"],
+        ["cover.desc"] = ["Used as the card preview and when the link is shared.", "Se usa en la tarjeta y al compartir el enlace.", "Utilisée sur la carte et lors du partage du lien.", "Usata nella scheda e quando si condivide il link.", "Usada no cartão e ao compartilhar o link.", "카드 미리보기와 링크 공유 이미지로 사용됩니다.", "カードのプレビューとリンク共有画像に使われます。", "用于卡片预览和链接分享图片。", "用於卡片預覽與連結分享圖片。", "Dùng cho thẻ xem trước và khi chia sẻ liên kết."],
+        ["banner.label"] = ["Wide banner", "Banner panorámico", "Bannière large", "Banner panoramico", "Banner amplo", "가로 배너", "横長バナー", "宽幅横幅", "寬幅橫幅", "Ảnh bìa ngang"],
+        ["banner.desc"] = ["The first image can appear as a wide heading for professional work.", "La primera imagen puede aparecer como cabecera ancha para trabajos profesionales.", "La première image peut servir d’en-tête large pour une réalisation professionnelle.", "La prima immagine può apparire come intestazione ampia per i lavori professionali.", "A primeira imagem pode aparecer como cabeçalho amplo em trabalhos profissionais.", "업무 사례의 첫 이미지를 넓은 상단 배너로 표시할 때 사용합니다.", "業務実績の最初の画像を横長の見出しとして表示できます。", "专业工作案例的首张图片可显示为宽幅标题图。", "專業工作案例的首張圖片可顯示為寬幅標題圖。", "Ảnh đầu tiên có thể hiển thị như ảnh bìa ngang cho công việc chuyên môn."],
+        ["gallery.label"] = ["Additional images", "Imágenes adicionales", "Images supplémentaires", "Immagini aggiuntive", "Imagens adicionais", "추가 이미지", "追加画像", "更多图片", "其他圖片", "Hình ảnh bổ sung"],
+        ["gallery.desc"] = ["Displayed in the detail gallery after the representative image.", "Se muestran en la galería después de la imagen principal.", "Affichées dans la galerie après l’image principale.", "Mostrate nella galleria dopo l’immagine principale.", "Exibidas na galeria após a imagem principal.", "대표 이미지 다음의 상세 갤러리에 표시됩니다.", "代表画像の後に詳細ギャラリーとして表示されます。", "显示在代表图片之后的详情图库中。", "顯示於代表圖片之後的詳細圖庫。", "Hiển thị trong bộ sưu tập sau ảnh đại diện."],
+        ["video.desc"] = ["MP4 (H.264) is recommended. Use 1920×1080 or 1280×720 when possible.", "Se recomienda MP4 (H.264), preferiblemente 1920×1080 o 1280×720.", "MP4 (H.264) est conseillé, idéalement en 1920×1080 ou 1280×720.", "Consigliato MP4 (H.264), preferibilmente 1920×1080 o 1280×720.", "Recomenda-se MP4 (H.264), de preferência 1920×1080 ou 1280×720.", "MP4(H.264)를 권장하며 1920×1080 또는 1280×720이 적합합니다.", "MP4（H.264）を推奨し、1920×1080または1280×720が適しています。", "建议使用 MP4（H.264），分辨率为 1920×1080 或 1280×720。", "建議使用 MP4（H.264），解析度為 1920×1080 或 1280×720。", "Nên dùng MP4 (H.264), độ phân giải 1920×1080 hoặc 1280×720."],
+        ["tips.title"] = ["Tips", "Consejos", "Conseils", "Suggerimenti", "Dicas", "도움말", "ヒント", "提示", "提示", "Mẹo"],
+        ["tips.formats"] = ["Images support PNG, JPG and WebP.", "Las imágenes admiten PNG, JPG y WebP.", "Les images acceptent PNG, JPG et WebP.", "Le immagini supportano PNG, JPG e WebP.", "Imagens aceitam PNG, JPG e WebP.", "이미지는 PNG, JPG, WebP 형식을 지원합니다.", "画像はPNG、JPG、WebPに対応しています。", "图片支持 PNG、JPG 和 WebP。", "圖片支援 PNG、JPG 與 WebP。", "Hình ảnh hỗ trợ PNG, JPG và WebP."],
+        ["tips.limits"] = ["Maximum upload: 20 MB per image and 500 MB per video.", "Máximo: 20 MB por imagen y 500 MB por vídeo.", "Maximum : 20 Mo par image et 500 Mo par vidéo.", "Massimo: 20 MB per immagine e 500 MB per video.", "Máximo: 20 MB por imagem e 500 MB por vídeo.", "최대 업로드 크기는 이미지당 20MB, 동영상당 500MB입니다.", "最大アップロードは画像1枚20MB、動画1本500MBです。", "最大上传大小为每张图片 20MB、每个视频 500MB。", "最大上傳大小為每張圖片 20MB、每部影片 500MB。", "Tối đa 20 MB cho mỗi ảnh và 500 MB cho mỗi video."],
+        ["tips.crop"] = ["Keep important text and people away from the outer edge because previews may be cropped.", "Aleja textos y personas importantes de los bordes porque la vista previa puede recortarse.", "Éloignez textes et personnes des bords, car l’aperçu peut être recadré.", "Tieni testi e persone lontani dai bordi perché l’anteprima può essere ritagliata.", "Mantenha textos e pessoas longe das bordas, pois a prévia pode ser cortada.", "미리보기에서 일부가 잘릴 수 있으므로 중요한 글자와 인물은 가장자리를 피하세요.", "プレビューで切れる場合があるため、重要な文字や人物は端を避けてください。", "预览可能裁切，请勿将重要文字或人物放在边缘。", "預覽可能裁切，請勿將重要文字或人物放在邊緣。", "Bản xem trước có thể bị cắt; tránh đặt chữ hoặc người sát mép."],
+        ["categories.title"] = ["Choose a section", "Elige una sección", "Choisir une rubrique", "Scegli una sezione", "Escolha uma seção", "업무 사례 구분", "掲載区分を選ぶ", "选择展示分类", "選擇展示分類", "Chọn nhóm nội dung"],
+        ["category.personal.desc"] = ["Learning, volunteering, hobbies and other personal experiences.", "Aprendizaje, voluntariado, aficiones y otras experiencias personales.", "Formation, bénévolat, loisirs et autres expériences personnelles.", "Formazione, volontariato, hobby e altre esperienze personali.", "Aprendizado, voluntariado, hobbies e outras experiências pessoais.", "학습, 자원봉사, 취미 등 개인적으로 진행한 경험을 정리합니다.", "学習、ボランティア、趣味など個人の経験をまとめます。", "整理学习、志愿服务、兴趣等个人经历。", "整理學習、志工、興趣等個人經歷。", "Ghi lại việc học, tình nguyện, sở thích và trải nghiệm cá nhân."],
+        ["category.work.desc"] = ["Work completed for an employer, customer or organization, including your role and results.", "Trabajo realizado para una empresa, cliente u organización, con función y resultados.", "Travail réalisé pour une entreprise, un client ou une organisation, avec rôle et résultats.", "Lavori svolti per aziende, clienti o organizzazioni, con ruolo e risultati.", "Trabalhos para empresa, cliente ou organização, com função e resultados.", "직장, 고객, 조직에서 수행한 업무와 맡은 역할, 성과를 정리합니다.", "勤務先、顧客、組織で行った仕事と役割、成果をまとめます。", "整理在单位、客户或组织中完成的工作、职责和成果。", "整理在公司、客戶或組織中完成的工作、職責與成果。", "Ghi lại công việc cho công ty, khách hàng hoặc tổ chức cùng vai trò và kết quả."],
+        ["category.public.desc"] = ["Presentations, publications, campaigns and materials shared with the public.", "Presentaciones, publicaciones, campañas y materiales compartidos públicamente.", "Présentations, publications, campagnes et contenus partagés publiquement.", "Presentazioni, pubblicazioni, campagne e materiali condivisi pubblicamente.", "Apresentações, publicações, campanhas e materiais compartilhados publicamente.", "발표, 출판, 캠페인, 공개 자료 등 대외 활동을 정리합니다.", "発表、出版、キャンペーン、公開資料など社外活動をまとめます。", "整理演讲、出版、活动和公开资料等对外经历。", "整理演講、出版、活動與公開資料等對外經歷。", "Ghi lại bài thuyết trình, xuất bản, chiến dịch và tài liệu công khai."],
+        ["faq.title"] = ["Frequently asked questions", "Preguntas frecuentes", "Questions fréquentes", "Domande frequenti", "Perguntas frequentes", "자주 묻는 질문", "よくある質問", "常见问题", "常見問題", "Câu hỏi thường gặp"],
+        ["faq.password.q"] = ["What if I forget the admin password?", "¿Qué ocurre si olvido la contraseña?", "Que faire en cas d’oubli du mot de passe ?", "Cosa faccio se dimentico la password?", "E se eu esquecer a senha?", "관리자 비밀번호를 잊어버리면 어떻게 하나요?", "管理者パスワードを忘れた場合は？", "忘记管理员密码怎么办？", "忘記管理員密碼怎麼辦？", "Nếu quên mật khẩu quản trị thì sao?"],
+        ["faq.password.a"] = ["Contact the service administrator because automatic password recovery is not available.", "Contacta con el administrador; no hay recuperación automática.", "Contactez l’administrateur du service, la récupération automatique n’étant pas disponible.", "Contatta l’amministratore; il recupero automatico non è disponibile.", "Fale com o administrador, pois não há recuperação automática.", "자동 비밀번호 찾기는 지원하지 않으므로 서비스 관리자에게 문의하세요.", "自動パスワード再発行はないため、サービス管理者へお問い合わせください。", "暂不支持自动找回密码，请联系服务管理员。", "暫不支援自動找回密碼，請聯絡服務管理員。", "Hãy liên hệ quản trị viên vì chưa hỗ trợ khôi phục tự động."],
+        ["faq.visibility.q"] = ["How do I hide a portfolio from the home list?", "¿Cómo oculto un portafolio de la lista principal?", "Comment masquer un portfolio de la liste d’accueil ?", "Come nascondo un portfolio dall’elenco iniziale?", "Como oculto um portfólio da lista inicial?", "홈 목록에서 포트폴리오를 숨기려면 어떻게 하나요?", "ホーム一覧から非表示にするには？", "如何从首页列表中隐藏作品集？", "如何從首頁清單中隱藏作品集？", "Làm sao ẩn hồ sơ khỏi danh sách trang chủ?"],
+        ["faq.visibility.a"] = ["Turn off home-list visibility in Portfolio settings. Anyone with the direct address may still open it.", "Desactiva la visibilidad en inicio. Quien tenga la dirección directa aún podrá abrirlo.", "Désactivez l’affichage sur l’accueil. L’adresse directe restera accessible.", "Disattiva la visibilità nell’elenco iniziale. L’indirizzo diretto resterà accessibile.", "Desative a exibição na página inicial. O endereço direto continuará acessível.", "포트폴리오 설정에서 홈 목록 노출을 끄세요. 공개 주소를 아는 사람은 계속 열 수 있습니다.", "設定でホーム一覧への表示をオフにします。直接アドレスを知る人は引き続き閲覧できます。", "在作品集设置中关闭首页展示；知道直接地址的人仍可访问。", "在作品集設定中關閉首頁顯示；知道直接網址的人仍可存取。", "Tắt hiển thị trang chủ trong cài đặt; người có địa chỉ trực tiếp vẫn có thể mở." ]
+    };
+
+    private string Local(string key)
+    {
+        if (!LocalTexts.TryGetValue(key, out string[]? values))
+        {
+            return key;
+        }
+
+        int index = Array.IndexOf(LanguageCodes, Text.Language);
+        return values[index < 0 ? 5 : index];
+    }
+
+}

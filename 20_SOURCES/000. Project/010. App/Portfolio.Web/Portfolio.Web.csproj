@@ -21,8 +21,16 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Update="App_Data\**\*.*">
+      <!-- Runtime tenant data can include password hashes, account metadata, and
+           contact messages. Keep local samples available for development builds,
+           but never package them as deployable production data. -->
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
     </Content>
+    <None Update="App_Data\**\*.*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>Never</CopyToPublishDirectory>
+    </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -30,6 +38,7 @@
     <ProjectReference Include="..\..\..\100. Library\Hybrid.Wpf\Dreamine.Hybrid.Wpf.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Hybrid\Dreamine.Hybrid.csproj" />
     <ProjectReference Include="..\..\..\100. Library\Identity\Dreamine.Identity.csproj" />
+    <ProjectReference Include="..\..\..\100. Library\UI.Blazor\Dreamine.UI.Blazor.csproj" />
   </ItemGroup>
 
   <ItemGroup>

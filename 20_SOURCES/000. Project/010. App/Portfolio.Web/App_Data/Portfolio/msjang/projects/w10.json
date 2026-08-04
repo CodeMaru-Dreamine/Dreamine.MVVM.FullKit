@@ -1,26 +1,40 @@
 {
   "Id": "w10",
-  "Title": "CIM UI 프로그램",
-  "Description": "기존 솔루션 연계로 라인 요구에 맞춘 실시간 CIM UI 구축.",
-  "Tags": [],
+  "Title": "CIM UI \uD504\uB85C\uADF8\uB7A8",
+  "Description": "\uAE30\uC874 \uC194\uB8E8\uC158 \uC5F0\uACC4\uB85C \uB77C\uC778 \uC694\uAD6C\uC5D0 \uB9DE\uCD98 \uC2E4\uC2DC\uAC04 CIM UI \uAD6C\uCD95.",
+  "Tags": [
+    "C#",
+    "WinForms",
+    "PLC Communication",
+    "CIM",
+    "MySQL",
+    "Real-time Monitoring",
+    "Equipment Monitoring",
+    "Line Monitoring",
+    "Industrial Automation"
+  ],
   "Year": 2023,
-  "Emoji": "🏭",
-  "ImageFileName": null,
+  "Emoji": "\uD83C\uDFED",
+  "ImageFileName": "1ec0ea8793484333a0cdfc60059a45d2.png",
   "GitHub": null,
   "LiveUrl": null,
   "DocUrl": null,
   "Category": "Work",
   "SortOrder": 10,
-  "WorkImages": [ "/portfolio-data/msjang/media/_cover/Projects/Humin.png" ],
-  "WorkSubtitle": "MELSEC-Q 통신 기반 실시간 CIM UI 신규 개발",
-  "WorkBullets": [
-      "WinForms 기반 고객 사용자 화면 구성 및 장비 연동",
-      "기존 MFC GUI 대비 UI/사용성 개선, 2~3개 라인 적용",
-      "실시간 알람/이력/모니터링 + 보고서/작업지시 확인",
-      "고객사 DB(MySQL) 기반 운용 데이터 연동"
+  "ImageBlurLevel": 1,
+  "VideoFileNames": [],
+  "WorkImages": [
+    "1ec0ea8793484333a0cdfc60059a45d2.png"
   ],
-  "WorkPeriod": "도입/운영 확장",
-  "WorkRole": "UI 신규 개발 · 장비 연동",
+  "WorkSubtitle": "MELSEC-Q \uD1B5\uC2E0 \uAE30\uBC18 \uC2E4\uC2DC\uAC04 CIM UI \uC2E0\uADDC \uAC1C\uBC1C",
+  "WorkBullets": [
+    "WinForms \uAE30\uBC18 \uACE0\uAC1D \uC0AC\uC6A9\uC790 \uD654\uBA74 \uAD6C\uC131 \uBC0F \uC7A5\uBE44 \uC5F0\uB3D9",
+    "\uAE30\uC874 MFC GUI \uB300\uBE44 UI/\uC0AC\uC6A9\uC131 \uAC1C\uC120, 2~3\uAC1C \uB77C\uC778 \uC801\uC6A9",
+    "\uC2E4\uC2DC\uAC04 \uC54C\uB78C/\uC774\uB825/\uBAA8\uB2C8\uD130\uB9C1 \u002B \uBCF4\uACE0\uC11C/\uC791\uC5C5\uC9C0\uC2DC \uD655\uC778",
+    "\uACE0\uAC1D\uC0AC DB(MySQL) \uAE30\uBC18 \uC6B4\uC6A9 \uB370\uC774\uD130 \uC5F0\uB3D9"
+  ],
+  "WorkPeriod": "\uB3C4\uC785/\uC6B4\uC601 \uD655\uC7A5",
+  "WorkRole": "UI \uC2E0\uADDC \uAC1C\uBC1C \u00B7 \uC7A5\uBE44 \uC5F0\uB3D9",
   "WorkTech": "C#, WinForms, MELSEC-Q, MySQL",
-  "WorkCompany": "㈜휴민로보틱스 / U社"
+  "WorkCompany": "\u321C\uD734\uBBFC\uB85C\uBCF4\uD2F1\uC2A4 / U\u793E"
 }

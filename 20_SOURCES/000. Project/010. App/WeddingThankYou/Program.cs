@@ -149,7 +149,8 @@ public static class Program
                 services.AddScoped<ThankYouLocalization>();
             };
 
-            options.AddDreamineIdentity(authOptions, usersDbPath);
+            // OAuth는 중앙 codemaru.co.kr 호스트에서만 처리합니다.
+            options.AddDreamineIdentity(authOptions.AsConsumer(), usersDbPath);
         });
 
         builder.Build().RunDreamineWpfApp<App>();
