@@ -1,29 +1,31 @@
 @inject TenantDbContextFactory DbFactory
 @inject ShopOptions ShopOpts
+@inject ShopLocalization Localization
 @using System.Text.Json
+@implements IDisposable
 
 <div>
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">상품 목록</h5>
-        <button class="btn btn-success btn-sm" @onclick="() => { _editProduct = null; _form = new(); _showForm = true; }">+ 상품 추가</button>
+        <h5 class="mb-0">@T("products.title")</h5>
+        <button class="btn btn-success btn-sm" @onclick="() => { _editProduct = null; _form = new(); _showForm = true; }">+ @T("products.add")</button>
     </div>
 
     @if (_showForm)
     {
         <div class="card mb-4">
             <div class="card-body">
-                <h6>@(_form.Id > 0 ? "상품 수정" : "새 상품")</h6>
+                <h6>@(_form.Id > 0 ? T("products.editHeading") : T("products.newHeading"))</h6>
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label">상품명 <span class="text-danger">*</span></label>
+                        <label class="form-label">@T("products.name") <span class="text-danger">*</span></label>
                         <input class="form-control" @bind="_form.Name" />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">가격 (원) <span class="text-danger">*</span></label>
+                        <label class="form-label">@T("products.price") (@T("common.krw")) <span class="text-danger">*</span></label>
                         <input class="form-control" type="number" @bind="_form.Price" />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">재고</label>
+                        <label class="form-label">@T("products.stock")</label>
                         <div class="input-group">
                             <input class="form-control" type="number" @bind="_form.Stock"
                                    disabled="@_form.IsUnlimitedStock" />
@@ -31,47 +33,47 @@
                                  @onclick="() => _form.IsUnlimitedStock = !_form.IsUnlimitedStock">
                                 <input type="checkbox" class="form-check-input mt-0"
                                        checked="@_form.IsUnlimitedStock" @onchange="() => {}" />
-                                <span style="font-size:.8rem;white-space:nowrap">무한</span>
+                                <span style="font-size:.8rem;white-space:nowrap">@T("products.unlimited")</span>
                             </div>
                         </div>
                     </div>
                     <div class="col-12">
-                        <label class="form-label">설명</label>
+                        <label class="form-label">@T("common.description")</label>
                         <textarea class="form-control" rows="2" @bind="_form.Description"></textarea>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">카테고리</label>
+                        <label class="form-label">@T("products.category")</label>
                         <input class="form-control" @bind="_form.Category" />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">노출 순서 <span class="text-muted small">(낮을수록 먼저)</span></label>
+                        <label class="form-label">@T("products.sortOrder") <span class="text-muted small">(@T("products.lowerFirst"))</span></label>
                         <input class="form-control" type="number" @bind="_form.SortOrder" />
                     </div>
                     <div class="col-md-3 d-flex align-items-end">
                         <div class="form-check form-switch mb-2">
                             <input class="form-check-input" type="checkbox" @bind="_form.IsFeatured" id="featuredCheck" />
-                            <label class="form-check-label fw-semibold" for="featuredCheck">⭐ 추천 상품</label>
+                            <label class="form-check-label fw-semibold" for="featuredCheck">⭐ @T("products.featured")</label>
                         </div>
                     </div>
 
                     <!-- 동영상 -->
                     <div class="col-12">
-                        <label class="form-label fw-semibold">🎬 동영상</label>
+                        <label class="form-label fw-semibold">🎬 @T("products.video")</label>
                         <div class="d-flex gap-2 align-items-start flex-wrap mb-2">
                             <div style="flex:1;min-width:200px">
                                 <InputFile OnChange="OnVideoSelected" accept="video/mp4,video/webm,video/ogg" class="form-control" />
-                                <div class="form-text">MP4/WEBM 파일 업로드 (최대 200MB)</div>
+                                <div class="form-text">@T("products.videoUploadHelp")</div>
                             </div>
                             <div style="flex:2;min-width:200px">
                                 <input class="form-control" @bind="_form.VideoUrl"
-                                       placeholder="또는 유튜브 URL: https://youtu.be/..." />
+                                       placeholder="@T("products.youtubePlaceholder")" />
                             </div>
                         </div>
                         @if (!string.IsNullOrEmpty(_form.VideoUrl))
                         {
                             <div class="d-flex align-items-center gap-2 mt-1">
                                 <span class="badge bg-secondary">@(_form.VideoUrl.Length > 50 ? _form.VideoUrl[..50] + "..." : _form.VideoUrl)</span>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => _form.VideoUrl = string.Empty">제거</button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => _form.VideoUrl = string.Empty">@T("common.remove")</button>
                             </div>
                         }
                         @if (!string.IsNullOrEmpty(_videoUploadError))
@@ -82,7 +84,7 @@
 
                     <!-- 상세 이미지 -->
                     <div class="col-12">
-                        <label class="form-label fw-semibold">🖼️ 상세 이미지 <span class="text-muted small">(여러 장 업로드 가능)</span></label>
+                        <label class="form-label fw-semibold">🖼️ @T("products.detailImages") <span class="text-muted small">(@T("products.multipleAllowed"))</span></label>
                         <InputFile OnChange="OnDetailImagesSelected" accept="image/*" multiple class="form-control mb-2" />
                         @if (_detailImages.Count > 0)
                         {
@@ -91,9 +93,11 @@
                                 {
                                     var idx = i;
                                     <div class="position-relative" style="width:110px">
-                                        <img src="@_detailImages[idx]" alt="상세 이미지"
+                                        <img src="@_detailImages[idx]" alt="@T("products.detailImageAlt")"
                                              style="width:110px;height:80px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0" />
                                         <button class="btn btn-danger btn-sm position-absolute top-0 end-0 p-0 lh-1"
+                                                aria-label="@T("products.removeDetailImage")"
+                                                title="@T("products.removeDetailImage")"
                                                 style="width:22px;height:22px;font-size:.75rem"
                                                 @onclick="() => RemoveDetailImage(idx)">×</button>
                                     </div>
@@ -104,34 +108,34 @@
 
                     <!-- 상세 텍스트 -->
                     <div class="col-12">
-                        <label class="form-label fw-semibold">📝 상세 텍스트 <span class="text-muted small">(선택 · 마크다운 또는 일반 텍스트)</span></label>
+                        <label class="form-label fw-semibold">📝 @T("products.detailText") <span class="text-muted small">(@T("products.detailTextHint"))</span></label>
                         <div class="mb-1" style="font-size:.8rem;color:#6c757d">
-                            <code>- 항목</code> 목록 &nbsp;|&nbsp;
-                            <code>**굵게**</code> &nbsp;|&nbsp;
-                            <code>## 소제목</code> &nbsp;|&nbsp;
-                            빈 줄 = 문단 나누기 &nbsp;|&nbsp; 이미지만 올릴 경우 비워도 됩니다
+                            <code>- @T("products.itemExample")</code> @T("products.listSyntax") &nbsp;|&nbsp;
+                            <code>**@T("products.boldExample")**</code> &nbsp;|&nbsp;
+                            <code>## @T("products.subheadingExample")</code> &nbsp;|&nbsp;
+                            @T("products.blankLineHelp") &nbsp;|&nbsp; @T("products.imageOnlyHelp")
                         </div>
                         <textarea class="form-control" rows="7" @bind="_form.DetailHtml"
-                                  placeholder="## 상품 특징&#10;- 국내산 청양고추 직접 재배&#10;- **당일 수확** 후 포장&#10;&#10;## 주의사항&#10;- 냉장 보관 권장"></textarea>
+                                  placeholder="@T("products.detailPlaceholder")"></textarea>
                     </div>
 
                     <!-- 이미지 -->
                     <div class="col-12">
-                        <label class="form-label">상품 이미지</label>
+                        <label class="form-label">@T("products.image")</label>
                         <div class="d-flex gap-2 align-items-start flex-wrap">
                             <div>
                                 <InputFile OnChange="OnImageSelected" accept="image/*" class="form-control" style="max-width:300px" />
-                                <div class="form-text">JPG/PNG/WEBP, 최대 5MB</div>
+                                <div class="form-text">@T("products.imageUploadHelp")</div>
                             </div>
                             <div class="flex-grow-1">
-                                <input class="form-control" placeholder="또는 이미지 URL 직접 입력" @bind="_form.ImagePath" />
+                                <input class="form-control" placeholder="@T("products.imageUrlPlaceholder")" @bind="_form.ImagePath" />
                             </div>
                         </div>
                         @if (!string.IsNullOrEmpty(_form.ImagePath))
                         {
                             <div class="mt-2">
-                                <img src="@_form.ImagePath" alt="미리보기" style="height:100px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0" />
-                                <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => _form.ImagePath = null">이미지 제거</button>
+                                <img src="@_form.ImagePath" alt="@T("common.preview")" style="height:100px;object-fit:cover;border-radius:8px;border:1px solid #e2e8f0" />
+                                <button class="btn btn-sm btn-outline-danger ms-2" @onclick="() => _form.ImagePath = null">@T("products.removeImage")</button>
                             </div>
                         }
                         @if (!string.IsNullOrEmpty(_uploadError))
@@ -143,15 +147,15 @@
                     <div class="col-12">
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" @bind="_form.IsActive" id="activeCheck" />
-                            <label class="form-check-label" for="activeCheck">판매 활성화</label>
+                            <label class="form-check-label" for="activeCheck">@T("products.enableSales")</label>
                         </div>
                     </div>
                 </div>
                 <div class="mt-3">
                     <button class="btn btn-primary me-2" @onclick="SaveProduct" disabled="@_uploading">
-                        @(_uploading ? "업로드 중..." : "저장")
+                        @(_uploading ? T("common.uploading") : T("common.save"))
                     </button>
-                    <button class="btn btn-secondary" @onclick="CancelForm">취소</button>
+                    <button class="btn btn-secondary" @onclick="CancelForm">@T("common.cancel")</button>
                 </div>
             </div>
         </div>
@@ -159,11 +163,11 @@
 
     @if (_products == null)
     {
-        <p>로딩 중...</p>
+        <p>@T("common.loading")</p>
     }
     else if (_products.Count == 0)
     {
-        <p class="text-muted">등록된 상품이 없습니다.</p>
+        <p class="text-muted">@T("products.empty")</p>
     }
     else
     {
@@ -171,13 +175,13 @@
             <table class="table table-hover align-middle">
                 <thead class="table-light">
                     <tr>
-                        <th style="width:60px">이미지</th>
-                        <th>상품명</th>
-                        <th style="width:100px">가격</th>
-                        <th style="width:70px">재고</th>
-                        <th style="width:90px">순서</th>
-                        <th style="width:80px">추천</th>
-                        <th style="width:80px">상태</th>
+                        <th style="width:60px">@T("common.image")</th>
+                        <th>@T("products.name")</th>
+                        <th style="width:100px">@T("products.price")</th>
+                        <th style="width:70px">@T("products.stock")</th>
+                        <th style="width:90px">@T("products.order")</th>
+                        <th style="width:80px">@T("products.featuredShort")</th>
+                        <th style="width:80px">@T("common.status")</th>
                         <th style="width:100px"></th>
                     </tr>
                 </thead>
@@ -196,8 +200,8 @@
                                 }
                             </td>
                             <td class="fw-semibold">@p.Name</td>
-                            <td>@p.Price.ToString("N0")원</td>
-                            <td>@p.Stock</td>
+                            <td>@p.Price.ToString("N0") @T("common.krw")</td>
+                            <td>@(p.IsUnlimitedStock ? T("products.unlimited") : p.Stock.ToString())</td>
                             <!-- 순서 인라인 편집 -->
                             <td>
                                 <input type="number" class="form-control form-control-sm text-center"
@@ -208,19 +212,19 @@
                             <!-- 추천 토글 -->
                             <td class="text-center">
                                 <button class="btn btn-sm @(p.IsFeatured ? "btn-warning" : "btn-outline-secondary")"
-                                        title="@(p.IsFeatured ? "추천 해제" : "추천 설정")"
+                                        title="@(p.IsFeatured ? T("products.unfeature") : T("products.feature"))"
                                         @onclick="() => ToggleFeatured(p)">
                                     ⭐
                                 </button>
                             </td>
                             <td>
                                 <span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">
-                                    @(p.IsActive ? "판매중" : "숨김")
+                                    @(p.IsActive ? T("products.onSale") : T("products.hidden"))
                                 </span>
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditProduct(p)">수정</button>
-                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteProduct(p.Id)">삭제</button>
+                                <button class="btn btn-sm btn-outline-primary me-1" @onclick="() => EditProduct(p)">@T("common.edit")</button>
+                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteProduct(p.Id)">@T("common.delete")</button>
                             </td>
                         </tr>
                     }
@@ -228,7 +232,7 @@
             </table>
         </div>
         <div class="text-muted small mt-1">
-            ⭐ 강조 표시된 행이 추천 상품입니다. 순서 숫자가 낮을수록 먼저 노출됩니다.
+            @T("products.featuredTableHelp")
         </div>
     }
 </div>
@@ -245,7 +249,11 @@
     private string _videoUploadError = string.Empty;
     private List<string> _detailImages = new(); // 현재 편집 중인 상세 이미지 경로 목록
 
-    protected override void OnInitialized() => LoadProducts();
+    protected override void OnInitialized()
+    {
+        Localization.Changed += OnLocalizationChanged;
+        LoadProducts();
+    }
 
     private void LoadProducts()
     {
@@ -299,9 +307,9 @@
     {
         _uploadError = string.Empty;
         var file = e.File;
-        if (file.Size > 5 * 1024 * 1024) { _uploadError = "파일 크기는 5MB 이하여야 합니다."; return; }
+        if (file.Size > 5 * 1024 * 1024) { _uploadError = T("products.imageTooLarge"); return; }
         var ext = Path.GetExtension(file.Name).ToLowerInvariant();
-        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp" or ".gif")) { _uploadError = "JPG, PNG, WEBP, GIF 파일만 가능합니다."; return; }
+        if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp" or ".gif")) { _uploadError = T("products.invalidImageType"); return; }
         _uploading = true;
         try
         {
@@ -314,7 +322,7 @@
             await stream.CopyToAsync(fs);
             _form.ImagePath = $"/shop-img/{Slug}/images/{fileName}";
         }
-        catch (Exception ex) { _uploadError = $"업로드 실패: {ex.Message}"; }
+        catch (Exception ex) { _uploadError = string.Format(T("common.uploadFailed"), ex.Message); }
         finally { _uploading = false; }
     }
 
@@ -375,9 +383,9 @@
         _videoUploadError = string.Empty;
         var file = e.File;
         var allowed = new[] { "video/mp4", "video/webm", "video/ogg" };
-        if (!allowed.Contains(file.ContentType)) { _videoUploadError = "MP4/WEBM/OGG 파일만 가능합니다."; return; }
+        if (!allowed.Contains(file.ContentType)) { _videoUploadError = T("products.invalidVideoType"); return; }
         const long maxSize = 200L * 1024 * 1024; // 200MB
-        if (file.Size > maxSize) { _videoUploadError = "200MB 이하 파일만 업로드 가능합니다."; return; }
+        if (file.Size > maxSize) { _videoUploadError = T("products.videoTooLarge"); return; }
 
         _uploading = true;
         try
@@ -392,7 +400,7 @@
             await stream.CopyToAsync(fs);
             _form.VideoUrl = $"/shop-img/{Slug}/images/{fn}";
         }
-        catch (Exception ex) { _videoUploadError = $"업로드 실패: {ex.Message}"; }
+        catch (Exception ex) { _videoUploadError = string.Format(T("common.uploadFailed"), ex.Message); }
         finally { _uploading = false; }
     }
 
@@ -432,4 +440,8 @@
         try { return JsonSerializer.Deserialize<List<string>>(json) ?? new(); }
         catch { return new(); }
     }
+
+    private string T(string key) => ShopAdminText.Get(key, Localization.Language);
+    private void OnLocalizationChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Localization.Changed -= OnLocalizationChanged;
 }

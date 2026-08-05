@@ -1,105 +1,110 @@
+@using Microsoft.AspNetCore.WebUtilities
 @inherits LayoutComponentBase
 @implements IDisposable
 @inject TenantContext Tenant
 @inject ShopUserContext UserContext
+@inject ShopLocalization Localization
 @inject NavigationManager Nav
 
-@if (IsPlatformPage)
-{
-    <header class="sp-topnav">
-        <a class="sp-topnav__brand" href="https://codemaru.co.kr/">
-            <img class="sp-topnav__mark" src="/img/Codemaru%20Bloom%20Light.jpg" alt="" />
-            <span>CodeMaru</span>
-        </a>
-        <nav id="spTopnavMenu" class="sp-topnav__links @(isNavOpen ? "open" : null)" aria-label="CodeMaru 서비스">
-            <a href="https://codemaru.co.kr/">Home</a>
-            <a href="https://dreamine.kr/" target="_blank" rel="noopener">Dreamine</a>
-            <a href="https://codemaru.co.kr/cardhybrid">CardHybrid</a>
-            <a href="https://wedding.codemaru.co.kr">Wedding</a>
-            <a href="https://thankyou.codemaru.co.kr/">ThankYou</a>
-            <a href="https://families.codemaru.co.kr">Families</a>
-            <a href="https://portfolio.codemaru.co.kr/">Portfolio</a>
-            <a href="https://cctvviewer.codemaru.co.kr">CCTV</a>
-            <a href="https://shop.codemaru.co.kr/" class="active" aria-current="page">ShopStore</a>
-            <a href="https://codemaru.co.kr/contact">Contact</a>
-            @if (currentUser.IsAuthenticated)
-            {
-                <a class="sp-topnav__auth" href="@AccountUrl">@NavUserLabel</a>
-                <a class="sp-topnav__auth" href="@SignoutUrl">로그아웃</a>
-            }
-            else
-            {
-                <a class="sp-topnav__auth" href="@LoginUrl">로그인</a>
-            }
-        </nav>
-        <button class="sp-topnav__burger"
-                type="button"
-                @onclick="ToggleNav"
-                aria-label="메뉴 열기/닫기"
-                aria-expanded="@isNavOpen"
-                aria-controls="spTopnavMenu">
-            <span></span><span></span><span></span>
-        </button>
-    </header>
-}
+<DreaminePortalHeader BrandName="CodeMaru"
+                      BrandUrl="@LocalizedUrl("https://codemaru.co.kr/")"
+                      BrandImageUrl="/img/Codemaru_Bloom.jpg"
+                      BrandLightImageUrl="/img/Codemaru%20Bloom%20Light.jpg"
+                      BrandImageAlt=""
+                      Items="@PortalItems"
+                      ActiveKey="shop"
+                      NavigationAriaLabel="@Localization["nav.services"]"
+                      ToggleMenuLabel="@Localization["nav.toggle"]"
+                      UseCodeMaruAppearance="true"
+                      Fixed="true"
+                      IsAuthenticated="@(hasLoadedCurrentUser && currentUser.IsAuthenticated)"
+                      DisplayName="@NavUserLabel"
+                      ScreenSettingsLabel="@Localization["screen.settings"]"
+                      LoginUrl="@LoginUrl"
+                      LoginLabel="@Localization["login"]"
+                      AccountUrl="@AccountUrl"
+                      AccountLabel="@Localization["account"]"
+                      SignoutUrl="@SignoutUrl"
+                      SignoutLabel="@Localization["logout"]">
+    <Preferences>
+        <ShopPreferences />
+    </Preferences>
+    <AdditionalUserActions>
+        <a href="@LocalizedPath("/my-shops")"><span aria-hidden="true">▣</span> @Localization["my.shops"]</a>
+        <a href="@LocalizedPath("/apply")"><span aria-hidden="true">＋</span> @Localization["open.shop"]</a>
+    </AdditionalUserActions>
+</DreaminePortalHeader>
 
-<div class="shop-layout @(Tenant.IsResolved ? "tenant-active" : "")">
+<div id="main-content"
+     class="shop-layout @(Tenant.IsResolved ? "tenant-active" : null)"
+     tabindex="-1">
     @Body
 </div>
 
 @code {
-    private static readonly HashSet<string> PlatformPages =
-        new(StringComparer.OrdinalIgnoreCase) { "", "apply", "admin" };
-
     private ShopCurrentUser currentUser = ShopCurrentUser.Anonymous;
-    private bool isNavOpen;
+    private bool hasLoadedCurrentUser;
 
-    private bool IsPlatformPage
-    {
-        get
-        {
-            var path = new Uri(Nav.Uri).AbsolutePath.Trim('/');
-            var firstSegment = path.Split('/', 2)[0];
-            return PlatformPages.Contains(firstSegment);
-        }
-    }
+    private string LoginUrl => IdentityUrl("login", Nav.Uri);
+    private string AccountUrl => IdentityUrl("account", Nav.Uri);
+    private string SignoutUrl => IdentityUrl("signout", LocalizedUrl(Nav.BaseUri));
+    private string NavUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName)
+        ? Localization["account"]
+        : currentUser.DisplayName;
 
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string AccountUrl => $"https://codemaru.co.kr/_identity/account?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
-    private string SignoutUrl => $"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.BaseUri)}";
-    private string NavUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? "내 계정" : currentUser.DisplayName;
+    private IReadOnlyList<DreaminePortalNavigationItem> PortalItems =>
+    [
+        new("home", Localization["home"], LocalizedUrl("https://codemaru.co.kr/")),
+        new("dreamine", "Dreamine", "https://dreamine.kr/", OpenInNewWindow: true),
+        new("cardhybrid", "CardHybrid", LocalizedUrl("https://codemaru.co.kr/cardhybrid")),
+        new("wedding", "Wedding", LocalizedUrl("https://wedding.codemaru.co.kr")),
+        new("thankyou", "ThankYou", LocalizedUrl("https://thankyou.codemaru.co.kr/")),
+        new("families", "Families", LocalizedUrl("https://families.codemaru.co.kr")),
+        new("portfolio", "Portfolio", LocalizedUrl("https://portfolio.codemaru.co.kr/")),
+        new("cctv", "CCTV", LocalizedUrl("https://cctvviewer.codemaru.co.kr")),
+        new("shop", "ShopStore", LocalizedPath("/")),
+        new("contact", Localization["contact"], LocalizedUrl("https://codemaru.co.kr/contact"))
+    ];
 
     protected override void OnInitialized()
     {
-        Nav.LocationChanged += OnLocationChanged;
+        Localization.Changed += HandleLanguageChanged;
+        Nav.LocationChanged += HandleLocationChanged;
+        ApplyLanguageFromLocation();
     }
 
     protected override async Task OnInitializedAsync()
     {
-        if (!IsPlatformPage)
-        {
-            return;
-        }
-
         currentUser = await UserContext.GetCurrentAsync();
+        hasLoadedCurrentUser = true;
     }
 
-    private void ToggleNav()
+    private void ApplyLanguageFromLocation()
     {
-        isNavOpen = !isNavOpen;
-    }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        if (isNavOpen)
+        var query = QueryHelpers.ParseQuery(new Uri(Nav.Uri).Query);
+        if (query.TryGetValue("lang", out var language))
         {
-            isNavOpen = false;
+            Localization.SetLanguage(language.ToString());
         }
+    }
+
+    private string LocalizedPath(string path) => Localization.WithLanguage(path);
+    private string LocalizedUrl(string url) => Localization.WithLanguage(url);
+
+    private string IdentityUrl(string action, string returnUrl) =>
+        Dreamine.Identity.DreamineIdentityPortal.CreateUrl(action, returnUrl, Localization.Language);
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        ApplyLanguageFromLocation();
         _ = InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
     {
-        Nav.LocationChanged -= OnLocationChanged;
+        Localization.Changed -= HandleLanguageChanged;
+        Nav.LocationChanged -= HandleLocationChanged;
     }
 }

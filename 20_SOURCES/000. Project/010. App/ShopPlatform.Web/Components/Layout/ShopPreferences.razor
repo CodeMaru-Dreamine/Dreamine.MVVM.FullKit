@@ -1,0 +1,44 @@
+@implements IDisposable
+@inject ShopLocalization Localization
+
+<DreaminePortalPreferences Theme="@theme"
+                           ThemeChanged="ChangeThemeAsync"
+                           ThemeLabel="@Localization["theme"]"
+                           SystemThemeLabel="@Localization["system"]"
+                           LightThemeLabel="@Localization["light"]"
+                           DarkThemeLabel="@Localization["dark"]"
+                           ThemeStorageKey="codemaru-theme"
+                           CookieDomain=".codemaru.co.kr"
+                           Language="@Localization.Language"
+                           LanguageChanged="ChangeLanguageAsync"
+                           Languages="@Languages"
+                           LanguageLabel="@Localization["language"]"
+                           FallbackLanguage="ko"
+                           LanguageStorageKey="codemaru-language" />
+
+@code {
+    private string theme = "system";
+
+    private static readonly IReadOnlyList<DreamineLanguage> Languages =
+        ShopLocalization.Languages
+            .Select(item => new DreamineLanguage(item.Code, item.Region, item.NativeName, item.HtmlLanguage))
+            .ToArray();
+
+    protected override void OnInitialized() => Localization.Changed += HandleLanguageChanged;
+
+    private Task ChangeThemeAsync(string value)
+    {
+        theme = value;
+        return Task.CompletedTask;
+    }
+
+    private Task ChangeLanguageAsync(string language)
+    {
+        Localization.SetLanguage(language);
+        return Task.CompletedTask;
+    }
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Localization.Changed -= HandleLanguageChanged;
+}

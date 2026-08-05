@@ -1,5 +1,7 @@
 @namespace DreamineVMS.Web.Blazor
 @using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
+@inject VmsLocalization Text
 
 <Router AppAssembly="@typeof(Routes).Assembly">
     <Found Context="routeData">
@@ -7,7 +9,13 @@
     </Found>
     <NotFound>
         <div class="page-shell">
-            <h2>Page not found</h2>
+            <h2>@Text["page.notfound"]</h2>
         </div>
     </NotFound>
 </Router>
+
+@code {
+    protected override void OnInitialized() => Text.Changed += HandleLanguageChanged;
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Text.Changed -= HandleLanguageChanged;
+}

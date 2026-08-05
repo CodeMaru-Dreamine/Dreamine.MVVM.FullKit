@@ -874,3 +874,277 @@ a { color: var(--sp-primary); }
 .sp-apply-done h2 { font-size: 1.5rem; font-weight: 800; margin-bottom: .5rem; }
 .sp-apply-url-preview { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: .75rem 1rem; margin-top: 1rem; display: flex; flex-direction: column; gap: .2rem; font-size: .9rem; }
 .sp-apply-notice { background: #fffbeb; border-left: 4px solid #f59e0b; border-radius: 8px; padding: .85rem 1rem; font-size: .85rem; line-height: 2; text-align: left; }
+
+/* ── Shared portal shell + complete light/dark theme ─────────────── */
+.shop-layout {
+    min-height: 100vh;
+    padding-top: 64px;
+    background: var(--sp-bg);
+}
+
+/* Tenant storefronts keep their own navigation directly below CodeMaru. */
+.shop-layout .ss-header { top: 64px; }
+
+:root {
+    color-scheme: light;
+    --sp-surface: #ffffff;
+    --sp-surface-soft: #f1f5f9;
+    --sp-surface-raised: #ffffff;
+    --sp-input-bg: #ffffff;
+    --sp-text-soft: #374151;
+    --sp-success: #16a34a;
+    --sp-danger: #dc2626;
+    --sp-overlay: rgba(255, 255, 255, .9);
+}
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) {
+    color-scheme: dark;
+    --sp-primary: #60a5fa;
+    --sp-primary-d: #93c5fd;
+    --sp-accent: #fbbf24;
+    --sp-bg: #080d19;
+    --sp-dark: #edf3ff;
+    --sp-gray: #a9b7cc;
+    --sp-border: #26344a;
+    --sp-shadow: 0 5px 26px rgba(0, 0, 0, .34);
+    --sp-surface: #111827;
+    --sp-surface-soft: #172033;
+    --sp-surface-raised: #162033;
+    --sp-input-bg: #0d1423;
+    --sp-text-soft: #c8d3e3;
+    --sp-success: #4ade80;
+    --sp-danger: #fb7185;
+    --sp-overlay: rgba(17, 24, 39, .92);
+    --bs-body-color: #edf3ff;
+    --bs-body-bg: #080d19;
+    --bs-secondary-color: #a9b7cc;
+    --bs-secondary-bg: #172033;
+    --bs-tertiary-color: #94a3b8;
+    --bs-tertiary-bg: #111827;
+    --bs-border-color: #26344a;
+    --bs-link-color: #60a5fa;
+    --bs-link-hover-color: #93c5fd;
+}
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) body,
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .shop-layout,
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-products-page {
+    background: var(--sp-bg);
+    color: var(--sp-dark);
+}
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(
+    .card, .modal-content, .dropdown-menu, .list-group-item, .accordion-item,
+    .table, .sp-features, .sp-shops, .sp-footer, .ss-featured,
+    .ss-product-card, .ss-policy-body, .sp-apply-box, .sp-notice-item
+) {
+    color: var(--sp-dark);
+    background-color: var(--sp-surface);
+    border-color: var(--sp-border);
+}
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(
+    .form-control, .form-select, .form-check-input, textarea, input, select,
+    .input-group-text, .page-link
+) {
+    color: var(--sp-dark);
+    background-color: var(--sp-input-bg);
+    border-color: var(--sp-border);
+}
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(
+    .form-control, .form-select, textarea, input
+)::placeholder { color: #7f8da3; opacity: 1; }
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(
+    .text-muted, .form-text, .ss-product-desc, .ss-detail-desc, .ss-footer,
+    .sp-shop-card-desc, .sp-hero-sub, .sp-cta-note, .sp-feature-item p,
+    .sp-step p, .sp-shops-sub, .sp-notice-item p, .sp-apply-footer-note,
+    .ss-detail-back, .ss-policy-arrow, .ss-detail-total
+) { color: var(--sp-gray) !important; }
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(
+    .text-dark, .ss-product-name, .ss-brand, .sp-feature-item h3,
+    .sp-how-inner h2, .sp-shops-title, .sp-apply-header h1,
+    .sp-notice-title, .sp-notice-item strong
+) { color: var(--sp-dark) !important; }
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(
+    .bg-white, .bg-light, .table-light, .card-header, .card-footer,
+    .accordion-button, .nav-tabs .nav-link.active
+) {
+    color: var(--sp-dark) !important;
+    background-color: var(--sp-surface-soft) !important;
+    border-color: var(--sp-border) !important;
+}
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .table > :not(caption) > * > * {
+    color: var(--sp-dark);
+    background-color: transparent;
+    border-color: var(--sp-border);
+}
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .nav-tabs {
+    border-color: var(--sp-border);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .nav-tabs .nav-link {
+    color: var(--sp-gray);
+    border-color: transparent;
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .nav-tabs .nav-link:hover {
+    color: var(--sp-dark);
+    border-color: var(--sp-border);
+}
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-hero-wrapper {
+    background: linear-gradient(135deg, #0b1730 0%, #111827 58%, #241b0a 100%);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-hero-badge {
+    color: #bfdbfe;
+    background: #172c52;
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-mockup {
+    background: var(--sp-surface-raised);
+    border-color: var(--sp-border);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-mockup-bar {
+    background: var(--sp-surface-soft);
+    border-color: var(--sp-border);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-mockup-url {
+    color: var(--sp-gray);
+    background: var(--sp-input-bg);
+    border-color: var(--sp-border);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-mock-card {
+    background: linear-gradient(135deg, #18345d, #13223b);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(.sp-how, .sp-notice) {
+    background: #0d1423;
+    border-color: var(--sp-border);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-shop-card {
+    color: var(--sp-dark);
+    background: var(--sp-surface-soft);
+    border-color: var(--sp-border);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-shop-card-thumb {
+    background: linear-gradient(135deg, #27344f, #153457);
+}
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(.ss-header, .shop-header) {
+    background: var(--sp-overlay);
+    border-color: var(--sp-border);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-nav a { color: var(--sp-text-soft); }
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-cart-btn:hover { background: var(--sp-surface-soft); }
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-product-img-wrap,
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-detail-img-placeholder {
+    background: var(--sp-surface-soft);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(
+    .ss-detail-main-img, .ss-detail-html-wrap, .ss-policy-accordion,
+    .ss-detail-gallery-img, .ss-detail-divider
+) { border-color: var(--sp-border); }
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(
+    .ss-detail-title, .ss-detail-price, .ss-detail-html-inner,
+    .ss-policy-title, .ss-policy-body, .policy-content
+) { color: var(--sp-dark); }
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-policy-hd {
+    color: var(--sp-dark);
+    background: var(--sp-surface-soft);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-policy-hd:hover { background: #202b40; }
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .policy-content :is(pre, code) {
+    color: var(--sp-dark);
+    background: var(--sp-surface-soft);
+    border-color: var(--sp-border);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-qty-ctrl { border-color: var(--sp-border); }
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-qty-btn {
+    color: var(--sp-dark);
+    background: var(--sp-surface-soft);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-qty-btn:hover { background: #26344a; }
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-detail-stock-ok { color: var(--sp-success); }
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .ss-detail-stock-out { color: var(--sp-danger); }
+
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-apply-wrap {
+    background: linear-gradient(135deg, #0c1830 0%, #080d19 65%);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-apply-alert {
+    color: #bfdbfe;
+    background: #10264a;
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-slug-input-wrap {
+    border-color: var(--sp-border);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-slug-prefix {
+    color: var(--sp-gray);
+    background: var(--sp-surface-soft);
+    border-color: var(--sp-border);
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-apply-terms { color: var(--sp-text-soft); }
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-apply-url-preview {
+    color: #bbf7d0;
+    background: #10291f;
+    border-color: #24563d;
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .sp-apply-notice {
+    color: #fde68a;
+    background: #2b220d;
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(.alert-info, .alert-primary) {
+    color: #bfdbfe;
+    background-color: #10264a;
+    border-color: #244d83;
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) .alert-success {
+    color: #bbf7d0;
+    background-color: #10291f;
+    border-color: #24563d;
+}
+:is(:root[data-theme="dark"], :root:not([data-theme]).system-dark) :is(.alert-warning, .alert-danger) {
+    color: #fde68a;
+    background-color: #2b220d;
+    border-color: #6b4e16;
+}
+
+/* Ten services plus two preference selectors need an earlier compact menu. */
+@media (min-width: 1101px) and (max-width: 1380px) {
+    .dreamine-portal-header .dreamine-portal-burger { display: flex !important; }
+    .dreamine-portal-header .dreamine-portal-nav {
+        position: absolute;
+        top: calc(100% + 1px);
+        right: .75rem;
+        display: none !important;
+        align-items: stretch;
+        flex-direction: column;
+        width: min(330px, calc(100vw - 1.5rem));
+        max-height: calc(100vh - 80px);
+        padding: .8rem;
+        overflow-y: auto;
+        color: var(--dreamine-portal-text, #334155);
+        background: var(--dreamine-portal-panel, #fff);
+        border: 1px solid var(--dreamine-portal-border, #dbe3ef);
+        border-radius: 12px;
+        box-shadow: var(--dreamine-portal-shadow, 0 14px 35px rgba(15, 23, 42, .18));
+    }
+    .dreamine-portal-header .dreamine-portal-nav.open { display: flex !important; }
+    .dreamine-portal-header .dreamine-portal-nav > a { width: 100%; }
+    .dreamine-portal-header .dreamine-portal-anonymous-preferences { align-items: stretch; flex-direction: column; }
+    .dreamine-portal-header .dreamine-portal-user-menu,
+    .dreamine-portal-header .dreamine-portal-user-badge { width: 100%; }
+    .dreamine-portal-header .dreamine-portal-user-badge { justify-content: space-between; }
+    .dreamine-portal-header .dreamine-portal-user-popover {
+        position: static;
+        width: 100%;
+        margin-top: .5rem;
+        box-shadow: none;
+    }
+}
+
+@media (max-width: 640px) {
+    .shop-layout { padding-top: 62px; }
+    .shop-layout .ss-header { top: 62px; }
+}

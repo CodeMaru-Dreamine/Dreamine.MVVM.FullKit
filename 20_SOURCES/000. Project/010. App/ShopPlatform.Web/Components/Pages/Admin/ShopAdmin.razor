@@ -4,47 +4,49 @@
 @inject IShopTenantStore TenantStore
 @inject ShopUserContext UserContext
 @inject NavigationManager Nav
+@inject ShopLocalization Localization
+@implements IDisposable
 
-<PageTitle>어드민 — @(Tenant.Config?.ShopName ?? "쇼핑몰")</PageTitle>
+<PageTitle>@T("shopAdmin.pageTitle") — @(Tenant.Config?.ShopName ?? T("common.shop"))</PageTitle>
 
 @if (!Tenant.IsResolved)
 {
     <div class="container py-5 text-center">
-        <h2>존재하지 않는 쇼핑몰입니다.</h2>
+        <h2>@T("shopAdmin.notFound")</h2>
     </div>
 }
 else if (!currentUser.IsAuthenticated)
 {
     <div class="container py-5" style="max-width:460px">
-        <h2>@Tenant.Config!.ShopName 어드민</h2>
-        <p class="text-muted">CodeMaru 계정으로 로그인하면 쇼핑몰을 관리할 수 있습니다.</p>
-        <a class="btn btn-primary w-100" href="@LoginUrl">CodeMaru 계정으로 로그인</a>
+        <h2>@Tenant.Config!.ShopName @T("shopAdmin.headingSuffix")</h2>
+        <p class="text-muted">@T("shopAdmin.signInHelp")</p>
+        <a class="btn btn-primary w-100" href="@LoginUrl">@T("shopAdmin.signInWithCodeMaru")</a>
     </div>
 }
 else if (!_authenticated)
 {
     <div class="container py-5" style="max-width:400px">
-        <h2>@Tenant.Config!.ShopName 어드민</h2>
-        <p class="text-muted">현재 계정: <strong>@CurrentUserLabel</strong></p>
+        <h2>@Tenant.Config!.ShopName @T("shopAdmin.headingSuffix")</h2>
+        <p class="text-muted">@T("shopAdmin.currentAccount"): <strong>@CurrentUserLabel</strong></p>
         <div class="mb-3">
-            <label class="form-label">기존 어드민 비밀번호</label>
+            <label class="form-label">@T("shopAdmin.legacyPassword")</label>
             <input type="password" class="form-control" @bind="_password" @bind:event="oninput" @onkeypress="OnKeyPress" />
         </div>
         @if (!string.IsNullOrEmpty(_loginError))
         {
             <div class="alert alert-danger">@_loginError</div>
         }
-        <button class="btn btn-primary w-100" @onclick="LinkLegacyAdmin">현재 계정에 연결</button>
+        <button class="btn btn-primary w-100" @onclick="LinkLegacyAdmin">@T("shopAdmin.linkAccount")</button>
     </div>
 }
 else
 {
     <div class="container-fluid py-3">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>@Tenant.Config!.ShopName 관리</h2>
+            <h2>@Tenant.Config!.ShopName @T("shopAdmin.manageSuffix")</h2>
             <div>
-                <a href="/@Slug" class="btn btn-outline-secondary me-2" target="_blank">쇼핑몰 보기 ↗</a>
-                <button class="btn btn-outline-danger" @onclick="Logout">로그아웃</button>
+                <a href="@Localization.WithLanguage($"/{Slug}")" class="btn btn-outline-secondary me-2" target="_blank" rel="noopener">@T("shopAdmin.viewShop") ↗</a>
+                <button class="btn btn-outline-danger" @onclick="Logout">@T("common.signOut")</button>
             </div>
         </div>
 
@@ -52,19 +54,19 @@ else
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item">
                 <button class="nav-link @(_tab == "products" ? "active" : "")"
-                        @onclick='() => _tab = "products"'>상품 관리</button>
+                        @onclick='() => _tab = "products"'>@T("shopAdmin.productsTab")</button>
             </li>
             <li class="nav-item">
                 <button class="nav-link @(_tab == "orders" ? "active" : "")"
-                        @onclick='() => _tab = "orders"'>주문 관리</button>
+                        @onclick='() => _tab = "orders"'>@T("shopAdmin.ordersTab")</button>
             </li>
             <li class="nav-item">
                 <button class="nav-link @(_tab == "payment" ? "active" : "")"
-                        @onclick='() => _tab = "payment"'>결제 설정</button>
+                        @onclick='() => _tab = "payment"'>@T("shopAdmin.paymentTab")</button>
             </li>
             <li class="nav-item">
                 <button class="nav-link @(_tab == "shop" ? "active" : "")"
-                        @onclick='() => _tab = "shop"'>쇼핑몰 설정</button>
+                        @onclick='() => _tab = "shop"'>@T("shopAdmin.settingsTab")</button>
             </li>
         </ul>
 
@@ -98,6 +100,11 @@ else
     private string _password = string.Empty;
     private string _loginError = string.Empty;
     private string _tab = "products";
+
+    protected override void OnInitialized()
+    {
+        Localization.Changed += OnLocalizationChanged;
+    }
 
     protected override async Task OnParametersSetAsync()
     {
@@ -143,14 +150,17 @@ else
         }
         else
         {
-            _loginError = "비밀번호가 올바르지 않습니다.";
+            _loginError = T("common.invalidPassword");
         }
     }
 
     private void Logout()
     {
         _authenticated = false;
-        Nav.NavigateTo($"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.BaseUri)}", forceLoad: true);
+        Nav.NavigateTo(Dreamine.Identity.DreamineIdentityPortal.CreateUrl(
+            "signout",
+            Nav.Uri,
+            Localization.Language), forceLoad: true);
     }
 
     private void OnKeyPress(KeyboardEventArgs e)
@@ -164,8 +174,15 @@ else
         StateHasChanged();
     }
 
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.Uri)}";
+    private string LoginUrl => Dreamine.Identity.DreamineIdentityPortal.CreateUrl(
+        "login",
+        Nav.Uri,
+        Localization.Language);
     private string CurrentUserLabel => string.IsNullOrWhiteSpace(currentUser.DisplayName) ? currentUser.Email : currentUser.DisplayName;
+    private string T(string key) => ShopAdminText.Get(key, Localization.Language);
+
+    private void OnLocalizationChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Localization.Changed -= OnLocalizationChanged;
 
     private static bool IsAdminUser(ShopConfig config, ShopCurrentUser user)
     {

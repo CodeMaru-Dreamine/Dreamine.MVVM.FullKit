@@ -1,17 +1,30 @@
 @page "/{Slug}/cart"
 @inject TenantContext Tenant
+@inject IShopTenantStore TenantStore
 @inject CartService Cart
+@inject ShopLocalization Localization
+@implements IDisposable
 
-<PageTitle>장바구니 — @(Tenant.Config?.ShopName ?? "")</PageTitle>
+<PageTitle>@T("Cart") — @(Tenant.Config?.ShopName ?? T("Shop"))</PageTitle>
 
+@if (!_tenantLookupCompleted)
+{
+    <div class="container py-5 text-center"><p class="text-muted">@T("Loading")</p></div>
+}
+else if (!Tenant.IsResolved)
+{
+    <div class="container py-5 text-center"><h2>@T("ShopUnavailable")</h2></div>
+}
+else
+{
 <div class="container py-4">
-    <h2>🛒 장바구니</h2>
-    <a href="/@Slug" class="btn btn-link ps-0">← 쇼핑 계속하기</a>
+    <h2>🛒 @T("Cart")</h2>
+    <a href="@Localization.WithLanguage($"/{Slug}")" class="btn btn-link ps-0">← @T("ContinueShopping")</a>
 
     @if (Cart.Count == 0)
     {
         <div class="text-center py-5 text-muted">
-            <p>장바구니가 비어 있습니다.</p>
+            <p>@T("CartEmpty")</p>
         </div>
     }
     else
@@ -19,10 +32,10 @@
         <table class="table mt-3">
             <thead>
                 <tr>
-                    <th>상품명</th>
-                    <th>단가</th>
-                    <th>수량</th>
-                    <th>소계</th>
+                    <th>@T("ProductName")</th>
+                    <th>@T("UnitPrice")</th>
+                    <th>@T("Quantity")</th>
+                    <th>@T("Subtotal")</th>
                     <th></th>
                 </tr>
             </thead>
@@ -31,15 +44,16 @@
                 {
                     <tr>
                         <td>@item.ProductName</td>
-                        <td>@item.UnitPrice.ToString("N0")원</td>
+                        <td>@Money(item.UnitPrice)</td>
                         <td>
                             <input type="number" min="1" class="form-control form-control-sm" style="width:70px"
                                    value="@item.Quantity"
                                    @onchange="e => UpdateQty(item.ProductId, e)" />
                         </td>
-                        <td>@item.Subtotal.ToString("N0")원</td>
+                        <td>@Money(item.Subtotal)</td>
                         <td>
                             <button class="btn btn-sm btn-outline-danger"
+                                    aria-label="@F("RemoveItem", item.ProductName)"
                                     @onclick="() => Cart.Remove(item.ProductId)">
                                 ✕
                             </button>
@@ -49,25 +63,58 @@
             </tbody>
             <tfoot>
                 <tr class="fw-bold">
-                    <td colspan="3" class="text-end">합계</td>
-                    <td>@Cart.Total.ToString("N0")원</td>
+                    <td colspan="3" class="text-end">@T("Total")</td>
+                    <td>@Money(Cart.Total)</td>
                     <td></td>
                 </tr>
             </tfoot>
         </table>
 
         <div class="text-end mt-3">
-            <a href="/@Slug/checkout" class="btn btn-primary btn-lg">결제하기</a>
+            <a href="@Localization.WithLanguage($"/{Slug}/checkout")" class="btn btn-primary btn-lg">@T("Checkout")</a>
         </div>
     }
 </div>
+}
 
 @code {
     [Parameter] public string Slug { get; set; } = string.Empty;
+
+    private string _loadedSlug = string.Empty;
+    private bool _tenantLookupCompleted;
+    private int _loadVersion;
+
+    protected override void OnInitialized()
+        => Localization.Changed += OnLanguageChanged;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        var requestedSlug = Slug;
+        if (_tenantLookupCompleted && _loadedSlug == requestedSlug) return;
+
+        var loadVersion = ++_loadVersion;
+        _tenantLookupCompleted = false;
+        Tenant.Config = null;
+
+        var cfg = await TenantStore.GetAsync(requestedSlug);
+        if (loadVersion != _loadVersion || requestedSlug != Slug) return;
+
+        Tenant.Config = cfg;
+        _loadedSlug = requestedSlug;
+        _tenantLookupCompleted = true;
+    }
+
+    private string T(string key) => ShopStorefrontText.Get(key, Localization.Language);
+    private string F(string key, params object?[] args) => ShopStorefrontText.Format(key, Localization.Language, args);
+    private string Money(decimal amount) => ShopStorefrontText.Money(amount, Localization.Language);
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 
     private void UpdateQty(int productId, ChangeEventArgs e)
     {
         if (int.TryParse(e.Value?.ToString(), out int qty))
             Cart.UpdateQuantity(productId, qty);
     }
+
+    public void Dispose() => Localization.Changed -= OnLanguageChanged;
 }

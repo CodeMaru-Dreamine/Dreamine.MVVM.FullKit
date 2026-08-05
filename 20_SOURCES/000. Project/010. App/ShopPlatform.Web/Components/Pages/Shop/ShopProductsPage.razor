@@ -6,12 +6,18 @@
 @inject ShopCustomerSession CustomerSession
 @inject ShopCustomerLoginSync CustomerLogin
 @inject NavigationManager Nav
+@inject ShopLocalization Localization
+@implements IDisposable
 
-<PageTitle>전체 상품 — @(Tenant.Config?.ShopName ?? "쇼핑몰")</PageTitle>
+<PageTitle>@T("AllProducts") — @(Tenant.Config?.ShopName ?? T("Shop"))</PageTitle>
 
-@if (!Tenant.IsResolved)
+@if (!_tenantLookupCompleted)
 {
-    <div class="container py-5 text-center"><h2>존재하지 않는 쇼핑몰입니다.</h2></div>
+    <div class="container py-5 text-center"><p class="text-muted">@T("Loading")</p></div>
+}
+else if (!Tenant.IsResolved)
+{
+    <div class="container py-5 text-center"><h2>@T("ShopUnavailable")</h2></div>
 }
 else
 {
@@ -20,7 +26,7 @@ else
     <!-- 헤더 -->
     <header class="ss-header">
         <div class="ss-header-inner">
-            <a href="/@Slug" class="ss-brand">
+            <a href="@Localization.WithLanguage($"/{Slug}")" class="ss-brand">
                 @if (!string.IsNullOrEmpty(cfg.LogoPath))
                 {
                     <img src="@cfg.LogoPath" class="ss-brand-logo" alt="@cfg.ShopName" />
@@ -28,25 +34,25 @@ else
                 <span class="ss-brand-name">@cfg.ShopName</span>
             </a>
             <nav class="ss-nav">
-                <a href="/@Slug">홈</a>
-                <a href="/@Slug/products" class="active">전체 상품</a>
+                <a href="@Localization.WithLanguage($"/{Slug}")">@T("Home")</a>
+                <a href="@Localization.WithLanguage($"/{Slug}/products")" class="active">@T("AllProducts")</a>
                 @if (cfg.ShowPlatformHomeLink)
                 {
-                    <a href="/">ShopStore 홈</a>
+                    <a href="@Localization.WithLanguage("/")">@T("PlatformHome")</a>
                 }
             </nav>
             <div class="ss-header-right">
                 @if (CustomerSession.IsLoggedIn)
                 {
                     <span class="ss-user-name">👤 @CustomerSession.User!.Name</span>
-                    <button class="btn btn-sm btn-outline-secondary" @onclick="LogoutCustomer">로그아웃</button>
+                    <button class="btn btn-sm btn-outline-secondary" @onclick="LogoutCustomer">@T("Logout")</button>
                 }
                 else
                 {
-                    <a href="/@Slug/login" class="btn btn-sm btn-outline-secondary">로그인</a>
-                    <a href="/@Slug/register" class="btn btn-sm btn-outline-primary">회원가입</a>
+                    <a href="@Localization.WithLanguage($"/{Slug}/login")" class="btn btn-sm btn-outline-secondary">@T("Login")</a>
+                    <a href="@Localization.WithLanguage($"/{Slug}/register")" class="btn btn-sm btn-outline-primary">@T("Register")</a>
                 }
-                <a href="/@Slug/cart" class="ss-cart-btn">
+                <a href="@Localization.WithLanguage($"/{Slug}/cart")" class="ss-cart-btn" aria-label="@T("Cart")">
                     🛒
                     @if (Cart.Count > 0)
                     {
@@ -61,29 +67,30 @@ else
         <section class="ss-products-page">
             <div class="container">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="ss-section-title mb-0">전체 상품</h2>
-                    <span class="text-muted small">총 @(_filtered.Count)개</span>
+                    <h2 class="ss-section-title mb-0">@T("AllProducts")</h2>
+                    <span class="text-muted small">@F("ProductCount", _filtered.Count)</span>
                 </div>
 
                 <!-- 검색/정렬 -->
                 <div class="ss-filters mb-4">
                     <input class="form-control ss-search"
-                           placeholder="상품명 검색..."
+                           placeholder="@T("SearchProducts")"
+                           aria-label="@T("SearchProducts")"
                            value="@_query"
                            @oninput="e => { _query = e.Value?.ToString() ?? string.Empty; ApplyFilter(); }" />
                     <select class="form-select ss-sort" @onchange="OnSortChange">
-                        <option value="name-asc">이름 ↑</option>
-                        <option value="name-desc">이름 ↓</option>
-                        <option value="price-asc">가격 낮은순</option>
-                        <option value="price-desc">가격 높은순</option>
+                        <option value="name-asc">@T("NameAsc")</option>
+                        <option value="name-desc">@T("NameDesc")</option>
+                        <option value="price-asc">@T("PriceLow")</option>
+                        <option value="price-desc">@T("PriceHigh")</option>
                     </select>
                 </div>
 
                 @if (_filtered.Count == 0)
                 {
                     <div class="text-center py-5 text-muted">
-                        <p>검색 결과가 없습니다.</p>
-                        <button class="btn btn-outline-secondary btn-sm" @onclick="ResetFilter">필터 초기화</button>
+                        <p>@T("NoSearchResults")</p>
+                        <button class="btn btn-outline-secondary btn-sm" @onclick="ResetFilter">@T("ResetFilters")</button>
                     </div>
                 }
                 else
@@ -92,7 +99,7 @@ else
                         @foreach (var p in _filtered)
                         {
                             <div class="ss-product-card">
-                                <a href="/@Slug/products/@p.Id" class="ss-product-img-wrap">
+                                <a href="@Localization.WithLanguage($"/{Slug}/products/{p.Id}")" class="ss-product-img-wrap">
                                     @if (!string.IsNullOrEmpty(p.ImagePath))
                                     {
                                         <img src="@p.ImagePath" alt="@p.Name" />
@@ -103,30 +110,30 @@ else
                                     }
                                     @if (!p.IsAvailable)
                                     {
-                                        <span class="ss-sold-out">품절</span>
+                                        <span class="ss-sold-out">@T("SoldOut")</span>
                                     }
                                 </a>
                                 <div class="ss-product-info">
                                     <h5 class="ss-product-name">
-                                        <a href="/@Slug/products/@p.Id" class="ss-product-name-link">@p.Name</a>
+                                        <a href="@Localization.WithLanguage($"/{Slug}/products/{p.Id}")" class="ss-product-name-link">@p.Name</a>
                                     </h5>
                                     @if (!string.IsNullOrEmpty(p.Description))
                                     {
                                         <p class="ss-product-desc">@p.Description</p>
                                     }
-                                    <p class="ss-product-price">@p.Price.ToString("N0")원</p>
+                                    <p class="ss-product-price">@Money(p.Price)</p>
                                     <div class="ss-product-actions">
-                                        <a href="/@Slug/products/@p.Id" class="btn btn-outline-primary btn-sm">자세히</a>
+                                        <a href="@Localization.WithLanguage($"/{Slug}/products/{p.Id}")" class="btn btn-outline-primary btn-sm">@T("Details")</a>
                                         @if (p.IsAvailable)
                                         {
                                             <button class="btn btn-primary btn-sm"
                                                     @onclick="() => AddToCart(p)">
-                                                🛒 담기
+                                                🛒 @T("Add")
                                             </button>
                                         }
                                         else
                                         {
-                                            <button class="btn btn-secondary btn-sm" disabled>품절</button>
+                                            <button class="btn btn-secondary btn-sm" disabled>@T("SoldOut")</button>
                                         }
                                     </div>
                                 </div>
@@ -148,17 +155,36 @@ else
     private List<ShopPlatform.Models.Product> _filtered = new();
     private string _query = string.Empty;
     private string _sort = "name-asc";
+    private string _loadedSlug = string.Empty;
+    private bool _tenantLookupCompleted;
+    private int _loadVersion;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
+        => Localization.Changed += OnLanguageChanged;
+
+    protected override async Task OnParametersSetAsync()
     {
-        await CustomerLogin.SyncAsync(Slug);
-        if (!Tenant.IsResolved)
-        {
-            var cfg = await TenantStore.GetAsync(Slug);
-            if (cfg != null) Tenant.Config = cfg;
-        }
+        var requestedSlug = Slug;
+        if (_tenantLookupCompleted && _loadedSlug == requestedSlug) return;
+
+        var loadVersion = ++_loadVersion;
+        _tenantLookupCompleted = false;
+        Tenant.Config = null;
+        _all.Clear();
+        _filtered.Clear();
+
+        var cfg = await TenantStore.GetAsync(requestedSlug);
+        if (loadVersion != _loadVersion || requestedSlug != Slug) return;
+
+        Tenant.Config = cfg;
+        _loadedSlug = requestedSlug;
+        _tenantLookupCompleted = true;
         if (!Tenant.IsResolved) return;
-        using var db = DbFactory.Create(Slug);
+
+        await CustomerLogin.SyncAsync(requestedSlug);
+        if (loadVersion != _loadVersion || requestedSlug != Slug) return;
+
+        using var db = DbFactory.Create(requestedSlug);
         _all = db.Products
             .Where(p => p.IsActive)
             .OrderByDescending(p => p.IsFeatured)
@@ -207,6 +233,17 @@ else
     private void LogoutCustomer()
     {
         CustomerSession.Logout();
-        Nav.NavigateTo($"https://codemaru.co.kr/_identity/signout?returnUrl={Uri.EscapeDataString(Nav.ToAbsoluteUri($"/{Slug}").ToString())}", forceLoad: true);
+        var returnPath = Localization.WithLanguage($"/{Slug}");
+        Nav.NavigateTo(Dreamine.Identity.DreamineIdentityPortal.CreateUrl(
+            "signout",
+            Nav.ToAbsoluteUri(returnPath).ToString(),
+            Localization.Language), forceLoad: true);
     }
+
+    private string T(string key) => ShopStorefrontText.Get(key, Localization.Language);
+    private string F(string key, params object?[] args) => ShopStorefrontText.Format(key, Localization.Language, args);
+    private string Money(decimal amount) => ShopStorefrontText.Money(amount, Localization.Language);
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Localization.Changed -= OnLanguageChanged;
 }

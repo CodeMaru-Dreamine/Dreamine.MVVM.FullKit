@@ -5,55 +5,68 @@
 @inject TenantDbContextFactory DbFactory
 @inject ShopCustomerSession Session
 @inject NavigationManager Nav
+@inject ShopLocalization Localization
+@implements IDisposable
 
-<PageTitle>회원가입 — @(Tenant.Config?.ShopName ?? "")</PageTitle>
+<PageTitle>@T("Register") — @(Tenant.Config?.ShopName ?? T("Shop"))</PageTitle>
 
+@if (!_tenantLookupCompleted)
+{
+    <div class="container py-5 text-center"><p class="text-muted">@T("Loading")</p></div>
+}
+else if (!Tenant.IsResolved)
+{
+    <div class="container py-5 text-center"><h2>@T("ShopUnavailable")</h2></div>
+}
+else
+{
 <div class="container py-5" style="max-width:480px">
     <div class="text-center mb-4">
-        <h2 class="fw-bold">회원가입</h2>
-        <p class="text-muted">@(Tenant.Config?.ShopName ?? "") 회원</p>
+        <h2 class="fw-bold">@T("Register")</h2>
+        <p class="text-muted">@(Tenant.Config?.ShopName ?? "") @T("Member")</p>
     </div>
 
     <div class="card shadow-sm">
         <div class="card-body p-4">
             <div class="mb-3">
-                <label class="form-label">이름 <span class="text-danger">*</span></label>
+                <label class="form-label">@T("Name") <span class="text-danger">*</span></label>
                 <input class="form-control" @bind="_name" @bind:event="oninput" />
             </div>
             <div class="mb-3">
-                <label class="form-label">이메일 <span class="text-danger">*</span></label>
+                <label class="form-label">@T("Email") <span class="text-danger">*</span></label>
                 <input class="form-control" type="email" @bind="_email" @bind:event="oninput" />
             </div>
             <div class="mb-3">
-                <label class="form-label">비밀번호 <span class="text-danger">*</span></label>
+                <label class="form-label">@T("Password") <span class="text-danger">*</span></label>
                 <input class="form-control" type="password" @bind="_password" @bind:event="oninput" />
             </div>
             <div class="mb-3">
-                <label class="form-label">비밀번호 확인</label>
+                <label class="form-label">@T("ConfirmPassword")</label>
                 <input class="form-control" type="password" @bind="_confirm" @bind:event="oninput" />
             </div>
             <div class="mb-3">
-                <label class="form-label">연락처</label>
+                <label class="form-label">@T("Phone")</label>
                 <input class="form-control" @bind="_phone" @bind:event="oninput" />
             </div>
             <div class="mb-3">
-                <label class="form-label">배송지 주소</label>
+                <label class="form-label">@T("Address")</label>
                 <input class="form-control" @bind="_address" @bind:event="oninput" />
             </div>
-            @if (!string.IsNullOrEmpty(_error))
+            @if (!string.IsNullOrEmpty(_errorKey))
             {
-                <div class="alert alert-danger py-2">@_error</div>
+                <div class="alert alert-danger py-2">@T(_errorKey)</div>
             }
             <button class="btn btn-primary w-100" @onclick="Register" disabled="@_loading">
-                @(_loading ? "가입 중..." : "회원가입")
+                @(_loading ? T("Registering") : T("Register"))
             </button>
             <hr />
             <p class="text-center mb-0 small">
-                이미 회원이신가요? <a href="/@Slug/login">로그인</a>
+                @T("AlreadyMember") <a href="@Localization.WithLanguage($"/{Slug}/login")">@T("Login")</a>
             </p>
         </div>
     </div>
 </div>
+}
 
 @code {
     [Parameter] public string Slug { get; set; } = string.Empty;
@@ -64,34 +77,44 @@
     private string _confirm = string.Empty;
     private string _phone = string.Empty;
     private string _address = string.Empty;
-    private string _error = string.Empty;
+    private string _errorKey = string.Empty;
     private bool _loading;
+    private bool _tenantLookupCompleted;
+    private int _loadVersion;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
+        => Localization.Changed += OnLanguageChanged;
+
+    protected override async Task OnParametersSetAsync()
     {
-        if (!Tenant.IsResolved)
-        {
-            var cfg = await TenantStore.GetAsync(Slug);
-            if (cfg != null) Tenant.Config = cfg;
-        }
+        var requestedSlug = Slug;
+        var loadVersion = ++_loadVersion;
+        _tenantLookupCompleted = false;
+        Tenant.Config = null;
+
+        var cfg = await TenantStore.GetAsync(requestedSlug);
+        if (loadVersion != _loadVersion || requestedSlug != Slug) return;
+
+        Tenant.Config = cfg;
+        _tenantLookupCompleted = true;
     }
 
     private async Task Register()
     {
-        _error = string.Empty;
+        _errorKey = string.Empty;
         if (string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
         {
-            _error = "이름, 이메일, 비밀번호는 필수입니다.";
+            _errorKey = "RegisterRequiredFields";
             return;
         }
         if (_password != _confirm)
         {
-            _error = "비밀번호가 일치하지 않습니다.";
+            _errorKey = "PasswordMismatch";
             return;
         }
         if (_password.Length < 8)
         {
-            _error = "비밀번호는 8자 이상이어야 합니다.";
+            _errorKey = "PasswordMinimum";
             return;
         }
         _loading = true;
@@ -99,7 +122,7 @@
         var emailLower = _email.Trim().ToLower();
         if (db.Users.Any(u => u.Email == emailLower))
         {
-            _error = "이미 가입된 이메일입니다.";
+            _errorKey = "EmailExists";
             _loading = false;
             return;
         }
@@ -114,6 +137,11 @@
         db.Users.Add(user);
         await db.SaveChangesAsync();
         Session.Login(user);
-        Nav.NavigateTo($"/{Slug}");
+        Nav.NavigateTo(Localization.WithLanguage($"/{Slug}"));
     }
+
+    private string T(string key) => ShopStorefrontText.Get(key, Localization.Language);
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Localization.Changed -= OnLanguageChanged;
 }

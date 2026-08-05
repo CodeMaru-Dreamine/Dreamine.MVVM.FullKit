@@ -9,6 +9,10 @@ using ShopPlatform.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Configuration.AddUserSecrets("codemaru-oauth-2ba4e1b2");
+// Keep the standard ASP.NET Core precedence after adding the shared secrets
+// explicitly: deployment environment variables and command-line values win.
+builder.Configuration.AddEnvironmentVariables();
+builder.Configuration.AddCommandLine(args);
 
 // ── 옵션 ─────────────────────────────────────────────────────────────
 var shopOpts = ShopOptions.From(builder.Configuration);
@@ -41,6 +45,7 @@ builder.Services.AddScoped<ShopCustomerSession>();
 builder.Services.AddScoped<ShopUserContext>();
 builder.Services.AddSingleton<ShopCustomerProfileStore>();
 builder.Services.AddScoped<ShopCustomerLoginSync>();
+builder.Services.AddScoped<ShopLocalization>();
 
 // ── Blazor Server ─────────────────────────────────────────────────────
 builder.Services.AddRazorComponents()
@@ -70,6 +75,11 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/shop-img"
 });
 
+// Keep static files ahead of endpoint matching. Without an explicit routing
+// boundary, root assets such as ShopPlatform.Web.styles.css can be captured by
+// the public /{Slug} Razor route and returned as HTML.
+app.UseRouting();
+
 // 테넌트 미들웨어: 경로에서 slug 추출 → TenantContext 주입
 app.UseMiddleware<TenantMiddleware>();
 
@@ -92,8 +102,11 @@ app.MapGet("/pay/{slug}/return", async (
     PaymentKeyProtector protector,
     IHttpClientFactory httpFactory,
     TenantDbContextFactory dbFactory,
+    ShopLocalization localization,
+    string? lang,
     CancellationToken cancellationToken) =>
 {
+    localization.SetLanguage(lang);
     var config = await store.GetAsync(slug);
     if (config == null) return Results.NotFound();
 
@@ -104,7 +117,13 @@ app.MapGet("/pay/{slug}/return", async (
 
     var result = await gateway.ConfirmAsync(paymentKey, orderId, amount);
     if (!result.Succeeded)
-        return Results.Redirect($"/{slug}/checkout?error={Uri.EscapeDataString(result.Error ?? "결제 실패")}");
+    {
+        var message = string.Equals(result.Error, "payment_key_not_configured", StringComparison.Ordinal)
+            ? localization["payment.keyMissing"]
+            : localization["payment.failed"];
+        return Results.Redirect(localization.WithLanguage(
+            $"/{slug}/checkout?error={Uri.EscapeDataString(message)}"));
+    }
 
     // 주문 상태 업데이트 + 재고 차감
     using var db = dbFactory.Create(slug);
@@ -119,11 +138,15 @@ app.MapGet("/pay/{slug}/return", async (
         await db.SaveChangesAsync(cancellationToken);
     }
 
-    return Results.Redirect($"/{slug}/order/{orderId}?paid=1");
+    return Results.Redirect(localization.WithLanguage($"/{slug}/order/{orderId}?paid=1"));
 });
 
-app.MapGet("/pay/{slug}/fail", (string slug, string? code, string? message) =>
-    Results.Redirect($"/{slug}/checkout?error={Uri.EscapeDataString(message ?? "결제가 취소되었습니다.")}"));
+app.MapGet("/pay/{slug}/fail", (string slug, string? code, string? message, string? lang, ShopLocalization localization) =>
+{
+    localization.SetLanguage(lang);
+    return Results.Redirect(localization.WithLanguage(
+        $"/{slug}/checkout?error={Uri.EscapeDataString(localization["payment.cancelled"])}"));
+});
 
 // ── Blazor Razor Components ───────────────────────────────────────────
 app.MapRazorComponents<ShopPlatform.Components.App>()

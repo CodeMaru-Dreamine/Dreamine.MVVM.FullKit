@@ -190,7 +190,7 @@ public sealed class TossPaymentGateway : IPaymentGateway
     {
         var secretKey = _protector.Unprotect(_config.TossSecretKeyEncrypted);
         if (string.IsNullOrEmpty(secretKey))
-            return new PaymentConfirmResult { Succeeded = false, Error = "결제 키가 설정되지 않았습니다." };
+            return new PaymentConfirmResult { Succeeded = false, Error = "payment_key_not_configured" };
 
         var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{secretKey}:"));
         var req = new HttpRequestMessage(HttpMethod.Post, $"{ApiBase}/payments/confirm");

@@ -5,8 +5,75 @@
     color: #e5e7eb;
 }
 
+/* The shared portal selector writes data-theme to <html>. System remains dark
+   unless the operating system requests light; explicit user choice wins. */
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) { color-scheme: light; background: #f8fafc; color: #172033; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) body { background: #f8fafc; color: #172033; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .page-shell { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 52%, #eef2ff 100%); }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .hero p,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .muted { color: #64748b !important; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .metric-card,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .event-card,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .cam-panel,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .auth-card,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-live-card,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-feature-card,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-step { background: #fff; color: #172033; border-color: #dbe3ef; box-shadow: 0 12px 32px rgba(15,23,42,.08); }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) input,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) textarea,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) select { background: #fff !important; color: #172033 !important; border-color: #cbd5e1 !important; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .cam-table th,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .cam-form label,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .auth-form label { color: #475569; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .cam-table td { border-color: #e2e8f0; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-hero { background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 60%, #e0f2fe 100%); border-color: #dbeafe; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-title { background: linear-gradient(135deg, #0f172a 0%, #2563eb 100%); background-clip: text; -webkit-background-clip: text; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-sub,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-feature-card p,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-step p,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-live-info span,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-download-req li { color: #64748b; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-live-section,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-features,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-footer { background: #f8fafc; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-steps { background: #f1f5f9; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-download { background: linear-gradient(135deg, #eff6ff 0%, #e2e8f0 100%); border-color: #cbd5e1; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-section-title,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-download-inner h2,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-feature-card strong,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-step strong,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-steps h2,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .home-live-info strong,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .guide-hero h1,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .guide-step-body h2,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .guide-faq h2,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .guide-faq-item strong { color: #172033; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .guide-step-body p,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .guide-list,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .guide-faq-item p { color: #475569; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .guide-list strong { color: #1e293b; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) code,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .guide-faq-item code { background: #e2e8f0; color: #0369a1; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .secondary,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .mini,
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .upload-btn { background: #e2e8f0; color: #334155; border-color: #cbd5e1; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .layout-btn { background: #fff; color: #475569; border-color: #cbd5e1; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .agent-login-box > div { background: #f8fafc; border-color: #dbe3ef; }
+:is(html[data-theme="light"], html:not([data-theme]):not(.system-dark)) .agent-login-box strong { color: #172033; }
+
 body { margin: 0; background: #0f172a; }
 a { color: #93c5fd; }
+
+/* Keep the shared portal header identical even when this app has no global
+   border-box reset. This also covers preference child components. */
+.dreamine-portal-header,
+.dreamine-portal-header *,
+.dreamine-portal-header *::before,
+.dreamine-portal-header *::after {
+    box-sizing: border-box;
+}
+
+#main-content { min-height: 100vh; padding-top: 64px; box-sizing: border-box; outline: none; }
 
 /* ── CodeMaru 공용 상단 네비 (통일 규격, 다크 테마) ─────── */
 .vms-topnav {
@@ -135,8 +202,36 @@ a { color: #93c5fd; }
     }
 }
 
+/* VMS has ten service links plus two preference selectors. Collapse the shared
+   portal header earlier so account/language controls never fall off-screen. */
+@media (min-width: 1101px) and (max-width: 1380px) {
+    .dreamine-portal-header .dreamine-portal-burger { display: flex !important; }
+    .dreamine-portal-header .dreamine-portal-nav {
+        position: absolute;
+        top: calc(100% + 1px);
+        right: .75rem;
+        display: none !important;
+        align-items: stretch;
+        flex-direction: column;
+        width: min(330px, calc(100vw - 1.5rem));
+        max-height: calc(100vh - 80px);
+        padding: .8rem;
+        overflow-y: auto;
+        color: var(--dreamine-portal-text, #334155);
+        background: var(--dreamine-portal-panel, #fff);
+        border: 1px solid var(--dreamine-portal-border, #dbe3ef);
+        border-radius: 12px;
+        box-shadow: var(--dreamine-portal-shadow, 0 14px 35px rgba(15, 23, 42, .18));
+    }
+    .dreamine-portal-header .dreamine-portal-nav.open { display: flex !important; }
+    .dreamine-portal-header .dreamine-portal-nav > a { width: 100%; }
+    .dreamine-portal-header .dreamine-portal-anonymous-preferences { align-items: stretch; flex-direction: column; }
+    .dreamine-portal-header .dreamine-portal-user-menu,
+    .dreamine-portal-header .dreamine-portal-user-badge { width: 100%; }
+}
+
 .page-shell {
-    min-height: 100vh;
+    min-height: calc(100vh - 64px);
     box-sizing: border-box;
     padding: 28px;
     background: linear-gradient(135deg, #0f172a 0%, #111827 50%, #1e293b 100%);
@@ -165,7 +260,7 @@ a { color: #93c5fd; }
 .badge.connecting { background: #92400e; color: #ffedd5; }
 .badge.faulted { background: #7f1d1d; color: #fee2e2; }
 .live-shell {
-    min-height: 100vh;
+    min-height: calc(100vh - 64px);
     display: flex;
     flex-direction: column;
 }
@@ -511,7 +606,7 @@ a { color: #93c5fd; }
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
+    min-height: calc(100vh - 64px);
     padding: 24px;
 }
 .auth-card {
@@ -644,7 +739,7 @@ a { color: #93c5fd; }
 }
 
 .home-shell {
-    min-height: 100vh;
+    min-height: calc(100vh - 64px);
     display: flex;
     flex-direction: column;
 }

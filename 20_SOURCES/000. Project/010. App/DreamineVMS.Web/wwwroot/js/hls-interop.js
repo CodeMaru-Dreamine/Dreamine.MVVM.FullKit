@@ -8,6 +8,27 @@
     const LOW_READY_LIMIT = 45;
     const STAGNANT_LIMIT = 60;
 
+    const messages = {
+        en: ['Waiting for stream…', 'Recovering stream…', 'Buffering stream…', 'Stream stopped.', 'Preparing stream…', 'Loading stream…', 'Starting playback…', 'Stream is not ready. Retrying…', 'Streaming is unavailable.'],
+        es: ['Esperando la transmisión…', 'Recuperando la transmisión…', 'Almacenando la transmisión…', 'Transmisión detenida.', 'Preparando la transmisión…', 'Cargando la transmisión…', 'Iniciando reproducción…', 'La transmisión no está lista. Reintentando…', 'La transmisión no está disponible.'],
+        fr: ['En attente du flux…', 'Récupération du flux…', 'Mise en mémoire du flux…', 'Flux arrêté.', 'Préparation du flux…', 'Chargement du flux…', 'Démarrage de la lecture…', 'Le flux n’est pas prêt. Nouvelle tentative…', 'Le streaming est indisponible.'],
+        it: ['In attesa dello streaming…', 'Ripristino dello streaming…', 'Buffering dello streaming…', 'Streaming interrotto.', 'Preparazione dello streaming…', 'Caricamento dello streaming…', 'Avvio della riproduzione…', 'Streaming non pronto. Nuovo tentativo…', 'Streaming non disponibile.'],
+        pt: ['Aguardando a transmissão…', 'Recuperando a transmissão…', 'Armazenando a transmissão…', 'Transmissão interrompida.', 'Preparando a transmissão…', 'Carregando a transmissão…', 'Iniciando reprodução…', 'A transmissão não está pronta. Tentando novamente…', 'Transmissão indisponível.'],
+        ko: ['스트림을 기다리는 중…', '스트림 복구 중…', '스트림 버퍼링 중…', '스트림이 중지되었습니다.', '스트림 준비 중…', '스트림 불러오는 중…', '재생 시작 중…', '스트림이 준비되지 않았습니다. 다시 시도 중…', '스트리밍을 사용할 수 없습니다.'],
+        ja: ['ストリームを待機中…', 'ストリームを復旧中…', 'ストリームをバッファリング中…', 'ストリームが停止しました。', 'ストリームを準備中…', 'ストリームを読み込み中…', '再生を開始中…', 'ストリームの準備ができていません。再試行中…', 'ストリーミングを利用できません。'],
+        'zh-hans': ['正在等待视频流…', '正在恢复视频流…', '正在缓冲视频流…', '视频流已停止。', '正在准备视频流…', '正在加载视频流…', '正在开始播放…', '视频流尚未就绪，正在重试…', '视频流不可用。'],
+        'zh-hant': ['正在等待串流…', '正在復原串流…', '正在緩衝串流…', '串流已停止。', '正在準備串流…', '正在載入串流…', '正在開始播放…', '串流尚未就緒，正在重試…', '串流無法使用。'],
+        vi: ['Đang chờ luồng…', 'Đang khôi phục luồng…', 'Đang tải bộ đệm…', 'Luồng đã dừng.', 'Đang chuẩn bị luồng…', 'Đang tải luồng…', 'Đang bắt đầu phát…', 'Luồng chưa sẵn sàng. Đang thử lại…', 'Không thể phát trực tuyến.']
+    };
+    const messageKeys = ['waiting', 'recovering', 'buffering', 'stopped', 'preparing', 'loading', 'starting', 'retrying', 'unavailable'];
+    function ui(key) {
+        let language = (document.documentElement.lang || 'ko').toLowerCase();
+        if (language === 'zh' || language === 'zh-cn' || language === 'zh-sg') language = 'zh-hans';
+        if (language === 'zh-tw' || language === 'zh-hk' || language === 'zh-mo') language = 'zh-hant';
+        const values = messages[language] || messages.ko;
+        return values[messageKeys.indexOf(key)] || key;
+    }
+
     function sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -79,7 +100,7 @@
 
         while (Date.now() - started < timeoutMs) {
             try {
-                setTileStatus(video, 'Waiting for HLS segment...', true);
+                setTileStatus(video, ui('waiting'), true);
 
                 const response = await fetch(addCacheBuster(playlistUrl), {
                     method: 'GET',
@@ -146,19 +167,19 @@
     function wireVideoRecoveryEvents(elementId, source, video) {
         const restart = function (reason) {
             console.warn(LOG, 'video recovery event:', elementId, reason);
-            setTileStatus(video, `Recovering stream (${reason})...`, true);
+            setTileStatus(video, ui('recovering'), true);
             scheduleRetry(elementId, source, RESTART_DELAY_MS);
         };
 
         video.onstalled = function () {
-            setTileStatus(video, 'Buffering stream...', true);
+            setTileStatus(video, ui('buffering'), true);
             safePlay(video, elementId);
         };
         video.onerror = function () { restart('video error'); };
         video.onemptied = function () { restart('emptied'); };
         video.onsuspend = function () { safePlay(video, elementId); };
         video.onwaiting = function () {
-            setTileStatus(video, 'Buffering stream...', true);
+            setTileStatus(video, ui('buffering'), true);
         };
         video.onplaying = function () { setTileStatus(video, null, false); };
         video.oncanplay = function () { setTileStatus(video, null, false); };
@@ -175,7 +196,7 @@
         if (!player) {
             const video = document.getElementById(elementId);
             if (video) {
-                setTileStatus(video, reason || 'Stream stopped.', false);
+                setTileStatus(video, reason || ui('stopped'), false);
             }
             return;
         }
@@ -203,7 +224,7 @@
                 player.video.oncanplay = null;
                 player.video.ontimeupdate = null;
                 player.video.onloadeddata = null;
-                setTileStatus(player.video, reason || 'Stream stopped.', false);
+                setTileStatus(player.video, reason || ui('stopped'), false);
                 player.video.pause();
                 player.video.removeAttribute('src');
                 player.video.load();
@@ -243,7 +264,7 @@
                 lowReadyCount++;
 
                 if (video.videoWidth <= 0) {
-                    setTileStatus(video, 'Waiting for stream data...', true);
+                    setTileStatus(video, ui('waiting'), true);
                 }
 
                 if (lowReadyCount >= LOW_READY_LIMIT) {
@@ -275,7 +296,7 @@
 
             if (current.hls) {
                 try {
-                    setTileStatus(video, 'Recovering HLS buffer...', true);
+                    setTileStatus(video, ui('recovering'), true);
                     current.hls.startLoad(-1);
                     awaitMicrotaskSafePlay(video, elementId);
                     return;
@@ -321,7 +342,7 @@
             }
 
             if (video.readyState < 2) {
-                setTileStatus(video, 'Waiting for stream data...', true);
+                setTileStatus(video, ui('waiting'), true);
             }
 
             await safePlay(video, elementId);
@@ -331,12 +352,12 @@
         destroy(elementId);
         configureVideo(video);
         wireVideoRecoveryEvents(elementId, source, video);
-        setTileStatus(video, 'Preparing HLS stream...', true);
+        setTileStatus(video, ui('preparing'), true);
 
         const ready = await waitUntilReady(source, READY_TIMEOUT_MS, READY_INTERVAL_MS, video);
         if (!ready) {
             console.warn(LOG, 'playlist or segment was not ready. Starting hls.js anyway with retry:', source);
-            setTileStatus(video, 'HLS not ready. Retrying...', true);
+            setTileStatus(video, ui('retrying'), true);
         }
 
         const playbackSource = addCacheBuster(source);
@@ -368,7 +389,7 @@
 
             hls.on(window.Hls.Events.MEDIA_ATTACHED, function () {
                 console.log(LOG, 'media attached, loading source:', playbackSource);
-                setTileStatus(video, 'Loading HLS manifest...', true);
+                setTileStatus(video, ui('loading'), true);
                 hls.loadSource(playbackSource);
                 hls.startLoad(-1);
             });
@@ -376,7 +397,7 @@
             hls.on(window.Hls.Events.MANIFEST_PARSED, function (_event, data) {
                 const levelCount = data && data.levels ? data.levels.length : 'n/a';
                 console.log(LOG, 'manifest parsed:', elementId, 'levels:', levelCount);
-                setTileStatus(video, 'Starting playback...', true);
+                setTileStatus(video, ui('starting'), true);
                 safePlay(video, elementId);
             });
 
@@ -399,7 +420,7 @@
                     'details:', data.details,
                     'fatal:', data.fatal);
 
-                setTileStatus(video, `Recovering HLS (${data.details || data.type})...`, true);
+                setTileStatus(video, ui('recovering'), true);
 
                 if (!data.fatal) {
                     try { hls.startLoad(-1); } catch { }
@@ -442,7 +463,7 @@
 
         console.error(LOG, 'hls.js is not available and native HLS is not supported:', elementId);
         players.set(elementId, { video: video, hls: null, source: source, watchdogId: null, retryTimerId: null });
-        setTileStatus(video, 'hls.js not loaded. Check network or bundle hls.min.js locally.', true);
+        setTileStatus(video, ui('unavailable'), true);
         scheduleRetry(elementId, source, 5000);
     }
 
@@ -464,7 +485,7 @@
         }
 
         if (video.readyState < 2) {
-            setTileStatus(video, 'Waiting for stream data...', true);
+            setTileStatus(video, ui('waiting'), true);
         }
 
         await safePlay(video, elementId);
@@ -488,7 +509,7 @@
     });
 
     window.dreamineVmsHls = {
-        version: '2026.06.15.3',
+        version: '2026.08.05.1',
         init: init,
         ensure: ensure,
         ensureOrInit: ensure,

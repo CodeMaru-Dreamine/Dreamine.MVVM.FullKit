@@ -9,34 +9,40 @@
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @inject ShopOptions Opts
+@inject ShopLocalization Localization
+@implements IDisposable
 
-<PageTitle>결제 — @(Tenant.Config?.ShopName ?? "")</PageTitle>
+<PageTitle>@T("Payment") — @(Tenant.Config?.ShopName ?? T("Shop"))</PageTitle>
 
-@if (_tenant == null)
+@if (!_tenantLookupCompleted)
 {
-    <div class="container py-5 text-center"><p class="text-muted">로딩 중...</p></div>
+    <div class="container py-5 text-center"><p class="text-muted">@T("Loading")</p></div>
+}
+else if (_tenant == null)
+{
+    <div class="container py-5 text-center"><h2>@T("ShopUnavailable")</h2></div>
 }
 else if (Cart.Count == 0)
 {
     <div class="container py-5 text-center">
-        <p class="text-muted">장바구니가 비어 있습니다.</p>
-        <a href="/@Slug" class="btn btn-primary">쇼핑 계속하기</a>
+        <p class="text-muted">@T("CartEmpty")</p>
+        <a href="@Localization.WithLanguage($"/{Slug}")" class="btn btn-primary">@T("ContinueShopping")</a>
     </div>
 }
 else
 {
     <div class="container py-4" style="max-width:780px">
-        <h2 class="fw-bold mb-1">💳 결제 진행</h2>
-        <a href="/@Slug/cart" class="btn btn-link ps-0 mb-3">← 장바구니로</a>
+        <h2 class="fw-bold mb-1">💳 @T("PaymentProcess")</h2>
+        <a href="@Localization.WithLanguage($"/{Slug}/cart")" class="btn btn-link ps-0 mb-3">← @T("BackToCart")</a>
 
-        @if (!string.IsNullOrEmpty(_error))
+        @if (!string.IsNullOrEmpty(_errorKey))
         {
-            <div class="alert alert-danger">@_error</div>
+            <div class="alert alert-danger">@T(_errorKey)</div>
         }
 
         <!-- 주문 상품 요약 -->
         <div class="card mb-4 shadow-sm">
-            <div class="card-header fw-semibold">주문 상품</div>
+            <div class="card-header fw-semibold">@T("OrderItems")</div>
             <div class="card-body p-0">
                 <table class="table align-middle mb-0">
                     <tbody>
@@ -44,14 +50,14 @@ else
                         {
                             <tr>
                                 <td class="ps-3">@item.ProductName <small class="text-muted">× @item.Quantity</small></td>
-                                <td class="text-end pe-3">@item.Subtotal.ToString("N0")원</td>
+                                <td class="text-end pe-3">@Money(item.Subtotal)</td>
                             </tr>
                         }
                     </tbody>
                     <tfoot>
                         <tr class="table-light fw-bold">
-                            <td class="ps-3">합계</td>
-                            <td class="text-end pe-3 text-primary">@Cart.Total.ToString("N0")원</td>
+                            <td class="ps-3">@T("Total")</td>
+                            <td class="text-end pe-3 text-primary">@Money(Cart.Total)</td>
                         </tr>
                     </tfoot>
                 </table>
@@ -62,24 +68,24 @@ else
             <!-- 주문자 정보 -->
             <div class="col-12 col-lg-6">
                 <div class="card shadow-sm">
-                    <div class="card-header fw-semibold">주문자 정보</div>
+                    <div class="card-header fw-semibold">@T("CustomerInfo")</div>
                     <div class="card-body">
                         @if (CustomerSession.IsLoggedIn)
                         {
                             <div class="alert alert-light py-2 mb-3 small">
-                                👤 <strong>@CustomerSession.User!.Name</strong> 님으로 주문합니다.
+                                👤 @((MarkupString)F("OrderingAs", $"<strong>{System.Net.WebUtility.HtmlEncode(CustomerSession.User!.Name)}</strong>"))
                             </div>
                         }
                         <div class="mb-3">
-                            <label class="form-label">이름 <span class="text-danger">*</span></label>
+                            <label class="form-label">@T("Name") <span class="text-danger">*</span></label>
                             <input class="form-control" @bind="_name" @bind:event="oninput" />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">연락처 <span class="text-danger">*</span></label>
+                            <label class="form-label">@T("Phone") <span class="text-danger">*</span></label>
                             <input class="form-control" @bind="_phone" @bind:event="oninput" />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">이메일</label>
+                            <label class="form-label">@T("Email")</label>
                             <input class="form-control" type="email" @bind="_email" @bind:event="oninput" />
                         </div>
                     </div>
@@ -89,15 +95,15 @@ else
             <!-- 배송지 정보 -->
             <div class="col-12 col-lg-6">
                 <div class="card shadow-sm">
-                    <div class="card-header fw-semibold">배송지 정보</div>
+                    <div class="card-header fw-semibold">@T("ShippingInfo")</div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label">배송 주소 <span class="text-danger">*</span></label>
+                            <label class="form-label">@T("ShippingAddress") <span class="text-danger">*</span></label>
                             <input class="form-control" @bind="_address" @bind:event="oninput" />
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">요청 사항</label>
-                            <input class="form-control" @bind="_memo" @bind:event="oninput" placeholder="예) 문 앞에 놓아주세요" />
+                            <label class="form-label">@T("RequestNotes")</label>
+                            <input class="form-control" @bind="_memo" @bind:event="oninput" placeholder="@T("RequestPlaceholder")" />
                         </div>
                     </div>
                 </div>
@@ -106,33 +112,33 @@ else
             <!-- 결제 수단 -->
             <div class="col-12">
                 <div class="card shadow-sm">
-                    <div class="card-header fw-semibold">결제 수단</div>
+                    <div class="card-header fw-semibold">@T("PaymentMethod")</div>
                     <div class="card-body">
                         <div class="d-flex flex-column gap-2 mb-3">
                             <label class="form-check">
                                 <input type="radio" class="form-check-input" name="payMethod"
                                        checked="@(_method == "card")"
                                        @onchange='() => OnMethodChange("card")' />
-                                <span class="ms-2">카드 (카카오/네이버 포함)</span>
+                                <span class="ms-2">@T("CardMethod")</span>
                             </label>
                             <label class="form-check">
                                 <input type="radio" class="form-check-input" name="payMethod"
                                        checked="@(_method == "transfer")"
                                        @onchange='() => OnMethodChange("transfer")' />
-                                <span class="ms-2">계좌 이체 (데모)</span>
+                                <span class="ms-2">@T("TransferDemo")</span>
                             </label>
                             <label class="form-check">
                                 <input type="radio" class="form-check-input" name="payMethod"
                                        checked="@(_method == "virtual")"
                                        @onchange='() => OnMethodChange("virtual")' />
-                                <span class="ms-2">가상 계좌 (데모)</span>
+                                <span class="ms-2">@T("VirtualDemo")</span>
                             </label>
                         </div>
 
                         @if (!_tenant.Payment.IsEnabled && _method == "card")
                         {
                             <div class="alert alert-info mb-0">
-                                <strong>데모 모드</strong> — 결제 연동은 어드민 → 결제 설정에서 토스 API 키를 입력하면 활성화됩니다.
+                                <strong>@T("DemoMode")</strong> — @T("DemoModeHelp")
                             </div>
                         }
                         else if (_method == "card")
@@ -147,20 +153,20 @@ else
 
             <!-- 하단 버튼 -->
             <div class="col-12 d-flex justify-content-between align-items-center">
-                <a href="/@Slug/cart" class="btn btn-outline-secondary">장바구니로</a>
+                <a href="@Localization.WithLanguage($"/{Slug}/cart")" class="btn btn-outline-secondary">@T("BackToCart")</a>
 
                 @if (!_tenant.Payment.IsEnabled || _method != "card")
                 {
                     <button class="btn btn-primary btn-lg" @onclick="PlaceDemoOrder" disabled="@_processing">
-                        @(_processing ? "처리 중..." : $"주문하기 (데모) — {Cart.Total:N0}원")
+                        @(_processing ? T("Processing") : F("PlaceDemoOrder", Money(Cart.Total)))
                     </button>
                 }
                 else
                 {
                     <button class="btn btn-success btn-lg" @onclick="PayOrSubmit" disabled="@_processing">
-                        @(_processing ? "처리 중..."
-                          : _widgetReady ? "카드로 결제하기"
-                          : "카드 결제 수단 열기")
+                        @(_processing ? T("Processing")
+                          : _widgetReady ? T("PayByCard")
+                          : T("OpenCardMethods"))
                     </button>
                 }
             </div>
@@ -169,7 +175,7 @@ else
         @if (!CustomerSession.IsLoggedIn)
         {
             <p class="text-center text-muted small mt-4">
-                <a href="/@Slug/login?returnUrl=/@Slug/checkout">로그인</a>하면 배송 정보가 자동으로 채워집니다.
+                <a href="@LoginUrl">@T("Login")</a>@T("LoginAutoFill")
             </p>
         }
     </div>
@@ -184,22 +190,45 @@ else
     private string _phone   = string.Empty;
     private string _address = string.Empty;
     private string _memo    = string.Empty;
-    private string _error   = string.Empty;
+    private string _errorKey = string.Empty;
     private string _method  = "card";
     private bool   _processing;
     private bool   _widgetReady;
     private string? _successUrl;
     private string? _failUrl;
+    private string _loadedSlug = string.Empty;
+    private bool _tenantLookupCompleted;
+    private int _loadVersion;
+    private string LoginUrl => Localization.WithLanguage(
+        $"/{Slug}/login?returnUrl={Uri.EscapeDataString($"/{Slug}/checkout")}");
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
+        => Localization.Changed += OnLanguageChanged;
+
+    protected override async Task OnParametersSetAsync()
     {
-        await CustomerLogin.SyncAsync(Slug);
-        if (!Tenant.IsResolved)
-        {
-            var cfg = await TenantStore.GetAsync(Slug);
-            if (cfg != null) Tenant.Config = cfg;
-        }
-        _tenant = Tenant.Config;
+        var requestedSlug = Slug;
+        if (_tenantLookupCompleted && _loadedSlug == requestedSlug) return;
+
+        var loadVersion = ++_loadVersion;
+        _tenantLookupCompleted = false;
+        Tenant.Config = null;
+        _tenant = null;
+        _widgetReady = false;
+        _successUrl = _failUrl = null;
+        _errorKey = string.Empty;
+
+        var cfg = await TenantStore.GetAsync(requestedSlug);
+        if (loadVersion != _loadVersion || requestedSlug != Slug) return;
+
+        Tenant.Config = cfg;
+        _tenant = cfg;
+        _loadedSlug = requestedSlug;
+        _tenantLookupCompleted = true;
+        if (_tenant == null) return;
+
+        await CustomerLogin.SyncAsync(requestedSlug);
+        if (loadVersion != _loadVersion || requestedSlug != Slug) return;
 
         if (CustomerSession.IsLoggedIn)
         {
@@ -234,14 +263,14 @@ else
     private async Task OpenTossWidget()
     {
         _processing = true;
-        _error = string.Empty;
+        _errorKey = string.Empty;
         try
         {
             // 서버측: 주문 ID 생성 및 URL 구성
             var orderId = GenerateOrderId();
             var baseUrl = Opts.BaseUrl.TrimEnd('/');
-            _successUrl = $"{baseUrl}/pay/{Slug}/return";
-            _failUrl    = $"{baseUrl}/pay/{Slug}/fail";
+            _successUrl = Localization.WithLanguage($"{baseUrl}/pay/{Slug}/return");
+            _failUrl    = Localization.WithLanguage($"{baseUrl}/pay/{Slug}/fail");
 
             var clientKey    = _tenant!.Payment.TossClientKey;
             var customerIdRaw = !string.IsNullOrEmpty(_email) ? _email
@@ -276,13 +305,13 @@ else
                 (double)Cart.Total,
                 clientKey,
                 customerIdRaw,
-                $"{Tenant.Config!.ShopName} 주문");
+                F("ShopOrder", Tenant.Config!.ShopName));
 
             _widgetReady = true;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _error = ex.Message;
+            _errorKey = "PaymentError";
         }
         finally { _processing = false; }
     }
@@ -335,20 +364,34 @@ else
         }
         await db.SaveChangesAsync();
         Cart.Clear();
-        Nav.NavigateTo($"/{Slug}/order/{orderNo}?demo=1");
+        Nav.NavigateTo(Localization.WithLanguage($"/{Slug}/order/{orderNo}?demo=1"));
     }
 
     private bool Validate()
     {
         if (string.IsNullOrWhiteSpace(_name) || string.IsNullOrWhiteSpace(_address))
         {
-            _error = "이름과 배송 주소는 필수입니다.";
+            _errorKey = "RequiredCheckout";
             return false;
         }
-        _error = string.Empty;
+        _errorKey = string.Empty;
         return true;
     }
 
     private static string GenerateOrderId() =>
         $"ORD-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid():N}"[..36];
+
+    private string T(string key) => ShopStorefrontText.Get(key, Localization.Language);
+    private string F(string key, params object?[] args) => ShopStorefrontText.Format(key, Localization.Language, args);
+    private string Money(decimal amount) => ShopStorefrontText.Money(amount, Localization.Language);
+    private void OnLanguageChanged()
+    {
+        if (!string.IsNullOrEmpty(_successUrl))
+            _successUrl = Localization.WithLanguage(_successUrl);
+        if (!string.IsNullOrEmpty(_failUrl))
+            _failUrl = Localization.WithLanguage(_failUrl);
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => Localization.Changed -= OnLanguageChanged;
 }

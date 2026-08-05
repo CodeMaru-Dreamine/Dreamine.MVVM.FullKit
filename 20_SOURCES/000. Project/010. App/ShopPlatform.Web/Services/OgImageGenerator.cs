@@ -90,13 +90,13 @@ public static class OgImageGenerator
         using var titleFont = new Font("Malgun Gothic", 62, FontStyle.Bold, GraphicsUnit.Pixel);
         using var titleBrush = new SolidBrush(Color.White);
         var titleSf = new StringFormat { Alignment = StringAlignment.Center };
-        g.DrawString("ShopPlatform", titleFont, titleBrush, new RectangleF(0, 295, W, 80), titleSf);
+        g.DrawString("ShopStore", titleFont, titleBrush, new RectangleF(0, 295, W, 80), titleSf);
 
         // 부제목
         using var subFont = new Font("Malgun Gothic", 30, FontStyle.Regular, GraphicsUnit.Pixel);
         using var subBrush = new SolidBrush(Color.FromArgb(200, 255, 255, 255));
         var subSf = new StringFormat { Alignment = StringAlignment.Center };
-        g.DrawString("나만의 온라인 쇼핑몰을 시작하세요", subFont, subBrush, new RectangleF(0, 378, W, 50), subSf);
+        g.DrawString("by CodeMaru", subFont, subBrush, new RectangleF(0, 378, W, 50), subSf);
 
         // 하단 URL 배지
         using var badgeBrush = new SolidBrush(Color.FromArgb(50, 255, 255, 255));
