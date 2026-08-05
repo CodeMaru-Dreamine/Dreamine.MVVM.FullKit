@@ -4,13 +4,14 @@
 @inject VmsAuthState AuthState
 @inject NavigationManager Nav
 @inject IJSRuntime JS
+@inject VmsLocalization Text
 
-<PageTitle>로그아웃 — Dreamine VMS</PageTitle>
+<PageTitle>@Text["logout"] — Dreamine VMS</PageTitle>
 
 <div class="page-shell auth-shell">
     <div class="auth-card">
-        <h1>로그아웃</h1>
-        <p class="muted">로그인 상태를 정리하고 있습니다.</p>
+        <h1>@Text["logout"]</h1>
+        <p class="muted">@Text["signing.out"]</p>
     </div>
 </div>
 
@@ -23,7 +24,6 @@
         }
 
         await AuthState.SignOutAsync(JS);
-        var returnUrl = Uri.EscapeDataString(Nav.BaseUri);
-        Nav.NavigateTo($"https://codemaru.co.kr/_identity/signout?returnUrl={returnUrl}", forceLoad: true);
+        Nav.NavigateTo(Dreamine.Identity.DreamineIdentityPortal.CreateUrl("signout", Nav.BaseUri, Text.Language), forceLoad: true);
     }
 }

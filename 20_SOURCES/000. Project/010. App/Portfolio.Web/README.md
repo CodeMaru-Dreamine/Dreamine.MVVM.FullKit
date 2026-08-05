@@ -42,6 +42,10 @@ Provides project data, galleries and video, resume content, search and filters, 
 dotnet run --project "Portfolio.Web.csproj"
 ```
 
+Keep the super-administrator credential out of `appsettings.json`. Supply it
+through user secrets for development or the `Portfolio__SuperAdminPassword`
+environment variable in production, and rotate it if it has ever been committed.
+
 ## Generate API documentation
 
 ```powershell

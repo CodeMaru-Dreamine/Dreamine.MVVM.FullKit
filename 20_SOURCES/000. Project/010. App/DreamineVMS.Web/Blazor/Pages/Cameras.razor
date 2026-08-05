@@ -3,31 +3,33 @@
 @using DreamineVMS.Web.Models
 @using DreamineVMS.Web.Services.Auth
 @using DreamineVMS.Web.Services.Cameras
+@implements IDisposable
 @inject IVmsCameraRepository Repository
 @inject VmsAuthState AuthState
 @inject VmsUserService UserService
+@inject VmsLocalization Text
 @inject NavigationManager Nav
 @inject IJSRuntime JS
 @inject IHttpClientFactory HttpClientFactory
 
-<PageTitle>카메라 관리 — Dreamine VMS</PageTitle>
+<PageTitle>@T("page.title")</PageTitle>
 
 <div class="page-shell">
     <div class="hero">
         <div>
-            <a href="/" style="font-size:0.85rem;color:#6b7280;text-decoration:none;display:inline-block;margin-bottom:0.4rem;">← 홈으로</a>
-            <h1>카메라 관리</h1>
+            <a href="@LocalizedPath("/")" style="font-size:0.85rem;color:#6b7280;text-decoration:none;display:inline-block;margin-bottom:0.4rem;">← @T("back.home")</a>
+            <h1>@T("heading")</h1>
             @if (AuthState.CurrentUser is not null)
             {
-                <p>@AuthState.CurrentUser.DisplayName 님 · 공개 링크: <a href="/@AuthState.CurrentUser.PublicSlug/live" target="_blank">/@AuthState.CurrentUser.PublicSlug/live</a></p>
+                <p>@AuthState.CurrentUser.DisplayName · @T("public.link"): <a href="@LocalizedPath($"/{AuthState.CurrentUser.PublicSlug}/live")" target="_blank">/@AuthState.CurrentUser.PublicSlug/live</a></p>
             }
         </div>
         <div class="action-toolbar">
             @if (AuthState.CurrentUser is not null)
             {
-                <a class="primary link-button" href="/@AuthState.CurrentUser.PublicSlug/live">내 라이브</a>
+                <a class="primary link-button" href="@LocalizedPath($"/{AuthState.CurrentUser.PublicSlug}/live")">@T("my.live")</a>
             }
-            <a class="secondary link-button" href="/logout">로그아웃</a>
+            <a class="secondary link-button" href="@LocalizedPath("/logout")">@T("logout")</a>
         </div>
     </div>
 
@@ -37,32 +39,32 @@
     }
 
     <section class="event-card">
-        <h3>에이전트 연결 계정</h3>
+        <h3>@T("agent.account")</h3>
         <p class="muted" style="margin-bottom:1rem;">
-            PC에 설치한 Dreamine VMS 에이전트에서 아래 이메일과 여기서 설정한 비밀번호로 로그인합니다.
+            @T("agent.description")
         </p>
         <div class="agent-login-box">
             <div>
-                <span>에이전트 이메일</span>
+                <span>@T("agent.email")</span>
                 <strong>@(AuthState.CurrentUser?.Email ?? "-")</strong>
             </div>
             <div>
-                <span>비밀번호 상태</span>
-                <strong>@(_hasAgentPassword ? "설정됨" : "미설정")</strong>
+                <span>@T("password.status")</span>
+                <strong>@(_hasAgentPassword ? T("status.configured") : T("status.not.configured"))</strong>
             </div>
         </div>
         <div class="cam-form">
             <div class="cam-form-row agent-password-row">
                 <label>
-                    새 에이전트 비밀번호
-                    <input type="password" @bind="_agentPassword" @bind:event="oninput" placeholder="8자 이상" />
+                    @T("new.agent.password")
+                    <input type="password" @bind="_agentPassword" @bind:event="oninput" placeholder="@T("placeholder.password.min")" />
                 </label>
                 <label>
-                    비밀번호 확인
-                    <input type="password" @bind="_agentPasswordConfirm" @bind:event="oninput" placeholder="한 번 더 입력" />
+                    @T("password.confirmation")
+                    <input type="password" @bind="_agentPasswordConfirm" @bind:event="oninput" placeholder="@T("placeholder.password.repeat")" />
                 </label>
                 <button class="primary" @onclick="SaveAgentPasswordAsync" disabled="@_agentPasswordBusy">
-                    @(_agentPasswordBusy ? "저장 중..." : "비밀번호 저장")
+                    @(_agentPasswordBusy ? T("saving") : T("save.password"))
                 </button>
             </div>
         </div>
@@ -70,26 +72,26 @@
 
     <!-- 카카오 / SNS 공유 미리보기 설정 -->
     <section class="event-card">
-        <h3>카카오 공유 미리보기 설정</h3>
-        <p class="muted" style="margin-bottom:1rem;">카카오톡으로 내 라이브 링크를 공유할 때 표시되는 제목, 설명, 이미지를 설정합니다.</p>
+        <h3>@T("share.settings")</h3>
+        <p class="muted" style="margin-bottom:1rem;">@T("share.description")</p>
 
         <div class="cam-form">
             <label class="cam-form-full">
-                제목
-                <input @bind="_ogTitle" placeholder="@(AuthState.CurrentUser?.DisplayName) CCTV Live" />
+                @T("field.title")
+                <input @bind="_ogTitle" placeholder="@TF("placeholder.share.title", AuthState.CurrentUser?.DisplayName ?? string.Empty)" />
             </label>
             <label class="cam-form-full">
-                설명
-                <input @bind="_ogDescription" placeholder="실시간 카메라 스트림입니다." />
+                @T("field.description")
+                <input @bind="_ogDescription" placeholder="@T("placeholder.share.description")" />
             </label>
             <label class="cam-form-full">
-                이미지
+                @T("field.image")
                 <div style="display:flex;gap:10px;align-items:center;margin-top:6px;flex-wrap:wrap;">
                     <label class="upload-btn" style="cursor:pointer;">
-                        <span>📁 이미지 업로드</span>
+                        <span>@T("upload.image")</span>
                         <InputFile OnChange="UploadOgImageAsync" accept="image/*" style="display:none;" />
                     </label>
-                    <span style="color:#6b7280;font-size:0.82em;">또는 URL 직접 입력 (JPG·PNG·WebP, 최대 5MB)</span>
+                    <span style="color:#6b7280;font-size:0.82em;">@T("upload.hint")</span>
                 </div>
                 <input @bind="_ogImage" placeholder="https://..." style="margin-top:8px;" />
             </label>
@@ -97,7 +99,7 @@
             @if (!string.IsNullOrWhiteSpace(_ogImage))
             {
                 <div style="margin-bottom:1rem;">
-                    <img src="@_ogImage" alt="OG 이미지 미리보기"
+                    <img src="@_ogImage" alt="@T("preview.alt")"
                          style="max-width:300px;max-height:160px;border-radius:8px;border:1px solid #374151;" />
                 </div>
             }
@@ -108,12 +110,12 @@
 
             <div class="cam-form-actions">
                 <button class="primary" @onclick="SaveOgAsync" disabled="@_ogBusy">
-                    @(_ogBusy ? "저장 중..." : "저장")
+                    @(_ogBusy ? T("saving") : T("save"))
                 </button>
                 @if (AuthState.CurrentUser is not null)
                 {
-                    <a class="secondary link-button" href="/@AuthState.CurrentUser.PublicSlug/live" target="_blank">
-                        내 라이브 열기
+                    <a class="secondary link-button" href="@LocalizedPath($"/{AuthState.CurrentUser.PublicSlug}/live")" target="_blank">
+                        @T("open.my.live")
                     </a>
                 }
             </div>
@@ -122,12 +124,12 @@
 
     <!-- 카메라 목록 (에이전트 앱에서 자동 동기화됨) -->
     <section class="event-card">
-        <h3>등록된 카메라 (@_cameras.Count 개)</h3>
-        <p class="muted" style="margin-bottom:1rem;">카메라는 Dreamine VMS 에이전트 앱에서 관리합니다. 앱이 연결되면 자동으로 동기화됩니다.</p>
+        <h3>@TF("cameras.registered", _cameras.Count)</h3>
+        <p class="muted" style="margin-bottom:1rem;">@T("cameras.description")</p>
 
         @if (_cameras.Count == 0)
         {
-            <p class="muted">에이전트 앱에서 카메라를 추가하고 연결하세요.</p>
+            <p class="muted">@T("cameras.empty")</p>
         }
         else
         {
@@ -136,11 +138,11 @@
                     <thead>
                         <tr>
                             <th>#</th>
-                            <th>이름</th>
-                            <th>호스트</th>
-                            <th>상태</th>
-                            <th>공개</th>
-                            <th></th>
+                            <th>@T("table.name")</th>
+                            <th>@T("table.host")</th>
+                            <th>@T("table.status")</th>
+                            <th>@T("table.visibility")</th>
+                            <th>@T("table.actions")</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -152,16 +154,16 @@
                                 <td>@cam.Host</td>
                                 <td>
                                     <span class="badge @(cam.Enabled ? "badge-green" : "badge-gray")">
-                                        @(cam.Enabled ? "활성" : "비활성")
+                                        @(cam.Enabled ? T("status.enabled") : T("status.disabled"))
                                     </span>
                                 </td>
                                 <td>
                                     <span class="badge @(cam.IsPublic ? "badge-green" : "badge-gray")">
-                                        @(cam.IsPublic ? "공개" : "비공개")
+                                        @(cam.IsPublic ? T("visibility.public") : T("visibility.private"))
                                     </span>
                                 </td>
                                 <td>
-                                    <button class="mini danger" @onclick="() => DeleteCameraAsync(cam)">삭제</button>
+                                    <button class="mini danger" @onclick="() => DeleteCameraAsync(cam)">@T("delete")</button>
                                 </td>
                             </tr>
                         }
@@ -173,8 +175,8 @@
 
     <!-- 라이브 레이아웃 설정 -->
     <section class="event-card">
-        <h3>라이브 레이아웃 설정</h3>
-        <p class="muted" style="margin-bottom:16px;">라이브 뷰 화면 분할 방식을 선택합니다. 카메라 순서에 따라 위치가 결정됩니다.</p>
+        <h3>@T("layout.settings")</h3>
+        <p class="muted" style="margin-bottom:16px;">@T("layout.description")</p>
         <div class="layout-picker">
             @foreach (var opt in _layoutOptions)
             {
@@ -183,7 +185,7 @@
                     <div class="layout-preview">
                         @((MarkupString)opt.Preview)
                     </div>
-                    <span>@opt.Label</span>
+                    <span>@T(opt.LabelKey)</span>
                 </button>
             }
         </div>
@@ -199,16 +201,16 @@
 
     // 레이아웃
     private string _selectedLayout = "auto";
-    private record LayoutOption(string Key, string Label, string Preview);
+    private record LayoutOption(string Key, string LabelKey, string Preview);
     private static readonly LayoutOption[] _layoutOptions =
     [
-        new("auto",   "자동",          "<div class='lp-auto'><div></div><div></div><div></div></div>"),
-        new("1",      "1분할",         "<div class='lp-1'><div></div></div>"),
-        new("2h",     "2분할 (가로)",  "<div class='lp-2h'><div></div><div></div></div>"),
-        new("2v",     "2분할 (세로)",  "<div class='lp-2v'><div></div><div></div></div>"),
-        new("3-left", "3분할 (좌 대)", "<div class='lp-3l'><div class='big'></div><div></div><div></div></div>"),
-        new("3-top",  "3분할 (상 대)", "<div class='lp-3t'><div class='big'></div><div></div><div></div></div>"),
-        new("4",      "4분할",         "<div class='lp-4'><div></div><div></div><div></div><div></div></div>"),
+        new("auto",   "layout.auto",   "<div class='lp-auto'><div></div><div></div><div></div></div>"),
+        new("1",      "layout.1",      "<div class='lp-1'><div></div></div>"),
+        new("2h",     "layout.2h",     "<div class='lp-2h'><div></div><div></div></div>"),
+        new("2v",     "layout.2v",     "<div class='lp-2v'><div></div><div></div></div>"),
+        new("3-left", "layout.3-left", "<div class='lp-3l'><div class='big'></div><div></div><div></div></div>"),
+        new("3-top",  "layout.3-top",  "<div class='lp-3t'><div class='big'></div><div></div><div></div></div>"),
+        new("4",      "layout.4",      "<div class='lp-4'><div></div><div></div><div></div><div></div></div>"),
     ];
 
     // OG 설정
@@ -224,17 +226,22 @@
     private bool _agentPasswordBusy;
     private bool _hasAgentPassword;
 
+    protected override void OnInitialized()
+    {
+        Text.Changed += HandleLanguageChanged;
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
         await AuthState.RestoreAsync(JS);
-        if (!AuthState.IsAuthenticated) { Nav.NavigateTo("/login"); return; }
+        if (!AuthState.IsAuthenticated) { Nav.NavigateTo(LocalizedPath("/login")); return; }
 
         // 다른 사용자의 slug로 접근 시 자신의 페이지로 리다이렉트
         if (!string.IsNullOrWhiteSpace(Slug) &&
             !string.Equals(Slug, AuthState.CurrentUser?.PublicSlug, StringComparison.OrdinalIgnoreCase))
         {
-            Nav.NavigateTo($"/{AuthState.CurrentUser?.PublicSlug}/cameras");
+            Nav.NavigateTo(LocalizedPath($"/{AuthState.CurrentUser?.PublicSlug}/cameras"));
             return;
         }
 
@@ -252,7 +259,7 @@
         _selectedLayout = layout;
         if (AuthState.CurrentUser is not null)
             await UserService.SetLayoutAsync(AuthState.CurrentUser.Id, layout);
-        ShowMessage($"레이아웃을 '{layout}'로 저장했습니다.");
+        ShowMessage(TF("message.layout.saved", LayoutLabel(layout)));
     }
 
     private async Task UploadOgImageAsync(InputFileChangeEventArgs e)
@@ -260,10 +267,10 @@
         _uploadError = "";
         var file = e.File;
         if (file is null) return;
-        if (file.Size > 5 * 1024 * 1024) { _uploadError = "파일이 너무 큽니다 (최대 5MB)."; return; }
+        if (file.Size > 5 * 1024 * 1024) { _uploadError = T("error.file.too.large"); return; }
 
         var sessionToken = await JS.InvokeAsync<string?>("localStorage.getItem", "vms_session");
-        if (string.IsNullOrWhiteSpace(sessionToken)) { _uploadError = "세션이 만료되었습니다."; return; }
+        if (string.IsNullOrWhiteSpace(sessionToken)) { _uploadError = T("error.session.expired"); return; }
 
         using var content = new MultipartFormDataContent();
         var stream = file.OpenReadStream(5 * 1024 * 1024);
@@ -275,7 +282,7 @@
 
         using var http = HttpClientFactory.CreateClient();
         using var resp = await http.SendAsync(req);
-        if (!resp.IsSuccessStatusCode) { _uploadError = "업로드 실패: " + resp.StatusCode; return; }
+        if (!resp.IsSuccessStatusCode) { _uploadError = TF("error.upload.failed", resp.StatusCode); return; }
 
         var json = await resp.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
         _ogImage = json.GetProperty("url").GetString() ?? "";
@@ -289,7 +296,7 @@
         try
         {
             await UserService.UpdateOgAsync(AuthState.CurrentUser.Id, _ogTitle, _ogDescription, _ogImage);
-            ShowMessage("카카오 공유 설정을 저장했습니다.");
+            ShowMessage(T("message.share.saved"));
         }
         finally { _ogBusy = false; }
     }
@@ -308,14 +315,14 @@
 
             if (!ok)
             {
-                ShowMessage(error, error: true);
+                ShowMessage(LocalizeAgentPasswordError(error), error: true);
                 return;
             }
 
             _agentPassword = "";
             _agentPasswordConfirm = "";
             _hasAgentPassword = !string.IsNullOrWhiteSpace(user?.PasswordHash);
-            ShowMessage("에이전트 연결 비밀번호를 저장했습니다.");
+            ShowMessage(T("message.password.saved"));
         }
         finally
         {
@@ -325,11 +332,11 @@
 
     private async Task DeleteCameraAsync(CameraDevice cam)
     {
-        var confirmed = await JS.InvokeAsync<bool>("confirm", $"'{cam.Name}' 카메라를 삭제하시겠습니까?");
+        var confirmed = await JS.InvokeAsync<bool>("confirm", TF("confirm.camera.delete", cam.Name));
         if (!confirmed) return;
         await Repository.DeleteAsync(cam.Id);
         LoadCameras();
-        ShowMessage($"'{cam.Name}' 삭제됨.");
+        ShowMessage(TF("message.camera.deleted", cam.Name));
     }
 
     private void LoadCameras()
@@ -344,5 +351,33 @@
     {
         _message = msg;
         _isError = error;
+    }
+
+    private string T(string key) => VmsCamerasText.Get(Text.Language, key);
+
+    private string TF(string key, params object?[] args) =>
+        VmsCamerasText.Format(Text.Language, key, args);
+
+    private string LocalizedPath(string path) =>
+        $"{path}{(path.Contains('?') ? '&' : '?')}lang={Uri.EscapeDataString(Text.Language)}";
+
+    private string LayoutLabel(string layout) =>
+        _layoutOptions.FirstOrDefault(option => option.Key == layout) is { } option
+            ? T(option.LabelKey)
+            : layout;
+
+    private string LocalizeAgentPasswordError(string error) => error switch
+    {
+        "에이전트 연결 비밀번호는 8자 이상이어야 합니다." => T("error.password.min"),
+        "비밀번호 확인이 일치하지 않습니다." => T("error.password.mismatch"),
+        "사용자를 찾을 수 없습니다." => T("error.user.not.found"),
+        _ => T("error.password.save")
+    };
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Text.Changed -= HandleLanguageChanged;
     }
 }

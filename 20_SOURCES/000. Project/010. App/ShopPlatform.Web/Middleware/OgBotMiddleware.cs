@@ -70,8 +70,9 @@ public sealed class OgBotMiddleware(RequestDelegate next)
     /// <para>The <c>Task</c> result produced by the invoke async operation.</para>
     /// \endif
     /// </returns>
-    public async Task InvokeAsync(HttpContext ctx, IShopTenantStore store, ShopOptions opts)
+    public async Task InvokeAsync(HttpContext ctx, IShopTenantStore store, ShopOptions opts, ShopLocalization localization)
     {
+        localization.SetLanguage(ctx.Request.Query["lang"].ToString());
         var ua   = ctx.Request.Headers.UserAgent.ToString().ToLowerInvariant();
         var path = ctx.Request.Path.Value ?? string.Empty;
 
@@ -81,7 +82,7 @@ public sealed class OgBotMiddleware(RequestDelegate next)
             var config = await store.GetAsync(slug);
             if (config != null && config.IsActive)
             {
-                await WriteOgHtml(ctx, config, opts, slug);
+                await WriteOgHtml(ctx, config, opts, slug, localization);
                 return;
             }
         }
@@ -221,14 +222,19 @@ public sealed class OgBotMiddleware(RequestDelegate next)
     /// <para>The <c>Task</c> result produced by the write og html operation.</para>
     /// \endif
     /// </returns>
-    private static async Task WriteOgHtml(HttpContext ctx, ShopConfig cfg, ShopOptions opts, string slug)
+    private static async Task WriteOgHtml(
+        HttpContext ctx,
+        ShopConfig cfg,
+        ShopOptions opts,
+        string slug,
+        ShopLocalization localization)
     {
         var baseUrl = opts.BaseUrl.TrimEnd('/');
         var title   = !string.IsNullOrEmpty(cfg.OgTitle)       ? cfg.OgTitle       : cfg.ShopName;
         var desc    = !string.IsNullOrEmpty(cfg.OgDescription) ? cfg.OgDescription
                     : !string.IsNullOrEmpty(cfg.Description)   ? cfg.Description
-                    : $"{cfg.ShopName}에서 쇼핑하세요";
-        var url     = $"{baseUrl}/{slug}";
+                    : string.Format(localization.Culture, localization["shop.here"], cfg.ShopName);
+        var url     = $"{baseUrl}/{slug}{ctx.Request.QueryString}";
 
         // OG 이미지: OgImagePath → LogoPath → 자동 생성
         string imgUrl;
@@ -241,7 +247,7 @@ public sealed class OgBotMiddleware(RequestDelegate next)
 
         var html = $"""
             <!DOCTYPE html>
-            <html lang="ko">
+            <html lang="{localization.HtmlLanguage}">
             <head>
               <meta charset="utf-8" />
               <title>{HtmlEncode(title)}</title>

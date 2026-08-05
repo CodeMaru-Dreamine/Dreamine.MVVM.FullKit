@@ -6,45 +6,58 @@
 @inject ShopCustomerSession Session
 @inject ShopCustomerLoginSync CustomerLogin
 @inject NavigationManager Nav
+@inject ShopLocalization Localization
+@implements IDisposable
 
-<PageTitle>로그인 — @(Tenant.Config?.ShopName ?? "")</PageTitle>
+<PageTitle>@T("Login") — @(Tenant.Config?.ShopName ?? T("Shop"))</PageTitle>
 
+@if (!_tenantLookupCompleted)
+{
+    <div class="container py-5 text-center"><p class="text-muted">@T("Loading")</p></div>
+}
+else if (!Tenant.IsResolved)
+{
+    <div class="container py-5 text-center"><h2>@T("ShopUnavailable")</h2></div>
+}
+else
+{
 <div class="container py-5" style="max-width:420px">
     <div class="text-center mb-4">
-        <h2 class="fw-bold">로그인</h2>
-        <p class="text-muted">@(Tenant.Config?.ShopName ?? "") 회원</p>
+        <h2 class="fw-bold">@T("Login")</h2>
+        <p class="text-muted">@(Tenant.Config?.ShopName ?? "") @T("Member")</p>
     </div>
 
     <div class="card shadow-sm">
         <div class="card-body p-4">
-            <a class="btn btn-primary w-100 mb-3" href="@CommonLoginUrl">CodeMaru 계정으로 계속하기</a>
-            <div class="text-center text-muted small mb-3">또는 기존 쇼핑몰 회원 로그인</div>
+            <a class="btn btn-primary w-100 mb-3" href="@CommonLoginUrl">@T("ContinueWithCodeMaru")</a>
+            <div class="text-center text-muted small mb-3">@T("OrLocalLogin")</div>
             <div class="mb-3">
-                <label class="form-label">이메일</label>
+                <label class="form-label">@T("Email")</label>
                 <input class="form-control" type="email" @bind="_email" @bind:event="oninput" />
             </div>
             <div class="mb-3">
-                <label class="form-label">비밀번호</label>
+                <label class="form-label">@T("Password")</label>
                 <input class="form-control" type="password" @bind="_password" @bind:event="oninput"
                        @onkeypress="OnKey" />
             </div>
-            @if (!string.IsNullOrEmpty(_error))
+            @if (!string.IsNullOrEmpty(_errorKey))
             {
-                <div class="alert alert-danger py-2">@_error</div>
+                <div class="alert alert-danger py-2">@T(_errorKey)</div>
             }
             <button class="btn btn-primary w-100" @onclick="Login" disabled="@_loading">
-                @(_loading ? "로그인 중..." : "로그인")
+                @(_loading ? T("SigningIn") : T("Login"))
             </button>
             <hr />
             <p class="text-center mb-0 small">
-                배송지·연락처는 결제 단계에서 추가로 입력할 수 있습니다.
+                @T("CheckoutProfileHelp")
             </p>
         </div>
     </div>
     <div class="text-center mt-3">
-        <a href="/@Slug" class="text-muted small">← 쇼핑몰로 돌아가기</a>
+        <a href="@Localization.WithLanguage($"/{Slug}")" class="text-muted small">← @T("BackToShop")</a>
     </div>
 </div>
+}
 
 @code {
     [Parameter] public string Slug { get; set; } = string.Empty;
@@ -52,31 +65,48 @@
 
     private string _email = string.Empty;
     private string _password = string.Empty;
-    private string _error = string.Empty;
+    private string _errorKey = string.Empty;
     private bool _loading;
+    private bool _tenantLookupCompleted;
+    private int _loadVersion;
     private string SafeReturnPath => GetSafeReturnPath(ReturnUrl, Slug);
+    private string SafeLocalizedReturnPath => Localization.WithLanguage(SafeReturnPath);
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
+        => Localization.Changed += OnLanguageChanged;
+
+    protected override async Task OnParametersSetAsync()
     {
-        if (!Tenant.IsResolved)
-        {
-            var cfg = await TenantStore.GetAsync(Slug);
-            if (cfg != null) Tenant.Config = cfg;
-        }
-        await CustomerLogin.SyncAsync(Slug);
+        var requestedSlug = Slug;
+        var loadVersion = ++_loadVersion;
+        _tenantLookupCompleted = false;
+        Tenant.Config = null;
+
+        var cfg = await TenantStore.GetAsync(requestedSlug);
+        if (loadVersion != _loadVersion || requestedSlug != Slug) return;
+
+        Tenant.Config = cfg;
+        _tenantLookupCompleted = true;
+        if (!Tenant.IsResolved) return;
+
+        await CustomerLogin.SyncAsync(requestedSlug);
+        if (loadVersion != _loadVersion || requestedSlug != Slug) return;
+
         if (Session.IsLoggedIn)
-            Nav.NavigateTo(SafeReturnPath);
+            Nav.NavigateTo(SafeLocalizedReturnPath);
     }
 
-    private string CommonLoginUrl =>
-        $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.ToAbsoluteUri(SafeReturnPath).ToString())}";
+    private string CommonLoginUrl => Dreamine.Identity.DreamineIdentityPortal.CreateUrl(
+        "login",
+        Nav.ToAbsoluteUri(SafeLocalizedReturnPath).ToString(),
+        Localization.Language);
 
     private void Login()
     {
-        _error = string.Empty;
+        _errorKey = string.Empty;
         if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password))
         {
-            _error = "이메일과 비밀번호를 입력해 주세요.";
+            _errorKey = "LoginRequiredFields";
             return;
         }
         _loading = true;
@@ -84,7 +114,7 @@
         var user = db.Users.FirstOrDefault(u => u.Email == _email.Trim().ToLower());
         if (user == null)
         {
-            _error = "이메일 또는 비밀번호가 올바르지 않습니다.";
+            _errorKey = "InvalidCredentials";
             _loading = false;
             return;
         }
@@ -98,7 +128,7 @@
 
         if (verification is PasswordHashVerificationResult.Failed)
         {
-            _error = "이메일 또는 비밀번호가 올바르지 않습니다.";
+            _errorKey = "InvalidCredentials";
             _loading = false;
             return;
         }
@@ -111,7 +141,7 @@
         }
 
         Session.Login(user);
-        Nav.NavigateTo(SafeReturnPath);
+        Nav.NavigateTo(SafeLocalizedReturnPath);
     }
 
     private Task OnKey(KeyboardEventArgs e)
@@ -206,4 +236,9 @@
 
         return slug.All(c => c is >= 'a' and <= 'z' or >= '0' and <= '9' or '-');
     }
+
+    private string T(string key) => ShopStorefrontText.Get(key, Localization.Language);
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Localization.Changed -= OnLanguageChanged;
 }

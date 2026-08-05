@@ -3,53 +3,73 @@
 @inject IShopTenantStore TenantStore
 @inject TenantDbContextFactory DbFactory
 @inject NavigationManager Nav
+@inject ShopLocalization Localization
+@implements IDisposable
 
-<PageTitle>주문 완료 — @(Tenant.Config?.ShopName ?? "")</PageTitle>
+<PageTitle>@T("OrderComplete") — @(Tenant.Config?.ShopName ?? T("Shop"))</PageTitle>
 
 <div class="container py-5" style="max-width:640px">
-    @if (_order == null)
+    @if (!_tenantLookupCompleted)
     {
         <div class="text-center py-5">
-            <p class="text-muted">주문 정보를 불러오는 중...</p>
+            <p class="text-muted">@T("Loading")</p>
+        </div>
+    }
+    else if (!Tenant.IsResolved)
+    {
+        <div class="text-center py-5">
+            <h2>@T("ShopUnavailable")</h2>
+        </div>
+    }
+    else if (!_orderLookupCompleted)
+    {
+        <div class="text-center py-5">
+            <p class="text-muted">@T("LoadingOrder")</p>
+        </div>
+    }
+    else if (_order == null)
+    {
+        <div class="text-center py-5">
+            <h2>@Localization["page.notfound"]</h2>
         </div>
     }
     else
     {
         <div class="text-center mb-4">
             <div style="font-size:3.5rem">✅</div>
-            <h2 class="mt-2 fw-bold">주문이 완료되었습니다!</h2>
+            <h2 class="mt-2 fw-bold">@T("OrderCompletedMessage")</h2>
             <p class="text-muted">
-                @Tenant.Config?.ShopName 을 이용해 주셔서 감사합니다.
+                @F("ThanksForShopping", Tenant.Config?.ShopName ?? T("Shop"))
             </p>
         </div>
 
         <div class="card mb-4">
             <div class="card-body">
-                <h5 class="card-title mb-3">주문 정보</h5>
+                <h5 class="card-title mb-3">@T("OrderInfo")</h5>
                 <dl class="row mb-0">
-                    <dt class="col-4 text-muted">주문번호</dt>
+                    <dt class="col-4 text-muted">@T("OrderNumber")</dt>
                     <dd class="col-8"><code>@_order.OrderNo</code></dd>
 
-                    <dt class="col-4 text-muted">주문자</dt>
+                    <dt class="col-4 text-muted">@T("Customer")</dt>
                     <dd class="col-8">@_order.CustomerName</dd>
 
-                    <dt class="col-4 text-muted">연락처</dt>
+                    <dt class="col-4 text-muted">@T("Phone")</dt>
                     <dd class="col-8">@_order.CustomerPhone</dd>
 
-                    <dt class="col-4 text-muted">배송지</dt>
+                    <dt class="col-4 text-muted">@T("Destination")</dt>
                     <dd class="col-8">@_order.ShippingAddress</dd>
 
-                    <dt class="col-4 text-muted">결제금액</dt>
-                    <dd class="col-8 fw-bold text-primary">@_order.TotalAmount.ToString("N0")원</dd>
+                    <dt class="col-4 text-muted">@T("PaymentAmount")</dt>
+                    <dd class="col-8 fw-bold text-primary">@Money(_order.TotalAmount)</dd>
 
-                    <dt class="col-4 text-muted">결제상태</dt>
+                    <dt class="col-4 text-muted">@T("PaymentStatus")</dt>
                     <dd class="col-8">
                         <span class="badge @(_order.Status == "paid" ? "bg-success" : "bg-warning text-dark")">
-                            @(_order.Status == "paid" ? "결제완료" : _order.Status)
+                            @StatusText(_order.Status)
                         </span>
                         @if (!string.IsNullOrEmpty(_order.TransactionId))
                         {
-                            <small class="text-muted ms-2">TX: @_order.TransactionId[..Math.Min(20, _order.TransactionId.Length)]...</small>
+                            <small class="text-muted ms-2">@T("Transaction"): @_order.TransactionId[..Math.Min(20, _order.TransactionId.Length)]...</small>
                         }
                     </dd>
                 </dl>
@@ -60,13 +80,13 @@
         {
             <div class="card mb-4">
                 <div class="card-body">
-                    <h5 class="card-title mb-3">주문 상품</h5>
+                    <h5 class="card-title mb-3">@T("OrderItems")</h5>
                     <table class="table table-sm mb-0">
                         <thead>
                             <tr>
-                                <th>상품명</th>
-                                <th class="text-end">수량</th>
-                                <th class="text-end">금액</th>
+                                <th>@T("ProductName")</th>
+                                <th class="text-end">@T("Quantity")</th>
+                                <th class="text-end">@T("Amount")</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -75,14 +95,14 @@
                                 <tr>
                                     <td>@line.ProductName</td>
                                     <td class="text-end">@line.Quantity</td>
-                                    <td class="text-end">@line.Subtotal.ToString("N0")원</td>
+                                    <td class="text-end">@Money(line.Subtotal)</td>
                                 </tr>
                             }
                         </tbody>
                         <tfoot>
                             <tr class="fw-bold">
-                                <td colspan="2" class="text-end">합계</td>
-                                <td class="text-end">@_order.TotalAmount.ToString("N0")원</td>
+                                <td colspan="2" class="text-end">@T("Total")</td>
+                                <td class="text-end">@Money(_order.TotalAmount)</td>
                             </tr>
                         </tfoot>
                     </table>
@@ -91,7 +111,7 @@
         }
 
         <div class="text-center">
-            <a href="/@Slug" class="btn btn-primary">쇼핑 계속하기</a>
+            <a href="@Localization.WithLanguage($"/{Slug}")" class="btn btn-primary">@T("ContinueShopping")</a>
         </div>
     }
 </div>
@@ -101,17 +121,42 @@
     [Parameter] public string OrderNo { get; set; } = string.Empty;
 
     private Order? _order;
+    private string _loadedSlug = string.Empty;
+    private string _loadedOrderNo = string.Empty;
+    private bool _tenantLookupCompleted;
+    private bool _orderLookupCompleted;
+    private int _loadVersion;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
+        => Localization.Changed += OnLanguageChanged;
+
+    protected override async Task OnParametersSetAsync()
     {
-        if (!Tenant.IsResolved)
-        {
-            var cfg = await TenantStore.GetAsync(Slug);
-            if (cfg != null) Tenant.Config = cfg;
-        }
-        using var db = DbFactory.Create(Slug);
+        var requestedSlug = Slug;
+        var requestedOrderNo = OrderNo;
+        if (_tenantLookupCompleted &&
+            _orderLookupCompleted &&
+            _loadedSlug == requestedSlug &&
+            _loadedOrderNo == requestedOrderNo) return;
+
+        var loadVersion = ++_loadVersion;
+        _tenantLookupCompleted = false;
+        _orderLookupCompleted = false;
+        Tenant.Config = null;
+        _order = null;
+
+        var cfg = await TenantStore.GetAsync(requestedSlug);
+        if (loadVersion != _loadVersion || requestedSlug != Slug || requestedOrderNo != OrderNo) return;
+
+        Tenant.Config = cfg;
+        _loadedSlug = requestedSlug;
+        _loadedOrderNo = requestedOrderNo;
+        _tenantLookupCompleted = true;
+        if (!Tenant.IsResolved) return;
+
+        using var db = DbFactory.Create(requestedSlug);
         _order = db.Orders
-            .Where(o => o.OrderNo == OrderNo)
+            .Where(o => o.OrderNo == requestedOrderNo)
             .Select(o => new Order
             {
                 Id = o.Id, OrderNo = o.OrderNo,
@@ -122,5 +167,22 @@
                 Lines = db.OrderLines.Where(l => l.OrderId == o.Id).ToList()
             })
             .FirstOrDefault();
+        _orderLookupCompleted = true;
     }
+
+    private string T(string key) => ShopStorefrontText.Get(key, Localization.Language);
+    private string F(string key, params object?[] args) => ShopStorefrontText.Format(key, Localization.Language, args);
+    private string Money(decimal amount) => ShopStorefrontText.Money(amount, Localization.Language);
+    private string StatusText(string status) => status.ToLowerInvariant() switch
+    {
+        "paid" => T("Paid"),
+        "pending" => T("Pending"),
+        "failed" => T("Failed"),
+        "cancelled" or "canceled" => T("Cancelled"),
+        _ => status
+    };
+
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Localization.Changed -= OnLanguageChanged;
 }

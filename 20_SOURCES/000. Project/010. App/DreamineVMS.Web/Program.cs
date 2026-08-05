@@ -6,6 +6,7 @@ using DreamineVMS.Web.Services.Agent;
 using DreamineVMS.Web.Services.Auth;
 using DreamineVMS.Web.Services.Cameras;
 using DreamineVMS.Web.Services.Hls;
+using DreamineVMS.Web.Services;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.HttpOverrides;
 
@@ -30,6 +31,7 @@ builder.Services.AddSingleton<VmsDatabase>();
 builder.Services.AddSingleton<VmsUserService>();
 builder.Services.AddSingleton<VmsSessionService>();
 builder.Services.AddScoped<VmsAuthState>();
+builder.Services.AddScoped<VmsLocalization>();
 builder.Services.AddSingleton<IVmsCameraRepository, SqliteCameraRepository>();
 builder.Services.AddSingleton<AgentTokenService>();
 builder.Services.AddSingleton<HlsSegmentStore>();
@@ -73,30 +75,34 @@ app.Use(async (ctx, next) =>
     if (!isCrawler) { await next(); return; }
 
     var path = ctx.Request.Path.Value ?? "";
+    var requestedLanguage = ctx.Request.Query["lang"].FirstOrDefault();
+    var languageCode = VmsLocalization.GetLanguageCode(requestedLanguage);
+    var htmlLanguage = VmsLocalization.GetHtmlLanguage(requestedLanguage);
 
     // / 홈페이지 OG
     if (path == "/" || path == "")
     {
         var siteUrl = $"https://{ctx.Request.Host}";
-        const string title = "CodeMaru CCTV Viewer";
-        const string desc = "카메라 주인은 앱 하나 설치, 보는 사람은 링크만으로 실시간 시청";
+        var pageUrl = $"{siteUrl}/?lang={Uri.EscapeDataString(languageCode)}";
+        var title = VmsLocalization.GetText(requestedLanguage, "page.title");
+        var desc = VmsLocalization.GetText(requestedLanguage, "seo.description");
         var image = $"{siteUrl}/images/cctvviewer-og.png";
         ctx.Response.ContentType = "text/html; charset=utf-8";
         await ctx.Response.WriteAsync($"""
             <!DOCTYPE html>
-            <html lang="ko">
+            <html lang="{htmlLanguage}">
             <head>
               <meta charset="utf-8"/>
               <title>{title}</title>
               <meta property="og:type" content="website"/>
-              <meta property="og:url" content="{siteUrl}/"/>
+              <meta property="og:url" content="{pageUrl}"/>
               <meta property="og:title" content="{title}"/>
               <meta property="og:description" content="{desc}"/>
               <meta property="og:image" content="{image}"/>
               <meta property="og:site_name" content="CodeMaru CCTV Viewer"/>
               <meta name="description" content="{desc}"/>
             </head>
-            <body><p><a href="{siteUrl}/">{title}</a></p></body>
+            <body><p><a href="{pageUrl}">{title}</a></p></body>
             </html>
             """);
         return;
@@ -112,12 +118,12 @@ app.Use(async (ctx, next) =>
         if (user is not null)
         {
             var siteUrl = $"https://{ctx.Request.Host}";
-            var pageUrl = $"{siteUrl}/{slug}/live";
+            var pageUrl = $"{siteUrl}/{slug}/live?lang={Uri.EscapeDataString(languageCode)}";
             var title = string.IsNullOrWhiteSpace(user.OgTitle)
-                ? $"{user.DisplayName} CCTV Live"
+                ? VmsLocalization.FormatText(requestedLanguage, "public.live.title", user.DisplayName)
                 : user.OgTitle;
             var desc = string.IsNullOrWhiteSpace(user.OgDescription)
-                ? $"{user.DisplayName}의 실시간 카메라 스트림입니다."
+                ? VmsLocalization.FormatText(requestedLanguage, "public.live.description", user.DisplayName)
                 : user.OgDescription;
             var image = string.IsNullOrWhiteSpace(user.OgImage)
                 ? $"{siteUrl}/img/og-default.png"
@@ -126,7 +132,7 @@ app.Use(async (ctx, next) =>
             ctx.Response.ContentType = "text/html; charset=utf-8";
             await ctx.Response.WriteAsync($"""
                 <!DOCTYPE html>
-                <html lang="ko">
+                <html lang="{htmlLanguage}">
                 <head>
                   <meta charset="utf-8"/>
                   <title>{title}</title>

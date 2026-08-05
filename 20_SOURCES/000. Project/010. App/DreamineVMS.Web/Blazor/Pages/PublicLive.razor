@@ -8,27 +8,28 @@
 @inject IVmsCameraRepository Repository
 @inject VmsAuthState AuthState
 @inject IJSRuntime JS
+@inject VmsLocalization Text
 
-<PageTitle>@_ownerName CCTV Live</PageTitle>
+<PageTitle>@Text.Format("public.live.title", _ownerName)</PageTitle>
 
 <div class="page-shell live-shell">
     @if (_notFound)
     {
-        <div class="hero"><div><h1>사용자를 찾을 수 없습니다.</h1><p>URL을 확인해 주세요.</p></div></div>
+        <div class="hero"><div><h1>@Text["not.found.user"]</h1><p>@Text["check.url"]</p></div></div>
     }
     else
     {
         <div class="hero compact">
             <div>
-                <a href="/" style="font-size:0.85rem;color:#6b7280;text-decoration:none;display:inline-block;margin-bottom:0.4rem;">← 홈으로</a>
-                <h1>@_ownerName Live</h1>
-                <p>실시간 카메라 스트림</p>
+                <a href="/?lang=@Text.Language" style="font-size:0.85rem;color:#6b7280;text-decoration:none;display:inline-block;margin-bottom:0.4rem;">← @Text["home"]</a>
+                <h1>@Text.Format("public.live.title", _ownerName)</h1>
+                <p>@Text["live.stream"]</p>
             </div>
         </div>
 
         @if (_cameras.Count == 0)
         {
-            <p class="muted" style="padding:2rem;">활성화된 카메라가 없습니다.</p>
+            <p class="muted" style="padding:2rem;">@Text["no.cameras"]</p>
         }
         else
         {
@@ -37,7 +38,7 @@
                 @foreach (var camera in _cameras)
                 {
                     _tileIdx++;
-                    <section class="video-tile tile-@_tileIdx" data-status="스트림 연결 중...">
+                    <section class="video-tile tile-@_tileIdx" data-status="@Text["connecting"]">
                         <header>
                             <strong>@camera.Name</strong>
                             <span>@camera.Host</span>
@@ -65,6 +66,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        Text.Changed += HandleLanguageChanged;
         var user = await UserService.FindBySlugAsync(Slug);
         if (user is null) { _notFound = true; return; }
 
@@ -115,10 +117,13 @@
     {
         if (_disposed) return;
         _disposed = true;
+        Text.Changed -= HandleLanguageChanged;
         foreach (var cam in _cameras)
         {
             try { await JS.InvokeVoidAsync("dreamineVmsHls.destroy", GetPlayerId(cam)); }
             catch { /* ignore */ }
         }
     }
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
 }

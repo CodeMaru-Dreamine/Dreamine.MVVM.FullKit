@@ -42,6 +42,10 @@
 dotnet run --project "Portfolio.Web.csproj"
 ```
 
+최고 관리자 자격 증명은 `appsettings.json`에 저장하지 않습니다. 개발 환경에서는
+User Secrets를, 운영 환경에서는 `Portfolio__SuperAdminPassword` 환경 변수를 사용하고,
+커밋 이력이 있다면 반드시 값을 교체하세요.
+
 ## API 문서 생성
 
 ```powershell

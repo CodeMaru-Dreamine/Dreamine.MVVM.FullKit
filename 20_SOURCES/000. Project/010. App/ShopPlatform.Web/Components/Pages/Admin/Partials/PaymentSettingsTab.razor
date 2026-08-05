@@ -1,57 +1,59 @@
 @inject PaymentKeyProtector KeyProtector
+@inject ShopLocalization Localization
+@implements IDisposable
 
 <div class="card" style="max-width:600px">
     <div class="card-header">
-        <h5 class="mb-0">결제 설정</h5>
+        <h5 class="mb-0">@T("paymentSettings.title")</h5>
     </div>
     <div class="card-body">
 
         <div class="alert alert-info mb-4">
-            <strong>토스페이먼츠 API 키 발급 방법:</strong><br />
-            1. <a href="https://developers.tosspayments.com" target="_blank">토스페이먼츠 개발자 콘솔</a> 접속<br />
-            2. 가입 후 "내 애플리케이션" → API 키 발급<br />
-            3. 테스트 키: <code>test_ck_...</code> / <code>test_sk_...</code><br />
-            4. 운영 키: 토스 심사 후 발급<br />
-            <small class="text-muted">※ 결제는 귀하의 토스 계정으로 직접 정산됩니다.</small>
+            <strong>@T("paymentSettings.keyGuideTitle")</strong><br />
+            1. <a href="https://developers.tosspayments.com" target="_blank" rel="noopener">@T("paymentSettings.developerConsole")</a> @T("paymentSettings.openConsole")<br />
+            2. @T("paymentSettings.keyGuideStep2")<br />
+            3. @T("paymentSettings.testKeys"): <code>test_ck_...</code> / <code>test_sk_...</code><br />
+            4. @T("paymentSettings.liveKeyStep")<br />
+            <small class="text-muted">@T("paymentSettings.settlementNote")</small>
         </div>
 
         <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="payEnabled"
                    @bind="_isEnabled" />
-            <label class="form-check-label" for="payEnabled">결제 활성화</label>
+            <label class="form-check-label" for="payEnabled">@T("paymentSettings.enable")</label>
         </div>
 
         <div class="form-check form-switch mb-4">
             <input class="form-check-input" type="checkbox" id="testMode"
                    @bind="_isTestMode" />
             <label class="form-check-label" for="testMode">
-                테스트 모드
+                @T("paymentSettings.testMode")
                 <span class="badge @(_isTestMode ? "bg-warning text-dark" : "bg-success") ms-1">
-                    @(_isTestMode ? "TEST" : "LIVE")
+                    @(_isTestMode ? T("common.test") : T("common.live"))
                 </span>
             </label>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">클라이언트 키 (Client Key)</label>
+            <label class="form-label">@T("paymentSettings.clientKey") (Client Key)</label>
             <input class="form-control font-monospace" placeholder="@(_isTestMode ? "test_ck_..." : "ck_...")"
                    @bind="_clientKey" />
-            <div class="form-text">브라우저에서 결제 위젯을 로드할 때 사용합니다.</div>
+            <div class="form-text">@T("paymentSettings.clientKeyHelp")</div>
         </div>
 
         <div class="mb-3">
-            <label class="form-label">시크릿 키 (Secret Key)</label>
+            <label class="form-label">@T("paymentSettings.secretKey") (Secret Key)</label>
             <input class="form-control font-monospace" type="password"
                    placeholder="@(_isTestMode ? "test_sk_..." : "sk_...")"
                    @bind="_secretKeyPlain" />
-            <div class="form-text">서버에서 결제 승인 시 사용합니다. 암호화되어 저장됩니다.</div>
+            <div class="form-text">@T("paymentSettings.secretKeyHelp")</div>
             @if (!string.IsNullOrEmpty(_secretKeyPlain))
             {
-                <div class="form-text text-success">✓ 새 키를 입력했습니다. 저장 시 기존 키를 덮어씁니다.</div>
+                <div class="form-text text-success">✓ @T("paymentSettings.newKeyEntered")</div>
             }
             else if (!string.IsNullOrEmpty(Config.Payment.TossSecretKeyEncrypted))
             {
-                <div class="form-text text-muted">기존 저장된 키가 있습니다. 변경하려면 새 키를 입력하세요.</div>
+                <div class="form-text text-muted">@T("paymentSettings.existingKey")</div>
             }
         </div>
 
@@ -60,7 +62,7 @@
             <div class="alert @(_saveError ? "alert-danger" : "alert-success")">@_saveMessage</div>
         }
 
-        <button class="btn btn-primary" @onclick="Save">설정 저장</button>
+        <button class="btn btn-primary" @onclick="Save">@T("paymentSettings.save")</button>
     </div>
 </div>
 
@@ -74,9 +76,17 @@
     private string _secretKeyPlain = string.Empty;
     private string _saveMessage = string.Empty;
     private bool _saveError;
+    private ShopConfig? _loadedConfig;
+
+    protected override void OnInitialized()
+    {
+        Localization.Changed += OnLocalizationChanged;
+    }
 
     protected override void OnParametersSet()
     {
+        if (ReferenceEquals(_loadedConfig, Config)) return;
+        _loadedConfig = Config;
         _isEnabled = Config.Payment.IsEnabled;
         _isTestMode = Config.Payment.IsTestMode;
         _clientKey = Config.Payment.TossClientKey;
@@ -103,13 +113,17 @@
         try
         {
             await OnSave.InvokeAsync(Config);
-            _saveMessage = "결제 설정이 저장되었습니다.";
+            _saveMessage = T("paymentSettings.saved");
             _saveError = false;
         }
         catch (Exception ex)
         {
-            _saveMessage = $"저장 실패: {ex.Message}";
+            _saveMessage = string.Format(T("common.saveFailed"), ex.Message);
             _saveError = true;
         }
     }
+
+    private string T(string key) => ShopAdminText.Get(key, Localization.Language);
+    private void OnLocalizationChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Localization.Changed -= OnLocalizationChanged;
 }

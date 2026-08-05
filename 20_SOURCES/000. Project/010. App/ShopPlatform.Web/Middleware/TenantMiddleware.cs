@@ -99,7 +99,7 @@ public sealed class TenantMiddleware
         var segments = path.TrimStart('/').Split('/', 2);
         var slug = segments[0];
 
-        if (!string.IsNullOrEmpty(slug) && !_reserved.Contains(slug))
+        if (IsTenantSlug(slug) && !_reserved.Contains(slug))
         {
             var config = await store.GetAsync(slug);
             if (config != null)
@@ -108,4 +108,16 @@ public sealed class TenantMiddleware
 
         await _next(ctx);
     }
+
+    // Root-level framework assets such as ShopPlatform.Web.styles.css also
+    // contain a single path segment. Only values accepted by the public shop
+    // URL format may reach the filesystem-backed tenant store.
+    private static bool IsTenantSlug(string value) =>
+        !string.IsNullOrWhiteSpace(value)
+        && value.All(character =>
+            character is >= 'a' and <= 'z'
+            or >= 'A' and <= 'Z'
+            or >= '0' and <= '9'
+            or '-'
+            or '_');
 }

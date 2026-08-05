@@ -1,35 +1,37 @@
 @page "/"
 @namespace DreamineVMS.Web.Blazor.Pages
+@implements IDisposable
 @using DreamineVMS.Web.Models
 @using DreamineVMS.Web.Services.Auth
 @using DreamineVMS.Web.Services.Cameras
 @inject VmsAuthState AuthState
 @inject VmsUserService UserService
 @inject IVmsCameraRepository Repository
+@inject VmsLocalization Localization
 @inject IJSRuntime JS
 
-<PageTitle>Dreamine VMS — IP 카메라 원격 모니터링</PageTitle>
+<PageTitle>@T("page.title")</PageTitle>
 
 <div class="home-shell">
 
     <!-- Hero -->
     <header class="home-hero">
         <div class="home-hero-inner">
-            <div class="home-badge">무료 CCTV 원격 모니터링</div>
+            <div class="home-badge">@T("hero.badge")</div>
             <h1 class="home-title">
-                어디서든<br />내 카메라를<br />실시간으로
+                @T("hero.title.1")<br />@T("hero.title.2")<br />@T("hero.title.3")
             </h1>
-            <p class="home-sub">IP 카메라 RTSP 주소만 입력하면<br />즉시 웹 스트리밍 · 모바일 접속 완료</p>
+            <p class="home-sub">@T("hero.subtitle.1")<br />@T("hero.subtitle.2")</p>
             <div class="home-hero-btns">
                 @if (AuthState.IsAuthenticated)
                 {
-                    <a class="primary link-button home-cta" href="/@AuthState.CurrentUser?.PublicSlug/cameras">카메라 관리 →</a>
-                    <a class="secondary link-button" href="/@AuthState.CurrentUser?.PublicSlug/live">라이브 보기</a>
+                    <a class="primary link-button home-cta" href="@LocalizedPath($"/{AuthState.CurrentUser?.PublicSlug}/cameras")">@T("action.manage")</a>
+                    <a class="secondary link-button" href="@LocalizedPath($"/{AuthState.CurrentUser?.PublicSlug}/live")">@T("action.live")</a>
                 }
                 else
                 {
-                    <a class="primary link-button home-cta" href="/register">무료로 시작하기 →</a>
-                    <a class="secondary link-button" href="/login">로그인</a>
+                    <a class="primary link-button home-cta" href="@LocalizedPath("/register")">@T("action.start")</a>
+                    <a class="secondary link-button" href="@LocalizedPath("/login")">@T("action.login")</a>
                 }
             </div>
         </div>
@@ -39,12 +41,12 @@
     @if (_loaded)
     {
         <section class="home-live-section">
-            <h2 class="home-section-title">📹 라이브 목록</h2>
+            <h2 class="home-section-title">@T("live.title")</h2>
 
             @if (_publicUsers.Count == 0)
             {
                 <p class="muted" style="text-align:center;padding:2rem;">
-                    공개 설정된 카메라가 아직 없습니다.
+                    @T("live.empty")
                 </p>
             }
             else
@@ -53,7 +55,7 @@
                     @foreach (var user in _publicUsers)
                     {
                         var camCount = _camCounts.GetValueOrDefault(user.Id, 0);
-                        <a class="home-live-card" href="/@user.PublicSlug/live">
+                        <a class="home-live-card" href="@LocalizedPath($"/{user.PublicSlug}/live")">
                             <div class="home-live-thumb">
                                 @if (!string.IsNullOrWhiteSpace(user.OgImage))
                                 {
@@ -66,10 +68,10 @@
                             </div>
                             <div class="home-live-info">
                                 <strong>@user.DisplayName</strong>
-                                <span>카메라 @camCount 대 공개</span>
+                                <span>@TF("live.camera.count", camCount)</span>
                                 <span class="home-live-slug">/@user.PublicSlug/live</span>
                             </div>
-                            <div class="home-live-badge">LIVE</div>
+                            <div class="home-live-badge">@T("live.badge")</div>
                         </a>
                     }
                 </div>
@@ -81,30 +83,30 @@
     <section class="home-download">
         <div class="home-download-inner">
             <div>
-                <h2>에이전트 앱 다운로드</h2>
-                <p class="muted">카메라가 연결된 PC에 설치하세요. 설치 후 로그인하면 자동으로 스트리밍이 시작됩니다.</p>
+                <h2>@T("download.title")</h2>
+                <p class="muted">@T("download.description")</p>
                 <ul class="home-download-req">
-                    <li>Windows 10 / 11 (64비트)</li>
-                    <li>FFmpeg 자동 포함 — 별도 설치 불필요</li>
-                    <li>IP 카메라 RTSP 주소 필요</li>
-                    <li>설치 용량 약 300MB · 설치 파일 약 90MB</li>
-                    <li>스트리밍 중 디스크 사용량: 카메라 1대당 약 180MB/시간 (400kbps 기준)<br/>
-                        <small style="color:#94a3b8;">앱 또는 카메라 재시작 시 오래된 파일 자동 정리</small>
+                    <li>@T("download.req.windows")</li>
+                    <li>@T("download.req.ffmpeg")</li>
+                    <li>@T("download.req.rtsp")</li>
+                    <li>@T("download.req.size")</li>
+                    <li>@T("download.req.disk")<br/>
+                        <small style="color:#94a3b8;">@T("download.req.cleanup")</small>
                     </li>
                 </ul>
                 <p style="margin-top:12px;font-size:0.82rem;color:#fbbf24;">
-                    ⚠ <strong>최초 설치 시 WebView2 Runtime을 자동으로 다운로드</strong>합니다. 인터넷 속도에 따라 수 분이 걸릴 수 있습니다. 설치 화면에서 기다려 주세요.
+                    ⚠ <strong>@T("download.webview.lead")</strong>@T("download.webview.detail")
                 </p>
                 <p style="margin-top:6px;font-size:0.82rem;color:#94a3b8;">
-                    관리자 권한은 <strong>C:\Program Files 등 쓰기 권한이 없는 폴더</strong>에서 실행할 때만 필요합니다.<br/>
-                    기본 설치 경로(사용자 AppData)에서는 일반 실행으로 충분합니다.
+                    @T("download.admin.prefix")<strong>@T("download.admin.location")</strong>@T("download.admin.suffix")<br/>
+                    @T("download.default.path")
                 </p>
             </div>
-            <a class="home-download-btn" href="/Setup/DreamineVMS-Setup-v1.0.0.exe" download>
+            <a class="home-download-btn" href="@LocalizedPath("/Setup/DreamineVMS-Setup-v1.0.0.exe")" download>
                 <span>⬇</span>
                 <span>
-                    <strong>Dreamine VMS 설치</strong>
-                    <small>v1.0.0 · Windows 64-bit</small>
+                    <strong>@T("download.install")</strong>
+                    <small>@T("download.version")</small>
                 </span>
             </a>
         </div>
@@ -115,33 +117,33 @@
         <div class="home-features-grid">
             <div class="home-feature-card">
                 <span class="home-feat-icon">📡</span>
-                <strong>RTSP → HLS 변환</strong>
-                <p>IP 카메라 주소만 입력하면 FFmpeg가 자동으로 HLS 스트림으로 변환합니다.</p>
+                <strong>@T("feature.rtsp.title")</strong>
+                <p>@T("feature.rtsp.description")</p>
             </div>
             <div class="home-feature-card">
                 <span class="home-feat-icon">🌐</span>
-                <strong>설치 없이 시청</strong>
-                <p>보는 사람은 앱 설치 불필요. 링크 하나로 어디서든 스마트폰/PC 접속.</p>
+                <strong>@T("feature.browser.title")</strong>
+                <p>@T("feature.browser.description")</p>
             </div>
             <div class="home-feature-card">
                 <span class="home-feat-icon">🔒</span>
-                <strong>테넌트 격리</strong>
-                <p>회원가입 후 내 카메라는 나만 관리. 공개 설정한 카메라만 외부 링크에 노출.</p>
+                <strong>@T("feature.isolation.title")</strong>
+                <p>@T("feature.isolation.description")</p>
             </div>
             <div class="home-feature-card">
                 <span class="home-feat-icon">🎥</span>
-                <strong>다중 카메라</strong>
-                <p>카메라 여러 대를 등록하고 그리드 레이아웃으로 한 화면에 모아보기.</p>
+                <strong>@T("feature.multi.title")</strong>
+                <p>@T("feature.multi.description")</p>
             </div>
             <div class="home-feature-card">
                 <span class="home-feat-icon">🔗</span>
-                <strong>공개 링크 공유</strong>
-                <p>내 전용 URL <span class="home-slug-sample">/{닉네임}/live</span>를 가족·직원과 공유.</p>
+                <strong>@T("feature.share.title")</strong>
+                <p>@T("feature.share.prefix")<span class="home-slug-sample">/@T("feature.share.nickname")/live</span>@T("feature.share.suffix")</p>
             </div>
             <div class="home-feature-card">
                 <span class="home-feat-icon">⚡</span>
-                <strong>FFmpeg 자동 설치</strong>
-                <p>카메라 PC에 WPF 앱 하나만 설치하면 FFmpeg까지 자동 다운로드 완료.</p>
+                <strong>@T("feature.ffmpeg.title")</strong>
+                <p>@T("feature.ffmpeg.description")</p>
             </div>
         </div>
     </section>
@@ -149,15 +151,15 @@
     <footer class="home-footer">
         @if (AuthState.IsAuthenticated)
         {
-            <a href="/@AuthState.CurrentUser?.PublicSlug/cameras" class="primary link-button">카메라 관리</a>
-            <a href="/@AuthState.CurrentUser?.PublicSlug/live" class="secondary link-button">라이브 보기</a>
+            <a href="@LocalizedPath($"/{AuthState.CurrentUser?.PublicSlug}/cameras")" class="primary link-button">@T("action.manage.short")</a>
+            <a href="@LocalizedPath($"/{AuthState.CurrentUser?.PublicSlug}/live")" class="secondary link-button">@T("action.live")</a>
         }
         else
         {
-            <a href="/register" class="primary link-button">지금 무료로 시작</a>
-            <a href="/login" class="secondary link-button">이미 계정이 있어요</a>
+            <a href="@LocalizedPath("/register")" class="primary link-button">@T("footer.start")</a>
+            <a href="@LocalizedPath("/login")" class="secondary link-button">@T("footer.account")</a>
         }
-        <a href="/guide" class="secondary link-button">설치 가이드</a>
+        <a href="@LocalizedPath("/guide")" class="secondary link-button">@T("footer.guide")</a>
     </footer>
 
 </div>
@@ -166,6 +168,8 @@
     private List<VmsUser> _publicUsers = [];
     private Dictionary<string, int> _camCounts = [];
     private bool _loaded;
+
+    protected override void OnInitialized() => Localization.Changed += HandleLanguageChanged;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -192,4 +196,10 @@
         _loaded = true;
         StateHasChanged();
     }
+
+    private string T(string key) => VmsHomeText.Get(Localization.Language, key);
+    private string TF(string key, params object?[] args) => VmsHomeText.Format(Localization.Language, key, args);
+    private string LocalizedPath(string path) => $"{path}{(path.Contains('?') ? '&' : '?')}lang={Uri.EscapeDataString(Localization.Language)}";
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Localization.Changed -= HandleLanguageChanged;
 }

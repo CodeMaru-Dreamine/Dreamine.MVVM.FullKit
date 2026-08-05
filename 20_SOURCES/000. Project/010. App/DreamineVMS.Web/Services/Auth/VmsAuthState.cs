@@ -1,6 +1,7 @@
 using DreamineVMS.Web.Models;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.JSInterop;
+using System.Security.Claims;
 
 namespace DreamineVMS.Web.Services.Auth;
 
@@ -60,6 +61,11 @@ public sealed class VmsAuthState
     /// \endif
     /// </summary>
     public VmsUser? CurrentUser { get; private set; }
+
+    /// <summary>
+    /// 공통 CodeMaru 로그인에서 전달된 최신 표시 이름을 가져옵니다.
+    /// </summary>
+    public string? SharedDisplayName { get; private set; }
     /// <summary>
     /// \if KO
     /// <para>Is Authenticated 값을 가져옵니다.</para>
@@ -141,6 +147,9 @@ public sealed class VmsAuthState
         if (IsAuthenticated) return;
 
         var authState = await _authenticationStateProvider.GetAuthenticationStateAsync();
+        SharedDisplayName = authState.User.Identity?.IsAuthenticated == true
+            ? authState.User.FindFirstValue(ClaimTypes.Name)
+            : null;
         var sharedUser = await _users.EnsureExternalUserAsync(authState.User);
         if (sharedUser is not null)
         {
@@ -207,6 +216,7 @@ public sealed class VmsAuthState
     {
         _token = token;
         CurrentUser = user;
+        SharedDisplayName = null;
         await js.InvokeVoidAsync("localStorage.setItem", "vms_session", token);
     }
 
@@ -239,6 +249,7 @@ public sealed class VmsAuthState
         _sessions.RemoveSession(_token);
         _token = null;
         CurrentUser = null;
+        SharedDisplayName = null;
         await js.InvokeVoidAsync("localStorage.removeItem", "vms_session");
     }
 }

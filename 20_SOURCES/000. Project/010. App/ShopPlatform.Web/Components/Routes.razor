@@ -1,16 +1,26 @@
+@implements IDisposable
+@inject ShopLocalization Localization
+
 <Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
         <FocusOnNavigate RouteData="routeData" Selector="h1" />
     </Found>
     <NotFound>
-        <PageTitle>페이지를 찾을 수 없습니다</PageTitle>
+        <PageTitle>@Localization["page.notfound"]</PageTitle>
         <LayoutView Layout="typeof(Layout.MainLayout)">
             <div class="container py-5 text-center">
                 <h1>404</h1>
-                <p>요청하신 페이지를 찾을 수 없습니다.</p>
-                <a href="/">홈으로</a>
+                <h2 class="h4">@Localization["page.notfound"]</h2>
+                <p>@Localization["page.notfound.description"]</p>
+                <a class="btn btn-primary" href="@Localization.WithLanguage("/")">@Localization["go.home"]</a>
             </div>
         </LayoutView>
     </NotFound>
 </Router>
+
+@code {
+    protected override void OnInitialized() => Localization.Changed += HandleLanguageChanged;
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Localization.Changed -= HandleLanguageChanged;
+}

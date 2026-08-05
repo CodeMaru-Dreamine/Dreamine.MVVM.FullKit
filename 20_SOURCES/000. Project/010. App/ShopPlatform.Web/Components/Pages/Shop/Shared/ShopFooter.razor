@@ -1,4 +1,6 @@
 @using ShopPlatform.Models
+@inject ShopLocalization Localization
+@implements IDisposable
 
 <footer class="ss-footer-biz">
     @{
@@ -12,29 +14,29 @@
             @if (!string.IsNullOrEmpty(b.CompanyName) || !string.IsNullOrEmpty(b.Representative) || !string.IsNullOrEmpty(b.BusinessNumber))
             {
                 <p>
-                    @if (!string.IsNullOrEmpty(b.CompanyName))   { <span>상호명: <strong>@b.CompanyName</strong></span> }
-                    @if (!string.IsNullOrEmpty(b.Representative)) { <span class="ss-footer-sep">|</span><span>대표자명: @b.Representative</span> }
-                    @if (!string.IsNullOrEmpty(b.BusinessNumber)) { <span class="ss-footer-sep">|</span><span>사업자등록번호: @b.BusinessNumber</span> }
+                    @if (!string.IsNullOrEmpty(b.CompanyName))   { <span>@T("CompanyName"): <strong>@b.CompanyName</strong></span> }
+                    @if (!string.IsNullOrEmpty(b.Representative)) { <span class="ss-footer-sep">|</span><span>@T("Representative"): @b.Representative</span> }
+                    @if (!string.IsNullOrEmpty(b.BusinessNumber)) { <span class="ss-footer-sep">|</span><span>@T("BusinessNumber"): @b.BusinessNumber</span> }
                 </p>
             }
             @if (!string.IsNullOrEmpty(b.Address))
             {
-                <p>주소: @b.Address</p>
+                <p>@T("BusinessAddress"): @b.Address</p>
             }
             @if (!string.IsNullOrEmpty(b.ManagerName) || !string.IsNullOrEmpty(b.Email) || !string.IsNullOrEmpty(b.Phone))
             {
                 <p>
-                    @if (!string.IsNullOrEmpty(b.ManagerName)) { <span>운영관리자: @b.ManagerName</span> }
-                    @if (!string.IsNullOrEmpty(b.Email))       { <span class="ss-footer-sep">|</span><span>이메일: <a href="mailto:@b.Email">@b.Email</a></span> }
-                    @if (!string.IsNullOrEmpty(b.Phone))       { <span class="ss-footer-sep">|</span><span>전화: @b.Phone</span> }
+                    @if (!string.IsNullOrEmpty(b.ManagerName)) { <span>@T("Manager"): @b.ManagerName</span> }
+                    @if (!string.IsNullOrEmpty(b.Email))       { <span class="ss-footer-sep">|</span><span>@T("Email"): <a href="mailto:@b.Email">@b.Email</a></span> }
+                    @if (!string.IsNullOrEmpty(b.Phone))       { <span class="ss-footer-sep">|</span><span>@T("FooterPhone"): @b.Phone</span> }
                 </p>
             }
         </div>
 
         <div class="ss-footer-links">
-            <a href="/@Slug/policy/refund">환불정책</a>
-            <a href="/@Slug/policy/exchange">교환·반품안내</a>
-            <a href="/@Slug/policy/delivery">배송안내</a>
+            <a href="@Localization.WithLanguage($"/{Slug}/policy/refund")">@T("RefundPolicy")</a>
+            <a href="@Localization.WithLanguage($"/{Slug}/policy/exchange")">@T("ExchangePolicy")</a>
+            <a href="@Localization.WithLanguage($"/{Slug}/policy/delivery")">@T("DeliveryPolicy")</a>
         </div>
 
         @if (!string.IsNullOrEmpty(b.TaxType))
@@ -50,7 +52,7 @@
         }
         else
         {
-            <span>© @DateTime.Now.Year @Config.ShopName &nbsp;·&nbsp; Powered by <a href="/">ShopPlatform</a></span>
+            <span>© @DateTime.Now.Year @Config.ShopName &nbsp;·&nbsp; @T("PoweredBy") <a href="@Localization.WithLanguage("/")">ShopPlatform</a></span>
         }
     </p>
 </footer>
@@ -58,4 +60,12 @@
 @code {
     [Parameter] public ShopConfig Config { get; set; } = default!;
     [Parameter] public string Slug { get; set; } = string.Empty;
+
+    protected override void OnInitialized()
+        => Localization.Changed += OnLanguageChanged;
+
+    private string T(string key) => ShopStorefrontText.Get(key, Localization.Language);
+    private void OnLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Localization.Changed -= OnLanguageChanged;
 }

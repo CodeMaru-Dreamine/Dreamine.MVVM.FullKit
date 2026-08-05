@@ -1,25 +1,27 @@
 @page "/"
+@implements IDisposable
 @inject IShopTenantStore TenantStore
 @inject ShopOptions ShopOpts
+@inject ShopLocalization Localization
 
-<PageTitle>ShopPlatform — 나만의 쇼핑몰</PageTitle>
+<PageTitle>@T("index.pageTitle")</PageTitle>
 
 <!-- Hero -->
 <div class="sp-hero-wrapper">
 <section class="sp-hero">
     <div class="sp-hero-inner">
-        <div class="sp-hero-badge">✨ 무료로 시작하세요</div>
+        <div class="sp-hero-badge">✨ @T("index.hero.badge")</div>
         <h1 class="sp-hero-title">
-            내 손으로 만드는<br />
-            <span class="sp-accent">온라인 쇼핑몰</span>
+            @T("index.hero.title")<br />
+            <span class="sp-accent">@T("index.hero.accent")</span>
         </h1>
         <p class="sp-hero-sub">
-            상품 등록부터 결제까지, 5분이면 충분합니다.<br />
-            별도 계약 없이 토스페이먼츠 API 키만 있으면 바로 결제 연동 완료.
+            @T("index.hero.description1")<br />
+            @T("index.hero.description2")
         </p>
         <div class="sp-hero-cta">
-            <a href="/apply" class="btn btn-primary btn-lg sp-cta-btn">쇼핑몰 개설 신청하기 →</a>
-            <span class="sp-cta-note">이미 운영 중이신가요? <a href="/my-shops" class="sp-cta-link">내 쇼핑몰 관리 →</a></span>
+            <a href="@Localization.WithLanguage("/apply")" class="btn btn-primary btn-lg sp-cta-btn">@T("index.hero.apply") →</a>
+            <span class="sp-cta-note">@T("index.hero.existing") <a href="@Localization.WithLanguage("/my-shops")" class="sp-cta-link">@T("index.hero.manage") →</a></span>
         </div>
     </div>
     <div class="sp-hero-visual">
@@ -29,7 +31,7 @@
                 <div class="sp-mockup-url">shop.codemaru.co.kr/<em>my-shop</em></div>
             </div>
             <div class="sp-mockup-body">
-                <div class="sp-mock-header">🛒 My Shop</div>
+                <div class="sp-mock-header">🛒 @T("index.mock.shop")</div>
                 <div class="sp-mock-products">
                     <div class="sp-mock-card"></div>
                     <div class="sp-mock-card"></div>
@@ -46,12 +48,12 @@
 {
     <section class="sp-shops">
         <div class="sp-shops-inner">
-            <h2 class="sp-shops-title">운영 중인 쇼핑몰</h2>
-            <p class="sp-shops-sub">지금 바로 방문하고 쇼핑을 즐겨보세요.</p>
+            <h2 class="sp-shops-title">@T("index.shops.title")</h2>
+            <p class="sp-shops-sub">@T("index.shops.description")</p>
             <div class="sp-shop-grid">
                 @foreach (var shop in _shops)
                 {
-                    <a href="/@shop.Slug" class="sp-shop-card">
+                    <a href="@Localization.WithLanguage($"/{shop.Slug}")" class="sp-shop-card">
                         <div class="sp-shop-card-thumb">
                             @if (!string.IsNullOrEmpty(shop.LogoPath))
                             {
@@ -82,23 +84,23 @@
     <div class="sp-features-inner">
         <div class="sp-feature-item">
             <div class="sp-feature-icon">🏪</div>
-            <h3>내 주소, 내 쇼핑몰</h3>
-            <p>shop.codemaru.co.kr/<strong>my-shop</strong> 형태로 고유 URL이 생성됩니다. 링크만 공유하면 바로 판매 시작.</p>
+            <h3>@T("index.feature.url.title")</h3>
+            <p>@T("index.feature.url.prefix")<strong>my-shop</strong>@T("index.feature.url.suffix")</p>
         </div>
         <div class="sp-feature-item">
             <div class="sp-feature-icon">💳</div>
-            <h3>내 계좌로 직접 정산</h3>
-            <p>토스페이먼츠에 직접 가입해 API 키를 발급하면 결제 금액이 내 계좌로 바로 입금됩니다. 플랫폼이 중간에 개입하지 않습니다.</p>
+            <h3>@T("index.feature.settlement.title")</h3>
+            <p>@T("index.feature.settlement.description")</p>
         </div>
         <div class="sp-feature-item">
             <div class="sp-feature-icon">📦</div>
-            <h3>상품·주문 관리</h3>
-            <p>상품 등록·수정·삭제, 재고 관리, 주문 내역 확인까지 어드민 패널 하나로 처리합니다.</p>
+            <h3>@T("index.feature.manage.title")</h3>
+            <p>@T("index.feature.manage.description")</p>
         </div>
         <div class="sp-feature-item">
             <div class="sp-feature-icon">🔒</div>
-            <h3>결제 키 암호화 보관</h3>
-            <p>입력한 시크릿 키는 서버 측에서 암호화되어 저장됩니다. 타인이 열람할 수 없습니다.</p>
+            <h3>@T("index.feature.security.title")</h3>
+            <p>@T("index.feature.security.description")</p>
         </div>
     </div>
 </section>
@@ -106,24 +108,24 @@
 <!-- 사용법 -->
 <section class="sp-how">
     <div class="sp-how-inner">
-        <h2>3단계로 쇼핑몰 오픈</h2>
+        <h2>@T("index.steps.title")</h2>
         <div class="sp-steps">
             <div class="sp-step">
                 <div class="sp-step-num">1</div>
-                <h4>개설 신청</h4>
-                <p>CodeMaru 계정으로 로그인하고 원하는 URL과 쇼핑몰 이름을 입력하면 바로 개설됩니다.</p>
+                <h4>@T("index.steps.apply.title")</h4>
+                <p>@T("index.steps.apply.description")</p>
             </div>
             <div class="sp-step-arrow">→</div>
             <div class="sp-step">
                 <div class="sp-step-num">2</div>
-                <h4>상품 등록 &amp; 결제 키 설정</h4>
-                <p>어드민 페이지에서 상품을 등록하고, 토스 API 키를 입력합니다.</p>
+                <h4>@T("index.steps.setup.title")</h4>
+                <p>@T("index.steps.setup.description")</p>
             </div>
             <div class="sp-step-arrow">→</div>
             <div class="sp-step">
                 <div class="sp-step-num">3</div>
-                <h4>링크 공유 → 판매 시작</h4>
-                <p>shop.codemaru.co.kr/my-shop 링크를 SNS에 공유하면 즉시 판매됩니다.</p>
+                <h4>@T("index.steps.share.title")</h4>
+                <p>@T("index.steps.share.description")</p>
             </div>
         </div>
     </div>
@@ -132,27 +134,27 @@
 <!-- 무료 서비스 안내 -->
 <section class="sp-notice">
     <div class="sp-notice-inner">
-        <h3 class="sp-notice-title">서비스 이용 안내</h3>
+        <h3 class="sp-notice-title">@T("index.notice.title")</h3>
         <div class="sp-notice-grid">
             <div class="sp-notice-item">
                 <span class="sp-notice-icon">⏰</span>
                 <div>
-                    <strong>24시간 내 상품 미등록 시 자동 삭제</strong>
-                    <p>개설 후 24시간 이내에 상품을 1개 이상 등록하지 않으면 쇼핑몰이 자동으로 삭제됩니다.</p>
+                    <strong>@T("index.notice.expiry.title")</strong>
+                    <p>@T("index.notice.expiry.description")</p>
                 </div>
             </div>
             <div class="sp-notice-item">
                 <span class="sp-notice-icon">⚡</span>
                 <div>
-                    <strong>무료 서비스 특성상 일시적 장애 가능</strong>
-                    <p>무료로 제공되는 서비스이므로 일시적인 접속 장애 또는 다운이 발생할 수 있습니다. 이 점 양해 부탁드립니다.</p>
+                    <strong>@T("index.notice.outage.title")</strong>
+                    <p>@T("index.notice.outage.description")</p>
                 </div>
             </div>
             <div class="sp-notice-item">
                 <span class="sp-notice-icon">📧</span>
                 <div>
-                    <strong>문의 시 빠르게 조치해 드립니다</strong>
-                    <p>문제가 발생하면 <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a>로 연락주세요. 최대한 빠르게 확인하겠습니다.</p>
+                    <strong>@T("index.notice.support.title")</strong>
+                    <p>@T("index.notice.support.prefix") <a href="mailto:admin@codemaru.co.kr">admin@codemaru.co.kr</a>@T("index.notice.support.suffix")</p>
                 </div>
             </div>
         </div>
@@ -161,14 +163,19 @@
 
 <!-- 푸터 -->
 <footer class="sp-footer">
-    <p>© 2025 ShopPlatform by <a href="https://codemaru.co.kr" target="_blank">Codemaru</a></p>
+    <p>© @DateTime.UtcNow.Year ShopPlatform @T("index.footer.by") <a href="@Localization.WithLanguage("https://codemaru.co.kr")" target="_blank" rel="noopener">Codemaru</a></p>
 </footer>
 
 @code {
     private List<ShopPlatform.Models.ShopConfig>? _shops;
     protected override async Task OnInitializedAsync()
     {
+        Localization.Changed += HandleLanguageChanged;
         var all = await TenantStore.GetAllAsync();
         _shops = all.Where(s => s.IsActive).OrderBy(s => s.CreatedAt).ToList();
     }
+
+    private string T(string key) => ShopPlatformText.Get(key, Localization.Language);
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Localization.Changed -= HandleLanguageChanged;
 }

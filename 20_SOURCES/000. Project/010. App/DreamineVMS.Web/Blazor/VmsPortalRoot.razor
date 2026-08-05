@@ -1,0 +1,39 @@
+@namespace DreamineVMS.Web.Blazor
+@using Microsoft.AspNetCore.WebUtilities
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject VmsLocalization Text
+
+<TopNav />
+<main id="main-content" tabindex="-1">
+    <Routes />
+</main>
+
+@code {
+    protected override void OnInitialized()
+    {
+        Text.Changed += HandleLanguageChanged;
+        ApplyLanguageFromLocation();
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
+
+    private void ApplyLanguageFromLocation()
+    {
+        var query = QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        if (query.TryGetValue("lang", out var language))
+            Text.SetLanguage(VmsLocalization.NormalizeLanguageCode(language.ToString()));
+    }
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args)
+    {
+        ApplyLanguageFromLocation();
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Text.Changed -= HandleLanguageChanged;
+        Navigation.LocationChanged -= HandleLocationChanged;
+    }
+}

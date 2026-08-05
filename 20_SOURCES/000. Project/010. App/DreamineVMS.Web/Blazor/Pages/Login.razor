@@ -1,19 +1,20 @@
 @page "/login"
 @namespace DreamineVMS.Web.Blazor.Pages
 @inject NavigationManager Nav
+@inject VmsLocalization Text
 
-<PageTitle>로그인 — Dreamine VMS</PageTitle>
+<PageTitle>@Text["login"] — Dreamine VMS</PageTitle>
 
 <div class="page-shell auth-shell">
     <div class="auth-card">
-        <h1>로그인</h1>
-        <p class="muted">CodeMaru 공통 로그인으로 이동합니다.</p>
-        <a class="primary link-button full-btn" href="@LoginUrl">로그인 계속하기</a>
+        <h1>@Text["login"]</h1>
+        <p class="muted">@Text["redirect.login"]</p>
+        <a class="primary link-button full-btn" href="@LoginUrl">@Text["continue.login"]</a>
     </div>
 </div>
 
 @code {
-    private string LoginUrl => $"https://codemaru.co.kr/_identity/login?returnUrl={Uri.EscapeDataString(Nav.BaseUri)}";
+    private string LoginUrl => Dreamine.Identity.DreamineIdentityPortal.CreateUrl("login", Nav.BaseUri, Text.Language);
 
     protected override void OnInitialized()
     {
