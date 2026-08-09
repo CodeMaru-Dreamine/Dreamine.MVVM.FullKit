@@ -145,3 +145,21 @@
 [submodule "20_SOURCES/100. Library/Identity"]
 	path = 20_SOURCES/100. Library/Identity
 	url = https://github.com/CodeMaru-Dreamine/Dreamine.Identity
+[submodule "20_SOURCES/100. Library/Secs.Abstractions"]
+	path = 20_SOURCES/100. Library/Secs.Abstractions
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Secs.Abstractions
+[submodule "20_SOURCES/100. Library/Secs.Com"]
+	path = 20_SOURCES/100. Library/Secs.Com
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Secs.Com
+[submodule "20_SOURCES/100. Library/Gem.Abstractions"]
+	path = 20_SOURCES/100. Library/Gem.Abstractions
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Gem.Abstractions
+[submodule "20_SOURCES/100. Library/Gem"]
+	path = 20_SOURCES/100. Library/Gem
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Gem
+[submodule "20_SOURCES/100. Library/Gem300.Abstractions"]
+	path = 20_SOURCES/100. Library/Gem300.Abstractions
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Gem300.Abstractions
+[submodule "20_SOURCES/100. Library/Gem300"]
+	path = 20_SOURCES/100. Library/Gem300
+	url = https://github.com/CodeMaru-Dreamine/Dreamine.Gem300
