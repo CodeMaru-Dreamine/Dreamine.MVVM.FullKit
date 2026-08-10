@@ -5,9 +5,10 @@ Status date: 2026-08-10. `Passed` means local automated evidence unless the peer
 | ID | Peer / mode | Scenario | Status | Evidence / next action |
 |---|---|---|---|---|
 | A-01 | Dreamine Host Active ↔ Dreamine Equipment Passive | TCP, Select, 100 Linktests | Passed | Headless self-test |
-| A-02 | Dreamine self loopback | 1,000 S1F1/S1F2 correlated replies | Passed | 1,000/1,000; timeout 0 |
-| A-03 | Dreamine self loopback | 100 independent connect/select/dispose cycles | Passed | 100/100 |
+| A-02 | Dreamine self loopback | 1,000 S1F1/S1F2 correlated replies | Passed | 1,000/1,000; timeout 0; P95 0.5424 ms on the final run |
+| A-03 | Dreamine self loopback | 100 independent cycles plus Passive and Active-auto-reconnect stress | Passed | 100/100 independent; 100/100 Passive Host; 100/100 Active auto reconnect with virtual T5 |
 | A-04 | Dreamine self loopback | 20 concurrent Primary transactions | Passed | Unique System Bytes and correlated replies |
+| A-05 | Harness diagnostics | 10,000-entry bound, pause/resume, correlated raw/decoded views, concurrent producers | Passed | 5 View/Manager tests; external UI automation blocked separately |
 | B-01 | Simulator Host Active ↔ Dreamine Equipment Passive | Connect, Select, Linktest | Not Run | Waiting for User; follow KO/EN procedure |
 | B-02 | Same as B-01 | S1F13/F14 and S1F1/F2 | Not Run | Waiting for User |
 | B-03 | Same as B-01 | S1F3/F4 and S1F11/F12 | Not Run | Waiting for User |
@@ -23,12 +24,13 @@ Status date: 2026-08-10. `Passed` means local automated evidence unless the peer
 
 | Test project | Passed |
 |---|---:|
-| Dreamine.Secs.Abstractions.Tests | 10 |
-| Dreamine.Secs.Com.Tests | 107 |
+| Dreamine.Secs.Abstractions.Tests | 12 |
+| Dreamine.Secs.Com.Tests | 117 |
 | Dreamine.Gem.Abstractions.Tests | 9 |
-| Dreamine.Gem.Tests | 35 |
+| Dreamine.Gem.Tests | 38 |
 | Dreamine.Gem300.Abstractions.Tests | 9 |
-| Dreamine.Gem300.Tests | 33 |
-| **Total** | **203** |
+| Dreamine.Gem300.Tests | 37 |
+| Dreamine.SecsGem.Interop.Wpf.Tests | 5 |
+| **Total** | **227** |
 
 No external simulator scenario has passed yet. Therefore the current result must not be described as production-ready, fully compliant, certified, or validated on real equipment.

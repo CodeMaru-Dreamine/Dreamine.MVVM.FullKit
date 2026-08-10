@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Windows;
+using System.Windows.Data;
 using Dreamine.MVVM.ViewModels;
 using Dreamine.Secs.Abstractions.Enums;
 using Dreamine.Secs.Abstractions.Model;
@@ -23,6 +25,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     private string _hsmsState = "NotConnected";
     private string _statusText = "Ready. External simulator scenarios: Not Run.";
     private string _lastActivity = "None";
+    private string _currentError = "None";
     private string _lastError = "None";
     private byte _stream = 1;
     private byte _function = 1;
@@ -35,13 +38,25 @@ public sealed class MainWindowViewModel : ViewModelBase
     private InteropLogEntry? _selectedLog;
     private string _simulatorExecutablePath = SimulatorProcessManager.DefaultExecutablePath;
     private bool _equipmentResponderEnabled;
+    private bool _isLogViewPaused;
+    private bool _autoScrollLogs = true;
+    private string _logFilterText = string.Empty;
 
     public MainWindowViewModel(ConnectionManager connection, MessageManager messages, ScenarioManager scenarios,
         InteropLogManager log, ResultExportManager export, SimulatorProcessManager simulator, FileDialogManager fileDialog)
     {
         _connection = connection; _messages = messages; _scenarios = scenarios; _log = log; _export = export; _simulator = simulator; _fileDialog = fileDialog;
+        FilteredLogs = CreateLogView(_log.Entries);
+        FilteredSecs1Logs = CreateLogView(_log.Secs1Entries);
+        FilteredSecs2Logs = CreateLogView(_log.Secs2Entries);
         _connection.StateChanged += (_, _) => Dispatch(RefreshStates);
-        _log.EntryAdded += (_, entry) => Dispatch(() => { LastActivity = $"{entry.Timestamp:HH:mm:ss.fff} {entry.Summary}"; if (entry.Level == "Error") LastError = entry.Summary; });
+        _log.EntryAdded += (_, entry) => Dispatch(() =>
+        {
+            LastActivity = $"{entry.Timestamp:HH:mm:ss.fff} {entry.Summary}";
+            if (entry.Level != "Error") return;
+            CurrentError = entry.Summary;
+            LastError = entry.Summary;
+        });
         ConnectCommand = Command(ConnectAsync, () => TcpState is "Disconnected" or "Faulted");
         DisconnectCommand = Command(DisconnectAsync, () => TcpState is not "Disconnected");
         SelectCommand = Command(() => RunAsync("Select", token => _connection.SelectAsync(token)), () => HsmsState == "ConnectedNotSelected");
@@ -73,12 +88,16 @@ public sealed class MainWindowViewModel : ViewModelBase
     public ObservableCollection<InteropLogEntry> Logs => _log.Entries;
     public ObservableCollection<InteropLogEntry> Secs1Logs => _log.Secs1Entries;
     public ObservableCollection<InteropLogEntry> Secs2Logs => _log.Secs2Entries;
+    public ICollectionView FilteredLogs { get; }
+    public ICollectionView FilteredSecs1Logs { get; }
+    public ICollectionView FilteredSecs2Logs { get; }
     public bool SimulatorInstalled => _simulator.IsInstalled(SimulatorExecutablePath);
     public string SimulatorAvailability => SimulatorInstalled ? "Installed (launch is manual)" : "Not found";
     public string TcpState { get => _tcpState; private set => SetProperty(ref _tcpState, value); }
     public string HsmsState { get => _hsmsState; private set => SetProperty(ref _hsmsState, value); }
     public string StatusText { get => _statusText; private set => SetProperty(ref _statusText, value); }
     public string LastActivity { get => _lastActivity; private set => SetProperty(ref _lastActivity, value); }
+    public string CurrentError { get => _currentError; private set => SetProperty(ref _currentError, value); }
     public string LastError { get => _lastError; private set => SetProperty(ref _lastError, value); }
     public byte Stream { get => _stream; set => SetProperty(ref _stream, value); }
     public byte Function { get => _function; set => SetProperty(ref _function, value); }
@@ -102,6 +121,27 @@ public sealed class MainWindowViewModel : ViewModelBase
     }
     public string EquipmentResponderState => EquipmentResponderEnabled ? "ON" : "OFF";
     public string EquipmentResponderButtonText => EquipmentResponderEnabled ? "✓ Equipment Responder: ON" : "Enable Equipment Responder";
+    public bool IsLogViewPaused
+    {
+        get => _isLogViewPaused;
+        set
+        {
+            if (!SetProperty(ref _isLogViewPaused, value)) return;
+            _log.SetPaused(value);
+            OnPropertyChanged(nameof(LogViewState));
+        }
+    }
+    public string LogViewState => IsLogViewPaused ? "Paused" : "Live";
+    public bool AutoScrollLogs { get => _autoScrollLogs; set => SetProperty(ref _autoScrollLogs, value); }
+    public string LogFilterText
+    {
+        get => _logFilterText;
+        set
+        {
+            if (!SetProperty(ref _logFilterText, value)) return;
+            FilteredLogs.Refresh(); FilteredSecs1Logs.Refresh(); FilteredSecs2Logs.Refresh();
+        }
+    }
 
     public AsyncRelayCommand ConnectCommand { get; }
     public AsyncRelayCommand DisconnectCommand { get; }
@@ -163,7 +203,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         _operationCancellation?.Dispose(); _operationCancellation = new CancellationTokenSource();
         StatusText = $"{operation} running...";
-        try { await action(_operationCancellation.Token); StatusText = $"{operation} completed."; }
+        try { await action(_operationCancellation.Token); CurrentError = "None"; StatusText = $"{operation} completed."; }
         catch (OperationCanceledException) { StatusText = $"{operation} cancelled."; }
         finally { RefreshStates(); }
     }
@@ -215,5 +255,21 @@ public sealed class MainWindowViewModel : ViewModelBase
         var dispatcher = Application.Current?.Dispatcher;
         if (dispatcher is null || dispatcher.CheckAccess()) action();
         else _ = dispatcher.BeginInvoke(action);
+    }
+
+    private ICollectionView CreateLogView(ObservableCollection<InteropLogEntry> source)
+    {
+        var view = new ListCollectionView(source) { IsLiveFiltering = false };
+        view.Filter = item => item is InteropLogEntry entry && MatchesLogFilter(entry);
+        return view;
+    }
+
+    private bool MatchesLogFilter(InteropLogEntry entry)
+    {
+        var filter = LogFilterText.Trim();
+        return filter.Length == 0 || entry.Direction.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+            entry.SxFy.Contains(filter, StringComparison.OrdinalIgnoreCase) || entry.SystemBytes.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+            entry.Category.Contains(filter, StringComparison.OrdinalIgnoreCase) || entry.Summary.Contains(filter, StringComparison.OrdinalIgnoreCase) ||
+            (entry.Message?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false);
     }
 }

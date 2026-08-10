@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Windows;
+using System.Windows.Threading;
 using Dreamine.Secs.Abstractions.Diagnostics;
 using Dreamine.Secs.Abstractions.Hsms;
 using Dreamine.Secs.Abstractions.Model;
@@ -10,7 +11,13 @@ namespace Dreamine.SecsGem.Interop.Wpf.Managers;
 
 public sealed class InteropLogManager
 {
-    private const int MaximumEntries = 5000;
+    public const int MaximumEntries = 10_000;
+    private const int DrainBatchSize = 250;
+    private readonly Queue<InteropLogEntry> _pending = new();
+    private readonly object _pendingGate = new();
+    private readonly object _collectionGate = new();
+    private int _drainScheduled;
+    private int _paused;
     public ObservableCollection<InteropLogEntry> Entries { get; } = new();
     public ObservableCollection<InteropLogEntry> Secs1Entries { get; } = new();
     public ObservableCollection<InteropLogEntry> Secs2Entries { get; } = new();
@@ -30,14 +37,69 @@ public sealed class InteropLogManager
 
     public void Info(string category, string summary) => Add(new(DateTimeOffset.Now, "Info", category, "--", summary, null, null));
     public void Error(string category, Exception exception) => Add(new(DateTimeOffset.Now, "Error", category, "--", exception.Message, exception.GetType().Name, null));
+    public bool IsPaused => Volatile.Read(ref _paused) != 0;
+
+    public void SetPaused(bool paused)
+    {
+        Volatile.Write(ref _paused, paused ? 1 : 0);
+        if (!paused) ScheduleDrain();
+    }
+
     public void Clear() => Dispatch(() =>
     {
-        Entries.Clear();
-        Secs1Entries.Clear();
-        Secs2Entries.Clear();
+        lock (_pendingGate) _pending.Clear();
+        lock (_collectionGate)
+        {
+            Entries.Clear();
+            Secs1Entries.Clear();
+            Secs2Entries.Clear();
+        }
     });
 
-    private void Add(InteropLogEntry entry) => Dispatch(() =>
+    private void Add(InteropLogEntry entry)
+    {
+        lock (_pendingGate)
+        {
+            _pending.Enqueue(entry);
+            while (_pending.Count > MaximumEntries) _pending.Dequeue();
+        }
+        ScheduleDrain();
+    }
+
+    private void ScheduleDrain()
+    {
+        if (IsPaused || Interlocked.Exchange(ref _drainScheduled, 1) != 0) return;
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is null) DrainPending();
+        else _ = dispatcher.BeginInvoke(DispatcherPriority.Background, DrainPending);
+    }
+
+    private void DrainPending()
+    {
+        try
+        {
+            if (IsPaused) return;
+            var batch = new List<InteropLogEntry>(DrainBatchSize);
+            lock (_pendingGate)
+            {
+                while (batch.Count < DrainBatchSize && _pending.Count > 0) batch.Add(_pending.Dequeue());
+            }
+            lock (_collectionGate)
+            foreach (var entry in batch) AddCore(entry);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _drainScheduled, 0);
+            if (!IsPaused && HasPendingEntries()) ScheduleDrain();
+        }
+    }
+
+    private bool HasPendingEntries()
+    {
+        lock (_pendingGate) return _pending.Count > 0;
+    }
+
+    private void AddCore(InteropLogEntry entry)
     {
         Entries.Add(entry);
         while (Entries.Count > MaximumEntries) Entries.RemoveAt(0);
@@ -49,7 +111,7 @@ public sealed class InteropLogManager
             while (Secs2Entries.Count > MaximumEntries) Secs2Entries.RemoveAt(0);
         }
         EntryAdded?.Invoke(this, entry);
-    });
+    }
 
     private static void Dispatch(Action action)
     {
