@@ -9,6 +9,7 @@ using Dreamine.Secs.Abstractions.Enums;
 using Dreamine.Secs.Abstractions.Hsms;
 using Dreamine.Secs.Abstractions.Model;
 using Dreamine.Secs.Com.Hsms;
+using Dreamine.SecsGem.Interop.Runtime;
 using Dreamine.SecsGem.Interop.Wpf.Models;
 
 namespace Dreamine.SecsGem.Interop.Wpf.Managers;
@@ -39,7 +40,7 @@ internal sealed class MultiEquipmentScenarioManager(InteropLogManager log)
 
         MultiEquipmentHost CreateHost()
         {
-            var host = new MultiEquipmentHost(log);
+            var host = new MultiEquipmentHost(log.EquipmentSink);
             hosts.Add(host);
             return host;
         }

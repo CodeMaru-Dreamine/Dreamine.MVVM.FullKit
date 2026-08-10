@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.IO;
 using Dreamine.Secs.Abstractions.Enums;
 using Dreamine.Secs.Abstractions.Model;
+using Dreamine.SecsGem.Interop.Runtime;
 using Dreamine.SecsGem.Interop.Wpf.Managers;
 using Dreamine.SecsGem.Interop.Wpf.Models;
 using Xunit;
@@ -49,7 +50,7 @@ public sealed class MultiEquipmentHostTests
     {
         var log = new InteropLogManager();
         await using var host = new MultiEquipmentHost(
-            new EquipmentConnectionRegistry(new EquipmentSessionFactory(log)),
+            new EquipmentConnectionRegistry(new EquipmentSessionFactory(log.EquipmentSink)),
             new MultiEquipmentHostOptions { ConnectConcurrency = 2, MessageConcurrency = 3, ReconnectConcurrency = 1 });
         for (var index = 0; index < 8; index++) host.Add(Definition($"EQ-{index + 1:000}", ReservePort()));
         var active = 0;
@@ -89,7 +90,7 @@ public sealed class MultiEquipmentHostTests
         try
         {
             var log = new InteropLogManager();
-            await using var source = new MultiEquipmentHost(new EquipmentConnectionRegistry(new EquipmentSessionFactory(log)),
+            await using var source = new MultiEquipmentHost(new EquipmentConnectionRegistry(new EquipmentSessionFactory(log.EquipmentSink)),
                 new MultiEquipmentHostOptions { ConnectConcurrency = 4, MessageConcurrency = 7, ReconnectConcurrency = 2 });
             source.Add(new EquipmentConnectionDefinition
             {
@@ -107,7 +108,19 @@ public sealed class MultiEquipmentHostTests
             Assert.DoesNotContain("password", json, StringComparison.OrdinalIgnoreCase);
             Assert.DoesNotContain("credential", json, StringComparison.OrdinalIgnoreCase);
 
-            await using var target = new MultiEquipmentHost(new InteropLogManager());
+            var targetLog = new InteropLogManager();
+            await using (var incompatible = new MultiEquipmentHost(targetLog.EquipmentSink))
+            {
+                await Assert.ThrowsAsync<InvalidDataException>(() =>
+                    incompatible.ImportConfigurationAsync(path, CancellationToken.None));
+                Assert.Empty(incompatible.Connections);
+            }
+
+            await using var target = new MultiEquipmentHost(targetLog.EquipmentSink, new MultiEquipmentHostOptions
+            {
+                ReconnectConcurrency = 2,
+                ReconnectQueueCapacity = 4096
+            });
             await target.ImportConfigurationAsync(path, CancellationToken.None);
             Assert.Equal(new[] { "EQ-A", "EQ-B" }, target.Connections.Select(value => value.EquipmentId));
             Assert.Equal((4, 7, 2), (target.Options.ConnectConcurrency, target.Options.MessageConcurrency,
@@ -127,7 +140,8 @@ public sealed class MultiEquipmentHostTests
     [Fact]
     public async Task FiftyEquipmentConnectSelectMessageAndDisposeWithoutAggregateLeak()
     {
-        var host = new MultiEquipmentHost(new InteropLogManager());
+        var log = new InteropLogManager();
+        var host = new MultiEquipmentHost(log.EquipmentSink);
         var fleet = await MultiEquipmentScenarioManager.LoopbackFleet.CreateAsync(host, 50);
         try
         {
@@ -149,7 +163,7 @@ public sealed class MultiEquipmentHostTests
     public async Task SameSessionAndSystemBytesAreCorrelatedByConnection()
     {
         var log = new InteropLogManager();
-        await using var host = new MultiEquipmentHost(log);
+        await using var host = new MultiEquipmentHost(log.EquipmentSink);
         await using var fleet = await MultiEquipmentScenarioManager.LoopbackFleet.CreateAsync(host, 2);
         var first = host.Connections[0];
         var second = host.Connections[1];
@@ -170,7 +184,8 @@ public sealed class MultiEquipmentHostTests
     [Fact]
     public async Task TimeoutAndLastErrorRemainOnFailingEquipment()
     {
-        await using var host = new MultiEquipmentHost(new InteropLogManager());
+        var log = new InteropLogManager();
+        await using var host = new MultiEquipmentHost(log.EquipmentSink);
         await using var fleet = await MultiEquipmentScenarioManager.LoopbackFleet.CreateAsync(host, 2,
             noResponseEquipmentIndex: 1, t3Seconds: 1);
         var results = await host.BroadcastAsync(1, 1, null, CancellationToken.None);
@@ -186,7 +201,8 @@ public sealed class MultiEquipmentHostTests
     [Fact]
     public async Task OneOfTenReconnectDoesNotReplaceOtherConnectionsOrGemRuntime()
     {
-        await using var host = new MultiEquipmentHost(new InteropLogManager());
+        var log = new InteropLogManager();
+        await using var host = new MultiEquipmentHost(log.EquipmentSink);
         await using var fleet = await MultiEquipmentScenarioManager.LoopbackFleet.CreateAsync(host, 10);
         var target = host.Connections[0];
         var stable = host.Connections.Skip(1).ToDictionary(value => value.EquipmentId,
@@ -213,7 +229,8 @@ public sealed class MultiEquipmentHostTests
     [Fact]
     public async Task DisposeCancelsPendingPassiveAcceptAndWaitsForOperations()
     {
-        var host = new MultiEquipmentHost(new InteropLogManager());
+        var log = new InteropLogManager();
+        var host = new MultiEquipmentHost(log.EquipmentSink);
         var context = host.Add(new EquipmentConnectionDefinition
         {
             EquipmentId = "EQ-PASSIVE", Host = "127.0.0.1", Port = ReservePort(),

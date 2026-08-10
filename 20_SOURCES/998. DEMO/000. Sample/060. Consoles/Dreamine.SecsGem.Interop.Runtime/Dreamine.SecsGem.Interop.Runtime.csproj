@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\100. Library\Communication.Abstractions\Dreamine.Communication.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Secs.Abstractions\Dreamine.Secs.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Secs.Com\Dreamine.Secs.Com.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Gem.Abstractions\Dreamine.Gem.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Gem\Dreamine.Gem.csproj" />
+  </ItemGroup>
+</Project>

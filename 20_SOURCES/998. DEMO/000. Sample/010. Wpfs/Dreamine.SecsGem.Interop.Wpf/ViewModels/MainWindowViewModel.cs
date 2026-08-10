@@ -8,6 +8,7 @@ using System.Windows.Data;
 using Dreamine.MVVM.ViewModels;
 using Dreamine.Secs.Abstractions.Enums;
 using Dreamine.Secs.Abstractions.Model;
+using Dreamine.SecsGem.Interop.Runtime;
 using Dreamine.SecsGem.Interop.Wpf.Managers;
 using Dreamine.SecsGem.Interop.Wpf.Models;
 
@@ -62,12 +63,15 @@ public sealed class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     private ushort _newEquipmentSessionId;
     private string _equipmentLogFilter = "All Equipment";
     private MultiEquipmentSelfTestSummary? _lastMultiEquipmentSummary;
+    private FactoryResultSummary _factoryResult = FactoryResultSummary.NotRun;
+    private string _factoryResultPath = "No Factory result imported.";
 
     public MainWindowViewModel(ConnectionManager connection, MessageManager messages, ScenarioManager scenarios,
         InteropLogManager log, ResultExportManager export, SimulatorProcessManager simulator, FileDialogManager fileDialog)
     {
         _connection = connection; _messages = messages; _scenarios = scenarios; _log = log; _export = export; _simulator = simulator; _fileDialog = fileDialog;
-        _multiEquipmentHost = new MultiEquipmentHost(log);
+        _multiEquipmentHost = new MultiEquipmentHost(log.EquipmentSink,
+            collectionContext: SynchronizationContext.Current);
         _multiEquipmentScenarios = new MultiEquipmentScenarioManager(log);
         FilteredLogs = CreateLogView(_log.Entries);
         FilteredSecs1Logs = CreateLogView(_log.Secs1Entries);
@@ -132,6 +136,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         RunMultiEquipmentSelfTestCommand = Command(RunMultiEquipmentSelfTestAsync, () => IsMultiEquipmentMode);
         ImportEquipmentConfigurationCommand = Command(ImportEquipmentConfigurationAsync, () => IsMultiEquipmentMode);
         ExportEquipmentConfigurationCommand = Command(ExportEquipmentConfigurationAsync, () => IsMultiEquipmentMode);
+        ImportFactoryResultCommand = Command(ImportFactoryResultAsync);
     }
 
     public ConnectionSettings Settings { get; } = new();
@@ -239,6 +244,18 @@ public sealed class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     public string MultiEquipmentTestResult => _lastMultiEquipmentSummary is null
         ? "Not Run"
         : $"{_lastMultiEquipmentSummary.Result}: {_lastMultiEquipmentSummary.MessagesPassed:N0}/{_lastMultiEquipmentSummary.MessagesRequested:N0} replies";
+    public FactoryResultSummary FactoryResult
+    {
+        get => _factoryResult;
+        private set => SetProperty(ref _factoryResult, value);
+    }
+    public string FactoryResultPath
+    {
+        get => _factoryResultPath;
+        private set => SetProperty(ref _factoryResultPath, value);
+    }
+    public string FactoryEvidenceBoundaryText =>
+        "Imported Factory results are Headless self-loopback evidence only. External Simulator and Real Equipment remain Not Run / Waiting for User.";
     private EquipmentConnectionContext? SelectedEquipmentContext => SelectedEquipment as EquipmentConnectionContext;
     private bool IsOperationIdle => Volatile.Read(ref _operationRunning) == 0;
 
@@ -280,6 +297,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IAsyncDisposable
     public AsyncRelayCommand RunMultiEquipmentSelfTestCommand { get; }
     public AsyncRelayCommand ImportEquipmentConfigurationCommand { get; }
     public AsyncRelayCommand ExportEquipmentConfigurationCommand { get; }
+    public AsyncRelayCommand ImportFactoryResultCommand { get; }
 
     private AsyncRelayCommand Command(Func<Task> execute, Func<bool>? canExecute = null)
     {
@@ -399,6 +417,18 @@ public sealed class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         var path = _fileDialog.SaveMultiEquipmentConfiguration(suggested);
         if (path is null) return Task.CompletedTask;
         return RunAsync("Export configuration", token => _multiEquipmentHost.ExportConfigurationAsync(path, token));
+    }
+    private Task ImportFactoryResultAsync()
+    {
+        var path = _fileDialog.OpenFactoryResult();
+        if (path is null) return Task.CompletedTask;
+        return RunAsync("Import Factory result", async token =>
+        {
+            var result = await FactoryResultJsonParser.ParseAsync(path, token);
+            FactoryResult = result;
+            FactoryResultPath = Path.GetFullPath(path);
+            StatusText = $"Imported Factory result: {result.Scenario} — {result.Status}.";
+        });
     }
     private async Task RunSelfTestAsync()
     {
@@ -570,6 +600,7 @@ public sealed class MainWindowViewModel : ViewModelBase, IAsyncDisposable
         RunMultiEquipmentSelfTestCommand.RaiseCanExecuteChanged();
         ImportEquipmentConfigurationCommand.RaiseCanExecuteChanged();
         ExportEquipmentConfigurationCommand.RaiseCanExecuteChanged();
+        ImportFactoryResultCommand.RaiseCanExecuteChanged();
         RaiseEquipmentCommandStates();
     }
 

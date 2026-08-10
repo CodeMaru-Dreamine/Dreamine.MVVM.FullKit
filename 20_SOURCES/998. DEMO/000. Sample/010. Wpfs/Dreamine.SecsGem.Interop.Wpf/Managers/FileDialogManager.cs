@@ -47,4 +47,15 @@ public sealed class FileDialogManager
         };
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
+
+    public string? OpenFactoryResult()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Import headless FactoryScale result",
+            Filter = "Factory result JSON (*.json)|*.json|All files (*.*)|*.*",
+            CheckFileExists = true
+        };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
 }

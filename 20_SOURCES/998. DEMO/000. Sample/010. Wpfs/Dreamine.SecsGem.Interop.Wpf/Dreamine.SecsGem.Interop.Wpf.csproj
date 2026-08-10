@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\060. Consoles\Dreamine.SecsGem.Interop.Runtime\Dreamine.SecsGem.Interop.Runtime.csproj" />
     <ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
     <ProjectReference Include="..\..\..\..\100. Library\Attributes\Dreamine.MVVM.Attributes.csproj" />
     <ProjectReference Include="..\..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer" />

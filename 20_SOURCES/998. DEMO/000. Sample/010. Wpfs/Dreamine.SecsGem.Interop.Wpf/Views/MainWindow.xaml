@@ -367,6 +367,170 @@
                     </ScrollViewer>
                 </TabItem>
 
+                <TabItem Header="Factory Results">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" PanningMode="VerticalOnly">
+                        <StackPanel Margin="12" MaxWidth="1040" HorizontalAlignment="Center" TextElement.Foreground="{StaticResource TextBrush}">
+                            <Border Style="{StaticResource Card}" Margin="6">
+                                <StackPanel>
+                                    <TextBlock FontSize="18" FontWeight="SemiBold" Text="Headless Factory result"/>
+                                    <TextBlock Margin="0,3,0,10" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap"
+                                               Text="Run factory-scale load from the Headless FactoryScale console. This WPF harness only imports and displays its completed JSON result."/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="132"/></Grid.ColumnDefinitions>
+                                        <Border Height="36" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,0">
+                                            <TextBlock VerticalAlignment="Center" Text="{Binding FactoryResultPath}" TextTrimming="CharacterEllipsis" ToolTip="{Binding FactoryResultPath}"/>
+                                        </Border>
+                                        <Button Grid.Column="1" Style="{StaticResource PrimaryButton}" Content="Browse / Import…" Command="{Binding ImportFactoryResultCommand}"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Card}" Margin="6" Background="{StaticResource InputBrush}">
+                                <StackPanel>
+                                    <TextBlock Foreground="#F2C66D" FontWeight="SemiBold" Text="{Binding FactoryEvidenceBoundaryText}" TextWrapping="Wrap"/>
+                                    <TextBlock Margin="0,6,0,0" Foreground="{StaticResource MutedTextBrush}" Text="{Binding FactoryResult.EvidenceScope}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <WrapPanel HorizontalAlignment="Center">
+                                <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBlock FontSize="17" FontWeight="SemiBold" Text="Run overview"/>
+                                            <Border Grid.Column="1">
+                                                <Border.Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource Badge}">
+                                                        <Setter Property="Background" Value="#263B5C"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding FactoryResult.Status}" Value="Passed"><Setter Property="Background" Value="#087F6B"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding FactoryResult.Status}" Value="Failed"><Setter Property="Background" Value="#8F2E3D"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding FactoryResult.Status}" Value="Cancelled"><Setter Property="Background" Value="#795D22"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding FactoryResult.Status}" Value="Experimental"><Setter Property="Background" Value="#46506F"/></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock FontWeight="SemiBold" Foreground="White" Text="{Binding FactoryResult.Status}"/>
+                                            </Border>
+                                        </Grid>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="118"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                            <TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Scenario"/><TextBlock Grid.Column="1" FontWeight="SemiBold" Text="{Binding FactoryResult.Scenario}" TextWrapping="Wrap"/>
+                                            <TextBlock Grid.Row="1" Foreground="{StaticResource MutedTextBrush}" Text="Execution mode"/><TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding FactoryResult.ExecutionMode}" TextWrapping="Wrap"/>
+                                            <TextBlock Grid.Row="2" Foreground="{StaticResource MutedTextBrush}" Text="Started"/><TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FactoryResult.StartedAt}"/>
+                                            <TextBlock Grid.Row="3" Foreground="{StaticResource MutedTextBrush}" Text="Completed"/><TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding FactoryResult.CompletedAt}"/>
+                                            <TextBlock Grid.Row="4" Foreground="{StaticResource MutedTextBrush}" Text="Elapsed / schema"/><TextBlock Grid.Row="4" Grid.Column="1"><Run Text="{Binding FactoryResult.Elapsed}"/><Run Text="  ·  v"/><Run Text="{Binding FactoryResult.SchemaVersion}"/></TextBlock>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                    <StackPanel>
+                                        <TextBlock Margin="0,0,0,10" FontSize="17" FontWeight="SemiBold" Text="Equipment state"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                                            <TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Requested"/><TextBlock Grid.Column="1" FontWeight="SemiBold" Text="{Binding FactoryResult.RequestedEquipment}"/>
+                                            <TextBlock Grid.Row="1" Foreground="{StaticResource MutedTextBrush}" Text="Connected"/><TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding FactoryResult.ConnectedEquipment}"/>
+                                            <TextBlock Grid.Row="2" Foreground="{StaticResource MutedTextBrush}" Text="Selected"/><TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FactoryResult.SelectedEquipment}"/>
+                                            <TextBlock Grid.Row="3" Foreground="{StaticResource MutedTextBrush}" Text="Failed"/><TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding FactoryResult.FailedEquipment}"/>
+                                            <TextBlock Grid.Row="4" Foreground="{StaticResource MutedTextBrush}" Text="Reconnecting"/><TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding FactoryResult.ReconnectingEquipment}"/>
+                                        </Grid>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                    <StackPanel>
+                                        <TextBlock Margin="0,0,0,10" FontSize="17" FontWeight="SemiBold" Text="Throughput and outcome"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                            <StackPanel><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Messages"/><TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding FactoryResult.MessagesPerSecond}"/></StackPanel>
+                                            <StackPanel Grid.Column="1"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Requests"/><TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding FactoryResult.RequestsPerSecond}"/></StackPanel>
+                                            <StackPanel Grid.Column="2"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Responses"/><TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding FactoryResult.ResponsesPerSecond}"/></StackPanel>
+                                        </Grid>
+                                        <TextBlock Margin="0,10,0,0" Text="{Binding FactoryResult.MessageTotals}" TextWrapping="Wrap"/>
+                                        <TextBlock Margin="0,6,0,0" Foreground="#F2C66D" Text="{Binding FactoryResult.TimeoutFailureSummary}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                    <StackPanel>
+                                        <TextBlock Margin="0,0,0,10" FontSize="17" FontWeight="SemiBold" Text="Response latency"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition/><ColumnDefinition/></Grid.ColumnDefinitions>
+                                            <StackPanel><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="P50"/><TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding FactoryResult.LatencyP50}"/></StackPanel>
+                                            <StackPanel Grid.Column="1"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="P95"/><TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding FactoryResult.LatencyP95}"/></StackPanel>
+                                            <StackPanel Grid.Column="2"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="P99"/><TextBlock FontSize="16" FontWeight="SemiBold" Text="{Binding FactoryResult.LatencyP99}"/></StackPanel>
+                                        </Grid>
+                                        <TextBlock Margin="0,10,0,0" Foreground="{StaticResource MutedTextBrush}" Text="{Binding FactoryResult.LatencyDetail}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                    <StackPanel>
+                                        <TextBlock Margin="0,0,0,10" FontSize="17" FontWeight="SemiBold" Text="Process and sockets"/>
+                                        <Grid>
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="112"/><ColumnDefinition Width="*"/><ColumnDefinition Width="100"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                            <Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                                            <TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Working set"/><TextBlock Grid.Column="1" Text="{Binding FactoryResult.WorkingSet}"/>
+                                            <TextBlock Grid.Column="2" Foreground="{StaticResource MutedTextBrush}" Text="Private"/><TextBlock Grid.Column="3" Text="{Binding FactoryResult.PrivateMemory}"/>
+                                            <TextBlock Grid.Row="1" Foreground="{StaticResource MutedTextBrush}" Text="Managed heap"/><TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding FactoryResult.ManagedHeap}"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="2" Foreground="{StaticResource MutedTextBrush}" Text="Handles"/><TextBlock Grid.Row="1" Grid.Column="3" Text="{Binding FactoryResult.HandleCount}"/>
+                                            <TextBlock Grid.Row="2" Foreground="{StaticResource MutedTextBrush}" Text="Threads"/><TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding FactoryResult.ThreadCount}"/>
+                                        </Grid>
+                                        <TextBlock Margin="0,10,0,0" Text="{Binding FactoryResult.SocketSummary}" TextWrapping="Wrap"/>
+                                        <TextBlock Margin="0,6,0,0" Foreground="{StaticResource MutedTextBrush}" Text="{Binding FactoryResult.RuntimeResourceSummary}" TextWrapping="Wrap"/>
+                                        <TextBlock Margin="0,10,0,0" Foreground="{StaticResource MutedTextBrush}" Text="Queue depth / capacity (peak, rejected, dropped)"/>
+                                        <TextBlock Margin="0,3,0,0" Text="{Binding FactoryResult.QueueSummary}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                    <StackPanel>
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                            <TextBlock FontSize="17" FontWeight="SemiBold" Text="Cleanup / leak view"/>
+                                            <Border Grid.Column="1">
+                                                <Border.Style>
+                                                    <Style TargetType="Border" BasedOn="{StaticResource Badge}">
+                                                        <Setter Property="Background" Value="#795D22"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding FactoryResult.CleanupState}" Value="Clear"><Setter Property="Background" Value="#087F6B"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding FactoryResult.CleanupState}" Value="Residual State"><Setter Property="Background" Value="#8F2E3D"/></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <TextBlock FontWeight="SemiBold" Foreground="White" Text="{Binding FactoryResult.CleanupState}"/>
+                                            </Border>
+                                        </Grid>
+                                        <TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Before forced GC"/>
+                                        <TextBlock Text="{Binding FactoryResult.CleanupBefore}" TextWrapping="Wrap"/>
+                                        <TextBlock Margin="0,8,0,0" Foreground="{StaticResource MutedTextBrush}" Text="After forced GC"/>
+                                        <TextBlock Text="{Binding FactoryResult.CleanupAfter}" TextWrapping="Wrap"/>
+                                        <TextBlock Margin="0,8,0,0" Text="{Binding FactoryResult.CleanupSocketSummary}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                    <StackPanel>
+                                        <TextBlock FontSize="17" FontWeight="SemiBold" Text="First failure"/>
+                                        <TextBlock Margin="0,8,0,0" Foreground="#FF8C94" Text="{Binding FactoryResult.FirstFailure}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                    <StackPanel>
+                                        <TextBlock FontSize="17" FontWeight="SemiBold" Text="Imported checks"/>
+                                        <TextBox Height="170" Margin="0,8,0,0" IsReadOnly="True" AcceptsReturn="True" TextWrapping="Wrap"
+                                                 HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto" Text="{Binding FactoryResult.Checks}"/>
+                                    </StackPanel>
+                                </Border>
+                            </WrapPanel>
+                        </StackPanel>
+                    </ScrollViewer>
+                </TabItem>
+
                 <TabItem Header="Advanced Settings">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <WrapPanel Margin="12" MaxWidth="1040" HorizontalAlignment="Center" TextElement.Foreground="{StaticResource TextBrush}">

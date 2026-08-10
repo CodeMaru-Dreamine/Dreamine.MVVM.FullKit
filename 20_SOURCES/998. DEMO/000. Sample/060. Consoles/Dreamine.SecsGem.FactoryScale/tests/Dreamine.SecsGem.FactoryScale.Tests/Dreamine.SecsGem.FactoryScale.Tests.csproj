@@ -1,20 +1,26 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <UseWPF>true</UseWPF>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <AssemblyName>Dreamine.SecsGem.FactoryScale.Tests</AssemblyName>
+    <RootNamespace>Dreamine.SecsGem.FactoryScale.Tests</RootNamespace>
   </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
     <PackageReference Include="coverlet.collector" PrivateAssets="all" />
   </ItemGroup>
+
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\060. Consoles\Dreamine.SecsGem.Interop.Runtime\Dreamine.SecsGem.Interop.Runtime.csproj" />
-    <ProjectReference Include="..\..\Dreamine.SecsGem.Interop.Wpf.csproj" />
+    <ProjectReference Include="..\..\Dreamine.SecsGem.FactoryScale.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
   </ItemGroup>
 </Project>

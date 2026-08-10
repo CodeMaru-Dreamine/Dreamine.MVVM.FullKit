@@ -5,6 +5,7 @@ using Dreamine.Secs.Abstractions.Diagnostics;
 using Dreamine.Secs.Abstractions.Hsms;
 using Dreamine.Secs.Abstractions.Model;
 using Dreamine.Secs.Com.Hsms;
+using Dreamine.SecsGem.Interop.Runtime;
 using Dreamine.SecsGem.Interop.Wpf.Models;
 
 namespace Dreamine.SecsGem.Interop.Wpf.Managers;
@@ -16,6 +17,7 @@ public sealed class InteropLogManager
     private readonly Queue<InteropLogEntry> _pending = new();
     private readonly object _pendingGate = new();
     private readonly object _collectionGate = new();
+    private IEquipmentEventSink? _equipmentSink;
     private int _drainScheduled;
     private int _paused;
     public ObservableCollection<InteropLogEntry> Entries { get; } = new();
@@ -23,6 +25,8 @@ public sealed class InteropLogManager
     public ObservableCollection<InteropLogEntry> Secs2Entries { get; } = new();
     public ObservableCollection<InteropLogEntry> DiagnosticsEntries { get; } = new();
     public event EventHandler<InteropLogEntry>? EntryAdded;
+    internal IEquipmentEventSink EquipmentSink =>
+        _equipmentSink ?? Interlocked.CompareExchange(ref _equipmentSink, new WpfEquipmentEventSink(this), null) ?? _equipmentSink!;
 
     public void Diagnostic(SecsDiagnosticEvent value) => Diagnostic(value, null);
 
@@ -160,16 +164,12 @@ internal sealed class InteropDiagnosticSink(
     }
 }
 
-internal sealed class EquipmentInteropDiagnosticSink(
-    InteropLogManager log,
-    Func<EquipmentLogIdentity> identity,
-    Action<SecsDiagnosticEvent>? diagnosticObserved = null) : ISecsDiagnosticSink
+internal sealed class WpfEquipmentEventSink(InteropLogManager log) : IEquipmentEventSink
 {
-    public void Emit(SecsDiagnosticEvent diagnosticEvent)
-    {
-        try { diagnosticObserved?.Invoke(diagnosticEvent); }
-        finally { log.Diagnostic(diagnosticEvent, identity()); }
-    }
+    public void Diagnostic(EquipmentLogIdentity identity, SecsDiagnosticEvent value) => log.Diagnostic(value, identity);
+    public void Message(EquipmentLogIdentity identity, string direction, SecsMessage message) => log.Message(direction, message, identity);
+    public void Info(EquipmentLogIdentity identity, string category, string summary) => log.Info(category, summary, identity);
+    public void Error(EquipmentLogIdentity identity, string category, Exception exception) => log.Error(category, exception, identity);
 }
 
 internal static class SecsItemText
