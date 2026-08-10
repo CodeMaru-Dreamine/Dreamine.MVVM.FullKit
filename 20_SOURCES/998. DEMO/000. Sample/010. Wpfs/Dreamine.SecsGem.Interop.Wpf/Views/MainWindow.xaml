@@ -1,0 +1,268 @@
+<Window x:Class="Dreamine.SecsGem.Interop.Wpf.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Dreamine.SecsGem.Interop.Wpf.ViewModels"
+        xmlns:behaviors="clr-namespace:Dreamine.SecsGem.Interop.Wpf.Behaviors"
+        Title="Dreamine SECS/GEM Interoperability Harness"
+        Width="1440" Height="820" MinWidth="900" MinHeight="480"
+        FontFamily="Segoe UI" FontSize="14"
+        Background="{StaticResource WindowBrush}" Foreground="{StaticResource TextBrush}"
+        WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Style x:Key="Card" TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource PanelBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="12"/>
+        </Style>
+        <Style x:Key="Badge" TargetType="Border">
+            <Setter Property="Background" Value="#263B5C"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Margin" Value="4,0"/>
+        </Style>
+        <HierarchicalDataTemplate DataType="{x:Type vm:SecsItemNodeViewModel}" ItemsSource="{Binding Children}">
+            <StackPanel Orientation="Horizontal" Margin="2">
+                <ComboBox Width="120" ItemsSource="{Binding Formats}" SelectedItem="{Binding Format}"/>
+                <TextBox Width="300" Text="{Binding Value, UpdateSourceTrigger=PropertyChanged}" ToolTip="Comma-separated typed values"/>
+            </StackPanel>
+        </HierarchicalDataTemplate>
+    </Window.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="82"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="52"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Style="{StaticResource Card}" Padding="16,10" Margin="0,0,0,10">
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel VerticalAlignment="Center">
+                    <TextBlock FontSize="24" FontWeight="SemiBold" Text="Dreamine SECS/GEM Interop"/>
+                    <TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Evidence harness — not a compliance certificate"/>
+                </StackPanel>
+                <WrapPanel Grid.Column="1" VerticalAlignment="Center">
+                    <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="TCP  "/><TextBlock FontWeight="SemiBold" Text="{Binding TcpState}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="#F2C66D"/><Style.Triggers><DataTrigger Binding="{Binding TcpState}" Value="Connected"><Setter Property="Foreground" Value="{StaticResource AccentBrush}"/></DataTrigger><DataTrigger Binding="{Binding TcpState}" Value="Faulted"><Setter Property="Foreground" Value="#FF7782"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></StackPanel></Border>
+                    <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="HSMS  "/><TextBlock FontWeight="SemiBold" Text="{Binding HsmsState}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="#F2C66D"/><Style.Triggers><DataTrigger Binding="{Binding HsmsState}" Value="Selected"><Setter Property="Foreground" Value="{StaticResource AccentBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></StackPanel></Border>
+                    <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Role  "/><TextBlock FontWeight="SemiBold" Text="{Binding Settings.Role}"/></StackPanel></Border>
+                    <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Mode  "/><TextBlock FontWeight="SemiBold" Text="{Binding Settings.Mode}"/></StackPanel></Border>
+                    <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Responder  "/><TextBlock FontWeight="SemiBold" Text="{Binding EquipmentResponderState}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="#F2C66D"/><Style.Triggers><DataTrigger Binding="{Binding EquipmentResponderEnabled}" Value="True"><Setter Property="Foreground" Value="{StaticResource AccentBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></StackPanel></Border>
+                </WrapPanel>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="280"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Style="{StaticResource Card}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <Grid>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <TextBlock Grid.Row="0" Margin="0,0,0,10" FontSize="18" FontWeight="SemiBold" Text="Connection"/>
+                    <Grid Grid.Row="1">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="92"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions><RowDefinition Height="42"/><RowDefinition Height="42"/><RowDefinition Height="42"/><RowDefinition Height="42"/><RowDefinition Height="42"/></Grid.RowDefinitions>
+                        <Label Grid.Row="0" Content="Host / Bind"/><TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Settings.Host, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Label Grid.Row="1" Content="Port"/><TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Settings.Port, UpdateSourceTrigger=PropertyChanged}"/>
+                        <Label Grid.Row="2" Content="Mode"/><ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding ConnectionModes}" SelectedItem="{Binding Settings.Mode}"/>
+                        <Label Grid.Row="3" Content="Role"/><ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Roles}" SelectedItem="{Binding Settings.Role}"/>
+                        <Label Grid.Row="4" Content="Session ID"/><TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Settings.SessionId, UpdateSourceTrigger=PropertyChanged}"/>
+                    </Grid>
+                    <StackPanel Grid.Row="2" Margin="0,14,0,8">
+                        <UniformGrid Columns="2"><Button Style="{StaticResource PrimaryButton}" Content="Connect" Command="{Binding ConnectCommand}"/><Button Style="{StaticResource DangerButton}" Content="Disconnect" Command="{Binding DisconnectCommand}"/></UniformGrid>
+                        <UniformGrid Columns="2"><Button Content="Select" Command="{Binding SelectCommand}"/><Button Style="{StaticResource DangerButton}" Content="Separate" Command="{Binding SeparateCommand}"/></UniformGrid>
+                        <UniformGrid Columns="2"><Button Content="Linktest" Command="{Binding LinktestCommand}"/><Button Content="Reconnect" Command="{Binding ReconnectCommand}"/></UniformGrid>
+                        <Button Content="{Binding EquipmentResponderButtonText}" Command="{Binding EnableResponderCommand}">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding EquipmentResponderEnabled}" Value="True">
+                                            <Setter Property="Background" Value="#087F6B"/>
+                                            <Setter Property="BorderBrush" Value="#20C7A5"/>
+                                            <Setter Property="Foreground" Value="White"/>
+                                            <Setter Property="FontWeight" Value="SemiBold"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                        <TextBlock Margin="4,3,4,0" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Text="Enabled state persists across reconnects." TextWrapping="Wrap"/>
+                    </StackPanel>
+                    <Border Grid.Row="4" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="10">
+                        <StackPanel>
+                            <TextBlock FontWeight="SemiBold" Text="Connection summary"/>
+                            <Grid Margin="0,7,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Foreground="{StaticResource MutedTextBrush}" Text="Provider"/><TextBlock Grid.Row="0" Grid.Column="1" Text="Dreamine"/>
+                                <TextBlock Grid.Row="1" Foreground="{StaticResource MutedTextBrush}" Text="TCP"/><TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding TcpState}"/>
+                                <TextBlock Grid.Row="2" Foreground="{StaticResource MutedTextBrush}" Text="HSMS"/><TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding HsmsState}"/>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                </ScrollViewer>
+            </Border>
+
+            <TabControl Grid.Column="2">
+                <TabItem Header="Messages">
+                    <Grid Margin="12" TextElement.Foreground="{StaticResource TextBrush}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <Border Grid.Row="0" Style="{StaticResource Card}" Margin="0,0,0,10">
+                            <WrapPanel>
+                                <Label Content="Stream"/><TextBox Width="70" Text="{Binding Stream}"/>
+                                <Label Margin="14,0,0,0" Content="Function"/><TextBox Width="70" Text="{Binding Function}"/>
+                                <CheckBox Margin="18,0" VerticalAlignment="Center" Content="W-bit / reply expected" IsChecked="{Binding ReplyExpected}"/>
+                                <Button MinWidth="136" Style="{StaticResource PrimaryButton}" Content="Send Message" Command="{Binding SendCommand}"/>
+                            </WrapPanel>
+                        </Border>
+                        <Border Grid.Row="1" Style="{StaticResource Card}">
+                            <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <StackPanel><TextBlock FontSize="17" FontWeight="SemiBold" Text="Structured SECS-II Item Tree"/><TextBlock Margin="0,3,0,10" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Text="Build typed items without implying SML support. Values are comma-separated."/></StackPanel>
+                                <TreeView Grid.Row="1" Padding="8" ItemsSource="{Binding RootItems}" behaviors:TreeViewSelectionBehavior.SelectedItem="{Binding SelectedItem, Mode=TwoWay}"/>
+                            </Grid>
+                        </Border>
+                        <WrapPanel Grid.Row="2" Margin="0,8,0,0"><Button Content="Add root item" Command="{Binding AddRootItemCommand}"/><Button Content="Add child item" Command="{Binding AddChildItemCommand}"/><Button Style="{StaticResource DangerButton}" Content="Remove selected" Command="{Binding RemoveItemCommand}"/></WrapPanel>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="Scenarios">
+                    <Grid Margin="12" TextElement.Foreground="{StaticResource TextBrush}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="160"/></Grid.RowDefinitions>
+                        <WrapPanel Grid.Row="0" Margin="0,0,0,8"><Button Style="{StaticResource PrimaryButton}" Content="Run Selected" Command="{Binding RunSelectedCommand}"/><Button Content="Run All Automatic" Command="{Binding RunAllCommand}"/><Button Style="{StaticResource DangerButton}" Content="Stop" Command="{Binding CancelCommand}"/><Button Content="Reset" Command="{Binding ResetScenariosCommand}"/></WrapPanel>
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding Scenarios}" SelectedItem="{Binding SelectedScenario}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="72"/>
+                                <DataGridTemplateColumn Header="Scenario" Width="2.1*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock VerticalAlignment="Center" Text="{Binding Name}" TextWrapping="Wrap" ToolTip="{Binding Name}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                                <DataGridTemplateColumn Header="Status" Width="140"><DataGridTemplateColumn.CellTemplate><DataTemplate><Border CornerRadius="10" Padding="8,3" HorizontalAlignment="Left"><Border.Style><Style TargetType="Border"><Setter Property="Background" Value="#46536A"/><Style.Triggers><DataTrigger Binding="{Binding Status}" Value="NotRun"><Setter Property="Background" Value="#46536A"/></DataTrigger><DataTrigger Binding="{Binding Status}" Value="WaitingForUser"><Setter Property="Background" Value="#8A6424"/></DataTrigger><DataTrigger Binding="{Binding Status}" Value="Running"><Setter Property="Background" Value="#275C91"/></DataTrigger><DataTrigger Binding="{Binding Status}" Value="Passed"><Setter Property="Background" Value="#16745F"/></DataTrigger><DataTrigger Binding="{Binding Status}" Value="Failed"><Setter Property="Background" Value="#963D47"/></DataTrigger></Style.Triggers></Style></Border.Style><TextBlock FontSize="13" FontWeight="SemiBold" Text="{Binding Status}"/></Border></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                                <DataGridTextColumn Header="Duration" Binding="{Binding Elapsed}" Width="100"/>
+                                <DataGridTemplateColumn Header="Detail" Width="2.4*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock VerticalAlignment="Center" Text="{Binding Detail}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Detail}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,10,0,0">
+                            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                <TextBlock Grid.ColumnSpan="2" FontSize="16" FontWeight="SemiBold" Text="Selected scenario detail"/>
+                                <StackPanel Grid.Row="1" Margin="0,8,12,0"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="{Binding SelectedScenario.Id, TargetNullValue=No selection}"/><TextBlock FontWeight="SemiBold" Text="{Binding SelectedScenario.Status}"/><TextBlock Text="{Binding SelectedScenario.Elapsed, StringFormat=Duration: {0}}"/></StackPanel>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" Text="{Binding SelectedScenario.Detail, TargetNullValue=Select a scenario to inspect its full result.}" TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                </TabItem>
+
+                <TabItem Header="Protocol Log">
+                    <TabControl Margin="12" TextElement.Foreground="{StaticResource TextBrush}">
+                        <TabItem Header="Protocol Events">
+                            <Grid Margin="8">
+                                <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="190"/></Grid.RowDefinitions>
+                                <DataGrid ItemsSource="{Binding Logs}" SelectedItem="{Binding SelectedLog}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="100"/>
+                                        <DataGridTextColumn Header="Direction" Binding="{Binding Direction}" Width="74"/>
+                                        <DataGridTextColumn Header="SxFy" Binding="{Binding SxFy}" Width="66"/>
+                                        <DataGridTextColumn Header="System Bytes" Binding="{Binding SystemBytes}" Width="112"/>
+                                        <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="86"/>
+                                        <DataGridTemplateColumn Header="Summary" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Summary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,10,0,0">
+                                    <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="Selected protocol event"/><Button Grid.Column="1" Content="Clear all logs" Command="{Binding ClearLogCommand}"/>
+                                        <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Margin="0,5" Text="{Binding SelectedLog.Message, TargetNullValue=Select an event to inspect its state or decoded item.}" TextWrapping="Wrap"/>
+                                        <TextBox Grid.Row="2" Grid.ColumnSpan="2" FontFamily="Consolas" IsReadOnly="True" Text="{Binding SelectedLog.RawHex, TargetNullValue=Raw frame hex is shown here when available.}" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </TabItem>
+
+                        <TabItem Header="SECS1 / HSMS Raw">
+                            <Grid Margin="8">
+                                <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="210"/></Grid.RowDefinitions>
+                                <DataGrid ItemsSource="{Binding Secs1Logs}" SelectedItem="{Binding SelectedLog}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="110"/>
+                                        <DataGridTextColumn Header="Direction" Binding="{Binding Direction}" Width="80"/>
+                                        <DataGridTextColumn Header="SxFy" Binding="{Binding SxFy}" Width="80"/>
+                                        <DataGridTextColumn Header="System Bytes" Binding="{Binding SystemBytes}" Width="130"/>
+                                        <DataGridTemplateColumn Header="Frame" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock FontFamily="Consolas" Text="{Binding RawHex}" TextTrimming="CharacterEllipsis" ToolTip="{Binding RawHex}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,10,0,0">
+                                    <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <StackPanel><TextBlock FontSize="16" FontWeight="SemiBold" Text="Selected raw HSMS frame"/><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Simulator SECS1-pane equivalent for this HSMS-SS harness."/></StackPanel><Button Grid.Column="1" Content="Clear all logs" Command="{Binding ClearLogCommand}"/>
+                                        <TextBox Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0" FontFamily="Consolas" FontSize="13" IsReadOnly="True" Text="{Binding SelectedLog.RawHex, TargetNullValue=Select a frame to inspect its bytes.}" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </TabItem>
+
+                        <TabItem Header="SECS2 Decoded">
+                            <Grid Margin="8">
+                                <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="230"/></Grid.RowDefinitions>
+                                <DataGrid ItemsSource="{Binding Secs2Logs}" SelectedItem="{Binding SelectedLog}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="110"/>
+                                        <DataGridTextColumn Header="Direction" Binding="{Binding Direction}" Width="80"/>
+                                        <DataGridTextColumn Header="SxFy" Binding="{Binding SxFy}" Width="80"/>
+                                        <DataGridTextColumn Header="System Bytes" Binding="{Binding SystemBytes}" Width="130"/>
+                                        <DataGridTemplateColumn Header="Message" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Summary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,10,0,0">
+                                    <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="Selected decoded SECS-II item"/><Button Grid.Column="1" Content="Clear all logs" Command="{Binding ClearLogCommand}"/>
+                                        <TextBox Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0" FontFamily="Consolas" FontSize="13" IsReadOnly="True" Text="{Binding SelectedLog.Message, TargetNullValue=Select a message to inspect its decoded item tree.}" AcceptsReturn="True" TextWrapping="Wrap" HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </TabItem>
+                    </TabControl>
+                </TabItem>
+
+                <TabItem Header="Advanced Settings">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <WrapPanel Margin="12" MaxWidth="1040" HorizontalAlignment="Center" TextElement.Foreground="{StaticResource TextBrush}">
+                            <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                <StackPanel><TextBlock FontSize="17" FontWeight="SemiBold" Text="HSMS timers"/><TextBlock Margin="0,3,0,8" Foreground="{StaticResource MutedTextBrush}" Text="Values are seconds and are validated by the public HSMS options API."/>
+                                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="42"/><RowDefinition Height="42"/><RowDefinition Height="42"/></Grid.RowDefinitions>
+                                        <Label Content="T3"/><TextBox Grid.Column="1" Text="{Binding Settings.T3Seconds}"/><Label Grid.Column="2" Content="T5"/><TextBox Grid.Column="3" Text="{Binding Settings.T5Seconds}"/>
+                                        <Label Grid.Row="1" Content="T6"/><TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Settings.T6Seconds}"/><Label Grid.Row="1" Grid.Column="2" Content="T7"/><TextBox Grid.Row="1" Grid.Column="3" Text="{Binding Settings.T7Seconds}"/>
+                                        <Label Grid.Row="2" Content="T8"/><TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Settings.T8Seconds}"/><CheckBox Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="2" Content="Active auto reconnect" IsChecked="{Binding Settings.AutoReconnect}"/>
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+                            <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                <StackPanel><TextBlock FontSize="17" FontWeight="SemiBold" Text="Automated self loopback"/><TextBlock Margin="0,3,0,8" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Text="Runs TCP/Select/Linktest, correlated S1F1/S1F2, concurrent Primary and reconnect checks."/>
+                                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="42"/><RowDefinition Height="42"/></Grid.RowDefinitions>
+                                        <Label Content="S1F1 pairs"/><TextBox Grid.Column="1" Text="{Binding MessageIterations}"/><Label Grid.Row="1" Content="Reconnect / Linktest"/><TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ReconnectCycles}"/>
+                                    </Grid>
+                                    <UniformGrid Columns="2"><Button Style="{StaticResource PrimaryButton}" Content="Run self loopback" Command="{Binding RunSelfTestCommand}"/><Button Style="{StaticResource DangerButton}" Content="Cancel" Command="{Binding CancelCommand}"/></UniformGrid>
+                                </StackPanel>
+                            </Border>
+                            <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                <StackPanel><TextBlock FontSize="17" FontWeight="SemiBold" Text="External simulator"/><TextBlock Margin="0,3,0,8" Foreground="{StaticResource MutedTextBrush}" Text="{Binding SimulatorAvailability}"/>
+                                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions><Border Height="36" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,0"><TextBlock VerticalAlignment="Center" Text="{Binding SimulatorExecutablePath}" TextTrimming="CharacterEllipsis" ToolTip="{Binding SimulatorExecutablePath}"/></Border><Button Grid.Column="1" Content="Browse…" Command="{Binding BrowseSimulatorCommand}"/></Grid>
+                                    <Button Content="Launch Simulator — manual action" Command="{Binding LaunchSimulatorCommand}"/><Button Content="Set external scenarios to Waiting for User" Command="{Binding MarkWaitingCommand}"/>
+                                    <TextBlock Margin="4,6" Foreground="#F2C66D" TextWrapping="Wrap" Text="The harness never automates the simulator GUI. External evidence remains Not Run / Waiting for User."/>
+                                </StackPanel>
+                            </Border>
+                            <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                <StackPanel><TextBlock FontSize="17" FontWeight="SemiBold" Text="Evidence export"/><TextBlock Margin="0,3,0,8" Foreground="{StaticResource MutedTextBrush}" Text="Exports masked JSON and Markdown evidence."/>
+                                    <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions><Border Height="36" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,0"><TextBlock VerticalAlignment="Center" Text="{Binding ExportDirectory}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ExportDirectory}"/></Border><Button Grid.Column="1" Content="Browse…" Command="{Binding BrowseExportCommand}"/></Grid>
+                                    <Button Style="{StaticResource PrimaryButton}" Content="Export masked JSON + Markdown" Command="{Binding ExportCommand}"/>
+                                </StackPanel>
+                            </Border>
+                        </WrapPanel>
+                    </ScrollViewer>
+                </TabItem>
+            </TabControl>
+        </Grid>
+
+        <Border Grid.Row="2" Background="{StaticResource PanelBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Margin="0,10,0,0" Padding="10,6">
+            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="1.3*"/><ColumnDefinition Width="1.4*"/><ColumnDefinition Width="1.1*"/></Grid.ColumnDefinitions>
+                <TextBlock VerticalAlignment="Center" Text="{Binding StatusText}" TextTrimming="CharacterEllipsis" ToolTip="{Binding StatusText}"/>
+                <TextBlock Grid.Column="1" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Text="{Binding LastActivity, StringFormat=Activity: {0}}" TextTrimming="CharacterEllipsis" ToolTip="{Binding LastActivity}"/>
+                <TextBlock Grid.Column="2" VerticalAlignment="Center" Foreground="#FF8C94" Text="{Binding LastError, StringFormat=Error: {0}}" TextTrimming="CharacterEllipsis" ToolTip="{Binding LastError}"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

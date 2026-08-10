@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <NoWarn>$(NoWarn);MC3066;MC3074</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\100. Library\Core\Dreamine.MVVM.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Attributes\Dreamine.MVVM.Attributes.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Generators\Dreamine.MVVM.Generators.csproj" PrivateAssets="all" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\..\..\..\100. Library\Interfaces\Dreamine.MVVM.Interfaces.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\ViewModels\Dreamine.MVVM.ViewModels.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Wpf\Dreamine.MVVM.Wpf.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Secs.Abstractions\Dreamine.Secs.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Secs.Com\Dreamine.Secs.Com.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Gem.Abstractions\Dreamine.Gem.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Gem\Dreamine.Gem.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Gem300.Abstractions\Dreamine.Gem300.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\..\100. Library\Gem300\Dreamine.Gem300.csproj" />
+  </ItemGroup>
+</Project>
