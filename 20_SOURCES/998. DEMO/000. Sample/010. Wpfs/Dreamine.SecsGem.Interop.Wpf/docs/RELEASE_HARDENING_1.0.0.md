@@ -16,7 +16,7 @@ Status date: 2026-08-10. This is source/package-candidate evidence, not a public
 | Parent solution Release build | Passed | 94 projects; 0 warnings, 0 errors |
 | Parent solution test | Existing failure | 663 passed; one pre-existing Ontology freshness gate failed because `manifest.json` is missing/older than seven days. After the final spool edge-case addition, the relevant suite is 227/227 and was rerun separately. |
 | External simulator | Not Run | Remains Waiting for User |
-| Automated visible WPF UI control | Blocked | Computer-use initialization failed with local Codex-app path `EPERM`; Release build/XAML/tests were still completed |
+| Automated visible WPF UI control | Passed via fallback | Computer-use initialization failed with local Codex-app path `EPERM`; a later Windows UI Automation/PrintWindow fallback launched the final Release UI and captured normal and compact logical viewports. |
 
 ## Actual defects corrected
 
@@ -52,7 +52,7 @@ No existing per-repository GitHub Actions convention was found. Standalone submo
 - **Self Loopback Tested:** Active/Passive HSMS, Select, Linktest, S1F1/S1F2 correlation, reconnect and responder rebind.
 - **SEComSimulator Interoperability Tested:** Not Run in this hardening run.
 - **Experimental:** GEM300 workflow coordinator.
-- **Not Implemented:** complete GEM/GEM300 wire mapping, SECS-I, persistence/recovery, multi-session/general-session behavior.
+- **Not Implemented in the public libraries:** complete GEM/GEM300 wire mapping, SECS-I, persistence/recovery, and a generic multi-session/fleet public API. A later Harness-only validation coordinates multiple independent `HsmsSession` instances without changing the SECS/GEM public API; see [MULTI_EQUIPMENT_HOST.md](MULTI_EQUIPMENT_HOST.md).
 - **Blocked by unavailable normative document:** scopes explicitly marked Blocked in the existing requirement traces; no wire number or service code was guessed.
 
 Performance measurements are in [PERFORMANCE_BASELINE.md](PERFORMANCE_BASELINE.md). Licensed standards and external/customer material were not copied into source, packages, tests, or documentation.

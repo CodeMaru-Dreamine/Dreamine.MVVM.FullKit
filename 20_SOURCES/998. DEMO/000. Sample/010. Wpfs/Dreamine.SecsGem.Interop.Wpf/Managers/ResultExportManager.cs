@@ -14,6 +14,13 @@ public sealed partial class ResultExportManager
         await File.WriteAllTextAsync(path, JsonSerializer.Serialize(summary, JsonOptions), token).ConfigureAwait(false);
     }
 
+    internal async Task ExportMultiEquipmentSelfTestAsync(string path, MultiEquipmentSelfTestSummary summary,
+        CancellationToken token)
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        await File.WriteAllTextAsync(path, JsonSerializer.Serialize(summary, JsonOptions), token).ConfigureAwait(false);
+    }
+
     public async Task<(string JsonPath, string MarkdownPath)> ExportAsync(string directory,
         IEnumerable<InteropScenarioResult> scenarios, IEnumerable<InteropLogEntry> logs, CancellationToken token)
     {

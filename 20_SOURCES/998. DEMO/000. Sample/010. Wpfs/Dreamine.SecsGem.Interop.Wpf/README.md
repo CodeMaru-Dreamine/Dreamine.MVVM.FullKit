@@ -19,3 +19,13 @@ Dreamine.SecsGem.Interop.Wpf.exe --self-test --output self-test.json
 ```
 
 See [docs/SECOMSIMULATOR_INTEROP_TEST.md](docs/SECOMSIMULATOR_INTEROP_TEST.md) and [docs/INTEROP_TEST_MATRIX.md](docs/INTEROP_TEST_MATRIX.md).
+
+## Multi-equipment host
+
+Use the **Multi Equipment** tab for configured endpoints, or run the isolated 1/2/10/50-equipment local loopback from a Release output directory:
+
+```powershell
+Dreamine.SecsGem.Interop.Wpf.exe --multi-self-test --output multi-equipment-self-test.json
+```
+
+See [Multi-Equipment Host](docs/MULTI_EQUIPMENT_HOST.md), the [test matrix](docs/MULTI_EQUIPMENT_TEST_MATRIX.md), and the [performance snapshot](docs/MULTI_EQUIPMENT_PERFORMANCE.md). External simulator results remain `Not Run / Waiting for User` until manually recorded.

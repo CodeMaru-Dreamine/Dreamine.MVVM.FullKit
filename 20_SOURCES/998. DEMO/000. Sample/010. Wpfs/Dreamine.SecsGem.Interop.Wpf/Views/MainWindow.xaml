@@ -4,7 +4,7 @@
         xmlns:vm="clr-namespace:Dreamine.SecsGem.Interop.Wpf.ViewModels"
         xmlns:behaviors="clr-namespace:Dreamine.SecsGem.Interop.Wpf.Behaviors"
         Title="Dreamine SECS/GEM Interoperability Harness"
-        Width="1440" Height="820" MinWidth="900" MinHeight="480"
+        Width="1366" Height="768" MinWidth="900" MinHeight="500"
         FontFamily="Segoe UI" FontSize="14"
         Background="{StaticResource WindowBrush}" Foreground="{StaticResource TextBrush}"
         WindowStartupLocation="CenterScreen">
@@ -32,36 +32,45 @@
 
     <Grid Margin="12">
         <Grid.RowDefinitions>
-            <RowDefinition Height="82"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="52"/>
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" Style="{StaticResource Card}" Padding="16,10" Margin="0,0,0,10">
             <Grid>
-                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                 <StackPanel VerticalAlignment="Center">
                     <TextBlock FontSize="24" FontWeight="SemiBold" Text="Dreamine SECS/GEM Interop"/>
                     <TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Evidence harness — not a compliance certificate"/>
                 </StackPanel>
-                <WrapPanel Grid.Column="1" VerticalAlignment="Center">
+                <Grid Grid.Column="1" VerticalAlignment="Center">
+                    <WrapPanel HorizontalAlignment="Right">
+                        <WrapPanel.Style><Style TargetType="WrapPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding IsMultiEquipmentMode}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></WrapPanel.Style>
                     <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="TCP  "/><TextBlock FontWeight="SemiBold" Text="{Binding TcpState}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="#F2C66D"/><Style.Triggers><DataTrigger Binding="{Binding TcpState}" Value="Connected"><Setter Property="Foreground" Value="{StaticResource AccentBrush}"/></DataTrigger><DataTrigger Binding="{Binding TcpState}" Value="Faulted"><Setter Property="Foreground" Value="#FF7782"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></StackPanel></Border>
                     <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="HSMS  "/><TextBlock FontWeight="SemiBold" Text="{Binding HsmsState}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="#F2C66D"/><Style.Triggers><DataTrigger Binding="{Binding HsmsState}" Value="Selected"><Setter Property="Foreground" Value="{StaticResource AccentBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></StackPanel></Border>
                     <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Role  "/><TextBlock FontWeight="SemiBold" Text="{Binding Settings.Role}"/></StackPanel></Border>
                     <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Mode  "/><TextBlock FontWeight="SemiBold" Text="{Binding Settings.Mode}"/></StackPanel></Border>
                     <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Responder  "/><TextBlock FontWeight="SemiBold" Text="{Binding EquipmentResponderState}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="#F2C66D"/><Style.Triggers><DataTrigger Binding="{Binding EquipmentResponderEnabled}" Value="True"><Setter Property="Foreground" Value="{StaticResource AccentBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></StackPanel></Border>
-                </WrapPanel>
+                    </WrapPanel>
+                    <Border HorizontalAlignment="Right"><Border.Style><Style TargetType="Border" BasedOn="{StaticResource Badge}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsMultiEquipmentMode}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Border.Style><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Multi Host  "/><TextBlock FontWeight="SemiBold" Text="{Binding MultiEquipmentSummary}"/></StackPanel></Border>
+                </Grid>
             </Grid>
         </Border>
 
         <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="280"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="240"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <Border Grid.Column="0" Style="{StaticResource Card}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <Grid>
-                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                     <TextBlock Grid.Row="0" Margin="0,0,0,10" FontSize="18" FontWeight="SemiBold" Text="Connection"/>
-                    <Grid Grid.Row="1">
+                    <StackPanel Grid.Row="1" Margin="0,0,0,10">
+                        <TextBlock Margin="3,0,0,4" Foreground="{StaticResource MutedTextBrush}" Text="Harness mode"/>
+                        <ComboBox ItemsSource="{Binding HostModes}" SelectedItem="{Binding HostMode}"/>
+                    </StackPanel>
+                    <Grid Grid.Row="2">
+                        <Grid.Style><Style TargetType="Grid"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding IsMultiEquipmentMode}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Grid.Style>
                         <Grid.ColumnDefinitions><ColumnDefinition Width="92"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                         <Grid.RowDefinitions><RowDefinition Height="42"/><RowDefinition Height="42"/><RowDefinition Height="42"/><RowDefinition Height="42"/><RowDefinition Height="42"/></Grid.RowDefinitions>
                         <Label Grid.Row="0" Content="Host / Bind"/><TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Settings.Host, UpdateSourceTrigger=PropertyChanged}"/>
@@ -70,7 +79,8 @@
                         <Label Grid.Row="3" Content="Role"/><ComboBox Grid.Row="3" Grid.Column="1" ItemsSource="{Binding Roles}" SelectedItem="{Binding Settings.Role}"/>
                         <Label Grid.Row="4" Content="Session ID"/><TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Settings.SessionId, UpdateSourceTrigger=PropertyChanged}"/>
                     </Grid>
-                    <StackPanel Grid.Row="2" Margin="0,14,0,8">
+                    <StackPanel Grid.Row="3" Margin="0,14,0,8">
+                        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding IsMultiEquipmentMode}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
                         <UniformGrid Columns="2"><Button Style="{StaticResource PrimaryButton}" Content="Connect" Command="{Binding ConnectCommand}"/><Button Style="{StaticResource DangerButton}" Content="Disconnect" Command="{Binding DisconnectCommand}"/></UniformGrid>
                         <UniformGrid Columns="2"><Button Content="Select" Command="{Binding SelectCommand}"/><Button Style="{StaticResource DangerButton}" Content="Separate" Command="{Binding SeparateCommand}"/></UniformGrid>
                         <UniformGrid Columns="2"><Button Content="Linktest" Command="{Binding LinktestCommand}"/><Button Content="Reconnect" Command="{Binding ReconnectCommand}"/></UniformGrid>
@@ -90,7 +100,8 @@
                         </Button>
                         <TextBlock Margin="4,3,4,0" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Text="Enabled state persists across reconnects." TextWrapping="Wrap"/>
                     </StackPanel>
-                    <Border Grid.Row="4" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="10">
+                    <Border Grid.Row="5" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="10">
+                        <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding IsMultiEquipmentMode}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style>
                         <StackPanel>
                             <TextBlock FontWeight="SemiBold" Text="Connection summary"/>
                             <Grid Margin="0,7,0,0"><Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition/><RowDefinition/><RowDefinition/></Grid.RowDefinitions>
@@ -100,20 +111,39 @@
                             </Grid>
                         </StackPanel>
                     </Border>
+                    <Border Grid.Row="5" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="10">
+                        <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsMultiEquipmentMode}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Border.Style>
+                        <StackPanel>
+                            <TextBlock FontWeight="SemiBold" Text="Multi Equipment Host"/>
+                            <TextBlock Margin="0,7,0,0" Text="{Binding MultiEquipmentSummary}"/>
+                            <TextBlock Margin="0,5,0,0" Foreground="{StaticResource MutedTextBrush}" Text="{Binding SelectedEquipment.Endpoint, TargetNullValue=Select an equipment row}" TextTrimming="CharacterEllipsis" ToolTip="{Binding SelectedEquipment.Endpoint}"/>
+                        </StackPanel>
+                    </Border>
                 </Grid>
                 </ScrollViewer>
             </Border>
 
-            <TabControl Grid.Column="2">
+            <TabControl Grid.Column="2" SelectedIndex="{Binding SelectedMainTabIndex}">
                 <TabItem Header="Messages">
-                    <Grid Margin="12" TextElement.Foreground="{StaticResource TextBrush}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Stretch">
+                    <Grid Margin="12" MinHeight="420" TextElement.Foreground="{StaticResource TextBrush}">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
                         <Border Grid.Row="0" Style="{StaticResource Card}" Margin="0,0,0,10">
                             <WrapPanel>
                                 <Label Content="Stream"/><TextBox Width="70" Text="{Binding Stream}"/>
                                 <Label Margin="14,0,0,0" Content="Function"/><TextBox Width="70" Text="{Binding Function}"/>
                                 <CheckBox Margin="18,0" VerticalAlignment="Center" Content="W-bit / reply expected" IsChecked="{Binding ReplyExpected}"/>
-                                <Button MinWidth="136" Style="{StaticResource PrimaryButton}" Content="Send Message" Command="{Binding SendCommand}"/>
+                                <Button MinWidth="136" Content="Send Message" Command="{Binding SendCommand}">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource PrimaryButton}">
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                            <Style.Triggers><DataTrigger Binding="{Binding IsMultiEquipmentMode}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                </Button>
+                                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Text="Use Send to Selected or Broadcast Message on the Multi Equipment tab.">
+                                    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsMultiEquipmentMode}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                                </TextBlock>
                             </WrapPanel>
                         </Border>
                         <Border Grid.Row="1" Style="{StaticResource Card}">
@@ -124,10 +154,75 @@
                         </Border>
                         <WrapPanel Grid.Row="2" Margin="0,8,0,0"><Button Content="Add root item" Command="{Binding AddRootItemCommand}"/><Button Content="Add child item" Command="{Binding AddChildItemCommand}"/><Button Style="{StaticResource DangerButton}" Content="Remove selected" Command="{Binding RemoveItemCommand}"/></WrapPanel>
                     </Grid>
+                    </ScrollViewer>
+                </TabItem>
+
+                <TabItem Header="Multi Equipment" IsEnabled="{Binding IsMultiEquipmentMode}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Stretch">
+                    <Grid Margin="12" MinHeight="420" TextElement.Foreground="{StaticResource TextBrush}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                        <Border Style="{StaticResource Card}" Margin="0,0,0,8" Padding="10">
+                            <WrapPanel VerticalAlignment="Center">
+                                <Label Content="Equipment ID"/><TextBox Width="105" Text="{Binding NewEquipmentId, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Label Content="IP"/><TextBox Width="125" Text="{Binding NewEquipmentHost, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Label Content="Port"/><TextBox Width="75" Text="{Binding NewEquipmentPort, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Label Content="Mode"/><ComboBox Width="105" ItemsSource="{Binding ConnectionModes}" SelectedItem="{Binding NewEquipmentMode}"/>
+                                <Label Content="Session ID"/><TextBox Width="75" Text="{Binding NewEquipmentSessionId, UpdateSourceTrigger=PropertyChanged}"/>
+                                <Button Style="{StaticResource PrimaryButton}" Content="Add Equipment" Command="{Binding AddEquipmentCommand}"/>
+                                <Button Style="{StaticResource DangerButton}" Content="Remove Selected" Command="{Binding RemoveEquipmentCommand}"/>
+                            </WrapPanel>
+                        </Border>
+                        <WrapPanel Grid.Row="1" Margin="0,0,0,8">
+                            <Button Style="{StaticResource PrimaryButton}" Content="Connect Selected" Command="{Binding ConnectSelectedEquipmentCommand}"/>
+                            <Button Style="{StaticResource DangerButton}" Content="Disconnect Selected" Command="{Binding DisconnectSelectedEquipmentCommand}"/>
+                            <Button Content="Reconnect Selected" Command="{Binding ReconnectSelectedEquipmentCommand}"/>
+                            <Button Style="{StaticResource PrimaryButton}" Content="Connect All" Command="{Binding ConnectAllEquipmentCommand}"/>
+                            <Button Style="{StaticResource DangerButton}" Content="Disconnect All" Command="{Binding DisconnectAllEquipmentCommand}"/>
+                            <Button Content="Linktest Selected" Command="{Binding LinktestSelectedEquipmentCommand}"/>
+                            <Button Content="Linktest All" Command="{Binding LinktestAllEquipmentCommand}"/>
+                            <Button Content="Send to Selected" Command="{Binding SendSelectedEquipmentCommand}"/>
+                            <Button Content="Broadcast Message" Command="{Binding BroadcastEquipmentCommand}"/>
+                            <Button Content="Run Scenario for Selected" Command="{Binding RunSelectedEquipmentScenarioCommand}"/>
+                            <Button Content="Run Scenario for All" Command="{Binding RunAllEquipmentScenariosCommand}"/>
+                            <Button Content="Run 1/2/10/50 Self-test" Command="{Binding RunMultiEquipmentSelfTestCommand}"/>
+                            <Button Content="Import Configuration" Command="{Binding ImportEquipmentConfigurationCommand}"/>
+                            <Button Content="Export Configuration" Command="{Binding ExportEquipmentConfigurationCommand}"/>
+                        </WrapPanel>
+                        <DataGrid Grid.Row="2" ItemsSource="{Binding EquipmentConnections}" SelectedItem="{Binding SelectedEquipment}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False" EnableRowVirtualization="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" HorizontalScrollBarVisibility="Disabled">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Equipment" Binding="{Binding EquipmentId}" Width="1.1*"/>
+                                <DataGridTextColumn Header="IP" Binding="{Binding Host}" Width="1.1*"/>
+                                <DataGridTextColumn Header="Port" Binding="{Binding Port}" Width="0.65*"/>
+                                <DataGridTextColumn Header="Mode" Binding="{Binding Mode}" Width="0.8*"/>
+                                <DataGridTextColumn Header="SID" Binding="{Binding SessionId}" Width="0.55*"/>
+                                <DataGridTextColumn Header="TCP" Binding="{Binding TcpState}" Width="0.9*"/>
+                                <DataGridTextColumn Header="HSMS" Binding="{Binding HsmsState}" Width="1.1*"/>
+                                <DataGridTextColumn Header="GEM" Binding="{Binding GemState}" Width="1.15*"/>
+                                <DataGridTextColumn Header="Responder" Binding="{Binding ResponderState}" Width="1.1*"/>
+                                <DataGridTextColumn Header="Activity" Binding="{Binding LastActivity, StringFormat=HH:mm:ss.fff}" Width="1.15*"/>
+                                <DataGridTemplateColumn Header="Last Error" Width="1.5*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding LastError}" TextTrimming="CharacterEllipsis" ToolTip="{Binding LastError}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <Border Grid.Row="3" Style="{StaticResource Card}" Margin="0,8,0,0" Padding="10,6">
+                            <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <TextBlock Text="{Binding MultiEquipmentSummary}" FontWeight="SemiBold"/>
+                                <TextBlock Grid.Column="1" Text="{Binding MultiEquipmentTestResult}" TextWrapping="Wrap" Foreground="{StaticResource MutedTextBrush}"/>
+                                <TextBlock Grid.Row="1" Grid.ColumnSpan="2" Margin="0,4,0,0" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap">
+                                    <TextBlock.Text>
+                                        <MultiBinding StringFormat="{}{0} · {1} · {2} SID {3} · TCP {4} · HSMS {5} · GEM {6} · {7} · Activity {8:HH:mm:ss.fff} · Error {9}">
+                                            <Binding Path="SelectedEquipment.EquipmentId"/><Binding Path="SelectedEquipment.Endpoint"/><Binding Path="SelectedEquipment.Mode"/><Binding Path="SelectedEquipment.SessionId"/><Binding Path="SelectedEquipment.TcpState"/><Binding Path="SelectedEquipment.HsmsState"/><Binding Path="SelectedEquipment.GemState"/><Binding Path="SelectedEquipment.ResponderState"/><Binding Path="SelectedEquipment.LastActivity"/><Binding Path="SelectedEquipment.LastError"/>
+                                        </MultiBinding>
+                                    </TextBlock.Text>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+                    </Grid>
+                    </ScrollViewer>
                 </TabItem>
 
                 <TabItem Header="Scenarios">
-                    <Grid Margin="12" TextElement.Foreground="{StaticResource TextBrush}">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Stretch">
+                    <Grid Margin="12" MinHeight="420" TextElement.Foreground="{StaticResource TextBrush}">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="160"/></Grid.RowDefinitions>
                         <WrapPanel Grid.Row="0" Margin="0,0,0,8"><Button Style="{StaticResource PrimaryButton}" Content="Run Selected" Command="{Binding RunSelectedCommand}"/><Button Content="Run All Automatic" Command="{Binding RunAllCommand}"/><Button Style="{StaticResource DangerButton}" Content="Stop" Command="{Binding CancelCommand}"/><Button Content="Reset" Command="{Binding ResetScenariosCommand}"/></WrapPanel>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding Scenarios}" SelectedItem="{Binding SelectedScenario}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False">
@@ -147,21 +242,24 @@
                             </Grid>
                         </Border>
                     </Grid>
+                    </ScrollViewer>
                 </TabItem>
 
                 <TabItem Header="Protocol Log">
-                    <Grid Margin="12">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Stretch">
+                    <Grid Margin="12" MinHeight="500">
                         <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                         <Border Style="{StaticResource Card}" Margin="0,0,0,8" Padding="10,6">
-                            <Grid>
-                                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="260"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Text="Filter"/>
-                                <TextBox Grid.Column="1" Margin="8,0" ToolTip="Direction, SxFy, System Bytes, category, summary, or decoded text" Text="{Binding LogFilterText, UpdateSourceTrigger=PropertyChanged}"/>
-                                <CheckBox Grid.Column="2" Margin="8,0" VerticalAlignment="Center" Content="Pause view" IsChecked="{Binding IsLogViewPaused}"/>
-                                <CheckBox Grid.Column="3" Margin="8,0" VerticalAlignment="Center" Content="Auto scroll" IsChecked="{Binding AutoScrollLogs}"/>
-                                <TextBlock Grid.Column="4" Margin="10,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Text="{Binding LogViewState, StringFormat=View: {0}}"/>
-                                <Button Grid.Column="5" Content="Clear all logs" Command="{Binding ClearLogCommand}"/>
-                            </Grid>
+                            <WrapPanel VerticalAlignment="Center">
+                                <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Text="Equipment"/>
+                                <ComboBox Width="160" Margin="8,0" ItemsSource="{Binding EquipmentFilterOptions}" SelectedItem="{Binding EquipmentLogFilter}"/>
+                                <TextBlock VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{StaticResource TextBrush}" Text="Filter"/>
+                                <TextBox Width="220" Margin="8,0" ToolTip="Equipment, connection, endpoint, direction, SxFy, System Bytes, category, summary, or decoded text" Text="{Binding LogFilterText, UpdateSourceTrigger=PropertyChanged}"/>
+                                <CheckBox Margin="8,0" VerticalAlignment="Center" Content="Pause view" IsChecked="{Binding IsLogViewPaused}"/>
+                                <CheckBox Margin="8,0" VerticalAlignment="Center" Content="Auto scroll" IsChecked="{Binding AutoScrollLogs}"/>
+                                <TextBlock Margin="10,0" VerticalAlignment="Center" Foreground="{StaticResource MutedTextBrush}" Text="{Binding LogViewState, StringFormat=View: {0}}"/>
+                                <Button Content="Clear all logs" Command="{Binding ClearLogCommand}"/>
+                            </WrapPanel>
                         </Border>
                     <TabControl Grid.Row="1" TextElement.Foreground="{StaticResource TextBrush}">
                         <TabItem Header="Protocol Events">
@@ -169,11 +267,15 @@
                                 <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="190"/></Grid.RowDefinitions>
                                 <DataGrid ItemsSource="{Binding FilteredLogs}" SelectedItem="{Binding SelectedLog}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" behaviors:DataGridAutoScrollBehavior.IsEnabled="{Binding AutoScrollLogs}">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="100"/>
-                                        <DataGridTextColumn Header="Direction" Binding="{Binding Direction}" Width="74"/>
-                                        <DataGridTextColumn Header="SxFy" Binding="{Binding SxFy}" Width="66"/>
-                                        <DataGridTextColumn Header="System Bytes" Binding="{Binding SystemBytes}" Width="112"/>
-                                        <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="86"/>
+                                        <DataGridTextColumn Header="Equipment" Binding="{Binding EquipmentId}" Width="80"/>
+                                        <DataGridTextColumn Header="Connection" Binding="{Binding ConnectionId}" Width="100"/>
+                                        <DataGridTextColumn Header="Endpoint" Binding="{Binding Endpoint}" Width="125"/>
+                                        <DataGridTextColumn Header="SID" Binding="{Binding SessionId}" Width="52"/>
+                                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="92"/>
+                                        <DataGridTextColumn Header="Dir" Binding="{Binding Direction}" Width="52"/>
+                                        <DataGridTextColumn Header="SxFy" Binding="{Binding SxFy}" Width="58"/>
+                                        <DataGridTextColumn Header="System Bytes" Binding="{Binding SystemBytes}" Width="106"/>
+                                        <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="78"/>
                                         <DataGridTemplateColumn Header="Summary" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Summary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
@@ -192,10 +294,14 @@
                                 <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="210"/></Grid.RowDefinitions>
                                 <DataGrid ItemsSource="{Binding FilteredSecs1Logs}" SelectedItem="{Binding SelectedLog}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" behaviors:DataGridAutoScrollBehavior.IsEnabled="{Binding AutoScrollLogs}">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="110"/>
-                                        <DataGridTextColumn Header="Direction" Binding="{Binding Direction}" Width="80"/>
-                                        <DataGridTextColumn Header="SxFy" Binding="{Binding SxFy}" Width="80"/>
-                                        <DataGridTextColumn Header="System Bytes" Binding="{Binding SystemBytes}" Width="130"/>
+                                        <DataGridTextColumn Header="Equipment" Binding="{Binding EquipmentId}" Width="80"/>
+                                        <DataGridTextColumn Header="Connection" Binding="{Binding ConnectionId}" Width="100"/>
+                                        <DataGridTextColumn Header="Endpoint" Binding="{Binding Endpoint}" Width="125"/>
+                                        <DataGridTextColumn Header="SID" Binding="{Binding SessionId}" Width="52"/>
+                                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="92"/>
+                                        <DataGridTextColumn Header="Dir" Binding="{Binding Direction}" Width="52"/>
+                                        <DataGridTextColumn Header="SxFy" Binding="{Binding SxFy}" Width="58"/>
+                                        <DataGridTextColumn Header="System Bytes" Binding="{Binding SystemBytes}" Width="106"/>
                                         <DataGridTemplateColumn Header="Frame" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock FontFamily="Consolas" Text="{Binding RawHex}" TextTrimming="CharacterEllipsis" ToolTip="{Binding RawHex}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
@@ -213,10 +319,14 @@
                                 <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="230"/></Grid.RowDefinitions>
                                 <DataGrid ItemsSource="{Binding FilteredSecs2Logs}" SelectedItem="{Binding SelectedLog}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" behaviors:DataGridAutoScrollBehavior.IsEnabled="{Binding AutoScrollLogs}">
                                     <DataGrid.Columns>
-                                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="110"/>
-                                        <DataGridTextColumn Header="Direction" Binding="{Binding Direction}" Width="80"/>
-                                        <DataGridTextColumn Header="SxFy" Binding="{Binding SxFy}" Width="80"/>
-                                        <DataGridTextColumn Header="System Bytes" Binding="{Binding SystemBytes}" Width="130"/>
+                                        <DataGridTextColumn Header="Equipment" Binding="{Binding EquipmentId}" Width="80"/>
+                                        <DataGridTextColumn Header="Connection" Binding="{Binding ConnectionId}" Width="100"/>
+                                        <DataGridTextColumn Header="Endpoint" Binding="{Binding Endpoint}" Width="125"/>
+                                        <DataGridTextColumn Header="SID" Binding="{Binding SessionId}" Width="52"/>
+                                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="92"/>
+                                        <DataGridTextColumn Header="Dir" Binding="{Binding Direction}" Width="52"/>
+                                        <DataGridTextColumn Header="SxFy" Binding="{Binding SxFy}" Width="58"/>
+                                        <DataGridTextColumn Header="System Bytes" Binding="{Binding SystemBytes}" Width="106"/>
                                         <DataGridTemplateColumn Header="Message" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Summary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
@@ -228,8 +338,33 @@
                                 </Border>
                             </Grid>
                         </TabItem>
+                        <TabItem Header="Diagnostics">
+                            <Grid Margin="8">
+                                <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="180"/></Grid.RowDefinitions>
+                                <DataGrid ItemsSource="{Binding FilteredDiagnosticsLogs}" SelectedItem="{Binding SelectedLog}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" behaviors:DataGridAutoScrollBehavior.IsEnabled="{Binding AutoScrollLogs}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Equipment" Binding="{Binding EquipmentId}" Width="85"/>
+                                        <DataGridTextColumn Header="Connection" Binding="{Binding ConnectionId}" Width="115"/>
+                                        <DataGridTextColumn Header="Endpoint" Binding="{Binding Endpoint}" Width="135"/>
+                                        <DataGridTextColumn Header="SID" Binding="{Binding SessionId}" Width="55"/>
+                                        <DataGridTextColumn Header="Time" Binding="{Binding Timestamp, StringFormat=HH:mm:ss.fff}" Width="100"/>
+                                        <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="105"/>
+                                        <DataGridTextColumn Header="Result" Binding="{Binding Result}" Width="80"/>
+                                        <DataGridTemplateColumn Header="Summary" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock Text="{Binding Summary}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Summary}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,10,0,0">
+                                    <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                                        <TextBlock FontSize="16" FontWeight="SemiBold" Text="Selected diagnostic detail"/>
+                                        <TextBlock Grid.Row="1" Margin="0,6,0,0" Foreground="{StaticResource MutedTextBrush}" Text="{Binding SelectedLog.CorrelationKey, StringFormat=Correlation: {0}}"/>
+                                        <TextBlock Grid.Row="2" Margin="0,6,0,0" Text="{Binding SelectedLog.Summary, TargetNullValue=Select a diagnostic event to inspect it.}" TextWrapping="Wrap"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </TabItem>
                     </TabControl>
                     </Grid>
+                    </ScrollViewer>
                 </TabItem>
 
                 <TabItem Header="Advanced Settings">

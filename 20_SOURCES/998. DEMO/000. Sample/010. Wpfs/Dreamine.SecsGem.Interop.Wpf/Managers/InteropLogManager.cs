@@ -21,22 +21,32 @@ public sealed class InteropLogManager
     public ObservableCollection<InteropLogEntry> Entries { get; } = new();
     public ObservableCollection<InteropLogEntry> Secs1Entries { get; } = new();
     public ObservableCollection<InteropLogEntry> Secs2Entries { get; } = new();
+    public ObservableCollection<InteropLogEntry> DiagnosticsEntries { get; } = new();
     public event EventHandler<InteropLogEntry>? EntryAdded;
 
-    public void Diagnostic(SecsDiagnosticEvent value) => Add(new(DateTimeOffset.Now,
-        value.Kind is SecsDiagnosticKind.ProtocolError or SecsDiagnosticKind.Timeout ? "Error" : "Info",
-        "HSMS", "--", value.Message, value.State?.ToString(), null));
+    public void Diagnostic(SecsDiagnosticEvent value) => Diagnostic(value, null);
 
-    public void Message(string direction, SecsMessage message)
+    internal void Diagnostic(SecsDiagnosticEvent value, EquipmentLogIdentity? identity) => Add(WithIdentity(new(DateTimeOffset.Now,
+        value.Kind is SecsDiagnosticKind.ProtocolError or SecsDiagnosticKind.Timeout ? "Error" : "Info",
+        "HSMS", "--", value.Message, value.State?.ToString(), null), identity));
+
+    public void Message(string direction, SecsMessage message) => Message(direction, message, null);
+
+    internal void Message(string direction, SecsMessage message, EquipmentLogIdentity? identity)
     {
         var frame = new HsmsFrameCodec().Encode(new HsmsDataMessage(message));
-        Add(new(DateTimeOffset.Now, "Info", "SECS-II", direction,
+        Add(WithIdentity(new(DateTimeOffset.Now, "Info", "SECS-II", direction,
             $"S{message.Stream.Value}F{message.Function.Value}{(message.ReplyExpected ? " W" : string.Empty)} SB=0x{message.SystemBytes.Value:X8}",
-            SecsItemText.Format(message.Item), string.Join(" ", frame.Select(value => value.ToString("X2")))));
+            SecsItemText.Format(message.Item), string.Join(" ", frame.Select(value => value.ToString("X2"))),
+            CorrelationSystemBytes: message.SystemBytes.Value), identity));
     }
 
     public void Info(string category, string summary) => Add(new(DateTimeOffset.Now, "Info", category, "--", summary, null, null));
     public void Error(string category, Exception exception) => Add(new(DateTimeOffset.Now, "Error", category, "--", exception.Message, exception.GetType().Name, null));
+    internal void Info(string category, string summary, EquipmentLogIdentity identity) =>
+        Add(WithIdentity(new(DateTimeOffset.Now, "Info", category, "--", summary, null, null), identity));
+    internal void Error(string category, Exception exception, EquipmentLogIdentity identity) =>
+        Add(WithIdentity(new(DateTimeOffset.Now, "Error", category, "--", exception.Message, exception.GetType().Name, null), identity));
     public bool IsPaused => Volatile.Read(ref _paused) != 0;
 
     public void SetPaused(bool paused)
@@ -53,6 +63,7 @@ public sealed class InteropLogManager
             Entries.Clear();
             Secs1Entries.Clear();
             Secs2Entries.Clear();
+            DiagnosticsEntries.Clear();
         }
     });
 
@@ -110,8 +121,23 @@ public sealed class InteropLogManager
             while (Secs1Entries.Count > MaximumEntries) Secs1Entries.RemoveAt(0);
             while (Secs2Entries.Count > MaximumEntries) Secs2Entries.RemoveAt(0);
         }
+        else
+        {
+            DiagnosticsEntries.Add(entry);
+            while (DiagnosticsEntries.Count > MaximumEntries) DiagnosticsEntries.RemoveAt(0);
+        }
         EntryAdded?.Invoke(this, entry);
     }
+
+    private static InteropLogEntry WithIdentity(InteropLogEntry entry, EquipmentLogIdentity? identity) => identity is { } value
+        ? entry with
+        {
+            EquipmentId = value.EquipmentId,
+            ConnectionId = value.ConnectionId,
+            Endpoint = value.Endpoint,
+            SessionId = value.SessionId
+        }
+        : entry;
 
     private static void Dispatch(Action action)
     {
@@ -131,6 +157,18 @@ internal sealed class InteropDiagnosticSink(
         // log entry, then independently notify connection-state observers.
         try { log.Diagnostic(diagnosticEvent); }
         finally { diagnosticObserved?.Invoke(diagnosticEvent); }
+    }
+}
+
+internal sealed class EquipmentInteropDiagnosticSink(
+    InteropLogManager log,
+    Func<EquipmentLogIdentity> identity,
+    Action<SecsDiagnosticEvent>? diagnosticObserved = null) : ISecsDiagnosticSink
+{
+    public void Emit(SecsDiagnosticEvent diagnosticEvent)
+    {
+        try { diagnosticObserved?.Invoke(diagnosticEvent); }
+        finally { log.Diagnostic(diagnosticEvent, identity()); }
     }
 }
 

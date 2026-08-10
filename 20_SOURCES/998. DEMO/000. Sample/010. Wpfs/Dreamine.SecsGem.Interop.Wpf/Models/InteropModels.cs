@@ -5,19 +5,31 @@ using Dreamine.MVVM.ViewModels;
 
 namespace Dreamine.SecsGem.Interop.Wpf.Models;
 
-public sealed class ConnectionSettings
+public sealed class ConnectionSettings : ViewModelBase
 {
-    public string Host { get; set; } = "127.0.0.1";
-    public int Port { get; set; } = 7000;
-    public SecsConnectionMode Mode { get; set; } = SecsConnectionMode.Active;
-    public SecsRole Role { get; set; } = SecsRole.Host;
-    public ushort SessionId { get; set; }
-    public bool AutoReconnect { get; set; }
-    public int T3Seconds { get; set; } = 45;
-    public int T5Seconds { get; set; } = 10;
-    public int T6Seconds { get; set; } = 10;
-    public int T7Seconds { get; set; } = 10;
-    public int T8Seconds { get; set; } = 10;
+    private string _host = "127.0.0.1";
+    private int _port = 7000;
+    private SecsConnectionMode _mode = SecsConnectionMode.Active;
+    private SecsRole _role = SecsRole.Host;
+    private ushort _sessionId;
+    private bool _autoReconnect;
+    private int _t3Seconds = 45;
+    private int _t5Seconds = 10;
+    private int _t6Seconds = 10;
+    private int _t7Seconds = 10;
+    private int _t8Seconds = 10;
+
+    public string Host { get => _host; set => SetProperty(ref _host, value); }
+    public int Port { get => _port; set => SetProperty(ref _port, value); }
+    public SecsConnectionMode Mode { get => _mode; set => SetProperty(ref _mode, value); }
+    public SecsRole Role { get => _role; set => SetProperty(ref _role, value); }
+    public ushort SessionId { get => _sessionId; set => SetProperty(ref _sessionId, value); }
+    public bool AutoReconnect { get => _autoReconnect; set => SetProperty(ref _autoReconnect, value); }
+    public int T3Seconds { get => _t3Seconds; set => SetProperty(ref _t3Seconds, value); }
+    public int T5Seconds { get => _t5Seconds; set => SetProperty(ref _t5Seconds, value); }
+    public int T6Seconds { get => _t6Seconds; set => SetProperty(ref _t6Seconds, value); }
+    public int T7Seconds { get => _t7Seconds; set => SetProperty(ref _t7Seconds, value); }
+    public int T8Seconds { get => _t8Seconds; set => SetProperty(ref _t8Seconds, value); }
 
     public HsmsSessionOptions ToOptions() => new()
     {
@@ -53,7 +65,8 @@ public sealed class InteropScenarioResult : ViewModelBase
 }
 
 public sealed record InteropLogEntry(DateTimeOffset Timestamp, string Level, string Category, string Direction,
-    string Summary, string? Message, string? RawHex)
+    string Summary, string? Message, string? RawHex, string EquipmentId = "", string ConnectionId = "",
+    string Endpoint = "", ushort? SessionId = null, uint? CorrelationSystemBytes = null)
 {
     public string SxFy
     {
@@ -70,6 +83,7 @@ public sealed record InteropLogEntry(DateTimeOffset Timestamp, string Level, str
     {
         get
         {
+            if (CorrelationSystemBytes is { } value) return $"0x{value:X8}";
             const string marker = "SB=";
             var start = Summary.IndexOf(marker, StringComparison.Ordinal);
             if (start < 0) return "--";
@@ -80,6 +94,9 @@ public sealed record InteropLogEntry(DateTimeOffset Timestamp, string Level, str
     }
 
     public string Result => Level == "Error" ? "Error" : Category == "SECS-II" ? "Transferred" : "Observed";
+    public string CorrelationKey => string.IsNullOrEmpty(ConnectionId) || SessionId is null || CorrelationSystemBytes is null
+        ? "--"
+        : $"{ConnectionId}:{SessionId.Value}:{CorrelationSystemBytes.Value:X8}";
 }
 
 public sealed record SelfTestSummary(DateTimeOffset StartedAt, DateTimeOffset CompletedAt, int Requested,
