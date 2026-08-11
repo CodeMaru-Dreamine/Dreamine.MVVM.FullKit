@@ -47,6 +47,56 @@ public sealed class InteropLogManager
 
     public void Info(string category, string summary) => Add(new(DateTimeOffset.Now, "Info", category, "--", summary, null, null));
     public void Error(string category, Exception exception) => Add(new(DateTimeOffset.Now, "Error", category, "--", exception.Message, exception.GetType().Name, null));
+    internal void SidecarTelemetry(EquipmentSidecarTelemetry telemetry, EquipmentLogIdentity identity)
+    {
+        if (telemetry.Message is { } message && telemetry.Direction is "Inbound" or "Outbound")
+        {
+            var direction = telemetry.Direction == "Inbound" ? "RX" : "TX";
+            var raw = telemetry.RawHex.Length == 0
+                ? null
+                : string.Join(" ", Enumerable.Range(0, telemetry.RawHex.Length / 2)
+                    .Select(index => telemetry.RawHex.Substring(index * 2, 2)));
+            Add(WithIdentity(new InteropLogEntry(
+                telemetry.Timestamp,
+                string.IsNullOrEmpty(telemetry.Timeout) ? "Info" : "Error",
+                "SECS-II",
+                direction,
+                $"S{message.Stream.Value}F{message.Function.Value}{(message.ReplyExpected ? " W" : string.Empty)} " +
+                $"SB=0x{message.SystemBytes.Value:X8} [{telemetry.Result}]",
+                SecsItemText.Format(message.Item),
+                raw,
+                CorrelationSystemBytes: message.SystemBytes.Value,
+                ContainsPrivateProfileData: true), identity));
+            return;
+        }
+
+        var summary = $"External equipment sidecar {telemetry.Direction}: {telemetry.Result}.";
+        if (!string.IsNullOrEmpty(telemetry.Timeout)) summary += $" Timeout: {telemetry.Timeout}.";
+        Add(WithIdentity(new InteropLogEntry(
+            telemetry.Timestamp,
+            string.IsNullOrEmpty(telemetry.Timeout) ? "Info" : "Error",
+            "External Equipment",
+            "--",
+            summary,
+            telemetry.RawStatus,
+            null,
+            ContainsPrivateProfileData: true), identity));
+    }
+
+    internal void SidecarOutput(
+        DateTimeOffset timestamp,
+        bool error,
+        string line,
+        EquipmentLogIdentity identity) =>
+        Add(WithIdentity(new InteropLogEntry(
+            timestamp,
+            error ? "Error" : "Info",
+            "External Equipment",
+            "--",
+            line,
+            null,
+            null,
+            ContainsPrivateProfileData: true), identity));
     internal void Info(string category, string summary, EquipmentLogIdentity identity) =>
         Add(WithIdentity(new(DateTimeOffset.Now, "Info", category, "--", summary, null, null), identity));
     internal void Error(string category, Exception exception, EquipmentLogIdentity identity) =>

@@ -29,3 +29,17 @@ Dreamine.SecsGem.Interop.Wpf.exe --multi-self-test --output multi-equipment-self
 ```
 
 See [Multi-Equipment Host](docs/MULTI_EQUIPMENT_HOST.md), the [test matrix](docs/MULTI_EQUIPMENT_TEST_MATRIX.md), and the [performance snapshot](docs/MULTI_EQUIPMENT_PERFORMANCE.md). External simulator results remain `Not Run / Waiting for User` until manually recorded.
+
+## Basic responder extension examples
+
+`Managers/MessageManager.cs` contains a deliberately small built-in Equipment responder. The examples show how to:
+
+- read typed request children through `SecsListItem.Items` and `Values.Span`;
+- build a dynamic flat `L[n]` with a temporary `List<SecsItem>`;
+- create nested lists by passing child `SecsListItem` instances to a parent;
+- return a one-byte Binary acknowledgement; and
+- return an ASCII scalar without an unnecessary surrounding list.
+
+`SecsListItem` is immutable, so build dynamic children in a temporary collection and pass `children.ToArray()` to its constructor. Add another `(Stream, Function)` tuple to `BuildBasicResponseItem` for a new educational pair. S1F1/S1F2 and S1F13/S1F14 are handled first by `GemProtocolEngine` and should not be duplicated in the fallback switch.
+
+These handlers are examples, not normative message definitions or production equipment behavior. Keep state rules, data identifiers, command semantics, and other application-specific behavior in a separate Equipment Profile. The built-in responder is also separate from the external sidecar responder; sidecar traffic does not pass through `MessageManager`.

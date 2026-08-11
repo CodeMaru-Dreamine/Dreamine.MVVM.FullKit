@@ -1,19 +1,20 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using Dreamine.MVVM.Attributes;
 using Dreamine.MVVM.ViewModels;
 using Dreamine.Secs.Abstractions.Model;
 using Dreamine.SecsGem.Interop.Wpf.Models;
 
 namespace Dreamine.SecsGem.Interop.Wpf.ViewModels;
 
-public sealed class SecsItemNodeViewModel : ViewModelBase
+public sealed partial class SecsItemNodeViewModel : ViewModelBase
 {
+    [DreamineProperty]
     private SecsItemEditorFormat _format;
+    [DreamineProperty]
     private string _value = string.Empty;
     public SecsItemNodeViewModel(SecsItemEditorFormat format = SecsItemEditorFormat.List) => _format = format;
     public IReadOnlyList<SecsItemEditorFormat> Formats { get; } = Enum.GetValues<SecsItemEditorFormat>();
-    public SecsItemEditorFormat Format { get => _format; set => SetProperty(ref _format, value); }
-    public string Value { get => _value; set => SetProperty(ref _value, value); }
     public ObservableCollection<SecsItemNodeViewModel> Children { get; } = new();
 
     public SecsItem ToSecsItem()

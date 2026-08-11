@@ -51,7 +51,7 @@
                     <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="HSMS  "/><TextBlock FontWeight="SemiBold" Text="{Binding HsmsState}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="#F2C66D"/><Style.Triggers><DataTrigger Binding="{Binding HsmsState}" Value="Selected"><Setter Property="Foreground" Value="{StaticResource AccentBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></StackPanel></Border>
                     <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Role  "/><TextBlock FontWeight="SemiBold" Text="{Binding Settings.Role}"/></StackPanel></Border>
                     <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Mode  "/><TextBlock FontWeight="SemiBold" Text="{Binding Settings.Mode}"/></StackPanel></Border>
-                    <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Responder  "/><TextBlock FontWeight="SemiBold" Text="{Binding EquipmentResponderState}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="#F2C66D"/><Style.Triggers><DataTrigger Binding="{Binding EquipmentResponderEnabled}" Value="True"><Setter Property="Foreground" Value="{StaticResource AccentBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></StackPanel></Border>
+                    <Border Style="{StaticResource Badge}"><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Responder  "/><TextBlock FontWeight="SemiBold" Text="{Binding EquipmentResponderState}"><TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}"><Setter Property="Foreground" Value="#F2C66D"/><Style.Triggers><DataTrigger Binding="{Binding AnyEquipmentResponderActive}" Value="True"><Setter Property="Foreground" Value="{StaticResource AccentBrush}"/></DataTrigger></Style.Triggers></Style></TextBlock.Style></TextBlock></StackPanel></Border>
                     </WrapPanel>
                     <Border HorizontalAlignment="Right"><Border.Style><Style TargetType="Border" BasedOn="{StaticResource Badge}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsMultiEquipmentMode}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></Border.Style><StackPanel Orientation="Horizontal"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Multi Host  "/><TextBlock FontWeight="SemiBold" Text="{Binding MultiEquipmentSummary}"/></StackPanel></Border>
                 </Grid>
@@ -549,6 +549,30 @@
                                         <Label Content="S1F1 pairs"/><TextBox Grid.Column="1" Text="{Binding MessageIterations}"/><Label Grid.Row="1" Content="Reconnect / Linktest"/><TextBox Grid.Row="1" Grid.Column="1" Text="{Binding ReconnectCycles}"/>
                                     </Grid>
                                     <UniformGrid Columns="2"><Button Style="{StaticResource PrimaryButton}" Content="Run self loopback" Command="{Binding RunSelfTestCommand}"/><Button Style="{StaticResource DangerButton}" Content="Cancel" Command="{Binding CancelCommand}"/></UniformGrid>
+                                </StackPanel>
+                            </Border>
+                            <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                <StackPanel>
+                                    <TextBlock FontSize="17" FontWeight="SemiBold" Text="External equipment responder"/>
+                                    <TextBlock Margin="0,3,0,8" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap" Text="Runs a local, separately supplied Equipment/Passive sidecar. It is mutually exclusive with this harness listener and Basic Responder."/>
+                                    <Grid>
+                                        <Grid.ColumnDefinitions><ColumnDefinition Width="110"/><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions><RowDefinition Height="42"/><RowDefinition Height="42"/><RowDefinition Height="42"/></Grid.RowDefinitions>
+                                        <Label Content="Responder"/>
+                                        <Border Grid.Column="1" Height="36" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,0"><TextBlock VerticalAlignment="Center" Text="{Binding EquipmentSidecarExecutablePath}" TextTrimming="CharacterEllipsis" ToolTip="{Binding EquipmentSidecarExecutablePath}"/></Border>
+                                        <Button Grid.Column="2" Content="Browse…" Command="{Binding BrowseEquipmentSidecarCommand}"/>
+                                        <Label Grid.Row="1" Content="Private evidence"/>
+                                        <Border Grid.Row="1" Grid.Column="1" Height="36" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,0"><TextBlock VerticalAlignment="Center" Text="{Binding EquipmentSidecarEvidencePath}" TextTrimming="CharacterEllipsis" ToolTip="{Binding EquipmentSidecarEvidencePath}"/></Border>
+                                        <Button Grid.Row="1" Grid.Column="2" Content="Browse…" Command="{Binding BrowseEquipmentSidecarEvidenceCommand}"/>
+                                        <Label Grid.Row="2" Content="Connections"/>
+                                        <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding EquipmentSidecarConnectionLimit}"/>
+                                        <TextBlock Grid.Row="2" Grid.Column="2" VerticalAlignment="Center" Text="{Binding EquipmentSidecarStatus}" TextTrimming="CharacterEllipsis" ToolTip="{Binding EquipmentSidecarStatus}"/>
+                                    </Grid>
+                                    <UniformGrid Columns="2">
+                                        <Button Style="{StaticResource PrimaryButton}" Content="Start responder" Command="{Binding StartEquipmentSidecarCommand}"/>
+                                        <Button Style="{StaticResource DangerButton}" Content="Force stop" Command="{Binding ForceStopEquipmentSidecarCommand}"/>
+                                    </UniformGrid>
+                                    <TextBlock Margin="4,6" Foreground="#F2C66D" TextWrapping="Wrap" Text="Complete the Simulator sequence and disconnect normally. Force stop makes the run ineligible for Passed. Private-profile traffic is excluded from public evidence export."/>
                                 </StackPanel>
                             </Border>
                             <Border Width="500" Style="{StaticResource Card}" Margin="6">
