@@ -1,35 +1,35 @@
 using Dreamine.Secs.Abstractions.Enums;
 using Dreamine.Secs.Abstractions.Hsms;
 using Dreamine.Secs.Abstractions.Model;
+using Dreamine.MVVM.Attributes;
 using Dreamine.MVVM.ViewModels;
 
 namespace Dreamine.SecsGem.Interop.Wpf.Models;
 
-public sealed class ConnectionSettings : ViewModelBase
+public sealed partial class ConnectionSettings : ViewModelBase
 {
+    [DreamineProperty]
     private string _host = "127.0.0.1";
+    [DreamineProperty]
     private int _port = 7000;
+    [DreamineProperty]
     private SecsConnectionMode _mode = SecsConnectionMode.Active;
+    [DreamineProperty]
     private SecsRole _role = SecsRole.Host;
+    [DreamineProperty]
     private ushort _sessionId;
+    [DreamineProperty]
     private bool _autoReconnect;
+    [DreamineProperty]
     private int _t3Seconds = 45;
+    [DreamineProperty]
     private int _t5Seconds = 10;
+    [DreamineProperty]
     private int _t6Seconds = 10;
+    [DreamineProperty]
     private int _t7Seconds = 10;
+    [DreamineProperty]
     private int _t8Seconds = 10;
-
-    public string Host { get => _host; set => SetProperty(ref _host, value); }
-    public int Port { get => _port; set => SetProperty(ref _port, value); }
-    public SecsConnectionMode Mode { get => _mode; set => SetProperty(ref _mode, value); }
-    public SecsRole Role { get => _role; set => SetProperty(ref _role, value); }
-    public ushort SessionId { get => _sessionId; set => SetProperty(ref _sessionId, value); }
-    public bool AutoReconnect { get => _autoReconnect; set => SetProperty(ref _autoReconnect, value); }
-    public int T3Seconds { get => _t3Seconds; set => SetProperty(ref _t3Seconds, value); }
-    public int T5Seconds { get => _t5Seconds; set => SetProperty(ref _t5Seconds, value); }
-    public int T6Seconds { get => _t6Seconds; set => SetProperty(ref _t6Seconds, value); }
-    public int T7Seconds { get => _t7Seconds; set => SetProperty(ref _t7Seconds, value); }
-    public int T8Seconds { get => _t8Seconds; set => SetProperty(ref _t8Seconds, value); }
 
     public HsmsSessionOptions ToOptions() => new()
     {
@@ -50,23 +50,24 @@ public sealed class ConnectionSettings : ViewModelBase
 
 public enum InteropScenarioStatus { NotRun, Running, WaitingForUser, Passed, Failed, NotSupported }
 
-public sealed class InteropScenarioResult : ViewModelBase
+public sealed partial class InteropScenarioResult : ViewModelBase
 {
+    [DreamineProperty]
     private InteropScenarioStatus _status;
+    [DreamineProperty]
     private string _detail = "Not Run";
+    [DreamineProperty]
     private TimeSpan _elapsed;
     public InteropScenarioResult(string id, string name, bool external) { Id = id; Name = name; External = external; }
     public string Id { get; }
     public string Name { get; }
     public bool External { get; }
-    public InteropScenarioStatus Status { get => _status; set => SetProperty(ref _status, value); }
-    public string Detail { get => _detail; set => SetProperty(ref _detail, value); }
-    public TimeSpan Elapsed { get => _elapsed; set => SetProperty(ref _elapsed, value); }
 }
 
 public sealed record InteropLogEntry(DateTimeOffset Timestamp, string Level, string Category, string Direction,
     string Summary, string? Message, string? RawHex, string EquipmentId = "", string ConnectionId = "",
-    string Endpoint = "", ushort? SessionId = null, uint? CorrelationSystemBytes = null)
+    string Endpoint = "", ushort? SessionId = null, uint? CorrelationSystemBytes = null,
+    bool ContainsPrivateProfileData = false)
 {
     public string SxFy
     {

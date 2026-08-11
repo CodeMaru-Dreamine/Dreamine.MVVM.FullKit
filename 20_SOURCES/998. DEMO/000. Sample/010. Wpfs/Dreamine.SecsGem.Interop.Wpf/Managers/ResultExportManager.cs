@@ -28,13 +28,22 @@ public sealed partial class ResultExportManager
         var stamp = DateTime.Now.ToString("yyyyMMdd-HHmmss");
         var jsonPath = Path.Combine(directory, $"interop-{stamp}.json");
         var markdownPath = Path.Combine(directory, $"interop-{stamp}.md");
-        var safeLogs = logs.Select(entry => entry with
+        var logSnapshot = logs.ToArray();
+        var privateLogCount = logSnapshot.Count(entry => entry.ContainsPrivateProfileData);
+        var safeLogs = logSnapshot.Where(entry => !entry.ContainsPrivateProfileData).Select(entry => entry with
         {
             Summary = Mask(entry.Summary) ?? string.Empty,
             Message = Mask(entry.Message),
             RawHex = entry.RawHex is { Length: > 4096 } hex ? hex[..4096] + "…" : entry.RawHex
         }).ToArray();
-        var payload = new { GeneratedAt = DateTimeOffset.Now, Scope = "Interoperability evidence; not a compliance certificate", Scenarios = scenarios, Logs = safeLogs };
+        var payload = new
+        {
+            GeneratedAt = DateTimeOffset.Now,
+            Scope = "Interoperability evidence; not a compliance certificate. Private-profile traffic is excluded.",
+            ExcludedPrivateProfileLogCount = privateLogCount,
+            Scenarios = scenarios,
+            Logs = safeLogs
+        };
         await File.WriteAllTextAsync(jsonPath, JsonSerializer.Serialize(payload, JsonOptions), token).ConfigureAwait(false);
         var markdown = new StringBuilder("# Interoperability Test Result\n\n> Evidence only; this is not a compliance certificate.\n\n| ID | Scenario | Status | Detail |\n|---|---|---|---|\n");
         foreach (var item in scenarios) markdown.AppendLine($"| {item.Id} | {Escape(item.Name)} | {item.Status} | {Escape(Mask(item.Detail) ?? string.Empty)} |");
