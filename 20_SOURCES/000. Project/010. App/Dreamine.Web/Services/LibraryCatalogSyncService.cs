@@ -216,7 +216,8 @@ public sealed class LibraryCatalogSyncService
 
         if (!string.IsNullOrWhiteSpace(project.Description))
         {
-            if (SetString(lib.DescriptionEn, project.Description, v => lib.DescriptionEn = v)) dirty = true;
+            if (string.IsNullOrWhiteSpace(lib.DescriptionEn)
+                && SetString(lib.DescriptionEn, project.Description, v => lib.DescriptionEn = v)) dirty = true;
             if (string.IsNullOrWhiteSpace(lib.Description))
             {
                 lib.Description = project.Description;
@@ -318,6 +319,9 @@ public sealed class LibraryCatalogSyncService
 
             var assemblyName = Path.GetFileNameWithoutExtension(path);
             var packageId = Property("PackageId") ?? Property("AssemblyName") ?? assemblyName;
+            if (string.Equals(Property("IsPackable"), "false", StringComparison.OrdinalIgnoreCase))
+                return null;
+
             var version = Property("Version");
             if (string.IsNullOrWhiteSpace(version) || version.Contains("$(", StringComparison.Ordinal))
                 version = "1.0.0";
@@ -381,6 +385,8 @@ public sealed class LibraryCatalogSyncService
         if (packageId.StartsWith("Dreamine.MVVM.", StringComparison.OrdinalIgnoreCase)) return "MVVM";
         if (packageId.StartsWith("Dreamine.UI.", StringComparison.OrdinalIgnoreCase)) return "UI";
         if (packageId.StartsWith("Dreamine.Communication.", StringComparison.OrdinalIgnoreCase)) return "Communication";
+        if (packageId.StartsWith("Dreamine.Secs", StringComparison.OrdinalIgnoreCase)) return "SECS/GEM";
+        if (packageId.StartsWith("Dreamine.Gem", StringComparison.OrdinalIgnoreCase)) return "SECS/GEM";
         if (packageId.StartsWith("Dreamine.Database.", StringComparison.OrdinalIgnoreCase)) return "Database";
         if (packageId.StartsWith("Dreamine.PLC.", StringComparison.OrdinalIgnoreCase)) return "PLC";
         if (packageId.StartsWith("Dreamine.IO.", StringComparison.OrdinalIgnoreCase)) return "IO";
@@ -424,8 +430,9 @@ public sealed class LibraryCatalogSyncService
         "Infrastructure" => 5,
         "Database" => 6,
         "Communication" => 7,
-        "IO" => 8,
-        "PLC" => 9,
+        "SECS/GEM" => 8,
+        "IO" => 9,
+        "PLC" => 10,
         _ => 99
     };
 

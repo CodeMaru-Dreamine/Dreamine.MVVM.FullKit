@@ -404,6 +404,14 @@ html, body {
     max-width: 100%; overflow-wrap: anywhere;
 }
 .dw-doc-meta strong { color: var(--accent-2); }
+.dw-install-command {
+    display: flex; align-items: center; gap: 10px; max-width: 100%;
+    margin-top: 12px; padding: 10px 12px; border: 1px solid var(--line);
+    border-radius: var(--radius-md); background: rgba(0,0,0,.25);
+    color: var(--sub); font-size: 12px;
+}
+.dw-install-command span { color: var(--accent-2); font-weight: 700; flex: 0 0 auto; }
+.dw-install-command code { overflow-x: auto; white-space: nowrap; color: var(--text); }
 .dw-back { color: var(--accent-2); text-decoration: none; font-size: 14px; display: block; margin-bottom: 16px; }
 .dw-doc-section { margin-bottom: 32px; }
 .dw-doc-section__title {

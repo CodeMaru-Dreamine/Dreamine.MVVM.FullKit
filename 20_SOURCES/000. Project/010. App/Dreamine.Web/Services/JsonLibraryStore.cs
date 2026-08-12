@@ -116,8 +116,10 @@ public sealed class JsonLibraryStore : ILibraryStore
 
             bool dirty = false;
 
+            var seeds = SeedDefaults();
+
             // 시드에 있지만 JSON에 없는 항목 추가
-            var missing = SeedDefaults().Where(s => !_cache.Any(c => c.Id == s.Id)).ToList();
+            var missing = seeds.Where(s => !_cache.Any(c => c.Id == s.Id)).ToList();
             if (missing.Count > 0)
             {
                 _cache.AddRange(missing);
@@ -125,16 +127,48 @@ public sealed class JsonLibraryStore : ILibraryStore
             }
 
             // 기존 항목에 시드에서 채울 수 있는 필드 백필
-            var seedMap = SeedDefaults().ToDictionary(s => s.Id);
+            var seedMap = seeds.ToDictionary(s => s.Id);
             foreach (var lib in _cache)
             {
                 if (!seedMap.TryGetValue(lib.Id, out var seed)) continue;
 
+                var entryDirty = false;
+
                 if (string.IsNullOrEmpty(lib.DescriptionEn) && !string.IsNullOrEmpty(seed.DescriptionEn))
-                { lib.DescriptionEn = seed.DescriptionEn; dirty = true; }
+                { lib.DescriptionEn = seed.DescriptionEn; entryDirty = true; }
 
                 if (string.IsNullOrEmpty(lib.RepoUrl) && !string.IsNullOrEmpty(seed.RepoUrl))
-                { lib.RepoUrl = seed.RepoUrl; dirty = true; }
+                { lib.RepoUrl = seed.RepoUrl; entryDirty = true; }
+
+                // NuGet에 공개된 시드 항목은 설치에 필요한 메타데이터를 정본으로 갱신합니다.
+                // 설명·표시 여부·정렬 순서는 관리자 편집값을 그대로 보존합니다.
+                if (!string.IsNullOrWhiteSpace(seed.NuGetId))
+                {
+                    if (!string.Equals(lib.NuGetId, seed.NuGetId, StringComparison.Ordinal))
+                    { lib.NuGetId = seed.NuGetId; entryDirty = true; }
+
+                    if (ShouldUpgradeVersion(lib.Version, seed.Version))
+                    { lib.Version = seed.Version; entryDirty = true; }
+
+                    if (!string.Equals(lib.Category, seed.Category, StringComparison.Ordinal))
+                    { lib.Category = seed.Category; entryDirty = true; }
+
+                    if (!string.IsNullOrWhiteSpace(seed.TargetFramework)
+                        && !string.Equals(lib.TargetFramework, seed.TargetFramework, StringComparison.Ordinal))
+                    { lib.TargetFramework = seed.TargetFramework; entryDirty = true; }
+
+                    if (!SameSet(lib.Tags, seed.Tags))
+                    { lib.Tags = [.. seed.Tags]; entryDirty = true; }
+
+                    if (seed.Dependencies.Length > 0 && !SameSet(lib.Dependencies, seed.Dependencies))
+                    { lib.Dependencies = [.. seed.Dependencies]; entryDirty = true; }
+                }
+
+                if (entryDirty)
+                {
+                    lib.UpdatedAt = DateTime.UtcNow;
+                    dirty = true;
+                }
             }
 
             if (dirty) await PersistAsync(_cache);
@@ -279,6 +313,17 @@ public sealed class JsonLibraryStore : ILibraryStore
     {
         var json = JsonSerializer.Serialize(list, _json);
         await File.WriteAllTextAsync(_path, json);
+    }
+
+    private static bool SameSet(string[] left, string[] right) =>
+        left.OrderBy(x => x, StringComparer.OrdinalIgnoreCase)
+            .SequenceEqual(right.OrderBy(x => x, StringComparer.OrdinalIgnoreCase), StringComparer.OrdinalIgnoreCase);
+
+    private static bool ShouldUpgradeVersion(string current, string seeded)
+    {
+        if (string.IsNullOrWhiteSpace(current)) return true;
+        if (!Version.TryParse(seeded, out var seededVersion)) return false;
+        return Version.TryParse(current, out var currentVersion) && seededVersion > currentVersion;
     }
 
     /// <summary>
@@ -455,7 +500,9 @@ public sealed class JsonLibraryStore : ILibraryStore
         },
         new() {
             Id = "identity", Name = "Dreamine.Identity", Category = "Identity", SortOrder = 39, Status = "stable", IsVisible = true,
-            Tags = ["identity","oauth","auth","cookie"],
+            Version = "1.0.2", NuGetId = "Dreamine.Identity", TargetFramework = "net8.0;net8.0-windows7.0",
+            Tags = ["dreamine","identity","authentication","oauth","sqlite","blazor","wpf"],
+            Dependencies = ["Dreamine.Database.Abstractions","Dreamine.Database.Core","Dreamine.Database.Sqlite","Dreamine.Hybrid.Wpf"],
             RepoUrl       = "https://github.com/CodeMaru-Dreamine/Dreamine.Identity",
             Description   = "OAuth 통합 로그인 라이브러리 — Google/Naver/Kakao 소셜 로그인, 로컬 이메일 로그인, 공용 쿠키/DataProtection 키 공유로 서비스 간 세션 공유.",
             DescriptionEn = "OAuth-integrated login library — Google/Naver/Kakao social login, local email login, shared cookie and DataProtection keys for cross-service session sharing."
@@ -585,6 +632,69 @@ public sealed class JsonLibraryStore : ILibraryStore
             RepoUrl       = "https://github.com/CodeMaru-Dreamine/Dreamine.Communication.FullKit",
             Description   = "통신 라이브러리 전체 번들 — Sockets, Serial, RabbitMQ 일괄 참조.",
             DescriptionEn = "Full communication bundle — Sockets, Serial, and RabbitMQ in a single reference."
+        },
+        new() {
+            Id = "secsgem-fullkit", Name = "Dreamine.SecsGem.FullKit", Category = "SECS/GEM", SortOrder = 77, Status = "stable", IsVisible = true,
+            Version = "1.0.0", NuGetId = "Dreamine.SecsGem.FullKit", TargetFramework = "net8.0",
+            Tags = ["dreamine","secs","secs-ii","hsms","gem","gem300","semiconductor","fullkit"],
+            Dependencies = ["Dreamine.Secs.Abstractions","Dreamine.Secs.Com","Dreamine.Gem.Abstractions","Dreamine.Gem","Dreamine.Gem300.Abstractions","Dreamine.Gem300"],
+            RepoUrl       = "https://github.com/CodeMaru-Dreamine",
+            Description   = "Dreamine SECS-II·HSMS·GEM·GEM300 전체 스택을 한 번에 설치하는 메타 패키지.",
+            DescriptionEn = "All-in-one meta package for the Dreamine SECS-II, HSMS, GEM, and GEM300 libraries."
+        },
+        new() {
+            Id = "secs-abstractions", Name = "Dreamine.Secs.Abstractions", Category = "SECS/GEM", SortOrder = 78, Status = "stable", IsVisible = true,
+            Version = "1.0.0", NuGetId = "Dreamine.Secs.Abstractions", TargetFramework = "net8.0",
+            Tags = ["dreamine","secs","abstractions","communication","contracts","providers"],
+            Dependencies = ["Dreamine.Communication.Abstractions"],
+            RepoUrl       = "https://github.com/CodeMaru-Dreamine/Dreamine.Secs.Abstractions",
+            Description   = "Dreamine SECS 통신을 위한 공통 계약과 프로바이더 경계.",
+            DescriptionEn = "Shared contracts and provider boundaries for Dreamine SECS communication."
+        },
+        new() {
+            Id = "secs-com", Name = "Dreamine.Secs.Com", Category = "SECS/GEM", SortOrder = 79, Status = "stable", IsVisible = true,
+            Version = "1.0.0", NuGetId = "Dreamine.Secs.Com", TargetFramework = "net8.0",
+            Tags = ["dreamine","secs","communication","hsms","runtime"],
+            Dependencies = ["Dreamine.Secs.Abstractions","Dreamine.Communication.Abstractions","Dreamine.Communication.Core","Dreamine.Communication.Sockets"],
+            RepoUrl       = "https://github.com/CodeMaru-Dreamine/Dreamine.Secs.Com",
+            Description   = "명시적 검증 경계를 제공하는 Dreamine 네이티브 SECS-II·HSMS 통신 런타임.",
+            DescriptionEn = "Native Dreamine SECS-II and HSMS communication runtime with explicit verification boundaries."
+        },
+        new() {
+            Id = "gem-abstractions", Name = "Dreamine.Gem.Abstractions", Category = "SECS/GEM", SortOrder = 80, Status = "stable", IsVisible = true,
+            Version = "1.0.0", NuGetId = "Dreamine.Gem.Abstractions", TargetFramework = "net8.0",
+            Tags = ["dreamine","gem","abstractions","secs","contracts"],
+            Dependencies = ["Dreamine.Secs.Abstractions"],
+            RepoUrl       = "https://github.com/CodeMaru-Dreamine/Dreamine.Gem.Abstractions",
+            Description   = "타입 안전한 Dreamine GEM Host·Equipment 기능을 위한 공통 계약.",
+            DescriptionEn = "Shared contracts for typed Dreamine GEM host and equipment capabilities."
+        },
+        new() {
+            Id = "gem", Name = "Dreamine.Gem", Category = "SECS/GEM", SortOrder = 81, Status = "stable", IsVisible = true,
+            Version = "1.0.0", NuGetId = "Dreamine.Gem", TargetFramework = "net8.0",
+            Tags = ["dreamine","gem","secs","runtime","equipment"],
+            Dependencies = ["Dreamine.Gem.Abstractions","Dreamine.Secs.Abstractions","Dreamine.Secs.Com"],
+            RepoUrl       = "https://github.com/CodeMaru-Dreamine/Dreamine.Gem",
+            Description   = "타입 기반 Equipment 프로필과 E30-0611 파생 상호운용 부분집합을 제공하는 GEM 런타임.",
+            DescriptionEn = "Dreamine GEM runtime with typed equipment profiles and an E30-0611 derived interoperability subset."
+        },
+        new() {
+            Id = "gem300-abstractions", Name = "Dreamine.Gem300.Abstractions", Category = "SECS/GEM", SortOrder = 82, Status = "stable", IsVisible = true,
+            Version = "1.0.0", NuGetId = "Dreamine.Gem300.Abstractions", TargetFramework = "net8.0",
+            Tags = ["dreamine","gem300","gem","abstractions","contracts"],
+            Dependencies = ["Dreamine.Gem.Abstractions","Dreamine.Secs.Abstractions"],
+            RepoUrl       = "https://github.com/CodeMaru-Dreamine/Dreamine.Gem300.Abstractions",
+            Description   = "Dreamine GEM300 도메인 기능 모듈을 위한 공통 계약.",
+            DescriptionEn = "Shared contracts for Dreamine GEM300 domain capability modules."
+        },
+        new() {
+            Id = "gem300", Name = "Dreamine.Gem300", Category = "SECS/GEM", SortOrder = 83, Status = "stable", IsVisible = true,
+            Version = "1.0.0", NuGetId = "Dreamine.Gem300", TargetFramework = "net8.0",
+            Tags = ["dreamine","gem300","gem","runtime","equipment"],
+            Dependencies = ["Dreamine.Gem300.Abstractions","Dreamine.Gem.Abstractions","Dreamine.Gem"],
+            RepoUrl       = "https://github.com/CodeMaru-Dreamine/Dreamine.Gem300",
+            Description   = "Carrier·Substrate·Job·Object·Event 워크플로를 무결성 안전하게 제공하는 GEM300 도메인 런타임.",
+            DescriptionEn = "Dreamine GEM300 domain runtime with integrity-safe carrier, substrate, job, object, and event workflows."
         },
         new() {
             Id = "io-abstractions", Name = "Dreamine.IO.Abstractions", Category = "IO", SortOrder = 80, Status = "stable", IsVisible = true,

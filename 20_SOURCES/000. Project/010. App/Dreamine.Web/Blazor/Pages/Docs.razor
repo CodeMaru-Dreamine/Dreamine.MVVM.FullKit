@@ -60,6 +60,13 @@
                         <span><strong>@(Ko ? "참조" : "Depends")</strong> @string.Join(", ", Vm.Library.Dependencies)</span>
                     }
                 </div>
+                @if (!string.IsNullOrWhiteSpace(Vm.Library.NuGetId))
+                {
+                    <div class="dw-install-command" aria-label="@(Ko ? "NuGet 설치 명령" : "NuGet install command")">
+                        <span>@(Ko ? "설치" : "Install")</span>
+                        <code>dotnet add package @Vm.Library.NuGetId --version @Vm.Library.Version</code>
+                    </div>
+                }
             </div>
         </div>
 
