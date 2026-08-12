@@ -1,95 +1,100 @@
 # Multi-Equipment Host
 
-상태: 2026-08-10 기준 Harness 구현 및 로컬 loopback 증거.
+## 현재 경계
 
-Multi-Equipment Host는 하나의 Harness 프로세스에서 여러 장비 endpoint의 HSMS/GEM 연결을 각각 독립적으로 관리한다. 상호운용 및 격리 시험을 위한 기능이며 적합성 인증서, 운영용 장비군 관리 SDK, 외부 Simulator 또는 실제 장비 시험 증거가 아니다.
+| Surface | 상태 | 경계 |
+|---|---|---|
+| Provider-neutral Orchestration 로컬 회귀 | `PASS` | 최종 Strict WPF 회귀/Build가 Green이며 정확한 Fresh 합계는 중앙 보고서에만 기록합니다. |
+| 이번 실행의 독립 `--multi-self-test` 명령 | `NOT_RUN` | 2026-08-10 과거 명령 실행은 Matrix에 보존하며 회귀 Coverage는 로컬/합성 범위입니다. |
+| 외부 SEComSimulator Multi-Equipment 상호운용 | `NOT_RUN` | 동시 Instance에 대한 Vendor 지원/License를 확인하지 못했습니다. |
+| 운영 Fleet SDK | `NOT_APPLICABLE` | Orchestration은 내부 Workbench/Runtime 조합이며 새로운 Public Fleet API가 아닙니다. |
+
+Multi-Equipment Host는 여러 Equipment Endpoint에 대한 독립 Host-role HSMS/GEM 연결을 조정합니다. 상호운용·격리 Surface이며 적합성 인증서, Capacity SLA, 운영 Fleet-management SDK, 외부 Simulator/실장비 Evidence가 아닙니다.
+
+`Passed`, `Failed`, `WaitingForUser` 같은 UI/Runtime 문자열은 운영 값일 뿐 위 Evidence Status를 대체하지 않습니다.
 
 ## 경계와 소유권
 
-이 구현은 `Dreamine.Secs.Abstractions`, `Dreamine.Secs.Com`, `Dreamine.Gem.Abstractions`, `Dreamine.Gem`의 public API를 변경하지 않는다. 오케스트레이션 타입은 모두 WPF Harness 내부 `internal` 타입이다.
+Orchestration의 WPF 전용 Session 생성은 공유 provider-neutral Runtime 계층으로 이동했습니다. `ISecsMessageSession`을 소비하고 Provider의 `SecsConnectionIdentity`를 검증하며, Orchestration Type을 Public Fleet API로 승격하지 않습니다.
 
 | 계층 | 책임 |
 |---|---|
-| Registry | 고유한 `EquipmentId` 항목을 보관하고 fan-out용 snapshot을 만들며, 삭제·교체된 Context를 Dispose한다. |
-| Factory | 장비 정의마다 Connection Context 하나를 생성한다. |
-| Context | `HsmsSession` 하나, 연결 상태, 연결 단위 `GemRuntime` 하나, 취소·진단·로그 식별자를 소유한다. |
-| Host | Selected/All 명령, 제한된 병렬 실행, 설정 Import/Export, 결과 집계, 취소와 최종 Dispose를 조정한다. |
+| Registry | 대소문자를 구분하지 않는 고유 `EquipmentId`를 보관하고 안정된 Snapshot을 제공하며 삭제·교체 Context를 Dispose합니다. |
+| Provider Factory | Equipment Definition마다 Host-role Message-session Provider를 만들고 Role, Mode, Session ID를 검증합니다. |
+| Context | Message Session 하나, Connection-scoped `GemRuntime`, Cancellation, Reconnect State, Diagnostic, Log Identity를 소유합니다. |
+| Host | Selected/All 명령, 제한된 Fan-out, Credential-free Configuration, Cancellation과 최종 Dispose를 조정합니다. |
 
-연결된 Context마다 별도 `HsmsSession`을 소유하므로 Transaction Manager와 `SystemBytes` Generator를 다른 장비와 공유하지 않는다. `GemRuntime`도 Context/연결 단위이며 새 연결이 성립하면 새 인스턴스로 교체된다. 따라서 한 장비의 Disconnect, Timeout, Reconnect, Dispose가 다른 장비 Context를 의도적으로 변경하지 않는다.
+연결된 Context마다 독립 `ISecsMessageSession`을 소유하므로 Transaction Manager와 System Bytes Allocator가 Connection 범위에 머뭅니다. Connection-scoped `GemRuntime`은 연결이 닫히면 버리고 교체 Session용으로 다시 만듭니다. 한 Context의 Disconnect, Timeout, Reconnect, Dispose가 Peer Context를 의도적으로 변경하지 않습니다.
 
-참조 방향은 Harness에서 SECS/GEM 라이브러리 쪽으로만 향한다. 라이브러리가 Harness 오케스트레이션을 참조하지 않는다.
+참조 방향은 WPF에서 공유 Runtime과 공개 SECS/GEM Abstraction으로만 향하며 Product Library는 WPF를 참조하지 않습니다.
 
 ## 식별과 상관관계
 
-| 필드 | 범위와 용도 |
+| 필드 | 범위 |
 |---|---|
-| `EquipmentId` | Registry에서 사용하는 운영자 지정 논리 키이다. 대소문자를 구분하지 않고 고유해야 한다. |
-| `ConnectionId` | 특정 transport 연결을 나타내는 Harness 생성 값이다. Reconnect하면 새 값이 부여된다. |
-| `SessionId` | 장비 정의에 포함된 HSMS/SECS protocol 식별자이다. 서로 다른 연결에서 같은 값을 사용할 수 있다. |
-| `SystemBytes` | 해당 `HsmsSession` 안에서 할당하고 Transaction을 연결하는 값이다. 다른 연결에서는 같은 값이 다시 나타나도 Transaction을 공유하지 않는다. |
+| `EquipmentId` | 운영자 지정 Registry Key이며 대소문자 구분 없이 고유합니다. |
+| `ConnectionId` | Transport 연결 하나의 Identity이며 Reconnect 시 새 값이 생깁니다. |
+| `SessionId` | Definition의 HSMS/SECS ID이며 서로 다른 연결이 같은 값을 사용할 수 있습니다. |
+| `SystemBytes` | 소유 Session이 할당·상관 처리하며 다른 연결에서 같은 숫자를 독립적으로 사용할 수 있습니다. |
 
-Protocol 상관관계는 Session 내부에서 처리한다. `EquipmentId`와 `ConnectionId`는 Context 선택과 로그 구분을 위한 Harness metadata이며 wire의 SECS Message에 추가되지 않는다. Protocol Log에는 `EquipmentId`, `ConnectionId`, endpoint, `SessionId`, 방향, SxFy, `SystemBytes`가 기록된다. 로컬 격리 시험은 서로 다른 연결에 `SessionId=0`, `SystemBytes=1`을 의도적으로 동시에 사용하고 각 응답이 올바른 장비 Context로 돌아오는지 검증한다.
+`EquipmentId`, `ConnectionId`는 Workbench Metadata이며 SECS Wire Message에 추가되지 않습니다. Protocol Correlation은 Session 내부에 머뭅니다. Log에는 독립 Context를 구분할 Connection/Header Metadata가 있지만 Endpoint/Header/Timing Data도 운영상 민감할 수 있습니다.
 
-## 수명주기와 Thread Safety
+## 수명주기와 동시성
 
-- Registry가 Add/Get/Remove/Replace를 소유한다. 설정 Import는 기존 Context를 Dispose한 뒤 구성 목록을 교체한다.
-- Context는 Connect/Disconnect/Reconnect 전이를 직렬화하고 호출자 취소를 자체 수명주기에 연결한다. Dispose 시 대기 중인 Passive accept도 취소한다.
-- Active 자동 재연결은 새 `ConnectionId`와 `GemRuntime`을 만들고 HSMS Select를 복원한다. Passive 모드의 자동 재연결 설정은 거부된다.
-- Host는 한 번에 하나의 집계 명령을 수행하고, 그 명령 내부 장비 작업만 제한된 동시성으로 실행한다. 기본값은 Connect 10, Message 20, Reconnect 5이다.
-- Observable Collection 변경은 필요한 경우 WPF Dispatcher로 전달한다. Network와 서비스 책임을 View 또는 code-behind로 이동하지 않는다.
-- Host Dispose는 새 작업과 진행 중인 집계 작업을 취소하고 추적 중인 Host 작업이 끝나기를 기다린 다음 모든 Context와 Session을 비동기로 Dispose한다.
+- Registry Add/Remove/Replace가 Context Lifetime을 소유합니다. Import는 모든 교체 Definition을 검증한 뒤 Registry를 전환하고 이전 Context를 Dispose합니다.
+- Context의 Connect/Disconnect/Reconnect 전이는 직렬화됩니다. Dispose는 대기 중인 Passive Accept와 Lifetime-linked Operation을 취소합니다.
+- Active Automatic Reconnect는 제한된 Coordinator를 사용하고 새 Connection Identity/Session/GEM Runtime을 만든 뒤 Select를 복원합니다. Passive Automatic Reconnect는 거부됩니다.
+- 한 번에 하나의 Aggregate Host Command만 실행하며 내부 작업은 제한된 Connect/Message/Reconnect 동시성을 사용합니다.
+- Observable Collection 알림은 설정한 Synchronization Context를 통하며 Network 작업을 View Code-behind로 옮기지 않습니다.
+- Host Dispose는 새 작업을 거부하고 Lifetime Operation을 취소하며 추적 Aggregate Work를 기다린 다음 모든 Context와 소유 Reconnect Coordinator를 Dispose합니다. Cleanup 실패는 숨기지 않습니다.
 
-Self-test의 자원 Counter는 Harness가 예약한 장비 delegate, Harness/loopback live session, selection recovery, loopback peer background operation 범위이다. 모든 CLR `Task`나 runtime 내부 continuation의 총 개수를 뜻하지 않는다.
+Self-test Counter는 명시적으로 계측한 Workbench Context, 합성 Peer, Reconnect Work, Host Delegate만 셉니다. 모든 CLR Task, Socket State, Allocation의 총합이 아닙니다.
 
-## Credential 없는 JSON 설정
+## Credential-free 설정
 
-UI에서 schema version 1 JSON을 Export/Import할 수 있다. 포함 필드는 다음으로 한정된다.
+Schema Version 1 JSON에는 Fan-out Limit, `EquipmentId`, Host/Address, Port, Active/Passive Mode, Session ID, Automatic-reconnect 선택, T3/T5/T6/T7/T8만 들어갑니다. Username, Password, Token, Certificate, Secret Field는 없습니다.
 
-- Host fan-out 제한값: `ConnectConcurrency`, `MessageConcurrency`, `ReconnectConcurrency`
-- `EquipmentId`, host/address, port, Active/Passive mode, `SessionId`
-- 자동 재연결 여부와 T3/T5/T6/T7/T8 값
-
-Username, password, token, certificate 등 credential 필드는 없다. Import 시 schema version, 중복 Equipment ID, endpoint, mode, session ID, timer 범위, reconnect/mode 조합을 검증한 다음 Registry를 교체한다. 다만 endpoint 정보도 운영 환경에서는 민감할 수 있으므로 배포 환경의 일반적인 파일 접근 정책을 적용해야 한다.
+Import는 Schema Version, 고유 ID, Endpoint, Mode, Session 값, Timer 범위, Reconnect/Mode 조합을 검증한 뒤 Registry를 교체합니다. Endpoint/Configuration Data도 민감할 수 있으므로 Deployment Access Control 아래 저장하고 고객/Private-sidecar Configuration을 Public Package나 Repository에 넣지 마십시오.
 
 ## UI 사용 순서
 
-1. Host Mode에서 **Multi Equipment Host**를 선택하고 **Multi Equipment** 탭을 연다.
-2. 장비 정의를 직접 추가하거나 **Import Configuration**을 사용한다.
-3. 한 행에는 Selected 명령을, 전체 구성에는 Connect/Disconnect/Linktest/Scenario/Broadcast 명령을 사용한다.
-4. 행별 TCP, HSMS, GEM, Activity, Last Error를 확인한다.
-5. **Protocol Log**에서 장비 또는 자유 검색어로 필터링하고 Equipment, Connection, Session, System Bytes 열로 로그를 연결한다.
-6. **Export Configuration**으로 credential 없는 연결 설정을 저장한다.
+1. **Multi Equipment Host**를 선택하고 **Multi Equipment**를 엽니다.
+2. Definition을 추가하거나 검증된 Configuration을 Import합니다.
+3. 한 Context에는 Selected 명령, 전체에는 제한된 All/Broadcast 명령을 사용합니다.
+4. Context별 TCP, HSMS, GEM, Responder/Activity, Last Error를 확인합니다.
+5. Protocol Log를 Equipment/자유 검색어로 Filter하고 Equipment, Connection, Session, System Bytes 열로 연결합니다.
+6. Credential-free Configuration은 승인된 위치에만 Export합니다.
 
-**Run 1/2/10/50 Self-test**는 로컬 합성 loopback peer를 생성한다. 구성된 외부 endpoint를 시험하지 않으며 외부 상호운용 증거로 기록하면 안 된다.
+**Run 1/2/10/50 Self-test**는 로컬 합성 Peer를 만듭니다. 구성된 외부 Endpoint를 사용하지 않으며 외부 행을 승격할 수 없습니다.
 
 ## Headless self-test
 
-Release 출력 폴더에서 다음을 실행한다.
+Release 출력 폴더:
 
 ```powershell
 Dreamine.SecsGem.Interop.Wpf.exe --multi-self-test --output multi-equipment-self-test.json
 ```
 
-또는 프로젝트 폴더에서 실행한다.
+Project 폴더:
 
 ```powershell
 dotnet run --project Dreamine.SecsGem.Interop.Wpf.csproj -c Release -- --multi-self-test --output multi-equipment-self-test.json
 ```
 
-이 명령은 10대 중 한 대를 대상으로 100회 Reconnect한다. 종료 코드 `0`은 Scenario가 `Passed`이고 추적 Session/Background Operation이 남지 않았음을, `2`는 Assertion 또는 정리 결과 실패를, `1`은 Headless Runner의 처리되지 않은 오류를 뜻한다.
+종료 코드 `0`은 Runner 자체 Assertion과 계측 Cleanup 조건 성공, `2`는 Assertion/Cleanup 조건 실패, `1`은 처리되지 않은 Runner 오류를 뜻합니다. Export의 `Passed`/`Failed` Text는 운영 Result Field이며 외부 상호운용 Status가 아닙니다.
 
-검증 항목은 [MULTI_EQUIPMENT_TEST_MATRIX.md](MULTI_EQUIPMENT_TEST_MATRIX.md), 최신 계측 snapshot은 [MULTI_EQUIPMENT_PERFORMANCE.md](MULTI_EQUIPMENT_PERFORMANCE.md)를 참고한다.
+범위는 [MULTI_EQUIPMENT_TEST_MATRIX.md](MULTI_EQUIPMENT_TEST_MATRIX.md), 날짜가 고정된 과거 측정은 [MULTI_EQUIPMENT_PERFORMANCE.md](MULTI_EQUIPMENT_PERFORMANCE.md)를 참고하십시오.
 
-## 외부 Simulator 사전 확인
+## 외부 사전 확인
 
-로컬 읽기 전용 조사만으로는 Simulator 동시 인스턴스에 대한 Vendor 지원 또는 GUI 하나에서 둘 이상의 Equipment 연결 지원을 확인하지 못했다. 따라서 승인된 외부 Multi-Equipment 절차나 Passed 결과는 아직 없다.
+읽기 전용 조사로는 Vendor가 지원하는 SEComSimulator 동시 Instance, 해당 License, GUI 하나의 복수 Active Equipment 연결을 확인하지 못했습니다. 따라서 승인된 외부 Multi-Equipment Result가 없으며 상태는 `NOT_RUN`입니다.
 
-추후 Vendor 문서와 License 조건에서 동시 인스턴스를 명확히 허용하는 경우에만 사용자가 **조건부** 수동 시험을 준비한다. Application/Configuration/Log 위치를 인스턴스별로 격리하고 7201·7202 같은 서로 다른 loopback port를 사용한 뒤, 서로 다른 두 Process가 모두 Selected인지 확인한다. 그 다음 한 인스턴스만 Reconnect하고 다른 인스턴스가 Selected를 유지하면서 S1F1/F2와 Linktest를 계속 처리하는지 확인한다. Process 식별자, endpoint, 시각, 양쪽 Log, 영향받지 않은 Peer 결과를 증거로 남긴다. 이 선행조건과 관찰 결과를 기록하기 전까지 외부 항목은 모두 **Not Run / Waiting for User**로 유지한다. 기존 단일 연결 증거 절차는 [SECOMSIMULATOR_INTEROP_TEST_KO.md](SECOMSIMULATOR_INTEROP_TEST_KO.md)를 참고한다.
+추후 Vendor 문서와 License가 동시 Instance를 허용할 때 운영자는 격리된 Configuration/Log 위치와 고유 Loopback Port를 사용하고, 서로 다른 두 Process가 Selected임을 증명한 뒤 한쪽만 Reconnect하여 영향받지 않은 Peer가 Selected와 Correlated Traffic을 유지하는지 확인해야 합니다. Process Identity, Endpoint, Timestamp, 양쪽의 Finalize된 Evidence를 보존합니다. Root 실행이 승인된 Manual Request를 통합하므로 이 문서는 별도 요청을 만들지 않습니다.
 
-## 현재 제한
+## 제한
 
-- 로컬 loopback은 이 구현과 한 프로세스 안의 동작을 검증한다. 표준 적합성, 운영 준비 완료, 실제 Network 수용량을 증명하지 않는다.
-- 오케스트레이션은 Harness 내부 기능이며 이번 변경에서 Multi-Equipment public library API를 추가하지 않았다.
-- 설정 모델에는 credential 또는 TLS material이 없다.
-- 처리량과 Memory 값은 비교용 진단 수치이며 SLA가 아니다. Runtime warm-up, 장비 부하, loopback scheduling에 따라 달라진다.
-- 외부 SEComSimulator Scenario는 사용자가 외부 절차를 수행하고 결과를 기록할 때까지 반드시 **Not Run / Waiting for User**이다. 로컬 loopback 결과로 대체하면 안 된다.
+- 로컬 합성 Peer는 계측 구현만 검증하며 표준 적합성, 운영 준비, Network Capacity를 확립하지 않습니다.
+- Configuration에는 Credential/TLS-material Model이 없습니다.
+- Context는 현재 기본 Connection-scoped `GemRuntime`을 조합합니다. 고정 E30 Equipment Profile 선택은 별도 Single-equipment Responder Surface입니다.
+- Throughput/Memory 값은 진단 비교점이며 SLA가 아닙니다.
+- 외부 Simulator와 실장비 행은 양쪽 Evidence를 Review할 때까지 `NOT_RUN`입니다.

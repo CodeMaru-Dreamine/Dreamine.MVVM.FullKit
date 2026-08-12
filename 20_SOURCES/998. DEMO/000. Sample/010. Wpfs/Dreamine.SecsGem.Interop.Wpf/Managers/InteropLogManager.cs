@@ -1,11 +1,12 @@
 using System.Collections.ObjectModel;
+using System.Text;
 using System.Windows;
 using System.Windows.Threading;
 using Dreamine.Secs.Abstractions.Diagnostics;
 using Dreamine.Secs.Abstractions.Hsms;
 using Dreamine.Secs.Abstractions.Model;
-using Dreamine.Secs.Com.Hsms;
 using Dreamine.SecsGem.Interop.Runtime;
+using Dreamine.SecsGem.Interop.Runtime.Logging;
 using Dreamine.SecsGem.Interop.Wpf.Models;
 
 namespace Dreamine.SecsGem.Interop.Wpf.Managers;
@@ -13,6 +14,7 @@ namespace Dreamine.SecsGem.Interop.Wpf.Managers;
 public sealed class InteropLogManager
 {
     public const int MaximumEntries = 10_000;
+    internal const int MaximumWireDisplayBytes = 64 * 1024;
     private const int DrainBatchSize = 250;
     private readonly Queue<InteropLogEntry> _pending = new();
     private readonly object _pendingGate = new();
@@ -38,11 +40,77 @@ public sealed class InteropLogManager
 
     internal void Message(string direction, SecsMessage message, EquipmentLogIdentity? identity)
     {
-        var frame = new HsmsFrameCodec().Encode(new HsmsDataMessage(message));
+        // This is an application-level semantic event. Exact bytes are supplied separately by
+        // the session wire observer; re-encoding here would mislabel canonicalized bytes as wire data.
         Add(WithIdentity(new(DateTimeOffset.Now, "Info", "SECS-II", direction,
             $"S{message.Stream.Value}F{message.Function.Value}{(message.ReplyExpected ? " W" : string.Empty)} SB=0x{message.SystemBytes.Value:X8}",
-            SecsItemText.Format(message.Item), string.Join(" ", frame.Select(value => value.ToString("X2"))),
+            SecsItemText.Format(message.Item), null,
             CorrelationSystemBytes: message.SystemBytes.Value), identity));
+    }
+
+    internal void Wire(WireLogRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        if (record.Kind != WireLogRecordKind.Frame)
+        {
+            Operational(record);
+            return;
+        }
+        var category = record.Stream is null ? "HSMS" : "SECS-II";
+        var direction = record.Direction switch
+        {
+            HsmsWireDirection.Inbound => "RX",
+            HsmsWireDirection.Outbound => "TX",
+            _ => "--"
+        };
+        var protocol = record.Stream is { } stream && record.Function is { } function
+            ? $"S{stream}F{function}{(record.ReplyExpected == true ? " W" : string.Empty)}"
+            : $"SType={record.SType?.ToString() ?? "--"}";
+        var correlation = record.SystemBytes is { } systemBytes ? $" SB=0x{systemBytes:X8}" : string.Empty;
+        var captured = (record.HeaderBytes?.Length ?? 0) + (record.BodyBytes?.Length ?? 0);
+        var summary = $"{protocol}{correlation} FrameBytes={record.ActualFrameBytes} " +
+            $"BodyBytes={record.CapturedBodyBytes} Capture={record.CaptureMode}";
+        var detail = record.DecodedItem ?? record.TransactionStatus ?? record.DecodeError ?? record.Error;
+        Add(new InteropLogEntry(
+            record.TimestampUtc,
+            record.Error is not null || record.DecodeError is not null ? "Error" : "Info",
+            category,
+            direction,
+            summary,
+            detail,
+            FormatWireBytes(record.HeaderBytes, record.BodyBytes, captured),
+            record.EquipmentId,
+            record.ConnectionId,
+            record.Endpoint,
+            record.HeaderSessionId ?? record.ConfiguredSessionId,
+            record.SystemBytes));
+    }
+
+    private void Operational(WireLogRecord record)
+    {
+        var isError = record.Error is not null;
+        var summary = record.Kind switch
+        {
+            WireLogRecordKind.Diagnostic =>
+                $"{record.DiagnosticKind?.ToString() ?? "Diagnostic"}; HSMS={record.CurrentHsmsState?.ToString() ?? "--"}",
+            WireLogRecordKind.StateTransition =>
+                $"TCP {record.PreviousConnectionState?.ToString() ?? "--"} -> {record.CurrentConnectionState?.ToString() ?? "--"}; " +
+                $"HSMS {record.PreviousHsmsState?.ToString() ?? "--"} -> {record.CurrentHsmsState?.ToString() ?? "--"}",
+            _ => "Operational log record"
+        };
+        Add(new InteropLogEntry(
+            record.TimestampUtc,
+            isError ? "Error" : "Info",
+            record.Kind == WireLogRecordKind.StateTransition ? "State" : "Diagnostic",
+            "--",
+            summary,
+            record.DiagnosticMessage,
+            null,
+            record.EquipmentId,
+            record.ConnectionId,
+            record.Endpoint,
+            record.HeaderSessionId ?? record.ConfiguredSessionId,
+            record.SystemBytes));
     }
 
     public void Info(string category, string summary) => Add(new(DateTimeOffset.Now, "Info", category, "--", summary, null, null));
@@ -168,14 +236,20 @@ public sealed class InteropLogManager
     {
         Entries.Add(entry);
         while (Entries.Count > MaximumEntries) Entries.RemoveAt(0);
-        if (entry.Category == "SECS-II" && entry.RawHex is not null)
+        var addedToProtocolView = false;
+        if (entry.Category is "SECS-II" or "HSMS" && entry.RawHex is not null)
         {
             Secs1Entries.Add(entry);
-            Secs2Entries.Add(entry);
+            addedToProtocolView = true;
             while (Secs1Entries.Count > MaximumEntries) Secs1Entries.RemoveAt(0);
+        }
+        if (entry.Category == "SECS-II" && entry.Message is not null)
+        {
+            Secs2Entries.Add(entry);
+            addedToProtocolView = true;
             while (Secs2Entries.Count > MaximumEntries) Secs2Entries.RemoveAt(0);
         }
-        else
+        if (!addedToProtocolView)
         {
             DiagnosticsEntries.Add(entry);
             while (DiagnosticsEntries.Count > MaximumEntries) DiagnosticsEntries.RemoveAt(0);
@@ -192,6 +266,29 @@ public sealed class InteropLogManager
             SessionId = value.SessionId
         }
         : entry;
+
+    private static string? FormatWireBytes(byte[]? header, byte[]? body, int captured)
+    {
+        if (captured == 0) return null;
+        var displayed = Math.Min(captured, MaximumWireDisplayBytes);
+        var builder = new StringBuilder(displayed * 3 + 32);
+        var written = 0;
+        Append(header);
+        Append(body);
+        if (captured > displayed) builder.Append(" … [display truncated]");
+        return builder.ToString();
+
+        void Append(byte[]? bytes)
+        {
+            if (bytes is null) return;
+            foreach (var value in bytes)
+            {
+                if (written >= displayed) return;
+                if (written++ > 0) builder.Append(' ');
+                builder.Append(value.ToString("X2"));
+            }
+        }
+    }
 
     private static void Dispatch(Action action)
     {
@@ -224,33 +321,6 @@ internal sealed class WpfEquipmentEventSink(InteropLogManager log) : IEquipmentE
 
 internal static class SecsItemText
 {
-    public static string Format(SecsItem? item) => Format(item, 0);
-
-    private static string Format(SecsItem? item, int depth)
-    {
-        var indent = new string(' ', depth * 2);
-        return item switch
-        {
-            null => $"{indent}<none>",
-            SecsListItem list when list.Count == 0 => $"{indent}<L[0]>",
-            SecsListItem list => $"{indent}<L[{list.Count}]\n{string.Join(Environment.NewLine, list.Items.Select(value => Format(value, depth + 1)))}\n{indent}>",
-            SecsAsciiItem ascii => $"{indent}<A[{ascii.Value.Length}] \"{ascii.Value}\">",
-            SecsBinaryItem value => $"{indent}<B[{value.Values.Length}] {string.Join(" ", value.Values.ToArray().Select(x => $"0x{x:X2}"))}>",
-            SecsBooleanItem value => Values(indent, "BOOLEAN", value.Values.ToArray()),
-            SecsInt8Item value => Values(indent, "I1", value.Values.ToArray()),
-            SecsInt16Item value => Values(indent, "I2", value.Values.ToArray()),
-            SecsInt32Item value => Values(indent, "I4", value.Values.ToArray()),
-            SecsInt64Item value => Values(indent, "I8", value.Values.ToArray()),
-            SecsUInt8Item value => Values(indent, "U1", value.Values.ToArray()),
-            SecsUInt16Item value => Values(indent, "U2", value.Values.ToArray()),
-            SecsUInt32Item value => Values(indent, "U4", value.Values.ToArray()),
-            SecsUInt64Item value => Values(indent, "U8", value.Values.ToArray()),
-            SecsFloat32Item value => Values(indent, "F4", value.Values.ToArray()),
-            SecsFloat64Item value => Values(indent, "F8", value.Values.ToArray()),
-            _ => $"{indent}<{item.Format}>"
-        };
-    }
-
-    private static string Values<T>(string indent, string format, T[] values) =>
-        $"{indent}<{format}[{values.Length}] {string.Join(" ", values)}>";
+    public static string Format(SecsItem? item) =>
+        BoundedSecsItemFormatter.Format(item, InteropLogManager.MaximumWireDisplayBytes);
 }

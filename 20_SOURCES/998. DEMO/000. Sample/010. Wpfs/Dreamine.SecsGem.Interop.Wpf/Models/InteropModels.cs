@@ -3,11 +3,26 @@ using Dreamine.Secs.Abstractions.Hsms;
 using Dreamine.Secs.Abstractions.Model;
 using Dreamine.MVVM.Attributes;
 using Dreamine.MVVM.ViewModels;
+using Dreamine.SecsGem.Interop.Runtime.Profiles;
 
 namespace Dreamine.SecsGem.Interop.Wpf.Models;
 
+/// <summary>
+/// EN: Selects one mutually exclusive, explicitly Demo-only equipment responder in the Workbench.
+/// KO: Workbench에서 상호배타적인 Demo 전용 장비 responder 하나를 선택한다.
+/// </summary>
+public enum EquipmentResponderProfileKind
+{
+    /// <summary>EN: Small educational S1/S2 switch, not a GEM profile. KO: GEM 프로필이 아닌 작은 학습용 S1/S2 switch.</summary>
+    EducationalDemoOnly,
+    /// <summary>EN: Public generic E30-derived subset Demo profile. KO: 공개 범용 E30 파생 부분집합 Demo 프로필.</summary>
+    E30DerivedSubsetDemo
+}
+
 public sealed partial class ConnectionSettings : ViewModelBase
 {
+    internal HsmsWireObservationOptions? WireObservation { get; set; }
+
     [DreamineProperty]
     private string _host = "127.0.0.1";
     [DreamineProperty]
@@ -30,6 +45,22 @@ public sealed partial class ConnectionSettings : ViewModelBase
     private int _t7Seconds = 10;
     [DreamineProperty]
     private int _t8Seconds = 10;
+    [DreamineProperty]
+    private int _reconnectInitialDelaySeconds = 1;
+    [DreamineProperty]
+    private int _reconnectMaximumDelaySeconds = 30;
+    [DreamineProperty]
+    private double _reconnectBackoffMultiplier = 2;
+    [DreamineProperty]
+    private int _maximumFrameLength = 16 * 1024 * 1024;
+    [DreamineProperty]
+    private int _maximumMessageLength = 16 * 1024 * 1024 - 10;
+    [DreamineProperty]
+    private int _maximumNestingDepth = 64;
+    [DreamineProperty]
+    private int _maximumListItemCount = 65_535;
+    [DreamineProperty]
+    private string _logPolicyId = ConnectionLogPolicyIds.HeaderOnlyV1;
 
     public HsmsSessionOptions ToOptions() => new()
     {
@@ -39,6 +70,11 @@ public sealed partial class ConnectionSettings : ViewModelBase
         Role = Role,
         SessionId = new SecsSessionId(SessionId),
         AutoReconnect = AutoReconnect,
+        WireObservation = WireObservation,
+        MaximumFrameLength = MaximumFrameLength,
+        MaximumMessageLength = MaximumMessageLength,
+        MaximumNestingDepth = MaximumNestingDepth,
+        MaximumListItemCount = MaximumListItemCount,
         Timers = new HsmsTimerOptions
         {
             T3 = TimeSpan.FromSeconds(T3Seconds), T5 = TimeSpan.FromSeconds(T5Seconds),
@@ -46,6 +82,70 @@ public sealed partial class ConnectionSettings : ViewModelBase
             T8 = TimeSpan.FromSeconds(T8Seconds)
         }
     };
+
+    /// <summary>Creates the complete, credential-free Connection Profile v1 represented by the editor.</summary>
+    public SingleConnectionProfileV1 ToProfile()
+    {
+        var profile = new SingleConnectionProfileV1
+        {
+            Role = Role,
+            Mode = Mode,
+            Host = Host,
+            Port = Port,
+            SessionId = SessionId,
+            AutoReconnect = AutoReconnect,
+            Timers = new ConnectionTimerProfileV1(
+                T3Seconds,
+                T5Seconds,
+                T6Seconds,
+                T7Seconds,
+                T8Seconds),
+            ReconnectPolicy = new OperationalReconnectPolicyV1(
+                ReconnectInitialDelaySeconds,
+                ReconnectMaximumDelaySeconds,
+                ReconnectBackoffMultiplier),
+            SafetyLimits = new ConnectionSafetyLimitsV1(
+                MaximumFrameLength,
+                MaximumMessageLength,
+                MaximumNestingDepth,
+                MaximumListItemCount),
+            LogPolicyId = LogPolicyId
+        };
+        profile.Validate();
+        return profile;
+    }
+
+    /// <summary>
+    /// Applies a validated Connection Profile v1 to editor fields and reports which changes require
+    /// recreation of an already-created session.
+    /// </summary>
+    public ConnectionProfileApplyDiff ApplyProfile(SingleConnectionProfileV1 profile)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        profile.Validate();
+        var diff = ConnectionProfileApplyDiff.Compare(ToProfile(), profile);
+
+        Role = profile.Role;
+        Mode = profile.Mode;
+        Host = profile.Host;
+        Port = profile.Port;
+        SessionId = profile.SessionId;
+        AutoReconnect = profile.AutoReconnect;
+        T3Seconds = profile.Timers.T3Seconds;
+        T5Seconds = profile.Timers.T5Seconds;
+        T6Seconds = profile.Timers.T6Seconds;
+        T7Seconds = profile.Timers.T7Seconds;
+        T8Seconds = profile.Timers.T8Seconds;
+        ReconnectInitialDelaySeconds = profile.ReconnectPolicy.InitialDelaySeconds;
+        ReconnectMaximumDelaySeconds = profile.ReconnectPolicy.MaximumDelaySeconds;
+        ReconnectBackoffMultiplier = profile.ReconnectPolicy.BackoffMultiplier;
+        MaximumFrameLength = profile.SafetyLimits.MaximumFrameLength;
+        MaximumMessageLength = profile.SafetyLimits.MaximumMessageLength;
+        MaximumNestingDepth = profile.SafetyLimits.MaximumNestingDepth;
+        MaximumListItemCount = profile.SafetyLimits.MaximumListItemCount;
+        LogPolicyId = profile.LogPolicyId;
+        return diff;
+    }
 }
 
 public enum InteropScenarioStatus { NotRun, Running, WaitingForUser, Passed, Failed, NotSupported }

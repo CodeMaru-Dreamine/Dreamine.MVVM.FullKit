@@ -1,8 +1,11 @@
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
 using System.Windows.Input;
 using Dreamine.MVVM.Attributes;
+using Dreamine.Secs.Abstractions.Enums;
 using Dreamine.SecsGem.Interop.Wpf.Events;
 using Dreamine.SecsGem.Interop.Wpf.Managers;
 using Dreamine.SecsGem.Interop.Wpf.Models;
@@ -41,7 +44,12 @@ public sealed class MainWindowViewModelContractTests
         "LinktestAllEquipmentCommand",
         "LinktestCommand",
         "LinktestSelectedEquipmentCommand",
+        "LoadConnectionProfileCommand",
+        "LoadEvidenceManifestCommand",
+        "LoadMessageTemplateCatalogCommand",
+        "LoadScenarioFileCommand",
         "MarkWaitingCommand",
+        "OpenWireLogCommand",
         "ReconnectCommand",
         "ReconnectSelectedEquipmentCommand",
         "RemoveEquipmentCommand",
@@ -50,6 +58,7 @@ public sealed class MainWindowViewModelContractTests
         "RunAllCommand",
         "RunAllEquipmentScenariosCommand",
         "RunMultiEquipmentSelfTestCommand",
+        "RunScenarioFileCommand",
         "RunSelectedCommand",
         "RunSelectedEquipmentScenarioCommand",
         "RunSelfTestCommand",
@@ -59,6 +68,50 @@ public sealed class MainWindowViewModelContractTests
         "SeparateCommand",
         "StartEquipmentSidecarCommand"
     ];
+
+    [Fact]
+    public async Task GeneratedConnectCommandStartsPassiveListenerBeforeHostExists()
+    {
+        using var directory = new TestDirectory();
+        var log = new InteropLogManager();
+        var wireLog = new WireLogManager(log, directory.Path);
+        var connection = new ConnectionManager(log, wireLog);
+        await using var viewModel = new MainWindowViewModel(
+            connection,
+            new MessageManager(connection, log),
+            new ScenarioManager(log),
+            log,
+            new ResultExportManager(),
+            new SimulatorProcessManager(),
+            new EquipmentSidecarProcessManager(),
+            new FileDialogManager(),
+            wireLog);
+        viewModel.Settings.Host = IPAddress.Loopback.ToString();
+        viewModel.Settings.Port = ReservePort();
+        viewModel.Settings.Mode = SecsConnectionMode.Passive;
+        viewModel.Settings.Role = SecsRole.Equipment;
+        viewModel.Settings.SessionId = 0;
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+        Assert.True(viewModel.ConnectCommand.CanExecute(null));
+        viewModel.ConnectCommand.Execute(null);
+
+        await WaitUntilAsync(() => viewModel.TcpState == "Listening", timeout.Token);
+        Assert.Equal("NotConnected", viewModel.HsmsState);
+        Assert.False(viewModel.ConnectCommand.CanExecute(null));
+        Assert.True(viewModel.DisconnectCommand.CanExecute(null));
+        Assert.Contains("Listening for Host", viewModel.StatusText, StringComparison.Ordinal);
+
+        // Keep background transport diagnostics from mutating WPF collection views on the
+        // test runner thread; production dispatches them through Application.Dispatcher.
+        log.SetPaused(true);
+        using var host = new TcpClient();
+        await host.ConnectAsync(IPAddress.Loopback, viewModel.Settings.Port, timeout.Token);
+        await WaitUntilAsync(() => viewModel.TcpState == "Connected", timeout.Token);
+
+        await viewModel.Event.Disconnect();
+        Assert.Equal("Disconnected", viewModel.TcpState);
+    }
 
     [Fact]
     public async Task FacadeExposesGeneratedEventPropertiesAndAllCommandBindings()
@@ -216,6 +269,41 @@ public sealed class MainWindowViewModelContractTests
             new SimulatorProcessManager(),
             sidecar ?? new EquipmentSidecarProcessManager(),
             new FileDialogManager());
+    }
+
+    private static int ReservePort()
+    {
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+        listener.Stop();
+        return port;
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition, CancellationToken cancellationToken)
+    {
+        while (!condition())
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await Task.Delay(10, cancellationToken);
+        }
+    }
+
+    private sealed class TestDirectory : IDisposable
+    {
+        public TestDirectory()
+        {
+            Path = System.IO.Path.Combine(
+                System.IO.Path.GetTempPath(),
+                $"dreamine-command-{Guid.NewGuid():N}");
+        }
+
+        public string Path { get; }
+
+        public void Dispose()
+        {
+            if (Directory.Exists(Path)) Directory.Delete(Path, recursive: true);
+        }
     }
 
     private sealed class FakeProcessFactory : IEquipmentSidecarProcessFactory

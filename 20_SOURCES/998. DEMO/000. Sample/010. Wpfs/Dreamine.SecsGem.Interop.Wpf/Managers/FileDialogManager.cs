@@ -85,4 +85,64 @@ public sealed class FileDialogManager
         };
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
+
+    public string? OpenWireLog(string currentPath)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Open an exact HSMS wire-log segment",
+            Filter = "Dreamine wire log (*.jsonl)|*.jsonl|All files (*.*)|*.*",
+            FileName = currentPath,
+            CheckFileExists = true
+        };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public string? OpenScenarioFile(string currentPath)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Load Scenario v1",
+            Filter = "Dreamine Scenario v1 (*.json)|*.json|All files (*.*)|*.*",
+            FileName = currentPath,
+            CheckFileExists = true
+        };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public string? OpenConnectionProfile(string currentPath)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Load Connection Profile v1",
+            Filter = "Dreamine Connection Profile v1 (*.json)|*.json|All files (*.*)|*.*",
+            FileName = currentPath,
+            CheckFileExists = true
+        };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public string? OpenMessageTemplateCatalog(string currentPath)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Load Message Template Catalog v1",
+            Filter = "Dreamine Message Template Catalog v1 (*.json)|*.json|All files (*.*)|*.*",
+            FileName = currentPath,
+            CheckFileExists = true
+        };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
+    public string? OpenEvidenceManifest(string currentPath)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Open public Interop Evidence manifest",
+            Filter = "Dreamine Interop Evidence manifest (*.json)|*.json|All files (*.*)|*.*",
+            FileName = currentPath,
+            CheckFileExists = true
+        };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
 }

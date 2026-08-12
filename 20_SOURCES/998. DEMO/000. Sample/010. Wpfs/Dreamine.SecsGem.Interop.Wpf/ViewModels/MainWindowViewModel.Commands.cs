@@ -156,6 +156,25 @@ public sealed partial class MainWindowViewModel
     [DreamineCommand("Event.ImportFactoryResult", CanExecute = nameof(CanRunOperation))]
     private partial Task ImportFactoryResult();
 
+    [DreamineCommand("Event.OpenWireLog", CanExecute = nameof(CanRunOperation))]
+    private partial Task OpenWireLog();
+
+    [DreamineCommand("Event.LoadScenarioFile", CanExecute = nameof(CanRunOperation))]
+    private partial Task LoadScenarioFile();
+
+    [DreamineCommand("Event.RunScenarioFile", CanExecute = nameof(CanRunScenarioFile))]
+    private partial Task RunScenarioFile();
+    private bool CanRunScenarioFile() => Event.CanRunScenarioFile;
+
+    [DreamineCommand("Event.LoadConnectionProfile", CanExecute = nameof(CanRunOperation))]
+    private partial Task LoadConnectionProfile();
+
+    [DreamineCommand("Event.LoadMessageTemplateCatalog", CanExecute = nameof(CanRunOperation))]
+    private partial Task LoadMessageTemplateCatalog();
+
+    [DreamineCommand("Event.LoadEvidenceManifest", CanExecute = nameof(CanRunOperation))]
+    private partial Task LoadEvidenceManifest();
+
     private bool CanAlways() => true;
     private bool CanRunOperation() => Event.IsOperationIdle;
     private bool CanUseMultiEquipmentMode() => Event.IsOperationIdle && IsMultiEquipmentMode;

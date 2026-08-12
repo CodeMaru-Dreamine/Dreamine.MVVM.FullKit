@@ -9,7 +9,9 @@ using Dreamine.Secs.Abstractions.Enums;
 using Dreamine.Secs.Abstractions.Hsms;
 using Dreamine.Secs.Abstractions.Interfaces;
 using Dreamine.Secs.Abstractions.Model;
+using Dreamine.Secs.Abstractions.Options;
 using Dreamine.Secs.Abstractions.Validation;
+using Dreamine.Secs.Com;
 using Dreamine.Secs.Com.Hsms;
 
 namespace Dreamine.SecsGem.Interop.Runtime;
@@ -24,9 +26,10 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
     private readonly object _stateGate = new();
     private readonly CancellationTokenSource _lifetimeCancellation = new();
     private readonly TaskCompletionSource _disposeCompletion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    private readonly Func<EquipmentConnectionDefinition, ISecsMessageSessionProvider> _providerFactory;
     private static int _liveSessions;
     private static int _liveReconnectOperations;
-    private HsmsSession? _session;
+    private ISecsMessageSession? _session;
     private GemRuntime? _gemRuntime;
     private CancellationTokenSource? _connectCancellation;
     private string _connectionId = "--";
@@ -43,20 +46,24 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
     private int _disconnecting;
 
     internal EquipmentConnectionContext(EquipmentConnectionDefinition definition, IEquipmentEventSink? events = null,
-        IReconnectScheduler? reconnectScheduler = null, SynchronizationContext? notificationContext = null)
+        IReconnectScheduler? reconnectScheduler = null, SynchronizationContext? notificationContext = null,
+        Func<EquipmentConnectionDefinition, ISecsMessageSessionProvider>? providerFactory = null)
     {
         Definition = definition ?? throw new ArgumentNullException(nameof(definition));
         Definition.Validate();
         _events = new SafeEquipmentEventSink(events);
         _reconnectScheduler = reconnectScheduler ?? NullReconnectScheduler.Instance;
         _notificationContext = notificationContext;
+        _providerFactory = providerFactory ?? (_ => new DreamineSecsCommunicationProvider(_ => ToOptions()));
     }
 
     internal EquipmentConnectionDefinition Definition { get; }
     internal static int LiveSessionCount => Volatile.Read(ref _liveSessions);
     internal static int LiveReconnectOperationCount => Volatile.Read(ref _liveReconnectOperations);
     internal static int LiveBackgroundOperationCount => LiveReconnectOperationCount;
-    internal HsmsSession? Session => Volatile.Read(ref _session);
+    /// <summary>Compatibility projection for existing Dreamine-provider callers.</summary>
+    internal HsmsSession? Session => MessageSession as HsmsSession;
+    internal ISecsMessageSession? MessageSession => Volatile.Read(ref _session);
     internal GemRuntime? GemRuntime => Volatile.Read(ref _gemRuntime);
     internal bool ShouldAutoReconnect => Definition.AutoReconnect && Volatile.Read(ref _desiredConnected) != 0 &&
         Volatile.Read(ref _disposed) == 0 && Volatile.Read(ref _disconnecting) == 0 && !IsConnected;
@@ -77,8 +84,8 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
     public int PendingTransactionCount => Volatile.Read(ref _pendingTransactions);
     public int ActiveReconnectOperationCount => Volatile.Read(ref _activeReconnectOperations);
     public long ReconnectAttemptCount => Interlocked.Read(ref _reconnectAttempts);
-    public bool IsConnected => Session is { State: ConnectionState.Connected };
-    public bool IsSelected => Session?.HsmsState == HsmsConnectionState.Selected;
+    public bool IsConnected => MessageSession is { State: ConnectionState.Connected };
+    public bool IsSelected => MessageSession?.HsmsState == HsmsConnectionState.Selected;
 
     internal EquipmentLogIdentity LogIdentity => new(EquipmentId, ConnectionId, Endpoint, SessionId);
     public event PropertyChangedEventHandler? PropertyChanged;
@@ -119,7 +126,6 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
                 throw new InvalidOperationException($"{EquipmentId} already has a connection attempt in progress.");
             if (_session is { } staleSession)
             {
-                staleSession.MessageReceived -= OnMessageReceived;
                 await DisposeSessionAsync(staleSession).ConfigureAwait(false);
                 _session = null;
                 _gemRuntime = null;
@@ -130,16 +136,21 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
             LastError = "None";
             Touch();
 
-            HsmsSession? session = null;
+            ISecsMessageSession? session = null;
             try
             {
-                HsmsSession? created = null;
-                created = new HsmsSession(ToOptions(), diagnostics: new EquipmentDiagnosticSink(
-                    _events, () => LogIdentity, diagnostic => OnDiagnostic(created, diagnostic)));
-                session = created;
+                var provider = _providerFactory(Definition) ??
+                    throw new InvalidOperationException("The equipment session provider factory returned null.");
+                session = provider.CreateSession(new SecsConnectionOptions
+                {
+                    ProviderKey = provider.Key,
+                    Role = SecsRole.Host,
+                    Mode = Definition.Mode
+                }) ?? throw new InvalidOperationException("The equipment session provider returned null.");
                 Interlocked.Increment(ref _liveSessions);
-                session.MessageReceived += OnMessageReceived;
+                SubscribeSession(session);
                 _session = session;
+                ValidateProviderIdentity(session.ConnectionIdentity);
                 RefreshStates();
                 _events.Info(LogIdentity, "MultiEquipment", "Connection attempt started.");
 
@@ -156,11 +167,13 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
                 _events.Error(LogIdentity, "MultiEquipment", exception);
                 if (session is not null)
                 {
-                    session.MessageReceived -= OnMessageReceived;
-                    await DisposeSessionAsync(session).ConfigureAwait(false);
+                    try { await DisposeSessionAsync(session).ConfigureAwait(false); }
+                    finally
+                    {
+                        Interlocked.CompareExchange(ref _session, null, session);
+                        _gemRuntime = null;
+                    }
                 }
-                _session = null;
-                _gemRuntime = null;
                 RefreshStates();
                 throw;
             }
@@ -186,7 +199,7 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
             await _lifecycleGate.WaitAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                var session = Interlocked.Exchange(ref _session, null);
+                var session = MessageSession;
                 Interlocked.Exchange(ref _gemRuntime, null);
                 if (session is null)
                 {
@@ -194,8 +207,8 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
                     return;
                 }
 
-                session.MessageReceived -= OnMessageReceived;
-                await DisposeSessionAsync(session).ConfigureAwait(false);
+                try { await DisposeSessionAsync(session).ConfigureAwait(false); }
+                finally { Interlocked.CompareExchange(ref _session, null, session); }
                 Touch();
                 RefreshStates();
                 _events.Info(LogIdentity, "MultiEquipment", "Connection disposed.");
@@ -236,20 +249,77 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
         CancellationToken cancellationToken, SecsSystemBytes? systemBytes = null)
     {
         var session = RequireSelectedSession();
-        var request = new SecsMessage(new SecsSessionId(SessionId), new SecsStream(stream), new SecsFunction(function),
-            true, systemBytes ?? session.AllocateSystemBytes(), item);
-        return RequestCoreAsync(session, request, cancellationToken);
+        if (systemBytes is { } explicitSystemBytes)
+        {
+            // Compatibility-only expert path used by the collision diagnostic. Normal callers
+            // leave System Bytes unset and use the provider-neutral safe request API below.
+            var request = new SecsMessage(
+                new SecsSessionId(SessionId),
+                new SecsStream(stream),
+                new SecsFunction(function),
+                true,
+                explicitSystemBytes,
+                item);
+            return ExpertRequestCoreAsync(session, request, cancellationToken);
+        }
+
+        var dialogue = new SecsDialogueDefinition(
+            new SecsStream(stream),
+            new SecsFunction(function),
+            new SecsFunction(checked((byte)(function + 1))));
+        return RequestCoreAsync(session, dialogue, item, cancellationToken);
     }
 
     public Task SendAsync(byte stream, byte function, SecsItem? item, CancellationToken cancellationToken)
     {
         var session = RequireSelectedSession();
-        var message = new SecsMessage(new SecsSessionId(SessionId), new SecsStream(stream), new SecsFunction(function),
-            false, session.AllocateSystemBytes(), item);
-        return SendCoreAsync(session, message, cancellationToken);
+        return SendCoreAsync(
+            session,
+            new SecsStream(stream),
+            new SecsFunction(function),
+            item,
+            cancellationToken);
     }
 
-    private async Task<SecsMessage> RequestCoreAsync(HsmsSession session, SecsMessage request,
+    private async Task<SecsMessage> RequestCoreAsync(
+        ISecsMessageSession session,
+        SecsDialogueDefinition dialogue,
+        SecsItem? item,
+        CancellationToken cancellationToken)
+    {
+        _events.Info(
+            LogIdentity,
+            "SECS-II",
+            $"TX S{dialogue.Stream.Value}F{dialogue.PrimaryFunction.Value} submitted through the safe W1 session API.");
+        Touch();
+        Interlocked.Increment(ref _pendingTransactions);
+        OnPropertyChanged(nameof(PendingTransactionCount));
+        try
+        {
+            var response = await session.RequestAsync(dialogue, item, cancellationToken).ConfigureAwait(false);
+            _events.Message(LogIdentity, "RX", response);
+            Touch();
+            if (response.Stream.Value == 1 && response.Function.Value == 14 && IsAcceptedS1F14(response.Item))
+                MarkGemCommunicating();
+            LastError = "None";
+            return response;
+        }
+        catch (Exception exception)
+        {
+            LastError = exception is SecsTransactionTimeoutException ? $"T3: {exception.Message}" : exception.Message;
+            _events.Error(LogIdentity, "MultiEquipment", exception);
+            throw;
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _pendingTransactions);
+            OnPropertyChanged(nameof(PendingTransactionCount));
+        }
+    }
+
+    private async Task<SecsMessage> ExpertRequestCoreAsync(
+        ISecsMessageSession session,
+        SecsMessage request,
         CancellationToken cancellationToken)
     {
         _events.Message(LogIdentity, "TX", request);
@@ -279,10 +349,18 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
         }
     }
 
-    private async Task SendCoreAsync(HsmsSession session, SecsMessage message, CancellationToken cancellationToken)
+    private async Task SendCoreAsync(
+        ISecsMessageSession session,
+        SecsStream stream,
+        SecsFunction function,
+        SecsItem? item,
+        CancellationToken cancellationToken)
     {
-        _events.Message(LogIdentity, "TX", message);
-        await session.SendAsync(message, cancellationToken).ConfigureAwait(false);
+        await session.SendAsync(stream, function, item, cancellationToken).ConfigureAwait(false);
+        _events.Info(
+            LogIdentity,
+            "SECS-II",
+            $"TX S{stream.Value}F{function.Value} submitted through the safe W0 session API.");
         Touch();
     }
 
@@ -320,10 +398,10 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
         _events.Error(LogIdentity, "MultiEquipment", exception);
     }
 
-    private HsmsSession RequireSelectedSession()
+    private ISecsMessageSession RequireSelectedSession()
     {
         ThrowIfDisposed();
-        var session = Session ?? throw new InvalidOperationException($"{EquipmentId} is not connected.");
+        var session = MessageSession ?? throw new InvalidOperationException($"{EquipmentId} is not connected.");
         if (session.HsmsState != HsmsConnectionState.Selected)
             throw new InvalidOperationException($"{EquipmentId} is not selected.");
         return session;
@@ -350,13 +428,25 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
 
     private void OnMessageReceived(object? sender, SecsMessage message)
     {
+        if (sender is not ISecsMessageSession session || !ReferenceEquals(MessageSession, session)) return;
         _events.Message(LogIdentity, "RX", message);
         Touch();
     }
 
-    private void OnDiagnostic(HsmsSession? session, SecsDiagnosticEvent diagnostic)
+    private void OnDiagnosticReceived(object? sender, SecsDiagnosticEvent diagnostic)
     {
-        if (session is null || !ReferenceEquals(Session, session)) return;
+        if (sender is not ISecsMessageSession session || !ReferenceEquals(MessageSession, session)) return;
+        try { OnDiagnostic(session, diagnostic); }
+        finally { _events.Diagnostic(LogIdentity, diagnostic); }
+    }
+
+    private void OnSessionStateChanged(object? sender, SecsSessionStateChangedEventArgs _)
+    {
+        if (sender is ISecsMessageSession session && ReferenceEquals(MessageSession, session)) RefreshStates();
+    }
+
+    private void OnDiagnostic(ISecsMessageSession session, SecsDiagnosticEvent diagnostic)
+    {
         if (diagnostic.Kind == SecsDiagnosticKind.ConnectionClosed)
         {
             Interlocked.Exchange(ref _gemRuntime, null);
@@ -411,7 +501,7 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
         GemState = communication.State.ToString();
     }
 
-    private GemRuntime CreateGemRuntime(HsmsSession session)
+    private GemRuntime CreateGemRuntime(ISecsMessageSession session)
     {
         var runtime = new GemRuntime(new ContextGemTransport(session, this), new GemEquipmentIdentity(EquipmentId, "HARNESS"));
         runtime.Communication.Enable(equipmentInitiated: false);
@@ -424,7 +514,7 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
 
     private void RefreshStates()
     {
-        var session = Session;
+        var session = MessageSession;
         TcpState = session?.State.ToString() ?? "Disconnected";
         HsmsState = session?.HsmsState.ToString() ?? "NotConnected";
         GemState = GemRuntime?.Communication.State.ToString() ?? "Disabled";
@@ -435,10 +525,39 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
 
     private void Touch() => LastActivity = DateTimeOffset.Now;
 
-    private static async Task DisposeSessionAsync(HsmsSession session)
+    private async Task DisposeSessionAsync(ISecsMessageSession session)
     {
-        await session.DisposeAsync().ConfigureAwait(false);
-        Interlocked.Decrement(ref _liveSessions);
+        try { await session.DisposeAsync().ConfigureAwait(false); }
+        finally
+        {
+            UnsubscribeSession(session);
+            Interlocked.Decrement(ref _liveSessions);
+        }
+    }
+
+    private void SubscribeSession(ISecsMessageSession session)
+    {
+        session.MessageReceived += OnMessageReceived;
+        session.DiagnosticReceived += OnDiagnosticReceived;
+        session.StateChanged += OnSessionStateChanged;
+    }
+
+    private void UnsubscribeSession(ISecsMessageSession session)
+    {
+        session.MessageReceived -= OnMessageReceived;
+        session.DiagnosticReceived -= OnDiagnosticReceived;
+        session.StateChanged -= OnSessionStateChanged;
+    }
+
+    private void ValidateProviderIdentity(SecsConnectionIdentity identity)
+    {
+        if (identity.Role != SecsRole.Host || identity.Mode != Definition.Mode ||
+            identity.SessionId.Value != Definition.SessionId)
+        {
+            throw new InvalidOperationException(
+                $"Provider identity does not match {EquipmentId}: expected Host/{Definition.Mode}/SID {Definition.SessionId}, " +
+                $"actual {identity.Role}/{identity.Mode}/SID {identity.SessionId.Value}.");
+        }
     }
 
     private void SetState<T>(ref T field, T value, [CallerMemberName] string? propertyName = null)
@@ -462,7 +581,7 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
 
-    private sealed class ContextGemTransport(HsmsSession session, EquipmentConnectionContext owner) : IGemMessageTransport
+    private sealed class ContextGemTransport(ISecsMessageSession session, EquipmentConnectionContext owner) : IGemMessageTransport
     {
         public ISecsConnection Connection => session;
         public SecsSessionId SessionId => new(owner.SessionId);
@@ -472,9 +591,9 @@ internal sealed class EquipmentConnectionContext : INotifyPropertyChanged, IAsyn
             remove => session.MessageReceived -= value;
         }
         public Task SendAsync(SecsMessage message, CancellationToken cancellationToken = default) =>
-            owner.SendCoreAsync(session, message, cancellationToken);
+            session.SendAsync(message, cancellationToken);
         public Task<SecsMessage> RequestAsync(SecsMessage message, CancellationToken cancellationToken = default) =>
-            owner.RequestCoreAsync(session, message, cancellationToken);
+            owner.ExpertRequestCoreAsync(session, message, cancellationToken);
         public SecsSystemBytes AllocateSystemBytes() => session.AllocateSystemBytes();
     }
 }

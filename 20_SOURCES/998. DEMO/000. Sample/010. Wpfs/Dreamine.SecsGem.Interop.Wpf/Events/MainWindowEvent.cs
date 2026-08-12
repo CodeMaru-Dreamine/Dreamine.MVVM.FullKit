@@ -6,8 +6,14 @@ using System.IO;
 using System.Windows;
 using System.Windows.Data;
 using Dreamine.Secs.Abstractions.Enums;
+using Dreamine.Secs.Abstractions.Hsms;
 using Dreamine.Secs.Abstractions.Model;
 using Dreamine.SecsGem.Interop.Runtime;
+using Dreamine.SecsGem.Interop.Runtime.Evidence;
+using Dreamine.SecsGem.Interop.Runtime.Logging;
+using Dreamine.SecsGem.Interop.Runtime.Profiles;
+using Dreamine.SecsGem.Interop.Runtime.Scenarios;
+using Dreamine.SecsGem.Interop.Runtime.Templates;
 using Dreamine.SecsGem.Interop.Wpf.Managers;
 using Dreamine.SecsGem.Interop.Wpf.Models;
 using Dreamine.SecsGem.Interop.Wpf.ViewModels;
@@ -29,8 +35,12 @@ public sealed class MainWindowEvent : IAsyncDisposable
     private readonly SimulatorProcessManager _simulator;
     private readonly EquipmentSidecarProcessManager _equipmentSidecar;
     private readonly FileDialogManager _fileDialog;
+    private readonly WireLogManager _wireLog;
     private readonly MultiEquipmentHost _multiEquipmentHost;
     private readonly MultiEquipmentScenarioManager _multiEquipmentScenarios;
+    private readonly ScenarioFileStoreV1 _scenarioFileStore = new();
+    private readonly ScenarioRunnerV1 _scenarioRunner = new();
+    private readonly EvidenceManifestStore _evidenceManifestStore = new();
     private readonly SemaphoreSlim _operationGate = new(1, 1);
     private readonly object _operationCancellationGate = new();
     private readonly CancellationTokenSource _lifetimeCancellation = new();
@@ -41,6 +51,8 @@ public sealed class MainWindowEvent : IAsyncDisposable
     private CancellationTokenSource? _operationCancellation;
     private MultiEquipmentSelfTestSummary? _lastMultiEquipmentSummary;
     private EquipmentSidecarConnectionProjection? _equipmentSidecarConnection;
+    private ScenarioDefinitionV1? _loadedScenario;
+    private MessageTemplateCatalogV1? _loadedTemplateCatalog;
     private long _equipmentSidecarConnectionEpoch;
     private int _disposed;
     private int _operationRunning;
@@ -54,7 +66,8 @@ public sealed class MainWindowEvent : IAsyncDisposable
         ResultExportManager export,
         SimulatorProcessManager simulator,
         EquipmentSidecarProcessManager equipmentSidecar,
-        FileDialogManager fileDialog)
+        FileDialogManager fileDialog,
+        WireLogManager wireLog)
     {
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
         _connection = connection ?? throw new ArgumentNullException(nameof(connection));
@@ -65,6 +78,7 @@ public sealed class MainWindowEvent : IAsyncDisposable
         _simulator = simulator ?? throw new ArgumentNullException(nameof(simulator));
         _equipmentSidecar = equipmentSidecar ?? throw new ArgumentNullException(nameof(equipmentSidecar));
         _fileDialog = fileDialog ?? throw new ArgumentNullException(nameof(fileDialog));
+        _wireLog = wireLog ?? throw new ArgumentNullException(nameof(wireLog));
 
         _multiEquipmentHost = new MultiEquipmentHost(
             log.EquipmentSink,
@@ -172,9 +186,20 @@ public sealed class MainWindowEvent : IAsyncDisposable
     public bool CanRunAllEquipmentScenarios => IsOperationIdle && _viewModel.IsMultiEquipmentMode &&
         _multiEquipmentHost.Connections.Any(value => value.IsSelected);
 
+    public bool CanRunScenarioFile => IsOperationIdle && _viewModel.IsSingleEquipmentMode &&
+        _loadedScenario is not null && _connection.MessageSession is not null;
+
     public bool IsSimulatorInstalled(string path) => _simulator.IsInstalled(path);
 
-    public Task Connect() => RunAsync("Connect", token => _connection.ConnectAsync(_viewModel.Settings, token));
+    public Task Connect() => RunAsync("Connect", async token =>
+    {
+        await _connection.ConnectAsync(_viewModel.Settings, token);
+        if (_viewModel.Settings.Mode == SecsConnectionMode.Passive && _connection.TcpState == "Listening")
+        {
+            _viewModel.StatusText =
+                $"Listening for Host on {_viewModel.Settings.Host}:{_viewModel.Settings.Port}.";
+        }
+    });
     public Task Disconnect() => RunAsync("Disconnect", token => _connection.DisconnectAsync(token));
     public Task Select() => RunAsync("Select", token => _connection.SelectAsync(token));
     public Task Linktest() => RunAsync("Linktest", token => _connection.LinktestAsync(token));
@@ -389,6 +414,176 @@ public sealed class MainWindowEvent : IAsyncDisposable
             _viewModel.StatusText = $"Imported Factory result: {result.Scenario} — {result.Status}.";
         });
 
+    public Task OpenWireLog() => RunAsync("Open exact HSMS wire log", async token =>
+    {
+        var selected = _fileDialog.OpenWireLog(_viewModel.WireLogFilePath);
+        if (selected is null)
+        {
+            _viewModel.WireLogOpenStatus = "Open exact HSMS wire log cancelled.";
+            return;
+        }
+        await OpenWireLogAsync(selected, token);
+    });
+
+    internal async Task OpenWireLogAsync(string path, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        var filter = CreateWireLogFilter(
+            _viewModel.WireLogDirectionFilter,
+            _viewModel.WireLogStreamFilter,
+            _viewModel.WireLogFunctionFilter,
+            _viewModel.WireLogSystemBytesFilter,
+            _viewModel.WireLogConnectionFilter,
+            _viewModel.WireLogFromUtcFilter,
+            _viewModel.WireLogToUtcFilter,
+            _viewModel.WireLogErrorsOnly);
+        var fullPath = Path.GetFullPath(path);
+        var count = await _wireLog.OpenAsync(fullPath, filter, cancellationToken);
+        _viewModel.WireLogFilePath = fullPath;
+        _viewModel.WireLogOpenStatus =
+            $"Loaded {count:N0} exact HSMS wire record(s) incrementally. Semantic SECS-II events remain separate.";
+        _viewModel.StatusText = _viewModel.WireLogOpenStatus;
+    }
+
+    public Task LoadScenarioFile() => RunAsync("Load Scenario v1", async token =>
+    {
+        var selected = _fileDialog.OpenScenarioFile(_viewModel.ScenarioFilePath);
+        if (selected is null)
+        {
+            _viewModel.ScenarioFileStatus = "Load Scenario v1 cancelled.";
+            return;
+        }
+        await LoadScenarioFileAsync(selected, token);
+    });
+
+    internal async Task LoadScenarioFileAsync(string path, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        var scenario = await _scenarioFileStore.LoadAsync(path, cancellationToken);
+        _loadedScenario = scenario;
+        _viewModel.ScenarioFilePath = Path.GetFullPath(path);
+        _viewModel.ScenarioFileStatus =
+            $"Loaded Scenario v1 '{scenario.Name}' ({scenario.Steps.Count:N0} defined step(s)).";
+        _viewModel.ScenarioRunStatus = "Not Run";
+        _viewModel.ScenarioRunDetails =
+            "Validated and ready for the current provider-neutral single-session connection.";
+        _viewModel.StatusText = _viewModel.ScenarioFileStatus;
+        _viewModel.RefreshAllCommandStates();
+    }
+
+    public Task RunScenarioFile() => RunAsync("Selected Scenario v1", async token =>
+    {
+        var scenario = _loadedScenario ??
+            throw new InvalidOperationException("Load a validated Scenario v1 file first.");
+        var session = _connection.RequireMessageSession();
+        var result = await _scenarioRunner.RunAsync(scenario, session, token);
+        ProjectScenarioResult(result);
+    });
+
+    public Task LoadConnectionProfile() => RunAsync("Load Connection Profile v1", async token =>
+    {
+        var selected = _fileDialog.OpenConnectionProfile(_viewModel.ConnectionProfilePath);
+        if (selected is null)
+        {
+            _viewModel.ConnectionProfileStatus = "Load Connection Profile v1 cancelled.";
+            return;
+        }
+        await LoadConnectionProfileAsync(selected, token);
+    });
+
+    internal async Task LoadConnectionProfileAsync(string path, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        var profile = await ConnectionProfileStore.Create().LoadAsync(path, cancellationToken);
+        var diff = _viewModel.Settings.ApplyProfile(profile);
+        _viewModel.ConnectionProfilePath = Path.GetFullPath(path);
+        var immediate = diff.ImmediateChanges.Count == 0
+            ? "none"
+            : string.Join(", ", diff.ImmediateChanges);
+        var recreate = diff.RecreateRequiredChanges.Count == 0
+            ? "none"
+            : string.Join(", ", diff.RecreateRequiredChanges);
+        _viewModel.ConnectionProfileStatus = diff.RequiresSessionRecreation
+            ? $"Recreate Required — immutable changes: {recreate}; immediate changes: {immediate}. " +
+              "The current session was not mutated; disconnect and reconnect to apply the profile."
+            : $"Applied without session recreation — immediate changes: {immediate}.";
+        _viewModel.StatusText = _viewModel.ConnectionProfileStatus;
+        _viewModel.RefreshAllCommandStates();
+    }
+
+    public Task LoadMessageTemplateCatalog() => RunAsync("Load Message Template Catalog v1", async token =>
+    {
+        var selected = _fileDialog.OpenMessageTemplateCatalog(_viewModel.MessageTemplateCatalogPath);
+        if (selected is null)
+        {
+            _viewModel.MessageTemplateCatalogStatus =
+                "Load Message Template Catalog v1 cancelled.";
+            return;
+        }
+        await LoadMessageTemplateCatalogAsync(selected, token);
+    });
+
+    internal async Task LoadMessageTemplateCatalogAsync(
+        string path,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        var catalog = await MessageTemplateCatalogStore.Create().LoadAsync(path, cancellationToken);
+        catalog.ValidateForSend();
+        _loadedTemplateCatalog = catalog;
+        _viewModel.LoadedTemplateNames.Clear();
+        foreach (var template in catalog.Templates)
+            _viewModel.LoadedTemplateNames.Add(
+                $"{template.Name} — S{template.Stream}F{template.Function}" +
+                (template.WaitBit ? " W" : string.Empty));
+        _viewModel.LoadedTemplateCount = catalog.Templates.Count;
+        _viewModel.MessageTemplateCatalogPath = Path.GetFullPath(path);
+        _viewModel.MessageTemplateCatalogStatus =
+            $"Loaded and send-validated {catalog.Templates.Count:N0} template(s). " +
+            "No manual reply is available without an actual pending inbound W-bit Primary context.";
+        _viewModel.PendingReplyStatus =
+            "No pending inbound W-bit Primary. Manual replies are never inferred.";
+        _viewModel.StatusText = _viewModel.MessageTemplateCatalogStatus;
+    }
+
+    public Task LoadEvidenceManifest() => RunAsync("Load public Evidence manifest", async token =>
+    {
+        var selected = _fileDialog.OpenEvidenceManifest(_viewModel.EvidenceManifestPath);
+        if (selected is null)
+        {
+            _viewModel.EvidenceManifestStatus = "Load public Evidence manifest cancelled.";
+            return;
+        }
+        await LoadEvidenceManifestAsync(selected, token);
+    });
+
+    internal async Task LoadEvidenceManifestAsync(
+        string path,
+        CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        var manifest = await _evidenceManifestStore.LoadAsync(path, cancellationToken);
+        var eligibility = manifest.EvaluateExternalEligibility();
+        _viewModel.EvidenceManifestPath = Path.GetFullPath(path);
+        _viewModel.EvidenceReviewState = manifest.ReviewState switch
+        {
+            EvidenceReviewState.EvidenceRecorded => "Evidence Recorded",
+            EvidenceReviewState.ManualReview => "Manual Review",
+            EvidenceReviewState.Verified => "Verified",
+            _ => manifest.ReviewState.ToString()
+        };
+        _viewModel.EvidenceEligibilityStatus = eligibility.EligibleForExternalPassReview
+            ? "Eligible for external PASS review — a reviewer must still assign the result."
+            : "Not eligible for external PASS review.";
+        _viewModel.EvidenceEligibilityReasons.Clear();
+        foreach (var reason in eligibility.Reasons)
+            _viewModel.EvidenceEligibilityReasons.Add(reason);
+        _viewModel.EvidenceManifestStatus =
+            $"Loaded public manifest '{manifest.RunId}' · {_viewModel.EvidenceReviewState}. " +
+            "Manifest attachment alone never assigns Passed.";
+        _viewModel.StatusText = _viewModel.EvidenceManifestStatus;
+    }
+
     public Task RunSelfTest() => RunAsync("Self loopback", async token =>
     {
         var summary = await _scenarios.RunSelfLoopbackAsync(
@@ -529,10 +724,12 @@ public sealed class MainWindowEvent : IAsyncDisposable
     {
         try
         {
-            _messages.EnableEquipmentResponder();
+            _messages.EnableEquipmentResponder(_viewModel.SelectedEquipmentResponderProfile);
             _viewModel.EquipmentResponderEnabled = true;
-            _viewModel.StatusText =
-                "Basic equipment responder enabled and will persist across reconnects.";
+            _viewModel.StatusText = _viewModel.SelectedEquipmentResponderProfile ==
+                EquipmentResponderProfileKind.E30DerivedSubsetDemo
+                ? "Public generic E30-derived subset Demo profile enabled; this is not a conformance claim."
+                : "Educational Demo-only fallback enabled; this is not a GEM profile.";
         }
         catch (Exception exception)
         {
@@ -613,6 +810,99 @@ public sealed class MainWindowEvent : IAsyncDisposable
     }
 
     public void ClearLog() => _log.Clear();
+
+    private void ProjectScenarioResult(ScenarioRunResultV1 result)
+    {
+        var passed = result.Steps.Count(step => step.Status == ScenarioStepStatusV1.Passed);
+        _viewModel.ScenarioRunStatus = result.Status.ToString();
+        var error = string.IsNullOrWhiteSpace(result.ErrorMessage)
+            ? string.Empty
+            : $" Error={Truncate(result.ErrorMessage, 1_024)}";
+        _viewModel.ScenarioRunDetails =
+            $"ExitCode={result.ExitCode}; Steps={passed:N0}/{result.Steps.Count:N0}; " +
+            $"DroppedInbound={result.DroppedInboundMessageCount:N0}; " +
+            $"Elapsed={(result.CompletedAtUtc - result.StartedAtUtc).TotalMilliseconds:N0} ms.{error}";
+        _viewModel.StatusText =
+            $"Selected Scenario v1 {result.Status}: {passed:N0}/{result.Steps.Count:N0} step(s).";
+    }
+
+    private static byte? ParseOptionalByte(
+        string value,
+        string name,
+        byte minimum,
+        byte maximum)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        if (!byte.TryParse(value.Trim(), out var parsed) || parsed < minimum || parsed > maximum)
+            throw new FormatException($"{name} filter must be between {minimum} and {maximum}.");
+        return parsed;
+    }
+
+    internal static WireLogFilter CreateWireLogFilter(
+        string direction,
+        string stream,
+        string function,
+        string systemBytes,
+        string connectionId,
+        string fromUtc,
+        string toUtc,
+        bool errorsOnly)
+    {
+        HsmsWireDirection? parsedDirection = direction.Trim() switch
+        {
+            "" => null,
+            var value when value.Equals("Inbound", StringComparison.OrdinalIgnoreCase) =>
+                HsmsWireDirection.Inbound,
+            var value when value.Equals("Outbound", StringComparison.OrdinalIgnoreCase) =>
+                HsmsWireDirection.Outbound,
+            _ => throw new FormatException("Direction filter must be empty, Inbound, or Outbound.")
+        };
+        var filter = new WireLogFilter(
+            Direction: parsedDirection,
+            Stream: ParseOptionalByte(stream, "Stream", 1, 127),
+            Function: ParseOptionalByte(function, "Function", 0, byte.MaxValue),
+            SystemBytes: ParseOptionalSystemBytes(systemBytes),
+            ConnectionId: string.IsNullOrWhiteSpace(connectionId) ? null : connectionId.Trim(),
+            FromUtc: ParseOptionalUtc(fromUtc, "From UTC"),
+            ToUtc: ParseOptionalUtc(toUtc, "To UTC"),
+            ErrorsOnly: errorsOnly);
+        filter.Validate();
+        return filter;
+    }
+
+    private static uint? ParseOptionalSystemBytes(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        var text = value.Trim();
+        var style = System.Globalization.NumberStyles.Integer;
+        if (text.StartsWith("0x", StringComparison.OrdinalIgnoreCase))
+        {
+            text = text[2..];
+            style = System.Globalization.NumberStyles.AllowHexSpecifier;
+        }
+        if (!uint.TryParse(text, style, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+            throw new FormatException("System Bytes filter must be an unsigned decimal or 0x-prefixed hexadecimal value.");
+        return parsed;
+    }
+
+    private static DateTimeOffset? ParseOptionalUtc(string value, string name)
+    {
+        if (string.IsNullOrWhiteSpace(value)) return null;
+        if (!DateTimeOffset.TryParse(
+                value.Trim(),
+                System.Globalization.CultureInfo.InvariantCulture,
+                System.Globalization.DateTimeStyles.RoundtripKind,
+                out var parsed) ||
+            parsed.Offset != TimeSpan.Zero)
+        {
+            throw new FormatException(
+                $"{name} filter must be an ISO-8601 timestamp with the UTC 'Z' or +00:00 offset.");
+        }
+        return parsed.ToUniversalTime();
+    }
+
+    private static string Truncate(string value, int maximumCharacters) =>
+        value.Length <= maximumCharacters ? value : value[..maximumCharacters] + "…";
 
     private Task RunSelectedEquipmentAsync(
         string operation,
@@ -730,6 +1020,10 @@ public sealed class MainWindowEvent : IAsyncDisposable
                 _viewModel.NotifyPropertyChanged(nameof(MainWindowViewModel.EquipmentResponderState));
                 _viewModel.NotifyPropertyChanged(nameof(MainWindowViewModel.EquipmentResponderButtonText));
                 _viewModel.NotifyPropertyChanged(nameof(MainWindowViewModel.AnyEquipmentResponderActive));
+                break;
+
+            case nameof(MainWindowViewModel.SelectedEquipmentResponderProfile):
+                _viewModel.NotifyPropertyChanged(nameof(MainWindowViewModel.EquipmentResponderState));
                 break;
 
             case nameof(MainWindowViewModel.IsLogViewPaused):
@@ -996,6 +1290,17 @@ public sealed class MainWindowEvent : IAsyncDisposable
             try
             {
                 List<Exception>? failures = null;
+                try
+                {
+                    // The event orchestrator is the production lifetime owner. Detach responder
+                    // registrations before the underlying connection is disposed.
+                    _messages.Dispose();
+                }
+                catch (Exception exception)
+                {
+                    (failures ??= []).Add(exception);
+                }
+
                 try
                 {
                     await _equipmentSidecar.DisposeAsync();

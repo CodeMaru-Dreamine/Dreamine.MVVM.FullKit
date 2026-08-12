@@ -1,66 +1,71 @@
 # Multi-Equipment Host
 
-Status: harness implementation and local loopback evidence as of 2026-08-10.
+## Current boundary
 
-The Multi-Equipment Host lets one harness process coordinate independent HSMS/GEM connections to multiple equipment endpoints. It is an interoperability and isolation test surface. It is not a compliance certificate, a production fleet-management SDK, or evidence from an external simulator or real equipment.
+| Surface | Status | Boundary |
+|---|---|---|
+| Provider-neutral orchestration local regression | `PASS` | Final strict WPF regression/build is green; exact fresh totals are recorded only in the central report. |
+| Standalone `--multi-self-test` command in the current run | `NOT_RUN` | A historical 2026-08-10 command run is retained in the matrix; regression coverage remains local/synthetic. |
+| External SEComSimulator multi-equipment interoperability | `NOT_RUN` | Vendor support/licensing for concurrent instances was not established. |
+| Production fleet SDK | `NOT_APPLICABLE` | The orchestration remains an internal Workbench/Runtime composition, not a new public fleet API. |
+
+The Multi-Equipment Host coordinates independent Host-role HSMS/GEM connections to several equipment endpoints. It is an interoperability and isolation surface, not a compliance certificate, capacity SLA, production fleet-management SDK, or evidence from an external simulator/real equipment.
+
+UI/runtime strings such as `Passed`, `Failed` or `WaitingForUser` are operational values only. They do not replace the evidence statuses above.
 
 ## Boundary and ownership
 
-The implementation does not change the public API of `Dreamine.Secs.Abstractions`, `Dreamine.Secs.Com`, `Dreamine.Gem.Abstractions`, or `Dreamine.Gem`. All orchestration types are `internal` to the WPF harness:
+The orchestration was moved from WPF-specific session construction into the shared provider-neutral Runtime layer. It consumes `ISecsMessageSession` and validates the provider's `SecsConnectionIdentity`; no orchestration type is promoted as a public fleet API.
 
 | Layer | Responsibility |
 |---|---|
-| Registry | Maintains the unique `EquipmentId` entries, provides immutable snapshots for fan-out work, and disposes removed or replaced contexts. |
-| Factory | Creates one connection context for each equipment definition. |
-| Context | Owns one `HsmsSession`, its connection state, one connection-scoped `GemRuntime`, cancellation, diagnostics, and log identity. |
-| Host | Coordinates selected/all operations, bounded fan-out, configuration import/export, result aggregation, cancellation, and final disposal. |
+| Registry | Maintains case-insensitively unique `EquipmentId` entries, exposes stable snapshots, and disposes removed/replaced contexts. |
+| Provider factory | Creates one Host-role message-session provider for each equipment definition and validates role, mode and Session ID. |
+| Context | Owns one message session, connection-scoped `GemRuntime`, cancellation, reconnect state, diagnostics and log identity. |
+| Host | Coordinates selected/all commands, bounded fan-out, credential-free configuration, cancellation and final disposal. |
 
-Each connected context owns a separate `HsmsSession`. Consequently its transaction manager and `SystemBytes` generator are not shared with another equipment. A `GemRuntime` is also scoped to that context and is replaced when a new connection is established. Disconnecting, timing out, reconnecting, or disposing one context therefore does not intentionally mutate a peer context.
+Each connected context owns an independent `ISecsMessageSession`. Its transaction manager and System Bytes allocator therefore remain connection-scoped. The connection-scoped `GemRuntime` is discarded when a connection closes and recreated for a replacement session. Disconnect, timeout, reconnect or disposal of one context is not intended to mutate a peer context.
 
-This dependency direction remains one-way: the harness references the SECS/GEM libraries; the libraries do not reference the harness orchestration.
+The dependency direction is one-way: WPF consumes the shared Runtime and public SECS/GEM abstractions; those product libraries do not reference WPF.
 
 ## Identity and correlation
 
-| Field | Scope and purpose |
+| Field | Scope |
 |---|---|
-| `EquipmentId` | Stable, operator-assigned logical key in the harness registry. It must be unique, case-insensitively. |
-| `ConnectionId` | Harness-generated identity for a particular transport connection. A reconnect receives a fresh value. |
-| `SessionId` | HSMS/SECS protocol session identifier from the equipment definition. Different connections may deliberately use the same value. |
-| `SystemBytes` | Transaction identifier allocated and correlated inside the owning `HsmsSession`. Values may repeat on different connections without sharing transactions. |
+| `EquipmentId` | Stable operator-assigned registry key; unique without regard to case. |
+| `ConnectionId` | Identity of one transport connection; reconnect creates a fresh value. |
+| `SessionId` | HSMS/SECS identifier from the definition; different connections may use the same value. |
+| `SystemBytes` | Allocated/correlated by the owning session; the same numeric value may appear independently on another connection. |
 
-Protocol correlation remains session-local. `EquipmentId` and `ConnectionId` are harness metadata used to select a context and make logs unambiguous; they are not added to a SECS message on the wire. The protocol log records `EquipmentId`, `ConnectionId`, endpoint, `SessionId`, direction, SxFy, and `SystemBytes`. The local isolation test deliberately sends two requests with `SessionId=0` and `SystemBytes=1` on different connections and verifies that each reply returns to the correct equipment context.
+`EquipmentId` and `ConnectionId` are Workbench metadata and are not added to the SECS wire message. Protocol correlation remains session-local. Logs include enough connection/header metadata to distinguish independent contexts, but endpoint/header/timing data may still be operationally sensitive.
 
 ## Lifecycle and concurrency
 
-- Add/Get/Remove/Replace operations are owned by the registry. Import replaces the configured set and disposes the previous contexts.
-- A context serializes connect, disconnect, and reconnect transitions, links caller cancellation to its lifetime, and cancels an outstanding passive accept when it is disposed.
-- Active automatic reconnect creates a fresh `ConnectionId` and `GemRuntime`, then restores HSMS selection. Automatic reconnect is rejected for Passive mode.
-- The host allows one aggregate command at a time. Work within that command fans out with bounded concurrency. Defaults are 10 connects, 20 message operations, and 5 reconnects.
-- Observable collection mutation is dispatched to the WPF dispatcher when necessary; network continuations are not moved into view code-behind.
-- Host disposal cancels new/in-flight aggregate work, waits for tracked host work to become idle, and then asynchronously disposes every registered context and session.
+- Registry add/remove/replace owns context lifetime. Import validates all replacement definitions before switching the registry and disposes the prior contexts.
+- Context connect/disconnect/reconnect transitions are serialized. Disposal cancels a pending Passive accept and any lifetime-linked operation.
+- Active automatic reconnect uses a bounded coordinator, creates a new connection identity/session/GEM runtime and restores selection. Passive automatic reconnect is rejected.
+- One aggregate host command runs at a time; work inside it uses bounded connect/message/reconnect concurrency.
+- Observable collection notifications are marshalled through the configured synchronization context without moving network work into view code-behind.
+- Host disposal rejects new work, cancels lifetime-linked operations, waits for tracked aggregate work, then disposes all contexts and the owned reconnect coordinator. Cleanup failures remain observable.
 
-The counters exposed by the self-test cover harness-scheduled equipment delegates, live harness/loopback sessions, selection-recovery work, and loopback peer background operations. They are not a count of every CLR `Task` or every internal runtime continuation.
+The self-test counters cover only explicitly instrumented Workbench contexts, synthetic peers, reconnect work and host delegates. They are not a count of every CLR task, socket state or allocation.
 
-## Credential-free JSON configuration
+## Credential-free configuration
 
-The UI can export and import schema version 1 JSON. It contains only:
+Schema version 1 JSON contains fan-out limits, `EquipmentId`, host/address, port, Active/Passive mode, Session ID, automatic-reconnect choice and T3/T5/T6/T7/T8 values. It has no username, password, token, certificate or secret field.
 
-- host fan-out limits (`ConnectConcurrency`, `MessageConcurrency`, `ReconnectConcurrency`);
-- `EquipmentId`, host/address, port, Active/Passive mode, and `SessionId`;
-- automatic reconnect selection and T3/T5/T6/T7/T8 values.
-
-There are no username, password, token, certificate, or other credential fields. Import validates the schema version, unique equipment IDs, endpoint values, mode, session ID, timer ranges, and reconnect/mode combination before replacing the registry. Endpoint data can still be operationally sensitive, so configuration files should be handled according to the deployment environment's normal access policy.
+Import validates schema version, unique IDs, endpoints, modes, session values, timer ranges and reconnect/mode combinations before registry replacement. Endpoint/configuration data can still be sensitive; store it under deployment access controls and do not include customer/private-sidecar configurations in a public package or repository.
 
 ## UI workflow
 
-1. Select **Multi Equipment Host** as the host mode and open the **Multi Equipment** tab.
-2. Add equipment definitions directly or use **Import Configuration**.
-3. Use the Selected commands for one row, or Connect/Disconnect/Linktest/Scenario/Broadcast commands for the configured set.
-4. Inspect TCP, HSMS, GEM, activity, and last-error state per row.
-5. In **Protocol Log**, filter by equipment or free text and correlate entries using the equipment, connection, session, and system-byte columns.
-6. Use **Export Configuration** to save connection settings without credentials.
+1. Select **Multi Equipment Host** and open **Multi Equipment**.
+2. Add definitions or import a validated configuration.
+3. Use a Selected command for one context or bounded All/Broadcast commands for the set.
+4. Inspect per-context TCP, HSMS, GEM, responder/activity and last-error state.
+5. Filter Protocol Log by equipment/free text and correlate equipment, connection, session and System Bytes columns.
+6. Export the credential-free configuration only to an approved location.
 
-**Run 1/2/10/50 Self-test** creates local synthetic loopback peers. It does not exercise the configured external endpoints and must not be reported as external interoperability evidence.
+**Run 1/2/10/50 Self-test** creates local synthetic peers. It does not touch configured external endpoints and cannot promote any external row.
 
 ## Headless self-test
 
@@ -76,20 +81,20 @@ Or from the project directory:
 dotnet run --project Dreamine.SecsGem.Interop.Wpf.csproj -c Release -- --multi-self-test --output multi-equipment-self-test.json
 ```
 
-The command uses 100 one-of-ten reconnect cycles. Exit code `0` means the scenario result is `Passed` and no tracked session/background operation remains; `2` means the run completed with a failed assertion or cleanup result; `1` means the headless runner raised an unhandled error.
+Exit code `0` means the runner's own assertions and instrumented cleanup conditions succeeded; `2` means an assertion/cleanup condition failed; `1` means an unhandled runner error. The exported `Passed`/`Failed` text is an operational result field, not an external interoperability status.
 
-See [MULTI_EQUIPMENT_TEST_MATRIX.md](MULTI_EQUIPMENT_TEST_MATRIX.md) for asserted scenarios and [MULTI_EQUIPMENT_PERFORMANCE.md](MULTI_EQUIPMENT_PERFORMANCE.md) for the latest measured snapshot.
+See [MULTI_EQUIPMENT_TEST_MATRIX.md](MULTI_EQUIPMENT_TEST_MATRIX.md) for scope and [MULTI_EQUIPMENT_PERFORMANCE.md](MULTI_EQUIPMENT_PERFORMANCE.md) for the dated historical measurement.
 
-## External simulator preflight
+## External preflight
 
-Read-only local inspection did not establish vendor-supported concurrent simulator instances or more than one active equipment connection in a single simulator GUI. Consequently there is no approved external multi-equipment procedure or Passed result yet.
+Read-only inspection did not establish vendor-supported concurrent SEComSimulator instances, licensing for them, or multiple active equipment connections in one GUI. Therefore no approved external multi-equipment result exists and the status remains `NOT_RUN`.
 
-If vendor documentation and licensing later confirm concurrent instances, a person may prepare a **conditional** manual check by using isolated application/configuration/log locations, assigning separate loopback ports such as 7201 and 7202, and confirming two distinct processes reach Selected. The operator must then reconnect only one instance and verify that the other process remains Selected and continues S1F1/F2 and Linktest traffic. Record process identity, endpoint, timestamps, both sides' logs, and the unaffected-peer result. Until those prerequisites and observations are recorded, every external row remains **Not Run / Waiting for User**. See [SECOMSIMULATOR_INTEROP_TEST.md](SECOMSIMULATOR_INTEROP_TEST.md) for the existing single-connection evidence procedure.
+If vendor documentation and licensing later confirm concurrent instances, the operator must use isolated configuration/log locations and unique loopback ports, prove two distinct processes are selected, reconnect only one, and show the unaffected peer remains selected while exchanging correlated traffic. Retain process identities, endpoints, timestamps and both sides' finalized evidence. The root run will consolidate any authorized manual request; this document does not create a separate request.
 
-## Current limitations
+## Limitations
 
-- Local loopback proves behavior within this implementation and process; it does not establish standards compliance, production readiness, or real-network capacity.
-- The orchestration is harness-internal. There is intentionally no new multi-equipment public library API in this change.
-- Configuration has no credential or TLS material model.
-- Throughput and memory values are diagnostic comparison points, not SLAs; runtime warm-up, machine load, and loopback scheduling materially affect them.
-- External SEComSimulator scenarios remain **Not Run / Waiting for User** until a person performs and records the external procedure. Local loopback results must not be substituted for that evidence.
+- Local synthetic peers verify only the instrumented implementation; they do not establish standards conformance, production readiness or network capacity.
+- Configuration has no credential/TLS-material model.
+- The context currently composes a basic connection-scoped `GemRuntime`; a frozen E30 Equipment Profile selection is a separate single-equipment responder surface.
+- Throughput and memory values are diagnostic comparison points, not SLAs.
+- External simulator and real-equipment rows remain `NOT_RUN` until both sides' evidence is reviewed.

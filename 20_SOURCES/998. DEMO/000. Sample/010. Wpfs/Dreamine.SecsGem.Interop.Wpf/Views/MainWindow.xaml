@@ -4,7 +4,7 @@
         xmlns:vm="clr-namespace:Dreamine.SecsGem.Interop.Wpf.ViewModels"
         xmlns:behaviors="clr-namespace:Dreamine.SecsGem.Interop.Wpf.Behaviors"
         Title="Dreamine SECS/GEM Interoperability Harness"
-        Width="1366" Height="768" MinWidth="900" MinHeight="500"
+        Width="1600" Height="1000" MinWidth="1100" MinHeight="650"
         FontFamily="Segoe UI" FontSize="14"
         Background="{StaticResource WindowBrush}" Foreground="{StaticResource TextBrush}"
         WindowStartupLocation="CenterScreen">
@@ -59,7 +59,7 @@
         </Border>
 
         <Grid Grid.Row="1">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="240"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="320"/><ColumnDefinition Width="14"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <Border Grid.Column="0" Style="{StaticResource Card}">
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                 <Grid>
@@ -84,6 +84,18 @@
                         <UniformGrid Columns="2"><Button Style="{StaticResource PrimaryButton}" Content="Connect" Command="{Binding ConnectCommand}"/><Button Style="{StaticResource DangerButton}" Content="Disconnect" Command="{Binding DisconnectCommand}"/></UniformGrid>
                         <UniformGrid Columns="2"><Button Content="Select" Command="{Binding SelectCommand}"/><Button Style="{StaticResource DangerButton}" Content="Separate" Command="{Binding SeparateCommand}"/></UniformGrid>
                         <UniformGrid Columns="2"><Button Content="Linktest" Command="{Binding LinktestCommand}"/><Button Content="Reconnect" Command="{Binding ReconnectCommand}"/></UniformGrid>
+                        <TextBlock Margin="4,8,4,0" FontWeight="SemiBold" Text="Equipment responder profile"/>
+                        <ComboBox ItemsSource="{Binding EquipmentResponderProfileOptions}"
+                                  DisplayMemberPath="Value"
+                                  SelectedValuePath="Key"
+                                  SelectedIndex="0"
+                                  SelectedValue="{Binding SelectedEquipmentResponderProfile, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                            <ComboBox.Style>
+                                <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+                                    <Style.Triggers><DataTrigger Binding="{Binding EquipmentResponderEnabled}" Value="True"><Setter Property="IsEnabled" Value="False"/></DataTrigger></Style.Triggers>
+                                </Style>
+                            </ComboBox.Style>
+                        </ComboBox>
                         <Button Content="{Binding EquipmentResponderButtonText}" Command="{Binding EnableResponderCommand}">
                             <Button.Style>
                                 <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
@@ -98,7 +110,7 @@
                                 </Style>
                             </Button.Style>
                         </Button>
-                        <TextBlock Margin="4,3,4,0" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Text="Enabled state persists across reconnects." TextWrapping="Wrap"/>
+                        <TextBlock Margin="4,3,4,0" FontSize="12" Foreground="{StaticResource MutedTextBrush}" Text="Select one mutually exclusive Demo responder. The E30 option uses the public profile; the educational fallback is Demo-only. Enabled state persists across reconnects." TextWrapping="Wrap"/>
                     </StackPanel>
                     <Border Grid.Row="5" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="5" Padding="10">
                         <Border.Style><Style TargetType="Border"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding IsMultiEquipmentMode}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></Border.Style>
@@ -223,9 +235,20 @@
                 <TabItem Header="Scenarios">
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" VerticalContentAlignment="Stretch">
                     <Grid Margin="12" MinHeight="420" TextElement.Foreground="{StaticResource TextBrush}">
-                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="160"/></Grid.RowDefinitions>
-                        <WrapPanel Grid.Row="0" Margin="0,0,0,8"><Button Style="{StaticResource PrimaryButton}" Content="Run Selected" Command="{Binding RunSelectedCommand}"/><Button Content="Run All Automatic" Command="{Binding RunAllCommand}"/><Button Style="{StaticResource DangerButton}" Content="Stop" Command="{Binding CancelCommand}"/><Button Content="Reset" Command="{Binding ResetScenariosCommand}"/></WrapPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding Scenarios}" SelectedItem="{Binding SelectedScenario}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="160"/></Grid.RowDefinitions>
+                        <Border Grid.Row="0" Style="{StaticResource Card}" Margin="0,0,0,8">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <StackPanel Grid.ColumnSpan="3"><TextBlock FontSize="16" FontWeight="SemiBold" Text="Scenario v1 file workbench"/><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Runs the selected persisted file through the same bounded ScenarioRunnerV1 used by headless mode. This is separate from synthetic Run All." TextWrapping="Wrap"/></StackPanel>
+                                <Border Grid.Row="1" Margin="0,8,6,0" Height="34" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,0"><TextBlock VerticalAlignment="Center" Text="{Binding ScenarioFilePath}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ScenarioFilePath}"/></Border>
+                                <Button Grid.Row="1" Grid.Column="1" Margin="3,8,3,0" Content="Browse / Load…" Command="{Binding LoadScenarioFileCommand}"/>
+                                <Button Grid.Row="1" Grid.Column="2" Margin="3,8,0,0" Style="{StaticResource PrimaryButton}" Content="Run selected file" Command="{Binding RunScenarioFileCommand}"/>
+                                <StackPanel Grid.Row="2" Grid.ColumnSpan="3" Margin="0,8,0,0"><TextBlock Text="{Binding ScenarioFileStatus}" TextWrapping="Wrap"/><TextBlock Margin="0,3,0,0" FontWeight="SemiBold" Text="{Binding ScenarioRunStatus, StringFormat=Last selected-file run: {0}}"/></StackPanel>
+                            </Grid>
+                        </Border>
+                        <WrapPanel Grid.Row="1" Margin="0,0,0,8"><Button Style="{StaticResource PrimaryButton}" Content="Run Selected" Command="{Binding RunSelectedCommand}"/><Button Content="Run All Automatic" Command="{Binding RunAllCommand}"/><Button Style="{StaticResource DangerButton}" Content="Stop" Command="{Binding CancelCommand}"/><Button Content="Reset" Command="{Binding ResetScenariosCommand}"/></WrapPanel>
+                        <DataGrid Grid.Row="2" ItemsSource="{Binding Scenarios}" SelectedItem="{Binding SelectedScenario}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="72"/>
                                 <DataGridTemplateColumn Header="Scenario" Width="2.1*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock VerticalAlignment="Center" Text="{Binding Name}" TextWrapping="Wrap" ToolTip="{Binding Name}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
@@ -234,11 +257,11 @@
                                 <DataGridTemplateColumn Header="Detail" Width="2.4*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock VerticalAlignment="Center" Text="{Binding Detail}" TextTrimming="CharacterEllipsis" ToolTip="{Binding Detail}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
-                        <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,10,0,0">
+                        <Border Grid.Row="3" Style="{StaticResource Card}" Margin="0,10,0,0">
                             <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="120"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
                                 <TextBlock Grid.ColumnSpan="2" FontSize="16" FontWeight="SemiBold" Text="Selected scenario detail"/>
                                 <StackPanel Grid.Row="1" Margin="0,8,12,0"><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="{Binding SelectedScenario.Id, TargetNullValue=No selection}"/><TextBlock FontWeight="SemiBold" Text="{Binding SelectedScenario.Status}"/><TextBlock Text="{Binding SelectedScenario.Elapsed, StringFormat=Duration: {0}}"/></StackPanel>
-                                <TextBlock Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" Text="{Binding SelectedScenario.Detail, TargetNullValue=Select a scenario to inspect its full result.}" TextWrapping="Wrap"/>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="0,8,0,0"><TextBlock Text="{Binding SelectedScenario.Detail, TargetNullValue=Select a scenario to inspect its full result.}" TextWrapping="Wrap"/><TextBlock Margin="0,6,0,0" Foreground="{StaticResource MutedTextBrush}" Text="{Binding ScenarioRunDetails}" TextWrapping="Wrap"/></StackPanel>
                             </Grid>
                         </Border>
                     </Grid>
@@ -289,10 +312,29 @@
                             </Grid>
                         </TabItem>
 
-                        <TabItem Header="SECS1 / HSMS Raw">
+                        <TabItem Header="HSMS Wire">
                             <Grid Margin="8">
-                                <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition Height="210"/></Grid.RowDefinitions>
-                                <DataGrid ItemsSource="{Binding FilteredSecs1Logs}" SelectedItem="{Binding SelectedLog}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" behaviors:DataGridAutoScrollBehavior.IsEnabled="{Binding AutoScrollLogs}">
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="210"/></Grid.RowDefinitions>
+                                <Border Grid.Row="0" Style="{StaticResource Card}" Margin="0,0,0,8" Padding="10,6">
+                                    <StackPanel>
+                                        <TextBlock FontWeight="SemiBold" Text="Open finalized exact-wire JSONL incrementally"/>
+                                        <TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Only session wire observations appear here. Application-level semantic SECS-II events are not advertised as raw wire." TextWrapping="Wrap"/>
+                                        <WrapPanel Margin="0,6,0,0">
+                                            <ComboBox Width="92" ToolTip="Direction" ItemsSource="{Binding WireLogDirectionOptions}" SelectedItem="{Binding WireLogDirectionFilter}"/>
+                                            <TextBox Width="54" ToolTip="Stream (1-127)" Text="{Binding WireLogStreamFilter}"/>
+                                            <TextBox Width="58" ToolTip="Function (0-255)" Text="{Binding WireLogFunctionFilter}"/>
+                                            <TextBox Width="120" ToolTip="System Bytes (decimal or 0x...)" Text="{Binding WireLogSystemBytesFilter}"/>
+                                            <TextBox Width="150" ToolTip="Connection ID" Text="{Binding WireLogConnectionFilter}"/>
+                                            <TextBox Width="174" ToolTip="From UTC (ISO-8601)" Text="{Binding WireLogFromUtcFilter}"/>
+                                            <TextBox Width="174" ToolTip="To UTC (ISO-8601)" Text="{Binding WireLogToUtcFilter}"/>
+                                            <CheckBox Margin="8,0" VerticalAlignment="Center" Content="Errors only" IsChecked="{Binding WireLogErrorsOnly}"/>
+                                            <Button Style="{StaticResource PrimaryButton}" Content="Browse / Open JSONL…" Command="{Binding OpenWireLogCommand}"/>
+                                            <Button Style="{StaticResource DangerButton}" Content="Cancel" Command="{Binding CancelCommand}"/>
+                                        </WrapPanel>
+                                        <TextBlock Margin="0,5,0,0" Text="{Binding WireLogOpenStatus}" TextWrapping="Wrap"/>
+                                    </StackPanel>
+                                </Border>
+                                <DataGrid Grid.Row="1" ItemsSource="{Binding FilteredSecs1Logs}" SelectedItem="{Binding SelectedLog}" AutoGenerateColumns="False" IsReadOnly="True" CanUserResizeRows="False" EnableRowVirtualization="True" EnableColumnVirtualization="True" VirtualizingPanel.IsVirtualizing="True" VirtualizingPanel.VirtualizationMode="Recycling" behaviors:DataGridAutoScrollBehavior.IsEnabled="{Binding AutoScrollLogs}">
                                     <DataGrid.Columns>
                                         <DataGridTextColumn Header="Equipment" Binding="{Binding EquipmentId}" Width="80"/>
                                         <DataGridTextColumn Header="Connection" Binding="{Binding ConnectionId}" Width="100"/>
@@ -305,9 +347,9 @@
                                         <DataGridTemplateColumn Header="Frame" Width="*"><DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock FontFamily="Consolas" Text="{Binding RawHex}" TextTrimming="CharacterEllipsis" ToolTip="{Binding RawHex}"/></DataTemplate></DataGridTemplateColumn.CellTemplate></DataGridTemplateColumn>
                                     </DataGrid.Columns>
                                 </DataGrid>
-                                <Border Grid.Row="1" Style="{StaticResource Card}" Margin="0,10,0,0">
+                                <Border Grid.Row="2" Style="{StaticResource Card}" Margin="0,10,0,0">
                                     <Grid><Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-                                        <StackPanel><TextBlock FontSize="16" FontWeight="SemiBold" Text="Selected raw HSMS frame"/><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Simulator SECS1-pane equivalent for this HSMS-SS harness."/></StackPanel><Button Grid.Column="1" Content="Clear all logs" Command="{Binding ClearLogCommand}"/>
+                                        <StackPanel><TextBlock FontSize="16" FontWeight="SemiBold" Text="Selected exact HSMS wire observation"/><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="Captured bytes depend on the fail-safe per-message body policy."/></StackPanel><Button Grid.Column="1" Content="Clear all logs" Command="{Binding ClearLogCommand}"/>
                                         <TextBox Grid.Row="1" Grid.ColumnSpan="2" Margin="0,8,0,0" FontFamily="Consolas" FontSize="13" IsReadOnly="True" Text="{Binding SelectedLog.RawHex, TargetNullValue=Select a frame to inspect its bytes.}" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"/>
                                     </Grid>
                                 </Border>
@@ -535,6 +577,27 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
                         <WrapPanel Margin="12" MaxWidth="1040" HorizontalAlignment="Center" TextElement.Foreground="{StaticResource TextBrush}">
                             <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                <StackPanel>
+                                    <TextBlock FontSize="17" FontWeight="SemiBold" Text="Connection Profile v1"/>
+                                    <TextBlock Margin="0,3,0,8" Foreground="{StaticResource MutedTextBrush}" Text="Loads a bounded, credential-free profile and reports whether the current session must be recreated." TextWrapping="Wrap"/>
+                                    <Border Height="36" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,0"><TextBlock VerticalAlignment="Center" Text="{Binding ConnectionProfilePath}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ConnectionProfilePath}"/></Border>
+                                    <Button Style="{StaticResource PrimaryButton}" Content="Browse / Apply profile…" Command="{Binding LoadConnectionProfileCommand}"/>
+                                    <TextBlock Margin="4,6" Foreground="#F2C66D" Text="{Binding ConnectionProfileStatus}" TextWrapping="Wrap"/>
+                                    <TextBlock Margin="4,2" Foreground="{StaticResource MutedTextBrush}" Text="{Binding Settings.LogPolicyId, StringFormat=Log policy: {0}}"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Width="500" Style="{StaticResource Card}" Margin="6">
+                                <StackPanel>
+                                    <TextBlock FontSize="17" FontWeight="SemiBold" Text="Message Template Catalog v1"/>
+                                    <TextBlock Margin="0,3,0,8" Foreground="{StaticResource MutedTextBrush}" Text="Loads and validates concrete SECS-II item trees before displaying them. A manual Secondary is enabled only by a real pending inbound W-bit Primary context." TextWrapping="Wrap"/>
+                                    <Border Height="36" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,0"><TextBlock VerticalAlignment="Center" Text="{Binding MessageTemplateCatalogPath}" TextTrimming="CharacterEllipsis" ToolTip="{Binding MessageTemplateCatalogPath}"/></Border>
+                                    <Button Style="{StaticResource PrimaryButton}" Content="Browse / Load catalog…" Command="{Binding LoadMessageTemplateCatalogCommand}"/>
+                                    <TextBlock Margin="4,6" Text="{Binding MessageTemplateCatalogStatus}" TextWrapping="Wrap"/>
+                                    <ListBox Height="92" ItemsSource="{Binding LoadedTemplateNames}"/>
+                                    <TextBlock Margin="4,4" Foreground="#F2C66D" Text="{Binding PendingReplyStatus}" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+                            <Border Width="500" Style="{StaticResource Card}" Margin="6">
                                 <StackPanel><TextBlock FontSize="17" FontWeight="SemiBold" Text="HSMS timers"/><TextBlock Margin="0,3,0,8" Foreground="{StaticResource MutedTextBrush}" Text="Values are seconds and are validated by the public HSMS options API."/>
                                     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/><ColumnDefinition Width="70"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions><Grid.RowDefinitions><RowDefinition Height="42"/><RowDefinition Height="42"/><RowDefinition Height="42"/></Grid.RowDefinitions>
                                         <Label Content="T3"/><TextBox Grid.Column="1" Text="{Binding Settings.T3Seconds}"/><Label Grid.Column="2" Content="T5"/><TextBox Grid.Column="3" Text="{Binding Settings.T5Seconds}"/>
@@ -586,6 +649,22 @@
                                 <StackPanel><TextBlock FontSize="17" FontWeight="SemiBold" Text="Evidence export"/><TextBlock Margin="0,3,0,8" Foreground="{StaticResource MutedTextBrush}" Text="Exports masked JSON and Markdown evidence."/>
                                     <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="90"/></Grid.ColumnDefinitions><Border Height="36" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,0"><TextBlock VerticalAlignment="Center" Text="{Binding ExportDirectory}" TextTrimming="CharacterEllipsis" ToolTip="{Binding ExportDirectory}"/></Border><Button Grid.Column="1" Content="Browse…" Command="{Binding BrowseExportCommand}"/></Grid>
                                     <Button Style="{StaticResource PrimaryButton}" Content="Export masked JSON + Markdown" Command="{Binding ExportCommand}"/>
+                                    <Separator Margin="4,10"/>
+                                    <TextBlock FontSize="16" FontWeight="SemiBold" Text="Public Evidence manifest review"/>
+                                    <TextBlock Margin="0,3,0,8" Foreground="{StaticResource MutedTextBrush}" TextWrapping="Wrap"
+                                               Text="Review lifecycle: Evidence Recorded → Manual Review → Verified. Only Verified can become eligible; attaching a manifest never assigns Passed."/>
+                                    <Border Height="36" Background="{StaticResource InputBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="8,0">
+                                        <TextBlock VerticalAlignment="Center" Text="{Binding EvidenceManifestPath}" TextTrimming="CharacterEllipsis" ToolTip="{Binding EvidenceManifestPath}"/>
+                                    </Border>
+                                    <Button Content="Open public manifest…" Command="{Binding LoadEvidenceManifestCommand}"/>
+                                    <TextBlock Margin="4,3" Text="{Binding EvidenceManifestStatus}" TextWrapping="Wrap"/>
+                                    <TextBlock Margin="4,3" FontWeight="SemiBold" Text="{Binding EvidenceReviewState, StringFormat=Review state: {0}}"/>
+                                    <TextBlock Margin="4,3" Foreground="#F2C66D" Text="{Binding EvidenceEligibilityStatus}" TextWrapping="Wrap"/>
+                                    <ItemsControl Margin="8,2" ItemsSource="{Binding EvidenceEligibilityReasons}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate><TextBlock Foreground="{StaticResource MutedTextBrush}" Text="{Binding}" TextWrapping="Wrap"/></DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
                                 </StackPanel>
                             </Border>
                         </WrapPanel>

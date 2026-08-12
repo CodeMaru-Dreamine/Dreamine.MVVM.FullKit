@@ -7,10 +7,11 @@ using Dreamine.SecsGem.Interop.Runtime;
 using Dreamine.SecsGem.Interop.Wpf.Managers;
 using Dreamine.SecsGem.Interop.Wpf.Models;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Dreamine.SecsGem.Interop.Wpf.Tests;
 
-public sealed class MultiEquipmentHostTests
+public sealed class MultiEquipmentHostTests(ITestOutputHelper output)
 {
     [Fact]
     public void OptionsRejectUnboundedOrZeroConcurrency()
@@ -251,8 +252,14 @@ public sealed class MultiEquipmentHostTests
     {
         var summary = await new MultiEquipmentScenarioManager(new InteropLogManager())
             .RunAsync(3, CancellationToken.None);
+        var evidence = $"Result={summary.Result}; RemainingSessions={summary.RemainingSessions}; " +
+            $"RemainingBackgroundOperations={summary.RemainingBackgroundOperations}; " +
+            $"TrackedOperationTaskCount={summary.TrackedOperationTaskCount}; " +
+            $"PeakConcurrentEquipmentOperations={summary.PeakConcurrentEquipmentOperations}{Environment.NewLine}" +
+            string.Join(Environment.NewLine, summary.Checks);
+        output.WriteLine(evidence);
 
-        Assert.Equal("Passed", summary.Result);
+        Assert.True(summary.Result == "Passed", evidence);
         Assert.Equal(50, summary.MaximumEquipment);
         Assert.Equal(0, summary.RemainingSessions);
         Assert.Equal(0, summary.RemainingBackgroundOperations);

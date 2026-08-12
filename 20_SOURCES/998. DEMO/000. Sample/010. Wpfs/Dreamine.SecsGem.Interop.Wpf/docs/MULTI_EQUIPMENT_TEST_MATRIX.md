@@ -1,47 +1,55 @@
 # Multi-Equipment Test Matrix
 
-Evidence snapshot: local headless run started `2026-08-10T10:38:37.7927176+00:00` and completed `2026-08-10T10:38:51.3549447+00:00`. Result: `Passed`.
+## Current status — 2026-08-12
 
-`Passed` below means an assertion passed against local synthetic TCP/HSMS loopback peers. It does not mean an external simulator, customer system, production network, or real equipment passed.
-
-| ID | Area | Assertion | Result | Evidence in the run |
-|---|---|---|---|---|
-| ME-01 | Scale | Host 1 ↔ Equipment 1, 2, 10, and 50 all Connect, Select, exchange S1F1/F2 and S1F13/F14, Linktest, and Disconnect. | Passed | Four scale checks; maximum 50 equipment |
-| ME-02 | GEM ownership | Sending S1F13 to only one of two contexts changes only that context to communicating; all contexts have distinct `GemRuntime` instances. | Passed | `Per-equipment GEM state divergence: isolated` |
-| ME-03 | Registration order | Registering definitions in reverse order preserves that registry order; Connect All still leaves every context selected and operational. | Passed | Reverse-order check |
-| ME-04 | Message volume | Ten equipment complete 100 S1F1/F2 broadcast rounds with every reply correlated. | Passed | 1,000/1,000 burst replies |
-| ME-05 | Slow peer | A deliberately held response on one equipment does not prevent a later request to another equipment from completing first. | Passed | Deterministic response gate check |
-| ME-06 | Collision isolation | Two connections both use `SessionId=0` and forced `SystemBytes=1`; replies remain bound to their own equipment and connection. | Passed | Connection-scoped correlation check |
-| ME-07 | Reconnect isolation | One of ten equipment reconnects 100 times with a fresh `ConnectionId`; nine peer connections stay selected and unchanged. Three equipment also reconnect concurrently. | Passed | 100 single-target + 3 concurrent reconnects |
-| ME-08 | Pending transaction | Disconnecting one context fails its pending request locally while a peer request completes; reconnect creates fresh connection and GEM state. | Passed | Selective-disconnect check |
-| ME-09 | HSMS state | Separating one context produces Selected/NotSelected divergence without changing its selected peer. | Passed | State-isolation check |
-| ME-10 | Automatic reconnect | Remote drop is observed as ConnectedNotSelected, then selection is restored with a fresh `ConnectionId` and `GemRuntime`; peer identity/state remains unchanged. | Passed | AutoReconnect recovery check |
-| ME-11 | T3 | One non-responsive equipment records a T3 error while the responsive peer remains selected and passes Linktest. | Passed | Injected T3 timeout |
-| ME-12 | Connect failure | An unavailable endpoint fails its own Connect result while the available equipment selects and passes Linktest. | Passed | Per-equipment aggregate result |
-| ME-13 | T6 | A peer that withholds the Select response fails with T6 while healthy equipment remains selected and operational. | Passed | Injected T6 timeout |
-| ME-14 | T8 | A partial frame expires with T8 while healthy equipment remains selected and operational. | Passed | Injected T8 timeout |
-| ME-15 | Malformed frame | A malformed frame records a protocol error on its own context without stopping healthy equipment. | Passed | Raw fault peer check |
-| ME-16 | Abrupt close | Closing one connection after Select does not affect healthy equipment. | Passed | Raw fault peer check |
-| ME-17 | Callback failure | An injected receive callback exception is recorded on the affected context while its peer remains usable. | Passed | Callback observation and LastError check |
-| ME-18 | Large inbound message | A 1 MiB Equipment→Host binary item is observed and a peer Linktest still completes. | Passed | Length assertion + peer Linktest |
-| ME-19 | Cleanup | Harness and loopback live-session deltas and tracked background-operation deltas return to zero after disposal. | Passed | `RemainingSessions=0`, `RemainingBackgroundOperations=0` |
-
-## Run totals
-
-| Measure | Value | Interpretation |
-|---|---:|---|
-| Connections attempted | 98 | Includes scale, isolation, fault, and reconnect setup attempts counted by the scenario. |
-| Messages requested | 1,241 | Includes expected negative-path requests. |
-| Messages passed | 1,239 | Two non-success results are deliberately induced: a disconnected pending request and a T3 request. The overall run passes only when their isolation assertions pass. |
-| Timeout count | 3 | Deliberately injected T3, T6, and T8 paths. |
-| Reconnect count | 105 | 100 one-of-ten cycles, 3 concurrent reconnects, 1 selective reconnect, and 1 automatic reconnect. |
-
-## Evidence boundaries
-
-| Peer / evidence source | Current status | Rule |
+| Evidence surface | Status | Boundary |
 |---|---|---|
-| Local synthetic loopback | Passed | May be reported only as local automated/self-loopback evidence. |
-| External SEComSimulator | **Not Run / Waiting for User** | Requires a person to execute and record the external procedure. No local result may promote this status. |
-| Real equipment / production network | Not Run | No claim is made by this harness run. |
+| Provider-neutral multi-equipment local regression | `PASS` | Final strict WPF regression/build is green; exact fresh totals belong in the central report. |
+| Current standalone 1/2/10/50 headless command | `NOT_RUN` | No stale command output is presented as a current standalone run. |
+| External SEComSimulator multi-equipment run | `NOT_RUN` | Concurrent-instance support and licensing were not established. |
+| Real equipment / production network | `NOT_RUN` | No field evidence exists. |
 
-The matrix checks behavior implemented by the harness and underlying libraries. It does not certify complete SEMI conformance or cover every timing/network/platform combination.
+The runner/export may contain operational result text such as `Passed` or `Failed`. Those strings report its internal assertion outcome only and are not external evidence statuses. The matrix below is explicitly historical.
+
+## Historical Evidence — local synthetic run on 2026-08-10 only
+
+The historical run started `2026-08-10T10:38:37.7927176+00:00` and completed `2026-08-10T10:38:51.3549447+00:00`. Every `PASS` below applies only to assertions against local synthetic TCP/HSMS peers in that dated run. It does not mean an external simulator, customer system, production network or real equipment passed.
+
+| ID | Area | Historical assertion | Historical status | Dated evidence |
+|---|---|---|---|---|
+| ME-01 | Scale | 1, 2, 10 and 50 local peers connect/select, exchange the configured S1 pairs, Linktest and disconnect. | `PASS` | Four scale checks; maximum 50 peers. |
+| ME-02 | GEM ownership | Communication state changes and `GemRuntime` ownership stay context-local. | `PASS` | Per-context divergence and distinct runtime instances. |
+| ME-03 | Registration order | Reverse registration order is preserved while Connect All remains operational. | `PASS` | Reverse-order snapshot. |
+| ME-04 | Message volume | Ten peers complete 100 S1F1/F2 broadcast rounds with correlation. | `PASS` | 1,000/1,000 historical burst replies. |
+| ME-05 | Slow peer | A held response does not prevent a later request to another peer from completing first. | `PASS` | Deterministic response gate. |
+| ME-06 | Collision isolation | Two connections use Session ID 0 and forced System Bytes 1 without cross-correlation. | `PASS` | Connection-scoped correlation. |
+| ME-07 | Reconnect isolation | One of ten peers reconnects repeatedly with fresh connection identity while peers stay selected; three also reconnect concurrently. | `PASS` | 100 single-target plus 3 concurrent reconnects. |
+| ME-08 | Pending transaction | Disconnect fails only the affected pending request; peer request completes and reconnect creates fresh state. | `PASS` | Selective-disconnect path. |
+| ME-09 | HSMS state | Separation creates per-context selected/not-selected divergence without mutating the peer. | `PASS` | State isolation. |
+| ME-10 | Automatic reconnect | Remote drop is observed and selection recovers with fresh connection/runtime while peer identity/state remains unchanged. | `PASS` | Automatic-reconnect recovery. |
+| ME-11 | T3 | Non-responsive peer records T3 while a responsive peer remains selected and passes Linktest. | `PASS` | Injected T3 path. |
+| ME-12 | Connect failure | Unavailable endpoint fails only its result while the available peer selects and passes Linktest. | `PASS` | Per-equipment aggregate result. |
+| ME-13 | T6 | Withheld Select response reaches T6 while a healthy peer remains operational. | `PASS` | Injected T6 path. |
+| ME-14 | T8 | Partial frame reaches T8 while a healthy peer remains operational. | `PASS` | Injected T8 path. |
+| ME-15 | Malformed frame | Protocol error remains on its own context without stopping the healthy peer. | `PASS` | Raw fault peer. |
+| ME-16 | Abrupt close | Closing one selected connection does not affect the healthy peer. | `PASS` | Raw fault peer. |
+| ME-17 | Callback failure | Injected receive callback failure is recorded on the affected context while its peer stays usable. | `PASS` | Callback observation and last-error check. |
+| ME-18 | Large inbound message | A 1 MiB Equipment→Host item is observed while a peer Linktest completes. | `PASS` | Length assertion and peer Linktest. |
+| ME-19 | Cleanup | Instrumented live-session and background-operation deltas return to zero after disposal. | `PASS` | Historical counters both zero. |
+
+### Historical totals
+
+| Measure | Dated value | Interpretation |
+|---|---:|---|
+| Connections attempted | 98 | Scale, isolation, fault and reconnect setup attempts counted by that scenario version. |
+| Messages requested / successful | 1,241 / 1,239 | Two non-success requests were deliberately injected: disconnected pending request and T3 request. |
+| Timeout count | 3 | Deliberately injected T3, T6 and T8 paths. |
+| Reconnect count | 105 | 100 one-of-ten, 3 concurrent, 1 selective and 1 automatic reconnect. |
+
+These values are not a current regression total. Scenario implementation, provider construction and product code may have changed since the snapshot.
+
+## Promotion rule
+
+A fresh local run may be recorded as `PASS` only after its generated structured result, cleanup counters and source revision are captured by the final verification run. That status remains local automated evidence.
+
+An external row may become `PASS` only after vendor/licensing prerequisites, distinct process/endpoint identities, both sides' finalized logs or screenshots, exact correlation, healthy no-drop/complete-flush evidence and manual review are recorded. Local synthetic results never promote an external or field row.

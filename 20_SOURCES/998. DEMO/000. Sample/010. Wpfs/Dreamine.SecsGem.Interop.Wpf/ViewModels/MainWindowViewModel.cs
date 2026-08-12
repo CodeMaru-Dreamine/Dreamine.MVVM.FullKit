@@ -90,6 +90,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
     private bool _equipmentResponderEnabled;
 
     [DreamineProperty]
+    private EquipmentResponderProfileKind _selectedEquipmentResponderProfile =
+        EquipmentResponderProfileKind.EducationalDemoOnly;
+
+    [DreamineProperty]
     private bool _isLogViewPaused;
 
     [DreamineProperty]
@@ -130,6 +134,80 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
     [DreamineProperty]
     private string _factoryResultPath = "No Factory result imported.";
 
+    [DreamineProperty]
+    private string _wireLogFilePath = string.Empty;
+
+    [DreamineProperty]
+    private string _wireLogOpenStatus = "No exact HSMS wire-log segment selected.";
+
+    [DreamineProperty]
+    private string _wireLogStreamFilter = string.Empty;
+
+    [DreamineProperty]
+    private string _wireLogFunctionFilter = string.Empty;
+
+    [DreamineProperty]
+    private string _wireLogSystemBytesFilter = string.Empty;
+
+    [DreamineProperty]
+    private string _wireLogConnectionFilter = string.Empty;
+
+    [DreamineProperty]
+    private bool _wireLogErrorsOnly;
+
+    [DreamineProperty]
+    private string _wireLogDirectionFilter = string.Empty;
+
+    [DreamineProperty]
+    private string _wireLogFromUtcFilter = string.Empty;
+
+    [DreamineProperty]
+    private string _wireLogToUtcFilter = string.Empty;
+
+    [DreamineProperty]
+    private string _scenarioFilePath = string.Empty;
+
+    [DreamineProperty]
+    private string _scenarioFileStatus = "No Scenario v1 selected.";
+
+    [DreamineProperty]
+    private string _scenarioRunStatus = "Not Run";
+
+    [DreamineProperty]
+    private string _scenarioRunDetails = "Load a validated Scenario v1 file to run it against the current connection.";
+
+    [DreamineProperty]
+    private string _connectionProfilePath = string.Empty;
+
+    [DreamineProperty]
+    private string _connectionProfileStatus = "No Connection Profile v1 selected.";
+
+    [DreamineProperty]
+    private string _messageTemplateCatalogPath = string.Empty;
+
+    [DreamineProperty]
+    private string _messageTemplateCatalogStatus = "No Message Template Catalog v1 selected.";
+
+    [DreamineProperty]
+    private int _loadedTemplateCount;
+
+    [DreamineProperty]
+    private string _pendingReplyStatus =
+        "No pending inbound W-bit Primary. Manual replies are never inferred.";
+
+    [DreamineProperty]
+    private string _evidenceManifestPath = string.Empty;
+
+    [DreamineProperty]
+    private string _evidenceManifestStatus =
+        "No public Evidence manifest selected. Evidence Recorded is not a Passed result.";
+
+    [DreamineProperty]
+    private string _evidenceReviewState = "Not loaded";
+
+    [DreamineProperty]
+    private string _evidenceEligibilityStatus = "Not evaluated";
+
     public MainWindowViewModel(
         ConnectionManager connection,
         MessageManager messages,
@@ -138,8 +216,10 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
         ResultExportManager export,
         SimulatorProcessManager simulator,
         EquipmentSidecarProcessManager equipmentSidecar,
-        FileDialogManager fileDialog)
+        FileDialogManager fileDialog,
+        WireLogManager wireLog)
     {
+        SelectedEquipmentResponderProfile = EquipmentResponderProfileKind.EducationalDemoOnly;
         _event = new MainWindowEvent(
             this,
             connection,
@@ -149,7 +229,31 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
             export,
             simulator,
             equipmentSidecar,
-            fileDialog);
+            fileDialog,
+            wireLog);
+    }
+
+    /// <summary>Compatibility constructor for direct sample/test composition.</summary>
+    public MainWindowViewModel(
+        ConnectionManager connection,
+        MessageManager messages,
+        ScenarioManager scenarios,
+        InteropLogManager log,
+        ResultExportManager export,
+        SimulatorProcessManager simulator,
+        EquipmentSidecarProcessManager equipmentSidecar,
+        FileDialogManager fileDialog)
+        : this(
+            connection,
+            messages,
+            scenarios,
+            log,
+            export,
+            simulator,
+            equipmentSidecar,
+            fileDialog,
+            new WireLogManager(log))
+    {
     }
 
     public ConnectionSettings Settings { get; } = new();
@@ -185,6 +289,19 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
 
     public IReadOnlyList<SecsRole> Roles { get; } = [SecsRole.Host, SecsRole.Equipment];
 
+    public IReadOnlyList<EquipmentResponderProfileKind> EquipmentResponderProfiles { get; } =
+        [EquipmentResponderProfileKind.EducationalDemoOnly, EquipmentResponderProfileKind.E30DerivedSubsetDemo];
+
+    public IReadOnlyList<KeyValuePair<EquipmentResponderProfileKind, string>> EquipmentResponderProfileOptions { get; } =
+    [
+        new(
+            EquipmentResponderProfileKind.EducationalDemoOnly,
+            "Educational basic responder (Demo-only, not GEM)"),
+        new(
+            EquipmentResponderProfileKind.E30DerivedSubsetDemo,
+            "E30-0611 derived subset profile v1 (Demo)")
+    ];
+
     public ObservableCollection<SecsItemNodeViewModel> RootItems { get; } = [];
 
     public ObservableCollection<InteropScenarioResult> Scenarios => Event.Scenarios;
@@ -202,6 +319,13 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
 
     public ObservableCollection<string> EquipmentFilterOptions { get; } = ["All Equipment"];
 
+    public ObservableCollection<string> LoadedTemplateNames { get; } = [];
+
+    public ObservableCollection<string> EvidenceEligibilityReasons { get; } = [];
+
+    public IReadOnlyList<string> WireLogDirectionOptions { get; } =
+        [string.Empty, "Inbound", "Outbound"];
+
     public bool SimulatorInstalled => Event.IsSimulatorInstalled(SimulatorExecutablePath);
     public string SimulatorAvailability => SimulatorInstalled ? "Installed (launch is manual)" : "Not found";
     public bool EquipmentSidecarAvailable => File.Exists(EquipmentSidecarExecutablePath);
@@ -216,7 +340,11 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
     public bool AnyEquipmentResponderActive => EquipmentResponderEnabled || EquipmentSidecarRunning;
 
     public string EquipmentResponderState =>
-        EquipmentSidecarRunning ? "EXTERNAL" : EquipmentResponderEnabled ? "BASIC ON" : "OFF";
+        EquipmentSidecarRunning ? "EXTERNAL" : EquipmentResponderEnabled
+            ? SelectedEquipmentResponderProfile == EquipmentResponderProfileKind.E30DerivedSubsetDemo
+                ? "E30 DEMO ON"
+                : "BASIC DEMO ON"
+            : "OFF";
 
     public string EquipmentResponderButtonText =>
         EquipmentResponderEnabled ? "✓ Equipment Responder: ON" : "Enable Equipment Responder";
@@ -265,6 +393,12 @@ public sealed partial class MainWindowViewModel : ViewModelBase, IAsyncDisposabl
         NotifyImportEquipmentConfigurationCommandCanExecuteChanged();
         NotifyExportEquipmentConfigurationCommandCanExecuteChanged();
         NotifyImportFactoryResultCommandCanExecuteChanged();
+        NotifyOpenWireLogCommandCanExecuteChanged();
+        NotifyLoadScenarioFileCommandCanExecuteChanged();
+        NotifyRunScenarioFileCommandCanExecuteChanged();
+        NotifyLoadConnectionProfileCommandCanExecuteChanged();
+        NotifyLoadMessageTemplateCatalogCommandCanExecuteChanged();
+        NotifyLoadEvidenceManifestCommandCanExecuteChanged();
         RefreshEquipmentCommandStates();
     }
 

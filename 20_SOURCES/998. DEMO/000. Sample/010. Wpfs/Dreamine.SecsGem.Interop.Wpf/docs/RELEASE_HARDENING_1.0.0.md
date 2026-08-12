@@ -1,58 +1,59 @@
-# 1.0.0 release-hardening record
+# 1.0.0 release-hardening evidence record
 
-Status date: 2026-08-10. This is source/package-candidate evidence, not a publication, certification, or external interoperability claim.
+This document separates the current candidate boundary from a dated 2026-08-10 snapshot. It is not a publication, certification, current-revision conformance statement, or external interoperability claim. Fresh final totals are recorded only in `SECS_GEM_PRODUCTIZATION_REPORT.md`.
 
-## Gate summary
+## Current candidate boundary — 2026-08-12
 
-| Gate | Result | Evidence |
+| Surface | Status | Evidence boundary |
 |---|---|---|
-| NuGet.org-only consumption (7 IDs) | Blocked | NuGet V3 flat-container returned `NOT_FOUND` for all IDs. No local feed was substituted. |
-| Six library Release tests | Passed | 222/222 |
-| Harness log-manager tests | Passed | 5/5 |
-| Headless self-loopback | Passed | 1,000/1,000 replies, 100 linktests, 100 reconnects, 20 concurrent primaries, timeout 0 |
-| Quick Start builds/runs | Passed | SECS Active/Passive two-connection pair, GEM services, GEM300 workflow (29 events) |
-| Doxygen EN/KO | Passed | 12 builds, 0 logged warnings; Doxygen emits a tool-level notice that Korean templates have not been updated since 1.8.15 |
-| Local package smoke | Passed | FullKit restored from local feed only; codec/GEM/GEM300 representative APIs executed |
-| Parent solution Release build | Passed | 94 projects; 0 warnings, 0 errors |
-| Parent solution test | Existing failure | 663 passed; one pre-existing Ontology freshness gate failed because `manifest.json` is missing/older than seven days. After the final spool edge-case addition, the relevant suite is 227/227 and was rerun separately. |
-| External simulator | Not Run | Remains Waiting for User |
-| Automated visible WPF UI control | Passed via fallback | Computer-use initialization failed with local Codex-app path `EPERM`; a later Windows UI Automation/PrintWindow fallback launched the final Release UI and captured normal and compact logical viewports. |
+| WPF/Interop Runtime local regression | `PASS` | Final strict WPF regression/build is green; exact fresh totals remain in the central report. |
+| Connection Profile v1, Template Catalog v1, Scenario v1 and configurable responder | `PASS` | Shared provider-neutral runtime paths passed final local regression in UI/headless integration. |
+| Persistent exact-wire logging and evidence privacy | `PASS` | Local regression covers the `HeaderOnly` default, bounded JSONL, closed export allow-list and health gating. |
+| WPF visible validation in the current run | `BLOCKED_ENVIRONMENT` | Computer-use could not launch the app because app approval/elicitations were unavailable. |
+| External SEComSimulator | `NOT_RUN` | Requires the consolidated operator procedure and both sides' evidence. |
+| Frozen E30 Demo profile selector/responder surface | `IMPLEMENTED_UNVERIFIED` | The exact UI label and mutually exclusive bindings are implemented within the frozen scope. |
+| Frozen E30 separate-process TCP evidence | `PASS` | The public Host/Equipment processes completed the actual local frozen-dialogue run. |
+| E37.1 / GEM300 wire conformance | `BLOCKED_STANDARD` | Required `.1` normative material is unavailable; no mapping is guessed. |
+| Legacy SECS-I | `INTENTIONALLY_EXCLUDED` | Candidate scope is HSMS/SECS-II. |
 
-## Actual defects corrected
+Operational UI/runtime enums such as `WaitingForUser`, `Passed`, `Failed` and `NotRun` are not release evidence vocabulary. They must be translated to the master literal statuses in the central report based on actual evidence.
 
-1. A transaction could be consumed by an unrelated higher even secondary function. Correlation now accepts only F0 or the exact `primary F + 1` secondary.
-2. GEM and GEM300 asynchronous command/action handlers observed mutable caller dictionaries. Parameters are now copied into read-only snapshots.
-3. Reentrant spool purge during a sender callback could corrupt/dequeue an already-cleared queue. Drain now removes only the same head it delivered.
-4. Undefined numeric connection/domain enum values reached state machines. Options and affected GEM300 commands now reject them at the boundary.
-5. Harness logging used a 5,000-entry limit and dispatcher work per event. It now retains 10,000 entries, drains in 250-entry batches, bounds the paused queue, virtualizes rows/columns, and exposes filter/pause/auto-scroll.
-6. Current error and historical last error were conflated. A successful operation clears `CurrentError`; `LastError` remains available in the status tooltip.
-7. FullKit described itself as a meta package but contained a dummy DLL. It now uses `lib/net8.0/_._` and carries no runtime assembly.
+## Current workbench architecture
 
-## API and architecture
+- The workbench and public console samples consume the same provider-neutral `ISecsMessageSession` contract. They do not create a second receive loop, transaction manager or System Bytes generator.
+- Connection Profile v1 validates credential-free endpoint/session/timer/safety/reconnect/log-policy data. Session-construction changes follow validate, diff, stop and recreate boundaries.
+- Message Template Catalog v1 stores bounded immutable application templates; it does not claim normative message ownership.
+- Scenario v1 provides bounded run/step deadlines, cancellation, repeats, state waits, sends, expectations and structured output. Cleanup failure, unhealthy logging or dropped inbound messages prevents a successful run result.
+- Configurable Responder v1 owns exact dispatcher registrations and bounded shutdown. The WPF responder profile selector binds either the public E30 Demo router or the mutually exclusive Demo-only educational fallback.
+- Multi-equipment contexts own independent sessions and provider-neutral runtime state. Registry replacement/removal disposes the old context; reconnect receives a fresh connection identity.
 
-Generated inventories cover 156 exported types across the six assemblies (52 + 16 + 29 + 15 + 35 + 9). No public signature, package ID, target framework, or binary surface was intentionally changed. Runtime changes are non-breaking validation/race corrections.
+## Logging, privacy and evidence
 
-Breaking proposals are deferred in each repository's `docs/API_REVIEW.md`: an explicit HSMS session abstraction/async handler boundary, typed spool result and lifecycle ownership, explicit aborted Control Job state, and repository-level cross-manager Process Job ownership.
+Persistent logging consumes actual session wire observations. `HeaderOnly` is the safe default, `Excluded` retains no body/raw frame, and the safe facade rejects global full-body capture. The application stops/disposes the session before the recorder is finalized, so terminal producers do not race queue completion.
 
-Reference direction remains acyclic:
+A run is eligible for evidence review only when observation and recorder drop counters are zero, flush completed and no writer failure exists. Public export is a closed allow-list: endpoints, free-form text, decoded bodies, raw frames, arbitrary check text and private-profile traffic are excluded or replaced with bounded categories. A manifest attachment alone never assigns external `PASS`; verified review, both sides' artifacts, hashes and a complete checklist are required.
 
-`Gem300 -> Gem300.Abstractions -> Gem.Abstractions -> Secs.Abstractions -> Communication.Abstractions`
+## Frozen E30 Demo boundary
 
-Implementations point toward their abstractions; abstraction projects do not reference implementations.
+The default Equipment responder profile uses `E30DemoEquipmentProfile.Create()` and `E30EquipmentRouter`. It covers exactly the frozen 20-dialogue manifest. The alternative fallback covers only seven educational pairs and is explicitly Demo-only, not GEM. The two paths never register concurrently.
 
-## Package and CI boundary
+The separate-process `Dreamine.Gem.QuickStart` exercises the same Demo Profile with Host and Equipment roles. Its local evidence remains distinct from SEComSimulator or real-equipment evidence. S2F35 empty-list unlink/delete variants and S6F19/F20 are `BLOCKED_STANDARD`; excluded capability families remain `INTENTIONALLY_EXCLUDED`.
 
-The seven local 1.0.0 candidates contain expected nuspec/readme/icon assets. Six component packages contain their net8.0 DLL/XML documentation; FullKit contains six exact 1.0.0 dependencies and no DLL. No new NuGet version was published.
+## Historical Evidence — 2026-08-10 only
 
-No existing per-repository GitHub Actions convention was found. Standalone submodule repositories currently contain sibling `ProjectReference` paths, so a workflow added to only one checkout would not restore. CI should be introduced only with a coordinated multi-repository checkout or an agreed package-consumption migration; no knowingly broken workflow was added.
+The following snapshot is retained for traceability. It is not the current 2026-08-12 result and does not override the status table above.
 
-## Verification categories
+| Historical gate | Historical status | Dated evidence |
+|---|---|---|
+| Six library Release suites | `PASS` | 222 tests were recorded in the 2026-08-10 snapshot. |
+| Harness log-manager suite | `PASS` | 5 tests were recorded in that snapshot. |
+| Single-equipment synthetic loopback | `PASS` | 1,000/1,000 replies, 100 Linktests, 100 reconnects, 20 concurrent primaries and zero timeouts were recorded. |
+| Local package smoke | `PASS` | A FullKit local-feed consumer executed representative codec/GEM/GEM300 APIs in that dated run. |
+| Parent solution build | `PASS` | The snapshot recorded 94 projects with zero warnings/errors. |
+| Parent solution test | `FAIL` | 663 tests succeeded and one pre-existing Ontology freshness gate failed because its manifest was missing/stale. |
+| Visible WPF fallback capture | `PASS` | UIAutomation/PrintWindow fallback captured normal/compact layouts. This historical method is not current computer-use evidence. |
+| External simulator | `NOT_RUN` | No external product row was executed. |
 
-- **Unit Tested:** codec boundaries/fuzz, transactions/timers, state machines, GEM/GEM300 services and workflows.
-- **Self Loopback Tested:** Active/Passive HSMS, Select, Linktest, S1F1/S1F2 correlation, reconnect and responder rebind.
-- **SEComSimulator Interoperability Tested:** Not Run in this hardening run.
-- **Experimental:** GEM300 workflow coordinator.
-- **Not Implemented in the public libraries:** complete GEM/GEM300 wire mapping, SECS-I, persistence/recovery, and a generic multi-session/fleet public API. A later Harness-only validation coordinates multiple independent `HsmsSession` instances without changing the SECS/GEM public API; see [MULTI_EQUIPMENT_HOST.md](MULTI_EQUIPMENT_HOST.md).
-- **Blocked by unavailable normative document:** scopes explicitly marked Blocked in the existing requirement traces; no wire number or service code was guessed.
+Historical defect corrections recorded at that time included transaction-secondary correlation, immutable async parameter snapshots, reentrant spool purge safety, enum-boundary rejection, bounded/virtualized UI logging, current-versus-last error separation, and FullKit's `_._` meta-package layout. Subsequent source work may change API and package inventories, so the dated “no public signature change” statement is not a current assertion.
 
-Performance measurements are in [PERFORMANCE_BASELINE.md](PERFORMANCE_BASELINE.md). Licensed standards and external/customer material were not copied into source, packages, tests, or documentation.
+Historical performance measurements are isolated in [PERFORMANCE_BASELINE.md](PERFORMANCE_BASELINE.md). Licensed standards, simulator binaries and external/customer material must not be copied into source, packages, tests or public documentation.

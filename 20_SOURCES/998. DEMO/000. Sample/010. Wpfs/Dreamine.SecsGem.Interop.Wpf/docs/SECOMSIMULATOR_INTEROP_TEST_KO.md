@@ -1,71 +1,79 @@
 # SEComSimulator 상호운용 시험
 
-## 범위와 증거 경계
+## 범위와 현재 상태
 
-Harness는 .NET 8을 대상으로 하며 Dreamine 공개 API만 사용한다. 설치 제품명과 제공된 설치 정보는 Simulator 4.0을 가리키지만 실행 파일의 File/Product Version 값은 유효하지 않아 Revision을 독립적으로 확인하지 못했다. 벤더 실행 파일, DLL, 메시지·시나리오 파일, 화면, 매뉴얼은 저장소에 포함하지 않았다.
-
-설치 폴더는 읽기 전용으로 조사했다. 구성과 기본 예제에서 Host/Equipment, Active/Passive 필드와 XML 메시지·시나리오 데이터를 확인했으나 공식 매뉴얼은 없었다. 이 정보는 설정 참고일 뿐 Normative 근거가 아니다. 이 문서는 SEMI Revision을 확정하지 않는다.
-
-## 자동 시험 결과
-
-2026-08-10 실행 결과:
-
-- 신규 프로젝트 Release Build: 통과, 경고 0, 오류 0
-- 로컬 S1F1/S1F2: 1,000/1,000 통과, timeout 0
-- HSMS Linktest: 100/100 통과
-- 독립 Connect/Select/Dispose: 100/100 통과
-- 동시 Primary 20건 상관관계: 통과
-- 기존 SECS/GEM/GEM300 테스트: 203/203 통과
-- UI 렌더링: 1366×768, 1920×1080 및 125%·150% 유효 DIP 레이아웃을 확인했다. 수평 스크롤에 의존하지 않으며 좁은 높이에서는 Connection/Advanced가 세로 스크롤된다.
-- 외부 Simulator 시험: **Not Run**
-
-로컬 결과만으로 외부 제품 호환성을 주장하지 않는다.
-
-## B 모드 — Simulator Host / Dreamine Equipment
-
-1. Harness 좌측에서 `Role = Equipment`, `Mode = Passive`, `Host / Bind = 127.0.0.1`, `Port = 7000`, 합의한 Session/Device ID(초기값 `0`)를 설정한다.
-2. **Advanced Settings**에서 타이머를 확인하고 **Launch Simulator — manual action**을 누른다. 외부 프로세스를 시작하는 Harness 동작은 이 버튼뿐이다.
-3. Simulator의 **Configure**(또는 **Configurate**) → **Connection**에서 HSMS, **HOST Mode**, **Active**를 선택한다. **Remote IP = 127.0.0.1**, **Remote Port = 7000**, 동일 Device ID와 T3/T5/T6/T7/T8을 입력한다.
-4. Harness의 **Connect**를 먼저 눌러 Passive 수신 대기 상태로 만든다.
-5. Simulator의 **Start** 또는 **Connect**를 누르고 `HSMS Connected`, `HSMS SELECTED` 표시를 확인한다.
-6. Harness에서 **Enable Equipment Responder**를 누른 뒤 Simulator에서 아래의 확인된 S1 메시지를 송신한다.
-7. **Protocol Log**에서 방향, SxFy, System Bytes 상관관계, Item, Raw Hex를 확인하고 **Advanced Settings**에서 마스킹 JSON/Markdown을 내보낸다.
-
-사용자가 3–7단계를 수행하기 전까지 B 모드는 `Waiting for User` / `Not Run`이다.
-
-## C 모드 — Dreamine Host / Simulator Equipment
-
-설치된 Simulator가 Equipment/Local Mode를 실제로 제공할 때만 수행한다.
-
-1. Simulator에서 **HOST Mode**를 해제하고 **Passive**, **Local Port = 7000**, 동일 Device ID와 타이머를 설정한 후 **Start**를 누른다.
-2. Harness에서 `Role = Host`, `Mode = Active`, `Host / Bind = 127.0.0.1`, `Port = 7000`, 동일 Session ID를 설정한다.
-3. **Connect**, **Select**, **Linktest** 순서로 실행한다.
-4. **Messages** 탭에서 확인된 S1 Primary를 보내고 Secondary 상관관계를 비교한다.
-5. Equipment/Passive 선택이 없으면 `Not Supported by Tested Simulator Configuration`으로 기록하고 통과로 추정하지 않는다.
-
-C 모드는 현재 **Not Run**이다.
-
-## 확인된 기본 메시지 형식
-
-다음은 설치된 기본 예제와 로컬 E30 자료에서 확인한 범위이며 일반 적합성 주장이 아니다.
-
-| 교환 | Primary Body | 예상 Secondary Body |
+| Evidence surface | 상태 | 경계 |
 |---|---|---|
-| S1F13/S1F14 | Host 시작은 빈 List, Equipment 시작은 식별 List | 1-byte COMMACK와 식별 List, 수락 예제 ACK `B[0]` |
-| S1F1/S1F2 | Item 없음 | ASCII Model/Software Revision List |
-| S1F3/S1F4 | 확인된 Status Variable ID List(예제 I2) | 대응 값 List |
-| S1F11/S1F12 | 지원 범위의 빈 List 또는 요청 ID List | ID, 이름, 단위 정의 List |
-| S1F15/S1F16 | Item 없음 | 1-byte OFLACK, 수락 예제 `B[0]` |
-| S1F17/S1F18 | Item 없음 | 1-byte ONLACK, 수락 예제 `B[0]` |
+| 외부 SEComSimulator 상호운용 | `NOT_RUN` | 이번 실행에서 Dreamine/상대편 Evidence Pair를 Review하지 않았습니다. |
+| WPF 화면 검증 | `BLOCKED_ENVIRONMENT` | Computer-use가 app approval/elicitations 부재로 애플리케이션을 실행하지 못했습니다. |
+| 고정 E30 Demo Responder Surface | `IMPLEMENTED_UNVERIFIED` | `E30-0611 derived subset profile v1`; 구현 범위가 고정돼 있으며 적합성 Evidence가 아닙니다. |
+| 고정 E30 별도 Process TCP Evidence | `PASS` | 공개 Host/Equipment Process가 실제 로컬 고정 Dialogue 실행을 완료했습니다. |
+| E37.1 적합성 | `BLOCKED_STANDARD` | 필요한 라이선스 Revision을 사용할 수 없습니다. |
 
-Simulator 화면에 보인다는 이유만으로 다른 메시지 Body를 만들지 않는다.
+설치 제품명과 제공된 설치 정보는 Simulator 4.0을 가리키지만 실행 파일에서 유효한 File/Product Version을 확인하지 못했습니다. Vendor 실행 파일, DLL, Message/Scenario 파일, Screenshot, Manual은 저장소에 복사하지 않았습니다. Host/Equipment 및 Active/Passive 필드를 읽기 전용으로 관찰한 결과는 설정 참고일 뿐 Normative Evidence가 아닙니다.
 
-## 판정과 제한
+UI의 `WaitingForUser`, `Passed` 값은 운영용 `InteropScenarioStatus` enum member입니다. 위 Evidence Status를 대체하지 않습니다. Root 실행은 자동 작업이 끝난 뒤 화면과 Simulator 수동 동작을 한 번에 요청합니다.
 
-예상 TCP/HSMS 상태, SxFy, W-bit, Session ID, System Bytes 상관관계를 증거에서 확인한 경우에만 통과로 판정한다. 예상 동작을 실제 결과로 기록하지 않는다.
+## 외부 실행 전 확인
 
-- Simulator GUI 자동화는 범위 밖이다.
-- 외부 HSMS, S1F13/F14, S1F1/F2, Online/Offline, 재연결 시험은 Not Run이다.
-- T3/T6/T7/T8 및 malformed frame은 라이브러리 회귀 테스트로 통과했지만 외부 제품 결과는 Not Run이다.
-- 미구현 GEM300 wire handler를 통과로 표시하지 않는다.
-- 이번 Harness 작업으로 라이브러리 또는 Communication public API를 변경하지 않았다.
+1. 별도 환경 소유자가 다른 Endpoint를 승인하지 않았다면 Loopback Endpoint와 합의한 Session/Device ID만 사용합니다.
+2. Responder를 활성화하기 전에 정확한 Profile을 선택합니다. 기본값은 **E30-0611 derived subset profile v1 (Demo)**입니다. 대안 **Educational basic responder (Demo-only, not GEM)**은 GEM이 아닙니다.
+3. 별도로 승인한 S/F별 Full-body Policy가 없다면 지속형 Logging은 `HeaderOnly`를 유지합니다. 고객/Private-sidecar Data를 저장하지 않습니다.
+4. Evidence Manifest/Checklist와 Product 소유 Output Folder를 준비합니다. 정상 Dreamine Log와 상대편 Log 또는 Screenshot이 모두 필요하며 단방향 Evidence로 외부 `PASS`를 만들 수 없습니다.
+5. 설치된 Simulator가 실제로 지원한다고 확인된 Message Row만 실행합니다. Menu Entry만으로 호환 Body Shape를 증명할 수 없습니다.
+
+## B 모드 — Simulator Host Active / Dreamine Equipment Passive
+
+1. Workbench에서 `Role = Equipment`, `Mode = Passive`, `Host / Bind = 127.0.0.1`, `Port = 7000`, 합의한 Session/Device ID를 설정합니다.
+2. Responder가 꺼진 상태에서 Profile을 선택한 뒤 **Enable Equipment Responder**를 누릅니다. 활성 중에는 선택기가 잠기며 Reconnect 후 교체 Session에 Binding이 복원됩니다.
+3. **Advanced Settings**에서 Timer를 확인하고 필요하면 **Launch Simulator — manual action**을 사용합니다. 외부 Process를 시작하는 Workbench 동작은 이 버튼뿐입니다.
+4. Simulator의 **Configure**(또는 **Configurate**) → **Connection**에서 HSMS, **HOST Mode**, **Active**를 선택합니다. `Remote IP = 127.0.0.1`, `Remote Port = 7000`, 동일 Device ID와 합의한 T3/T5/T6/T7/T8을 입력합니다.
+5. Workbench의 **Connect**를 먼저 누릅니다. Passive Listening/Disconnected-not-selected 자체는 실패가 아닙니다.
+6. Simulator의 **Start** 또는 **Connect**를 누르고 양쪽 애플리케이션에서 TCP Connected와 HSMS Selected를 확인합니다.
+7. 선택 Profile에서 Simulator가 지원하는 Primary만 전송합니다. 양쪽에서 Direction, SxFy, W-bit, Session ID, System Bytes Correlation, Typed Body/ACK를 확인합니다.
+8. Disconnect/Reconnect를 수행하고 Responder가 한 번만 다시 Bind됐는지 확인한 뒤 Correlated Exchange를 반복합니다.
+9. Exact-wire Recorder를 finalize하기 전에 Session을 Disconnect/Stop합니다. Observation Drop 0, Recorder Drop 0, Flush 완료, Writer Failure 없음인지 확인합니다.
+10. Finalize된 Dreamine/상대편 Artifact를 Hash하고 Checklist를 완료한 뒤 Manual Review합니다. 모든 단계에 Evidence가 생기기 전까지 B 모드 행은 `NOT_RUN`입니다.
+
+## C 모드 — Dreamine Host Active / Simulator Equipment Passive
+
+설치된 Simulator가 Equipment/Local Mode를 제공할 때만 진행합니다.
+
+1. Simulator에서 **HOST Mode**를 해제하고 **Passive**, `Local Port = 7000`, 합의한 Device ID와 Timer를 설정한 후 **Start**를 누릅니다.
+2. Workbench에서 `Role = Host`, `Mode = Active`, `Host / Bind = 127.0.0.1`, `Port = 7000`, 동일 Session ID를 설정합니다.
+3. **Connect**, **Select**, **Linktest** 순서로 실행합니다.
+4. 제한된 Message Template Catalog v1/Scenario v1을 로드하거나 Structured Editor에서 확인된 Message Shape만 사용합니다.
+5. B 모드와 동일하게 양쪽 Correlation과 Evidence-health 조건을 검증합니다.
+6. Equipment/Passive 선택이 없으면 관찰 결과만 보존하고 C 모드는 `NOT_RUN`으로 둡니다. 호환성을 추론하지 않습니다.
+
+C 모드는 `NOT_RUN`입니다.
+
+## 고정 E30 Demo Dialogue 경계
+
+정확한 Profile 이름은 `E30-0611 derived subset profile v1`입니다. 공개 Demo Profile은 다음 20개 Dialogue Definition을 고정합니다.
+
+| Direction family | 포함 Dialogue |
+|---|---|
+| Host-request/Equipment-response | S1F1/F2, S1F3/F4, S1F11/F12, S1F13/F14, S1F15/F16, S1F17/F18; S2F13/F14, S2F15/F16, S2F17/F18, S2F29/F30, S2F31/F32, S2F33/F34, S2F35/F36, S2F37/F38, S2F41/F42; S5F3/F4, S5F5/F6; S6F15/F16 |
+| Equipment-primary/Host-response | S5F1/F2, S6F11/F12 |
+
+Public Host Client가 해당 Direction을 명시적으로 등록한 일부 Communication/Time Exchange는 Equipment가 시작할 수도 있습니다. Direction은 반드시 관찰하며 추론하지 않습니다. S2F35 Empty-list Unlink/Delete Variant와 S6F19/F20은 `BLOCKED_STANDARD`이고, Multi-block, Trace, Limit, Spooling 및 고정 Profile 밖 Capability Family는 `INTENTIONALLY_EXCLUDED`입니다.
+
+교육용 Fallback은 S1F1/F2, S1F3/F4, S1F11/F12, S1F13/F14, S1F15/F16, S1F17/F18, S2F17/F18만 포함합니다. Demo-only이며 GEM으로 보고하면 안 됩니다.
+
+## 외부 `PASS` 기준
+
+다음 조건을 모두 만족한 행만 `PASS`가 될 수 있습니다.
+
+- 예상 TCP/HSMS State와 Reconnect 동작이 보입니다.
+- Direction, SxFy, W-bit, Session ID, System Bytes Correlation이 일치합니다.
+- Body와 Typed ACK가 선택 Profile에 맞고 Reject 시 State를 변경하지 않습니다.
+- Exact-wire Health Gate가 Evidence 대상입니다.
+- Dreamine/상대편 Artifact가 Finalize·Hash되고 Manual Review됐습니다.
+- Profile 범위를 넓히지 않은 결과가 중앙 보고서에 기록됐습니다.
+
+Timeout, Malformed Body, 예상 밖 ACK, Disconnect, 미지원 설정, Observation Drop, 불완전 Flush는 Evidence로 보존하며 `PASS`가 아닙니다. 로컬 Loopback, 별도 Process QuickStart 또는 UI Workflow 값은 외부 행을 승격할 수 없습니다.
+
+## Historical Evidence — 2026-08-10 only
+
+과거 문서에는 2026-08-10 로컬 합성 Loopback Count와 UIAutomation/PrintWindow Fallback Capture가 기록돼 있었습니다. 해당 항목은 날짜가 고정된 과거 비교 Evidence이며 현재 화면 또는 외부 Evidence가 아닙니다. 당시 외부 Simulator 상태도 `NOT_RUN`이었습니다.

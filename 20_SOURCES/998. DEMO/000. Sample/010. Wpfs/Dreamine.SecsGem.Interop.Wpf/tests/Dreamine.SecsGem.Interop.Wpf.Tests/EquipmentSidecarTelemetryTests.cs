@@ -93,12 +93,14 @@ public sealed class EquipmentSidecarTelemetryTests
                 CancellationToken.None);
 
             var json = await File.ReadAllTextAsync(paths.JsonPath);
-            Assert.Contains("PUBLIC-SUMMARY", json, StringComparison.Ordinal);
+            Assert.DoesNotContain("PUBLIC-SUMMARY", json, StringComparison.Ordinal);
             Assert.DoesNotContain("PRIVATE-SECRET", json, StringComparison.Ordinal);
             Assert.DoesNotContain("PRIVATE-BODY", json, StringComparison.Ordinal);
+            Assert.DoesNotContain("\"Summary\"", json, StringComparison.Ordinal);
             using var document = JsonDocument.Parse(json);
             Assert.Equal(1, document.RootElement.GetProperty("ExcludedPrivateProfileLogCount").GetInt32());
-            Assert.Single(document.RootElement.GetProperty("Logs").EnumerateArray());
+            var exported = Assert.Single(document.RootElement.GetProperty("Logs").EnumerateArray());
+            Assert.Equal("HSMS", exported.GetProperty("Category").GetString());
         }
         finally
         {

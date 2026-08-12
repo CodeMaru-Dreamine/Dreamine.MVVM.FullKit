@@ -1,17 +1,38 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using Dreamine.Communication.Abstractions.Enums;
 using Dreamine.Secs.Abstractions.Enums;
 using Dreamine.Secs.Abstractions.Hsms;
+using Dreamine.Secs.Abstractions.Interfaces;
 using Dreamine.Secs.Abstractions.Model;
-using Dreamine.Secs.Com.Hsms;
+using Dreamine.Secs.Abstractions.Options;
+using Dreamine.Secs.Com;
 using Dreamine.SecsGem.Interop.Wpf.Models;
 
 namespace Dreamine.SecsGem.Interop.Wpf.Managers;
 
-public sealed class ScenarioManager(InteropLogManager log)
+public sealed class ScenarioManager
 {
+    private const ushort SelfTestSessionId = 7;
+    private readonly InteropLogManager _log;
+    private readonly Func<ConnectionSettings, ISecsMessageSessionProvider> _providerFactory;
+
+    public ScenarioManager(InteropLogManager log)
+        : this(log, settings => new DreamineSecsCommunicationProvider(_ => settings.ToOptions()))
+    {
+    }
+
+    internal ScenarioManager(
+        InteropLogManager log,
+        Func<ConnectionSettings, ISecsMessageSessionProvider> providerFactory)
+    {
+        _log = log ?? throw new ArgumentNullException(nameof(log));
+        _providerFactory = providerFactory ?? throw new ArgumentNullException(nameof(providerFactory));
+    }
+
     public ObservableCollection<InteropScenarioResult> Scenarios { get; } = new(new[]
     {
         new InteropScenarioResult("A-01", "Self loopback: TCP + Select + Linktest", false),
@@ -38,7 +59,7 @@ public sealed class ScenarioManager(InteropLogManager log)
 
         try
         {
-            await using (var pair = await LoopbackPair.CreateAsync(token).ConfigureAwait(false))
+            await using (var pair = await LoopbackPair.CreateAsync(_providerFactory, token).ConfigureAwait(false))
             {
                 var linktestTimer = Stopwatch.StartNew();
                 for (var linktest = 0; linktest < reconnectCycles; linktest++)
@@ -52,10 +73,13 @@ public sealed class ScenarioManager(InteropLogManager log)
                 {
                     token.ThrowIfCancellationRequested();
                     var latency = Stopwatch.StartNew();
-                    var request = new SecsMessage(new(0), new(1), new(1), true, pair.Host.AllocateSystemBytes());
-                    var response = await pair.Host.SendPrimaryAsync(request, token).ConfigureAwait(false);
+                    var response = await pair.Host.RequestAsync(Dialogue(1, 1), null, token).ConfigureAwait(false);
                     latency.Stop(); latencies.Add(latency.Elapsed.TotalMilliseconds);
-                    if (response.Stream.Value == 1 && response.Function.Value == 2 && response.SystemBytes == request.SystemBytes) passed++; else failed++;
+                    if (response.SessionId.Value == SelfTestSessionId &&
+                        response.Stream.Value == 1 && response.Function.Value == 2)
+                        passed++;
+                    else
+                        failed++;
                 }
                 throughput.Stop();
                 Scenarios[1].Elapsed = throughput.Elapsed;
@@ -63,11 +87,8 @@ public sealed class ScenarioManager(InteropLogManager log)
                     $"{passed:N0}/{messageCount:N0} correlated replies; {messageCount / Math.Max(throughput.Elapsed.TotalSeconds, .001):N1} msg/s.");
 
                 var concurrentTimer = Stopwatch.StartNew();
-                var concurrent = Enumerable.Range(0, 20).Select(_ =>
-                {
-                    var request = new SecsMessage(new(0), new(1), new(1), true, pair.Host.AllocateSystemBytes());
-                    return pair.Host.SendPrimaryAsync(request, token);
-                });
+                var concurrent = Enumerable.Range(0, 20)
+                    .Select(_ => pair.Host.RequestAsync(Dialogue(1, 1), null, token));
                 var responses = await Task.WhenAll(concurrent).ConfigureAwait(false);
                 concurrentTimer.Stop(); Scenarios[3].Elapsed = concurrentTimer.Elapsed;
                 if (responses.Select(value => value.SystemBytes.Value).Distinct().Count() == responses.Length)
@@ -79,7 +100,7 @@ public sealed class ScenarioManager(InteropLogManager log)
             for (var cycle = 0; cycle < reconnectCycles; cycle++)
             {
                 token.ThrowIfCancellationRequested();
-                await using var pair = await LoopbackPair.CreateAsync(token).ConfigureAwait(false);
+                await using var pair = await LoopbackPair.CreateAsync(_providerFactory, token).ConfigureAwait(false);
                 if (pair.Host.HsmsState != HsmsConnectionState.Selected) throw new InvalidOperationException("Reconnect cycle did not reach Selected.");
             }
             reconnectTimer.Stop(); Scenarios[2].Elapsed = reconnectTimer.Elapsed;
@@ -96,7 +117,7 @@ public sealed class ScenarioManager(InteropLogManager log)
         catch (Exception exception)
         {
             failed++;
-            log.Error("SelfTest", exception);
+            _log.Error("SelfTest", exception);
             foreach (var scenario in Scenarios.Take(4).Where(value => value.Status == InteropScenarioStatus.Running))
             { scenario.Status = InteropScenarioStatus.Failed; scenario.Detail = exception.Message; }
         }
@@ -109,7 +130,7 @@ public sealed class ScenarioManager(InteropLogManager log)
             reconnectCycles, messageCount / Math.Max((completed - started).TotalSeconds, .001),
             latencies.Count == 0 ? 0 : latencies[0], average, latencies.Count == 0 ? 0 : latencies[^1], p95,
             failed == 0 ? null : "See scenario detail and diagnostic log.", failed == 0 ? "Passed" : "Failed", checks);
-        log.Info("SelfTest", $"{summary.Result}: {summary.Passed:N0} replies, {summary.ReconnectCycles:N0} reconnect cycles.");
+        _log.Info("SelfTest", $"{summary.Result}: {summary.Passed:N0} replies, {summary.ReconnectCycles:N0} reconnect cycles.");
         return summary;
     }
 
@@ -130,77 +151,151 @@ public sealed class ScenarioManager(InteropLogManager log)
 
     private async Task VerifyResponderRebindAsync(CancellationToken token)
     {
-        await using var connection = new ConnectionManager(log);
-        var messages = new MessageManager(connection, log);
-        var settings = new ConnectionSettings
-        {
-            Host = "127.0.0.1",
-            Mode = SecsConnectionMode.Passive,
-            Role = SecsRole.Equipment,
-            SessionId = 0,
-            T3Seconds = 10,
-            T5Seconds = 2,
-            T6Seconds = 5,
-            T7Seconds = 10,
-            T8Seconds = 5
-        };
+        var wireRoot = Path.Combine(Path.GetTempPath(), "DreamineInteropSelfTestLogs");
+        Directory.CreateDirectory(wireRoot);
+        await using var wireLog = new WireLogManager(_log, wireRoot);
+        await using var connection = new ConnectionManager(_log, _providerFactory, wireLog);
+        using var messages = new MessageManager(connection, _log);
+        var settings = Settings(0, SecsConnectionMode.Passive, SecsRole.Equipment);
 
         for (var cycle = 0; cycle < 2; cycle++)
         {
             settings.Port = ReservePort();
             var passiveConnect = connection.ConnectAsync(settings, token);
-            await WaitUntilAsync(() => connection.TcpState == "Listening", token).ConfigureAwait(false);
+            await WaitUntilOrCompletionAsync(
+                () => connection.TcpState == "Listening",
+                passiveConnect,
+                token).ConfigureAwait(false);
             if (cycle == 0) messages.EnableEquipmentResponder();
 
-            await using var host = CreateSession(settings.Port, SecsConnectionMode.Active, SecsRole.Host);
+            await using var host = CreateSession(
+                _providerFactory,
+                Settings(settings.Port, SecsConnectionMode.Active, SecsRole.Host));
             await host.ConnectAsync(token).ConfigureAwait(false);
             await passiveConnect.ConfigureAwait(false);
             await host.SelectAsync(token).ConfigureAwait(false);
-            var request = new SecsMessage(new(0), new(1), new(13), true, host.AllocateSystemBytes(), new SecsListItem());
-            var response = await host.SendPrimaryAsync(request, token).ConfigureAwait(false);
-            if (response.Stream.Value != 1 || response.Function.Value != 14 || response.SystemBytes != request.SystemBytes)
+            var response = await host.RequestAsync(
+                Dialogue(1, 13),
+                new SecsListItem(),
+                token).ConfigureAwait(false);
+            if (response.SessionId.Value != SelfTestSessionId ||
+                response.Stream.Value != 1 || response.Function.Value != 14)
                 throw new InvalidOperationException($"Equipment responder rebind cycle {cycle + 1} returned an invalid S1F14.");
             await connection.DisconnectAsync(token).ConfigureAwait(false);
         }
     }
 
-    private sealed class LoopbackPair(HsmsSession equipment, HsmsSession host) : IAsyncDisposable
+    private sealed class LoopbackPair(
+        ISecsMessageSession equipment,
+        ISecsMessageSession host,
+        IDisposable responderRegistration) : IAsyncDisposable
     {
-        public HsmsSession Equipment { get; } = equipment;
-        public HsmsSession Host { get; } = host;
-        public static async Task<LoopbackPair> CreateAsync(CancellationToken token)
+        public ISecsMessageSession Equipment { get; } = equipment;
+        public ISecsMessageSession Host { get; } = host;
+
+        public static async Task<LoopbackPair> CreateAsync(
+            Func<ConnectionSettings, ISecsMessageSessionProvider> providerFactory,
+            CancellationToken token)
         {
             var port = ReservePort();
-            var equipment = CreateSession(port, SecsConnectionMode.Passive, SecsRole.Equipment);
-            var host = CreateSession(port, SecsConnectionMode.Active, SecsRole.Host);
-            equipment.MessageReceived += (_, message) =>
-            {
-                if (message.Stream.Value != 1 || message.Function.Value != 1 || !message.ReplyExpected) return;
-                var response = new SecsMessage(message.SessionId, new(1), new(2), false, message.SystemBytes,
-                    new SecsListItem(new SecsAsciiItem("DREAMINE-INTEROP"), new SecsAsciiItem("0.1")));
-                _ = equipment.SendAsync(response, token);
-            };
+            var equipment = CreateSession(
+                providerFactory,
+                Settings(port, SecsConnectionMode.Passive, SecsRole.Equipment));
+            var host = CreateSession(
+                providerFactory,
+                Settings(port, SecsConnectionMode.Active, SecsRole.Host));
+            var registration = equipment.PrimaryDispatcher.Register(
+                Dialogue(1, 1),
+                static async (context, cancellationToken) =>
+                {
+                    if (!context.CanReply) return;
+                    await context.ReplyAsync(
+                        new SecsListItem(
+                            new SecsAsciiItem("DREAMINE-INTEROP"),
+                            new SecsAsciiItem("0.1")),
+                        cancellationToken).ConfigureAwait(false);
+                });
             try
             {
                 var passiveConnect = equipment.ConnectAsync(token);
-                await WaitUntilAsync(() => equipment.State.ToString() == "Listening", token).ConfigureAwait(false);
+                await WaitUntilOrCompletionAsync(
+                    () => equipment.State == ConnectionState.Listening,
+                    passiveConnect,
+                    token).ConfigureAwait(false);
                 await host.ConnectAsync(token).ConfigureAwait(false);
                 await passiveConnect.ConfigureAwait(false);
                 await host.SelectAsync(token).ConfigureAwait(false);
-                return new LoopbackPair(equipment, host);
+                return new LoopbackPair(equipment, host, registration);
             }
-            catch { await host.DisposeAsync(); await equipment.DisposeAsync(); throw; }
+            catch
+            {
+                registration.Dispose();
+                await host.DisposeAsync();
+                await equipment.DisposeAsync();
+                throw;
+            }
         }
-        public async ValueTask DisposeAsync() { await Host.DisposeAsync(); await Equipment.DisposeAsync(); }
-        private static HsmsSession CreateSession(int port, SecsConnectionMode mode, SecsRole role) => ScenarioManager.CreateSession(port, mode, role);
+
+        public async ValueTask DisposeAsync()
+        {
+            responderRegistration.Dispose();
+            await Host.DisposeAsync();
+            await Equipment.DisposeAsync();
+        }
     }
 
-    private static HsmsSession CreateSession(int port, SecsConnectionMode mode, SecsRole role) => new(new HsmsSessionOptions
+    private static ISecsMessageSession CreateSession(
+        Func<ConnectionSettings, ISecsMessageSessionProvider> providerFactory,
+        ConnectionSettings settings)
     {
-        Host = "127.0.0.1", Port = port, Mode = mode, Role = role, SessionId = new(0),
-        Timers = new HsmsTimerOptions { T3 = TimeSpan.FromSeconds(10), T5 = TimeSpan.FromSeconds(2), T6 = TimeSpan.FromSeconds(5), T7 = TimeSpan.FromSeconds(10), T8 = TimeSpan.FromSeconds(5) }
-    });
+        var provider = providerFactory(settings) ??
+            throw new InvalidOperationException("The self-test provider factory returned null.");
+        return provider.CreateSession(new SecsConnectionOptions
+        {
+            ProviderKey = provider.Key,
+            Role = settings.Role,
+            Mode = settings.Mode
+        }) ?? throw new InvalidOperationException("The self-test provider returned null.");
+    }
+
+    private static ConnectionSettings Settings(int port, SecsConnectionMode mode, SecsRole role) => new()
+    {
+        Host = "127.0.0.1",
+        Port = port,
+        Mode = mode,
+        Role = role,
+        SessionId = SelfTestSessionId,
+        T3Seconds = 10,
+        T5Seconds = 2,
+        T6Seconds = 5,
+        T7Seconds = 10,
+        T8Seconds = 5
+    };
+
+    private static SecsDialogueDefinition Dialogue(byte stream, byte primaryFunction) => new(
+        new SecsStream(stream),
+        new SecsFunction(primaryFunction),
+        new SecsFunction(checked((byte)(primaryFunction + 1))));
+
     private static int ReservePort() { var listener = new TcpListener(IPAddress.Loopback, 0); listener.Start(); var port = ((IPEndPoint)listener.LocalEndpoint).Port; listener.Stop(); return port; }
     private static async Task WaitUntilAsync(Func<bool> condition, CancellationToken token)
     { while (!condition()) { token.ThrowIfCancellationRequested(); await Task.Delay(5, token).ConfigureAwait(false); } }
+
+    private static async Task WaitUntilOrCompletionAsync(
+        Func<bool> condition,
+        Task operation,
+        CancellationToken token)
+    {
+        while (!condition())
+        {
+            token.ThrowIfCancellationRequested();
+            if (operation.IsCompleted)
+            {
+                await operation.ConfigureAwait(false);
+                if (!condition())
+                    throw new InvalidOperationException("The passive connection completed without entering Listening state.");
+            }
+            await Task.Delay(5, token).ConfigureAwait(false);
+        }
+    }
 }

@@ -3,9 +3,25 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <IsPackable>false</IsPackable>
+    <PackageId>Dreamine.SecsGem.Interop.Runtime</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Dreamine Core Team</Authors>
+    <Company>Dreamine</Company>
+    <Description>Provider-neutral SECS/GEM profile, template, scenario, responder, evidence, and bounded wire-log runtime.</Description>
+    <PackageTags>SECS;HSMS;GEM;scenario;wire-log</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit</PackageProjectUrl>
+    <Title>Dreamine.SecsGem.Interop.Runtime</Title>
+    <Copyright>© 2026 Dreamine Core Team. All rights reserved.</Copyright>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <IsPackable>true</IsPackable>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\100. Library\Communication.Abstractions\Dreamine.Communication.Abstractions.csproj" />
