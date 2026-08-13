@@ -248,11 +248,41 @@ var eventComponentDeclarations = declarations
 var eventComponentDeclarationKeys = eventComponentDeclarations
     .Select(declaration => $"{Normalize(declaration.Path)}|{declaration.QualifiedName}|{declaration.Line}")
     .ToHashSet(StringComparer.OrdinalIgnoreCase);
+var eventComponentTypeKeys = eventComponentDeclarations
+    .Select(declaration => $"{Normalize(declaration.Path)}|{declaration.QualifiedName}")
+    .ToHashSet(StringComparer.OrdinalIgnoreCase);
 eventBindings = eventBindings.Select(binding =>
 {
     var declaration = ResolveEventComponentDeclaration(binding, declarations);
     return declaration is null ? binding : binding with { ComponentPath = declaration.Path, ComponentLine = declaration.Line };
 }).ToList();
+var eventComponentMethods = new List<EventComponentMethodDeclaration>();
+foreach (var tree in syntaxTrees)
+{
+    var sourcePath = Normalize(tree.FilePath);
+    if (!eventComponentFilePathSet.Contains(sourcePath)) continue;
+
+    var root = await tree.GetRootAsync();
+    var model = compilation.GetSemanticModel(tree, ignoreAccessibility: true);
+    foreach (var method in root.DescendantNodes().OfType<MethodDeclarationSyntax>())
+    {
+        if (method.Body is null && method.ExpressionBody is null) continue;
+        var containingDeclaration = method.Ancestors().OfType<BaseTypeDeclarationSyntax>().FirstOrDefault();
+        if (containingDeclaration is null) continue;
+        var containingSymbol = model.GetDeclaredSymbol(containingDeclaration) as INamedTypeSymbol;
+        var containingTypeQualifiedName = containingSymbol?.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)
+            ?? BuildQualifiedName(containingDeclaration);
+        if (!eventComponentTypeKeys.Contains($"{sourcePath}|{containingTypeQualifiedName}")) continue;
+
+        eventComponentMethods.Add(new EventComponentMethodDeclaration(
+            sourcePath,
+            containingSymbol?.Name ?? containingDeclaration.Identifier.ValueText,
+            containingTypeQualifiedName,
+            method.Identifier.ValueText,
+            method.GetLocation().GetLineSpan().StartLinePosition.Line + 1,
+            method.ParameterList.Parameters.Count));
+    }
+}
 var eventComponentNodeIds = nodeMappings.Where(mapping =>
         eventComponentDeclarationKeys.Contains($"{Normalize(mapping.Path)}|{mapping.QualifiedName}|{mapping.Line}"))
     .Select(mapping => mapping.NodeId).Distinct(StringComparer.Ordinal).ToArray();
@@ -469,10 +499,12 @@ var report = new
         componentDeclarationCount = eventComponentDeclarations.Count,
         componentFileCount = eventComponentFilePaths.Length,
         bindingCount = eventBindings.Count,
+        methodDeclarationCount = eventComponentMethods.Count,
         unresolvedBindingCount = unresolvedEventBindings.Count,
         forwardingDeclarationCount = partialMethods.Count(item => item.Classification == "dreamine_event_forwarding"),
         eventComponentNodeIds,
         eventComponentFilePaths,
+        eventComponentMethods,
         eventBindings,
         unresolvedEventBindings
     },
@@ -515,6 +547,7 @@ var sourceDeclarationOutput = new
     partialMethods,
     eventBindings,
     eventComponentDeclarations,
+    eventComponentMethods,
     eventComponentNodeIds,
     eventComponentFilePaths,
     sourcePathOverrides,
@@ -756,6 +789,8 @@ sealed record PartialMethodDeclaration(string Path, string? ContainingType, stri
 sealed record EventBindingDeclaration(string Path, string? ContainingType, string? ContainingTypeQualifiedName,
     string FieldName, string ComponentTypeName, string ComponentTypeQualifiedName, int Line,
     string AttributeText, string? ComponentPath, int? ComponentLine);
+sealed record EventComponentMethodDeclaration(string Path, string ContainingType, string ContainingTypeQualifiedName,
+    string Name, int Line, int ParameterCount);
 sealed record NodeDeclarationMapping(string NodeId, string Path, string Name, string QualifiedName,
     int Line, string OntologyType, string? RawPath, bool IsRemapped);
 sealed record NodeMappingIssue(string NodeId, string Name, string? Path, int CandidateCount, string Reason);

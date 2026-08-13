@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "domainTerms": [
+    "SECS",
+    "HSMS",
+    "GEM",
+    "GEM300"
+  ],
+  "packages": [
+    {
+      "packageId": "Dreamine.Secs.Abstractions",
+      "version": "1.0.0",
+      "targetFrameworks": [
+        "net8.0"
+      ],
+      "projectFile": "20_SOURCES/100. Library/Secs.Abstractions/Dreamine.Secs.Abstractions.csproj",
+      "synthetic": false,
+      "summaryKo": "Dreamine SECS 통신을 위한 공통 계약과 프로바이더 경계입니다.",
+      "summaryEn": "Shared contracts and provider boundaries for Dreamine SECS communication.",
+      "dependencies": []
+    },
+    {
+      "packageId": "Dreamine.Secs.Com",
+      "version": "1.0.0",
+      "targetFrameworks": [
+        "net8.0"
+      ],
+      "projectFile": "20_SOURCES/100. Library/Secs.Com/Dreamine.Secs.Com.csproj",
+      "synthetic": false,
+      "summaryKo": "Dreamine 네이티브 SECS-II 및 HSMS 통신 런타임입니다.",
+      "summaryEn": "Native Dreamine SECS-II and HSMS communication runtime.",
+      "dependencies": [
+        "Dreamine.Secs.Abstractions"
+      ]
+    },
+    {
+      "packageId": "Dreamine.Gem.Abstractions",
+      "version": "1.0.0",
+      "targetFrameworks": [
+        "net8.0"
+      ],
+      "projectFile": "20_SOURCES/100. Library/Gem.Abstractions/Dreamine.Gem.Abstractions.csproj",
+      "synthetic": false,
+      "summaryKo": "타입 안전한 Dreamine GEM Host 및 Equipment 기능을 위한 공통 계약입니다.",
+      "summaryEn": "Shared contracts for typed Dreamine GEM host and equipment capabilities.",
+      "dependencies": [
+        "Dreamine.Secs.Abstractions"
+      ]
+    },
+    {
+      "packageId": "Dreamine.Gem",
+      "version": "1.0.0",
+      "targetFrameworks": [
+        "net8.0"
+      ],
+      "projectFile": "20_SOURCES/100. Library/Gem/Dreamine.Gem.csproj",
+      "synthetic": false,
+      "summaryKo": "타입 기반 Equipment 프로필과 E30 파생 상호운용 부분집합을 제공하는 GEM 런타임입니다.",
+      "summaryEn": "Dreamine GEM runtime with typed equipment profiles and an E30-derived interoperability subset.",
+      "dependencies": [
+        "Dreamine.Gem.Abstractions",
+        "Dreamine.Secs.Abstractions",
+        "Dreamine.Secs.Com"
+      ]
+    },
+    {
+      "packageId": "Dreamine.Gem300.Abstractions",
+      "version": "1.0.0",
+      "targetFrameworks": [
+        "net8.0"
+      ],
+      "projectFile": "20_SOURCES/100. Library/Gem300.Abstractions/Dreamine.Gem300.Abstractions.csproj",
+      "synthetic": false,
+      "summaryKo": "Dreamine GEM300 도메인 기능 모듈을 위한 공통 계약입니다.",
+      "summaryEn": "Shared contracts for Dreamine GEM300 domain capability modules.",
+      "dependencies": [
+        "Dreamine.Gem.Abstractions",
+        "Dreamine.Secs.Abstractions"
+      ]
+    },
+    {
+      "packageId": "Dreamine.Gem300",
+      "version": "1.0.0",
+      "targetFrameworks": [
+        "net8.0"
+      ],
+      "projectFile": "20_SOURCES/100. Library/Gem300/Dreamine.Gem300.csproj",
+      "synthetic": false,
+      "summaryKo": "Carrier, Substrate, Job, Object 및 Event 워크플로를 제공하는 GEM300 도메인 런타임입니다.",
+      "summaryEn": "Dreamine GEM300 domain runtime for carrier, substrate, job, object, and event workflows.",
+      "dependencies": [
+        "Dreamine.Gem300.Abstractions",
+        "Dreamine.Gem.Abstractions",
+        "Dreamine.Gem"
+      ]
+    },
+    {
+      "packageId": "Dreamine.SecsGem.FullKit",
+      "version": "1.0.0",
+      "targetFrameworks": [
+        "net8.0"
+      ],
+      "projectFile": null,
+      "synthetic": true,
+      "summaryKo": "Dreamine SECS-II, HSMS, GEM 및 GEM300 전체 스택을 설치하는 메타 패키지입니다.",
+      "summaryEn": "All-in-one meta package for the Dreamine SECS-II, HSMS, GEM, and GEM300 stack.",
+      "dependencies": [
+        "Dreamine.Secs.Abstractions",
+        "Dreamine.Secs.Com",
+        "Dreamine.Gem.Abstractions",
+        "Dreamine.Gem",
+        "Dreamine.Gem300.Abstractions",
+        "Dreamine.Gem300"
+      ]
+    }
+  ]
+}

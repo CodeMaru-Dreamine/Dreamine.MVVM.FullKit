@@ -156,9 +156,27 @@ public class DocViewModel : ViewModelBase
     /// \endif
     /// </param>
     public DocViewModel(ILibraryStore store)
+        : this(store, Path.Combine(AppContext.BaseDirectory, "wwwroot", "xmldocs"))
     {
+    }
+
+    /// <summary>
+    /// \if KO
+    /// <para>지정한 문서 루트를 사용하여 <see cref="DocViewModel"/> 클래스의 새 인스턴스를 초기화합니다.</para>
+    /// \endif
+    /// \if EN
+    /// <para>Initializes a new <see cref="DocViewModel"/> instance with the specified documentation root.</para>
+    /// \endif
+    /// </summary>
+    /// <param name="store">라이브러리 카탈로그 저장소입니다.</param>
+    /// <param name="xmlDocRoot">게시 가능한 XML 및 Markdown 문서 루트입니다.</param>
+    public DocViewModel(ILibraryStore store, string xmlDocRoot)
+    {
+        ArgumentNullException.ThrowIfNull(store);
+        ArgumentException.ThrowIfNullOrWhiteSpace(xmlDocRoot);
+
         _store = store;
-        _xmlDocRoot = Path.Combine(AppContext.BaseDirectory, "wwwroot", "xmldocs");
+        _xmlDocRoot = Path.GetFullPath(xmlDocRoot);
     }
 
     /// <summary>

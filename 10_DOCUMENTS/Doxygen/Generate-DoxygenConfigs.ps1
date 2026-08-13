@@ -122,7 +122,8 @@ function New-DoxyfileContent {
         [string]$Readme,
         [string]$ExcludedReadme,
         [string]$DotPath,
-        [string]$LayoutFile
+        [string]$LayoutFile,
+        [string]$CSharpFilter
     )
 
     $escapedName = Escape-DoxyValue $ProjectName
@@ -130,6 +131,12 @@ function New-DoxyfileContent {
     $escapedOutput = $OutputDirectory.Replace('\', '/')
     $escapedDotPath = $DotPath.Replace('\', '/')
     $escapedLayoutFile = $LayoutFile.Replace('\', '/')
+    $filterConfiguration = if ([string]::IsNullOrWhiteSpace($CSharpFilter)) {
+        ''
+    } else {
+        $escapedCSharpFilter = $CSharpFilter.Replace('\', '/')
+        "FILTER_PATTERNS          = *.cs=`"node $escapedCSharpFilter`"`r`n"
+    }
 
     return @"
 # Generated from project metadata by 10_DOCUMENTS/Doxygen/Generate-DoxygenConfigs.ps1
@@ -147,6 +154,7 @@ FILE_PATTERNS            = *.cs *.md
 RECURSIVE                = YES
 EXCLUDE                  = bin obj .git .vs node_modules TestResults wwwroot "$ExcludedReadme"
 EXCLUDE_PATTERNS         = */bin/* */obj/* */.git/* */.vs/* */node_modules/* */TestResults/* */wwwroot/* */Generated/* */generated/* *.g.cs *.g.i.cs *.Designer.cs *.AssemblyInfo.cs *.AssemblyAttributes.cs
+$filterConfiguration
 
 EXTRACT_ALL              = YES
 EXTRACT_PRIVATE          = YES
@@ -254,6 +262,18 @@ $projectPaths = @(
 )
 $createdReadmes = 0
 $generatedConfigs = 0
+$filteredProjects = @(
+    'Dreamine.Secs.Abstractions',
+    'Dreamine.Secs.Com',
+    'Dreamine.Gem.Abstractions',
+    'Dreamine.Gem',
+    'Dreamine.Gem300.Abstractions',
+    'Dreamine.Gem300'
+)
+$csharpFilterPath = Join-Path $outputRoot 'DoxygenCSharpFilter.mjs'
+if (-not (Test-Path -LiteralPath $csharpFilterPath)) {
+    throw "C# Doxygen filter was not found: $csharpFilterPath"
+}
 
 foreach ($relativeOrAbsolutePath in $projectPaths) {
     $projectPath = (Resolve-Path $relativeOrAbsolutePath).Path
@@ -289,8 +309,11 @@ foreach ($relativeOrAbsolutePath in $projectPaths) {
 
     $enLayout = [IO.Path]::GetRelativePath($projectDirectory, $layoutEnPath)
     $krLayout = [IO.Path]::GetRelativePath($projectDirectory, $layoutKoPath)
-    $enConfig = New-DoxyfileContent $projectName $version $descriptionEn 'English' 'EN' $enOutput 'README.md' 'README_KO.md' $dotPath $enLayout
-    $krConfig = New-DoxyfileContent $projectName $version $descriptionKo 'Korean' 'KO' $krOutput 'README_KO.md' 'README.md' $dotPath $krLayout
+    $projectCSharpFilter = if ($projectName -in $filteredProjects) {
+        [IO.Path]::GetRelativePath($projectDirectory, $csharpFilterPath)
+    } else { '' }
+    $enConfig = New-DoxyfileContent $projectName $version $descriptionEn 'English' 'EN' $enOutput 'README.md' 'README_KO.md' $dotPath $enLayout $projectCSharpFilter
+    $krConfig = New-DoxyfileContent $projectName $version $descriptionKo 'Korean' 'KO' $krOutput 'README_KO.md' 'README.md' $dotPath $krLayout $projectCSharpFilter
     [IO.File]::WriteAllText((Join-Path $projectDirectory 'Doxyfile.en'), $enConfig, $utf8)
     [IO.File]::WriteAllText((Join-Path $projectDirectory 'Doxyfile.kr'), $krConfig, $utf8)
     $generatedConfigs += 2

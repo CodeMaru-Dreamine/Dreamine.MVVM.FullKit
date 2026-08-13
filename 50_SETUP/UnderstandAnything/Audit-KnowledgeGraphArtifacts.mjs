@@ -28,8 +28,18 @@ function listFiles(root, predicate) {
   return result.sort();
 }
 
+const uaRoot = path.join(repositoryRoot, ".ua");
+const activeUaGraphs = fs.existsSync(uaRoot)
+  ? fs.readdirSync(uaRoot, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && /knowledge-graph.*\.json$/i.test(entry.name))
+      .map((entry) => path.join(uaRoot, entry.name))
+      .sort()
+  : [];
 const graphFiles = [
-  ...listFiles(path.join(repositoryRoot, ".ua"), (filePath) => /knowledge-graph.*\.json$/i.test(path.basename(filePath))),
+  // Only active top-level UA graphs are authoritative. Recursive traversal
+  // would incorrectly audit recoverable `.trash-*` snapshots and the bundled
+  // dashboard demo graph as if they were current publication inputs.
+  ...activeUaGraphs,
   ...listFiles(destinationRoot, (filePath) => path.basename(filePath).toLowerCase() === "knowledge-graph.json"),
 ];
 const graphIssues = [];

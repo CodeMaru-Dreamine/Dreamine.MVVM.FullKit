@@ -460,7 +460,10 @@ FodyWeavers.xsd
 /10_DOCUMENTS/Doxygen.tar
 /10_DOCUMENTS/Doxygen.7z
 /20_SOURCES/000. Project/010. App/Dreamine.Web/wwwroot/understand/
-/20_SOURCES/000. Project/010. App/Dreamine.Web/wwwroot/xmldocs/
+/20_SOURCES/000. Project/010. App/Dreamine.Web/wwwroot/xmldocs/*
+!/20_SOURCES/000. Project/010. App/Dreamine.Web/wwwroot/xmldocs/Dreamine.SecsGem.FullKit/
+!/20_SOURCES/000. Project/010. App/Dreamine.Web/wwwroot/xmldocs/Dreamine.SecsGem.FullKit/README.md
+!/20_SOURCES/000. Project/010. App/Dreamine.Web/wwwroot/xmldocs/Dreamine.SecsGem.FullKit/README_KO.md
 
 # Runtime application data
 **/App_Data/
