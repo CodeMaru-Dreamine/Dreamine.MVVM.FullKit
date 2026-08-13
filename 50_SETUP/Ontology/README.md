@@ -47,10 +47,14 @@ Dreamine FullKit의 코드 지식 그래프를 재사용 가능한 의미 모델
 UI와 챗봇 소비자 그래프까지 다시 생성하려면 저장소 루트에서 다음을 실행합니다.
 
 ```powershell
+# Codex/Understand Anything에서 저장소 루트를 대상으로 /understand --full 실행
+# 이어서 /understand-domain을 실행해 .ua/domain-graph.json 갱신
 powershell -ExecutionPolicy Bypass -File .\50_SETUP\Ontology\Generate-DreamineOntology.ps1 -RepositoryRoot $PWD
 node .\50_SETUP\UnderstandAnything\Generate-ProjectGraphs.mjs $PWD
 node .\50_SETUP\UnderstandAnything\Validate-ProjectGraphs.mjs $PWD
 ```
+
+SECS/GEM 프로젝트는 `secsgem-packages.json`을 프로젝트 경계의 정본으로 사용합니다. 여섯 코드 패키지는 전체 bilingual 지식 그래프에서 소유 C# 노드가 확인되어야 하며, `Dreamine.SecsGem.FullKit`은 소스 없는 메타 패키지이므로 source-verified synthetic `Project` ABox 노드로 생성됩니다. `Generate-DreamineOntology.ps1`의 사전 검증은 stale graph나 SECS/GEM 도메인이 없는 domain graph를 거부하며, 생성 후 검증은 일곱 프로젝트 노드와 패키지 의존 관계를 다시 확인합니다.
 
 - 챗봇 정본: `.ua/knowledge-graph.json`
 - UI 정본: `.ua/knowledge-graph.source-verified.ko.json`, `.ua/knowledge-graph.source-verified.en.json`

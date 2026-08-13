@@ -1,12 +1,25 @@
 [CmdletBinding()]
 param(
-    [string]$RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path,
-    [string]$DashboardBuild = (Join-Path (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path '.ua\public-dashboard-build'),
-    [string]$Destination = (Join-Path (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path '20_SOURCES\000. Project\010. App\Dreamine.Web\wwwroot\understand'),
+    [string]$RepositoryRoot,
+    [string]$DashboardBuild,
+    [string]$Destination,
     [string]$NodeExecutable = 'node'
 )
 
 $ErrorActionPreference = 'Stop'
+
+# Windows PowerShell can evaluate parameter default expressions before
+# $PSScriptRoot is populated. Resolve script-relative defaults only after the
+# param block so direct `-File` invocation behaves the same in PS 5.1 and 7.
+if ([string]::IsNullOrWhiteSpace($RepositoryRoot)) {
+    $RepositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+}
+if ([string]::IsNullOrWhiteSpace($DashboardBuild)) {
+    $DashboardBuild = Join-Path $RepositoryRoot '.ua\public-dashboard-build'
+}
+if ([string]::IsNullOrWhiteSpace($Destination)) {
+    $Destination = Join-Path $RepositoryRoot '20_SOURCES\000. Project\010. App\Dreamine.Web\wwwroot\understand'
+}
 
 $repositoryPath = [System.IO.Path]::GetFullPath($RepositoryRoot)
 $buildPath = [System.IO.Path]::GetFullPath($DashboardBuild)
@@ -22,6 +35,7 @@ $projectGraphGeneratorPath = Join-Path $PSScriptRoot 'Generate-ProjectGraphs.mjs
 $projectGraphValidatorPath = Join-Path $PSScriptRoot 'Validate-ProjectGraphs.mjs'
 $sourceMirrorGeneratorPath = Join-Path $PSScriptRoot 'Generate-SourceMirrors.mjs'
 $artifactAuditorPath = Join-Path $PSScriptRoot 'Audit-KnowledgeGraphArtifacts.mjs'
+$graphFreshnessModulePath = Join-Path $PSScriptRoot 'UnderstandGraphFreshness.psm1'
 $ontologyOverlayPublisherPath = Join-Path $repositoryPath '50_SETUP\Ontology\Apply-OntologyOverlay.mjs'
 $ontologySourcePath = Join-Path $repositoryPath '.ua\ontology'
 $ontologyArtifactNames = @(
@@ -39,7 +53,7 @@ if (-not $destinationPath.StartsWith($webRoot + [System.IO.Path]::DirectorySepar
     throw "Unsafe destination: $destinationPath"
 }
 
-foreach ($requiredPath in @($buildPath, $scanPath, $graphPath, $portalPath, $contentPath, $enricherPath, $generatorPath, $projectGraphGeneratorPath, $projectGraphValidatorPath, $sourceMirrorGeneratorPath, $artifactAuditorPath, $ontologyOverlayPublisherPath) + $ontologyArtifactPaths) {
+foreach ($requiredPath in @($buildPath, $scanPath, $graphPath, $portalPath, $contentPath, $enricherPath, $generatorPath, $projectGraphGeneratorPath, $projectGraphValidatorPath, $sourceMirrorGeneratorPath, $artifactAuditorPath, $graphFreshnessModulePath, $ontologyOverlayPublisherPath) + $ontologyArtifactPaths) {
     if (-not (Test-Path -LiteralPath $requiredPath)) {
         throw "Required input not found: $requiredPath"
     }
@@ -47,8 +61,11 @@ foreach ($requiredPath in @($buildPath, $scanPath, $graphPath, $portalPath, $con
 
 # Restore API contracts and code-derived relationships in both languages after
 # every fresh Understand Anything scan. Both outputs share node IDs/topology.
-$baseGraphPath = Join-Path $repositoryPath '.ua\knowledge-graph.pre-enrichment.json'
-if (-not (Test-Path -LiteralPath $baseGraphPath)) { $baseGraphPath = $graphPath }
+Import-Module $graphFreshnessModulePath -Force
+$graphSelection = Resolve-UnderstandBaseGraph -RepositoryRoot $repositoryPath -RawGraphPath $graphPath `
+    -SnapshotGraphPath (Join-Path $repositoryPath '.ua\knowledge-graph.pre-enrichment.json') -RefreshSnapshot
+$baseGraphPath = $graphSelection.SelectedPath
+Write-Output "Understand base graph: $baseGraphPath ($($graphSelection.Reason), commit=$($graphSelection.GitCommitHash), nodes=$($graphSelection.NodeCount))"
 $koGraphPath = Join-Path $repositoryPath '.ua\knowledge-graph.ko.json'
 $enGraphPath = Join-Path $repositoryPath '.ua\knowledge-graph.en.json'
 foreach ($languageRun in @(
@@ -100,8 +117,13 @@ $graphDestination = Join-Path $destinationPath 'graph'
 New-Item -ItemType Directory -Path $graphDestination | Out-Null
 Copy-Item -Path (Join-Path $buildPath '*') -Destination $graphDestination -Recurse -Force
 $graphIndexPath = Join-Path $graphDestination 'index.html'
-$graphIndexHtml = Get-Content -LiteralPath $graphIndexPath -Raw
-$graphIndexHtml = $graphIndexHtml.Replace('<title>Understand Anything</title>', '<title>Dreamine 프로젝트 지식 그래프</title>')
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+$graphIndexHtml = [System.IO.File]::ReadAllText($graphIndexPath, $utf8NoBom)
+# Keep this script ASCII-only. Windows PowerShell 5.1 decodes a BOM-less .ps1
+# through the active ANSI code page and can consume the '<' in </title> when a
+# non-ASCII literal immediately precedes it, leaving the whole app inside title.
+$graphTitle = '<title>Dreamine &#xD504;&#xB85C;&#xC81D;&#xD2B8; &#xC9C0;&#xC2DD; &#xADF8;&#xB798;&#xD504;</title>'
+$graphIndexHtml = $graphIndexHtml.Replace('<title>Understand Anything</title>', $graphTitle)
 $graphSelectorScript = @'
   <style>
     #dreamine-docs-return {
@@ -150,7 +172,7 @@ $graphSelectorScript = @'
         const returnLink = document.createElement('a');
         returnLink.id = 'dreamine-docs-return';
         returnLink.href = '/knowledge';
-        returnLink.textContent = language === 'en' ? '← Dreamine Docs Hub' : '← Dreamine 문서 허브';
+        returnLink.textContent = language === 'en' ? '\u2190 Dreamine Docs Hub' : '\u2190 Dreamine \ubb38\uc11c \ud5c8\ube0c';
         returnLink.setAttribute('aria-label', returnLink.textContent);
         document.body.appendChild(returnLink);
       });
@@ -159,7 +181,34 @@ $graphSelectorScript = @'
 '@
 if (-not $graphIndexHtml.Contains('</head>')) { throw 'Dashboard index does not contain </head>.' }
 $graphIndexHtml = $graphIndexHtml.Replace('</head>', "$graphSelectorScript`n</head>")
-Set-Content -LiteralPath $graphIndexPath -Value $graphIndexHtml -NoNewline -Encoding utf8
+$titleStart = $graphIndexHtml.IndexOf('<title>', [System.StringComparison]::OrdinalIgnoreCase)
+$titleEnd = $graphIndexHtml.IndexOf('</title>', [System.StringComparison]::OrdinalIgnoreCase)
+$headEnd = $graphIndexHtml.IndexOf('</head>', [System.StringComparison]::OrdinalIgnoreCase)
+$bodyStart = $graphIndexHtml.IndexOf('<body>', [System.StringComparison]::OrdinalIgnoreCase)
+if ($titleStart -lt 0 -or $titleEnd -le $titleStart) {
+    throw 'Dashboard index contains an unclosed title element.'
+}
+if ($headEnd -le $titleEnd -or $bodyStart -le $headEnd) {
+    throw 'Dashboard index has an invalid head/body structure.'
+}
+if (-not $graphIndexHtml.Contains('<div id="root"></div>')) {
+    throw 'Dashboard index does not contain the application root.'
+}
+
+$bundleReferencePattern = '(?:src|href)="(?<path>/understand/graph/[^"]+)"'
+$bundleReferences = [regex]::Matches($graphIndexHtml, $bundleReferencePattern)
+if ($bundleReferences.Count -eq 0) {
+    throw 'Dashboard index does not reference any local bundle assets.'
+}
+foreach ($bundleReference in $bundleReferences) {
+    $webPath = $bundleReference.Groups['path'].Value
+    $relativePath = $webPath.Substring('/understand/graph/'.Length).Replace('/', [System.IO.Path]::DirectorySeparatorChar)
+    $assetPath = Join-Path $graphDestination $relativePath
+    if (-not (Test-Path -LiteralPath $assetPath -PathType Leaf) -or (Get-Item -LiteralPath $assetPath).Length -eq 0) {
+        throw "Dashboard bundle asset not found or empty: $webPath"
+    }
+}
+[System.IO.File]::WriteAllText($graphIndexPath, $graphIndexHtml, $utf8NoBom)
 Copy-Item -LiteralPath $publishedKoGraphPath -Destination (Join-Path $destinationPath 'knowledge-graph.json') -Force
 Copy-Item -LiteralPath $publishedKoGraphPath -Destination (Join-Path $graphDestination 'knowledge-graph.json') -Force
 
@@ -198,7 +247,7 @@ if ($codeViewer.Count -ne 1) {
     throw "Expected exactly one CodeViewer chunk, found $($codeViewer.Count)."
 }
 
-$viewerText = Get-Content -LiteralPath $codeViewer[0].FullName -Raw
+$viewerText = [System.IO.File]::ReadAllText($codeViewer[0].FullName, $utf8NoBom)
 $urlPattern = 'function (?<name>\w+)\(e,t\)\{return`/file-content\.json\?\$\{new URLSearchParams\(\{token:t,path:e\}\)\.toString\(\)\}`\}'
 $urlMatches = [regex]::Matches($viewerText, $urlPattern)
 if ($urlMatches.Count -ne 1) {
@@ -227,7 +276,7 @@ $responseName = $sourceResponseMatches[0].Groups['response'].Value
 $payloadName = $sourceResponseMatches[0].Groups['payload'].Value
 $sourceResponseReplacement = '.then(async ' + $responseName + '=>{if(!' + $responseName + '.ok)throw new Error(' + $responseName + '.status===404?"Source preview is not available for this file.":"Source preview request failed.");const T=await ' + $responseName + '.text();if(!T.trim())throw new Error("Source preview is empty.");let ' + $payloadName + ';try{' + $payloadName + '=JSON.parse(T)}catch{throw new Error("Source preview data is invalid.")}if(!' + $payloadName + '||typeof ' + $payloadName + '.content!=="string")throw new Error("Source preview data is incomplete.");v({status:"loaded",source:' + $payloadName + ',error:null})})'
 $viewerText = [regex]::Replace($viewerText, $sourceResponsePattern, $sourceResponseReplacement, 1)
-Set-Content -LiteralPath $codeViewer[0].FullName -Value $viewerText -NoNewline -Encoding utf8
+[System.IO.File]::WriteAllText($codeViewer[0].FullName, $viewerText, $utf8NoBom)
 
 & $NodeExecutable $sourceMirrorGeneratorPath $repositoryPath $destinationPath
 if ($LASTEXITCODE -ne 0) {
@@ -257,6 +306,11 @@ if ($LASTEXITCODE -ne 0) {
 Write-Output "Published knowledge hub: $destinationPath"
 Write-Output "Published advanced graph: $graphDestination"
 Write-Output "Published source previews from scan and source-verified Overlay."
-Write-Output "Published project graphs: 160"
+$publishedCatalogPath = Join-Path $destinationPath 'project-catalog.json'
+$publishedCatalogText = [System.IO.File]::ReadAllText($publishedCatalogPath, [System.Text.Encoding]::UTF8)
+$publishedCatalog = $publishedCatalogText | ConvertFrom-Json
+$publishedProjectCount = [int]$publishedCatalog.totalProjects
+$publishedGraphCount = $publishedProjectCount * 2
+Write-Output "Published project graphs: $publishedGraphCount ($publishedProjectCount projects x 2 languages)"
 Write-Output "Audited every raw, localized, full, and per-project knowledge graph artifact."
 Write-Output "Published ontology consumer artifacts: $($ontologyArtifactPaths.Count)"

@@ -12,6 +12,8 @@ const readJson = async filePath => JSON.parse(await readFile(filePath, 'utf8'));
 const koGraph = await readJson(path.join(uaDirectory, 'knowledge-graph.ko.json'));
 const enGraph = await readJson(path.join(uaDirectory, 'knowledge-graph.en.json'));
 const domainGraph = await readJson(path.join(uaDirectory, 'domain-graph.json'));
+const secsGemManifestPath = path.join(scriptDirectory, 'secsgem-packages.json');
+const secsGemManifest = await readJson(secsGemManifestPath);
 
 const externalInterfaceNamespaces = new Map([
   ['INotifyPropertyChanged', 'System.ComponentModel'],
@@ -332,7 +334,46 @@ for (const node of typeGraphNodes) {
     }
   }
 }
-const allElements = [...codeElements, ...domainElements, ...externalElementsByName.values()];
+const secsGemPackageElements = (secsGemManifest.packages || []).map(packageInfo => {
+  const sourceGraphId = `synthetic:project:${packageInfo.packageId}`;
+  const stableId = resourceUri('element', `project|${packageInfo.packageId}`);
+  stableByGraphId.set(sourceGraphId, stableId);
+  return {
+    '@type': ['Project', ...(ancestorTypes.Project || []), 'owl:NamedIndividual'],
+    stable_id: stableId,
+    source_graph_id: sourceGraphId,
+    canonical_name: packageInfo.packageId,
+    labels: [
+      { '@type': 'LocalizedText', language: 'ko', text: packageInfo.packageId },
+      { '@type': 'LocalizedText', language: 'en', text: packageInfo.packageId }
+    ],
+    summaries: [
+      { '@type': 'LocalizedText', language: 'ko', text: packageInfo.summaryKo },
+      { '@type': 'LocalizedText', language: 'en', text: packageInfo.summaryEn }
+    ],
+    element_type: 'Project',
+    element_layer: 'library',
+    source_path: normalizePath(packageInfo.projectFile || '50_SETUP/Ontology/secsgem-packages.json'),
+    raw_element_type: 'project',
+    source_verification_status: packageInfo.synthetic ? 'derived_source_verified' : 'source_verified',
+    default_search_visible: true,
+    project_name: packageInfo.packageId,
+    package_id: packageInfo.packageId,
+    project_version: packageInfo.version,
+    target_frameworks: packageInfo.targetFrameworks || [],
+    signature: `package ${packageInfo.packageId} ${packageInfo.version}`,
+    complexity: 'simple',
+    tags: ['project-boundary', 'secsgem', packageInfo.synthetic ? 'meta-package' : 'source-package'],
+    evidence: [{
+      '@type': 'Evidence',
+      evidence_source: 'project_metadata',
+      evidence_value: packageInfo.projectFile || '50_SETUP/Ontology/secsgem-packages.json',
+      confidence: 1
+    }]
+  };
+});
+const secsGemPackageElementsById = new Map(secsGemPackageElements.map(element => [element.package_id, element]));
+const allElements = [...codeElements, ...domainElements, ...externalElementsByName.values(), ...secsGemPackageElements];
 const elementByStableId = new Map(allElements.map(element => [element.stable_id, element]));
 const graphNodeById = new Map(koGraph.nodes.map(node => [node.id, node]));
 const directAssertions = new Map();
@@ -379,9 +420,22 @@ const addEvidenceRelation = (relationType, source, target, evidenceValue, eviden
     relation_type: relationType,
     evidence: [{ '@type': 'Evidence', evidence_source: evidenceKind, evidence_value: evidenceValue, confidence: 1 }]
   });
-  addDirectAssertion(source, relationType, target);
+  addDirectAssertion(source, relationType === 'depends_on' ? 'dependsOn' : relationType, target);
   if (relationType === 'contains') addDirectAssertion(target, 'containedBy', source);
 };
+
+for (const packageInfo of secsGemManifest.packages || []) {
+  const source = secsGemPackageElementsById.get(packageInfo.packageId)?.stable_id;
+  for (const dependency of packageInfo.dependencies || []) {
+    const target = secsGemPackageElementsById.get(dependency)?.stable_id;
+    addEvidenceRelation(
+      'depends_on',
+      source,
+      target,
+      `50_SETUP/Ontology/secsgem-packages.json:${packageInfo.packageId}->${dependency}`,
+      'project_metadata');
+  }
+}
 
 for (const relation of pendingBaseRelations) {
   addEvidenceRelation(
@@ -499,6 +553,10 @@ const ensurePartialMethod = method => {
   if (graphNode) {
     const stableId = stableByGraphId.get(graphNode.id);
     partialStableByKey.set(key, stableId);
+    const ownerStableId = stableForType(method.path, method.containingTypeQualifiedName);
+    addEvidenceRelation('contains', ownerStableId, stableId,
+      `${method.path}:${method.line}:partial ${method.name}`, 'source_declaration');
+    addDirectAssertion(stableId, 'declaredIn', ensureSourceFile(method.path));
     return stableId;
   }
 
@@ -535,10 +593,61 @@ const ensurePartialMethod = method => {
 };
 for (const method of sourceDeclarationAudit.partialMethods || []) ensurePartialMethod(method);
 
+const eventMethodStableByKey = new Map();
+const eventMethodKey = method => `${normalizePath(method.path)}|${method.containingTypeQualifiedName}|${method.name}|${method.line}|${method.parameterCount}`;
+const ensureEventComponentMethod = method => {
+  const key = eventMethodKey(method);
+  if (eventMethodStableByKey.has(key)) return eventMethodStableByKey.get(key);
+
+  const graphNode = koGraph.nodes.find(node => node.type === 'function'
+    && effectiveSourcePath(node) === normalizePath(method.path)
+    && node.name === method.name
+    && (!node.lineRange || (method.line >= node.lineRange[0] && method.line <= node.lineRange[1])));
+  let stableId = stableByGraphId.get(graphNode?.id);
+  const ownerStableId = stableForType(method.path, method.containingTypeQualifiedName);
+  const ownerElement = elementByStableId.get(ownerStableId);
+  const fileStableId = ensureSourceFile(method.path);
+
+  if (!stableId) {
+    stableId = resourceUri('element', `event-component-method|${key}`);
+    const sourceGraphId = `derived:event-component-method:${hash(key)}`;
+    if (!elementByStableId.has(stableId)) {
+      const element = {
+        '@type': ['Method', ...(ancestorTypes.Method || []), 'owl:NamedIndividual'],
+        stable_id: stableId, source_graph_id: sourceGraphId, canonical_name: method.name,
+        labels: [
+          { '@type': 'LocalizedText', language: 'ko', text: method.name },
+          { '@type': 'LocalizedText', language: 'en', text: method.name }
+        ],
+        element_type: 'Method', element_layer: layerOf({ filePath: method.path }),
+        source_path: normalizePath(method.path), line_start: method.line, line_end: method.line,
+        project_name: ownerElement?.project_name, package_id: ownerElement?.package_id,
+        project_version: ownerElement?.project_version, target_frameworks: ownerElement?.target_frameworks || [],
+        namespace: ownerElement?.namespace,
+        signature: `method ${method.containingTypeQualifiedName}.${method.name}(${method.parameterCount} parameter(s))`,
+        complexity: 'unknown', source_verification_status: 'derived_source_verified', default_search_visible: true,
+        tags: ['source-verified-overlay', 'roslyn-event-component-method'],
+        evidence: [{ '@type': 'Evidence', evidence_source: 'source_declaration',
+          evidence_value: `${method.path}:${method.line}:method ${method.containingTypeQualifiedName}.${method.name}`, confidence: 1 }]
+      };
+      codeElements.push(element); allElements.push(element); elementByStableId.set(stableId, element);
+      stableByGraphId.set(sourceGraphId, stableId);
+    }
+  }
+
+  eventMethodStableByKey.set(key, stableId);
+  addEvidenceRelation('contains', ownerStableId, stableId,
+    `${method.path}:${method.line}:method ${method.containingTypeQualifiedName}.${method.name}`, 'source_declaration');
+  addDirectAssertion(stableId, 'declaredIn', fileStableId);
+  return stableId;
+};
+for (const method of sourceDeclarationAudit.eventComponentMethods || []) ensureEventComponentMethod(method);
+
 const eventPattern = {
   eventComponents: (sourceDeclarationAudit.eventComponentDeclarations || []).length,
   eventFiles: eventComponentFilePaths.size,
   eventBindings: (sourceDeclarationAudit.eventBindings || []).length,
+  eventMethods: (sourceDeclarationAudit.eventComponentMethods || []).length,
   forwardingDeclarations: (sourceDeclarationAudit.partialMethods || []).filter(method => method.classification === 'dreamine_event_forwarding').length,
   resolvedForwardings: 0, unresolvedForwardings: []
 };
@@ -596,17 +705,25 @@ for (const binding of sourceDeclarationAudit.eventBindings || []) {
 }
 
 for (const method of (sourceDeclarationAudit.partialMethods || []).filter(item => item.classification === 'dreamine_event_forwarding')) {
-  const binding = (sourceDeclarationAudit.eventBindings || []).find(candidate =>
-    normalizePath(candidate.path) === normalizePath(method.path)
-    && candidate.containingTypeQualifiedName === method.containingTypeQualifiedName);
+  const bindingCandidates = (sourceDeclarationAudit.eventBindings || []).filter(candidate =>
+    candidate.containingTypeQualifiedName === method.containingTypeQualifiedName);
+  const sameFileBinding = bindingCandidates.find(candidate => normalizePath(candidate.path) === normalizePath(method.path));
+  const binding = sameFileBinding || (bindingCandidates.length === 1 ? bindingCandidates[0] : undefined);
   const sourceMethodStableId = ensurePartialMethod(method);
-  const targetMethodNode = binding?.componentPath ? koGraph.nodes.find(node => node.type === 'function'
-    && effectiveSourcePath(node) === normalizePath(binding.componentPath)
-    && node.name === method.forwardTargetName
-    && (!node.apiMeta?.containingType
-      || node.apiMeta.containingType === binding.componentTypeName
-      || node.apiMeta.containingType.endsWith(`:${binding.componentTypeName}`))) : undefined;
-  const targetMethodStableId = stableByGraphId.get(targetMethodNode?.id);
+  const boundViewModelStableId = binding
+    ? stableForType(binding.path, binding.containingTypeQualifiedName)
+    : undefined;
+  addEvidenceRelation('contains', boundViewModelStableId, sourceMethodStableId,
+    `${method.path}:${method.line}:[DreamineCommand("Event.${method.forwardTargetName}")]`, 'source_attribute');
+  const namedTargetMethods = binding?.componentPath
+    ? (sourceDeclarationAudit.eventComponentMethods || []).filter(candidate =>
+      normalizePath(candidate.path) === normalizePath(binding.componentPath)
+      && candidate.containingTypeQualifiedName === binding.componentTypeQualifiedName
+      && candidate.name === method.forwardTargetName)
+    : [];
+  const exactParameterTarget = namedTargetMethods.find(candidate => candidate.parameterCount === method.parameterCount);
+  const targetMethod = exactParameterTarget || (namedTargetMethods.length === 1 ? namedTargetMethods[0] : undefined);
+  const targetMethodStableId = targetMethod ? ensureEventComponentMethod(targetMethod) : undefined;
   if (!binding || !sourceMethodStableId || !targetMethodStableId) {
     eventPattern.unresolvedForwardings.push({ method, binding: binding || null, reason: 'Forwarding target method was not found on the connected Event Component' });
     continue;

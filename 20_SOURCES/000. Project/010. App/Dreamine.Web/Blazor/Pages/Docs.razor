@@ -2,6 +2,7 @@
 @namespace DreamineWeb.Blazor.Pages
 @rendermode InteractiveServer
 @inject DocViewModel Vm
+@inject DocumentationCatalogService DocumentationCatalog
 @inject IJSRuntime JS
 @implements IDisposable
 
@@ -35,6 +36,14 @@
                     @if (!string.IsNullOrEmpty(Vm.Library.RepoUrl))
                     {
                         <a href="@Vm.Library.RepoUrl" target="_blank" class="dw-btn dw-btn--sm dw-btn--ghost">GitHub</a>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(KnowledgeGraphUrl))
+                    {
+                        <a href="@KnowledgeGraphUrl"
+                           class="dw-btn dw-btn--sm dw-btn--ghost"
+                           data-enhance-nav="false">
+                            @(Ko ? "지식 그래프" : "Knowledge Graph")
+                        </a>
                     }
                 </div>
                 @if (Vm.Library.Tags.Length > 0)
@@ -189,6 +198,9 @@
 
     // UI 라벨 언어는 전역 설정 사용
     private bool Ko => Lang.IsKorean;
+    private DocumentationProjectInfo? DocumentationProject { get; set; }
+    private string Language => Ko ? "ko" : "en";
+    private string KnowledgeGraphUrl => DocumentationProject?.GetGraphUrl(Language) ?? string.Empty;
 
     protected override Task OnInitializedAsync()
     {
@@ -201,6 +213,7 @@
         // 전역 언어 설정을 README 언어의 초기값으로 동기화
         Vm.IsKorean = Lang.IsKorean;
         await Vm.LoadAsync(LibraryId);
+        DocumentationProject = DocumentationCatalog.FindByDocumentPageUrl($"/docs/{LibraryId}");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

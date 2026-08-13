@@ -105,4 +105,24 @@ public sealed class DocumentationCatalogService
         _projects = catalog.Projects.OrderBy(project => project.Category).ThenBy(project => project.Name).ToArray();
         return _projects;
     }
+
+    /// <summary>Finds the catalog project published for a Dreamine document-page URL.</summary>
+    /// <param name="documentPageUrl">The application-relative document URL, such as <c>/docs/secsgem-fullkit</c>.</param>
+    /// <returns>The matching catalog project, or <see langword="null"/> when no project is published for the URL.</returns>
+    public DocumentationProjectInfo? FindByDocumentPageUrl(string? documentPageUrl)
+    {
+        if (string.IsNullOrWhiteSpace(documentPageUrl))
+            return null;
+
+        string normalizedUrl = NormalizeDocumentPageUrl(documentPageUrl);
+        return GetProjects().FirstOrDefault(project =>
+            !string.IsNullOrWhiteSpace(project.DocumentPageUrl)
+            && string.Equals(
+                NormalizeDocumentPageUrl(project.DocumentPageUrl),
+                normalizedUrl,
+                StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string NormalizeDocumentPageUrl(string documentPageUrl) =>
+        $"/{documentPageUrl.Trim().Trim('/')}";
 }

@@ -15,6 +15,35 @@ $doxygen = @(
 ) | Where-Object { Test-Path $_ } | Select-Object -First 1
 
 if (-not $doxygen) { throw 'Doxygen executable was not found.' }
+$node = Get-Command node -ErrorAction SilentlyContinue
+$csharpFilter = Join-Path $documentationRoot 'DoxygenCSharpFilter.mjs'
+
+function Get-UndocumentedPublicApiCount {
+    param([string]$XmlDirectory)
+
+    if (-not (Test-Path -LiteralPath $XmlDirectory)) { return 0 }
+    $count = 0
+    foreach ($xmlPath in Get-ChildItem -LiteralPath $XmlDirectory -Filter '*.xml' -File) {
+        if ($xmlPath.Name -eq 'index.xml') { continue }
+        try { [xml]$document = [IO.File]::ReadAllText($xmlPath.FullName) } catch { continue }
+        $compound = $document.doxygen.compounddef
+        if (-not $compound) { continue }
+        $sourceFile = [string]$compound.location.file
+        $isProductSource = $sourceFile -match '\.cs$' -and $sourceFile -notmatch '(^|[\\/])(tests|samples|bin|obj)([\\/]|$)'
+        if ($isProductSource -and $compound.prot -eq 'public' -and $compound.kind -in @('class', 'struct', 'interface', 'union', 'exception')) {
+            $description = ([string]$compound.briefdescription.InnerText + [string]$compound.detaileddescription.InnerText).Trim()
+            if ([string]::IsNullOrWhiteSpace($description)) { $count++ }
+        }
+        if ($compound.prot -ne 'public') { continue }
+        foreach ($member in $compound.SelectNodes('.//memberdef[@prot="public"]')) {
+            $memberSource = [string]$member.location.file
+            if ($memberSource -notmatch '\.cs$' -or $memberSource -match '(^|[\\/])(tests|samples|bin|obj)([\\/]|$)') { continue }
+            $description = ([string]$member.briefdescription.InnerText + [string]$member.detaileddescription.InnerText).Trim()
+            if ([string]::IsNullOrWhiteSpace($description)) { $count++ }
+        }
+    }
+    return $count
+}
 
 $languages = if ($Language -eq 'ALL') { @('EN', 'KR') } else { @($Language) }
 $projects = @(rg --files $sourcesRoot -g '*.csproj' -g '!**/bin/**' -g '!**/obj/**' |
@@ -26,6 +55,13 @@ foreach ($projectPathValue in $projects) {
     $projectPath = (Resolve-Path $projectPathValue).Path
     $projectDirectory = Split-Path $projectPath
     $projectName = [IO.Path]::GetFileNameWithoutExtension($projectPath)
+    $filterConfigured = Select-String -Path (Join-Path $projectDirectory 'Doxyfile.en') -Pattern '^FILTER_PATTERNS\s*=.*DoxygenCSharpFilter' -Quiet -ErrorAction SilentlyContinue
+    if ($filterConfigured) {
+        if (-not $node) { throw 'Node.js is required by DoxygenCSharpFilter.mjs.' }
+        if (-not (Test-Path -LiteralPath $csharpFilter)) { throw "C# Doxygen filter was not found: $csharpFilter" }
+        & $node.Source $csharpFilter --audit $projectDirectory
+        if ($LASTEXITCODE -ne 0) { throw "C# documentation inheritance audit failed: $projectName" }
+    }
 
     foreach ($currentLanguage in $languages) {
         $configName = if ($currentLanguage -eq 'EN') { 'Doxyfile.en' } else { 'Doxyfile.kr' }
@@ -70,17 +106,21 @@ foreach ($projectPathValue in $projects) {
         $imageFormatLine = (Select-String -Path $configPath -Pattern '^DOT_IMAGE_FORMAT\s*=').Line
         $imageFormat = if ($imageFormatLine) { ($imageFormatLine -split '=', 2)[1].Trim() } else { 'png' }
         $graphs = @(Get-ChildItem -LiteralPath $outputPath -Recurse -Filter "*.$imageFormat" -ErrorAction SilentlyContinue).Count
-        $status = if ($process.ExitCode -eq 0) { 'Success' } else { 'Failed' }
+        $undocumented = if ($filterConfigured) { Get-UndocumentedPublicApiCount (Join-Path $outputPath 'xml') } else { 0 }
+        $qualityFailure = $filterConfigured -and ($warnings -gt 0 -or $undocumented -gt 0)
+        $effectiveExitCode = if ($process.ExitCode -eq 0 -and $qualityFailure) { 2 } else { $process.ExitCode }
+        $status = if ($effectiveExitCode -eq 0) { 'Success' } else { 'Failed' }
         $result = [pscustomobject]@{
             Project = $projectName
             Language = $currentLanguage
-            ExitCode = $process.ExitCode
+            ExitCode = $effectiveExitCode
             Warnings = $warnings
+            Undocumented = $undocumented
             Graphs = $graphs
             Status = $status
         }
         $results.Add($result)
-        Write-Output "$projectName|$currentLanguage|Exit=$($process.ExitCode)|Warnings=$warnings|Graphs=$graphs"
+        Write-Output "$projectName|$currentLanguage|Exit=$effectiveExitCode|Warnings=$warnings|Undocumented=$undocumented|Graphs=$graphs"
     }
 }
 

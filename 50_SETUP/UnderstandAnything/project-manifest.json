@@ -1,0 +1,326 @@
+{
+  "schemaVersion": 1,
+  "sourceProjects": [
+    {
+      "projectFile": "20_SOURCES/000. Project/010. App/Codemaru/Codemaru.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/000. Project/010. App/Dreamine.Web/Dreamine.Web.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/000. Project/010. App/DreamineVMS.Web/DreamineVMS.Web.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/000. Project/010. App/DreamineVMS/DreamineVMS.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/000. Project/010. App/Families.AutoWriter/Families.AutoWriter.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/000. Project/010. App/Families.Web/Families.Web.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/000. Project/010. App/Portfolio.Web/Portfolio.Web.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/000. Project/010. App/ShopPlatform.Web/ShopPlatform.Web.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/000. Project/010. App/WeddingPlatform.Web/WeddingPlatform.Web.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/000. Project/010. App/WeddingThankYou/WeddingThankYou.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Attributes/Dreamine.MVVM.Attributes.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Behaviors.Core/Dreamine.MVVM.Behaviors.Core.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Behaviors.Wpf/Dreamine.MVVM.Behaviors.Wpf.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Behaviors/Dreamine.MVVM.Behaviors.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Communication.Abstractions/Dreamine.Communication.Abstractions.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Communication.Core/Dreamine.Communication.Core.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Communication.FullKit/Dreamine.Communication.FullKit.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Communication.RabbitMQ/Dreamine.Communication.RabbitMQ.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Communication.Serial/Dreamine.Communication.Serial.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Communication.Sockets/Dreamine.Communication.Sockets.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Communication.Wpf/Dreamine.Communication.Wpf.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Core/Dreamine.MVVM.Core.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Database.Abstractions/Dreamine.Database.Abstractions.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Database.Core/Dreamine.Database.Core.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Database.MySql/Dreamine.Database.MySql.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Database.Oracle/Dreamine.Database.Oracle.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Database.Sqlite/Dreamine.Database.Sqlite.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Database.SqlServer/Dreamine.Database.SqlServer.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Extensions/Dreamine.MVVM.Extensions.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Gem.Abstractions/Dreamine.Gem.Abstractions.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Gem/Dreamine.Gem.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Gem300.Abstractions/Dreamine.Gem300.Abstractions.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Gem300/Dreamine.Gem300.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Generators/Dreamine.MVVM.Generators.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Hybrid.Wpf/Dreamine.Hybrid.Wpf.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Hybrid/Dreamine.Hybrid.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Identity/Dreamine.Identity.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Interfaces/Dreamine.MVVM.Interfaces.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/IO.Abstractions/Dreamine.IO.Abstractions.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/IO.Fastech.Ethernet/Dreamine.IO.Fastech.Ethernet.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Locators.Wpf/Dreamine.MVVM.Locators.Wpf.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Locators/Dreamine.MVVM.Locators.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Logging.Wpf/Dreamine.Logging.Wpf.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Logging/Dreamine.Logging.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/PLC.Abstractions/Dreamine.PLC.Abstractions.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/PLC.Core/Dreamine.PLC.Core.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/PLC.Mitsubishi.MC/Dreamine.PLC.Mitsubishi.MC.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/PLC.Mitsubishi.MxComponent/Dreamine.PLC.Mitsubishi.MxComponent.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/PLC.Omron.CxComponent/Dreamine.PLC.Omron.CxComponent.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/PLC.Omron.Fins/Dreamine.PLC.Omron.Fins.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/PLC.Wpf/Dreamine.PLC.Wpf.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Secs.Abstractions/Dreamine.Secs.Abstractions.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Secs.Com/Dreamine.Secs.Com.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Threading.Windows/Dreamine.Threading.Windows.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Threading.Wpf/Dreamine.Threading.Wpf.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Threading/Dreamine.Threading.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/UI.Abstractions/Dreamine.UI.Abstractions.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/UI.Blazor/Dreamine.UI.Blazor.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/UI.Maui/Dreamine.UI.Maui.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/UI.WinForms/Dreamine.UI.WinForms.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/UI.Wpf.Controls/Dreamine.UI.Wpf.Controls.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/UI.Wpf.Equipment/Dreamine.UI.Wpf.Equipment.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/UI.Wpf.Themes/Dreamine.UI.Wpf.Themes.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/UI.Wpf/Dreamine.UI.Wpf.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/ViewModels/Dreamine.MVVM.ViewModels.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/100. Library/Wpf/Dreamine.MVVM.Wpf.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/200. Tests/Dreamine.FullKit.Tests/Dreamine.FullKit.Tests.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/200. Tests/Dreamine.FullKit.Wpf.Tests/Dreamine.FullKit.Wpf.Tests.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/200. Tests/UI.Blazor.Tests/Dreamine.UI.Blazor.Tests.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/200. Tests/UI.Maui.Tests/Dreamine.UI.Maui.Tests.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/200. Tests/UI.WinForms.Tests/Dreamine.UI.WinForms.Tests.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/Enterprise/SampleEnterprise/SampleEnterprise.Events/SampleEnterprise.Events.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/Enterprise/SampleEnterprise/SampleEnterprise.Models/SampleEnterprise.Models.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/Enterprise/SampleEnterprise/SampleEnterprise.Resources/SampleEnterprise.Resources.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/Enterprise/SampleEnterprise/SampleEnterprise.Styles/SampleEnterprise.Styles.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/Enterprise/SampleEnterprise/SampleEnterprise.ViewModels/SampleEnterprise.ViewModels.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/Enterprise/SampleEnterprise/SampleEnterprise.Views/SampleEnterprise.Views.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/Enterprise/SampleEnterprise/SampleEnterprise/SampleEnterprise.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/SampleCore/SampleCore.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/010. Wpfs/SampleSmart/SampleSmart.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/040. Hybrids/Sample01/Sample01.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Blazor/SampleCrossUi.Blazor.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Maui/SampleCrossUi.Maui.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Shared/SampleCrossUi.Shared.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.WinForms/SampleCrossUi.WinForms.csproj"
+    },
+    {
+      "projectFile": "20_SOURCES/998. DEMO/000. Sample/050. CrossUi/SampleCrossUi.Wpf/SampleCrossUi.Wpf.csproj"
+    }
+  ],
+  "requiredProductProjects": [
+    {
+      "name": "Dreamine.Secs.Abstractions",
+      "slug": "dreamine-secs-abstractions",
+      "projectFile": "20_SOURCES/100. Library/Secs.Abstractions/Dreamine.Secs.Abstractions.csproj",
+      "documentPageUrl": "/docs/secs-abstractions"
+    },
+    {
+      "name": "Dreamine.Secs.Com",
+      "slug": "dreamine-secs-com",
+      "projectFile": "20_SOURCES/100. Library/Secs.Com/Dreamine.Secs.Com.csproj",
+      "documentPageUrl": "/docs/secs-com"
+    },
+    {
+      "name": "Dreamine.Gem.Abstractions",
+      "slug": "dreamine-gem-abstractions",
+      "projectFile": "20_SOURCES/100. Library/Gem.Abstractions/Dreamine.Gem.Abstractions.csproj",
+      "documentPageUrl": "/docs/gem-abstractions"
+    },
+    {
+      "name": "Dreamine.Gem",
+      "slug": "dreamine-gem",
+      "projectFile": "20_SOURCES/100. Library/Gem/Dreamine.Gem.csproj",
+      "documentPageUrl": "/docs/gem"
+    },
+    {
+      "name": "Dreamine.Gem300.Abstractions",
+      "slug": "dreamine-gem300-abstractions",
+      "projectFile": "20_SOURCES/100. Library/Gem300.Abstractions/Dreamine.Gem300.Abstractions.csproj",
+      "documentPageUrl": "/docs/gem300-abstractions"
+    },
+    {
+      "name": "Dreamine.Gem300",
+      "slug": "dreamine-gem300",
+      "projectFile": "20_SOURCES/100. Library/Gem300/Dreamine.Gem300.csproj",
+      "documentPageUrl": "/docs/gem300"
+    }
+  ],
+  "syntheticProjects": [
+    {
+      "kind": "meta-package",
+      "name": "Dreamine.SecsGem.FullKit",
+      "slug": "dreamine-secsgem-fullkit",
+      "category": "100. Library",
+      "version": "1.0.0",
+      "targetFrameworks": [
+        "net8.0"
+      ],
+      "descriptions": {
+        "ko": "Dreamine SECS-II/HSMS, GEM 및 GEM300 제품 라이브러리를 한 번에 설치하는 메타패키지입니다.",
+        "en": "Meta-package that installs the Dreamine SECS-II/HSMS, GEM, and GEM300 product libraries."
+      },
+      "documentPageUrl": "/docs/secsgem-fullkit",
+      "dependencies": [
+        "Dreamine.Secs.Abstractions",
+        "Dreamine.Secs.Com",
+        "Dreamine.Gem.Abstractions",
+        "Dreamine.Gem",
+        "Dreamine.Gem300.Abstractions",
+        "Dreamine.Gem300"
+      ]
+    }
+  ]
+}

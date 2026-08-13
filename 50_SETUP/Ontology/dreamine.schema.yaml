@@ -23,7 +23,7 @@ settings:
     [
       {"id":"AllowedLayerDependencyShape","kind":"allowed_layer_matrix","relation_types":["depends_on"],"allowed":{"application":["application","library"],"library":["library"],"test":["application","library","test"],"sample":["application","library","sample"],"tooling":["application","library","test","sample","tooling"]}},
       {"id":"ViewModelUiIndependenceShape","kind":"viewmodel_ui_independence","relation_types":["depends_on","calls","uses"]},
-      {"id":"RelationTypeMatrixShape","kind":"relation_type_matrix","allowed":{"contains":[["SourceFile","CodeElement"],["CodeType","CodeMember"]],"exports":[["SourceFile","CodeElement"]],"implements":[["CodeType","CodeInterface"]],"inherits":[["CodeType","CodeType"]],"tested_by":[["CodeElement","SourceFile"],["CodeElement","TestCase"]],"calls":[["CodeMember","CodeMember"]]}},
+      {"id":"RelationTypeMatrixShape","kind":"relation_type_matrix","allowed":{"contains":[["SourceFile","CodeElement"],["CodeType","CodeMember"]],"exports":[["SourceFile","CodeElement"]],"implements":[["CodeType","CodeInterface"]],"inherits":[["CodeType","CodeType"]],"tested_by":[["SourceFile","SourceFile"],["CodeElement","SourceFile"],["CodeElement","TestCase"]],"calls":[["CodeMember","CodeMember"]]}},
       {"id":"DreamineEventForwardTargetShape","kind":"event_forward_target_exists","relation_types":["forwardsTo"]}
     ]
 

@@ -113,7 +113,7 @@ def main() -> int:
         positive_conforms, _, positive_violations = run_validation(positive_graph, shape_graph)
         negative_conforms, _, negative_violations = run_validation(negative_graph, shape_graph)
         passed = positive_conforms and not negative_conforms and negative_violations > 0
-        failed = failed or not passed
+        failed = failed or not passed or not actual_conforms
         results.append({
             "shape": rule_id,
             "generatedNodeShapeCount": generated_shape_count,

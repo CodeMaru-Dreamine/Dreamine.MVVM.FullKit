@@ -1,6 +1,7 @@
 using System.Text.Json;
 using DreamineWeb.Models;
 using DreamineWeb.Services;
+using DreamineWeb.ViewModels;
 using Xunit;
 
 namespace Dreamine.FullKit.Tests.DreamineWeb;
@@ -116,6 +117,33 @@ public sealed class LibraryCatalogTests
         Assert.DoesNotContain(libraries, library => library.Name == "Dreamine.Gem.QuickStart");
     }
 
+    [Fact]
+    public async Task FullKitDocumentationIsBundledForBothLanguageTabs()
+    {
+        using var directory = new TemporaryDirectory();
+        var store = new JsonLibraryStore(new DreamineOptions { DataPath = directory.Path });
+        string documentRoot = Path.Combine(
+            FindRepositoryRoot(),
+            "20_SOURCES", "000. Project", "010. App", "Dreamine.Web", "wwwroot", "xmldocs");
+        var viewModel = new DocViewModel(store, documentRoot);
+
+        viewModel.IsKorean = true;
+        await viewModel.LoadAsync("secsgem-fullkit");
+
+        Assert.NotNull(viewModel.ReadmeHtml);
+        Assert.Contains("포함 패키지", viewModel.ReadmeHtml, StringComparison.Ordinal);
+        Assert.Contains("빠른 시작", viewModel.ReadmeHtml, StringComparison.Ordinal);
+        Assert.Contains("알려진 제한", viewModel.ReadmeHtml, StringComparison.Ordinal);
+
+        viewModel.IsKorean = false;
+        await viewModel.RefreshReadme();
+
+        Assert.NotNull(viewModel.ReadmeHtml);
+        Assert.Contains("Included packages", viewModel.ReadmeHtml, StringComparison.Ordinal);
+        Assert.Contains("Quick start", viewModel.ReadmeHtml, StringComparison.Ordinal);
+        Assert.Contains("Known limitations", viewModel.ReadmeHtml, StringComparison.Ordinal);
+    }
+
     private static Task WriteProjectAsync(string root, string packageId, bool? isPackable)
     {
         string directory = System.IO.Path.Combine(root, packageId);
@@ -133,6 +161,23 @@ public sealed class LibraryCatalogTests
             </Project>
             """;
         return File.WriteAllTextAsync(System.IO.Path.Combine(directory, $"{packageId}.csproj"), project);
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        foreach (string start in new[] { AppContext.BaseDirectory, Directory.GetCurrentDirectory() })
+        {
+            var directory = new DirectoryInfo(start);
+            while (directory is not null)
+            {
+                if (Directory.Exists(Path.Combine(directory.FullName, "20_SOURCES")))
+                    return directory.FullName;
+
+                directory = directory.Parent;
+            }
+        }
+
+        throw new DirectoryNotFoundException("Could not locate the Dreamine.MVVM.FullKit repository root.");
     }
 
     private sealed class TemporaryDirectory : IDisposable

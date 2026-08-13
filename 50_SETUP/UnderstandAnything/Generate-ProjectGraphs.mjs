@@ -11,6 +11,7 @@ const sourcesRoot = path.join(repositoryRoot, "20_SOURCES");
 const doxygenRoot = path.join(repositoryRoot, "10_DOCUMENTS", "Doxygen");
 const webProjectRoot = path.join(repositoryRoot, "20_SOURCES", "000. Project", "010. App", "Dreamine.Web");
 const libraryStorePath = path.join(webProjectRoot, "Services", "JsonLibraryStore.cs");
+const projectManifestPath = path.join(scriptDir, "project-manifest.json");
 const preferredGraphPath = (language) => {
   const verified = path.join(repositoryRoot, ".ua", `knowledge-graph.source-verified.${language}.json`);
   return fs.existsSync(verified) ? verified : path.join(repositoryRoot, ".ua", `knowledge-graph.${language}.json`);
@@ -29,21 +30,11 @@ const dreamineDocSlug = (value) => slugify(String(value).replace(/^Dreamine\./i,
 const encodePath = (...segments) => `/${segments.map((segment) => encodeURIComponent(segment)).join("/")}`;
 const isNonEmptyFile = (filePath, minimumBytes = 32) => fs.existsSync(filePath) && fs.statSync(filePath).isFile() && fs.statSync(filePath).size >= minimumBytes;
 
-for (const required of [sourcesRoot, doxygenRoot, graphPaths.ko, graphPaths.en, libraryStorePath]) {
+for (const required of [sourcesRoot, doxygenRoot, graphPaths.ko, graphPaths.en, libraryStorePath, projectManifestPath]) {
   if (!fs.existsSync(required)) throw new Error(`Required input not found: ${required}`);
 }
 if (!destinationRoot.startsWith(path.join(sourcesRoot, "000. Project") + path.sep)) {
   throw new Error(`Unsafe destination: ${destinationRoot}`);
-}
-
-function walk(directory, result = []) {
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    if (["bin", "obj", ".git", ".vs", "node_modules", "TestResults"].includes(entry.name)) continue;
-    const fullPath = path.join(directory, entry.name);
-    if (entry.isDirectory()) walk(fullPath, result);
-    else if (entry.name.toLowerCase().endsWith(".csproj")) result.push(fullPath);
-  }
-  return result;
 }
 
 function tag(xml, name) {
@@ -62,8 +53,34 @@ const documentationEntries = new Map(
   [...libraryStoreSource.matchAll(/Id\s*=\s*"([^"]+)"\s*,\s*Name\s*=\s*"([^"]+)"/g)]
     .map((match) => [match[2], match[1]]));
 const defaultVersion = tag(rootProps, "AppVersion") || tag(rootProps, "Version") || "1.0.0";
-const projectFiles = walk(sourcesRoot).sort((a, b) => slash(a).localeCompare(slash(b)));
-const projects = projectFiles.map((projectFile) => {
+const manifest = JSON.parse(fs.readFileSync(projectManifestPath, "utf8"));
+if (manifest.schemaVersion !== 1 || !Array.isArray(manifest.sourceProjects) || !Array.isArray(manifest.syntheticProjects)) {
+  throw new Error("project-manifest.json does not match schema version 1.");
+}
+const requiredProductNames = [
+  "Dreamine.Secs.Abstractions",
+  "Dreamine.Secs.Com",
+  "Dreamine.Gem.Abstractions",
+  "Dreamine.Gem",
+  "Dreamine.Gem300.Abstractions",
+  "Dreamine.Gem300",
+];
+const requiredProductEntries = manifest.requiredProductProjects ?? [];
+if (JSON.stringify(requiredProductEntries.map((entry) => entry.name).sort()) !== JSON.stringify([...requiredProductNames].sort())) {
+  throw new Error("project-manifest.json must declare the six SECS/GEM product projects exactly once.");
+}
+const projectFiles = manifest.sourceProjects.map((entry) => {
+  const relativePath = slash(entry?.projectFile);
+  const projectFile = path.resolve(repositoryRoot, relativePath);
+  if (!relativePath || !projectFile.startsWith(sourcesRoot + path.sep) || !fs.existsSync(projectFile)) {
+    throw new Error(`Manifest source project is missing or outside 20_SOURCES: ${relativePath || "<empty>"}`);
+  }
+  return projectFile;
+});
+const duplicateProjectFiles = projectFiles.filter((projectFile, index) => projectFiles.indexOf(projectFile) !== index);
+if (duplicateProjectFiles.length) throw new Error(`Duplicate manifest project paths: ${unique(duplicateProjectFiles.map(slash)).join(", ")}`);
+
+const sourceProjects = projectFiles.map((projectFile) => {
   const xml = fs.readFileSync(projectFile, "utf8");
   const directory = path.dirname(projectFile);
   const relativeProjectFile = slash(path.relative(repositoryRoot, projectFile));
@@ -92,12 +109,64 @@ const projects = projectFiles.map((projectFile) => {
   const hasEnglishReadme = isNonEmptyFile(readmeEnPath, 80) && compact(fs.readFileSync(readmeEnPath, "utf8")).length >= 40;
   const hasKoreanReadme = isNonEmptyFile(readmeKoPath, 80) && compact(fs.readFileSync(readmeKoPath, "utf8")).length >= 40;
   const documentationAvailable = category === "100. Library" && documentationId !== null && (hasApiMembers || hasEnglishReadme || hasKoreanReadme);
-  return { projectFile, relativeProjectFile, directory, relativeDirectory, baseName, displayName, assemblyName, category, version, targetFrameworks, references, linkedFiles, slug, summaryEn, summaryKo, documentationId, documentationAvailable, hasEnglishReadme, hasKoreanReadme };
+  return { kind: "source", isSynthetic: false, projectFile, relativeProjectFile, directory, relativeDirectory, baseName, displayName, assemblyName, category, version, targetFrameworks, references, linkedFiles, slug, summaryEn, summaryKo, documentationId, documentationAvailable, hasEnglishReadme, hasKoreanReadme, documentPageUrl: documentationAvailable ? `/docs/${encodeURIComponent(documentationId)}` : null };
 });
+
+const sourceProjectByName = new Map(sourceProjects.map((project) => [project.displayName, project]));
+for (const expected of requiredProductEntries) {
+  const project = sourceProjectByName.get(expected.name);
+  if (!project) throw new Error(`Required product project is not in the source manifest: ${expected.name}`);
+  if (project.slug !== expected.slug || project.relativeProjectFile !== slash(expected.projectFile)) {
+    throw new Error(`Required product identity does not match the manifest: ${expected.name}`);
+  }
+  if (project.documentPageUrl !== expected.documentPageUrl) {
+    throw new Error(`Required product documentation route does not match the library catalog: ${expected.name}`);
+  }
+}
+
+const syntheticProjects = manifest.syntheticProjects.map((entry) => {
+  if (entry.kind !== "meta-package" || !entry.name || !entry.slug || slugify(entry.name) !== entry.slug) {
+    throw new Error(`Invalid synthetic meta-package identity: ${entry.name || "<missing>"}`);
+  }
+  const references = unique(entry.dependencies ?? []);
+  if (JSON.stringify([...references].sort()) !== JSON.stringify([...requiredProductNames].sort())
+      || references.some((name) => !sourceProjectByName.has(name))) {
+    throw new Error(`Synthetic meta-package dependencies are missing from the source manifest: ${entry.name}`);
+  }
+  const documentationId = documentationEntries.get(entry.name) ?? null;
+  const expectedDocumentPageUrl = documentationId ? `/docs/${encodeURIComponent(documentationId)}` : null;
+  if (!expectedDocumentPageUrl || expectedDocumentPageUrl !== entry.documentPageUrl) {
+    throw new Error(`Synthetic meta-package documentation route does not match the library catalog: ${entry.name}`);
+  }
+  return {
+    kind: entry.kind,
+    isSynthetic: true,
+    projectFile: null,
+    relativeProjectFile: null,
+    directory: null,
+    relativeDirectory: null,
+    baseName: entry.name,
+    displayName: entry.name,
+    assemblyName: entry.name,
+    category: entry.category,
+    version: entry.version,
+    targetFrameworks: unique(entry.targetFrameworks ?? []),
+    references,
+    linkedFiles: [],
+    slug: entry.slug,
+    summaryEn: compact(entry.descriptions?.en),
+    summaryKo: compact(entry.descriptions?.ko),
+    documentationId,
+    documentationAvailable: true,
+    hasEnglishReadme: true,
+    hasKoreanReadme: true,
+    documentPageUrl: entry.documentPageUrl,
+  };
+});
+const projects = [...sourceProjects, ...syntheticProjects];
 
 const duplicateSlugs = [...new Set(projects.filter((project, index) => projects.findIndex((item) => item.slug === project.slug) !== index).map((project) => project.slug))];
 if (duplicateSlugs.length) throw new Error(`Duplicate project slugs: ${duplicateSlugs.join(", ")}`);
-if (projects.length !== 80) throw new Error(`Expected 80 projects under 20_SOURCES, found ${projects.length}.`);
 
 const graphs = Object.fromEntries(Object.entries(graphPaths).map(([language, graphPath]) => [language, JSON.parse(fs.readFileSync(graphPath, "utf8"))]));
 const fileLevelTypes = new Set(["file", "config", "document", "service", "pipeline", "table", "schema", "resource", "endpoint"]);
@@ -120,7 +189,7 @@ function nodeProjects(node, projectByPath) {
   if (node.filePath) {
     const normalized = slash(node.filePath);
     memberships.push(...(linkedFileProjects.get(normalized.toLowerCase()) ?? []));
-    const matches = projects.filter((project) => normalized === project.relativeProjectFile || normalized.startsWith(`${project.relativeDirectory}/`)).sort((a, b) => b.relativeDirectory.length - a.relativeDirectory.length);
+    const matches = sourceProjects.filter((project) => normalized === project.relativeProjectFile || normalized.startsWith(`${project.relativeDirectory}/`)).sort((a, b) => b.relativeDirectory.length - a.relativeDirectory.length);
     if (matches.length) memberships.push(matches[0]);
   }
   const metadataProject = projects.find((project) => project.baseName === metadataName || project.displayName === metadataName);
@@ -159,7 +228,7 @@ const layerText = {
   },
 };
 
-const projectByPath = new Map(projects.map((project) => [slash(path.relative(repositoryRoot, project.projectFile)).toLowerCase(), project]));
+const projectByPath = new Map(sourceProjects.map((project) => [project.relativeProjectFile.toLowerCase(), project]));
 const outputRoot = path.join(destinationRoot, "projects");
 fs.mkdirSync(outputRoot, { recursive: true });
 const catalog = [];
@@ -180,7 +249,7 @@ for (const project of projects) {
       summary: language === "ko" ? project.summaryKo : project.summaryEn,
       tags: ["project", project.category, ...project.targetFrameworks],
       complexity: ownedNodes.length > 200 ? "complex" : ownedNodes.length > 60 ? "moderate" : "simple",
-      projectMeta: { projectFile: project.relativeProjectFile, version: project.version, targetFrameworks: project.targetFrameworks },
+      projectMeta: { kind: project.kind, projectFile: project.relativeProjectFile, version: project.version, targetFrameworks: project.targetFrameworks },
     });
     nodeIds.add(rootId);
 
@@ -235,6 +304,7 @@ for (const project of projects) {
         gitCommitHash: sourceGraph.project?.gitCommitHash ?? "",
         outputLanguage: language,
         sourceProjectFile: project.relativeProjectFile,
+        kind: project.kind,
       },
       nodes,
       edges,
@@ -250,7 +320,9 @@ for (const project of projects) {
   }
 
   const doxyPhysical = (language) => path.join(doxygenRoot, project.category, project.displayName, language === "ko" ? "KR" : "EN", "html", "index.html");
-  const doxygenAvailability = { ko: isNonEmptyFile(doxyPhysical("ko"), 100), en: isNonEmptyFile(doxyPhysical("en"), 100) };
+  const doxygenAvailability = project.isSynthetic
+    ? { ko: false, en: false }
+    : { ko: isNonEmptyFile(doxyPhysical("ko"), 100), en: isNonEmptyFile(doxyPhysical("en"), 100) };
   const graphAvailability = Object.fromEntries(["ko", "en"].map((language) => {
     const directory = path.join(outputRoot, project.slug, language);
     const available = counts[language].nodes > 1
@@ -267,6 +339,7 @@ for (const project of projects) {
     slug: project.slug,
     name: project.displayName,
     category: project.category,
+    kind: project.kind,
     version: project.version,
     targetFrameworks: project.targetFrameworks,
     projectFile: project.relativeProjectFile,
@@ -276,10 +349,11 @@ for (const project of projects) {
     knowledgeGraphAvailable: graphAvailability.ko || graphAvailability.en,
     koreanDocumentationAvailable: localizedDocumentation.ko,
     englishDocumentationAvailable: localizedDocumentation.en,
-    documentPageUrl: project.documentationAvailable ? `/docs/${encodeURIComponent(project.documentationId)}` : null,
+    documentPageUrl: project.documentPageUrl,
     doxygenUrls: Object.fromEntries(["ko", "en"].filter((language) => doxygenAvailability[language]).map((language) => [language, encodePath("docs", "doxygen", project.category, project.displayName, language === "ko" ? "KR" : "EN", "html", "index.html")])),
     graphUrls: Object.fromEntries(["ko", "en"].filter((language) => graphAvailability[language]).map((language) => [language, `/understand/graph/?project=${encodeURIComponent(project.slug)}&lang=${language}`])),
     availability: { doxygen: doxygenAvailability, knowledgeGraph: graphAvailability },
+    dependencies: project.references,
     counts,
   });
 }

@@ -10,10 +10,12 @@ $venvPath = Join-Path $PSScriptRoot '.venv'
 $linkmlPath = Join-Path $venvPath 'Scripts\linkml.exe'
 $pythonPath = Join-Path $venvPath 'Scripts\python.exe'
 $outputPath = Join-Path $RepositoryRoot '.ua\ontology'
-$domainAnalysisPath = Join-Path $RepositoryRoot '.ua\intermediate\domain-analysis.json'
 $domainGraphPath = Join-Path $RepositoryRoot '.ua\domain-graph.json'
 $knowledgeGraphPath = Join-Path $RepositoryRoot '.ua\knowledge-graph.ko.json'
+$englishKnowledgeGraphPath = Join-Path $RepositoryRoot '.ua\knowledge-graph.en.json'
 $nodePath = 'C:\Users\Minsu\.cache\codex-runtimes\codex-primary-runtime\dependencies\node\bin\node.exe'
+$coverageValidatorPath = Join-Path $PSScriptRoot 'Validate-SecsGemOntologyCoverage.mjs'
+$secsGemManifestPath = Join-Path $PSScriptRoot 'secsgem-packages.json'
 $sourceAuditProject = Join-Path $PSScriptRoot 'SourceAudit\Dreamine.Ontology.SourceAudit.csproj'
 $sourceAuditConfig = Join-Path $PSScriptRoot 'SourceAudit\NuGet.Config'
 $sourceAuditDll = Join-Path $PSScriptRoot 'SourceAudit\bin\Release\net10.0\Dreamine.Ontology.SourceAudit.dll'
@@ -26,13 +28,22 @@ if (-not (Test-Path -LiteralPath $nodePath)) {
     if (-not $nodeCommand) { throw 'Node.js is required to build ontology instances.' }
     $nodePath = $nodeCommand.Source
 }
-if (-not (Test-Path -LiteralPath $domainAnalysisPath)) {
-    throw "Domain graph source is missing: $domainAnalysisPath"
+if (-not (Test-Path -LiteralPath $domainGraphPath)) {
+    throw "Domain graph is missing: $domainGraphPath. Run understand-domain after the full knowledge-graph rebuild."
+}
+foreach ($requiredPath in @($knowledgeGraphPath, $englishKnowledgeGraphPath, $coverageValidatorPath, $secsGemManifestPath)) {
+    if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) {
+        throw "Required ontology input is missing: $requiredPath"
+    }
+}
+
+$null = & $nodePath $coverageValidatorPath $RepositoryRoot preflight
+if ($LASTEXITCODE -ne 0) {
+    throw 'SECS/GEM ontology preflight failed. Rebuild the full bilingual knowledge graph and domain graph before generating ontology artifacts.'
 }
 
 $env:PYSTOW_HOME = Join-Path $PSScriptRoot '.pystow'
 New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
-Copy-Item -LiteralPath $domainAnalysisPath -Destination $domainGraphPath -Force
 
 & dotnet restore $sourceAuditProject --configfile $sourceAuditConfig --nologo
 if ($LASTEXITCODE -ne 0) { throw 'Roslyn source audit restore failed.' }
@@ -57,6 +68,9 @@ if ($LASTEXITCODE -ne 0) { throw 'Architecture SHACL generation failed.' }
 
 & $nodePath (Join-Path $PSScriptRoot 'Build-OntologyGraph.mjs') $RepositoryRoot $outputPath
 if ($LASTEXITCODE -ne 0) { throw 'Ontology instance generation failed.' }
+
+$null = & $nodePath $coverageValidatorPath $RepositoryRoot generated
+if ($LASTEXITCODE -ne 0) { throw 'Generated ontology does not contain the required SECS/GEM project boundaries and dependency relations.' }
 
 & dotnet $sourceAuditDll $RepositoryRoot $knowledgeGraphPath $domainGraphPath (Join-Path $outputPath 'instances.json') $outputPath
 if ($LASTEXITCODE -ne 0) { throw 'Source graph and ontology overlay audit failed.' }

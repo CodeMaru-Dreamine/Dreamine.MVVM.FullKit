@@ -4,3 +4,5 @@
 dreamine:negativeMethod rdf:type dreamine:Method, dreamine:CodeMember, dreamine:CodeElement .
 dreamine:negativeClass rdf:type dreamine:CodeClass, dreamine:CodeType, dreamine:CodeElement .
 dreamine:negativeImplements rdf:type dreamine:SemanticRelation ; dreamine:relation_type "implements" ; dreamine:source dreamine:negativeMethod ; dreamine:target dreamine:negativeClass .
+dreamine:negativeFile rdf:type dreamine:SourceFile .
+dreamine:negativeTestedBy rdf:type dreamine:SemanticRelation ; dreamine:relation_type "tested_by" ; dreamine:source dreamine:negativeFile ; dreamine:target dreamine:negativeClass .
