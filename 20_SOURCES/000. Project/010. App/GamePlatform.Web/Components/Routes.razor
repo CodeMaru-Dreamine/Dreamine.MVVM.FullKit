@@ -1,0 +1,34 @@
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">
+            <NotAuthorized>
+                <div class="gp-auth-card">
+                    <span class="gp-kicker">로그인이 필요합니다</span>
+                    <h1>원정 기록을 불러오려면 로그인해 주세요.</h1>
+                    <p>CodeMaru에서 사용하던 계정으로 로그인하면 같은 진행 데이터를 계속 사용할 수 있습니다.</p>
+                    <a class="gp-button gp-button-primary" href="@LoginUrl">CodeMaru 로그인</a>
+                </div>
+            </NotAuthorized>
+        </AuthorizeRouteView>
+        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+    </Found>
+    <NotFound>
+        <PageTitle>페이지 없음 | CodeMaru Games</PageTitle>
+        <LayoutView Layout="typeof(MainLayout)">
+            <div class="gp-auth-card">
+                <span class="gp-kicker">404</span>
+                <h1>아직 열리지 않은 게임입니다.</h1>
+                <a class="gp-button gp-button-primary" href="/">처음으로</a>
+            </div>
+        </LayoutView>
+    </NotFound>
+</Router>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private string LoginUrl => Dreamine.Identity.DreamineIdentityPortal.CreateUrl(
+        "login",
+        Navigation.Uri,
+        "ko");
+}

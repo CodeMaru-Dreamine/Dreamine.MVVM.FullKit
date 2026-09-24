@@ -1,0 +1,13 @@
+.map-sheet-layer{position:absolute;inset:0;z-index:30;display:flex;align-items:flex-end;justify-content:flex-end;padding:12px;isolation:isolate;touch-action:auto}
+.sheet-backdrop{position:absolute;inset:0;width:100%;height:100%;border:0!important;border-radius:inherit;background:linear-gradient(transparent,#030b1370)!important;cursor:default;z-index:-1}
+.map-sheet{box-sizing:border-box;width:390px;max-width:100%;max-height:92%;display:flex;flex-direction:column;min-height:0;overflow:hidden;border:1px solid #c5a56b;border-radius:16px;background:linear-gradient(135deg,#243440,#0d1a24 70%);color:#efe5ce;box-shadow:0 12px 36px #0009,inset 0 1px #ffe4aa33;animation:sheet-enter .18s ease-out}
+.map-sheet header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0;padding:12px 14px;border-bottom:1px solid #b3976240;background:linear-gradient(110deg,#31424b90,transparent)}
+.map-sheet header>div{min-width:0}.map-sheet small{font-size:10px;letter-spacing:.1em;color:#b2c6c2}.map-sheet h3{margin:3px 0 0;font:800 20px/1.25 Georgia,'Noto Serif KR',serif;overflow-wrap:anywhere;color:#ffebbd}
+.map-sheet .sheet-close{width:44px;min-width:44px;height:44px;padding:0;border:1px solid #93aba466;border-radius:50%;color:#efe6cd;background:#07151cb3;font:28px/1 sans-serif;cursor:pointer}
+.sheet-body{padding:12px 14px;overflow:auto;overscroll-behavior:contain;min-height:0;scrollbar-width:thin;scrollbar-color:#bea374 #101e27}
+.sheet-actions{padding:10px 14px 12px;flex-shrink:0;border-top:1px solid #b3976240;background:#0b1821}
+.sheet-close:focus-visible{outline:2px solid #ffe2a0;outline-offset:2px}
+@media(max-width:600px){.map-sheet-layer{padding:0}.map-sheet{width:100%;max-height:88%;border-radius:16px 16px 8px 8px}.map-sheet header{padding:9px 12px}.map-sheet h3{font-size:18px}.sheet-body{padding:10px 12px}.sheet-actions{padding:8px 12px 10px}}
+@media(max-height:600px){.map-sheet{max-height:100%}.map-sheet header{padding:6px 10px}.sheet-body{padding:8px 10px}}
+@keyframes sheet-enter{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.map-sheet{animation:none}}

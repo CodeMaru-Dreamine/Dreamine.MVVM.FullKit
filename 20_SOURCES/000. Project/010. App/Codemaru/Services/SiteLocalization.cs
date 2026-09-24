@@ -11,6 +11,11 @@ public sealed class SiteLocalization : DreamineLocalizationService
     {
         ["ko"] = new()
         {
+            ["service.games"] = "브라우저에서 가볍게 즐기는 CodeMaru 게임. 잠깐의 여유를 플레이로 채워보세요.",
+            ["service.games.action"] = "게임 둘러보기",
+            ["service.babycare"] = "수유·수면·기저귀·체온을 말로 기록하고 가족과 함께 아기의 하루를 돌보세요.",
+            ["service.babycare.action"] = "육아 기록 시작하기",
+
             ["language"] = "언어", ["contact"] = "문의하기", ["login"] = "로그인",
             ["nav.home"] = "홈", ["nav.toggle"] = "메뉴 열기/닫기",
             ["theme.label"] = "화면 테마", ["theme.system"] = "시스템", ["theme.light"] = "라이트", ["theme.dark"] = "다크",
@@ -62,6 +67,11 @@ public sealed class SiteLocalization : DreamineLocalizationService
         },
         ["en"] = new()
         {
+            ["service.games"] = "Enjoy CodeMaru games in your browser. Turn a short break into play.",
+            ["service.games.action"] = "Explore games",
+            ["service.babycare"] = "Record feeds, sleep, diapers and temperature by voice, and share your baby’s day with family.",
+            ["service.babycare.action"] = "Start a baby diary",
+
             ["language"] = "Language", ["contact"] = "Contact", ["login"] = "Sign in",
             ["nav.home"] = "Home", ["nav.toggle"] = "Open or close menu",
             ["theme.label"] = "Theme", ["theme.system"] = "System", ["theme.light"] = "Light", ["theme.dark"] = "Dark",
@@ -113,6 +123,11 @@ public sealed class SiteLocalization : DreamineLocalizationService
         },
         ["es"] = new()
         {
+            ["service.games"] = "Disfruta de los juegos de CodeMaru en tu navegador. Convierte un descanso en diversión.",
+            ["service.games.action"] = "Explorar juegos",
+            ["service.babycare"] = "Registra tomas, sueño, pañales y temperatura con tu voz y comparte el día del bebé en familia.",
+            ["service.babycare.action"] = "Empezar el diario",
+
             ["nav.home"] = "Inicio", ["theme.label"] = "Tema", ["theme.system"] = "Sistema", ["theme.light"] = "Claro", ["theme.dark"] = "Oscuro",
             ["language"] = "Idioma", ["contact"] = "Contacto", ["login"] = "Iniciar sesión",
             ["screenSettings"] = "Ajustes de pantalla", ["account"] = "Mi cuenta", ["admin"] = "Administración", ["logout"] = "Cerrar sesión",
@@ -133,6 +148,11 @@ public sealed class SiteLocalization : DreamineLocalizationService
         },
         ["fr"] = new()
         {
+            ["service.games"] = "Jouez aux jeux CodeMaru dans votre navigateur. Une petite pause pour jouer.",
+            ["service.games.action"] = "Découvrir les jeux",
+            ["service.babycare"] = "Notez repas, sommeil, couches et température à la voix et partagez la journée de bébé en famille.",
+            ["service.babycare.action"] = "Commencer le journal",
+
             ["nav.home"] = "Accueil", ["theme.label"] = "Thème", ["theme.system"] = "Système", ["theme.light"] = "Clair", ["theme.dark"] = "Sombre",
             ["language"] = "Langue", ["contact"] = "Contact", ["login"] = "Connexion",
             ["screenSettings"] = "Paramètres d’affichage", ["account"] = "Mon compte", ["admin"] = "Administration", ["logout"] = "Déconnexion",
@@ -153,6 +173,11 @@ public sealed class SiteLocalization : DreamineLocalizationService
         },
         ["it"] = new()
         {
+            ["service.games"] = "Divertiti con i giochi CodeMaru nel browser. Trasforma una pausa in un momento di gioco.",
+            ["service.games.action"] = "Esplora i giochi",
+            ["service.babycare"] = "Registra poppate, sonno, pannolini e temperatura con la voce e condividi la giornata del bebè in famiglia.",
+            ["service.babycare.action"] = "Inizia il diario",
+
             ["nav.home"] = "Home", ["theme.label"] = "Tema", ["theme.system"] = "Sistema", ["theme.light"] = "Chiaro", ["theme.dark"] = "Scuro",
             ["language"] = "Lingua", ["contact"] = "Contatti", ["login"] = "Accedi",
             ["screenSettings"] = "Impostazioni schermo", ["account"] = "Il mio account", ["admin"] = "Amministrazione", ["logout"] = "Esci",
@@ -173,6 +198,11 @@ public sealed class SiteLocalization : DreamineLocalizationService
         },
         ["pt"] = new()
         {
+            ["service.games"] = "Desfrute dos jogos CodeMaru no navegador. Transforme uma pausa num momento de diversão.",
+            ["service.games.action"] = "Explorar jogos",
+            ["service.babycare"] = "Registe mamadas, sono, fraldas e temperatura por voz e partilhe o dia do bebé em família.",
+            ["service.babycare.action"] = "Começar o diário",
+
             ["nav.home"] = "Início", ["theme.label"] = "Tema", ["theme.system"] = "Sistema", ["theme.light"] = "Claro", ["theme.dark"] = "Escuro",
             ["language"] = "Idioma", ["contact"] = "Contato", ["login"] = "Entrar",
             ["screenSettings"] = "Configurações de exibição", ["account"] = "Minha conta", ["admin"] = "Administração", ["logout"] = "Sair",
@@ -193,6 +223,11 @@ public sealed class SiteLocalization : DreamineLocalizationService
         },
         ["vi"] = new()
         {
+            ["service.games"] = "Chơi game CodeMaru ngay trên trình duyệt. Thư giãn với một chút thời gian vui chơi.",
+            ["service.games.action"] = "Khám phá trò chơi",
+            ["service.babycare"] = "Ghi lại cữ bú, giấc ngủ, tã và nhiệt độ bằng giọng nói, cùng gia đình chăm sóc bé mỗi ngày.",
+            ["service.babycare.action"] = "Bắt đầu nhật ký",
+
             ["nav.home"] = "Trang chủ", ["theme.label"] = "Giao diện", ["theme.system"] = "Hệ thống", ["theme.light"] = "Sáng", ["theme.dark"] = "Tối",
             ["language"] = "Ngôn ngữ", ["contact"] = "Liên hệ", ["login"] = "Đăng nhập",
             ["screenSettings"] = "Cài đặt hiển thị", ["account"] = "Tài khoản", ["admin"] = "Quản trị", ["logout"] = "Đăng xuất",
@@ -227,6 +262,11 @@ public sealed class SiteLocalization : DreamineLocalizationService
         },
         ["ja"] = new()
         {
+            ["service.games"] = "ブラウザーで気軽に遊べるCodeMaruのゲーム。短い休憩を遊びの時間に。",
+            ["service.games.action"] = "ゲームを見る",
+            ["service.babycare"] = "授乳・睡眠・おむつ・体温を声で記録し、家族と赤ちゃんの一日を共有できます。",
+            ["service.babycare.action"] = "育児記録を始める",
+
             ["nav.home"] = "ホーム", ["theme.label"] = "画面テーマ", ["theme.system"] = "システム", ["theme.light"] = "ライト", ["theme.dark"] = "ダーク",
             ["language"] = "言語", ["contact"] = "お問い合わせ", ["login"] = "ログイン",
             ["screenSettings"] = "表示設定", ["account"] = "マイアカウント", ["admin"] = "管理者", ["logout"] = "ログアウト",
@@ -277,6 +317,11 @@ public sealed class SiteLocalization : DreamineLocalizationService
         },
         ["zh-hans"] = new()
         {
+            ["service.games"] = "在浏览器中轻松畅玩CodeMaru游戏，让片刻休息充满乐趣。",
+            ["service.games.action"] = "浏览游戏",
+            ["service.babycare"] = "用语音记录喂奶、睡眠、尿布和体温，与家人一起照顾宝宝的每一天。",
+            ["service.babycare.action"] = "开始育儿记录",
+
             ["nav.home"] = "首页", ["theme.label"] = "界面主题", ["theme.system"] = "跟随系统", ["theme.light"] = "浅色", ["theme.dark"] = "深色",
             ["language"] = "语言", ["contact"] = "联系我们", ["login"] = "登录",
             ["screenSettings"] = "显示设置", ["account"] = "我的账户", ["admin"] = "管理后台", ["logout"] = "退出登录",
@@ -311,6 +356,11 @@ public sealed class SiteLocalization : DreamineLocalizationService
         },
         ["zh-hant"] = new()
         {
+            ["service.games"] = "在瀏覽器中輕鬆暢玩CodeMaru遊戲，讓片刻休息充滿樂趣。",
+            ["service.games.action"] = "瀏覽遊戲",
+            ["service.babycare"] = "用語音記錄餵奶、睡眠、尿布和體溫，與家人一起照顧寶寶的每一天。",
+            ["service.babycare.action"] = "開始育兒紀錄",
+
             ["nav.home"] = "首頁", ["theme.label"] = "畫面主題", ["theme.system"] = "跟隨系統", ["theme.light"] = "淺色", ["theme.dark"] = "深色",
             ["language"] = "語言", ["contact"] = "聯絡我們", ["login"] = "登入",
             ["screenSettings"] = "顯示設定", ["account"] = "我的帳戶", ["admin"] = "管理後台", ["logout"] = "登出",

@@ -1,0 +1,222 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "action": {
+      "type": "string",
+      "enum": [
+        "create",
+        "update",
+        "clarify"
+      ]
+    },
+    "targetId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "kind": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "startedAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "endedAt": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "amountMl": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "detail": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "note": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "question": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "temperatureC": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "noteTranslations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ko": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "en": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "es": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "fr": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "it": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ja": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "zh-hans": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "zh-hant": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "vi": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "ko",
+        "en",
+        "es",
+        "fr",
+        "it",
+        "pt",
+        "ja",
+        "zh-hans",
+        "zh-hant",
+        "vi"
+      ]
+    },
+    "leftAmountMl": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "rightAmountMl": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "pumpMethod": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "electric",
+        "manual",
+        "hand",
+        "",
+        null
+      ]
+    },
+    "feedingMode": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "",
+        "formula",
+        "breast",
+        "expressed",
+        null
+      ]
+    },
+    "breastSide": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "",
+        "left",
+        "right",
+        "both",
+        null
+      ]
+    },
+    "amountGrams": {
+      "type": [
+        "number",
+        "null"
+      ]
+    }
+  },
+  "required": [
+    "action",
+    "targetId",
+    "kind",
+    "startedAt",
+    "endedAt",
+    "amountMl",
+    "detail",
+    "note",
+    "question",
+    "temperatureC",
+    "noteTranslations",
+    "leftAmountMl",
+    "rightAmountMl",
+    "pumpMethod",
+    "feedingMode",
+    "breastSide",
+    "amountGrams"
+  ]
+}

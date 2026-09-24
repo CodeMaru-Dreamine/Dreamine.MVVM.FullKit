@@ -1,0 +1,199 @@
+[
+  {
+    "file": "Steel Against Stone.mp3",
+    "durationSeconds": 1.813,
+    "codec": "mp3",
+    "bitRateKbps": 116,
+    "sampleRate": 48000,
+    "channels": 2,
+    "channelLayout": "stereo",
+    "samplePeakDbfs": -0.321,
+    "rmsDbfs": -29.79,
+    "clippingSampleCount": 0,
+    "clippingPercent": 0.0,
+    "silenceThresholdDbfs": -50,
+    "silenceIntervals": [
+      {
+        "start": 0.45,
+        "end": 1.8,
+        "duration": 1.35
+      }
+    ],
+    "transientCandidatesSeconds": [
+      0.05
+    ],
+    "loopCandidate": {
+      "start": 5.0,
+      "end": 35.0,
+      "boundaryScore": 53.447
+    },
+    "waveform": "steel-against-stone-waveform.png",
+    "spectrogram": "steel-against-stone-spectrogram.png"
+  },
+  {
+    "file": "Steel Relic Reel.mp3",
+    "durationSeconds": 213.733,
+    "codec": "mp3",
+    "bitRateKbps": 179,
+    "sampleRate": 48000,
+    "channels": 2,
+    "channelLayout": "stereo",
+    "samplePeakDbfs": -0.565,
+    "rmsDbfs": -13.262,
+    "clippingSampleCount": 0,
+    "clippingPercent": 0.0,
+    "silenceThresholdDbfs": -50,
+    "silenceIntervals": [
+      {
+        "start": 3.45,
+        "end": 4.0,
+        "duration": 0.55
+      },
+      {
+        "start": 7.45,
+        "end": 8.0,
+        "duration": 0.55
+      },
+      {
+        "start": 209.35,
+        "end": 213.7,
+        "duration": 4.35
+      }
+    ],
+    "transientCandidatesSeconds": [
+      0.05,
+      0.55,
+      1.0,
+      1.55,
+      2.0,
+      2.55,
+      3.0,
+      4.0,
+      5.0,
+      6.0,
+      7.0,
+      8.0,
+      12.0,
+      15.5,
+      16.0,
+      19.05,
+      65.55,
+      69.55,
+      78.05,
+      79.55,
+      80.0,
+      159.55,
+      160.0,
+      205.05
+    ],
+    "loopCandidate": {
+      "start": 102.5,
+      "end": 192.5,
+      "boundaryScore": 0.196
+    },
+    "waveform": "steel-relic-reel-waveform.png",
+    "spectrogram": "steel-relic-reel-spectrogram.png"
+  },
+  {
+    "file": "Ironfang Relics.mp3",
+    "durationSeconds": 309.214,
+    "codec": "mp3",
+    "bitRateKbps": 192,
+    "sampleRate": 48000,
+    "channels": 2,
+    "channelLayout": "stereo",
+    "samplePeakDbfs": 0.129,
+    "rmsDbfs": -18.965,
+    "clippingSampleCount": 1,
+    "clippingPercent": 3e-06,
+    "silenceThresholdDbfs": -50,
+    "silenceIntervals": [],
+    "transientCandidatesSeconds": [
+      2.05,
+      11.95,
+      15.3,
+      18.1,
+      46.0,
+      48.8,
+      49.85,
+      50.55,
+      113.55,
+      116.35,
+      119.15,
+      120.05,
+      120.55,
+      121.95,
+      129.15,
+      131.1,
+      158.1,
+      158.8,
+      159.15,
+      160.9,
+      161.95,
+      166.0,
+      167.05,
+      208.45
+    ],
+    "loopCandidate": {
+      "start": 208.0,
+      "end": 298.0,
+      "boundaryScore": 0.015
+    },
+    "waveform": "ironfang-relics-waveform.png",
+    "spectrogram": "ironfang-relics-spectrogram.png"
+  },
+  {
+    "file": "Ironfang Relics (1).mp3",
+    "durationSeconds": 344.253,
+    "codec": "mp3",
+    "bitRateKbps": 190,
+    "sampleRate": 48000,
+    "channels": 2,
+    "channelLayout": "stereo",
+    "samplePeakDbfs": -2.104,
+    "rmsDbfs": -16.712,
+    "clippingSampleCount": 0,
+    "clippingPercent": 0.0,
+    "silenceThresholdDbfs": -50,
+    "silenceIntervals": [
+      {
+        "start": 342.45,
+        "end": 344.25,
+        "duration": 1.8
+      }
+    ],
+    "transientCandidatesSeconds": [
+      0.15,
+      0.4,
+      0.85,
+      3.0,
+      6.2,
+      31.9,
+      33.5,
+      34.3,
+      35.1,
+      36.7,
+      38.3,
+      39.9,
+      40.7,
+      41.5,
+      93.1,
+      101.75,
+      114.55,
+      178.55,
+      196.7,
+      198.3,
+      199.9,
+      201.5,
+      203.1,
+      204.7
+    ],
+    "loopCandidate": {
+      "start": 111.5,
+      "end": 201.5,
+      "boundaryScore": 0.053
+    },
+    "waveform": "ironfang-relics-1-waveform.png",
+    "spectrogram": "ironfang-relics-1-spectrogram.png"
+  }
+]

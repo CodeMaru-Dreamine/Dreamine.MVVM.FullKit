@@ -1,0 +1,59 @@
+@implements IAsyncDisposable
+
+<section class="field-battle" role="dialog" aria-modal="true" aria-label="월드맵 몬스터 전투">
+    <header><div><small>FIELD ENCOUNTER · @(Replay ? "REPLAY" : "LIVE")</small><h3>@(EncounterTitle ?? Record.EncounterTitle ?? TerritoryRules.TileName(Record.Tile))</h3></div><button aria-label="전투 장면 닫기" @onclick="CloseRequested">×</button></header>
+    <div class="battle-versus"><span>@(Cooperative ? "연합 원정군" : $"제 {Record.Slot} 원정군") <b>@Record.ArmyPower.ToString("N0")</b></span><strong>VS</strong><span>@EnemyTitle<b>@Record.EnemyPower.ToString("N0")</b></span></div>
+    <div class="battle-stage @(Fighting ? "fighting" : "") @(Progress >= 1 ? "ended" : "")" style="@($"--turn:{Turn}")">
+        <div class="round-banner">@(Waiting ? "원정군이 전장으로 이동 중입니다" : Progress >= 1 ? Record.Victory ? "거점 수비대 격파" : "전열 재정비 · 후퇴" : $"교전 {Turn} / 10 · {(Turn % 2 == 0 ? "수비대 반격" : "대장 합동 공격")}")</div>
+        <div class="enemy-health"><strong>@EnemyTitle</strong><progress max="100" value="@TerritoryBattleRules.EnemyHealth(Record, Progress)" aria-label="몬스터 잔여 전력"></progress></div>
+        <div class="enemy"><img src="@EnemyPicture" alt="@EnemyTitle" /></div>
+        <div class="enemy-guards"><img src="@EnemyPicture" alt="수비 몬스터"/><img src="@EnemyPicture" alt="수비 몬스터"/></div>
+        @if (Fighting) { <div class="strike-trail"></div><div class="impact"></div><b @key="Turn" class="damage">−@RoundDamage.ToString("N0")</b> }
+        <div class="commanders">
+            @if (Record.Squads.Count == 0) { <img src="@TerritoryWorldVisuals.MarchAsset(null)" alt="원정 대장"/> }
+            @foreach (var squad in Record.Squads) { <div><img src="@TerritoryWorldVisuals.MarchAsset(squad)" alt="@squad.CommanderName"/><span>@squad.CommanderName</span></div> }
+        </div>
+        <div class="soldiers">@for (var i = 0; i < Record.Troops.Length; i++) { @if (Record.Troops[i] > 0) { <div><i class="troop troop-@i"></i><b>@TerritoryRules.TroopNames[i] @Record.Troops[i]명</b></div> } }</div>
+        <div class="army-health"><span>원정군 잔여 병력 <b>@TerritoryBattleRules.ArmyHealth(Record, Progress).ToString("0")%</b></span><progress max="100" value="@TerritoryBattleRules.ArmyHealth(Record, Progress)" aria-label="원정군 잔여 병력"></progress></div>
+        @if (Progress >= 1) { <div class="outcome @(Record.Victory ? "victory" : "defeat")"><small>@(Record.Victory ? "VICTORY" : "RETREAT")</small><strong>@(Record.Victory ? "정복 성공" : "공략 실패")</strong></div> }
+    </div>
+    <footer>
+        @if (Cooperative) { <p>같은 서버 원정대 합동 전투 · 피해 @Record.Losses.Sum()명 예상</p><small>부상·전사와 자원 보상은 각 원정대의 귀환 시 확정됩니다. 집결 전력과 서버 승패 판정에 맞춘 전투 재생입니다.</small> }
+        else {
+        <p>@(Confirmed ? "확정 전투 기록" : "귀환 시 확정") · 피해 @Record.Losses.Sum()명 / @(Confirmed ? "부상" : "예상 부상") @Record.Wounded.Sum()명 / @(Confirmed ? "전사" : "예상 전사") @Record.Deaths.Sum()명</p>
+        <small>@(Confirmed ? "귀환 당시 병상 수용 결과입니다. 부상병은 치료소에서 치료 후 다시 출정할 수 있습니다." : "부상자는 치료소로 이송됩니다. 병상 부족분은 전사 처리되며, 여러 부대가 귀환하면 실제 부상 수가 달라질 수 있습니다.")</small>
+        }
+        <button @onclick="CloseRequested">월드맵으로 돌아가기 · 출정은 계속 진행</button>
+    </footer>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public TerritoryBattleRecord Record { get; set; } = new();
+    [Parameter] public TerritoryMarch? March { get; set; }
+    [Parameter] public bool Replay { get; set; }
+    [Parameter] public bool Cooperative { get; set; }
+    [Parameter] public string? EncounterTitle { get; set; }
+    [Parameter] public string? EnemyAsset { get; set; }
+    private string EnemyTitle => EncounterTitle ?? Record.OpponentName ?? TerritoryWorldVisuals.MonsterName(Record.Tile);
+    private string EnemyPicture => EnemyAsset ?? Record.OpponentAsset ?? TerritoryWorldVisuals.MonsterAsset(Record.Tile);
+    [Parameter] public EventCallback CloseRequested { get; set; }
+    private readonly CancellationTokenSource stop = new();
+    private Task? animation;
+    private DateTime replayStart = DateTime.UtcNow;
+    private string lastId = "";
+    private double Progress => Replay || March is null ? Math.Clamp((DateTime.UtcNow - replayStart).TotalSeconds / 10, 0, 1) : TerritoryBattleRules.CombatProgress(March, DateTime.UtcNow);
+    private bool Waiting => !Replay && March is not null && TerritoryRules.MarchProgress(March, DateTime.UtcNow) < .45;
+    private bool Fighting => !Waiting && Progress < 1;
+    private bool Confirmed => Replay || March is null;
+    private int Turn => Math.Clamp((int)(Progress * 10) + 1, 1, 10);
+    private long RoundDamage => (long)Math.Round(Record.EnemyPower * (TerritoryBattleRules.EnemyHealth(Record, (Turn - 1) / 10d) - TerritoryBattleRules.EnemyHealth(Record, Turn / 10d)) / 100d);
+    protected override void OnParametersSet() { if (lastId != Record.Id) { lastId = Record.Id; replayStart = DateTime.UtcNow; } }
+    protected override void OnInitialized() { animation = Animate(); }
+    private async Task Animate()
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(150));
+        try { while (await timer.WaitForNextTickAsync(stop.Token)) await InvokeAsync(StateHasChanged); }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+    }
+    public async ValueTask DisposeAsync() { await stop.CancelAsync(); if (animation is not null) await animation; stop.Dispose(); }
+}

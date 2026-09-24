@@ -1,0 +1,39 @@
+/* Territory uses its own city key art, not the tower-defense board. */
+.mi-trial-feature.game-territory {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    min-height: 340px;
+    background: #101e29;
+    border-color: #b99c68;
+}
+.mi-trial-feature.game-territory > img {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    object-fit: cover;
+    object-position: 65% 45%;
+    filter: none;
+}
+.mi-trial-feature.game-territory::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: linear-gradient(90deg, #08141bf5, #08141bc9 48%, #08141b12), linear-gradient(0deg, #08141b99, transparent 70%);
+    pointer-events: none;
+}
+.mi-trial-feature.game-territory > div { width: 65%; text-shadow: 0 2px 4px #000; }
+.mi-trial-feature.game-territory small { color: #e1c38b; }
+.mi-trial-feature.game-territory button { background: linear-gradient(110deg, #8b602e, #bc9855); border-color: #edce91; }
+.mi-trial-library .territory-thumbnail { object-fit: cover; object-position: 50% 35%; border: 1px solid #b99c68; border-radius: 7px; filter: none; }
+@media (max-width: 600px) {
+    .mi-trial-feature.game-territory { min-height: 290px; align-items: flex-end; }
+    .mi-trial-feature.game-territory > div { width: 100%; }
+    .mi-trial-feature.game-territory > img { object-position: 50% 30%; }
+    .mi-trial-feature.game-territory::after { background: linear-gradient(0deg, #07131bfa, #07131be8 43%, #07131b12 95%); }
+    .mi-trial-feature.game-territory p { max-width: 38em; }
+}

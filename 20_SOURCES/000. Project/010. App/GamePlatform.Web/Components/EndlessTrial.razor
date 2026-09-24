@@ -1,0 +1,122 @@
+@implements IAsyncDisposable
+@inject GameSession Session
+@inject IJSRuntime JS
+
+<section class="mi-endless-trial" role="dialog" aria-modal="true" aria-label="무한 시련">
+    <header>
+        <div><small>ENDLESS RIFT</small><h2>무한 시련</h2><p>좌우로 원정대를 이동해 몬스터를 막고, 무기와 아군을 모아 한계를 돌파하세요.</p></div>
+        <button type="button" class="mi-endless-close" aria-label="무한 시련 닫기" @onclick="CloseAsync">×</button>
+    </header>
+    <div class="mi-endless-hud" id="@($"{rootId}-hud")">
+        <span><small>생존</small><strong data-trial-time>0:00</strong></span>
+        <span><small>처치</small><strong data-trial-kills>0</strong></span>
+        <span><small>화력</small><strong data-trial-power>Lv.1</strong></span>
+        <span><small>원정대</small><strong data-trial-allies>1명</strong></span>
+    </div>
+    <div class="mi-endless-canvas-shell" id="@rootId">
+        <canvas @ref="canvas" width="720" height="1080" tabindex="0" aria-label="좌우 이동 무한 전투 게임"></canvas>
+        @if (!running)
+        {
+            <div class="mi-endless-gate">
+                @if (lastResult is null)
+                {
+                    <img src="/images/maru-idle/icons-premium/codex.png" alt="" />
+                    <small>NO STAGE · INFINITE SURVIVAL</small>
+                    <h3>끝없이 밀려오는 마물 군세</h3>
+                    <p>화면을 누른 채 좌우로 움직입니다. 아군과 무기로 전력을 높이고, 35기 처치마다 방벽을 1칸 복구할 수 있습니다.</p>
+                }
+                else
+                {
+                    <small>EXPEDITION COMPLETE</small>
+                    <h3>@(lastResult.Accepted ? "시련 보상 정산 완료" : "기록 확인 실패")</h3>
+                    <strong>@lastResult.Message</strong>
+                    @if (lastResult.EquipmentDropped is not null) { <p>장비 획득 · @lastResult.EquipmentDropped.DisplayName</p> }
+                    @if (lastResult.BoostDropped is not null) { <p>부적 획득 · @lastResult.BoostDropped.Name</p> }
+                }
+                <button type="button" disabled="@starting" @onclick="StartAsync">@(starting ? "원정 준비 중…" : lastResult is null ? "무한 시련 시작" : "다시 도전")</button>
+            </div>
+        }
+    </div>
+    <footer>
+        <span><b>조작</b> 드래그 · 마우스 이동 · ← →</span>
+        <span><b>보상</b> 금화 · 강화 광석 · 소환패 · 장비 · 부적</span>
+        <span><b>규칙</b> 방벽 4칸 · 35처치마다 1칸 복구</span>
+    </footer>
+</section>
+
+@code {
+    private readonly string rootId = $"endless-{Guid.NewGuid():N}";
+    private ElementReference canvas;
+    private DotNetObjectReference<EndlessTrial>? componentReference;
+    private EndlessTrialStart? activeRun;
+    private EndlessTrialResult? lastResult;
+    private bool running;
+    private bool starting;
+
+    [Parameter, EditorRequired] public GameSnapshot Snapshot { get; set; } = GameSnapshot.Empty;
+    [Parameter] public EventCallback<GameSnapshot> SnapshotChanged { get; set; }
+    [Parameter] public EventCallback CloseRequested { get; set; }
+
+    private async Task StartAsync()
+    {
+        if (running || starting) return;
+        starting = true;
+        lastResult = null;
+        try
+        {
+            activeRun = await Session.BeginEndlessTrialAsync();
+            componentReference ??= DotNetObjectReference.Create(this);
+            running = true;
+            await JS.InvokeVoidAsync("maruEndless.start", canvas, rootId, componentReference, new
+            {
+                backgroundUrl = "/images/maru-idle/trials/endless-rift-arena-v2.png",
+                enemyUrl = Snapshot.World.EnemyAssetUrl,
+                playerUrls = new[] { Snapshot.Party.ActiveHero.SpriteAssetUrl }
+                    .Concat(Snapshot.Party.Companions.Select(hero => hero.SpriteAssetUrl))
+                    .ToArray(),
+                weaponUrls = new[]
+                {
+                    "/images/maru-idle/equipment/personal/weapon-sword-v1.png",
+                    "/images/maru-idle/equipment/personal/weapon-bow-v1.png",
+                    "/images/maru-idle/equipment/personal/weapon-staff-v1.png"
+                },
+                goldUrl = "/images/maru-idle/rewards/gold-pouch.svg",
+                materialUrl = "/images/maru-idle/rewards/companion-ore.svg",
+                ticketUrl = "/images/maru-idle/icons-premium/companions.png"
+            });
+        }
+        finally
+        {
+            starting = false;
+        }
+    }
+
+    [JSInvokable]
+    public async Task FinishAsync(int survivalSeconds, int kills, int goldPickups, int materialPickups, int ticketPickups)
+    {
+        if (!running || activeRun is null) return;
+        running = false;
+        var run = activeRun;
+        activeRun = null;
+        lastResult = await Session.CompleteEndlessTrialAsync(
+            run.RunId, survivalSeconds, kills, goldPickups, materialPickups, ticketPickups);
+        await SnapshotChanged.InvokeAsync(lastResult.State);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CloseAsync()
+    {
+        running = false;
+        activeRun = null;
+        try { await JS.InvokeVoidAsync("maruEndless.stop", canvas); }
+        catch (JSDisconnectedException) { }
+        await CloseRequested.InvokeAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { await JS.InvokeVoidAsync("maruEndless.stop", canvas); }
+        catch (JSDisconnectedException) { }
+        componentReference?.Dispose();
+    }
+}

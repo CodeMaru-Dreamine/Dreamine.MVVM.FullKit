@@ -1,0 +1,189 @@
+@page "/admin"
+@attribute [Authorize(Policy = "GameAdmin")]
+@inject IGameProgressStore ProgressStore
+@inject IGameAdminGrantService GrantService
+@inject IGameAdminCommunicationService CommunicationService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+<PageTitle>GM Console | CodeMaru Games</PageTitle>
+
+<main class="gp-ops">
+    <header class="gp-ops-commandbar">
+        <div class="gp-ops-brand"><i aria-hidden="true">令</i><span><small>CODEMARU LIVE OPERATIONS</small><h1>마루 원정 <b>GM Console</b></h1></span></div>
+        <div class="gp-ops-operator"><span><b></b> LIVE SERVER</span><small>@administrator</small></div>
+        <button type="button" class="gp-ops-refresh" @onclick="ReloadAsync" disabled="@(loading || IsWorking)" aria-label="운영 데이터 새로고침"><span>↻</span> 새로고침</button>
+    </header>
+
+    <nav class="gp-ops-nav" role="tablist" aria-label="GM 운영 메뉴">
+        <button type="button" role="tab" aria-selected="@(activeSection == "overview")" class="@(activeSection == "overview" ? "is-active" : null)" @onclick='() => SetSection("overview")'><i>◈</i><span>상황실<small>Overview</small></span></button>
+        <button type="button" role="tab" aria-selected="@(activeSection == "rewards")" class="@(activeSection == "rewards" ? "is-active" : null)" @onclick='() => SetSection("rewards")'><i>◆</i><span>재화 운영<small>Economy</small></span></button>
+        <button type="button" role="tab" aria-selected="@(activeSection == "messages")" class="@(activeSection == "messages" ? "is-active" : null)" @onclick='() => SetSection("messages")'><i>✦</i><span>통신 지휘<small>Broadcast</small></span></button>
+        <button type="button" role="tab" aria-selected="@(activeSection == "players")" class="@(activeSection == "players" ? "is-active" : null)" @onclick='() => SetSection("players")'><i>◎</i><span>원정대원<small>Players</small></span></button>
+        <button type="button" role="tab" aria-selected="@(activeSection == "logs")" class="@(activeSection == "logs" ? "is-active" : null)" @onclick='() => SetSection("logs")'><i>▤</i><span>작전 기록<small>Audit</small></span></button>
+    </nav>
+
+    @if (loading)
+    {
+        <section class="gp-ops-loading" role="status"><i></i><strong>LIVE DATA LINK</strong><span>서버 작전 정보를 동기화하고 있습니다.</span></section>
+    }
+    else
+    {
+        <datalist id="gp-ops-player-list">@foreach (var player in players) { <option value="@player.UserId">@PlayerName(player) · Stage @player.Stage</option> }</datalist>
+
+        @if (activeSection == "overview")
+        {
+            <section class="gp-ops-metrics" aria-label="서버 현황">
+                <article><i>隊</i><span><small>ACTIVE PROFILES</small><strong>@players.Count.ToString("N0")</strong><em>게임 진행 계정</em></span></article>
+                <article><i>C</i><span><small>CODEMARU RESERVE</small><strong>@CompactNumber(TotalPremiumCurrency)</strong><em>전체 C 보유량</em></span></article>
+                <article><i>金</i><span><small>GOLD CIRCULATION</small><strong>@CompactNumber(TotalGold)</strong><em>전체 금화 보유량</em></span></article>
+                <article><i>頂</i><span><small>HIGHEST EXPEDITION</small><strong>Stage @HighestStage.ToString("N0")</strong><em>서버 최고 진행</em></span></article>
+            </section>
+            <section class="gp-ops-overview-grid">
+                <article class="gp-ops-panel gp-ops-launchpad">
+                    <header><span><small>COMMAND DECK</small><h2>빠른 작전 실행</h2></span><em>GM 전용</em></header>
+                    <div>
+                        <button type="button" @onclick='() => SetSection("rewards")'><i>◆</i><span><strong>재화 지급·회수</strong><small>개별/전체 지급 및 테스트 재화 회수</small></span><b>›</b></button>
+                        <button type="button" @onclick='() => SetSection("messages")'><i>✦</i><span><strong>공지·우편 발송</strong><small>전체 알림과 보상 첨부 우편</small></span><b>›</b></button>
+                        <button type="button" @onclick='() => SetSection("players")'><i>◎</i><span><strong>원정대원 검색</strong><small>진행도와 실시간 재화 잔액 확인</small></span><b>›</b></button>
+                    </div>
+                </article>
+                <article class="gp-ops-panel gp-ops-feed">
+                    <header><span><small>RECENT ACTIVITY</small><h2>최근 운영 활동</h2></span><button type="button" @onclick='() => SetSection("logs")'>전체 기록</button></header>
+                    @if (!RecentActivities.Any()) { <p class="gp-ops-empty">아직 기록된 운영 활동이 없습니다.</p> }
+                    else { <div>@foreach (var activity in RecentActivities) { <article><i class="@activity.Tone">@activity.Icon</i><span><strong>@activity.Title</strong><small>@activity.Detail</small></span><time>@activity.When.ToLocalTime().ToString("MM-dd HH:mm")</time></article> }</div> }
+                </article>
+            </section>
+        }
+        else if (activeSection == "rewards")
+        {
+            <header class="gp-ops-section-head"><div><small>ECONOMY CONTROL</small><h2>재화 운영실</h2><p>지급, 테스트 재화 회수와 잔액 초기화를 하나의 승인 흐름으로 관리합니다.</p></div><span>모든 명령은 감사 기록에 영구 보존</span></header>
+            <section class="gp-ops-target-strip">
+                <label><span>작전 대상 검색</span><input list="gp-ops-player-list" @bind="selectedUserId" @bind:event="oninput" placeholder="닉네임 또는 계정 ID" autocomplete="off" /></label>
+                @if (SelectedPlayer is { } selected)
+                {
+                    <div class="gp-ops-target-profile"><i>@Initial(selected)</i><span><small>SELECTED PLAYER</small><strong>@PlayerName(selected)</strong><em>@selected.UserId · Stage @selected.Stage.ToString("N0")</em></span></div>
+                    <div class="gp-ops-wallet"><span><small>CodeMaru C</small><b>@CompactNumber(selected.PremiumCurrency)</b></span><span><small>금화</small><b>@CompactNumber(selected.Gold)</b></span><span><small>소환패</small><b>@CompactNumber(selected.HeroSummonTickets)</b></span></div>
+                }
+                else { <p><i>⌕</i><span><strong>대상 계정을 선택하세요</strong><small>아래 원정대원 목록을 눌러도 선택됩니다.</small></span></p> }
+            </section>
+            <section class="gp-ops-economy-grid">
+                <article class="gp-ops-panel gp-ops-command-card is-gold">
+                    <header><i>賜</i><span><small>REWARD DROP</small><h3>운영 보상 지급</h3></span></header>
+                    <div class="gp-ops-segments"><button type="button" class="@(target == GameAdminGrantTarget.Individual ? "is-active" : null)" @onclick='() => target = GameAdminGrantTarget.Individual'>선택 계정</button><button type="button" class="@(target == GameAdminGrantTarget.AllPlayers ? "is-active" : null)" @onclick='() => target = GameAdminGrantTarget.AllPlayers'>전체 계정</button></div>
+                    @if (target == GameAdminGrantTarget.AllPlayers) { <div class="gp-ops-command-alert"><i>!</i><span><strong>@players.Count.ToString("N0")개 계정 전체 지급</strong><small>각 계정에 동일한 수량이 지급됩니다.</small></span></div> }
+                    <div class="gp-ops-fields"><label><span>지급 품목</span><select @bind="rewardKind"><option value="@GameAdminRewardKind.PremiumCurrency">CodeMaru C</option><option value="@GameAdminRewardKind.Gold">금화</option><option value="@GameAdminRewardKind.HeroSummonTickets">동료 소환패</option></select></label><label><span>계정당 수량</span><input type="number" min="1" max="1000000000000" @bind="amount" /></label><label class="is-wide"><span>운영 메모 <em>선택</em></span><input maxlength="200" @bind="note" placeholder="예: 출시 기념 보상" /></label></div>
+                    <button type="button" class="gp-ops-primary" disabled="@(IsWorking || amount < 1 || target == GameAdminGrantTarget.Individual && SelectedPlayer is null)" @onclick="RequestGrantConfirmation"><span>보상 투하 승인</span><b>◆</b></button>
+                </article>
+                <article class="gp-ops-panel gp-ops-command-card is-red">
+                    <header><i>收</i><span><small>BALANCE CONTROL</small><h3>재화 회수·초기화</h3></span></header>
+                    <div class="gp-ops-segments"><button type="button" class="@(balanceAction == "reclaim" ? "is-active" : null)" @onclick='() => ChangeBalanceAction("reclaim")'>수량 회수</button><button type="button" class="@(balanceAction == "reset" ? "is-active" : null)" @onclick='() => ChangeBalanceAction("reset")'>잔액 초기화</button></div>
+                    <div class="gp-ops-fields"><label><span>@(balanceAction == "reclaim" ? "회수 품목" : "초기화 항목")</span><select @bind="balanceRewardKind"><option value="@GameAdminRewardKind.PremiumCurrency">CodeMaru C</option><option value="@GameAdminRewardKind.Gold">금화</option><option value="@GameAdminRewardKind.HeroSummonTickets">동료 소환패</option>@if (balanceAction == "reset") { <option value="@GameAdminRewardKind.AllCurrencies">전체 재화</option> }</select></label>@if (balanceAction == "reclaim") { <label><span>회수 수량</span><input type="number" min="1" max="1000000000000" @bind="reclaimAmount" /></label> }<label class="is-wide"><span>운영 메모 <em>선택</em></span><input maxlength="200" @bind="balanceNote" placeholder="예: 테스트 지급분 회수" /></label></div>
+                    <button type="button" class="gp-ops-primary" disabled="@(IsWorking || SelectedPlayer is null || balanceAction == "reclaim" && reclaimAmount < 1)" @onclick="RequestBalanceConfirmation"><span>@(balanceAction == "reclaim" ? "회수 명령 승인" : "초기화 명령 승인")</span><b>◆</b></button>
+                </article>
+            </section>
+        }
+        else if (activeSection == "messages")
+        {
+            <header class="gp-ops-section-head"><div><small>LIVE COMMUNICATION</small><h2>통신 지휘실</h2><p>전체 공지, 보상 우편과 특정 이용자 귓속말을 실시간 발송합니다.</p></div><span>발송 후 수정 불가</span></header>
+            <section class="gp-ops-comms-grid">
+                <article class="gp-ops-panel gp-ops-composer">
+                    <header><span><small>TRANSMISSION TYPE</small><h3>새 메시지 작성</h3></span></header>
+                    <nav class="gp-ops-message-kinds"><button type="button" class="@(communicationKind == GameAdminMessageKind.Announcement ? "is-active" : null)" @onclick='() => SetCommunicationKind(GameAdminMessageKind.Announcement)'><i>◉</i><span>전체 공지<small>즉시 팝업</small></span></button><button type="button" class="@(communicationKind == GameAdminMessageKind.Mail ? "is-active" : null)" @onclick='() => SetCommunicationKind(GameAdminMessageKind.Mail)'><i>✉</i><span>운영 우편<small>선물 첨부</small></span></button><button type="button" class="@(communicationKind == GameAdminMessageKind.Whisper ? "is-active" : null)" @onclick='() => SetCommunicationKind(GameAdminMessageKind.Whisper)'><i>⌁</i><span>귓속말<small>개별 전송</small></span></button></nav>
+                    @if (communicationKind != GameAdminMessageKind.Announcement) { <div class="gp-ops-segments"><button type="button" class="@(communicationTarget == GameAdminMessageTarget.AllPlayers ? "is-active" : null)" disabled="@(communicationKind == GameAdminMessageKind.Whisper)" @onclick='() => communicationTarget = GameAdminMessageTarget.AllPlayers'>전체 계정</button><button type="button" class="@(communicationTarget == GameAdminMessageTarget.Individual ? "is-active" : null)" @onclick='() => communicationTarget = GameAdminMessageTarget.Individual'>특정 계정</button></div> }
+                    <div class="gp-ops-fields">@if (NeedsCommunicationUser) { <label class="is-wide"><span>수신 계정</span><input list="gp-ops-player-list" @bind="communicationUserId" @bind:event="oninput" placeholder="계정 ID" /></label> }@if (communicationKind != GameAdminMessageKind.Whisper) { <label class="is-wide"><span>제목</span><input maxlength="80" @bind="communicationTitle" placeholder="메시지 제목" /></label> }@if (communicationKind == GameAdminMessageKind.Mail) { <label><span>첨부 선물</span><select @bind="attachmentKind"><option value="@GameAdminMailAttachmentKind.None">첨부 없음</option><option value="@GameAdminMailAttachmentKind.PremiumCurrency">CodeMaru C</option><option value="@GameAdminMailAttachmentKind.Gold">금화</option><option value="@GameAdminMailAttachmentKind.HeroSummonTickets">동료 소환패</option></select></label>@if (attachmentKind != GameAdminMailAttachmentKind.None) { <label><span>첨부 수량</span><input type="number" min="1" max="1000000000000" @bind="attachmentAmount" /></label> } }<label class="is-wide"><span>본문</span><textarea maxlength="500" @bind="communicationText" placeholder="이용자에게 전달할 내용을 작성하세요."></textarea></label></div>
+                    <button type="button" class="gp-ops-primary" disabled="@(!CanSendCommunication || IsWorking)" @onclick="RequestCommunicationConfirmation"><span>전송 명령 승인</span><b>✦</b></button>
+                </article>
+                <article class="gp-ops-panel gp-ops-transmission-preview"><header><span><small>PLAYER VIEW</small><h3>게임 내 미리보기</h3></span><em>LIVE PREVIEW</em></header><div class="kind-@communicationKind.ToString().ToLowerInvariant()"><i>@CommunicationIcon(communicationKind)</i><span><small>CODEMARU OPERATIONS · @CommunicationAudience</small><strong>@(communicationKind == GameAdminMessageKind.Whisper ? "운영자 귓속말" : string.IsNullOrWhiteSpace(communicationTitle) ? "메시지 제목" : communicationTitle)</strong><p>@(string.IsNullOrWhiteSpace(communicationText) ? "작성한 내용이 실제 게임 화면에 이런 모습으로 표시됩니다." : communicationText)</p>@if (communicationKind == GameAdminMessageKind.Mail && attachmentKind != GameAdminMailAttachmentKind.None) { <em>🎁 @AttachmentLabel(attachmentKind) @attachmentAmount.ToString("N0")</em> }</span></div></article>
+            </section>
+        }
+        else if (activeSection == "players")
+        {
+            <header class="gp-ops-section-head"><div><small>PLAYER DIRECTORY</small><h2>원정대원 관리</h2><p>계정 진행도와 재화 상태를 조회하고 작전 대상으로 지정합니다.</p></div><span>@FilteredPlayers.Count().ToString("N0")명 표시</span></header>
+        }
+        else
+        {
+            <header class="gp-ops-section-head"><div><small>IMMUTABLE AUDIT TRAIL</small><h2>작전 기록 보관소</h2><p>재화 명령과 이용자 통신 이력을 시간순으로 확인합니다.</p></div><span>최근 @(history.Count + communicationHistory.Count)건</span></header>
+            <section class="gp-ops-log-grid">
+                <article class="gp-ops-panel gp-ops-log"><header><span><small>ECONOMY LOG</small><h3>재화 명령</h3></span></header><div>@if (history.Count == 0) { <p class="gp-ops-empty">재화 기록이 없습니다.</p> } else { @foreach (var item in history) { <article><i class="@(item.Amount > 0 ? "grant" : "reclaim")">@(item.Amount > 0 ? "+" : item.Amount < 0 ? "−" : "0")</i><span><strong>@EconomyLogTitle(item)</strong><small>@(item.Target == GameAdminGrantTarget.AllPlayers ? "전체 계정" : item.TargetUserId) · @item.Administrator</small><em>@(string.IsNullOrWhiteSpace(item.Note) ? "운영 메모 없음" : item.Note)</em></span><time>@item.CreatedUtc.ToLocalTime().ToString("MM-dd HH:mm")</time></article> } }</div></article>
+                <article class="gp-ops-panel gp-ops-log"><header><span><small>TRANSMISSION LOG</small><h3>통신 기록</h3></span></header><div>@if (communicationHistory.Count == 0) { <p class="gp-ops-empty">통신 기록이 없습니다.</p> } else { @foreach (var item in communicationHistory) { <article><i class="message">@CommunicationIcon(item.Kind)</i><span><strong>@item.Title</strong><small>@CommunicationKindLabel(item.Kind) · @CommunicationTargetLabel(item)</small><em>@item.Text</em></span><time>@item.CreatedUtc.ToLocalTime().ToString("MM-dd HH:mm")</time></article> } }</div></article>
+            </section>
+        }
+
+        @if (activeSection is "rewards" or "players")
+        {
+            <section class="gp-ops-panel gp-ops-roster @(activeSection == "rewards" ? "is-compact" : null)">
+                <header><span><small>PLAYER ROSTER</small><h3>원정대원 현황</h3></span><label><i>⌕</i><input @bind="search" @bind:event="oninput" placeholder="닉네임 또는 계정 ID 검색" /></label></header>
+                <div class="gp-ops-roster-head"><span>원정대원</span><span>진행</span><span>CodeMaru C</span><span>금화</span><span>소환패</span><span></span></div>
+                <div class="gp-ops-roster-body">@foreach (var player in FilteredPlayers) { <button type="button" class="@(SelectedPlayer?.UserId == player.UserId ? "is-selected" : null)" @onclick="() => SelectPlayer(player.UserId)"><span class="identity"><i>@Initial(player)</i><b>@PlayerName(player)<small>@player.UserId</small></b></span><strong>Stage @player.Stage.ToString("N0")</strong><span>@CompactNumber(player.PremiumCurrency)</span><span>@CompactNumber(player.Gold)</span><span>@CompactNumber(player.HeroSummonTickets)</span><em>선택 ›</em></button> }</div>
+            </section>
+        }
+    }
+</main>
+
+@if (confirmation is not null)
+{
+    <div class="gp-ops-confirm-backdrop" role="presentation" @onclick="CloseConfirmation"><section class="gp-ops-confirm @(confirmation.IsDanger ? "is-danger" : null)" role="alertdialog" aria-modal="true" aria-labelledby="gp-confirm-title" @onclick:stopPropagation="true"><i>@(confirmation.IsDanger ? "警" : "令")</i><small>@confirmation.Eyebrow</small><h2 id="gp-confirm-title">@confirmation.Title</h2><p>@confirmation.Summary</p><div><button type="button" @onclick="CloseConfirmation">취소</button><button type="button" class="is-approve" @onclick="ConfirmOperationAsync">명령 실행</button></div></section></div>
+}
+@if (!string.IsNullOrWhiteSpace(toastMessage))
+{
+    <aside class="gp-ops-toast @(toastSuccess ? "is-success" : "is-error")" role="status"><i>@(toastSuccess ? "✓" : "!")</i><span><strong>@(toastSuccess ? "명령 처리 완료" : "명령 처리 실패")</strong><small>@toastMessage</small></span><button type="button" @onclick="() => toastMessage = null">×</button></aside>
+}
+
+@code {
+    private IReadOnlyList<GameProgress> players = [];
+    private IReadOnlyList<GameAdminGrantRecord> history = [];
+    private IReadOnlyList<GameAdminMessage> communicationHistory = [];
+    private string activeSection = "overview", administrator = "GM", search = string.Empty, selectedUserId = string.Empty, note = string.Empty, balanceAction = "reclaim", balanceNote = string.Empty, communicationUserId = string.Empty, communicationTitle = string.Empty, communicationText = string.Empty;
+    private bool loading = true, busy, resetBusy, communicationBusy, toastSuccess;
+    private GameAdminGrantTarget target = GameAdminGrantTarget.Individual;
+    private GameAdminRewardKind rewardKind = GameAdminRewardKind.PremiumCurrency, balanceRewardKind = GameAdminRewardKind.PremiumCurrency;
+    private long amount = 100, reclaimAmount = 100, attachmentAmount = 100;
+    private GameAdminMessageKind communicationKind = GameAdminMessageKind.Announcement;
+    private GameAdminMessageTarget communicationTarget = GameAdminMessageTarget.AllPlayers;
+    private GameAdminMailAttachmentKind attachmentKind = GameAdminMailAttachmentKind.None;
+    private string? toastMessage;
+    private OperationConfirmation? confirmation;
+
+    private bool IsWorking => busy || resetBusy || communicationBusy;
+    private long TotalPremiumCurrency => SaturatingSum(players.Select(item => item.PremiumCurrency));
+    private long TotalGold => SaturatingSum(players.Select(item => item.Gold));
+    private int HighestStage => players.Count == 0 ? 0 : players.Max(item => item.HighestClearedStage);
+    private GameProgress? SelectedPlayer => players.FirstOrDefault(item => string.Equals(item.UserId, selectedUserId?.Trim(), StringComparison.OrdinalIgnoreCase));
+    private bool NeedsCommunicationUser => communicationKind == GameAdminMessageKind.Whisper || communicationKind == GameAdminMessageKind.Mail && communicationTarget == GameAdminMessageTarget.Individual;
+    private bool CanSendCommunication => !string.IsNullOrWhiteSpace(communicationText) && (communicationKind == GameAdminMessageKind.Whisper || !string.IsNullOrWhiteSpace(communicationTitle)) && (!NeedsCommunicationUser || players.Any(item => string.Equals(item.UserId, communicationUserId?.Trim(), StringComparison.OrdinalIgnoreCase))) && (communicationKind != GameAdminMessageKind.Mail || attachmentKind == GameAdminMailAttachmentKind.None || attachmentAmount > 0);
+    private IEnumerable<GameProgress> FilteredPlayers => players.Where(item => string.IsNullOrWhiteSpace(search) || item.UserId.Contains(search, StringComparison.OrdinalIgnoreCase) || item.GameNickname.Contains(search, StringComparison.OrdinalIgnoreCase)).OrderByDescending(item => item.UpdatedUtc).Take(200);
+    private IEnumerable<OpsActivity> RecentActivities => history.Select(item => new OpsActivity(item.CreatedUtc, item.Amount > 0 ? "+" : item.Amount < 0 ? "−" : "0", EconomyLogTitle(item), item.Target == GameAdminGrantTarget.AllPlayers ? "전체 계정" : item.TargetUserId ?? "대상 없음", item.Amount > 0 ? "grant" : "reclaim")).Concat(communicationHistory.Select(item => new OpsActivity(item.CreatedUtc, CommunicationIcon(item.Kind), item.Title, $"{CommunicationKindLabel(item.Kind)} · {CommunicationTargetLabel(item)}", "message"))).OrderByDescending(item => item.When).Take(6);
+
+    protected override async Task OnInitializedAsync() { var state = await AuthenticationStateProvider.GetAuthenticationStateAsync(); administrator = state.User.FindFirst(ClaimTypes.Email)?.Value ?? state.User.Identity?.Name ?? "GM"; await ReloadAsync(); }
+    private async Task ReloadAsync() { loading = true; try { players = await ProgressStore.ListAsync(); history = await GrantService.LoadRecentAsync(); communicationHistory = await CommunicationService.LoadRecentAsync(); } catch (Exception ex) { ShowToast($"운영 데이터를 불러오지 못했습니다. ({ex.Message})", false); } finally { loading = false; } }
+    private void SetSection(string section) => activeSection = section;
+    private void SelectPlayer(string userId) { selectedUserId = userId; communicationUserId = userId; if (activeSection == "players") activeSection = "rewards"; }
+    private void SetCommunicationKind(GameAdminMessageKind kind) { communicationKind = kind; communicationTarget = kind == GameAdminMessageKind.Announcement ? GameAdminMessageTarget.AllPlayers : kind == GameAdminMessageKind.Whisper ? GameAdminMessageTarget.Individual : communicationTarget; if (kind != GameAdminMessageKind.Mail) attachmentKind = GameAdminMailAttachmentKind.None; }
+    private void ChangeBalanceAction(string action) { balanceAction = action; if (action == "reclaim" && balanceRewardKind == GameAdminRewardKind.AllCurrencies) balanceRewardKind = GameAdminRewardKind.PremiumCurrency; }
+
+    private void RequestGrantConfirmation() { if (amount < 1) { ShowToast("지급 수량을 확인해 주세요.", false); return; } var audience = target == GameAdminGrantTarget.AllPlayers ? $"전체 {players.Count:N0}개 계정" : SelectedPlayer is { } player ? $"{PlayerName(player)} ({player.UserId})" : string.Empty; if (audience.Length == 0) { ShowToast("보상을 지급할 계정을 선택해 주세요.", false); return; } confirmation = new("REWARD AUTHORIZATION", "보상 투하를 승인할까요?", $"{audience}에 {RewardLabel(rewardKind)} {amount:N0}을 지급합니다.", target == GameAdminGrantTarget.AllPlayers, GrantAsync); }
+    private void RequestBalanceConfirmation() { if (SelectedPlayer is not { } player) { ShowToast("재화를 조정할 계정을 선택해 주세요.", false); return; } var operation = balanceAction == "reclaim" ? $"{RewardLabel(balanceRewardKind)} {reclaimAmount:N0} 회수" : $"{RewardLabel(balanceRewardKind)} 잔액 0 초기화"; confirmation = new("IRREVERSIBLE COMMAND", "재화 조정 명령을 실행할까요?", $"{PlayerName(player)} ({player.UserId}) · {operation}. 실행 결과는 감사 기록에 남습니다.", true, ExecuteBalanceActionAsync); }
+    private void RequestCommunicationConfirmation() { if (!CanSendCommunication) { ShowToast("수신 대상과 메시지 내용을 확인해 주세요.", false); return; } confirmation = new("TRANSMISSION AUTHORIZATION", "메시지를 전송할까요?", $"{CommunicationAudience}에게 {CommunicationKindLabel(communicationKind)}을 발송합니다. 발송 후에는 수정할 수 없습니다.", communicationTarget == GameAdminMessageTarget.AllPlayers, SendCommunicationAsync); }
+    private async Task ConfirmOperationAsync() { if (confirmation is null) return; var action = confirmation.Action; confirmation = null; await action(); }
+    private void CloseConfirmation() => confirmation = null;
+
+    private async Task GrantAsync() { busy = true; try { var result = await GrantService.GrantAsync(new(target, target == GameAdminGrantTarget.Individual ? selectedUserId : null, rewardKind, amount, note), administrator); ShowToast(result.Message, result.Accepted); if (result.Accepted) await RefreshEconomyAsync(); } catch (Exception ex) { ShowToast($"보상 지급에 실패했습니다. ({ex.Message})", false); } finally { busy = false; } }
+    private async Task ExecuteBalanceActionAsync() { resetBusy = true; try { var result = balanceAction == "reclaim" ? await GrantService.ReclaimBalanceAsync(selectedUserId, balanceRewardKind, reclaimAmount, balanceNote, administrator) : await GrantService.ResetBalanceAsync(selectedUserId, balanceRewardKind, balanceNote, administrator); ShowToast(result.Message, result.Accepted); if (result.Accepted) await RefreshEconomyAsync(); } catch (Exception ex) { ShowToast($"재화 조정에 실패했습니다. ({ex.Message})", false); } finally { resetBusy = false; } }
+    private async Task SendCommunicationAsync() { communicationBusy = true; try { var result = await CommunicationService.PublishAsync(new(communicationKind, communicationTarget, communicationUserId, communicationTitle, communicationText, attachmentKind, attachmentAmount), administrator); ShowToast(result.Message, result.Accepted); if (result.Accepted) { communicationHistory = await CommunicationService.LoadRecentAsync(); communicationText = string.Empty; } } catch (Exception ex) { ShowToast($"메시지 발송에 실패했습니다. ({ex.Message})", false); } finally { communicationBusy = false; } }
+    private async Task RefreshEconomyAsync() { players = await ProgressStore.ListAsync(); history = await GrantService.LoadRecentAsync(); }
+    private void ShowToast(string text, bool success) { toastMessage = text; toastSuccess = success; }
+
+    private string CommunicationAudience => communicationKind == GameAdminMessageKind.Announcement || communicationTarget == GameAdminMessageTarget.AllPlayers ? "전체 원정대" : players.FirstOrDefault(item => string.Equals(item.UserId, communicationUserId, StringComparison.OrdinalIgnoreCase)) is { } player ? PlayerName(player) : communicationUserId;
+    private static string Initial(GameProgress player) { var name = PlayerName(player).Trim(); return name.Length > 0 ? name[..1] : "?"; }
+    private static long SaturatingSum(IEnumerable<long> values) { var total = 0L; foreach (var value in values) total = value > 0 && total > long.MaxValue - value ? long.MaxValue : total + value; return total; }
+    private static string CompactNumber(long value) => value switch { >= 1_000_000_000_000_000 => $"{value / 1_000_000_000_000_000d:0.##}Q", >= 1_000_000_000_000 => $"{value / 1_000_000_000_000d:0.##}T", >= 1_000_000_000 => $"{value / 1_000_000_000d:0.##}B", >= 1_000_000 => $"{value / 1_000_000d:0.##}M", >= 1_000 => $"{value / 1_000d:0.##}K", _ => value.ToString("N0") };
+    private static string PlayerName(GameProgress player) => string.IsNullOrWhiteSpace(player.GameNickname) ? "이름 미설정" : player.GameNickname;
+    private static string RewardLabel(GameAdminRewardKind kind) => kind switch { GameAdminRewardKind.PremiumCurrency => "CodeMaru C", GameAdminRewardKind.Gold => "금화", GameAdminRewardKind.HeroSummonTickets => "소환패", GameAdminRewardKind.AllCurrencies => "전체 재화", _ => "보상" };
+    private static string AttachmentLabel(GameAdminMailAttachmentKind kind) => kind switch { GameAdminMailAttachmentKind.PremiumCurrency => "CodeMaru C", GameAdminMailAttachmentKind.Gold => "금화", GameAdminMailAttachmentKind.HeroSummonTickets => "소환패", _ => "첨부 없음" };
+    private static string CommunicationKindLabel(GameAdminMessageKind kind) => kind switch { GameAdminMessageKind.Announcement => "전체 공지", GameAdminMessageKind.Mail => "운영 우편", GameAdminMessageKind.Whisper => "귓속말", _ => "메시지" };
+    private static string CommunicationTargetLabel(GameAdminMessage item) => item.Target == GameAdminMessageTarget.AllPlayers ? "전체 계정" : item.TargetUserId ?? "대상 없음";
+    private static string CommunicationIcon(GameAdminMessageKind kind) => kind switch { GameAdminMessageKind.Announcement => "◉", GameAdminMessageKind.Mail => "✉", _ => "⌁" };
+    private static string EconomyLogTitle(GameAdminGrantRecord item) => item.Amount == 0 ? $"{RewardLabel(item.RewardKind)} 초기화" : item.Amount < 0 ? $"{RewardLabel(item.RewardKind)} {-item.Amount:N0} 회수" : $"{RewardLabel(item.RewardKind)} {item.Amount:N0} 지급";
+    private sealed record OperationConfirmation(string Eyebrow, string Title, string Summary, bool IsDanger, Func<Task> Action);
+    private sealed record OpsActivity(DateTime When, string Icon, string Title, string Detail, string Tone);
+}

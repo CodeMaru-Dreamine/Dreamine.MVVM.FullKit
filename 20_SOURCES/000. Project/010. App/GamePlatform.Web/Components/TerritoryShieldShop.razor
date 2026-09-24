@@ -1,0 +1,34 @@
+@inject GameSession Session
+<section class="shield-shop" aria-label="본성 보호막 상점">
+    <header><small>CASTLE PROTECTION</small><h3>본성 보호막</h3><span>보유 C @(data?.Coins.ToString("N0") ?? "—")</span></header>
+    <p>영주관 Lv.10 미만은 초보 보호 · 최초 월드 입장 시 3일 보호막<br/>구매 즉시 남은 시간에 추가됩니다. 본성 공격 출정 시 보호막이 해제됩니다.</p>
+    @if (Member is { } member) { <div class="status">@TerritorySharedRules.Protection(member, DateTime.UtcNow)<br/>보호막 종료 @member.ShieldUntilUtc.ToLocalTime().ToString("MM-dd HH:mm")</div> }
+    <div class="products">@for (var i = 0; i < TerritorySharedRules.Shields.Length; i++) { var index = i; var item = TerritorySharedRules.Shields[i]; <button disabled="@busy" class="@(selected == i ? "selected" : "")" @onclick="() => Select(index)"><strong>@Label(item.Hours)</strong><span>C @item.Coins</span></button> }</div>
+    @if (selected is { } choice && Member is { } current)
+    {
+        var product = TerritorySharedRules.Shields[choice];
+        <p>구매 후 종료: @((current.ShieldUntilUtc > DateTime.UtcNow ? current.ShieldUntilUtc : DateTime.UtcNow).AddHours(product.Hours).ToLocalTime().ToString("MM-dd HH:mm"))</p>
+        <button class="purchase" disabled="@(busy || data!.Coins < product.Coins)" @onclick="Buy">C @product.Coins 사용 · @Label(product.Hours) 보호막 구매 확정</button>
+    }
+    @if (message is not null) { <p role="status">@message</p> }
+</section>
+@code {
+    [Parameter] public EventCallback Changed { get; set; }
+    private TerritorySharedResult? data;
+    private TerritoryWorldMember? Member => data?.World.Members.GetValueOrDefault(data.UserId);
+    private int? selected;
+    private string purchaseId = Guid.NewGuid().ToString("N");
+    private bool busy;
+    private string? message;
+    private static string Label(int hours) => hours >= 72 ? $"{hours / 24}일" : $"{hours}시간";
+    protected override async Task OnInitializedAsync() { try { data = await Session.SharedWorldActionAsync(); } catch { message = "서버 선택과 연결 상태를 확인하세요."; } }
+    private void Select(int index) { if (selected != index) purchaseId = Guid.NewGuid().ToString("N"); selected = index; }
+    private async Task Buy()
+    {
+        if (busy || selected is null) return;
+        busy = true;
+        try { data = await Session.SharedWorldActionAsync("shield-buy", purchaseId, selected.Value); message = data.Message; if (data.Success) { selected = null; purchaseId = Guid.NewGuid().ToString("N"); } await Changed.InvokeAsync(); }
+        catch { message = "구매 결과를 확인하지 못했습니다. 같은 구매 버튼을 재시도하면 중복 결제 없이 확인합니다."; }
+        finally { busy = false; }
+    }
+}

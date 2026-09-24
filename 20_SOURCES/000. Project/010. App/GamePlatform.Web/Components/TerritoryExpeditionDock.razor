@@ -1,0 +1,51 @@
+<div class="expedition-bar"><button @onclick="() => expanded = !expanded">출정 관리 <b>@TerritoryRules.ActiveMarches(State).Count() / @TerritoryRules.MarchSlots(State)</b><span>@(TerritoryRules.FreeMarchSlots(State) == 1 ? "다음 슬롯 Lv.5" : TerritoryRules.FreeMarchSlots(State) == 2 ? "다음 슬롯 Lv.10" : "무료 3슬롯 개방") · @(expanded ? "닫기" : "열기")</span></button></div>
+@if (expanded)
+{
+    <section class="expedition-drawer" aria-label="원정군 출정 슬롯">
+        <header><strong>원정군 지휘소</strong><button aria-label="출정 관리 닫기" @onclick="() => expanded = false">×</button></header>
+        <div class="slot-tabs">@for (var i = 1; i <= 5; i++) { var slot = i; var active = TerritoryRules.ActiveMarches(State).FirstOrDefault(m => m.Slot == slot); <button class="@(selected == slot ? "selected" : "")" @onclick="() => { selected = slot; confirming = false; }"><b>@slot 부대</b><small>@(active is not null ? "출정 중" : slot <= TerritoryRules.MarchSlots(State) ? "대기" : slot == 2 ? "Lv.5" : slot == 3 ? "Lv.10" : "코인 해금")</small></button> }</div>
+        @if (SelectedMarch is { } march)
+        {
+            <div class="march-summary"><img src="@TerritoryWorldVisuals.MarchAsset(march.Squads.FirstOrDefault())" alt="출정 대장"/><div><strong>@TerritoryRules.TileName(march.Tile)</strong><span>@string.Join(" · ", march.Squads.Select(s => s.CommanderName)) · @march.Troops.Sum()명</span><small>@Phase(march) · 귀환까지 @Math.Max(0, Math.Ceiling((march.ReturnsUtc - Now).TotalSeconds))초</small></div></div>
+            @if (march.Mission.StartsWith("world-"))
+            {
+                <p>서버 월드에서 전투를 확인하세요. 공동 전투는 서버 일정에 맞춰 진행되며 개별 가속을 지원하지 않습니다.</p>
+            }
+            else
+            {
+                <div class="commands">@if (march.Mission == "conquer") { <button @onclick="() => Watch(march)">전투 보기</button> }<button disabled="@(Busy || march.Boosted || State.Food < 50 || (march.ReturnsUtc - Now).TotalSeconds <= 5)" @onclick="() => BoostRequested.InvokeAsync(march.Slot)">@(march.Boosted ? "가속 적용됨" : "행군 가속 · 식량 50")</button></div>
+                <button disabled="@Busy" @onclick="() => SpeedUp(march)">코인 시간 가속 · 보유 C @Coins.ToString("N0")</button>
+            }
+        }
+        else if (selected <= TerritoryRules.MarchSlots(State)) { <p>사용 가능한 출정 슬롯입니다. 출정 전 대장·병력을 저장해 둘 수 있습니다.</p>@if (State.FormationPresets.TryGetValue(selected, out var preset)) { <p>저장 편성 · @(preset.Squads.Sum(s => s.Count))명 · 대장 @(preset.Squads.Count)명</p> }<button @onclick="EditFormation">제 @selected 부대 · 대장·병력 편성</button> }
+        else if (selected < 4) { <p>영주관 Lv.@(selected == 2 ? 5 : 10)에 무료 개방됩니다.</p> }
+        else
+        {
+            <p>제 @selected 출정 슬롯 영구 해금 · <b>C @TerritoryRules.MarchSlotCost(selected)</b><br/>보유 C @Coins.ToString("N0") · 영주관 Lv.10부터 순서대로 개방</p>
+            @if (confirming) { <p>기존 CodeMaru C가 차감됩니다. 제 @selected 부대를 영구 해금할까요?</p> }
+            <button disabled="@(Busy || TerritoryRules.FreeMarchSlots(State) < 3 || selected != 4 + State.PurchasedMarchSlots || Coins < TerritoryRules.MarchSlotCost(selected))" @onclick="Unlock">@(confirming ? $"C {TerritoryRules.MarchSlotCost(selected)} 사용 · 해금 확정" : "코인으로 영구 해금")</button>
+        }
+        <small>한 대장은 한 원정군에만 배치할 수 있습니다. 각 부대의 가속·귀환·전투는 별도로 진행됩니다.</small>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public TerritoryState State { get; set; } = new();
+    [Parameter] public DateTime Now { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public long Coins { get; set; }
+    [Parameter] public EventCallback<int> UnlockRequested { get; set; }
+    [Parameter] public EventCallback<TerritoryMarch> AccelerateRequested { get; set; }
+    [Parameter] public EventCallback<int> BoostRequested { get; set; }
+    [Parameter] public EventCallback<TerritoryMarch> BattleRequested { get; set; }
+    [Parameter] public EventCallback<int> FormationRequested { get; set; }
+    private bool expanded;
+    private async Task EditFormation() { expanded = false; await FormationRequested.InvokeAsync(selected); }
+    private bool confirming;
+    private int selected = 1;
+    private TerritoryMarch? SelectedMarch => TerritoryRules.ActiveMarches(State).FirstOrDefault(m => m.Slot == selected);
+    private string Phase(TerritoryMarch m) { if (m.Mission.StartsWith("world-")) return m.Mission == "world-rally" ? "공동 집결 진행" : "본성 원정 진행"; var p = TerritoryRules.MarchProgress(m, Now); return p < .45 ? "이동 중" : p > .55 ? "귀환 중" : m.Mission == "conquer" ? "교전 중" : m.Mission == "gather" ? "채집 중" : "정찰 중"; }
+    private async Task Watch(TerritoryMarch march) { expanded = false; await BattleRequested.InvokeAsync(march); }
+    private async Task SpeedUp(TerritoryMarch march) { expanded = false; await AccelerateRequested.InvokeAsync(march); }
+    private async Task Unlock() { if (!confirming) { confirming = true; return; } await UnlockRequested.InvokeAsync(selected); confirming = false; }
+}

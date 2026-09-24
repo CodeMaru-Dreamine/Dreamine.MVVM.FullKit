@@ -1,0 +1,128 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject NavigationManager Navigation
+@inject GamesLocalization Text
+
+<div class="gp-site-chrome @(IsPlayRoute ? "is-hidden" : null)">
+<AuthorizeView>
+    <Authorized Context="authenticationState">
+        <DreaminePortalHeader BrandName="CodeMaru"
+                              BrandUrl="https://codemaru.co.kr/"
+                              Items="@NavigationItems"
+                              ActiveKey="games"
+                              NavigationAriaLabel="CodeMaru 서비스"
+                              ToggleMenuLabel="@Text["nav.toggle"]"
+                              UseCodeMaruAppearance="true"
+                              Fixed="true"
+                              IsAuthenticated="true"
+                              DisplayName="@DisplayNameOf(authenticationState)"
+                              ScreenSettingsLabel="@Text["screenSettings"]"
+                              AccountUrl="@IdentityUrl("account", Navigation.Uri)"
+                              AccountLabel="@Text["account"]"
+                              SignoutUrl="@IdentityUrl("signout", Navigation.BaseUri)"
+                              SignoutLabel="@Text["logout"]">
+            <Preferences>
+                <DreaminePortalPreferences ThemeLabel="@Text["theme.label"]"
+                                           SystemThemeLabel="@Text["theme.system"]"
+                                           LightThemeLabel="@Text["theme.light"]"
+                                           DarkThemeLabel="@Text["theme.dark"]"
+                                           ThemeStorageKey="codemaru-theme"
+                                           CookieDomain=".codemaru.co.kr"
+                                           Language="@Text.Language"
+                                           LanguageChanged="ChangeLanguageAsync"
+                                           LanguageLabel="@Text["language"]"
+                                           Languages="@Text.Languages"
+                                           FallbackLanguage="ko"
+                                           LanguageStorageKey="codemaru-language" />
+            </Preferences>
+        </DreaminePortalHeader>
+    </Authorized>
+    <NotAuthorized>
+        <DreaminePortalHeader BrandName="CodeMaru"
+                              BrandUrl="https://codemaru.co.kr/"
+                              Items="@NavigationItems"
+                              ActiveKey="games"
+                              NavigationAriaLabel="CodeMaru 서비스"
+                              ToggleMenuLabel="@Text["nav.toggle"]"
+                              UseCodeMaruAppearance="true"
+                              Fixed="true"
+                              LoginUrl="@IdentityUrl("login", Navigation.Uri)"
+                              LoginLabel="@Text["login"]">
+            <Preferences>
+                <DreaminePortalPreferences ThemeLabel="@Text["theme.label"]"
+                                           SystemThemeLabel="@Text["theme.system"]"
+                                           LightThemeLabel="@Text["theme.light"]"
+                                           DarkThemeLabel="@Text["theme.dark"]"
+                                           ThemeStorageKey="codemaru-theme"
+                                           CookieDomain=".codemaru.co.kr"
+                                           Language="@Text.Language"
+                                           LanguageChanged="ChangeLanguageAsync"
+                                           LanguageLabel="@Text["language"]"
+                                           Languages="@Text.Languages"
+                                           FallbackLanguage="ko"
+                                           LanguageStorageKey="codemaru-language" />
+            </Preferences>
+        </DreaminePortalHeader>
+    </NotAuthorized>
+</AuthorizeView>
+</div>
+
+<main class="gp-main @(IsPlayRoute ? "gp-main-play" : null)" id="main-content" tabindex="-1">
+    @Body
+</main>
+
+<footer class="gp-footer @(IsPlayRoute ? "is-hidden" : null)">
+    <span>@Text["footer.games"]</span>
+    <span>@Text["footer.account"]</span>
+</footer>
+
+@code {
+    private bool IsPlayRoute => new Uri(Navigation.Uri).AbsolutePath is "/maru-idle/play" or "/play";
+
+    private IReadOnlyList<DreaminePortalNavigationItem> NavigationItems =>
+    [
+        new("home", Text["nav.home"], "https://codemaru.co.kr/"),
+        new("dreamine", "Dreamine", "https://dreamine.kr/", OpenInNewWindow: true),
+        new("cardhybrid", "CardHybrid", "https://codemaru.co.kr/cardhybrid"),
+        new("wedding", "Wedding", "https://wedding.codemaru.co.kr"),
+        new("families", "Families", "https://families.codemaru.co.kr"),
+        new("babycare", "BabyCare", "https://babycare.codemaru.co.kr/"),
+        new("portfolio", "Portfolio", "https://portfolio.codemaru.co.kr/"),
+        new("cctv", "CCTV", "https://cctvviewer.codemaru.co.kr"),
+        new("shop", "ShopStore", "https://shop.codemaru.co.kr/"),
+        new("games", "Games", "/"),
+        new("contact", Text["contact"], "https://codemaru.co.kr/contact")
+    ];
+
+    protected override void OnInitialized()
+    {
+        Text.Changed += HandleLanguageChanged;
+        Navigation.LocationChanged += HandleLocationChanged;
+    }
+
+    private Task ChangeLanguageAsync(string language)
+    {
+        Text.SetLanguage(language);
+        return Task.CompletedTask;
+    }
+
+    private string DisplayNameOf(AuthenticationState authenticationState)
+    {
+        var name = authenticationState.User.Identity?.Name;
+        return string.IsNullOrWhiteSpace(name) ? Text["account"] : name;
+    }
+
+    private string IdentityUrl(string action, string returnUrl) =>
+        Dreamine.Identity.DreamineIdentityPortal.CreateUrl(action, returnUrl, Text.Language);
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    private void HandleLocationChanged(object? sender, LocationChangedEventArgs args) =>
+        _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose()
+    {
+        Text.Changed -= HandleLanguageChanged;
+        Navigation.LocationChanged -= HandleLocationChanged;
+    }
+}

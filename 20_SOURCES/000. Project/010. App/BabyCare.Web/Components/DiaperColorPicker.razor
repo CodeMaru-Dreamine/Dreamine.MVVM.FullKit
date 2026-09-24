@@ -1,0 +1,31 @@
+@inject BabyCareText Text
+@using BabyCare.Application
+@using BabyCare.Domain
+<fieldset class="color-picker">
+    <legend>@Text[Stool ? "대변 색상" : "소변 색상"]</legend>
+    <div class="color-options">
+    @foreach (var color in Colors)
+    {
+        <button type="button" class="color-option @(Value == color.Id ? "selected" : "")" aria-pressed="@(Value == color.Id)" @onclick="() => Select(color.Id)"><span class="color-swatch" style="background:@color.Hex" aria-hidden="true"></span>@Text[color.Label] @if (Value == color.Id) { <span aria-hidden="true">✓</span> }</button>
+    }
+    <button type="button" class="color-option @(Value is null ? "selected" : "")" aria-pressed="@(Value is null)" @onclick="() => Select(null)">@Text["미확인"]</button>
+    </div>
+    @if (Value is not null && !Confirmed) { <p class="fine">@Text["기본 선택입니다. 실제 색을 확인하고 다르면 바꿔주세요."]</p> }
+    @if (CareObservations.Advice(Stool, Value) is { } advice)
+    {
+        <div class="notice color-advice" role="status">@Text[advice]<p>@Text["피가 보이면서 발열·구토·심한 처짐·수유 저하가 동반되면 즉시 진료를 받으세요."]</p><a href="@AdviceUrl" target="_blank" rel="noopener">@Text["소아과 안내 자료"]</a></div>
+    }
+</fieldset>
+@code {
+    [Parameter, EditorRequired] public CareEntry Entry { get; set; } = default!;
+    [Parameter] public bool Stool { get; set; }
+    private DiaperColor[] Colors => Stool ? CareObservations.StoolColors : CareObservations.UrineColors;
+    private string? Value => Stool ? Entry.StoolColor : Entry.UrineColor;
+    private bool Confirmed => Stool ? Entry.StoolColorConfirmed : Entry.UrineColorConfirmed;
+    private string AdviceUrl => Stool
+        ? "https://www.healthychildren.org/English/ages-stages/baby/Pages/The-Many-Colors-of-Poop.aspx"
+        : Value == "brown"
+            ? "https://www.niddk.nih.gov/health-information/urologic-diseases/hematuria-blood-urine"
+            : "https://www.healthychildren.org/English/ages-stages/baby/Pages/Babys-First-Days-Bowel-Movements-and-Urination.aspx";
+    private void Select(string? value) { if (Stool) { Entry.StoolColor = value; Entry.StoolColorConfirmed = value is not null; } else { Entry.UrineColor = value; Entry.UrineColorConfirmed = value is not null; } }
+}

@@ -1,0 +1,21 @@
+@inject BabyCareText Text
+@if (Entry.Kind == "feeding")
+{
+    <label>@Text["수유 방법"]<select value="@Entry.FeedingMode" @onchange="ModeChanged"><option value="">@Text["선택해주세요"]</option><option value="formula">@Text["분유"]</option><option value="breast">@Text["모유 직수"]</option><option value="expressed">@Text["유축 모유 수유"]</option></select></label>
+}
+@if (Entry.Kind == "pumping" || Entry.FeedingMode == "breast")
+{
+    <label>@Text["수유·유축 방향"]<select value="@Entry.BreastSide" @onchange="e => Entry.BreastSide = e.Value?.ToString() ?? string.Empty"><option value="">@Text["선택해주세요"]</option><option value="left">@Text["왼쪽"]</option><option value="right">@Text["오른쪽"]</option><option value="both">@Text["양쪽"]</option></select></label>
+}
+@if (Entry.FeedingMode == "breast") { <p class="fine">@Text["직수는 시간으로 기록해요. 섭취량(mL)으로 환산하지 않아요."]</p> }
+@if (Entry.Kind == "solids")
+{
+    <label>@Text["먹은 양 (g)"]<input type="number" min="0" max="2000" step="0.1" value="@Entry.AmountGrams?.ToString(System.Globalization.CultureInfo.InvariantCulture)" @oninput="GramsChanged" /></label>
+    <p class="fine">@Text["음식·재료는 메모에 적어주세요. 모르는 양은 비워두세요."]</p>
+}
+@code {
+    [Parameter, EditorRequired] public CareEntry Entry { get; set; } = default!;
+    [Parameter] public EventCallback Changed { get; set; }
+    private async Task ModeChanged(ChangeEventArgs e) { Entry.FeedingMode = e.Value?.ToString() ?? ""; if (Entry.FeedingMode == "breast") Entry.AmountMl = null; else Entry.BreastSide = ""; await Changed.InvokeAsync(); }
+    private void GramsChanged(ChangeEventArgs e) { var s=e.Value?.ToString(); Entry.AmountGrams = string.IsNullOrWhiteSpace(s) ? null : decimal.TryParse(s,System.Globalization.NumberStyles.Number,System.Globalization.CultureInfo.InvariantCulture,out var n) ? n : -1; }
+}

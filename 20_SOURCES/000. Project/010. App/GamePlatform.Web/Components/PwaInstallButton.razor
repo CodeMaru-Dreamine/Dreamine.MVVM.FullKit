@@ -1,0 +1,105 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+
+@if (visible)
+{
+    <button type="button" class="gp-pwa-install @Variant" @onclick="InstallAsync" disabled="@busy" aria-label="마루 원정을 바탕화면 앱으로 설치">
+        <span aria-hidden="true">⇩</span><strong>@InstallButtonText</strong>
+    </button>
+}
+
+@if (installHelp is not null)
+{
+    <div class="gp-pwa-ios-backdrop" role="presentation" @onclick="CloseInstallHelp">
+        <section role="dialog" aria-modal="true" aria-labelledby="gp-pwa-ios-title" @onclick:stopPropagation="true">
+            <button type="button" class="gp-pwa-ios-close" @onclick="CloseInstallHelp" aria-label="설치 안내 닫기">×</button>
+            <img src="/icons/maru-expedition-192.png" alt="" />
+            @if (installHelp == "samsung")
+            {
+                <small>ANDROID · SAMSUNG INTERNET</small>
+                <h2 id="gp-pwa-ios-title">Chrome에서 안전하게 설치해 주세요</h2>
+                <p class="gp-pwa-warning">현재 기기에서는 삼성 인터넷의 설치 패키지를 Play Protect가 오래된 Android 대상 앱으로 판단합니다.</p>
+                <a class="gp-pwa-ios-done" href="intent://games.codemaru.co.kr/maru-idle#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=https%3A%2F%2Fgames.codemaru.co.kr%2Fmaru-idle;end">Chrome에서 게임 열기</a>
+                <ol><li>위 버튼으로 <b>Chrome</b>에서 게임을 엽니다.</li><li>Chrome 메뉴의 <b>앱 설치</b> 또는 <b>홈 화면에 추가</b>를 누릅니다.</li><li>설치된 마루 원정 아이콘으로 실행합니다.</li></ol>
+                <p>Play Protect 경고에서 강제로 설치하지 않아도 됩니다. 게임 기록은 서버 계정에 그대로 유지됩니다.</p>
+            }
+            else
+            {
+                <small>IPHONE · IPAD</small>
+                <h2 id="gp-pwa-ios-title">홈 화면에 마루 원정 추가</h2>
+                <ol><li>Safari 아래쪽의 <b>공유</b> 버튼을 누릅니다.</li><li><b>홈 화면에 추가</b>를 선택합니다.</li><li>홈 화면의 마루 원정 아이콘으로 실행합니다.</li></ol>
+                <p>아이콘으로 실행하면 주소창 없이 전체 화면 앱처럼 플레이할 수 있습니다.</p>
+            }
+            @if (installHelp != "samsung")
+            {
+                <button type="button" class="gp-pwa-ios-done" @onclick="CloseInstallHelp">확인</button>
+            }
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter] public string Variant { get; set; } = "default";
+
+    private DotNetObjectReference<PwaInstallButton>? reference;
+    private bool visible;
+    private bool busy;
+    private bool samsungInternet;
+    private string? installHelp;
+
+    private string InstallButtonText => busy ? "준비 중" : samsungInternet ? "Chrome에서 설치" : "바탕화면에 추가";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        reference = DotNetObjectReference.Create(this);
+        try
+        {
+            var state = await JS.InvokeAsync<PwaInstallState>("maruPwa.register", reference);
+            Apply(state);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (JSException) { visible = false; }
+    }
+
+    [JSInvokable]
+    public Task UpdateInstallState(PwaInstallState state)
+    {
+        Apply(state);
+        return InvokeAsync(StateHasChanged);
+    }
+
+    private void Apply(PwaInstallState state)
+    {
+        samsungInternet = state.IsSamsungInternet;
+        visible = !state.IsStandalone && (state.CanInstall || state.IsIos || state.IsSamsungInternet);
+    }
+
+    private async Task InstallAsync()
+    {
+        if (busy) return;
+        busy = true;
+        try
+        {
+            var result = await JS.InvokeAsync<string>("maruPwa.requestInstall");
+            if (result is "ios" or "samsung") installHelp = result;
+            else if (result is "accepted" or "installed") visible = false;
+        }
+        catch (JSException) { }
+        finally { busy = false; }
+    }
+
+    private void CloseInstallHelp() => installHelp = null;
+
+    public async ValueTask DisposeAsync()
+    {
+        if (reference is not null)
+        {
+            try { await JS.InvokeVoidAsync("maruPwa.unregister", reference); }
+            catch (JSDisconnectedException) { }
+            reference.Dispose();
+        }
+    }
+
+    public sealed record PwaInstallState(bool CanInstall, bool IsIos, bool IsSamsungInternet, bool IsStandalone);
+}

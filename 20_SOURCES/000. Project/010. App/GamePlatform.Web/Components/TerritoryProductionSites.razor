@@ -1,0 +1,26 @@
+<section class="production-estate" aria-label="생산 시설 확장">
+    <nav class="resource-tabs" aria-label="생산 시설 종류">@for (var i = 1; i <= 3; i++) { var type = i; <button class="@(selectedType == type ? "selected" : "")" aria-pressed="@(selectedType == type)" @onclick="() => selectedType = type">@TerritoryRules.BuildingNames[type] <b>@(1 + State.ProductionSites.Where((n, index) => TerritoryRules.SiteType(index) == type && n > 0).Count()) / 5</b></button> }</nav>
+    <div class="district-scene district-@selectedType @(Locked ? "locked" : "")">
+        <span class="scene-category">청운 영지 / 생산 지구</span><span class="level-seal">@(Level == 0 ? "미건설" : $"Lv.{Level}")</span>
+        <div class="scene-title"><small>@(selectedType == 1 ? "GOLDEN HARVEST" : selectedType == 2 ? "CEDAR WORKS" : "JADE QUARRY")</small><h3>@TerritoryRules.SiteName(Site)</h3><span>@(Locked ? $"영주관 Lv.{TerritoryRules.SiteUnlockLevel(Site)}에 개방" : Working ? "건설 중 · 완공을 준비하고 있습니다" : Level == 0 ? "새로운 생산 거점을 건설하세요" : $"생산 중 · 분당 +{Level * 12}")</span></div>
+    </div>
+    <div class="estate-income"><span>지구 전체 생산 <b>+@TerritoryRules.Production(State, selectedType)<small> / 분</small></b></span><span>건설 작업 <b>@TerritoryRules.ActiveConstructions(State).Count()<small> / 2</small></b></span></div>
+    <nav class="plot-tabs" aria-label="생산 부지 선택">@for (var i = 0; i < 4; i++) { var plot = i; var site = (selectedType - 1) * 4 + i; <button class="@(selectedPlot == plot ? "selected" : "")" aria-pressed="@(selectedPlot == plot)" @onclick="() => selectedPlot = plot"><b>@(plot + 2)호 부지</b><small>@(State.Buildings[0] < TerritoryRules.SiteUnlockLevel(site) ? $"Lv.{TerritoryRules.SiteUnlockLevel(site)} 개방" : State.ProductionSites[site] == 0 ? "미건설" : $"Lv.{State.ProductionSites[site]}")</small></button> }</nav>
+    <article class="build-order">
+        <div class="order-heading"><strong>@(Level == 0 ? "생산 시설 건설" : $"시설 강화 · Lv.{Level + 1}")</strong><span>생산량 <b>+12</b> / 분</span></div>
+        <div class="costs"><span>목재 <b>@Cost.Wood.ToString("N0")</b></span><span>석재 <b>@Cost.Stone.ToString("N0")</b></span><span>소요 <b>@(TerritoryRules.SiteSeconds(State, Site) / 60)분</b></span></div>
+        <button class="build-cta" disabled="@(Busy || Blocked is not null)" @onclick="() => BuildRequested.InvokeAsync(Site)">@(Blocked ?? (Level == 0 ? "추가 건설 시작" : "시설 강화 시작")) <span aria-hidden="true">→</span></button>
+    </article>
+</section>
+@code {
+    [Parameter, EditorRequired] public TerritoryState State { get; set; } = new();
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<int> BuildRequested { get; set; }
+    private int selectedType = 1, selectedPlot;
+    private int Site => (selectedType - 1) * 4 + selectedPlot;
+    private int Level => State.ProductionSites[Site];
+    private bool Locked => State.Buildings[0] < TerritoryRules.SiteUnlockLevel(Site);
+    private bool Working => TerritoryRules.ActiveConstructions(State).Any(j => j.Kind == "site-build" && j.Target == Site);
+    private (long Wood, long Stone) Cost => TerritoryRules.SiteCost(State, Site);
+    private string? Blocked => Locked ? $"영주관 Lv.{TerritoryRules.SiteUnlockLevel(Site)} 필요" : TerritoryRules.ConstructionBlocked(State, "site-build", Site) ?? (Level >= 20 ? "최고 레벨" : Level >= State.Buildings[0] ? "영주관 확장 필요" : State.Wood < Cost.Wood || State.Stone < Cost.Stone ? "건설 자원 부족" : null);
+}

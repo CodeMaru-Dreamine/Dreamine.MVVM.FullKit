@@ -1,0 +1,2741 @@
+@page "/maru-idle/play"
+@page "/play"
+@attribute [Authorize]
+@implements IAsyncDisposable
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject GameSession Session
+@inject IGameSettingsService SettingsService
+@inject IGameRankingService RankingService
+@inject IGameAdminCommunicationService CommunicationService
+@inject IAudioService Audio
+@inject IRegionAudioResolver AudioResolver
+@inject ICombatAudioDirector CombatAudio
+@inject IJSRuntime JS
+@inject IWebHostEnvironment HostEnvironment
+
+<PageTitle>마루 원정 | CodeMaru Games</PageTitle>
+
+@if (isLoading)
+{
+    <section class="mi-loading" aria-live="polite"><span class="mi-loading-mark"></span><strong>여정 기록을 펼치는 중</strong></section>
+}
+else if (!string.IsNullOrWhiteSpace(errorMessage))
+{
+    <section class="gp-auth-card" role="alert"><span class="gp-kicker">불러오기 실패</span><h1>@errorMessage</h1><a class="gp-button gp-button-primary" href="/maru-idle/play">다시 시도</a></section>
+}
+else
+{
+<main class="mi-stage phase-@snapshot.Phase.ToString().ToLowerInvariant() quality-@gameSettings.Display.Quality.ToString().ToLowerInvariant() @(snapshot.AutoAttackEnabled ? "auto-active" : null) @(!gameSettings.Display.AmbientEffects ? "ambient-disabled" : null) @(gameSettings.Display.PowerSaving ? "power-saving" : null)"
+          style="--region-primary:@snapshot.World.Region.PrimaryColor; --region-accent:@snapshot.World.Region.AccentColor"
+          data-exploration-audio-muted="@ExplorationAudioMuted.ToString().ToLowerInvariant()"
+          tabindex="0" @ref="gameRoot" @onkeydown="OnKeyDownAsync" @onkeyup="OnKeyUp">
+        @if (!ChannelConfirmed)
+        {
+            <div class="mi-server-gate" role="dialog" aria-modal="true" aria-labelledby="mi-server-gate-title"
+                 @onkeydown:stopPropagation="true" @onkeyup:stopPropagation="true">
+                <section>
+                    <header>
+                        <small>FIRST CONNECTION</small>
+                        <h1 id="mi-server-gate-title">원정 서버를 선택해 주세요</h1>
+                        <p>서버를 선택해야 원정을 시작할 수 있습니다. 월드 채팅과 순위는 같은 서버의 원정대끼리만 공유합니다.</p>
+                    </header>
+                    <div class="mi-server-gate-list">
+                        @foreach (var option in ChannelOptions)
+                        {
+                            <button type="button" disabled="@serviceBusy" @onclick='() => SelectChannelAsync(option.Key)'>
+                                <i>@option.Icon</i>
+                                <span><small>@option.Region</small><strong>@option.Name</strong><em>@option.Description</em></span>
+                                <b>선택</b>
+                            </button>
+                        }
+                    </div>
+                    <footer>
+                        <p>선택한 서버는 이 계정에 영구 귀속되며 이후 변경할 수 없습니다.</p>
+                        @if (serviceBusy) { <strong role="status">서버 접속 정보를 저장하는 중입니다…</strong> }
+                        else if (!string.IsNullOrWhiteSpace(serviceMessage)) { <strong class="is-error" role="alert">@serviceMessage</strong> }
+                    </footer>
+                </section>
+            </div>
+        }
+        <header class="mi-topbar">
+            <button type="button" class="mi-account-profile" aria-label="@currentDisplayName 개인 정보 열기" aria-expanded="@profileOpen" @onclick="OpenProfile">
+                <i style="background-image:url('@snapshot.Party.ActiveHero.SpriteAssetUrl'); --sprite-x:@snapshot.Party.ActiveHero.SpriteFocusX%; --sprite-y:@snapshot.Party.ActiveHero.SpriteFocusY%;" aria-hidden="true"></i>
+                <span>
+                    <strong>@currentDisplayName</strong>
+                    <small class="mi-profile-caption">내 원정대</small>
+                    <small class="mi-profile-power-mobile">전투력 @FormatCompact(snapshot.Party.PartyAttackPower)</small>
+                </span>
+                <em title="원정대 전투력">@FormatCompact(snapshot.Party.PartyAttackPower)</em>
+            </button>
+            <div class="mi-top-actions">
+                <PwaInstallButton Variant="compact" />
+                <div class="mi-currencies" aria-label="보유 재화">
+                    <span class="mi-currency"><i class="mi-coin" aria-hidden="true"></i><small>금화</small><strong>@FormatCompact(snapshot.Gold)</strong></span>
+                    <span class="mi-currency"><i class="mi-ticket-icon" aria-hidden="true"></i><small>소환패</small><strong>@FormatCompact(snapshot.HeroSummonTickets)</strong></span>
+                    <span class="mi-currency is-premium"><i aria-hidden="true">C</i><small>CodeMaru</small><strong>@FormatCompact(snapshot.PremiumCurrency)</strong></span>
+                </div>
+                @if (HostEnvironment.IsDevelopment()) { <button type="button" class="mi-dev-reset" aria-label="로컬 테스트 진행을 Stage 1로 초기화" title="테스트 진행 초기화" @onclick="ResetTestProgressAsync">↺</button> }
+                <button type="button" class="mi-settings-gear" aria-label="환경설정 열기" @onclick="OpenSettingsAsync">⚙</button>
+            </div>
+        </header>
+
+        @if (latestAnnouncement is not null)
+        {
+            <aside class="mi-admin-announcement" role="status" aria-label="운영 공지">
+                <span><b>공지</b><strong>@latestAnnouncement.Title</strong><em>@latestAnnouncement.Text</em></span>
+                <button type="button" aria-label="공지 확인 및 닫기" @onclick="DismissAnnouncementAsync">×</button>
+            </aside>
+        }
+
+        @if (profileOpen)
+        {
+            <div class="mi-profile-backdrop" @onclick="CloseProfile">
+                <section class="mi-profile-card" role="dialog" aria-modal="true" aria-labelledby="mi-profile-title" @onclick:stopPropagation="true">
+                    <button type="button" class="mi-profile-close" aria-label="개인 정보 닫기" @onclick="CloseProfile">×</button>
+                    <header class="mi-profile-identity">
+                        <i style="background-image:url('@snapshot.Party.ActiveHero.SpriteAssetUrl'); --sprite-x:@snapshot.Party.ActiveHero.SpriteFocusX%; --sprite-y:@snapshot.Party.ActiveHero.SpriteFocusY%;" aria-hidden="true"></i>
+                        <div class="mi-profile-name-block">
+                            <small>PLAYER PROFILE</small>
+                            <div class="mi-profile-name-row">
+                                <h2 id="mi-profile-title">@currentDisplayName</h2>
+                                <button type="button" class="mi-profile-name-edit" aria-label="닉네임 변경" @onclick="OpenNicknameEditor">변경</button>
+                            </div>
+                            <span>ID @PlayerIdDetail</span>
+                        </div>
+                        <strong><small>원정대 전투력</small>@FormatCompact(snapshot.Party.PartyAttackPower)</strong>
+                    </header>
+                    @if (nicknameEditorOpen)
+                    {
+                        <section class="mi-nickname-editor" aria-label="게임 닉네임 변경">
+                            <div>
+                                <label for="mi-nickname-input">원정대 닉네임</label>
+                                <span class="@(snapshot.NicknameChangeCount == 0 ? "is-free" : null)">@NicknameChangePriceLabel</span>
+                            </div>
+                            <input id="mi-nickname-input" type="text" maxlength="@GameNicknameRules.MaximumLength"
+                                   autocomplete="off" spellcheck="false" disabled="@nicknameBusy"
+                                   @onkeydown:stopPropagation="true" @onkeyup:stopPropagation="true"
+                                   @bind="nicknameDraft" @bind:event="oninput" />
+                            <small>한글·영문·숫자 @GameNicknameRules.MinimumLength~@(GameNicknameRules.MaximumLength)자 · 다른 원정대와 중복 불가</small>
+                            @if (!string.IsNullOrWhiteSpace(nicknameMessage))
+                            {
+                                <p class="@(nicknameChangeSucceeded ? "is-success" : "is-error")" role="status">@nicknameMessage</p>
+                            }
+                            <footer>
+                                <button type="button" @onclick="CancelNicknameEditor" disabled="@nicknameBusy">취소</button>
+                                <button type="button" class="is-primary" @onclick="ChangeNicknameAsync" disabled="@nicknameBusy">
+                                    @(nicknameBusy ? "변경 중" : "닉네임 적용")
+                                </button>
+                            </footer>
+                        </section>
+                    }
+                    <div class="mi-profile-facts">
+                        <article><small>채널</small><strong>@SelectedChannel</strong></article>
+                        <article><small>현재 스테이지</small><strong>STAGE @snapshot.Stage</strong></article>
+                        <article><small>최고 클리어</small><strong>STAGE @snapshot.HighestClearedStage</strong></article>
+                        <article><small>현재 지역</small><strong>@snapshot.World.Region.Name</strong></article>
+                    </div>
+    <section class="mi-profile-party-preview" aria-label="현재 원정대 편성">
+                        <header><div><small>ACTIVE PARTY</small><strong>현재 원정대</strong></div><span>본체 1 + 동료 @snapshot.Party.CompanionCount</span></header>
+                        <div class="mi-profile-party-grid">
+                            <article class="is-leader">
+                                <i style="background-image:url('@snapshot.Party.ActiveHero.SpriteAssetUrl'); --sprite-x:@snapshot.Party.ActiveHero.SpriteFocusX%; --sprite-y:@snapshot.Party.ActiveHero.SpriteFocusY%;" aria-hidden="true"></i>
+                                <span><small>대표 캐릭터</small><strong>@snapshot.Party.ActiveHero.Name</strong><em>@snapshot.Party.ActiveHero.Role</em></span>
+                            </article>
+                            @foreach (var hero in snapshot.Party.Companions)
+                            {
+                                <article>
+                                    <i style="background-image:url('@hero.SpriteAssetUrl'); --sprite-x:@hero.SpriteFocusX%; --sprite-y:@hero.SpriteFocusY%;" aria-hidden="true"></i>
+                                    <span><small>출전 동료</small><strong>@hero.Name</strong><em>@hero.Role</em></span>
+                                </article>
+                            }
+        </div>
+    </section>
+    <section class="mi-profile-growth" aria-label="본체 성장 메뉴">
+        <header>
+            <div><small>BODY GROWTH</small><strong>본체 성장</strong></div>
+            <span>계승 성장</span>
+        </header>
+        <div class="mi-profile-growth-actions">
+            <button type="button" @onclick='() => OpenProfilePanel("upgrade")'>
+                <img src="/images/maru-idle/icons-premium/forge.png" alt="" /><span><strong>검 강화</strong><small>본체 기본 공격력</small></span>
+            </button>
+            <button type="button" @onclick='() => OpenProfilePanel("skills")'>
+                <img src="/images/maru-idle/icons-premium/sword-art.png" alt="" /><span><strong>검술 수련</strong><small>기술 피해와 치명타</small></span>
+            </button>
+            <button type="button" @onclick='() => OpenProfilePanel("equipment")'>
+                <img src="/images/maru-idle/icons-premium/equipment.png" alt="" /><span><strong>장비 강화</strong><small>공격·생명·방어</small></span>
+            </button>
+        </div>
+    </section>
+</section>
+</div>
+        }
+
+        <section class="mi-enemy-hud @(snapshot.World.IsBoss ? "is-boss" : null)" aria-label="현재 적 상태">
+            <div class="mi-enemy-title"><span>@(snapshot.World.IsBoss ? "REGION BOSS" : snapshot.World.Region.Name)</span><strong>@snapshot.World.EnemyName</strong></div>
+            <div class="mi-hp-track" role="progressbar" aria-label="적 체력" aria-valuemin="0" aria-valuemax="@snapshot.EnemyMaxHp" aria-valuenow="@snapshot.EnemyHp">
+                <span style="width:@EnemyHpPercent%"></span><em>@FormatNumber(snapshot.EnemyHp) / @FormatNumber(snapshot.EnemyMaxHp)</em>
+            </div>
+        </section>
+
+<section class="mi-battlefield @(screenShake ? "is-shaking" : null) @(snapshot.World.IsBoss ? "is-boss-stage" : null)" aria-label="전투 영역, 터치하여 공격" @onclick="BattlefieldAttackAsync">
+            <img class="mi-background @(backgroundTransition ? "is-transitioning" : null)" src="@CurrentBackgroundUrl" alt="" fetchpriority="high" @onerror="UseFallbackBackground" />
+            <div class="mi-lighting lighting-@snapshot.World.LightingKey"></div>
+            <div class="mi-midground" aria-hidden="true"></div>
+            <div class="mi-ambient ambient-@snapshot.World.Region.AmbientEffectKey" aria-hidden="true">
+                @for (var index = 0; index < AmbientParticleCount; index++) { <i style="--i:@index"></i> }
+            </div>
+            <div class="mi-foreground" aria-hidden="true"></div>
+            <nav class="mi-quick-menu @(quickMenuOpen ? "is-open" : null)" aria-label="빠른 메뉴" @onclick:stopPropagation="true">
+                <button type="button" class="mi-quick-menu-toggle" aria-expanded="@quickMenuOpen" aria-label="@(quickMenuOpen ? "빠른 메뉴 닫기" : "빠른 메뉴 열기")" @onclick="ToggleQuickMenu"><img src="/images/maru-idle/icons-premium/menu-crest-v1.png" alt="" /><strong>@(quickMenuOpen ? "닫기" : "메뉴")</strong></button>
+                @if (quickMenuOpen)
+                {
+                    <div class="mi-quick-menu-list">
+                        <button type="button" @onclick='() => OpenServicePanel("channel")'><img src="/images/maru-idle/icons-premium/quick-channel.png" alt="" /><span>채널</span></button>
+                        <button type="button" @onclick="OpenOfflineReward"><img src="/images/maru-idle/rewards/gold-pouch.svg" alt="" /><span>방치 보상</span>@if (snapshot.OfflineReward.IsUnlocked && snapshot.OfflineReward.PendingGold > 0) { <b aria-label="수령 가능"></b> }</button>
+                        <button type="button" @onclick='() => OpenQuickCompanions("summon")'><img src="/images/maru-idle/icons-premium/companions.png" alt="" /><span>소환</span></button>
+                        <button type="button" @onclick='() => OpenServicePanel("mail")'><img src="/images/maru-idle/icons-premium/codex.png" alt="" /><span>우편</span>@if (snapshot.OfflineReward.PendingGold > 0 || adminMailMessages.Any(item => !IsAdminMailRead(item))) { <b aria-label="확인할 보상 또는 새 우편"></b> }</button>
+                        <button type="button" @onclick='() => OpenServicePanel("mission")'><img src="/images/maru-idle/icons-premium/quick-mission.png" alt="" /><span>임무</span></button>
+                        <button type="button" @onclick='() => OpenServicePanel("rank")'><img src="/images/maru-idle/icons-premium/quick-ranking.png" alt="" /><span>순위</span></button>
+                        <button type="button" @onclick='() => OpenServicePanel("shop")'><img src="/images/maru-idle/icons-premium/quick-shop.png" alt="" /><span>상점</span></button>
+                        <button type="button" @onclick="OpenTalismanVault"><img src="/images/maru-idle/boosts/auto-talisman-x3-v1.png" alt="" /><span>부적 사용</span>@if (snapshot.AutoBoostInventory.Sum(item => item.Count) > 0) { <b aria-label="사용 가능 부적"></b> }</button>
+                        <button type="button" @onclick="OpenQuickSettingsAsync"><img src="/images/maru-idle/icons-premium/quick-settings.png" alt="" /><span>설정</span></button>
+                        <button type="button" @onclick="OpenPowerSavingSettings"><img src="/images/maru-idle/icons-premium/quick-powersave.png" alt="" /><span>절전</span></button>
+                    </div>
+                }
+            </nav>
+            @if (quickNotice is not null)
+            {
+                <button type="button" class="mi-quick-notice" role="status" @onclick="DismissQuickNotice">@quickNotice <span aria-hidden="true">×</span></button>
+            }
+
+            @if (snapshot.BossGuardUnits.Any(unit => unit.IsAlive))
+            {
+                <div class="mi-boss-guards" aria-label="생존한 보조 몬스터 @snapshot.BossGuardUnits.Count(unit => unit.IsAlive) 마리">
+                    @foreach (var member in snapshot.BossGuardUnits.Select((unit, index) => (unit, index)).Where(member => member.unit.IsAlive))
+                    {
+                        <article class="mi-boss-guard guard-@member.index @(hitGuardId == member.unit.UnitId ? "is-hit" : null)" @key="member.unit.UnitId">
+                            <img src="@member.unit.AssetUrl" alt="@member.unit.Name" draggable="false" />
+                            <span><strong>@member.unit.Name</strong><small>@FormatNumber(member.unit.Hp) / @FormatNumber(member.unit.MaxHp)</small><i><b style="width:@UnitHpPercent(member.unit)%"></b></i></span>
+                            @foreach (var popup in VisibleDamagePopups(member.unit.UnitId))
+                            {
+                                <output class="mi-unit-damage @(popup.IsCritical ? "is-critical" : null)" @key="@($"guard-damage-{popup.Id}")">-@FormatNumber(popup.Damage)</output>
+                            }
+                        </article>
+                    }
+                </div>
+            }
+
+            <div class="mi-monster @(monsterHit ? "is-hit" : null) @(monsterAttacking ? "is-attacking" : null) @(snapshot.World.IsBoss ? "is-boss" : null)" @key="monsterAnimationKey">
+                <img src="@snapshot.World.EnemyAssetUrl" alt="@snapshot.World.EnemyName" draggable="false" />
+            </div>
+            @foreach (var popup in VisibleDamagePopups("enemy"))
+            {
+                <output class="mi-damage @(popup.IsCritical && gameSettings.Combat.CriticalEffects ? "is-critical" : null)" @key="@($"enemy-damage-{popup.Id}")">@(popup.IsCritical ? "치명 " : "-")@FormatNumber(popup.Damage)</output>
+            }
+            @if (playerDamagePopup is not null && hitCompanionId is null)
+            {
+                <output class="mi-damage mi-player-damage" @key="@($"player-damage-{enemyAnimationSequence}")">-@FormatNumber(playerDamagePopup.Value)</output>
+            }
+            @if (snapshot.Party.CompanionCount > 0)
+            {
+                <div class="mi-support-party" aria-label="연수와 함께 출전한 동료 @snapshot.Party.CompanionCount 명">
+                    @foreach (var member in snapshot.CompanionUnits.Select((unit, index) => (unit, index)).Where(member => member.unit.IsAlive))
+                    {
+                        <article class="mi-companion companion-@member.index unit-@member.unit.UnitId @member.unit.SkinCssClass @(playerAttacking ? "is-attacking" : null) @(hitCompanionId == member.unit.UnitId ? "is-hit" : null)"
+                                 style="--slot:@member.index; --attack-delay:@(member.index * 42)ms;"
+                                 @key="(member.unit.UnitId, animationSequence, enemyAnimationSequence)">
+                            <div class="mi-companion-sprite" style="background-image:url('@member.unit.AssetUrl')" role="img" aria-label="@member.unit.Name"></div>
+                            @if (playerAttacking && gameSettings.Display.SlashEffects && !SkipCombatEffects)
+                            {
+                                <i class="mi-companion-attack-effect" aria-hidden="true"></i>
+                            }
+                            @if (hitCompanionId == member.unit.UnitId && playerDamagePopup is not null)
+                            {
+                                <output class="mi-unit-damage mi-companion-damage">-@FormatNumber(playerDamagePopup.Value)</output>
+                            }
+                            <span><strong>@member.unit.Name</strong><small>@member.unit.Role</small><i><b style="width:@UnitHpPercent(member.unit)%"></b></i></span>
+                        </article>
+                    }
+                    <em>원정대 1 + @snapshot.Party.CompanionCount</em>
+                </div>
+            }
+            <div class="mi-player @(playerAttacking ? "is-attacking" : null) @(playerHit ? "is-hit" : null)" aria-label="원정대장 연수" @key="playerAnimationKey">
+                <img src="/images/maru-idle/swordswoman-idle-v2.png" alt="떠돌이 검객 연수" draggable="false" />
+                <span><strong>연수</strong><small>원정대장</small></span>
+            </div>
+            @if (playerAttacking && gameSettings.Display.SlashEffects && !SkipCombatEffects)
+            {
+                <img class="mi-slash" src="/images/maru-idle/effects/slash.svg" alt="" @key="slashAnimationKey" />
+                <img class="mi-impact" src="/images/maru-idle/effects/impact.svg" alt="" @key="impactAnimationKey" />
+            }
+
+            @if (snapshot.Phase is CombatPhase.Intro or CombatPhase.Transitioning)
+            {
+                <div class="mi-region-intro" role="status"><span>@(snapshot.World.IsBoss ? "수호자 출현" : "새 길을 여는 중")</span><strong>@snapshot.World.Region.Name</strong>@if (snapshot.World.IsBoss) { <em>@snapshot.World.EnemyName</em> }</div>
+            }
+            else if (snapshot.Phase == CombatPhase.Victory)
+            {
+                <div class="mi-victory" role="status"><span>길이 열렸습니다</span><strong>승리</strong></div>
+            }
+            else if (snapshot.Phase == CombatPhase.Defeat)
+            {
+                <div class="mi-defeat" role="status"><span>호흡을 가다듬는 중</span><strong>쓰러졌습니다</strong><em>현재 스테이지에서 다시 도전합니다</em></div>
+            }
+            <div class="mi-touch-hint">전투 영역 터치 · Space</div>
+            @if (showAudioUnlockHint) { <button type="button" class="mi-audio-unlock-hint" @onclick:stopPropagation="true" @onclick="EnsureAudioUnlockedAsync">화면을 터치하면 음악이 재생됩니다</button> }
+        </section>
+
+        <section class="mi-auto-energy">
+            @if (!snapshot.AutoAttackUnlocked)
+            {
+                <div class="mi-auto-locked" role="status"><span class="mi-lock" aria-hidden="true"></span><strong>AUTO 잠김</strong><small>15 스테이지 클리어 시 자동 공격 해금</small></div>
+            }
+            else
+            {
+                <button class="mi-auto-toggle @(snapshot.AutoAttackEnabled ? "is-on" : null)" type="button" aria-pressed="@snapshot.AutoAttackEnabled" @onclick="ToggleAutoAsync">
+                    <span class="mi-auto-dot"></span><strong>AUTO</strong><em>@(snapshot.AutoAttackEnabled ? "ON" : "OFF")</em>@if (snapshot.ActiveAutoSpeedMultiplier > 1) { <small>×@snapshot.ActiveAutoSpeedMultiplier</small> }
+                </button>
+            }
+            <div class="mi-energy mi-life"><span>생명력</span><strong>@FormatNumber(snapshot.PlayerHp) / @FormatNumber(snapshot.PlayerMaxHp)</strong><div><i style="width:@PlayerHpPercent%"></i></div></div>
+        </section>
+
+        @if (ChannelConfirmed)
+        {
+            <GameChatPanel UserId="@currentUserId" ChannelKey="@SelectedChannelKey" ChannelName="@SelectedChannel" DisplayName="@currentDisplayName" OpenChanged="@(open => chatOpen = open)" />
+        }
+
+        <nav class="mi-menu" aria-label="게임 기능">
+            <button type="button" class="mi-menu-item @(IsBodyGrowthPanel ? "is-selected" : null)" @onclick='() => OpenPanel("upgrade")'><img src="/images/maru-idle/icons-premium/forge.png" alt="" /><span>성장</span><small>검 · 검술 · 계승 장비</small></button>
+            <button type="button" class="mi-menu-item @(activePanel == "companions" ? "is-selected" : null)" @onclick='() => OpenCompanions("formation")'><img src="/images/maru-idle/icons-premium/companions.png" alt="" /><span>동료</span><small>@snapshot.Party.CompanionCount/@PartyRules.MaximumCompanions 편성</small></button>
+            <button type="button" class="mi-menu-item mi-explore-item @(activePanel is null && !endlessTrialOpen ? "is-selected" : null) @(snapshot.AutoAttackEnabled ? "is-auto" : null)" aria-label="탐험 전투 화면으로 돌아가기" @onclick="ReturnToExploration">
+                <img src="/images/maru-idle/icons-premium/explore.png" alt="" /><span>탐험</span><small>@(snapshot.AutoAttackEnabled ? "AUTO 진행 중" : "전투 화면")</small>
+            </button>
+            <button type="button" class="mi-menu-item @(offlineRewardOpen ? "is-selected" : null)" @onclick="OpenOfflineReward"><img src="/images/maru-idle/rewards/gold-pouch.svg" alt="" /><span>보상</span><small>@(snapshot.OfflineReward.PendingGold > 0 ? $"{FormatCompact(snapshot.OfflineReward.PendingGold)} 수령" : "원정 정산")</small></button>
+            <button type="button" class="mi-menu-item @(endlessTrialOpen ? "is-selected" : null)" @onclick="OpenEndlessTrial"><img src="/images/maru-idle/icons-premium/codex.png" alt="" /><span>시련</span><small>콘텐츠 8종</small></button>
+        </nav>
+
+        @if (endlessTrialOpen)
+        {
+            <TrialArcade @key="trialArcadeComponentKey" Snapshot="snapshot" SnapshotChanged="OnEndlessSnapshotChanged" CloseRequested="CloseEndlessTrial" />
+        }
+
+        @if (servicePanel is not null)
+        {
+            <aside class="mi-service-sheet" role="dialog" aria-modal="true" aria-label="게임 서비스">
+                <header><div><small>EXPEDITION SERVICES</small><h2>원정 서비스</h2><p>채널과 원정 지원 기능을 한곳에서 관리합니다.</p></div><button type="button" aria-label="서비스 닫기" @onclick="CloseServicePanel">×</button></header>
+                <nav aria-label="서비스 종류">
+                    <button class="@(servicePanel == "channel" ? "is-selected" : null)" @onclick='() => servicePanel = "channel"'>채널</button>
+                    <button class="@(servicePanel == "mail" ? "is-selected" : null)" @onclick='() => OpenServiceTabAsync("mail")'>우편</button>
+                    <button class="@(servicePanel == "mission" ? "is-selected" : null)" @onclick='() => servicePanel = "mission"'>임무</button>
+                    <button class="@(servicePanel == "rank" ? "is-selected" : null)" @onclick='() => OpenServiceTabAsync("rank")'>순위</button>
+                    <button class="@(servicePanel == "shop" ? "is-selected" : null)" @onclick='() => servicePanel = "shop"'>상점</button>
+                </nav>
+                <div class="mi-service-content">
+                    @if (servicePanel == "channel")
+                    {
+                        <section class="mi-channel-service">
+                            <header><div><small>WORLD CHANNEL</small><h3>계정 채널 선택</h3><p>@(ChannelConfirmed ? "최초 확정한 채널에 계정이 귀속되어 변경할 수 없습니다." : "계정 시작 시 단 한 번만 선택할 수 있습니다. 확정 후에는 변경할 수 없습니다.")</p></div><strong>@(ChannelConfirmed ? $"{SelectedChannel} 확정" : "채널 미확정")</strong></header>
+                            <div>
+                                @foreach (var option in ChannelOptions)
+                                {
+                                    <button type="button" class="@(SelectedChannelKey == option.Key ? "is-selected" : null)" disabled="@(serviceBusy || ChannelConfirmed)" @onclick='() => SelectChannelAsync(option.Key)'>
+                                        <i>@option.Icon</i><span><small>@option.Region</small><strong>@option.Name</strong><em>@option.Description</em></span><b>@ChannelActionLabel(option.Key)</b>
+                                    </button>
+                                }
+                            </div>
+                            <p class="mi-channel-rule">※ 채널 확정은 계정당 1회이며 장비·재화·순위가 해당 채널에 귀속됩니다.</p>
+                        </section>
+                    }
+                    else if (servicePanel == "mail")
+                    {
+                        <section class="mi-mail-service"><header><small>EXPEDITION POST</small><h3>원정 우편함</h3><p>현재 수령할 수 있는 정산 보상과 운영 소식을 모아봅니다.</p></header>
+                            <article class="is-reward"><i>休</i><span><strong>방치 원정 정산</strong><small>@(snapshot.OfflineReward.PendingGold > 0 ? $"금화 {FormatNumber(snapshot.OfflineReward.PendingGold)} 수령 가능" : "새로 도착한 정산 보상이 없습니다.")</small></span><button type="button" @onclick="OpenOfflineReward">확인</button></article>
+                            @if (SelectedAdminMail is { } adminMail)
+                            {
+                                <article class="mi-mail-detail is-admin-mail"><i>令</i><div><small>CodeMaru 운영팀 · @(adminMail.Target == GameAdminMessageTarget.AllPlayers ? "전체 우편" : "개별 우편")</small><strong>@adminMail.Title</strong><p>@adminMail.Text</p><span>@adminMail.CreatedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+                                    @if (adminMail.AttachmentKind != GameAdminMailAttachmentKind.None)
+                                    {
+                                        <div class="mi-admin-mail-attachment"><b>🎁 @AdminMailAttachmentLabel(adminMail.AttachmentKind)</b><strong>@FormatNumber(adminMail.AttachmentAmount)</strong></div>
+                                    }
+                                </div><footer><button type="button" class="is-secondary" @onclick="CloseMailDetail">목록으로</button>@if (adminMail.AttachmentKind != GameAdminMailAttachmentKind.None) { <button type="button" disabled="@(serviceBusy || Session.HasClaimedAdminMailReward(adminMail.MessageId))" @onclick="() => ClaimAdminMailRewardAsync(adminMail.MessageId)">@(Session.HasClaimedAdminMailReward(adminMail.MessageId) ? "수령 완료" : "선물 받기")</button> }</footer></article>
+                                @if (!string.IsNullOrWhiteSpace(mailClaimMessage)) { <p class="mi-service-result">@mailClaimMessage</p> }
+                            }
+                            else if (selectedMailKey == "trial-arcade-open")
+                            {
+                                <article class="mi-mail-detail"><img src="/images/maru-idle/icons-premium/codex.png" alt="" /><div><small>원정 관리국 · 시스템 우편</small><strong>시련 회랑 개방 안내</strong><p>첫 번째 미니게임 ‘무한 시련’이 개방되었습니다. 좌우로 원정대를 이동해 몰려오는 마물을 막고, 무기와 동료를 늘려 끝없이 상승하는 난이도에 도전해 보세요.</p><span>입장 비용 없음 · 반복 플레이 가능 · 금화·광석·장비·부적 획득</span></div><footer><button type="button" class="is-secondary" @onclick="CloseMailDetail">목록으로</button><button type="button" @onclick="OpenTrialFromMail">시련 회랑 입장</button></footer></article>
+                            }
+                            else
+                            {
+                                @foreach (var item in adminMailMessages)
+                                {
+                                    <article class="@(IsAdminMailRead(item) ? null : "is-unread")"><i>令</i><span><strong>@item.Title</strong><small>@item.Text</small><em>@item.CreatedUtc.ToLocalTime().ToString("MM-dd HH:mm") · @(item.Target == GameAdminMessageTarget.AllPlayers ? "전체 우편" : "개별 우편")@if (item.AttachmentKind != GameAdminMailAttachmentKind.None) { <b> · 🎁 @AdminMailAttachmentLabel(item.AttachmentKind) @FormatNumber(item.AttachmentAmount)</b> }</em></span><button type="button" @onclick="() => OpenAdminMailAsync(item)">@(IsAdminMailRead(item) ? "다시 읽기" : "새 우편")</button></article>
+                                }
+                                <article><i>信</i><span><strong>시련 회랑 개방 안내</strong><small>첫 번째 미니게임 ‘무한 시련’이 개방되었습니다.</small></span><button type="button" @onclick='() => OpenMailAsync("trial-arcade-open")'>@(IsMailRead("trial-arcade-open") ? "다시 읽기" : "열기")</button></article>
+                            }
+                        </section>
+                    }
+                    else if (servicePanel == "mission")
+                    {
+                        <section class="mi-mission-service"><header><small>DAILY ORDERS</small><h3>오늘의 원정 임무</h3><p>대한민국 표준시 자정에 새 임무가 시작됩니다. 달성한 보상은 직접 수령해 계정에 저장됩니다.</p></header>
+                            @foreach (var mission in snapshot.DailyMissions)
+                            {
+                                <article class="@(mission.IsClaimed ? "is-claimed" : mission.IsCompleted ? "is-complete" : null)"><span><strong>@mission.Definition.Name</strong><small>@mission.Definition.Description</small><em>@mission.Progress / @mission.Definition.Target</em></span><progress max="@mission.Definition.Target" value="@mission.Progress"></progress><div><img src="@(mission.Definition.RewardKind == DailyMissionRewardKind.Gold ? "/images/maru-idle/rewards/gold-pouch.svg" : mission.Definition.RewardKind == DailyMissionRewardKind.UpgradeMaterial ? "/images/maru-idle/rewards/companion-ore.svg" : "/images/maru-idle/icons-premium/companions.png")" alt="" /><b>@mission.Definition.RewardLabel</b><button type="button" disabled="@(serviceBusy || !mission.IsCompleted || mission.IsClaimed)" @onclick="() => ClaimDailyMissionAsync(mission.Definition.MissionKey)">@(mission.IsClaimed ? "수령 완료" : mission.IsCompleted ? "보상 수령" : "진행 중")</button></div></article>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(missionMessage)) { <p class="mi-service-result">@missionMessage</p> }
+                        </section>
+                    }
+                    else if (servicePanel == "rank")
+                    {
+                        <section class="mi-rank-service"><header><small>CHANNEL RANKING</small><h3>@SelectedChannel 원정대 순위</h3><p>가상 경쟁자 없이 이 서버에 저장된 실제 계정 전투력만 집계합니다.</p></header>
+                            @if (!ChannelConfirmed)
+                            {
+                                <p class="mi-rank-empty">채널을 최초 확정하면 해당 채널 순위에 등록됩니다.</p>
+                            }
+                            else if (rankingBusy)
+                            {
+                                <p class="mi-rank-empty">채널 순위를 집계하는 중입니다.</p>
+                            }
+                            else if (channelRankings.Count == 0)
+                            {
+                                <p class="mi-rank-empty">아직 등록된 원정대가 없습니다.</p>
+                            }
+                            else
+                            {
+                                @foreach (var entry in channelRankings)
+                                {
+                                    <article class="@(string.Equals(entry.UserId, currentUserId, StringComparison.Ordinal) ? "is-player" : null)"><b>@entry.Rank</b><span><strong>@RankingDisplayName(entry)</strong><small>STAGE @entry.HighestClearedStage · @FormatNumber(entry.TotalDefeated)기 격파</small></span><em>@FormatCompact(entry.AttackPower)</em></article>
+                                }
+                            }
+                        </section>
+                    }
+                    else if (servicePanel == "talisman")
+                    {
+                        <section class="mi-talisman-service"><header><small>WIND TALISMAN VAULT</small><h3>AUTO 가속 부적 보관함</h3><p>드랍과 상점 구매로 얻은 부적을 여기서 즉시 사용할 수 있습니다.</p></header>
+                            @if (snapshot.ActiveAutoSpeedMultiplier > 1) { <div class="mi-service-active-boost"><img src="/images/maru-idle/boosts/auto-talisman-x5-v1.png" alt="" /><span><small>현재 효과</small><strong>AUTO ×@snapshot.ActiveAutoSpeedMultiplier</strong><em>@FormatBoostExpiry(snapshot.AutoSpeedBoostEndsUtc)</em></span><button type="button" disabled="@actionBusy" @onclick="DeactivateBoostAsync">효과 해제</button></div> }
+                            <div class="mi-service-talisman-grid">@foreach (var item in BoostCatalog) { var ownedCount = BoostCount(item.ItemKey); <article><img src="@item.AssetUrl" alt="" /><span><small>AUTO ×@item.Multiplier · @FormatBoostDuration(item.Duration)</small><strong>@item.Name</strong><em>보유 @(ownedCount)개</em></span><button type="button" disabled="@(actionBusy || ownedCount <= 0 || snapshot.ActiveAutoSpeedMultiplier > 1)" @onclick="() => ActivateBoostAsync(item.ItemKey)">사용</button></article> }</div>
+                            @if (!string.IsNullOrWhiteSpace(boostMessage)) { <p class="mi-service-result">@boostMessage</p> }
+                        </section>
+                    }
+                    else
+                    {
+                        <section class="mi-shop-service"><header><small>CODEMARU SUPPLY</small><h3>원정 보급 상점</h3><p>보유 CodeMaru C @FormatNumber(snapshot.PremiumCurrency) · 구매 결과는 즉시 계정에 저장됩니다.</p></header>
+                            <TerritoryShieldShop Changed="@(() => snapshot = Session.Snapshot)" />
+                            <h4>금화 교환</h4><div class="mi-gold-pack-list">@foreach (var pack in GoldPackCatalog) { <article><img src="@pack.AssetUrl" alt="" /><span><small>GOLD EXCHANGE</small><strong>@pack.Name</strong><em>금화 @FormatNumber(pack.Gold)</em></span><button type="button" disabled="@(actionBusy || snapshot.PremiumCurrency < pack.PriceC)" @onclick='() => PurchaseGoldPackAsync(pack.PackKey)'>C @pack.PriceC</button></article> }</div>
+                            <h4>AUTO 가속 부적</h4>
+                            <div class="mi-shop-purchase-batch" role="radiogroup" aria-label="부적 구매 수량">
+                                <button type="button" role="radio" aria-checked="@(boostPurchaseBatch == 1 ? "true" : "false")" class="@(boostPurchaseBatch == 1 ? "is-selected" : null)" @onclick="() => SetBoostPurchaseBatch(1)">1개</button>
+                                <button type="button" role="radio" aria-checked="@(boostPurchaseBatch == 10 ? "true" : "false")" class="@(boostPurchaseBatch == 10 ? "is-selected" : null)" @onclick="() => SetBoostPurchaseBatch(10)">10개</button>
+                                <button type="button" role="radio" aria-checked="@(boostPurchaseBatch == 0 ? "true" : "false")" class="@(boostPurchaseBatch == 0 ? "is-selected" : null)" @onclick="() => SetBoostPurchaseBatch(0)">최대</button>
+                            </div>
+                            <div>@foreach (var item in BoostCatalog) { var quantity = BoostPurchaseQuantity(item); var displayQuantity = quantity > 0 ? quantity : boostPurchaseBatch; var totalPrice = BoostPurchasePrice(item, displayQuantity); <article><img src="@item.AssetUrl" alt="" /><span><strong>@item.Name</strong><small>AUTO ×@item.Multiplier · @((int)item.Duration.TotalMinutes)분 · 보유 @BoostCount(item.ItemKey)개</small></span><button type="button" title="@(quantity > 0 ? $"{quantity:N0}개 구매" : "구매 불가")" disabled="@(actionBusy || quantity <= 0)" @onclick='() => PurchaseBoostAsync(item.ItemKey, quantity)'>C @FormatNumber(totalPrice)</button></article> }</div>
+                            @if (!string.IsNullOrWhiteSpace(boostMessage)) { <p class="mi-service-result">@boostMessage</p> }
+                            @if (!string.IsNullOrWhiteSpace(shopMessage)) { <p class="mi-service-result">@shopMessage</p> }
+                        </section>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(serviceMessage)) { <p class="mi-service-result">@serviceMessage</p> }
+                </div>
+            </aside>
+        }
+
+        @if (activePanel is not null)
+        {
+            <aside class="mi-sheet panel-@activePanel" role="dialog" aria-modal="true" aria-label="@PanelTitle" @onclick:stopPropagation="true">
+                <button class="mi-sheet-close" type="button" @onclick="ClosePanel" aria-label="닫기">×</button><span>@PanelEyebrow</span><h2>@PanelTitle</h2>
+                @if (activePanel == "companions")
+                {
+                    <nav class="mi-companion-tabs" aria-label="동료 관리 메뉴">
+                        <button type="button" class="@(companionTab == "growth" ? "is-selected" : null)" @onclick='() => SetCompanionTab("growth")'>육성</button>
+                        <button type="button" class="@(companionTab == "codex" ? "is-selected" : null)" @onclick='() => SetCompanionTab("codex")'>도감</button>
+                        <button type="button" class="@(companionTab == "formation" ? "is-selected" : null)" @onclick='() => SetCompanionTab("formation")'>편성</button>
+                        <button type="button" class="@(companionTab == "summon" ? "is-selected" : null)" @onclick='() => SetCompanionTab("summon")'>소환</button>
+                    </nav>
+                    @if (companionTab == "formation")
+                    {
+                        <section class="mi-companion-management mi-formation-management">
+                            <header><div><small>ACTIVE PARTY</small><strong>출전 동료 선택</strong></div><span>@snapshot.Party.CompanionCount / @PartyRules.MaximumCompanions</span></header>
+                            <p>미리보기에서 동료를 끌어 순서를 바꿀 수 있습니다. 본체 검과 공용 장비 성장은 모든 편성에 계승됩니다.</p>
+                            <section class="mi-formation-recommendation" aria-label="추천 동료 조합">
+                                <nav class="mi-formation-recommendation-modes" aria-label="추천 조합 기준">
+                                    <button type="button" class="@(formationRecommendationMode == FormationRecommendationMode.BasePotential ? "is-selected" : null)" @onclick="() => formationRecommendationMode = FormationRecommendationMode.BasePotential">기본 잠재력</button>
+                                    <button type="button" class="@(formationRecommendationMode == FormationRecommendationMode.CurrentPower ? "is-selected" : null)" @onclick="() => formationRecommendationMode = FormationRecommendationMode.CurrentPower">현재 최강</button>
+                                    <button type="button" class="@(formationRecommendationMode == FormationRecommendationMode.Exploration ? "is-selected" : null)" @onclick="() => formationRecommendationMode = FormationRecommendationMode.Exploration">탐험 특화</button>
+                                    <button type="button" class="@(formationRecommendationMode == FormationRecommendationMode.TrialTower ? "is-selected" : null)" @onclick="() => formationRecommendationMode = FormationRecommendationMode.TrialTower">시련의 탑</button>
+                                </nav>
+                                <header>
+                                    <div><small>@FormationRecommendationEyebrow</small><strong>@FormationRecommendationTitle</strong><span>@FormationRecommendationSummary</span></div>
+                                    <button type="button" disabled="@(actionBusy || RecommendedFormation.Count == 0 || IsRecommendedFormationActive)" @onclick="ApplyRecommendedFormationAsync">@(IsRecommendedFormationActive ? "추천 조합 적용됨" : "추천 조합 적용")</button>
+                                </header>
+                                <div class="mi-formation-recommendation-cards">
+                                    @foreach (var candidate in RecommendedFormation)
+                                    {
+                                        <article class="rarity-@candidate.Hero.Rarity.ToString().ToLowerInvariant()">
+                                            <i style="background-image:url('@candidate.ActiveSkin.AssetUrl'); --sprite-x:@candidate.Hero.SpriteFocusX%; --sprite-y:@candidate.Hero.SpriteFocusY%;"></i>
+                                            <span><strong>@candidate.Hero.Name</strong><small>@RarityName(candidate.Hero.Rarity) · @candidate.Hero.Role</small><em>@FormationRecommendationMetric(candidate)</em></span>
+                                        </article>
+                                    }
+                                </div>
+                                <p>@FormationRecommendationDescription</p>
+                            </section>
+                            <div class="mi-formation-preview" aria-label="현재 전투 배치 미리보기">
+                                <div class="mi-formation-preview-heading">
+                                    <span><b aria-hidden="true">↔</b> 카드를 드래그해 순서 변경</span>
+                                    <small>왼쪽이 선봉</small>
+                                </div>
+                                <article class="mi-formation-main">
+                                    <i style="background-image:url('@snapshot.Party.ActiveHero.SpriteAssetUrl')"></i>
+                                    <span><small>본체 · 원정대장</small><strong>@snapshot.Party.ActiveHero.Name</strong></span>
+                                </article>
+                                <div class="mi-formation-slots">
+                                    @for (var slot = 0; slot < snapshot.Party.Companions.Count; slot++)
+                                    {
+                                        var hero = snapshot.Party.Companions[slot];
+                                        var position = slot;
+                                        <article @key="hero.HeroId" class="mi-formation-unit slot-@position" data-hero-id="@hero.HeroId">
+                                            <header><span>@(position + 1)</span><b class="mi-drag-handle" aria-hidden="true">⠿</b></header>
+                                            <i style="background-image:url('@hero.SpriteAssetUrl'); --sprite-x:@hero.SpriteFocusX%; --sprite-y:@hero.SpriteFocusY%;"></i>
+                                            <span><strong>@hero.Name</strong><small>@hero.Role</small></span>
+                                            <div class="mi-formation-unit-actions">
+                                                <button type="button" disabled="@(actionBusy || position == 0)" @onclick="() => MoveCompanionAsync(hero.HeroId, -1)" aria-label="@hero.Name 앞 위치로">←</button>
+                                                <button type="button" disabled="@(actionBusy || position == snapshot.Party.Companions.Count - 1)" @onclick="() => MoveCompanionAsync(hero.HeroId, 1)" aria-label="@hero.Name 뒤 위치로">→</button>
+                                            </div>
+                                        </article>
+                                    }
+                                </div>
+                            </div>
+                            <div class="mi-companion-sortbar" role="group" aria-label="동료 목록 정렬">
+                                <span>목록 정렬</span>
+                                <button type="button" class="@(companionRosterSort == "default" ? "is-selected" : null)" @onclick='() => companionRosterSort = "default"'>기본순</button>
+                                <button type="button" class="@(companionRosterSort == "rarity-desc" ? "is-selected" : null)" @onclick='() => companionRosterSort = "rarity-desc"'>전설 → 희귀</button>
+                                <button type="button" class="@(companionRosterSort == "rarity-asc" ? "is-selected" : null)" @onclick='() => companionRosterSort = "rarity-asc"'>희귀 → 전설</button>
+                            </div>
+                            <div class="mi-companion-card-grid mi-formation-roster">
+                                @foreach (var hero in SortedFormationCompanions)
+                                {
+                                    var selected = snapshot.Party.Companions.Any(item => item.HeroId == hero.HeroId);
+                                    <button type="button" class="mi-companion-card rarity-@hero.Rarity.ToString().ToLowerInvariant() @(selected ? "is-selected" : null)" disabled="@(actionBusy || (!selected && snapshot.Party.CompanionCount >= PartyRules.MaximumCompanions))" @onclick="() => ToggleCompanionAsync(hero.HeroId)">
+                                        <i style="background-image:url('@hero.SpriteAssetUrl'); --sprite-x:@hero.SpriteFocusX%; --sprite-y:@hero.SpriteFocusY%;"></i>
+                                        <span><strong>@hero.Name</strong><small><mark class="mi-rarity-mark rarity-@hero.Rarity.ToString().ToLowerInvariant()">@RarityName(hero.Rarity)</mark>@hero.Role</small><em>지원 공격 +@hero.AssistPowerPercent%</em></span>
+                                        <b>@(selected ? "출전" : "대기")</b>
+                                    </button>
+                                }
+                            </div>
+                        </section>
+                    }
+                    else if (companionTab == "growth")
+                    {
+                        <section class="mi-companion-management mi-growth-management">
+                            <header><div><small>COMPANION GROWTH</small><strong>독립 성장</strong></div><span class="mi-premium-balance">C @FormatNumber(snapshot.PremiumCurrency)</span></header>
+                            <p>금화 육성, 조각 승급, 개인 장비와 외형 보너스가 동료별로 따로 저장됩니다.</p>
+                            @if (SelectedCompanionGrowth is not null)
+                            {
+                                var growth = SelectedCompanionGrowth;
+                                <div class="mi-growth-workspace">
+                                    <nav class="mi-growth-roster" aria-label="육성할 동료 선택">
+                                        @foreach (var candidate in FormationCompanionGrowth)
+                                        {
+                                            <button type="button" class="hero-@candidate.Hero.HeroId @candidate.ActiveSkin.CssClass @(candidate.Hero.HeroId == growth.Hero.HeroId ? "is-selected" : null)" @onclick="() => SelectCompanion(candidate.Hero.HeroId)">
+                                                <i style="background-image:url('@candidate.ActiveSkin.AssetUrl'); --sprite-x:@candidate.Hero.SpriteFocusX%; --sprite-y:@candidate.Hero.SpriteFocusY%;"></i>
+                                                <span><strong>@candidate.Hero.Name</strong><small>Lv.@candidate.Level · @candidate.Rank 성</small></span>
+                                            </button>
+                                        }
+                                    </nav>
+                                    <article class="mi-growth-detail hero-@growth.Hero.HeroId @growth.ActiveSkin.CssClass">
+                                        <header>
+                                            <i style="background-image:url('@growth.ActiveSkin.AssetUrl'); --sprite-x:@growth.Hero.SpriteFocusX%; --sprite-y:@growth.Hero.SpriteFocusY%;"></i>
+                                            <div><small>@growth.Hero.Role</small><h3>@growth.Hero.Name</h3><span>Lv.@growth.Level · @growth.Rank 성</span></div>
+                                            <strong>전투 지원 +@growth.AttackPercent%</strong>
+                                        </header>
+                                        <dl class="mi-growth-stats"><div><dt>공격</dt><dd>+@growth.AttackPercent%</dd></div><div><dt>생명</dt><dd>+@growth.HealthPercent%</dd></div><div><dt>방어</dt><dd>+@growth.DefensePercent%</dd></div></dl>
+                                        <div class="mi-growth-actions">
+                                            <button type="button" disabled="@(actionBusy || snapshot.Gold < growth.LevelUpCost || growth.Level >= int.MaxValue)" @onclick="() => UpgradeCompanionLevelAsync(growth.Hero.HeroId)"><span>금화 육성</span><small>@(growth.Level >= int.MaxValue ? "시스템 최대" : $"{FormatNumber(growth.LevelUpCost)} 금화 · 레벨 제한 없음")</small></button>
+                                            <button type="button" disabled="@(actionBusy || growth.Shards < growth.RankUpShardCost || !CompanionProgressionRules.CanRankUp(growth.Rank))" @onclick="() => RankUpCompanionAsync(growth.Hero.HeroId)"><span>@(growth.Rank >= 10 ? "한계 돌파 승급" : "조각 승급")</span><small>@(CompanionProgressionRules.CanRankUp(growth.Rank) ? $"{FormatNumber(growth.Shards)} / {FormatNumber(growth.RankUpShardCost)} 조각 · {growth.Rank + 1:N0}성" : "시스템 최대")</small></button>
+                                        </div>
+                                        <p class="mi-companion-message">10성 이후에도 조각으로 계속 승급합니다. 매 승급 시 공격 +3%p · 생명 +4%p · 방어 +2%p (피해 감소는 최대 75%).</p>
+                                        <section class="mi-personal-equipment mi-equipment-inventory">
+                                            <h4><span>@growth.Hero.Name 착용 장비 <small>전용 무기: @WeaponTypeName(growth.Hero.WeaponType)</small></span></h4>
+                                            <div class="mi-equipped-slots">
+                                                @foreach (var slot in EquipmentSlots)
+                                                {
+                                                    var equippedItem = growth.Equipment.FirstOrDefault(item => item.Definition.Slot == slot);
+                                                    <button type="button" class="mi-equipped-slot-button @(equippedItem is null ? "is-empty" : "is-equipped")" @onclick="() => OpenCompanionEquipmentPicker(slot)">
+                                                        @if (equippedItem is null)
+                                                        {
+                                                            <i><span>+</span></i><span><small>@EquipmentSlotName(slot)</small><strong>미착용</strong><em>눌러서 장비 선택</em></span><b>선택</b>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="@EquipmentArtCss(equippedItem.Definition)"><img src="@equippedItem.Definition.AssetUrl" alt="" /><b>+@equippedItem.Instance.Level</b></i><span><small>@EquipmentRarityName(equippedItem.Instance.Rarity) · @EquipmentSlotName(slot)</small><strong>@equippedItem.DisplayName</strong><em>@EquipmentBonus(equippedItem)</em></span><b>변경</b>
+                                                        }
+                                                    </button>
+                                                }
+                                            </div>
+                                        </section>
+                                        <section class="mi-companion-skins">
+                                            <h4>외형 의장 <small>보유 효과는 장착 시 적용</small></h4>
+                                            <div>
+                                                @foreach (var skin in growth.Skins)
+                                                {
+                                                    var owned = growth.OwnedSkinIds.Contains(skin.SkinId);
+                                                    var active = growth.ActiveSkinId == skin.SkinId;
+                                                    <button type="button" class="hero-@growth.Hero.HeroId @skin.CssClass @(active ? "is-active" : null)" disabled="@(actionBusy || active || (!owned && snapshot.PremiumCurrency < skin.PriceC))" @onclick="() => SelectOrPurchaseSkinAsync(growth.Hero.HeroId, skin.SkinId)">
+                                                        <i><img src="@skin.AssetUrl" alt="@skin.Name 미리보기" /></i>
+                                                        <span><strong>@skin.Name</strong><small>공 +@skin.AttackPercent% · 생 +@skin.HealthPercent% · 방 +@skin.DefensePercent%</small></span><em>@(active ? "사용 중" : owned ? "선택" : $"C {skin.PriceC:N0}")</em>
+                                                    </button>
+                                                }
+                                            </div>
+                                        </section>
+                                        @if (!string.IsNullOrWhiteSpace(companionActionMessage)) { <p class="mi-companion-message">@companionActionMessage</p> }
+                                        @if (HostEnvironment.IsDevelopment()) { <button type="button" class="mi-dev-premium" disabled="@actionBusy" @onclick="GrantDevelopmentCurrencyAsync">로컬 결제 테스트 · C 600 충전</button> }
+                                    </article>
+                                </div>
+                            }
+                        </section>
+                    }
+                    else if (companionTab == "summon")
+                    {
+                        <section class="mi-summon-panel @(latestSummonRewards.Count > 10 ? "has-many-results" : null)">
+                            <header><div><small>COMPANION SUMMON</small><strong>인연 소환</strong></div><span>소환패 @FormatNumber(snapshot.HeroSummonTickets)</span></header>
+                            <div class="mi-pity-stack">
+                                <div class="mi-pity-track is-epic"><span style="width:@(snapshot.HeroSummonPity * 100d / CompanionSummonPolicy.PityThreshold)%"></span><strong>영웅 이상 확정까지 @(CompanionSummonPolicy.EpicGuaranteePulls - snapshot.HeroSummonPity)회</strong></div>
+                                <div class="mi-pity-track is-legendary"><span style="width:@(snapshot.LegendarySummonPity * 100d / CompanionSummonPolicy.LegendaryPityThreshold)%"></span><strong>전설 확정까지 @(CompanionSummonPolicy.LegendaryGuaranteePulls - snapshot.LegendarySummonPity)회</strong></div>
+                            </div>
+                            <p>동료 등장률 12% · 희귀 9.5% · 영웅 2% · 전설 0.5%. 자연 등장과 별개로 영웅 이상은 50회, 전설은 1,000회 안에 반드시 등장하며 중복은 등급별 전용 조각으로 전환됩니다.</p>
+                            <div class="mi-summon-controls">
+                                <div class="mi-summon-counts" role="radiogroup" aria-label="빠른 소환 횟수 선택">
+                                    @foreach (var count in SummonCountOptions)
+                                    {
+                                        <button type="button" role="radio" aria-checked="@(summonCount == count ? "true" : "false")" class="@(summonCount == count ? "is-selected" : null)" @onclick="() => SetSummonCount(count)">@count 회</button>
+                                    }
+                                </div>
+                                <div class="mi-summon-stepper" aria-label="소환 횟수 직접 조절">
+                                    <button type="button" disabled="@(actionBusy || summonCount <= MinimumSummonCount)" @onclick="() => AdjustSummonCount(-1)" aria-label="소환 횟수 1회 줄이기">−</button>
+                                    <span><small>선택한 소환</small><output>@summonCount 회</output></span>
+                                    <button type="button" disabled="@(actionBusy || summonCount >= MaximumSummonCount)" @onclick="() => AdjustSummonCount(1)" aria-label="소환 횟수 1회 늘리기">+</button>
+                                </div>
+                            </div>
+                            <button class="mi-summon-button" type="button" disabled="@(actionBusy || snapshot.HeroSummonTickets < summonCount)" @onclick="SummonCompanionsAsync"><span>@(snapshot.HeroSummonTickets < summonCount ? "소환패 부족" : $"{summonCount}회 소환")</span><small>소환패 @summonCount 장 · 소환 후 @FormatNumber(Math.Max(0, snapshot.HeroSummonTickets - summonCount))장</small></button>
+                            @if (!string.IsNullOrWhiteSpace(summonMessage)) { <p class="mi-summon-message">@summonMessage</p> }
+                            <div class="mi-summon-reveal @(latestSummonRewards.Count > 0 ? "is-open" : null) @(latestSummonRewards.Count > 10 ? "is-many" : null) @(actionBusy ? "is-summoning" : null)" @key="summonRevealSequence" aria-live="polite" aria-busy="@actionBusy">
+                                <div class="mi-summon-magic" aria-hidden="true">
+                                    <i class="mi-summon-sigil"></i><i class="mi-summon-ring"></i><b></b>
+                                    <span></span><span></span><span></span><span></span><span></span><span></span>
+                                </div>
+                                <div class="mi-summon-reveal-content">
+                                    @if (latestSummonRewards.Count == 0)
+                                    {
+                                        <div class="mi-summon-empty"><small>FATE RESONANCE</small><strong>인연의 문이 열립니다</strong><span>소환 횟수를 선택하고 인연을 불러오세요</span></div>
+                                    }
+                                    else
+                                    {
+                                        <header class="mi-summon-result-summary">
+                                            <div><small>SUMMON RESULT</small><strong>@(latestSummonRewards.Count)개 전체 보상</strong></div>
+                                            @if (latestSummonRewards.Count > 10) { <span>↕ 스크롤해 모두 확인</span> }
+                                        </header>
+                                        <div class="mi-summon-result-grid count-@Math.Min(latestSummonRewards.Count, 10)">
+                                            @foreach (var reward in latestSummonRewards)
+                                            {
+                                                var rewardHero = reward.HeroId is null ? null : PartyRules.AllCompanions.FirstOrDefault(hero => hero.HeroId == reward.HeroId);
+                                                <article class="kind-@reward.Kind.ToString().ToLowerInvariant() @(reward.Rarity is null ? null : $"rarity-{RarityCss(reward.Rarity.Value)}")">
+                                                    @if (rewardHero is not null) { <i style="background-image:url('@rewardHero.SpriteAssetUrl')"></i> }
+                                                    else
+                                                    {
+                                                        <i class="mi-summon-reward-art"><img src="@(reward.Kind == CompanionSummonRewardKind.Gold ? "/images/maru-idle/rewards/gold-pouch.svg" : "/images/maru-idle/rewards/companion-ore.svg")" alt="" /></i>
+                                                    }
+                                                    <small>@(reward.RolledHero ? $"{RarityName(reward.Rarity ?? CompanionRarity.Rare)} · {(reward.WasDuplicate ? "중복" : "신규 동료")}" : "인연 보상")</small><strong>@reward.DisplayName</strong><span>× @FormatNumber(reward.Quantity)</span>
+                                                </article>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                            <section class="mi-summon-ticket-shop" aria-label="CodeMaru C 소환패 상점">
+                                <header><div><small>SUMMON TICKET SHOP</small><strong>소환패 교환소</strong></div><span>보유 C <b>@FormatNumber(snapshot.PremiumCurrency)</b></span></header>
+                                <div>
+                                    @foreach (var pack in SummonTicketPackCatalog)
+                                    {
+                                        <button type="button" disabled="@(actionBusy || snapshot.PremiumCurrency < pack.PriceC)" @onclick="() => PurchaseSummonTicketPackAsync(pack.PackKey)"><span><strong>소환패 @pack.Tickets 장</strong><small>@pack.Label</small></span><b>C @FormatNumber(pack.PriceC)</b></button>
+                                    }
+                                </div>
+                            </section>
+                            <div class="mi-summon-economy"><span><strong>무료 획득</strong><small>스테이지 최초 클리어마다 +1</small></span><span><strong>천장 공유</strong><small>무료·구매 소환 모두 누적 횟수에 포함</small></span></div>
+                        </section>
+                    }
+                    else if (companionTab == "inheritance")
+                    {
+                        <section class="mi-inheritance-panel">
+                            <header><div><small>ACCOUNT INHERITANCE</small><strong>본체 공용 성장</strong></div><span>ACCOUNT BOUND</span></header>
+                            <p class="mi-inheritance-compact-copy">장식 영역 없이 현재 수치와 부위별 강화 기능만 표시합니다. 무기·갑주·옥패는 각각 독립 성장합니다.</p>
+                            <div class="mi-inheritance-stat-grid" aria-label="계승 성장 현황">
+                                <article><span><img src="/images/maru-idle/icons-premium/forge.png" alt="" /></span><div><small>계승된 검 단계</small><strong>Lv.@snapshot.AttackLevel</strong></div><em>검</em></article>
+                                <article><span><img src="/images/maru-idle/icons-premium/sword-art.png" alt="" /></span><div><small>계승된 검술</small><strong>Lv.@snapshot.SwordArtLevel</strong></div><em>술</em></article>
+                                <article><span><img src="/images/maru-idle/icons-premium/equipment.png" alt="" /></span><div><small>계승 장비 합계</small><strong>+@(snapshot.WeaponEquipmentLevel + snapshot.ArmorEquipmentLevel + snapshot.JadeEquipmentLevel)</strong></div><em>裝</em></article>
+                                <article class="is-power"><span><img src="/images/maru-idle/icons-premium/forge.png" alt="" /></span><div><small>현재 원정대 총 공격력</small><strong>@FormatNumber(snapshot.AttackPower)</strong></div><em>POWER</em></article>
+                            </div>
+                            <section class="mi-inheritance-forge" aria-label="계승 장비 단련소">
+                                <header><div><small>LEGACY FORGE</small><strong>계승 장비 단련소</strong></div><span>보유 금화 @FormatNumber(snapshot.Gold)</span></header>
+                                <div class="mi-inheritance-loadout" role="tablist" aria-label="확인할 계승 장비 선택">
+                                    <button type="button" role="tab" aria-selected="@(selectedInheritanceSlot == "weapon")" class="@(selectedInheritanceSlot == "weapon" ? "is-selected" : null)" @onclick='() => SelectInheritanceSlot("weapon")'><img src="/images/maru-idle/icons-premium/forge.png" alt="" /><span><small>천명 무기</small><strong>+@snapshot.WeaponEquipmentLevel</strong></span></button>
+                                    <button type="button" role="tab" aria-selected="@(selectedInheritanceSlot == "armor")" class="@(selectedInheritanceSlot == "armor" ? "is-selected" : null)" @onclick='() => SelectInheritanceSlot("armor")'><img src="/images/maru-idle/icons-premium/equipment.png" alt="" /><span><small>수호 갑주</small><strong>+@snapshot.ArmorEquipmentLevel</strong></span></button>
+                                    <button type="button" role="tab" aria-selected="@(selectedInheritanceSlot == "jade")" class="@(selectedInheritanceSlot == "jade" ? "is-selected" : null)" @onclick='() => SelectInheritanceSlot("jade")'><img src="/images/maru-idle/icons-premium/companions.png" alt="" /><span><small>인연 옥패</small><strong>+@snapshot.JadeEquipmentLevel</strong></span></button>
+                                </div>
+                                <article class="mi-inheritance-gear-detail" @key="@($"{selectedInheritanceSlot}-{equipmentUpgradeSequence}")">
+                                    <figure><img src="@SelectedInheritanceAsset" alt="" /><i></i></figure>
+                                    <div>
+                                        <small>@SelectedInheritanceEyebrow</small><strong>@SelectedInheritanceName</strong><p>@SelectedInheritanceEffect</p>
+                                        <div class="mi-inheritance-tier"><span><b style="width:@InheritanceTierPercent%"></b></span><small>다음 계승 등급까지 @(5 - SelectedInheritanceLevel % 5)단계</small></div>
+                                    </div>
+                                </article>
+                                @if (!string.IsNullOrWhiteSpace(equipmentMessage)) { <p class="mi-inheritance-message">@equipmentMessage</p> }
+                                <div class="mi-inheritance-batch" role="radiogroup" aria-label="연속 단련 횟수">
+                                    <button type="button" role="radio" aria-checked="@(equipmentUpgradeBatch == 1)" class="@(equipmentUpgradeBatch == 1 ? "is-selected" : null)" @onclick="() => SetEquipmentUpgradeBatch(1)">1회</button>
+                                    <button type="button" role="radio" aria-checked="@(equipmentUpgradeBatch == 10)" class="@(equipmentUpgradeBatch == 10 ? "is-selected" : null)" @onclick="() => SetEquipmentUpgradeBatch(10)">10회</button>
+                                    <button type="button" role="radio" aria-checked="@(equipmentUpgradeBatch == 0)" class="@(equipmentUpgradeBatch == 0 ? "is-selected" : null)" @onclick="() => SetEquipmentUpgradeBatch(0)">최대</button>
+                                </div>
+                                <button class="mi-inheritance-upgrade" type="button" disabled="@(actionBusy || EquipmentBatchLevels == 0)" @onclick="UpgradeEquipmentBatchAsync"><img src="@SelectedInheritanceAsset" alt="" /><span><strong>@(EquipmentBatchLevels == 0 ? "단련할 금화가 부족합니다" : $"{SelectedInheritanceLabel} +{EquipmentBatchLevels} 단련")</strong><small>@(EquipmentBatchLevels == 0 ? $"필요 금화 {FormatNumber(SelectedInheritanceUpgradeCost)}" : $"{FormatNumber(EquipmentBatchCost)} 금화 · 선택 부위만 적용")</small></span><b>단련</b></button>
+                            </section>
+                        </section>
+                    }
+                    else
+                    {
+                        <section class="mi-companion-management">
+                            <header><div><small>COMPANION CODEX</small><strong>동료 도감</strong></div><span>@snapshot.Party.AvailableCompanions.Count / @PartyRules.AllCompanions.Count</span></header>
+                            <p>전투에는 5명만 데려가지만 동료 카탈로그는 콘텐츠 추가에 따라 계속 확장됩니다.</p>
+                            <div class="mi-companion-codex-scroll">
+                                @foreach (var rarityGroup in PartyRules.AllCompanions.GroupBy(hero => hero.Rarity).OrderByDescending(group => group.Key))
+                                {
+                                    <section class="mi-rarity-group rarity-@RarityCss(rarityGroup.Key)">
+                                        <header><strong>@RarityName(rarityGroup.Key)</strong><span>@rarityGroup.Count(hero => snapshot.Party.AvailableCompanions.Any(item => item.HeroId == hero.HeroId)) / @rarityGroup.Count()</span></header>
+                                        <div class="mi-codex-card-grid">
+                                            @foreach (var hero in rarityGroup)
+                                            {
+                                                var unlocked = snapshot.Party.AvailableCompanions.Any(item => item.HeroId == hero.HeroId);
+                                                <article class="mi-companion-card @(unlocked ? "is-owned" : "is-locked")"><i style="background-image:url('@hero.SpriteAssetUrl'); --sprite-x:@hero.SpriteFocusX%; --sprite-y:@hero.SpriteFocusY%;"></i><span><strong>@(unlocked ? hero.Name : "미확인 동료")</strong><small>@(unlocked ? hero.Role : $"{RarityName(hero.Rarity)} 소환으로 영입")</small><em>@(unlocked ? $"지원 공격 +{hero.AssistPowerPercent}%" : "도감 미등록")</em></span></article>
+                                            }
+                                        </div>
+                                    </section>
+                                }
+                            </div>
+                        </section>
+                    }
+                }
+                else if (IsBodyGrowthPanel)
+                {
+                    <nav class="mi-companion-tabs mi-body-growth-tabs" aria-label="본체 성장 메뉴">
+                        <button type="button" class="@(activePanel == "upgrade" ? "is-selected" : null)" @onclick='() => OpenPanel("upgrade")'>검 강화</button>
+                        <button type="button" class="@(activePanel == "skills" ? "is-selected" : null)" @onclick='() => OpenPanel("skills")'>검술 수련</button>
+                        <button type="button" class="@(activePanel == "equipment" ? "is-selected" : null)" @onclick='() => OpenPanel("equipment")'>계승 장비</button>
+                    </nav>
+                    @if (activePanel == "upgrade")
+                    {
+                        <section class="mi-body-growth-pane mi-forge-growth-pane">
+                            <article class="mi-growth-keyart mi-forge-keyart">
+                                <img src="/images/maru-idle/growth/body-forge-v1.png" alt="연수가 천명검을 단련하는 모습" />
+                                <div><small>DESTINY FORGE · @SwordForgeTierName</small><h3>천명검 담금질</h3><p>검신에 축적된 불꽃과 옥빛 기운을 깨워 본체의 기본 공격력을 계승합니다.</p><span>계정 영구 성장</span></div>
+                                <b>Lv.@snapshot.AttackLevel</b>
+                            </article>
+                            <div class="mi-growth-summary mi-premium-growth-summary"><div><small>현재 검 단계</small><strong>Lv.@snapshot.AttackLevel</strong><span>@SwordForgeTierName</span></div><div><small>현재 원정대 공격력</small><strong>@FormatNumber(snapshot.AttackPower)</strong><span>편성 지원력 포함</span></div><div><small>다음 담금질</small><strong>Lv.@(snapshot.AttackLevel + 1)</strong><span>@FormatNumber(snapshot.UpgradeCost) 금화</span></div></div>
+                            <section class="mi-growth-track">
+                                <header><div><small>FORGE RESONANCE</small><strong>다음 검 등급까지</strong></div><span>Lv.@NextSwordForgeMilestone</span></header>
+                                <div><i style="width:@SwordForgeProgressPercent%"></i><b>@SwordForgeProgressPercent%</b></div>
+                                <footer><span>현재 Lv.@snapshot.AttackLevel</span><span>등급 승격 Lv.@NextSwordForgeMilestone</span></footer>
+                            </section>
+                            <div class="mi-growth-benefit-grid">
+                                <article><img src="/images/maru-idle/icons-premium/forge.png" alt="" /><span><small>즉시 효과</small><strong>기본 공격 강화</strong><p>모든 공격과 치명타의 기반 피해가 상승합니다.</p></span></article>
+                                <article><img src="/images/maru-idle/icons-premium/companions.png" alt="" /><span><small>계승 범위</small><strong>전체 원정대 적용</strong><p>대표 캐릭터와 현재 편성을 바꿔도 효과가 유지됩니다.</p></span></article>
+                                <article><img src="/images/maru-idle/icons-premium/equipment.png" alt="" /><span><small>연계 성장</small><strong>무기 계승 증폭</strong><p>계승 무기와 검술 보너스가 최종 공격력에 함께 반영됩니다.</p></span></article>
+                            </div>
+                            <aside class="mi-growth-lore"><span>검로 기록</span><p>열 번의 담금질마다 검의 공명이 한 단계 깊어집니다. 금화만 소비하며 실패하거나 단계가 하락하지 않습니다.</p></aside>
+                            <div class="mi-inheritance-batch mi-body-growth-batch" role="radiogroup" aria-label="검 연속 강화 횟수">
+                                <button type="button" role="radio" aria-checked="@(bodyGrowthBatch == 1)" class="@(bodyGrowthBatch == 1 ? "is-selected" : null)" @onclick="() => SetBodyGrowthBatch(1)">1회</button>
+                                <button type="button" role="radio" aria-checked="@(bodyGrowthBatch == 10)" class="@(bodyGrowthBatch == 10 ? "is-selected" : null)" @onclick="() => SetBodyGrowthBatch(10)">10회</button>
+                                <button type="button" role="radio" aria-checked="@(bodyGrowthBatch == 0)" class="@(bodyGrowthBatch == 0 ? "is-selected" : null)" @onclick="() => SetBodyGrowthBatch(0)">최대 <small>1,000회</small></button>
+                            </div>
+                            <button class="mi-upgrade" type="button" disabled="@(SwordBatchLevels == 0 || actionBusy)" @onclick="UpgradeSwordAsync">검 벼리기 +@SwordBatchLevels <small>@(SwordBatchLevels == 0 ? $"필요 금화 {FormatNumber(snapshot.UpgradeCost)}" : $"{FormatNumber(SwordBatchCost)} 금화")</small></button>
+                        </section>
+                    }
+                    else if (activePanel == "skills")
+                    {
+                        <section class="mi-body-growth-pane mi-sword-art-growth-pane">
+                            <article class="mi-growth-keyart mi-sword-art-keyart">
+                                <img src="/images/maru-idle/growth/sword-arts-v1.png" alt="연수가 월광 아래 검술을 펼치는 모습" />
+                                <div><small>SWORD ART MANUAL · @SwordArtDisciplineName</small><h3>청월 검결</h3><p>호흡과 검로를 하나로 이어 연속 참격과 치명타의 위력을 끌어올립니다.</p><span>수련 실패 없음</span></div>
+                                <b>Lv.@snapshot.SwordArtLevel</b>
+                            </article>
+                            <div class="mi-growth-summary mi-premium-growth-summary"><div><small>수련 단계</small><strong>Lv.@snapshot.SwordArtLevel</strong><span>@SwordArtDisciplineName</span></div><div><small>검술 추가 공격력</small><strong>+@FormatNumber(snapshot.SwordArtAttackBonus)</strong><span>기본 공격에 합산</span></div><div><small>현재 총 공격력</small><strong>@FormatNumber(snapshot.AttackPower)</strong><span>모든 보너스 적용</span></div></div>
+                            <section class="mi-growth-track mi-sword-art-track">
+                                <header><div><small>MASTERY PATH</small><strong>다음 오의 해금까지</strong></div><span>Lv.@NextSwordArtMilestone</span></header>
+                                <div><i style="width:@SwordArtProgressPercent%"></i><b>@SwordArtProgressPercent%</b></div>
+                                <footer><span>현재 Lv.@snapshot.SwordArtLevel</span><span>@NextSwordArtName</span></footer>
+                            </section>
+                            <div class="mi-skill-grid mi-premium-skill-grid" aria-label="검술 수련 계보">
+                                <article class="@(snapshot.SwordArtLevel >= 1 ? "is-unlocked" : null)"><span>Ⅰ</span><i>流</i><strong>유성 베기</strong><small>@(snapshot.SwordArtLevel >= 1 ? "습득 완료" : "Lv.1 해금")</small><p>빠른 초식으로 검광을 남겨 기본 피해를 증폭합니다.</p></article>
+                                <article class="@(snapshot.SwordArtLevel >= 5 ? "is-unlocked" : null)"><span>Ⅱ</span><i>月</i><strong>반월 참</strong><small>@(snapshot.SwordArtLevel >= 5 ? "습득 완료" : "Lv.5 해금")</small><p>반월의 검기를 넓게 펼쳐 다수의 적을 꿰뚫습니다.</p></article>
+                                <article class="@(snapshot.SwordArtLevel >= 10 ? "is-unlocked" : null)"><span>Ⅲ</span><i>雷</i><strong>천뢰 일섬</strong><small>@(snapshot.SwordArtLevel >= 10 ? "습득 완료" : "Lv.10 해금")</small><p>찰나의 뇌광으로 치명적인 마무리 일격을 완성합니다.</p></article>
+                            </div>
+                            <aside class="mi-growth-lore"><span>사문 비전</span><p>수련 단계가 오를 때마다 추가 공격력이 누적됩니다. 오의는 자동으로 습득되며 별도의 장착이나 교체가 필요하지 않습니다.</p></aside>
+                            <div class="mi-inheritance-batch mi-body-growth-batch" role="radiogroup" aria-label="검술 연속 수련 횟수">
+                                <button type="button" role="radio" aria-checked="@(bodyGrowthBatch == 1)" class="@(bodyGrowthBatch == 1 ? "is-selected" : null)" @onclick="() => SetBodyGrowthBatch(1)">1회</button>
+                                <button type="button" role="radio" aria-checked="@(bodyGrowthBatch == 10)" class="@(bodyGrowthBatch == 10 ? "is-selected" : null)" @onclick="() => SetBodyGrowthBatch(10)">10회</button>
+                                <button type="button" role="radio" aria-checked="@(bodyGrowthBatch == 0)" class="@(bodyGrowthBatch == 0 ? "is-selected" : null)" @onclick="() => SetBodyGrowthBatch(0)">최대 <small>1,000회</small></button>
+                            </div>
+                            <button class="mi-upgrade" type="button" disabled="@(SwordArtBatchLevels == 0 || actionBusy)" @onclick="UpgradeSwordArtAsync">검술 수련 +@SwordArtBatchLevels <small>@(SwordArtBatchLevels == 0 ? $"필요 금화 {FormatNumber(snapshot.SwordArtUpgradeCost)}" : $"{FormatNumber(SwordArtBatchCost)} 금화")</small></button>
+                        </section>
+                    }
+                    else
+                    {
+                    <section class="mi-body-growth-pane">
+                    <div class="mi-growth-summary"><div><small>계승 장비 합계</small><strong>+@(snapshot.WeaponEquipmentLevel + snapshot.ArmorEquipmentLevel + snapshot.JadeEquipmentLevel)</strong></div><div><small>무기 공격 · 옥패 지원</small><strong>+@FormatNumber(snapshot.EquipmentAttackBonus) · +@snapshot.JadeAssistBonusPercent%</strong></div></div>
+                    <div class="mi-equipment-grid" aria-label="장착 장비">
+                        <article><span><img src="/images/maru-idle/icons-premium/forge.png" alt="" /></span><div><small>무기 · 공격력</small><strong>@EquipmentName("검", snapshot.WeaponEquipmentLevel)</strong></div><em>+@snapshot.WeaponEquipmentLevel</em></article>
+                        <article><span><img src="/images/maru-idle/icons-premium/equipment.png" alt="" /></span><div><small>갑주 · 생명/방어</small><strong>@EquipmentName("도포", snapshot.ArmorEquipmentLevel)</strong></div><em>+@snapshot.ArmorEquipmentLevel</em></article>
+                        <article><span><img src="/images/maru-idle/icons-premium/companions.png" alt="" /></span><div><small>옥패 · 동료 지원</small><strong>@EquipmentName("옥패", snapshot.JadeEquipmentLevel)</strong></div><em>+@snapshot.JadeEquipmentLevel</em></article>
+                    </div>
+                    <section class="mi-inheritance-forge mi-growth-inline-forge" aria-label="계승 장비 단련소">
+                        <header><div><small>LEGACY FORGE</small><strong>부위별 계승 단련소</strong></div><span>보유 금화 @FormatNumber(snapshot.Gold)</span></header>
+                        <div class="mi-inheritance-loadout" role="tablist" aria-label="강화할 계승 장비 선택">
+                            <button type="button" role="tab" aria-selected="@(selectedInheritanceSlot == "weapon")" class="@(selectedInheritanceSlot == "weapon" ? "is-selected" : null)" @onclick='() => SelectInheritanceSlot("weapon")'><img src="/images/maru-idle/icons-premium/forge.png" alt="" /><span><small>천명 무기</small><strong>+@snapshot.WeaponEquipmentLevel</strong></span></button>
+                            <button type="button" role="tab" aria-selected="@(selectedInheritanceSlot == "armor")" class="@(selectedInheritanceSlot == "armor" ? "is-selected" : null)" @onclick='() => SelectInheritanceSlot("armor")'><img src="/images/maru-idle/icons-premium/equipment.png" alt="" /><span><small>수호 갑주</small><strong>+@snapshot.ArmorEquipmentLevel</strong></span></button>
+                            <button type="button" role="tab" aria-selected="@(selectedInheritanceSlot == "jade")" class="@(selectedInheritanceSlot == "jade" ? "is-selected" : null)" @onclick='() => SelectInheritanceSlot("jade")'><img src="/images/maru-idle/icons-premium/companions.png" alt="" /><span><small>인연 옥패</small><strong>+@snapshot.JadeEquipmentLevel</strong></span></button>
+                        </div>
+                        <article class="mi-inheritance-gear-detail" @key="@($"{selectedInheritanceSlot}-{equipmentUpgradeSequence}")">
+                            <figure><img src="@SelectedInheritanceAsset" alt="" /><i></i></figure>
+                            <div><small>@SelectedInheritanceEyebrow</small><strong>@SelectedInheritanceName</strong><p>@SelectedInheritanceEffect</p><div class="mi-inheritance-tier"><span><b style="width:@InheritanceTierPercent%"></b></span><small>다음 계승 등급까지 @(5 - SelectedInheritanceLevel % 5)단계</small></div></div>
+                        </article>
+                        @if (!string.IsNullOrWhiteSpace(equipmentMessage)) { <p class="mi-inheritance-message">@equipmentMessage</p> }
+                        <div class="mi-inheritance-batch" role="radiogroup" aria-label="연속 단련 횟수">
+                            <button type="button" role="radio" aria-checked="@(equipmentUpgradeBatch == 1)" class="@(equipmentUpgradeBatch == 1 ? "is-selected" : null)" @onclick="() => SetEquipmentUpgradeBatch(1)">1회</button>
+                            <button type="button" role="radio" aria-checked="@(equipmentUpgradeBatch == 10)" class="@(equipmentUpgradeBatch == 10 ? "is-selected" : null)" @onclick="() => SetEquipmentUpgradeBatch(10)">10회</button>
+                            <button type="button" role="radio" aria-checked="@(equipmentUpgradeBatch == 0)" class="@(equipmentUpgradeBatch == 0 ? "is-selected" : null)" @onclick="() => SetEquipmentUpgradeBatch(0)">최대</button>
+                        </div>
+                        <button class="mi-inheritance-upgrade" type="button" disabled="@(actionBusy || EquipmentBatchLevels == 0)" @onclick="UpgradeEquipmentBatchAsync"><img src="@SelectedInheritanceAsset" alt="" /><span><strong>@(EquipmentBatchLevels == 0 ? "단련할 금화가 부족합니다" : $"{SelectedInheritanceLabel} +{EquipmentBatchLevels} 단련")</strong><small>@(EquipmentBatchLevels == 0 ? $"필요 금화 {FormatNumber(SelectedInheritanceUpgradeCost)}" : $"{FormatNumber(EquipmentBatchCost)} 금화 · 선택 부위만 적용")</small></span><b>단련</b></button>
+                    </section>
+                    </section>
+                    }
+                }
+                @if (activePanel == "companions" && companionTab == "growth" && selectedCompanionEquipmentSlot is { } pickerSlot && SelectedCompanionGrowth is { } pickerGrowth)
+                {
+                    var equippedItem = pickerGrowth.Equipment.FirstOrDefault(item => item.Definition.Slot == pickerSlot);
+                    var availableItems = CompatibleUnequippedEquipment(pickerGrowth, pickerSlot);
+                    <div class="mi-equipment-picker-backdrop" @onclick="CloseCompanionEquipmentPicker">
+                        <section class="mi-equipment-picker" role="dialog" aria-modal="true" aria-labelledby="mi-equipment-picker-title" @onclick:stopPropagation="true">
+                            <header>
+                                <div><small>EQUIPMENT SELECT</small><h3 id="mi-equipment-picker-title">@pickerGrowth.Hero.Name · @EquipmentSlotName(pickerSlot) 선택</h3><p>@(pickerSlot == CompanionEquipmentSlot.Weapon ? $"{WeaponTypeName(pickerGrowth.Hero.WeaponType)} 계열 전용 장비만 표시합니다." : $"현재 장착할 수 있는 {EquipmentSlotName(pickerSlot)}만 표시합니다.")</p></div>
+                                <button type="button" aria-label="장비 선택 닫기" @onclick="CloseCompanionEquipmentPicker">×</button>
+                            </header>
+                            <div class="mi-equipment-picker-summary"><span>사용 가능 <b>@availableItems.Count</b></span><span>미착용 @UnequippedEquipmentCount</span><strong>강화 광석 @FormatNumber(snapshot.CompanionUpgradeMaterials)</strong></div>
+                            @if (equippedItem is not null)
+                            {
+                                <article class="mi-equipment-current rarity-@EquipmentRarityCss(equippedItem.Instance.Rarity)">
+                                    <figure class="@EquipmentArtCss(equippedItem.Definition)"><img src="@equippedItem.Definition.AssetUrl" alt="" /><b>+@equippedItem.Instance.Level</b></figure>
+                                    <div><small>현재 장착 · @EquipmentRarityName(equippedItem.Instance.Rarity)</small><strong>@equippedItem.DisplayName</strong><span>@EquipmentBonus(equippedItem)</span></div>
+                                    <footer><button type="button" disabled="@(actionBusy || equippedItem.Instance.Level >= CompanionProgressionRules.MaximumEquipmentLevel || snapshot.CompanionUpgradeMaterials < equippedItem.UpgradeMaterialCost)" @onclick="() => UpgradeCompanionEquipmentAsync(pickerGrowth.Hero.HeroId, equippedItem.Instance.InstanceId)">@(equippedItem.Instance.Level >= CompanionProgressionRules.MaximumEquipmentLevel ? "강화 최대" : $"강화 · 광석 {equippedItem.UpgradeMaterialCost}")</button><button type="button" class="is-secondary" disabled="@actionBusy" @onclick="() => ToggleCompanionEquipmentAsync(pickerGrowth.Hero.HeroId, equippedItem.Instance.InstanceId)">장착 해제</button></footer>
+                                </article>
+                            }
+                            <div class="mi-equipment-picker-list">
+                                @if (availableItems.Count == 0)
+                                {
+                                    <div class="mi-equipment-picker-empty"><span>+</span><strong>장착 가능한 장비가 없습니다</strong><small>전투와 보스 처치로 @EquipmentSlotName(pickerSlot) 장비를 획득할 수 있습니다.</small></div>
+                                }
+                                else
+                                {
+                                    @foreach (var item in availableItems)
+                                    {
+                                        <article class="rarity-@EquipmentRarityCss(item.Instance.Rarity)">
+                                            <figure class="@EquipmentArtCss(item.Definition)"><img src="@item.Definition.AssetUrl" alt="" /><b>+@item.Instance.Level</b></figure>
+                                            <div><small>@EquipmentRarityName(item.Instance.Rarity) · @EquipmentTypeName(item.Definition)</small><strong>@item.DisplayName</strong><span>@EquipmentBonus(item)</span></div>
+                                            <footer><button type="button" disabled="@actionBusy" @onclick="() => ToggleCompanionEquipmentAsync(pickerGrowth.Hero.HeroId, item.Instance.InstanceId)">장착</button><button type="button" disabled="@(actionBusy || item.Instance.Level >= CompanionProgressionRules.MaximumEquipmentLevel || snapshot.CompanionUpgradeMaterials < item.UpgradeMaterialCost)" @onclick="() => UpgradeCompanionEquipmentAsync(pickerGrowth.Hero.HeroId, item.Instance.InstanceId)">강화 <small>@item.UpgradeMaterialCost</small></button><button type="button" class="is-sell" disabled="@actionBusy" @onclick="() => SellCompanionEquipmentAsync(pickerGrowth.Hero.HeroId, item.Instance.InstanceId)">판매 <small>@FormatNumber(item.SellGold)</small></button></footer>
+                                        </article>
+                                    }
+                                }
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(companionActionMessage)) { <p class="mi-equipment-picker-message">@companionActionMessage</p> }
+                        </section>
+                    </div>
+                }
+            </aside>
+        }
+
+        @if (powerSavingScreenOpen)
+        {
+            <aside class="mi-power-saving-screen" role="dialog" aria-modal="true" aria-label="절전 모드">
+                <time datetime="@PowerSavingNow.ToString("O")"><strong>@PowerSavingNow.ToString("HH:mm")</strong><span>@PowerSavingDateText</span></time>
+                <div class="mi-power-saving-emblem"><img src="/images/maru-idle/enemy-bell-fox.webp" alt="휴식 중인 원정 수호령" /></div>
+                <section><small>CURRENT EXPEDITION</small><strong>St.@snapshot.Stage</strong><span>@snapshot.World.Region.Name · @(snapshot.AutoAttackEnabled ? "AUTO 원정 진행 중" : "원정 대기 중")</span>@if (snapshot.ActiveAutoSpeedMultiplier > 1) { <em>AUTO ×@snapshot.ActiveAutoSpeedMultiplier · @FormatBoostExpiry(snapshot.AutoSpeedBoostEndsUtc)</em> }</section>
+                <label class="mi-power-saving-slider" style="--slide:@powerSavingUnlockProgress%"><input type="range" min="0" max="100" step="1" value="@powerSavingUnlockProgress" @oninput="OnPowerSavingSlide" @onchange="CompletePowerSavingSlide" /><span><i>›</i><strong>슬라이드로 복귀</strong></span></label>
+            </aside>
+        }
+
+        @if (offlineRewardOpen)
+        {
+            <div class="mi-offline-backdrop" @onclick="CloseOfflineReward">
+                <section class="mi-offline-card" role="dialog" aria-modal="true" aria-labelledby="offline-reward-title" @onclick:stopPropagation="true">
+                    <button type="button" class="mi-offline-close" aria-label="방치 보상 닫기" @onclick="CloseOfflineReward">×</button>
+                    <span>EXPEDITION REPORT</span>
+                    <h2 id="offline-reward-title">방치 보상</h2>
+                    @if (!snapshot.OfflineReward.IsUnlocked)
+                    {
+                        <div class="mi-offline-locked"><i aria-hidden="true">鎖</i><strong>Stage @(snapshot.OfflineReward.UnlockStage)에서 해금</strong><p>접속하지 않은 시간은 전투 요청을 반복하지 않고 서버가 한 번에 정산합니다.</p></div>
+                    }
+                    else
+                    {
+                        <div class="mi-offline-summary">
+                            <small>현재 원정 수익</small><strong>@FormatNumber(snapshot.OfflineReward.PendingGold) 금화</strong><span>@FormatOfflineDuration(snapshot.OfflineReward.PendingDuration) 적립 · 시간당 @FormatNumber(snapshot.OfflineReward.GoldPerHour)</span>
+                        </div>
+                        <div class="mi-offline-progress" role="progressbar" aria-label="방치 보상 적립 시간" aria-valuemin="0" aria-valuemax="100" aria-valuenow="@OfflineRewardPercent"><i style="width:@OfflineRewardPercent%"></i></div>
+                        <p>최대 @FormatOfflineDuration(snapshot.OfflineReward.MaximumAccrual)까지 적립됩니다. 전투와 AUTO는 방치 정산과 분리되어 있습니다.</p>
+                        <button type="button" class="mi-offline-claim" disabled="@(offlineClaimBusy || snapshot.OfflineReward.PendingGold <= 0)" @onclick="ClaimOfflineRewardAsync">@(offlineClaimBusy ? "정산 중…" : snapshot.OfflineReward.PendingGold > 0 ? "보상 수령" : "적립 중")</button>
+                        @if (offlineRewardMessage is not null) { <output class="mi-offline-message">@offlineRewardMessage</output> }
+                    }
+                </section>
+            </div>
+        }
+
+        @if (snapshot.ShowAutoUnlockNotice)
+        {
+            <div class="mi-unlock-backdrop" role="dialog" aria-modal="true" aria-labelledby="auto-unlock-title">
+                <div class="mi-unlock-card"><span>A NEW RHYTHM</span><h2 id="auto-unlock-title">자동공격 해금</h2><p>Stage 15의 길을 돌파했습니다. AUTO 설정은 계정에 영구 저장됩니다.</p><button type="button" @onclick="AcknowledgeUnlockAsync">확인</button></div>
+            </div>
+        }
+
+        @if (latestEquipmentDrop is not null)
+        {
+            <div class="mi-loot-toast is-equipment" role="status"><span>MONSTER EQUIPMENT DROP</span><figure class="@EquipmentArtCss(latestEquipmentDrop.Definition)"><img src="@latestEquipmentDrop.Definition.AssetUrl" alt="" /></figure><strong>@latestEquipmentDrop.DisplayName</strong><small>@EquipmentRarityName(latestEquipmentDrop.Instance.Rarity) · @EquipmentTypeName(latestEquipmentDrop.Definition) · 계정 공용 가방에 보관됨</small><button type="button" @onclick="DismissBoostDrop" aria-label="전리품 알림 닫기">×</button></div>
+        }
+        else if (latestBoostDrop is not null)
+        {
+            <div class="mi-loot-toast" role="status"><span>BOSS DROP · 3%</span><strong>@latestBoostDrop.Name</strong><small>빠른 메뉴 → 부적 사용에서 활성화할 수 있습니다.</small><button type="button" @onclick="DismissBoostDrop" aria-label="전리품 알림 닫기">×</button></div>
+        }
+
+        @if (showTutorial)
+        {
+            <div class="mi-tutorial" role="dialog" aria-modal="true"><div><span>기본 조작</span><h2>전투 영역을 누르면 공격합니다</h2><p>Space 키와 전투 영역 길게 누르기도 지원합니다. Stage 15를 넘으면 AUTO가 열립니다.</p><button type="button" @onclick="() => showTutorial = false">확인</button></div></div>
+        }
+
+        @if (settingsOpen)
+        {
+            <GameSettingsModal SavedSettings="gameSettings" CurrentAudio="audioSelection" ActiveTab="@settingsTab" ActiveTabChanged="value => settingsTab = value"
+                               SupportsVibration="supportsVibration" AutoUnlocked="snapshot.AutoAttackUnlocked" IsAudioPaused="audioPaused"
+                               Saving="settingsSaving" ErrorMessage="@settingsError" PreviewChanged="PreviewSettingsAsync" ApplyRequested="ApplySettingsAsync"
+                               CloseRequested="CloseSettingsAsync" PreviousTrack="() => ChangeTrackAsync(-1)" NextTrack="() => ChangeTrackAsync(1)"
+                               TogglePlayback="ToggleAudioPlaybackAsync" TutorialRequested="ShowTutorialAsync" />
+        }
+    </main>
+}
+
+@code {
+    private static readonly TimeSpan LootToastDuration = TimeSpan.FromSeconds(5);
+    private const int MinimumSummonCount = 1;
+    private const int MaximumSummonCount = 100;
+    private static readonly int[] SummonCountOptions = [1, 5, 10, 50, 100];
+    private readonly CancellationTokenSource lifetimeCancellation = new();
+    private readonly AutoAttackLoop autoLoop = new();
+    private readonly AutoAttackLoop enemyLoop = new();
+    private readonly List<DamagePopup> damagePopups = [];
+    private readonly object transitionSync = new();
+    private CancellationTokenSource? holdCancellation;
+    private CancellationTokenSource? lootToastCancellation;
+    private Task? holdTask;
+    private Task? victoryTransitionTask;
+    private Task? defeatTransitionTask;
+    private DotNetObjectReference<Play>? componentReference;
+    private ElementReference gameRoot;
+    private GameSnapshot snapshot = GameSnapshot.Empty;
+    private bool isLoading = true;
+    private bool isPageVisible = true;
+    private bool holdingAttack;
+    private bool actionBusy;
+    private bool playerAttacking;
+    private bool monsterHit;
+    private bool monsterAttacking;
+    private bool playerHit;
+    private bool screenShake;
+    private bool backgroundTransition;
+    private bool backgroundFailed;
+    private string? activePanel;
+    private string companionTab = "formation";
+    private string companionRosterSort = "rarity-desc";
+    private FormationRecommendationMode formationRecommendationMode = FormationRecommendationMode.BasePotential;
+    private string? errorMessage;
+    private string currentUserId = string.Empty;
+    private string currentDisplayName = "이름 없는 검객";
+    private bool nicknameEditorOpen;
+    private bool nicknameBusy;
+    private bool nicknameChangeSucceeded;
+    private string nicknameDraft = string.Empty;
+    private string? nicknameMessage;
+    private GameSettings gameSettings = new();
+    private RegionAudioSelection audioSelection = default!;
+    private bool settingsOpen;
+    private bool settingsSaving;
+    private bool supportsVibration;
+    private bool prefersReducedMotion;
+    private bool audioInitialized;
+    private bool audioUnlocked;
+    private bool audioPaused;
+    private bool showAudioUnlockHint;
+    private bool? lastExplorationAudioMuted;
+    private bool chatOpen;
+    private bool ExplorationAudioMuted => activePanel is not null || servicePanel is not null || endlessTrialOpen
+        || settingsOpen || profileOpen || offlineRewardOpen || showTutorial || quickMenuOpen || chatOpen
+        || powerSavingScreenOpen || !isPageVisible || !ChannelConfirmed;
+    private bool showTutorial;
+    private bool quickMenuOpen;
+    private bool profileOpen;
+    private bool offlineRewardOpen;
+    private bool endlessTrialOpen;
+    private readonly object trialArcadeComponentKey = new();
+    private bool offlineClaimBusy;
+    private string settingsTab = "sound";
+    private string? settingsError;
+    private string? quickNotice;
+    private string? servicePanel;
+    private string? serviceMessage;
+    private string? selectedMailKey;
+    private string? missionMessage;
+    private string? mailClaimMessage;
+    private string? shopMessage;
+    private bool serviceBusy;
+    private bool rankingBusy;
+    private bool powerSavingScreenOpen;
+    private bool powerSavingPreviousDisplayMode;
+    private int powerSavingUnlockProgress;
+    private IReadOnlyList<ChannelRankingEntry> channelRankings = [];
+    private IReadOnlyList<GameAdminMessage> adminMailMessages = [];
+    private IReadOnlyList<GameAdminMessage> adminAnnouncements = [];
+    private GameAdminMessage? latestAnnouncement;
+    private string? offlineRewardMessage;
+    private string? boostMessage;
+    private string? summonMessage;
+    private string? selectedCompanionHeroId;
+    private CompanionEquipmentSlot? selectedCompanionEquipmentSlot;
+    private string selectedInheritanceSlot = "weapon";
+    private int equipmentUpgradeBatch = 1;
+    private int bodyGrowthBatch = 1;
+    private int boostPurchaseBatch = 1;
+    private string? equipmentMessage;
+    private string? companionActionMessage;
+    private IReadOnlyList<CompanionSummonReward> latestSummonRewards = [];
+    private static readonly CompanionEquipmentSlot[] EquipmentSlots = [CompanionEquipmentSlot.Weapon, CompanionEquipmentSlot.Armor, CompanionEquipmentSlot.Talisman];
+    private static readonly IReadOnlyList<AutoSpeedBoostDefinition> BoostCatalog = GameRules.GetAutoSpeedBoosts()
+        .OrderBy(item => item.Multiplier)
+        .ThenBy(item => item.Duration)
+        .ToArray();
+    private static readonly IReadOnlyList<GoldPackDefinition> GoldPackCatalog = ExpeditionEconomy.GetGoldPacks();
+    private static readonly IReadOnlyList<SummonTicketPackDefinition> SummonTicketPackCatalog = CompanionSummonPolicy.GetTicketPacks();
+    private static readonly IReadOnlyList<ChannelOption> ChannelOptions =
+    [
+        new("cheongun-1", "청운-1", "청운 산맥", "혼잡", "靑"),
+        new("cheongun-2", "청운-2", "청운 산맥", "원활", "雲"),
+        new("baekya-1", "백야-1", "백야 설원", "보통", "白"),
+        new("baekya-2", "백야-2", "백야 설원", "쾌적", "夜")
+    ];
+    private AutoSpeedBoostDefinition? latestBoostDrop;
+    private CompanionEquipmentView? latestEquipmentDrop;
+    private int summonCount = MinimumSummonCount;
+    private string displayedBackgroundUrl = GameSnapshot.Empty.World.BackgroundUrl;
+    private long animationSequence;
+    private long enemyAnimationSequence;
+    private long summonRevealSequence;
+    private long equipmentUpgradeSequence;
+    private long? playerDamagePopup;
+    private string? hitGuardId;
+    private string? hitCompanionId;
+
+    [Parameter, SupplyParameterFromQuery(Name = "channel")]
+    public string? Channel { get; set; }
+
+    private int AmbientParticleCount => !gameSettings.Display.AmbientEffects ? 0 : gameSettings.Display.Quality == GameQuality.Low || gameSettings.Display.PowerSaving ? 4 : 12;
+    private bool SkipCombatEffects => gameSettings.Display.PowerSaving && gameSettings.Combat.SkipEffectsWhileSaving;
+
+    private double EnemyHpPercent => snapshot.EnemyMaxHp <= 0 ? 0 : Math.Clamp((double)snapshot.EnemyHp / snapshot.EnemyMaxHp * 100d, 0d, 100d);
+    private double PlayerHpPercent => snapshot.PlayerMaxHp <= 0 ? 0 : Math.Clamp((double)snapshot.PlayerHp / snapshot.PlayerMaxHp * 100d, 0d, 100d);
+    private double OfflineRewardPercent => snapshot.OfflineReward.MaximumAccrual <= TimeSpan.Zero ? 0 : Math.Clamp(snapshot.OfflineReward.PendingDuration.TotalSeconds / snapshot.OfflineReward.MaximumAccrual.TotalSeconds * 100d, 0d, 100d);
+    private static double UnitHpPercent(BattleUnitSnapshot unit) => unit.MaxHp <= 0 ? 0 : Math.Clamp((double)unit.Hp / unit.MaxHp * 100d, 0d, 100d);
+    private string CurrentBackgroundUrl => backgroundFailed ? "/images/maru-idle/regions/fallback.webp" : displayedBackgroundUrl;
+    private string playerAnimationKey => $"player-{animationSequence}";
+    private string monsterAnimationKey => $"monster-{animationSequence}";
+    private string slashAnimationKey => $"slash-{animationSequence}";
+    private string impactAnimationKey => $"impact-{animationSequence}";
+    private bool IsBodyGrowthPanel => activePanel is "upgrade" or "skills" or "equipment";
+    private string PanelTitle => IsBodyGrowthPanel ? "본체 성장" : "동료 관리";
+    private string PanelEyebrow => IsBodyGrowthPanel ? "BODY GROWTH" : "COMPANION HALL";
+    private IReadOnlyList<CompanionGrowthView> FormationCompanionGrowth => snapshot.Party.Companions
+        .Select(hero => snapshot.CompanionGrowth.FirstOrDefault(item =>
+            string.Equals(item.Hero.HeroId, hero.HeroId, StringComparison.OrdinalIgnoreCase)))
+        .Where(item => item is not null)
+        .Cast<CompanionGrowthView>()
+        .ToArray();
+    private CompanionGrowthView? SelectedCompanionGrowth => FormationCompanionGrowth.FirstOrDefault(item =>
+        string.Equals(item.Hero.HeroId, selectedCompanionHeroId, StringComparison.OrdinalIgnoreCase))
+        ?? FormationCompanionGrowth.FirstOrDefault();
+    private IReadOnlyList<HeroDefinition> SortedFormationCompanions => companionRosterSort switch
+    {
+        "rarity-asc" => snapshot.Party.AvailableCompanions.OrderBy(hero => hero.Rarity).ToArray(),
+        "default" => snapshot.Party.AvailableCompanions,
+        _ => snapshot.Party.AvailableCompanions.OrderByDescending(hero => hero.Rarity).ToArray()
+    };
+    private IReadOnlyList<CompanionGrowthView> RecommendedFormation => PartyRules.RecommendFormation(snapshot.CompanionGrowth, formationRecommendationMode);
+    private int RecommendedFormationAttackPercent => RecommendedFormation.Sum(item => item.AttackPercent);
+    private int RecommendedFormationWeaponCount => RecommendedFormation.Select(item => item.Hero.WeaponType).Distinct().Count();
+    private string FormationRecommendationEyebrow => formationRecommendationMode switch
+    {
+        FormationRecommendationMode.CurrentPower => "CURRENT POWER",
+        FormationRecommendationMode.Exploration => "EXPEDITION SPECIALIST",
+        FormationRecommendationMode.TrialTower => "TRIAL TOWER SPECIALIST",
+        _ => "BASE POTENTIAL"
+    };
+    private string FormationRecommendationTitle => formationRecommendationMode switch
+    {
+        FormationRecommendationMode.CurrentPower => "현재 보유 동료 최강 조합",
+        FormationRecommendationMode.Exploration => "빠른 원정·탐험 특화 조합",
+        FormationRecommendationMode.TrialTower => "시련의 탑 생존 특화 조합",
+        _ => "강화 전 기본 잠재력 추천"
+    };
+    private string FormationRecommendationSummary => formationRecommendationMode switch
+    {
+        FormationRecommendationMode.CurrentPower => $"현재 공격 지원 +{RecommendedFormationAttackPercent}% · 무기 계열 {RecommendedFormationWeaponCount}종",
+        FormationRecommendationMode.Exploration => $"속공·원거리 역할 우선 · 무기 계열 {RecommendedFormationWeaponCount}종",
+        FormationRecommendationMode.TrialTower => $"호위·지원 역할 우선 · 무기 계열 {RecommendedFormationWeaponCount}종",
+        _ => $"기본 지원 +{RecommendedFormation.Sum(item => item.Hero.AssistPowerPercent)}% · 강화 수치 제외"
+    };
+    private string FormationRecommendationDescription => formationRecommendationMode switch
+    {
+        FormationRecommendationMode.CurrentPower => "현재 레벨·승급·개인 장비·외형 보너스를 모두 합산한 실제 지원 전투력 순위입니다.",
+        FormationRecommendationMode.Exploration => "강화 수치를 제외하고 빠른 처치에 유리한 척후·궁수·창 계열과 영웅 고유 지원력을 우선합니다.",
+        FormationRecommendationMode.TrialTower => "강화 수치를 제외하고 장기전에 유리한 호위·치유·술사 계열과 영웅 고유 지원력을 우선합니다.",
+        _ => "레벨·승급·개인 장비·외형 강화 없이 영웅이 원래 가진 등급과 기본 지원력만 비교합니다."
+    };
+    private string FormationRecommendationMetric(CompanionGrowthView candidate) => formationRecommendationMode switch
+    {
+        FormationRecommendationMode.CurrentPower => $"현재 공격 지원 +{candidate.AttackPercent}%",
+        FormationRecommendationMode.Exploration => $"탐험 적합도 {PartyRules.FormationRecommendationScore(candidate, formationRecommendationMode)}",
+        FormationRecommendationMode.TrialTower => $"시련 적합도 {PartyRules.FormationRecommendationScore(candidate, formationRecommendationMode)}",
+        _ => $"기본 지원 +{candidate.Hero.AssistPowerPercent}%"
+    };
+    private bool IsRecommendedFormationActive => RecommendedFormation.Select(item => item.Hero.HeroId)
+        .SequenceEqual(snapshot.Party.Companions.Select(item => item.HeroId), StringComparer.OrdinalIgnoreCase);
+    private IEnumerable<DamagePopup> VisibleDamagePopups(string targetUnitId)
+    {
+        var matching = damagePopups.Where(item => item.TargetUnitId == targetUnitId).ToArray();
+        if (!gameSettings.Combat.AggregateDamage || matching.Length <= 1) return matching;
+        return
+        [
+            new DamagePopup(
+                matching.Max(item => item.Id),
+                matching.Aggregate(0L, (total, item) => GameRules.SaturatingAdd(total, item.Damage)),
+                matching.Any(item => item.IsCritical),
+                targetUnitId)
+        ];
+    }
+    private int EquippedEquipmentCount => snapshot.CompanionEquipmentInventory.Count(item => EquipmentOwner(item) is not null);
+    private int UnequippedEquipmentCount => snapshot.CompanionEquipmentInventory.Count - EquippedEquipmentCount;
+    private int BoostCount(string itemKey) => snapshot.AutoBoostInventory
+        .FirstOrDefault(entry => string.Equals(entry.Item.ItemKey, itemKey, StringComparison.OrdinalIgnoreCase))?.Count ?? 0;
+    private DateTime PowerSavingNow => DateTime.Now;
+    private string PowerSavingDateText => PowerSavingNow.ToString("M월 d일 dddd", System.Globalization.CultureInfo.GetCultureInfo("ko-KR"));
+    private string SelectedInheritanceAsset => selectedInheritanceSlot switch
+    {
+        "armor" => "/images/maru-idle/icons-premium/equipment.png",
+        "jade" => "/images/maru-idle/icons-premium/companions.png",
+        _ => "/images/maru-idle/icons-premium/forge.png"
+    };
+    private string SelectedInheritanceEyebrow => selectedInheritanceSlot switch { "armor" => "GUARDIAN ARMOR", "jade" => "BOND RELIC", _ => "DESTINY WEAPON" };
+    private InheritedEquipmentSlot SelectedInheritanceSlot => selectedInheritanceSlot switch { "armor" => InheritedEquipmentSlot.Armor, "jade" => InheritedEquipmentSlot.Jade, _ => InheritedEquipmentSlot.Weapon };
+    private string SelectedInheritanceLabel => selectedInheritanceSlot switch { "armor" => "수호 갑주", "jade" => "인연 옥패", _ => "천명 무기" };
+    private int SelectedInheritanceLevel => selectedInheritanceSlot switch { "armor" => snapshot.ArmorEquipmentLevel, "jade" => snapshot.JadeEquipmentLevel, _ => snapshot.WeaponEquipmentLevel };
+    private long SelectedInheritanceUpgradeCost => selectedInheritanceSlot switch { "armor" => snapshot.ArmorUpgradeCost, "jade" => snapshot.JadeUpgradeCost, _ => snapshot.WeaponUpgradeCost };
+    private string SelectedInheritanceName => selectedInheritanceSlot switch { "armor" => EquipmentName("갑주", SelectedInheritanceLevel), "jade" => EquipmentName("옥패", SelectedInheritanceLevel), _ => EquipmentName("검", SelectedInheritanceLevel) };
+    private string SelectedInheritanceEffect => selectedInheritanceSlot switch
+    {
+        "armor" => $"갑주 +{snapshot.ArmorEquipmentLevel} 효과로 주인공과 동료의 최대 생명력·피해 경감만 강화됩니다.",
+        "jade" => $"옥패 +{snapshot.JadeEquipmentLevel} 효과로 모든 출전 동료의 지원력이 +{snapshot.JadeAssistBonusPercent}% 강화됩니다.",
+        _ => $"전체 원정대에 공격력 +{FormatNumber(snapshot.EquipmentAttackBonus)}를 영구 계승합니다."
+    };
+    private int InheritanceTierPercent => SelectedInheritanceLevel % 5 * 20;
+    private int NextSwordForgeMilestone => Math.Min(int.MaxValue, ((snapshot.AttackLevel / 10) + 1) * 10);
+    private int SwordForgeProgressPercent => Math.Clamp(snapshot.AttackLevel % 10 * 10, 0, 100);
+    private string SwordForgeTierName => snapshot.AttackLevel >= 50 ? "천명 검성"
+        : snapshot.AttackLevel >= 30 ? "금강 검호"
+        : snapshot.AttackLevel >= 20 ? "청운 검객"
+        : snapshot.AttackLevel >= 10 ? "정련 검수"
+        : "수련 검수";
+    private int NextSwordArtMilestone => snapshot.SwordArtLevel < 1 ? 1
+        : snapshot.SwordArtLevel < 5 ? 5
+        : snapshot.SwordArtLevel < 10 ? 10
+        : (snapshot.SwordArtLevel / 5 + 1) * 5;
+    private int PreviousSwordArtMilestone => snapshot.SwordArtLevel < 1 ? 0
+        : snapshot.SwordArtLevel < 5 ? 1
+        : snapshot.SwordArtLevel < 10 ? 5
+        : snapshot.SwordArtLevel / 5 * 5;
+    private int SwordArtProgressPercent => Math.Clamp((snapshot.SwordArtLevel - PreviousSwordArtMilestone) * 100 / Math.Max(1, NextSwordArtMilestone - PreviousSwordArtMilestone), 0, 100);
+    private string NextSwordArtName => NextSwordArtMilestone == 1 ? "유성 베기"
+        : NextSwordArtMilestone == 5 ? "반월 참"
+        : NextSwordArtMilestone == 10 ? "천뢰 일섬"
+        : "심화 오의";
+    private string SwordArtDisciplineName => snapshot.SwordArtLevel >= 10 ? "천뢰경"
+        : snapshot.SwordArtLevel >= 5 ? "반월경"
+        : snapshot.SwordArtLevel >= 1 ? "유성경"
+        : "입문";
+    private (int Levels, long Cost) EquipmentBatchPlan
+    {
+        get
+        {
+            var requested = equipmentUpgradeBatch == 0 ? 1_000 : equipmentUpgradeBatch;
+            var remainingGold = snapshot.Gold;
+            var cost = 0L;
+            var levels = 0;
+            while (levels < requested && SelectedInheritanceLevel <= int.MaxValue - levels - 1)
+            {
+                var nextCost = GameRules.EquipmentUpgradeCost(SelectedInheritanceLevel + levels);
+                if (nextCost > remainingGold) break;
+                remainingGold -= nextCost;
+                cost += nextCost;
+                levels++;
+            }
+            return (levels, cost);
+        }
+    }
+    private int EquipmentBatchLevels => EquipmentBatchPlan.Levels;
+    private long EquipmentBatchCost => EquipmentBatchPlan.Cost;
+    private (int Levels, long Cost) SwordBatchPlan => ResolveBodyGrowthBatch(snapshot.AttackLevel, GameRules.UpgradeCost);
+    private (int Levels, long Cost) SwordArtBatchPlan => ResolveBodyGrowthBatch(snapshot.SwordArtLevel, GameRules.SwordArtUpgradeCost);
+    private int SwordBatchLevels => SwordBatchPlan.Levels;
+    private long SwordBatchCost => SwordBatchPlan.Cost;
+    private int SwordArtBatchLevels => SwordArtBatchPlan.Levels;
+    private long SwordArtBatchCost => SwordArtBatchPlan.Cost;
+    private (int Levels, long Cost) ResolveBodyGrowthBatch(int currentLevel, Func<int, long> costResolver)
+    {
+        var requested = bodyGrowthBatch == 0 ? 1_000 : bodyGrowthBatch;
+        var remainingGold = snapshot.Gold;
+        var cost = 0L;
+        var levels = 0;
+        while (levels < requested && currentLevel <= int.MaxValue - levels - 1)
+        {
+            var nextCost = costResolver(currentLevel + levels);
+            if (nextCost > remainingGold) break;
+            remainingGold -= nextCost;
+            cost = GameRules.SaturatingAdd(cost, nextCost);
+            levels++;
+        }
+        return (levels, cost);
+    }
+    private string SelectedChannelKey
+    {
+        get
+        {
+            if (!ChannelConfirmed && !string.IsNullOrWhiteSpace(Channel))
+            {
+                var fromQuery = ChannelOptions.FirstOrDefault(option =>
+                    string.Equals(option.Key, Channel, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(option.Name, Channel, StringComparison.OrdinalIgnoreCase));
+                if (fromQuery is not null) return fromQuery.Key;
+            }
+            return ChannelOptions.Any(option => option.Key == gameSettings.General.ChannelKey)
+                ? gameSettings.General.ChannelKey
+                : "cheongun-1";
+        }
+    }
+    private bool ChannelConfirmed => gameSettings.General.ChannelConfirmed;
+    private string SelectedChannel => ChannelOptions.First(option => option.Key == SelectedChannelKey).Name;
+    private string ChannelActionLabel(string channelKey) => ChannelConfirmed
+        ? SelectedChannelKey == channelKey ? "접속 중" : "선택 불가"
+        : SelectedChannelKey == channelKey ? "선택 후보" : "선택";
+    private string RankingDisplayName(ChannelRankingEntry entry)
+    {
+        if (!string.IsNullOrWhiteSpace(entry.DisplayName)) return entry.DisplayName;
+        if (string.Equals(entry.UserId, currentUserId, StringComparison.Ordinal)) return currentDisplayName;
+        var separator = entry.UserId.IndexOf('@');
+        var value = separator > 0 ? entry.UserId[..separator] : entry.UserId;
+        if (value.Length <= 4) return $"원정대 {value}";
+        return $"원정대 {value[..2]}…{value[^2..]}";
+    }
+    private string PlayerIdLabel
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(currentUserId)) return currentDisplayName;
+            var separator = currentUserId.IndexOf('@');
+            var value = separator > 0 ? currentUserId[..separator] : currentUserId;
+            return value.Length <= 16 ? value : $"{value[..7]}…{value[^5..]}";
+        }
+    }
+    private string PlayerIdDetail => string.IsNullOrWhiteSpace(currentUserId) ? currentDisplayName : currentUserId;
+    private string NicknameChangePriceLabel => snapshot.NicknameChangeCount == 0
+        ? "첫 변경 무료"
+        : $"변경 비용 C {GameNicknameRules.PaidChangeCost:N0}";
+    private GameAdminMessage? SelectedAdminMail => selectedMailKey is null
+        ? null
+        : adminMailMessages.FirstOrDefault(item => string.Equals(item.MessageId, selectedMailKey, StringComparison.Ordinal));
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var authenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var userId = authenticationState.User.FindFirst(Dreamine.Identity.DreamineIdentityExtensions.UserIdClaimType)?.Value
+                         ?? authenticationState.User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+                         ?? authenticationState.User.FindFirst(ClaimTypes.Email)?.Value;
+            if (string.IsNullOrWhiteSpace(userId)) { errorMessage = "로그인 계정의 사용자 식별자를 확인할 수 없습니다."; return; }
+            currentUserId = userId;
+            var loginDisplayName = authenticationState.User.Identity?.Name
+                                   ?? authenticationState.User.FindFirst(ClaimTypes.Email)?.Value
+                                   ?? $"검객-{userId[^Math.Min(4, userId.Length)..]}";
+            snapshot = await Session.InitializeAsync(userId, lifetimeCancellation.Token);
+            currentDisplayName = string.IsNullOrWhiteSpace(snapshot.GameNickname)
+                ? loginDisplayName
+                : snapshot.GameNickname;
+            gameSettings = await SettingsService.LoadAsync(userId, cancellationToken: lifetimeCancellation.Token);
+            await LoadAdminCommunicationsAsync();
+            CommunicationService.MessagePublished += OnAdminMessagePublished;
+            gameSettings.Combat.AutoEnabled = snapshot.AutoAttackEnabled;
+            audioSelection = AudioResolver.Resolve(snapshot.Stage);
+            displayedBackgroundUrl = snapshot.World.BackgroundUrl;
+        }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested) { }
+        catch (Exception exception) { errorMessage = exception.Message; }
+        finally { isLoading = false; }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!isLoading && errorMessage is null && lastExplorationAudioMuted != ExplorationAudioMuted)
+        {
+            var muted = ExplorationAudioMuted;
+            try { await JS.InvokeVoidAsync("maruAudio.setExplorationMuted", lifetimeCancellation.Token, muted); lastExplorationAudioMuted = muted; }
+            catch (Exception exception) when (exception is JSException or OperationCanceledException) { }
+        }
+        if (!firstRender || isLoading || errorMessage is not null) return;
+        try
+        {
+            componentReference = DotNetObjectReference.Create(this);
+            isPageVisible = await JS.InvokeAsync<bool>("maruIdle.bindVisibility", componentReference);
+            await JS.InvokeVoidAsync("maruIdle.bindIdleTimer", componentReference, gameSettings.General.ScreenSaverTimeoutMinutes);
+            await JS.InvokeVoidAsync("maruIdle.bindFormationDrag", componentReference);
+            supportsVibration = await JS.InvokeAsync<bool>("maruAudio.supportsVibration");
+            prefersReducedMotion = await JS.InvokeAsync<bool>("maruAudio.prefersReducedMotion");
+            await JS.InvokeVoidAsync("maruAudio.clearGuestSettings");
+            try
+            {
+                audioInitialized = await Audio.InitializeAsync(gameSettings.Sound, lifetimeCancellation.Token);
+                if (audioInitialized)
+                {
+                    await JS.InvokeVoidAsync("maruAudio.bindAutoUnlock", componentReference);
+                    var started = await Audio.PlayMusicAsync(audioSelection.Track, gameSettings.Sound, lifetimeCancellation.Token);
+                    showAudioUnlockHint = !started && await JS.InvokeAsync<bool>("maruAudio.shouldShowUnlockHint");
+                }
+            }
+            catch (JSException exception) { settingsError = $"오디오 초기화에 실패했습니다. 전투는 계속할 수 있습니다. ({exception.Message})"; }
+            try { await JS.InvokeVoidAsync("maruIdle.preload", snapshot.World.PreloadBackgroundUrl); }
+            catch (JSException) { backgroundFailed = true; }
+            try { await gameRoot.FocusAsync(); }
+            catch (InvalidOperationException) { }
+        }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested) { }
+        catch (Exception exception) { settingsError = $"일부 화면 연출을 준비하지 못했습니다. 전투는 계속됩니다. ({exception.Message})"; }
+        finally
+        {
+            if (!lifetimeCancellation.IsCancellationRequested)
+            {
+                if (ChannelConfirmed)
+                {
+                    if (snapshot.Phase == CombatPhase.Intro) _ = RunIntroAsync();
+                    await SyncAutoLoopAsync();
+                    SyncEnemyLoop();
+                }
+            }
+        }
+    }
+
+    private async Task BattlefieldAttackAsync() => await PerformAttackAsync(AttackSource.Manual);
+    private Task OnKeyDownAsync(KeyboardEventArgs args)
+    {
+        if (!ChannelConfirmed) return Task.CompletedTask;
+        if (args.Key == "Escape" && profileOpen)
+        {
+            profileOpen = false;
+            return Task.CompletedTask;
+        }
+        if ((args.Code == "Space" || args.Key == " ") && !args.Repeat)
+            return BeginHoldAttackAsync(default!);
+        return Task.CompletedTask;
+    }
+
+    private void OnKeyUp(KeyboardEventArgs args)
+    {
+        if (args.Code == "Space" || args.Key == " ") EndHoldAttack(default!);
+    }
+
+    private Task BeginHoldAttackAsync(PointerEventArgs _)
+    {
+        if (holdingAttack || isLoading) return Task.CompletedTask;
+        holdingAttack = true;
+        holdCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetimeCancellation.Token);
+        holdTask = RunHoldAttackAsync(holdCancellation.Token);
+        return Task.CompletedTask;
+    }
+
+    private void EndHoldAttack(PointerEventArgs _) { holdingAttack = false; holdCancellation?.Cancel(); }
+
+    private async Task RunHoldAttackAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await PerformAttackAsync(AttackSource.Manual, lifetimeCancellation.Token);
+            await Task.Delay(GameRules.DefaultAutoAttackInterval, cancellationToken);
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await PerformAttackAsync(AttackSource.Manual, cancellationToken);
+                await Task.Delay(GameRules.DefaultAutoAttackInterval, cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        finally { holdingAttack = false; }
+    }
+
+    private async Task PerformAttackAsync(AttackSource source, CancellationToken cancellationToken = default)
+    {
+        if (source == AttackSource.Manual) await EnsureAudioUnlockedAsync();
+        if (!isPageVisible) return;
+        if (snapshot.Phase != CombatPhase.Fighting)
+        {
+            if (source == AttackSource.Automatic)
+                await RecoverAutomaticCombatAsync(cancellationToken);
+            return;
+        }
+        try
+        {
+            var previousAutoInterval = snapshot.AutoAttackInterval;
+            var result = await Session.AttackAsync(source, cancellationToken);
+            snapshot = result.State;
+            if (!result.Accepted) return;
+            if (result.EquipmentDropped is not null) ShowEquipmentDrop(result.EquipmentDropped);
+            else if (result.AutoSpeedBoostDropped is not null) ShowBoostDrop(result.AutoSpeedBoostDropped);
+            PlayAttackAnimation(result);
+            var victoryTransition = result.EnemyDefeated
+                ? EnsureVictoryTransitionAsync()
+                : Task.CompletedTask;
+            _ = PlayCombatCueAsync(
+                CombatAudio.ResolvePlayerAttack(result.IsCritical, result.EnemyDefeated),
+                lifetimeCancellation.Token);
+            await InvokeAsync(StateHasChanged);
+            if (previousAutoInterval != snapshot.AutoAttackInterval) await SyncAutoLoopAsync();
+            await victoryTransition;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+    }
+
+    private void PlayAttackAnimation(AttackResult result)
+    {
+        var sequence = ++animationSequence;
+        playerAttacking = !SkipCombatEffects;
+        monsterHit = !SkipCombatEffects && result.TargetUnitId == "enemy";
+        hitGuardId = !SkipCombatEffects && result.TargetUnitId?.StartsWith("guard-", StringComparison.Ordinal) == true
+            ? result.TargetUnitId
+            : null;
+        screenShake = !SkipCombatEffects && gameSettings.Display.ScreenShake && !prefersReducedMotion;
+        if (gameSettings.Display.DamageNumbers && !SkipCombatEffects)
+            damagePopups.Add(new DamagePopup(sequence, result.Damage, result.IsCritical, result.TargetUnitId ?? "enemy"));
+        _ = ClearAttackAnimationAsync(sequence);
+    }
+
+    private async Task ClearAttackAnimationAsync(long sequence)
+    {
+        try
+        {
+            await Task.Delay(520, lifetimeCancellation.Token);
+            damagePopups.RemoveAll(item => item.Id == sequence);
+            if (sequence == animationSequence)
+            {
+                playerAttacking = monsterHit = screenShake = false;
+                hitGuardId = null;
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task PerformEnemyAttackAsync(CancellationToken cancellationToken)
+    {
+        if (!isPageVisible || snapshot.Phase != CombatPhase.Fighting) return;
+        try
+        {
+            var result = await Session.EnemyAttackAsync(cancellationToken);
+            snapshot = result.State;
+            if (!result.Accepted) return;
+            PlayEnemyAttackAnimation(result);
+            var defeatTransition = result.PlayerDefeated
+                ? EnsureDefeatTransitionAsync()
+                : Task.CompletedTask;
+            _ = PlayCombatCueAsync(
+                CombatAudio.ResolveEnemyAttack(result.PlayerDefeated),
+                lifetimeCancellation.Token);
+            await InvokeAsync(StateHasChanged);
+            if (result.PlayerDefeated) await SyncAutoLoopAsync();
+            await defeatTransition;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+    }
+
+    private void PlayEnemyAttackAnimation(EnemyAttackResult result)
+    {
+        var sequence = ++enemyAnimationSequence;
+        monsterAttacking = !SkipCombatEffects;
+        playerHit = !SkipCombatEffects && result.TargetUnitId == "yeonsu";
+        hitCompanionId = !SkipCombatEffects && result.TargetUnitId is not null && result.TargetUnitId != "yeonsu"
+            ? result.TargetUnitId
+            : null;
+        playerDamagePopup = gameSettings.Display.DamageNumbers && !SkipCombatEffects ? result.Damage : null;
+        screenShake = !SkipCombatEffects && gameSettings.Display.ScreenShake && !prefersReducedMotion;
+        _ = ClearEnemyAttackAnimationAsync(sequence);
+    }
+
+    private async Task PlayCombatCueAsync(CombatAudioCue cue, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (cue.MovementEffectKey is not null)
+                await TryPlayEffectAsync(cue.MovementEffectKey, uiEffect: false, cancellationToken);
+            if (cue.ImpactDelayMilliseconds > 0)
+                await Task.Delay(cue.ImpactDelayMilliseconds, cancellationToken);
+            await TryPlayEffectAsync(cue.ImpactEffectKey, uiEffect: false, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+    }
+
+    private async Task ClearEnemyAttackAnimationAsync(long sequence)
+    {
+        try
+        {
+            await Task.Delay(480, lifetimeCancellation.Token);
+            if (sequence == enemyAnimationSequence)
+            {
+                monsterAttacking = playerHit = false;
+                hitCompanionId = null;
+                playerDamagePopup = null;
+                screenShake = false;
+            }
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private Task EnsureVictoryTransitionAsync()
+    {
+        lock (transitionSync)
+        {
+            if (victoryTransitionTask is not { IsCompleted: false })
+                victoryTransitionTask = RunVictoryTransitionAsync(lifetimeCancellation.Token);
+            return victoryTransitionTask;
+        }
+    }
+
+    private Task EnsureDefeatTransitionAsync()
+    {
+        lock (transitionSync)
+        {
+            if (defeatTransitionTask is not { IsCompleted: false })
+                defeatTransitionTask = RunDefeatTransitionAsync(lifetimeCancellation.Token);
+            return defeatTransitionTask;
+        }
+    }
+
+    private async Task RunDefeatTransitionAsync(CancellationToken cancellationToken)
+    {
+        await Task.Delay(1250, cancellationToken);
+        snapshot = await Session.RestartAfterDefeatAsync(cancellationToken);
+        await InvokeAsync(StateHasChanged);
+        await SyncAutoLoopAsync();
+        SyncEnemyLoop();
+    }
+
+    private async Task RunVictoryTransitionAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(560, cancellationToken);
+            snapshot = await Session.AdvanceCombatPhaseAsync(cancellationToken);
+            backgroundTransition = true;
+            backgroundFailed = false;
+            await InvokeAsync(StateHasChanged);
+
+            // 이미지·오디오 브라우저 연동은 전투 상태 머신을 막아서는 안 됩니다.
+            _ = PreloadBackgroundSafelyAsync(snapshot.World.BackgroundUrl, cancellationToken);
+            await Task.Delay(280, cancellationToken);
+            displayedBackgroundUrl = snapshot.World.BackgroundUrl;
+            backgroundTransition = false;
+            snapshot = await Session.AdvanceCombatPhaseAsync(cancellationToken);
+            _ = SyncRegionAudioSafelyAsync(cancellationToken);
+            await InvokeAsync(StateHasChanged);
+            if (snapshot.Phase == CombatPhase.Intro) await RunIntroAsync();
+            _ = PreloadBackgroundSafelyAsync(snapshot.World.PreloadBackgroundUrl, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (Exception exception)
+        {
+            settingsError = $"전투 화면 전환을 자동 복구했습니다. ({exception.Message})";
+            await RecoverCombatTransitionAfterFailureAsync(cancellationToken);
+        }
+        finally
+        {
+            backgroundTransition = false;
+            if (!lifetimeCancellation.IsCancellationRequested)
+            {
+                await SyncAutoLoopAsync();
+                SyncEnemyLoop();
+            }
+        }
+    }
+
+    private async Task PreloadBackgroundSafelyAsync(string? backgroundUrl, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(backgroundUrl)) return;
+        try
+        {
+            await JS.InvokeVoidAsync("maruIdle.preload", cancellationToken, backgroundUrl);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (Exception)
+        {
+            backgroundFailed = true;
+        }
+    }
+
+    private async Task SyncRegionAudioSafelyAsync(CancellationToken cancellationToken)
+    {
+        try { await SyncRegionAudioAsync(cancellationToken); }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (Exception exception)
+        {
+            settingsError = $"지역 음악 전환에 실패했습니다. 전투는 계속됩니다. ({exception.Message})";
+        }
+    }
+
+    private async Task RecoverCombatTransitionAfterFailureAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            snapshot = Session.Snapshot;
+            for (var step = 0; step < 3 && snapshot.Phase is CombatPhase.Victory or CombatPhase.Transitioning or CombatPhase.Intro; step++)
+                snapshot = await Session.AdvanceCombatPhaseAsync(cancellationToken);
+            displayedBackgroundUrl = snapshot.World.BackgroundUrl;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+        catch (Exception)
+        {
+            // 다음 AUTO 틱이 현재 서버 단계에서 복구를 다시 시도합니다.
+        }
+    }
+
+    private async Task RecoverAutomaticCombatAsync(CancellationToken cancellationToken)
+    {
+        switch (snapshot.Phase)
+        {
+            case CombatPhase.Victory:
+                await EnsureVictoryTransitionAsync();
+                break;
+            case CombatPhase.Defeat:
+                await EnsureDefeatTransitionAsync();
+                break;
+            case CombatPhase.Transitioning:
+                snapshot = await Session.AdvanceCombatPhaseAsync(cancellationToken);
+                if (snapshot.Phase == CombatPhase.Intro)
+                    await RunIntroAsync();
+                await InvokeAsync(StateHasChanged);
+                SyncEnemyLoop();
+                break;
+            case CombatPhase.Intro:
+                await RunIntroAsync();
+                break;
+        }
+    }
+
+    private async Task RunIntroAsync()
+    {
+        try { await Task.Delay(850, lifetimeCancellation.Token); snapshot = await Session.AdvanceCombatPhaseAsync(lifetimeCancellation.Token); await InvokeAsync(StateHasChanged); await SyncAutoLoopAsync(); SyncEnemyLoop(); }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task ToggleAutoAsync()
+    {
+        snapshot = await Session.SetAutoAttackAsync(!snapshot.AutoAttackEnabled, lifetimeCancellation.Token);
+        gameSettings.Combat.AutoEnabled = snapshot.AutoAttackEnabled;
+        try { gameSettings = await SettingsService.SaveAsync(currentUserId, gameSettings, lifetimeCancellation.Token); }
+        catch { settingsError = "AUTO 설정을 계정에 저장하지 못했습니다."; }
+        await SyncAutoLoopAsync();
+    }
+
+    private async Task SyncAutoLoopAsync()
+    {
+        if (snapshot.AutoAttackUnlocked && snapshot.AutoAttackEnabled && isPageVisible)
+            autoLoop.Start(token => InvokeAsync(() => PerformAttackAsync(AttackSource.Automatic, token)), snapshot.AutoAttackInterval, lifetimeCancellation.Token);
+        else await autoLoop.StopAsync();
+    }
+
+    private void SyncEnemyLoop()
+    {
+        if (isPageVisible)
+            enemyLoop.Start(token => InvokeAsync(() => PerformEnemyAttackAsync(token)), GameRules.DefaultEnemyAttackInterval, lifetimeCancellation.Token);
+        else
+            _ = enemyLoop.StopAsync();
+    }
+
+    private void SyncCombatLoopsForOverlay()
+        => _ = InvokeAsync(async () =>
+        {
+            await SyncAutoLoopAsync();
+            SyncEnemyLoop();
+        });
+
+    private async Task UpgradeSwordAsync()
+    {
+        if (actionBusy) return;
+        var plannedLevels = SwordBatchLevels;
+        if (plannedLevels <= 0) return;
+        actionBusy = true;
+        try { snapshot = await Session.UpgradeSwordAsync(plannedLevels, lifetimeCancellation.Token); }
+        finally { actionBusy = false; }
+    }
+
+    private async Task UpgradeSwordArtAsync()
+    {
+        if (actionBusy) return;
+        var plannedLevels = SwordArtBatchLevels;
+        if (plannedLevels <= 0) return;
+        actionBusy = true;
+        try { snapshot = await Session.UpgradeSwordArtAsync(plannedLevels, lifetimeCancellation.Token); }
+        finally { actionBusy = false; }
+    }
+
+    private void SetBodyGrowthBatch(int batch)
+    {
+        if (batch is not (0 or 1 or 10)) return;
+        bodyGrowthBatch = batch;
+    }
+
+    private void OpenInheritancePanel()
+    {
+        activePanel = "equipment";
+        equipmentMessage = null;
+    }
+
+    private void SelectInheritanceSlot(string slot)
+    {
+        if (slot is not ("weapon" or "armor" or "jade")) return;
+        selectedInheritanceSlot = slot;
+        equipmentMessage = null;
+    }
+
+    private void SetEquipmentUpgradeBatch(int batch)
+    {
+        if (batch is not (0 or 1 or 10)) return;
+        equipmentUpgradeBatch = batch;
+        equipmentMessage = null;
+    }
+
+    private async Task UpgradeEquipmentBatchAsync()
+    {
+        if (actionBusy) return;
+        var plannedLevels = EquipmentBatchLevels;
+        if (plannedLevels <= 0) return;
+        var previousLevel = SelectedInheritanceLevel;
+        actionBusy = true;
+        equipmentMessage = null;
+        try
+        {
+            snapshot = await Session.UpgradeEquipmentAsync(SelectedInheritanceSlot, plannedLevels, lifetimeCancellation.Token);
+            var currentLevel = SelectedInheritanceLevel;
+            var upgradedLevels = currentLevel - previousLevel;
+            if (upgradedLevels > 0)
+            {
+                equipmentUpgradeSequence++;
+                equipmentMessage = $"{SelectedInheritanceLabel}만 +{upgradedLevels}단계 단련했습니다. 현재 +{currentLevel}";
+            }
+            else equipmentMessage = "단련에 필요한 금화가 부족합니다.";
+        }
+        finally { actionBusy = false; }
+    }
+
+    private void SetBoostPurchaseBatch(int batch)
+    {
+        if (batch is not (0 or 1 or 10)) return;
+        boostPurchaseBatch = batch;
+        boostMessage = null;
+    }
+
+    private int BoostPurchaseQuantity(AutoSpeedBoostDefinition item)
+    {
+        if (item.PriceC <= 0) return 0;
+        var capacity = int.MaxValue - BoostCount(item.ItemKey);
+        var affordable = (int)Math.Min(int.MaxValue, snapshot.PremiumCurrency / item.PriceC);
+        var requested = boostPurchaseBatch == 0 ? Math.Min(capacity, affordable) : boostPurchaseBatch;
+        return requested > 0 && requested <= capacity && requested <= affordable ? requested : 0;
+    }
+
+    private static long BoostPurchasePrice(AutoSpeedBoostDefinition item, int quantity) =>
+        quantity <= 0 || item.PriceC > long.MaxValue / quantity ? 0 : item.PriceC * quantity;
+
+    private async Task PurchaseBoostAsync(string itemKey, int quantity)
+    {
+        if (actionBusy || quantity <= 0) return;
+        actionBusy = true;
+        boostMessage = null;
+        try
+        {
+            var result = await Session.PurchaseAutoSpeedBoostAsync(itemKey, quantity, lifetimeCancellation.Token);
+            snapshot = result.State;
+            boostMessage = result.Purchased && result.Item is not null
+                ? $"{result.Item.Name} {quantity:N0}개를 구매해 보관함에 넣었습니다."
+                : result.RejectionReason;
+        }
+        finally { actionBusy = false; }
+    }
+
+    private async Task PurchaseGoldPackAsync(string packKey)
+    {
+        if (actionBusy) return;
+        actionBusy = true;
+        shopMessage = null;
+        try
+        {
+            var result = await Session.PurchaseGoldPackAsync(packKey, lifetimeCancellation.Token);
+            snapshot = result.State;
+            shopMessage = result.Purchased && result.Item is not null
+                ? $"{result.Item.Name}에서 금화 {FormatNumber(result.Item.Gold)}을 계정 금고에 넣었습니다."
+                : result.RejectionReason;
+            if (result.Purchased) await TryPlayEffectAsync("reward-claim", uiEffect: true, lifetimeCancellation.Token);
+        }
+        finally { actionBusy = false; }
+    }
+
+    private async Task ClaimDailyMissionAsync(string missionKey)
+    {
+        if (serviceBusy) return;
+        serviceBusy = true;
+        missionMessage = null;
+        try
+        {
+            var result = await Session.ClaimDailyMissionAsync(missionKey, lifetimeCancellation.Token);
+            snapshot = result.State;
+            missionMessage = result.Message;
+            if (result.Accepted) await TryPlayEffectAsync("reward-claim", uiEffect: true, lifetimeCancellation.Token);
+        }
+        finally { serviceBusy = false; }
+    }
+
+    private async Task ActivateBoostAsync(string itemKey)
+    {
+        if (actionBusy) return;
+        actionBusy = true;
+        boostMessage = null;
+        try
+        {
+            var result = await Session.ActivateAutoSpeedBoostAsync(itemKey, lifetimeCancellation.Token);
+            snapshot = result.State;
+            boostMessage = result.Activated
+                ? $"AUTO ×{snapshot.ActiveAutoSpeedMultiplier} 효과를 활성화했습니다."
+                : result.RejectionReason;
+            await SyncAutoLoopAsync();
+        }
+        finally { actionBusy = false; }
+    }
+
+    private async Task DeactivateBoostAsync()
+    {
+        if (actionBusy || snapshot.ActiveAutoSpeedMultiplier <= 1) return;
+        actionBusy = true;
+        try
+        {
+            snapshot = await Session.DeactivateAutoSpeedBoostAsync(lifetimeCancellation.Token);
+            boostMessage = "AUTO 가속 효과를 해제했습니다. 사용한 부적은 반환되지 않습니다.";
+            await SyncAutoLoopAsync();
+        }
+        finally { actionBusy = false; }
+    }
+
+    private async Task ToggleCompanionAsync(string heroId)
+    {
+        if (actionBusy) return;
+        var selected = snapshot.Party.Companions.Select(hero => hero.HeroId).ToList();
+        if (!selected.Remove(heroId))
+        {
+            if (selected.Count >= PartyRules.MaximumCompanions) return;
+            selected.Add(heroId);
+        }
+        if (selected.Count == 0) return;
+        actionBusy = true;
+        try
+        {
+            snapshot = await Session.SetCompanionsAsync(selected, lifetimeCancellation.Token);
+            await ResumeCombatAfterCompanionChangeAsync();
+        }
+        finally { actionBusy = false; }
+    }
+
+    private async Task ApplyRecommendedFormationAsync()
+    {
+        if (actionBusy || RecommendedFormation.Count == 0 || IsRecommendedFormationActive) return;
+        actionBusy = true;
+        try
+        {
+            snapshot = await Session.SetCompanionsAsync(
+                RecommendedFormation.Select(item => item.Hero.HeroId),
+                lifetimeCancellation.Token);
+            companionActionMessage = $"{FormationRecommendationTitle}을 편성했습니다.";
+            await ResumeCombatAfterCompanionChangeAsync();
+        }
+        finally { actionBusy = false; }
+    }
+
+    [JSInvokable]
+    public async Task CommitCompanionFormationAsync(string[] heroIds)
+    {
+        if (actionBusy || heroIds.Length != snapshot.Party.Companions.Count) return;
+        var validIds = snapshot.Party.Companions.Select(hero => hero.HeroId).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (heroIds.Distinct(StringComparer.OrdinalIgnoreCase).Count() != heroIds.Length || heroIds.Any(heroId => !validIds.Contains(heroId))) return;
+        await PersistCompanionFormationAsync(heroIds);
+    }
+
+    private async Task MoveCompanionAsync(string heroId, int offset)
+    {
+        if (actionBusy) return;
+        var selected = snapshot.Party.Companions.Select(hero => hero.HeroId).ToList();
+        var sourceIndex = selected.IndexOf(heroId);
+        var targetIndex = sourceIndex + Math.Sign(offset);
+        if (sourceIndex < 0 || targetIndex < 0 || targetIndex >= selected.Count) return;
+        (selected[sourceIndex], selected[targetIndex]) = (selected[targetIndex], selected[sourceIndex]);
+        await PersistCompanionFormationAsync(selected);
+    }
+
+    private async Task PersistCompanionFormationAsync(IReadOnlyList<string> heroIds)
+    {
+        actionBusy = true;
+        try
+        {
+            snapshot = await Session.SetCompanionsAsync(heroIds, lifetimeCancellation.Token);
+            companionActionMessage = "전투 배치 순서를 저장했습니다.";
+            await ResumeCombatAfterCompanionChangeAsync();
+        }
+        finally { actionBusy = false; }
+    }
+
+    private async Task ResumeCombatAfterCompanionChangeAsync()
+    {
+        // 편성 저장 중 종료되었거나 취소 중이던 루프까지 현재 AUTO 설정으로 다시 묶습니다.
+        await SyncAutoLoopAsync();
+        SyncEnemyLoop();
+    }
+
+    private void SelectCompanion(string heroId)
+    {
+        selectedCompanionHeroId = heroId;
+        selectedCompanionEquipmentSlot = null;
+        companionActionMessage = null;
+    }
+
+    private void SetCompanionTab(string tab)
+    {
+        companionTab = tab;
+        selectedCompanionEquipmentSlot = null;
+        companionActionMessage = null;
+    }
+
+    private void OpenCompanionEquipmentPicker(CompanionEquipmentSlot slot)
+    {
+        selectedCompanionEquipmentSlot = slot;
+        companionActionMessage = null;
+    }
+
+    private void CloseCompanionEquipmentPicker()
+    {
+        selectedCompanionEquipmentSlot = null;
+        companionActionMessage = null;
+    }
+
+    private IReadOnlyList<CompanionEquipmentView> CompatibleUnequippedEquipment(CompanionGrowthView growth, CompanionEquipmentSlot slot) =>
+        snapshot.CompanionEquipmentInventory
+            .Where(item => EquipmentOwner(item) is null
+                && item.Definition.Slot == slot
+                && CompanionProgressionRules.CanEquip(growth.Hero, item.Definition))
+            .OrderByDescending(item => item.Instance.Rarity)
+            .ThenByDescending(item => item.Instance.Level)
+            .ThenBy(item => item.DisplayName, StringComparer.CurrentCulture)
+            .ToArray();
+
+    private async Task UpgradeCompanionLevelAsync(string heroId) =>
+        await RunCompanionActionAsync(() => Session.UpgradeCompanionLevelAsync(heroId, lifetimeCancellation.Token), "companion-upgrade");
+
+    private async Task RankUpCompanionAsync(string heroId) =>
+        await RunCompanionActionAsync(() => Session.RankUpCompanionAsync(heroId, lifetimeCancellation.Token), "companion-rank-up");
+
+    private async Task ToggleCompanionEquipmentAsync(string heroId, string equipmentId) =>
+        await RunCompanionActionAsync(() => Session.ToggleCompanionEquipmentAsync(heroId, equipmentId, lifetimeCancellation.Token), "equipment-equip");
+
+    private async Task UpgradeCompanionEquipmentAsync(string heroId, string instanceId) =>
+        await RunCompanionActionAsync(() => Session.UpgradeCompanionEquipmentAsync(heroId, instanceId, lifetimeCancellation.Token), "equipment-upgrade");
+
+    private async Task SellCompanionEquipmentAsync(string heroId, string instanceId) =>
+        await RunCompanionActionAsync(() => Session.SellCompanionEquipmentAsync(heroId, instanceId, lifetimeCancellation.Token), "equipment-sell");
+
+    private async Task CraftCompanionEquipmentAsync(string heroId, string itemId) =>
+        await RunCompanionActionAsync(() => Session.CraftCompanionEquipmentAsync(heroId, itemId, lifetimeCancellation.Token), "equipment-craft");
+
+    private async Task SelectOrPurchaseSkinAsync(string heroId, string skinId) =>
+        await RunCompanionActionAsync(() => Session.PurchaseOrSelectCompanionSkinAsync(heroId, skinId, lifetimeCancellation.Token), "skin-equip");
+
+    private async Task RunCompanionActionAsync(Func<Task<CompanionActionResult>> action, string effectKey)
+    {
+        if (actionBusy) return;
+        actionBusy = true;
+        companionActionMessage = null;
+        try
+        {
+            await EnsureAudioUnlockedAsync();
+            var result = await action();
+            snapshot = result.State;
+            companionActionMessage = result.Message;
+            if (result.Accepted) await TryPlayEffectAsync(effectKey, uiEffect: true, lifetimeCancellation.Token);
+        }
+        finally { actionBusy = false; }
+    }
+
+    private async Task GrantDevelopmentCurrencyAsync()
+    {
+        if (!HostEnvironment.IsDevelopment() || actionBusy) return;
+        actionBusy = true;
+        try
+        {
+            snapshot = await Session.GrantPremiumCurrencyForDevelopmentAsync(600, lifetimeCancellation.Token);
+            companionActionMessage = "로컬 결제 검증용 CodeMaru C 600을 충전했습니다.";
+            await TryPlayEffectAsync("premium-credit", uiEffect: true, lifetimeCancellation.Token);
+        }
+        finally { actionBusy = false; }
+    }
+
+    private async Task SummonCompanionsAsync()
+    {
+        if (actionBusy || snapshot.HeroSummonTickets < summonCount) return;
+        actionBusy = true;
+        summonMessage = null;
+        try
+        {
+            var result = await Session.SummonCompanionsAsync(summonCount, lifetimeCancellation.Token);
+            snapshot = result.State;
+            latestSummonRewards = result.Rewards;
+            summonRevealSequence++;
+            summonMessage = result.Accepted ? null : result.RejectionReason;
+            if (result.Accepted) await TryPlayEffectAsync("summon-result", uiEffect: true, lifetimeCancellation.Token);
+        }
+        finally { actionBusy = false; }
+    }
+
+    private async Task PurchaseSummonTicketPackAsync(string packKey)
+    {
+        if (actionBusy) return;
+        actionBusy = true;
+        summonMessage = null;
+        try
+        {
+            var result = await Session.PurchaseSummonTicketPackAsync(packKey, lifetimeCancellation.Token);
+            snapshot = result.State;
+            summonMessage = result.Purchased
+                ? $"{result.Item!.Tickets:N0}장의 소환패를 구매했습니다."
+                : result.RejectionReason;
+            if (result.Purchased) await TryPlayEffectAsync("premium-purchase", uiEffect: true, lifetimeCancellation.Token);
+        }
+        finally { actionBusy = false; }
+    }
+
+    private void SetSummonCount(int count) => summonCount = Math.Clamp(count, MinimumSummonCount, MaximumSummonCount);
+
+    private void AdjustSummonCount(int offset) => SetSummonCount(summonCount + Math.Sign(offset));
+
+    private async Task ResetTestProgressAsync()
+    {
+        if (!HostEnvironment.IsDevelopment() || actionBusy) return;
+        actionBusy = true;
+        try
+        {
+            snapshot = await Session.ResetProgressForDevelopmentAsync(lifetimeCancellation.Token);
+            activePanel = null;
+            latestSummonRewards = [];
+            summonMessage = null;
+            boostMessage = null;
+            displayedBackgroundUrl = snapshot.World.BackgroundUrl;
+            await SyncAutoLoopAsync();
+            SyncEnemyLoop();
+            _ = RunIntroAsync();
+        }
+        finally { actionBusy = false; }
+    }
+
+    private async Task AcknowledgeUnlockAsync() => snapshot = await Session.AcknowledgeAutoUnlockAsync(lifetimeCancellation.Token);
+    private void OpenPanel(string panel)
+    {
+        endlessTrialOpen = false;
+        servicePanel = null;
+        activePanel = panel;
+        SyncCombatLoopsForOverlay();
+    }
+    private void OpenCompanions(string tab)
+    {
+        endlessTrialOpen = false;
+        servicePanel = null;
+        companionTab = tab;
+        selectedCompanionEquipmentSlot = null;
+        if (FormationCompanionGrowth.All(item => !string.Equals(item.Hero.HeroId, selectedCompanionHeroId, StringComparison.OrdinalIgnoreCase)))
+            selectedCompanionHeroId = FormationCompanionGrowth.FirstOrDefault()?.Hero.HeroId;
+        activePanel = "companions";
+        SyncCombatLoopsForOverlay();
+    }
+    private Task ReturnToExploration()
+        => ResumeExplorationAsync();
+
+    private async Task ResumeExplorationAsync()
+    {
+        endlessTrialOpen = false;
+        servicePanel = null;
+        activePanel = null;
+        snapshot = Session.Snapshot;
+        await InvokeAsync(StateHasChanged);
+        await Task.Yield();
+        if (snapshot.Phase != CombatPhase.Fighting)
+            await RecoverAutomaticCombatAsync(lifetimeCancellation.Token);
+        await SyncAutoLoopAsync();
+        SyncEnemyLoop();
+    }
+    private void OpenEndlessTrial()
+    {
+        activePanel = null;
+        offlineRewardOpen = false;
+        servicePanel = null;
+        endlessTrialOpen = true;
+        SyncCombatLoopsForOverlay();
+    }
+    private async Task CloseEndlessTrial()
+        => await ResumeExplorationAsync();
+    private void OnEndlessSnapshotChanged(GameSnapshot state) => snapshot = state;
+    private void ClosePanel()
+    {
+        selectedCompanionEquipmentSlot = null;
+        activePanel = null;
+    }
+    private void OpenProfile()
+    {
+        quickMenuOpen = false;
+        profileOpen = true;
+    }
+private void CloseProfile()
+{
+    profileOpen = false;
+    CancelNicknameEditor();
+}
+
+private void OpenNicknameEditor()
+{
+    nicknameDraft = currentDisplayName;
+    nicknameMessage = null;
+    nicknameChangeSucceeded = false;
+    nicknameEditorOpen = true;
+}
+
+private void CancelNicknameEditor()
+{
+    if (nicknameBusy) return;
+    nicknameEditorOpen = false;
+    nicknameMessage = null;
+    nicknameChangeSucceeded = false;
+}
+
+private async Task ChangeNicknameAsync()
+{
+    if (nicknameBusy) return;
+    nicknameBusy = true;
+    nicknameMessage = null;
+    nicknameChangeSucceeded = false;
+    try
+    {
+        var result = await Session.ChangeNicknameAsync(nicknameDraft, lifetimeCancellation.Token);
+        snapshot = result.State;
+        nicknameMessage = result.Message;
+        nicknameChangeSucceeded = result.Accepted;
+        if (result.Accepted)
+        {
+            currentDisplayName = snapshot.GameNickname;
+            nicknameDraft = currentDisplayName;
+        }
+    }
+    finally { nicknameBusy = false; }
+}
+
+private void OpenProfilePanel(string panel)
+{
+    profileOpen = false;
+    OpenPanel(panel);
+}
+    private void UseFallbackBackground() => backgroundFailed = true;
+
+    private void ToggleQuickMenu() => quickMenuOpen = !quickMenuOpen;
+
+    private void OpenOfflineReward()
+    {
+        quickMenuOpen = false;
+        activePanel = null;
+        endlessTrialOpen = false;
+        servicePanel = null;
+        SyncCombatLoopsForOverlay();
+        offlineRewardMessage = null;
+        offlineRewardOpen = true;
+    }
+
+    private void CloseOfflineReward() => offlineRewardOpen = false;
+
+    private async Task ClaimOfflineRewardAsync()
+    {
+        if (offlineClaimBusy || snapshot.OfflineReward.PendingGold <= 0) return;
+        offlineClaimBusy = true;
+        offlineRewardMessage = null;
+        try
+        {
+            var result = await Session.ClaimOfflineRewardAsync(lifetimeCancellation.Token);
+            snapshot = result.State;
+            offlineRewardMessage = result.Accepted
+                ? $"{FormatNumber(result.ClaimedGold)} 금화를 원정대 금고에 넣었습니다."
+                : result.Message;
+            if (result.Accepted) await TryPlayEffectAsync("reward-claim", uiEffect: true, lifetimeCancellation.Token);
+        }
+        finally { offlineClaimBusy = false; }
+    }
+
+    private void OpenQuickCompanions(string tab)
+    {
+        quickMenuOpen = false;
+        OpenCompanions(tab);
+    }
+
+    private async Task OpenQuickSettingsAsync()
+    {
+        quickMenuOpen = false;
+        await OpenSettingsAsync();
+    }
+
+    private Task OpenPowerSavingSettings() => EnterPowerSavingAsync();
+
+    private async Task EnterPowerSavingAsync()
+    {
+        if (powerSavingScreenOpen || !ChannelConfirmed || !isPageVisible) return;
+        quickMenuOpen = false;
+        settingsOpen = false;
+        powerSavingUnlockProgress = 0;
+        powerSavingPreviousDisplayMode = gameSettings.Display.PowerSaving;
+        powerSavingScreenOpen = true;
+        gameSettings.Display.PowerSaving = true;
+        try { await Audio.SetPausedAsync(true, lifetimeCancellation.Token); }
+        catch (Exception exception) when (exception is JSException or JSDisconnectedException or OperationCanceledException) { }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    [JSInvokable]
+    public Task EnterPowerSavingFromIdleAsync() => EnterPowerSavingAsync();
+
+    private async Task OnPowerSavingSlide(ChangeEventArgs args)
+    {
+        powerSavingUnlockProgress = int.TryParse(args.Value?.ToString(), out var value)
+            ? Math.Clamp(value, 0, 100)
+            : 0;
+        if (powerSavingUnlockProgress >= 96) await ClosePowerSavingScreenAsync();
+    }
+
+    private async Task CompletePowerSavingSlide(ChangeEventArgs _)
+    {
+        if (powerSavingUnlockProgress >= 82) await ClosePowerSavingScreenAsync();
+        else powerSavingUnlockProgress = 0;
+    }
+
+    private async Task ClosePowerSavingScreenAsync()
+    {
+        powerSavingScreenOpen = false;
+        powerSavingUnlockProgress = 0;
+        gameSettings.Display.PowerSaving = powerSavingPreviousDisplayMode;
+        try { await Audio.SetPausedAsync(ShouldPauseAudio, lifetimeCancellation.Token); }
+        catch (Exception exception) when (exception is JSException or JSDisconnectedException or OperationCanceledException) { }
+        try { await JS.InvokeVoidAsync("maruIdle.resetIdleTimer"); }
+        catch (Exception exception) when (exception is JSException or JSDisconnectedException) { }
+    }
+
+    private async Task OpenServicePanel(string panel)
+    {
+        if (panel is not ("channel" or "mail" or "mission" or "rank" or "shop")) return;
+        quickMenuOpen = false;
+        activePanel = null;
+        endlessTrialOpen = false;
+        offlineRewardOpen = false;
+        serviceMessage = null;
+        servicePanel = panel;
+        SyncCombatLoopsForOverlay();
+        if (panel == "rank") await LoadChannelRankingsAsync();
+        if (panel == "mail") await LoadAdminCommunicationsAsync();
+    }
+
+    private void OpenTalismanVault()
+    {
+        quickMenuOpen = false;
+        activePanel = null;
+        endlessTrialOpen = false;
+        offlineRewardOpen = false;
+        serviceMessage = null;
+        boostMessage = null;
+        servicePanel = "talisman";
+        SyncCombatLoopsForOverlay();
+    }
+
+    private bool IsMailRead(string mailKey) => gameSettings.General.ReadMailKeys.Contains(mailKey, StringComparer.OrdinalIgnoreCase);
+
+    private static string AdminMailReadKey(GameAdminMessage message) => $"admin-mail:{message.MessageId}";
+    private static string AdminNoticeReadKey(GameAdminMessage message) => $"admin-notice:{message.MessageId}";
+    private bool IsAdminMailRead(GameAdminMessage message) => IsMailRead(AdminMailReadKey(message));
+
+    private async Task LoadAdminCommunicationsAsync()
+    {
+        if (string.IsNullOrWhiteSpace(currentUserId)) return;
+        adminMailMessages = await CommunicationService.LoadForUserAsync(
+            currentUserId,
+            GameAdminMessageKind.Mail,
+            cancellationToken: lifetimeCancellation.Token);
+        adminAnnouncements = await CommunicationService.LoadForUserAsync(
+            currentUserId,
+            GameAdminMessageKind.Announcement,
+            count: 20,
+            cancellationToken: lifetimeCancellation.Token);
+        latestAnnouncement = adminAnnouncements.FirstOrDefault(item => !IsMailRead(AdminNoticeReadKey(item)));
+    }
+
+    private async Task OpenAdminMailAsync(GameAdminMessage message)
+    {
+        selectedMailKey = message.MessageId;
+        mailClaimMessage = null;
+        await MarkAdminMessageReadAsync(AdminMailReadKey(message));
+    }
+
+    private async Task DismissAnnouncementAsync()
+    {
+        if (latestAnnouncement is not { } announcement) return;
+        var readKey = AdminNoticeReadKey(announcement);
+        if (!IsMailRead(readKey)) gameSettings.General.ReadMailKeys.Add(readKey);
+        latestAnnouncement = adminAnnouncements.FirstOrDefault(item => !IsMailRead(AdminNoticeReadKey(item)));
+        await PersistReadStateAsync();
+    }
+
+    private async Task MarkAdminMessageReadAsync(string readKey)
+    {
+        if (IsMailRead(readKey)) return;
+        gameSettings.General.ReadMailKeys.Add(readKey);
+        await PersistReadStateAsync();
+    }
+
+    private async Task PersistReadStateAsync()
+    {
+        try { gameSettings = await SettingsService.SaveAsync(currentUserId, gameSettings, lifetimeCancellation.Token); }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested) { }
+        catch (Exception exception) { serviceMessage = $"읽음 상태를 저장하지 못했습니다. ({exception.Message})"; }
+    }
+
+    private async Task ClaimAdminMailRewardAsync(string messageId)
+    {
+        if (serviceBusy) return;
+        serviceBusy = true;
+        mailClaimMessage = null;
+        try
+        {
+            var result = await Session.ClaimAdminMailRewardAsync(messageId, lifetimeCancellation.Token);
+            snapshot = result.State;
+            mailClaimMessage = result.Message;
+            if (result.Accepted) quickNotice = result.Message;
+        }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested) { }
+        catch (Exception exception) { mailClaimMessage = $"우편 선물을 수령하지 못했습니다. ({exception.Message})"; }
+        finally { serviceBusy = false; }
+    }
+
+    private static string AdminMailAttachmentLabel(GameAdminMailAttachmentKind kind) => kind switch
+    {
+        GameAdminMailAttachmentKind.PremiumCurrency => "CodeMaru C",
+        GameAdminMailAttachmentKind.Gold => "금화",
+        GameAdminMailAttachmentKind.HeroSummonTickets => "동료 소환패",
+        _ => "선물"
+    };
+
+    private bool IsAdminMessageForCurrentUser(GameAdminMessage message) =>
+        message.Target == GameAdminMessageTarget.AllPlayers
+        || string.Equals(message.TargetUserId, currentUserId, StringComparison.OrdinalIgnoreCase);
+
+    private void OnAdminMessagePublished(GameAdminMessage message) => _ = InvokeAsync(() =>
+    {
+        if (!IsAdminMessageForCurrentUser(message)) return;
+        if (message.Kind == GameAdminMessageKind.Announcement)
+        {
+            adminAnnouncements = new[] { message }
+                .Concat(adminAnnouncements.Where(item => item.MessageId != message.MessageId))
+                .Take(20)
+                .ToArray();
+            latestAnnouncement = message;
+        }
+        else if (message.Kind == GameAdminMessageKind.Mail)
+        {
+            adminMailMessages = new[] { message }
+                .Concat(adminMailMessages.Where(item => item.MessageId != message.MessageId))
+                .Take(50)
+                .ToArray();
+            quickNotice = $"새 운영 우편 · {message.Title}";
+        }
+        StateHasChanged();
+    });
+
+    private async Task OpenMailAsync(string mailKey)
+    {
+        selectedMailKey = mailKey;
+        if (IsMailRead(mailKey)) return;
+        gameSettings.General.ReadMailKeys.Add(mailKey);
+        try { gameSettings = await SettingsService.SaveAsync(currentUserId, gameSettings, lifetimeCancellation.Token); }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested) { }
+        catch (Exception exception) { serviceMessage = $"우편 읽음 상태를 저장하지 못했습니다. ({exception.Message})"; }
+    }
+
+    private void CloseMailDetail() => selectedMailKey = null;
+
+    private void OpenTrialFromMail()
+    {
+        selectedMailKey = null;
+        OpenEndlessTrial();
+    }
+
+    private async Task OpenServiceTabAsync(string panel)
+    {
+        servicePanel = panel;
+        serviceMessage = null;
+        if (panel == "rank") await LoadChannelRankingsAsync();
+        if (panel == "mail") await LoadAdminCommunicationsAsync();
+    }
+
+    private void CloseServicePanel()
+    {
+        servicePanel = null;
+        serviceMessage = null;
+        selectedMailKey = null;
+        missionMessage = null;
+        shopMessage = null;
+    }
+
+    private async Task SelectChannelAsync(string channelKey)
+    {
+        if (serviceBusy || !ChannelOptions.Any(option => option.Key == channelKey)) return;
+        if (ChannelConfirmed)
+        {
+            serviceMessage = "채널은 계정 시작 시 최초 1회만 선택할 수 있습니다.";
+            return;
+        }
+        serviceBusy = true;
+        serviceMessage = null;
+        try
+        {
+            gameSettings.General.ChannelKey = channelKey;
+            gameSettings.General.ChannelConfirmed = true;
+            gameSettings = await SettingsService.SaveAsync(currentUserId, gameSettings, lifetimeCancellation.Token);
+            Channel = null;
+            serviceMessage = $"{SelectedChannel} 채널로 계정이 확정되었습니다. 이후에는 변경할 수 없습니다.";
+            await LoadChannelRankingsAsync();
+            if (snapshot.Phase == CombatPhase.Intro) _ = RunIntroAsync();
+            await SyncAutoLoopAsync();
+            SyncEnemyLoop();
+            await TryPlayEffectAsync("reward-claim", uiEffect: true, lifetimeCancellation.Token);
+        }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested) { }
+        catch (Exception exception) { serviceMessage = $"채널 이동을 저장하지 못했습니다. ({exception.Message})"; }
+        finally { serviceBusy = false; }
+    }
+
+    private async Task LoadChannelRankingsAsync()
+    {
+        if (!ChannelConfirmed)
+        {
+            channelRankings = [];
+            return;
+        }
+
+        rankingBusy = true;
+        try
+        {
+            channelRankings = await RankingService.GetAsync(SelectedChannelKey, lifetimeCancellation.Token);
+        }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested) { }
+        catch (Exception exception)
+        {
+            channelRankings = [];
+            serviceMessage = $"채널 순위를 불러오지 못했습니다. ({exception.Message})";
+        }
+        finally { rankingBusy = false; }
+    }
+
+    private void ShowQuickNotice(string value)
+    {
+        quickNotice = value;
+        quickMenuOpen = false;
+    }
+
+    private void DismissQuickNotice() => quickNotice = null;
+
+    private sealed record ChannelOption(string Key, string Name, string Region, string Description, string Icon);
+
+    private void ShowBoostDrop(AutoSpeedBoostDefinition drop)
+    {
+        lootToastCancellation?.Cancel();
+        lootToastCancellation?.Dispose();
+        lootToastCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetimeCancellation.Token);
+        latestBoostDrop = drop;
+        _ = HideBoostDropAfterDelayAsync(lootToastCancellation.Token);
+    }
+
+    private void ShowEquipmentDrop(CompanionEquipmentView drop)
+    {
+        lootToastCancellation?.Cancel();
+        lootToastCancellation?.Dispose();
+        lootToastCancellation = CancellationTokenSource.CreateLinkedTokenSource(lifetimeCancellation.Token);
+        latestBoostDrop = null;
+        latestEquipmentDrop = drop;
+        _ = HideBoostDropAfterDelayAsync(lootToastCancellation.Token);
+    }
+
+    private async Task HideBoostDropAfterDelayAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(LootToastDuration, cancellationToken);
+            latestBoostDrop = null;
+            latestEquipmentDrop = null;
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+    }
+
+    private void DismissBoostDrop()
+    {
+        lootToastCancellation?.Cancel();
+        latestBoostDrop = null;
+        latestEquipmentDrop = null;
+    }
+
+    private async Task OpenSettingsAsync()
+    {
+        await EnsureAudioUnlockedAsync();
+        settingsError = null;
+        settingsOpen = true;
+    }
+
+    private async Task CloseSettingsAsync()
+    {
+        try { await Audio.ApplySettingsAsync(gameSettings.Sound, lifetimeCancellation.Token); }
+        catch (JSException) { }
+        settingsOpen = false;
+        settingsError = null;
+        await gameRoot.FocusAsync();
+    }
+
+    private async Task PreviewSettingsAsync(GameSettings draft)
+    {
+        try { await Audio.ApplySettingsAsync(GameSettingsPolicy.Normalize(draft).Sound, lifetimeCancellation.Token); }
+        catch (JSException exception) { settingsError = $"음량 미리듣기에 실패했습니다: {exception.Message}"; }
+    }
+
+    private async Task ApplySettingsAsync(GameSettings draft)
+    {
+        if (settingsSaving) return;
+        settingsSaving = true;
+        settingsError = null;
+        try
+        {
+            var normalized = GameSettingsPolicy.Normalize(draft);
+            if (snapshot.AutoAttackUnlocked && normalized.Combat.AutoEnabled != snapshot.AutoAttackEnabled)
+            {
+                snapshot = await Session.SetAutoAttackAsync(normalized.Combat.AutoEnabled, lifetimeCancellation.Token);
+                await SyncAutoLoopAsync();
+            }
+            normalized.Combat.AutoEnabled = snapshot.AutoAttackEnabled;
+            gameSettings = await SettingsService.SaveAsync(currentUserId, normalized, lifetimeCancellation.Token);
+            await Audio.ApplySettingsAsync(gameSettings.Sound, lifetimeCancellation.Token);
+            await JS.InvokeVoidAsync("maruIdle.configureIdleTimer", gameSettings.General.ScreenSaverTimeoutMinutes);
+            settingsOpen = false;
+            await InvokeAsync(StateHasChanged);
+            await gameRoot.FocusAsync();
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            settingsError = $"설정을 저장하지 못했습니다. 기존 설정을 유지합니다. ({exception.Message})";
+            await Audio.ApplySettingsAsync(gameSettings.Sound, lifetimeCancellation.Token);
+        }
+        finally { settingsSaving = false; }
+    }
+
+    private async Task ChangeTrackAsync(int direction)
+    {
+        var track = AudioResolver.ResolveAdjacent(audioSelection.Track.AssetKey, direction);
+        audioSelection = audioSelection with { Track = track };
+        await EnsureAudioUnlockedAsync();
+        if (!audioUnlocked) return;
+        try
+        {
+            await Audio.PlayMusicAsync(track, gameSettings.Sound, lifetimeCancellation.Token);
+            await Audio.SetPausedAsync(ShouldPauseAudio, lifetimeCancellation.Token);
+        }
+        catch (JSException exception) { settingsError = $"곡을 재생하지 못했습니다. ({exception.Message})"; }
+    }
+
+    private async Task ToggleAudioPlaybackAsync()
+    {
+        if (!audioUnlocked) await EnsureAudioUnlockedAsync();
+        audioPaused = !audioPaused;
+        try { await Audio.SetPausedAsync(ShouldPauseAudio, lifetimeCancellation.Token); }
+        catch (JSException exception) { settingsError = $"재생 상태를 변경하지 못했습니다. ({exception.Message})"; }
+    }
+
+    private async Task EnsureAudioUnlockedAsync()
+    {
+        if (!audioInitialized || audioUnlocked) return;
+        try
+        {
+            audioUnlocked = await Audio.UnlockAsync(lifetimeCancellation.Token);
+            if (!audioUnlocked) { showAudioUnlockHint = true; return; }
+            await Audio.PlayMusicAsync(audioSelection.Track, gameSettings.Sound, lifetimeCancellation.Token);
+            await Audio.SetPausedAsync(ShouldPauseAudio, lifetimeCancellation.Token);
+            showAudioUnlockHint = false;
+            await JS.InvokeVoidAsync("maruAudio.markUnlockHintSeen");
+        }
+        catch (Exception exception) when (exception is JSException or JSDisconnectedException)
+        {
+            settingsError = $"브라우저가 음악 재생을 허용하지 않았습니다. ({exception.Message})";
+            showAudioUnlockHint = true;
+        }
+    }
+
+    /// <summary>브라우저의 첫 사용자 입력으로 오디오 제한이 해제되면 현재 지역 음악을 시작합니다.</summary>
+    [JSInvokable("OnAudioGestureUnlocked")]
+    public async Task OnAudioGestureUnlockedAsync()
+    {
+        if (!audioInitialized || audioUnlocked || lifetimeCancellation.IsCancellationRequested) return;
+        audioUnlocked = true;
+        showAudioUnlockHint = false;
+        try
+        {
+            await Audio.PlayMusicAsync(audioSelection.Track, gameSettings.Sound, lifetimeCancellation.Token);
+            await Audio.SetPausedAsync(ShouldPauseAudio, lifetimeCancellation.Token);
+            await JS.InvokeVoidAsync("maruAudio.markUnlockHintSeen");
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception exception) when (exception is JSException or JSDisconnectedException or OperationCanceledException)
+        {
+            audioUnlocked = false;
+            showAudioUnlockHint = true;
+        }
+    }
+
+    private async Task SyncRegionAudioAsync(CancellationToken cancellationToken)
+    {
+        var next = AudioResolver.Resolve(snapshot.Stage);
+        if (next.Track.AssetKey == audioSelection.Track.AssetKey) { audioSelection = next; return; }
+        audioSelection = next;
+        if (!audioUnlocked) return;
+        try
+        {
+            await Audio.PlayMusicAsync(next.Track, gameSettings.Sound, cancellationToken);
+            await Audio.SetPausedAsync(ShouldPauseAudio, cancellationToken);
+        }
+        catch (JSException exception) { settingsError = $"지역 음악 전환에 실패했습니다. 전투는 계속됩니다. ({exception.Message})"; }
+    }
+
+    private async Task ShowTutorialAsync()
+    {
+        settingsOpen = false;
+        showTutorial = true;
+        await TryPlayEffectAsync("tutorial-open", uiEffect: true, lifetimeCancellation.Token);
+    }
+
+    private async Task TryPlayEffectAsync(string effectKey, bool uiEffect, CancellationToken cancellationToken)
+    {
+        if (powerSavingScreenOpen || !uiEffect && ExplorationAudioMuted) return;
+        try { await Audio.PlayEffectAsync(effectKey, uiEffect, cancellationToken); }
+        catch (JSException) { }
+    }
+
+    /// <summary>브라우저 탭 가시성 변경을 받아 AUTO 작업을 즉시 정리하거나 복원합니다.</summary>
+    [JSInvokable]
+    public async Task SetPageVisibilityAsync(bool visible)
+    {
+        isPageVisible = visible;
+        if (!visible)
+        {
+            EndHoldAttack(default!);
+            await autoLoop.StopAsync();
+            await enemyLoop.StopAsync();
+            snapshot = await Session.PauseAutoSpeedBoostAsync(lifetimeCancellation.Token);
+        }
+        else
+        {
+            snapshot = await Session.ResumeAutoSpeedBoostAsync(lifetimeCancellation.Token);
+            await SyncAutoLoopAsync();
+            SyncEnemyLoop();
+            try { await JS.InvokeVoidAsync("maruIdle.resetIdleTimer"); }
+            catch (Exception exception) when (exception is JSException or JSDisconnectedException) { }
+        }
+        try { await Audio.SetPausedAsync(ShouldPauseAudio, lifetimeCancellation.Token); }
+        catch (JSException) { }
+    }
+
+    private bool ShouldPauseAudio => audioPaused
+        || powerSavingScreenOpen
+        || (!isPageVisible && !gameSettings.Sound.BackgroundPlayback);
+
+    private static string FormatNumber(long value) => value.ToString("N0");
+    private static string FormatCompact(long value) => value switch { >= 1_000_000_000 => $"{value / 1_000_000_000d:0.#}B", >= 1_000_000 => $"{value / 1_000_000d:0.#}M", >= 10_000 => $"{value / 1_000d:0.#}K", _ => value.ToString("N0") };
+    private static string FormatBoostDuration(TimeSpan duration) => duration.TotalHours >= 1 ? $"{duration.TotalHours:0}시간" : $"{duration.TotalMinutes:0}분";
+    private static string FormatOfflineDuration(TimeSpan duration) => duration.TotalHours >= 1 ? $"{(int)duration.TotalHours}시간 {duration.Minutes}분" : $"{Math.Max(0, (int)duration.TotalMinutes)}분";
+    private static string FormatBoostExpiry(DateTime? expiresUtc) => expiresUtc is null ? "종료" : $"{expiresUtc.Value.ToLocalTime():HH:mm}까지";
+    private static double CodexProgress(CodexEntry entry) => entry.TotalStages <= 0 ? 0d : Math.Clamp((double)entry.ClearedStages / entry.TotalStages * 100d, 0d, 100d);
+    private static string EquipmentName(string type, int level) => level >= 10 ? $"천명 {type}" : level >= 5 ? $"청운 {type}" : $"수련 {type}";
+    private static string EquipmentSlotName(CompanionEquipmentSlot slot) => slot switch { CompanionEquipmentSlot.Weapon => "무기", CompanionEquipmentSlot.Armor => "방어구", _ => "옥패" };
+    private static string WeaponTypeName(CompanionWeaponType type) => type switch { CompanionWeaponType.Sword => "검", CompanionWeaponType.Spear => "창", CompanionWeaponType.Bow => "활", CompanionWeaponType.Staff => "지팡이", CompanionWeaponType.Mace => "철퇴", CompanionWeaponType.Dagger => "쌍단도", _ => "전용 무기" };
+    private static string EquipmentTypeName(CompanionEquipmentDefinition definition) => definition.Slot == CompanionEquipmentSlot.Weapon && definition.WeaponType is not null ? WeaponTypeName(definition.WeaponType.Value) : EquipmentSlotName(definition.Slot);
+    private static string EquipmentArtCss(CompanionEquipmentDefinition definition) => string.IsNullOrWhiteSpace(definition.AssetCssClass) ? "" : $"mi-weapon-atlas {definition.AssetCssClass}";
+    private CompanionGrowthView? EquipmentOwner(CompanionEquipmentView equipment) => snapshot.CompanionGrowth.FirstOrDefault(hero =>
+        hero.Equipment.Any(equipped => string.Equals(equipped.Instance.InstanceId, equipment.Instance.InstanceId, StringComparison.OrdinalIgnoreCase)));
+    private static string EquipmentBonus(CompanionEquipmentView item) => string.Join(" · ", new[] { item.AttackPercent > 0 ? $"공 +{item.AttackPercent}%" : null, item.HealthPercent > 0 ? $"생 +{item.HealthPercent}%" : null, item.DefensePercent > 0 ? $"방 +{item.DefensePercent}%" : null }.Where(value => value is not null));
+    private static string EquipmentRarityName(CompanionEquipmentRarity rarity) => rarity switch { CompanionEquipmentRarity.Legendary => "전설", CompanionEquipmentRarity.Epic => "영웅", _ => "희귀" };
+    private static string EquipmentRarityCss(CompanionEquipmentRarity rarity) => rarity.ToString().ToLowerInvariant();
+    private static string RarityName(CompanionRarity rarity) => rarity switch { CompanionRarity.Legendary => "전설", CompanionRarity.Epic => "영웅", _ => "희귀" };
+    private static string RarityCss(CompanionRarity rarity) => rarity.ToString().ToLowerInvariant();
+
+    public async ValueTask DisposeAsync()
+    {
+        CommunicationService.MessagePublished -= OnAdminMessagePublished;
+        try { snapshot = await Session.PauseAutoSpeedBoostAsync(CancellationToken.None); }
+        catch (InvalidOperationException) { }
+        lifetimeCancellation.Cancel();
+        holdCancellation?.Cancel();
+        lootToastCancellation?.Cancel();
+        await autoLoop.DisposeAsync();
+        await enemyLoop.DisposeAsync();
+        if (holdTask is not null) { try { await holdTask; } catch (OperationCanceledException) { } }
+        if (componentReference is not null)
+        {
+            try { await JS.InvokeVoidAsync("maruIdle.unbindVisibility"); } catch (JSDisconnectedException) { }
+            try { await JS.InvokeVoidAsync("maruIdle.unbindIdleTimer"); } catch (JSDisconnectedException) { }
+            try { await JS.InvokeVoidAsync("maruIdle.unbindFormationDrag"); } catch (JSDisconnectedException) { }
+            componentReference.Dispose();
+        }
+        holdCancellation?.Dispose();
+        lootToastCancellation?.Dispose();
+        await Audio.DisposeAsync();
+        lifetimeCancellation.Dispose();
+    }
+
+    private sealed record DamagePopup(long Id, long Damage, bool IsCritical, string TargetUnitId);
+}

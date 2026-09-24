@@ -1,0 +1,109 @@
+@inject BabyCareText Text
+@using System.Globalization
+
+<section class="baby-hero">
+    @if (Family.Preferences.AvatarPhotoId is { } avatar) { <img class="baby-avatar" src="@CarePhotos.Url(Family.Id, avatar)" alt="@T("아기 대표 사진")" /> }
+    else { <div class="baby-orbit" aria-hidden="true">☾<span>✦</span></div> }
+    <div class="baby-hero-copy"><span class="eyebrow">@T("오늘도 함께, 차곡차곡")</span>
+        <h1>@Family.BabyName<span class="soft">@T("의 하루")</span></h1>
+        @if (Age is { } age)
+        {
+            <div class="age-pills"><strong>@string.Format(T("함께한 {0}일"), age.Days + 1)</strong><span>@string.Format(T("생후 {0}일 · {1}개월"), age.Days, age.Months)</span></div>
+        }
+        else { <p>@T("생년월일을 입력하면 월령별 참고 정보를 볼 수 있어요.")</p> }
+        <p class="fine">@Family.Name · @T("보호자") @Family.Members.Count @T("명") · @Today.ToString("yyyy.MM.dd")</p>
+    </div>
+</section>
+<details class="profile-settings">
+    <summary>@T("아기 프로필 · 하루 목표")</summary>
+    <h3>@T("아기 대표 사진")</h3>
+    <CarePhotoPicker @key="Family.Id" FamilyId="@Family.Id" Value="avatarIds" ValueChanged="v => avatarIds = v" Limit="1" UploadingChanged="AvatarUploading" />
+    <div class="form-grid">
+        <label>@T("생년월일")<input type="date" value="@birthInput" max="@Today.ToString("yyyy-MM-dd")" @oninput="e => birthInput = e.Value?.ToString() ?? string.Empty" /></label>
+        <label>@T("하루 수유 목표 (mL, 선택)")<input type="number" min="1" max="3000" value="@milkInput" @oninput="e => milkInput = e.Value?.ToString() ?? string.Empty" /></label>
+        <label>@T("기저귀 확인 간격 (분, 선택)")<input type="number" min="15" max="720" value="@diaperInput" @oninput="e => diaperInput = e.Value?.ToString() ?? string.Empty" /></label>
+    </div>
+    <p class="fine">@T("목표는 보호자가 정한 참고값이에요. 배고픔·포만 신호와 의료진 안내를 우선해주세요.")</p>
+    <button class="primary" disabled="@photoUploading" @onclick="Save">@T("설정 저장")</button>
+    @if (error is not null) { <p role="alert" class="notice error">@T(error)</p> }
+</details>
+<div class="dashboard-heading"><h2>@T("하루를 한눈에")</h2><span>@Day.ToString("yyyy.MM.dd") · @T("기록된 내용 기준")</span></div>
+<section class="care-dashboard" aria-label="@T("선택한 날짜 요약")">
+    <article class="metric-card milk-card"><div class="metric-top"><span class="metric-icon" aria-hidden="true">🍼</span><span>@T("수유")</span><span class="metric-tag">@T("기록 합계")</span></div>
+        <div class="metric-value">@Milk <small>mL</small></div>
+        @if (Family.Preferences.DailyMilkGoalMl is { } goal)
+        {
+            <p>@T("보호자 설정 목표") <strong>@goal mL</strong></p>
+            <progress value="@Math.Min(Milk, goal)" max="@goal" aria-label="@T("보호자 설정 목표")"></progress>
+        }
+        else { <p>@T("목표를 설정하면 기록량과 함께 표시해요.")</p> }
+        <div class="metric-bottom">@T("기록 간 평균") <strong>@Interval("feeding")</strong></div>
+    </article>
+    <article class="metric-card sleep-card"><div class="metric-top"><span class="metric-icon" aria-hidden="true">🌙</span><span>@T("수면")</span><span class="metric-tag">@T("완료 기록")</span></div>
+        <div class="metric-value">@(SleepMinutes / 60)<small>@T("시간")</small> @(SleepMinutes % 60)<small>@T("분")</small></div>
+        <p>@T(CareDashboard.SleepReference(DayAge?.Months))</p>
+        <div class="metric-bottom">@T("진행 중·미확인 추정 수면은 제외돼요.")</div>
+    </article>
+    <article class="metric-card diaper-card"><div class="metric-top"><span class="metric-icon" aria-hidden="true">🧷</span><span>@T("기저귀")</span><span class="metric-tag">@T("기록 합계")</span></div>
+        <div class="metric-value">@Entries.Count(e => e.Kind == "diaper")<small>@T("회")</small></div>
+        @if (Family.Preferences.DiaperCheckMinutes is { } minutes) { <p>@T("보호자 설정 확인 간격") <strong>@minutes @T("분")</strong></p> }
+        else { <p>@T("젖거나 더러워지면 가능한 빨리 갈아주세요.")</p> }
+        <div class="metric-bottom">@T("기록 간 평균") <strong>@Interval("diaper")</strong></div>
+    </article>
+</section>
+<div class="pumping-summary"><span aria-hidden="true">🤱</span><div><strong>@T("유축 기록") · @Entries.Count(e => e.Kind == "pumping") @T("회")</strong><p>@T("왼쪽") @Entries.Where(e => e.Kind == "pumping").Sum(e => e.LeftAmountMl ?? 0) mL · @T("오른쪽") @Entries.Where(e => e.Kind == "pumping").Sum(e => e.RightAmountMl ?? 0) mL</p><small>@T("선택한 날짜의 입력된 양 합계 · 아기 수유량과 별도")</small></div></div>
+<details class="reference-notes"><summary>@T("월령별 참고 · 알아두세요")</summary>
+    <p>@T("기록 누락과 개인차가 있어요. 목표 달성 여부로 건강 상태를 판단하지 않아요. 미숙아는 교정 월령과 의료진 안내를 참고해주세요.")</p>
+    <p>@T("분유 참고: 첫 달 말에는 1회 약 90~120mL, 6개월 무렵에는 약 180~240mL를 먹기도 해요. 모유·혼합수유에 그대로 적용하지 마세요.") <a href="https://www.healthychildren.org/English/ages-stages/baby/formula-feeding/Pages/Amount-and-Schedule-of-Formula-Feedings.aspx" target="_blank" rel="noopener">AAP ↗</a></p>
+    <p>@T("수면 참고는 낮잠을 포함한 하루 총량이며, 반드시 채워야 하는 목표가 아니에요.") <a href="https://aasm.org/resources/pdf/pressroom/pediatric-sleep-duration-consensus.pdf" target="_blank" rel="noopener">AASM ↗</a> · <a href="https://www.healthychildren.org/English/ages-stages/baby/sleep/Pages/Getting-Your-Baby-to-Sleep.aspx" target="_blank" rel="noopener">AAP ↗</a></p>
+    <p>@T("기저귀 확인 간격은 알림이나 교체를 기다리는 시간이 아니에요. 젖음·대변이 확인되면 바로 확인하고 교체해주세요.") <a href="https://www.nhs.uk/baby/caring-for-a-newborn/how-to-change-your-babys-nappy/" target="_blank" rel="noopener">NHS ↗</a></p>
+    <p class="fine">@T("기록 간 평균은 선택한 날짜 안에서 기록 시작 시각끼리 계산해요. 2건 미만이면 표시하지 않아요.")</p>
+</details>
+
+@code {
+    [Parameter, EditorRequired] public FamilyState Family { get; set; } = default!;
+    [Parameter] public DateTime Day { get; set; }
+    [Parameter] public TimeSpan Offset { get; set; }
+    [Parameter] public EventCallback<CarePreferences> OnSave { get; set; }
+    [Parameter] public EventCallback<bool> UploadingChanged { get; set; }
+    private List<string> avatarIds = [];
+    private bool photoUploading;
+    private async Task AvatarUploading(bool value) { photoUploading = value; await UploadingChanged.InvokeAsync(value); }
+    private string birthInput = "", milkInput = "", diaperInput = "", familyId = "";
+    private int version = -1;
+    private string? error;
+
+    private DateOnly Today => DateOnly.FromDateTime(DateTimeOffset.UtcNow.ToOffset(Offset).DateTime);
+    private (int Days, int Months)? Age => CareDashboard.Age(Family.Preferences.BirthDate, Today);
+    private (int Days, int Months)? DayAge => CareDashboard.Age(Family.Preferences.BirthDate, DateOnly.FromDateTime(Day));
+    private IEnumerable<CareEntry> Entries => Family.Entries.Where(e => e.StartedAt.ToOffset(Offset).Date == Day.Date);
+    private int Milk => Entries.Where(e => e.Kind == "feeding").Sum(e => e.AmountMl ?? 0);
+    private int SleepMinutes => CarePlanning.SleepMinutesOnDay(Family.Entries, Day, Offset);
+    private string T(string key) => Text[key];
+    private string Interval(string kind) => CareDashboard.AverageInterval(Entries, kind) is { } m ? $"{Math.Round(m)} {T("분")}" : "—";
+    protected override void OnParametersSet()
+    {
+        if (familyId == Family.Id && version == Family.Preferences.Version) return;
+        familyId = Family.Id; version = Family.Preferences.Version;
+        birthInput = Family.Preferences.BirthDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "";
+        milkInput = Family.Preferences.DailyMilkGoalMl?.ToString(CultureInfo.InvariantCulture) ?? "";
+        diaperInput = Family.Preferences.DiaperCheckMinutes?.ToString(CultureInfo.InvariantCulture) ?? "";
+        avatarIds = Family.Preferences.AvatarPhotoId is { } id ? [id] : [];
+        error = null;
+    }
+    private async Task Save()
+    {
+        error = null;
+        if ((birthInput.Length > 0 && !DateOnly.TryParseExact(birthInput, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _)) ||
+            (milkInput.Length > 0 && !int.TryParse(milkInput, out _)) || (diaperInput.Length > 0 && !int.TryParse(diaperInput, out _)))
+        { error = "생년월일과 목표 설정을 확인해주세요."; return; }
+        var p = Family.Preferences with {
+            AvatarPhotoId = avatarIds.FirstOrDefault(),
+            BirthDate = birthInput.Length == 0 ? null : DateOnly.ParseExact(birthInput, "yyyy-MM-dd", CultureInfo.InvariantCulture),
+            DailyMilkGoalMl = milkInput.Length == 0 ? null : int.Parse(milkInput),
+            DiaperCheckMinutes = diaperInput.Length == 0 ? null : int.Parse(diaperInput)
+        };
+        try { CareDashboard.Validate(p, Today); await OnSave.InvokeAsync(p); }
+        catch (CareException ex) { error = ex.Message; }
+    }
+}

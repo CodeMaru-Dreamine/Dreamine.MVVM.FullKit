@@ -112,6 +112,14 @@ jobs:
           dotnet restore "20_SOURCES/000. Project/010. App/WeddingThankYou/WeddingThankYou.csproj"
           dotnet restore "20_SOURCES/000. Project/010. App/Wedding.Layouts.Editor.Wpf/Wedding.Layouts.Editor.Wpf.csproj"
 
+      - name: Restore BabyCare and Games tests
+        shell: pwsh
+        run: |
+          dotnet restore "20_SOURCES/200. Tests/BabyCare.Web.Tests/BabyCare.Web.Tests.csproj"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet restore "20_SOURCES/200. Tests/GamePlatform.Web.Tests/GamePlatform.Web.Tests.csproj"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Begin SonarCloud analysis
         if: >-
           env.SONAR_TOKEN != '' &&
@@ -182,6 +190,7 @@ jobs:
             # Localized catalogs are declarative content. Their repeated keys
             # and record shapes are intentional across ten languages.
             "20_SOURCES/000. Project/010. App/Codemaru/Services/*Localization.cs",
+            "20_SOURCES/000. Project/010. App/BabyCare.Web/Content/translations.json",
             "20_SOURCES/000. Project/010. App/Codemaru/Blazor/Pages/Guide.razor",
             "20_SOURCES/000. Project/010. App/DreamineVMS.Web/Services/VmsCamerasText.cs",
             "20_SOURCES/000. Project/010. App/DreamineVMS.Web/Services/VmsGuideText.cs",
@@ -253,6 +262,20 @@ jobs:
           dotnet test "20_SOURCES/200. Tests/UI.Blazor.Tests/Dreamine.UI.Blazor.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --collect:"XPlat Code Coverage" --settings $settings --results-directory "$results\ui-blazor" --logger "trx;LogFileName=ui-blazor.trx"
           dotnet test "20_SOURCES/200. Tests/Wedding.Layouts.Contracts.Tests/Wedding.Layouts.Contracts.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --collect:"XPlat Code Coverage" --settings $settings --results-directory "$results\wedding-contracts" --logger "trx;LogFileName=wedding-contracts.trx"
           dotnet test "20_SOURCES/200. Tests/WeddingPlatform.LayoutWorkflow.Tests/WeddingPlatform.LayoutWorkflow.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --collect:"XPlat Code Coverage" --settings $settings --results-directory "$results\wedding-workflow" --logger "trx;LogFileName=wedding-workflow.trx"
+
+      - name: Test BabyCare and Games with coverage
+        shell: pwsh
+        run: |
+          dotnet test "20_SOURCES/200. Tests/BabyCare.Web.Tests/BabyCare.Web.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --collect:"XPlat Code Coverage" --settings ".github/coverlet.runsettings" --results-directory "$env:RUNNER_TEMP/TestResults/babycare" --logger "trx;LogFileName=babycare.trx"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          dotnet test "20_SOURCES/200. Tests/GamePlatform.Web.Tests/GamePlatform.Web.Tests.csproj" --no-restore --configuration Release -m:1 --verbosity minimal --collect:"XPlat Code Coverage" --settings ".github/coverlet.runsettings" --results-directory "$env:RUNNER_TEMP/TestResults/games" --logger "trx;LogFileName=games.trx"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Test Games browser modules
+        shell: pwsh
+        run: |
+          node --test "20_SOURCES/200. Tests/GamePlatform.Web.Tests/exploration-audio.test.mjs" "20_SOURCES/200. Tests/GamePlatform.Web.Tests/territory-map.test.mjs"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Run wedding layout pipeline smoke test
         run: dotnet run --project "20_SOURCES/200. Tests/Wedding.Layouts.PipelineSmoke/Wedding.Layouts.PipelineSmoke.csproj" --no-restore --configuration Release

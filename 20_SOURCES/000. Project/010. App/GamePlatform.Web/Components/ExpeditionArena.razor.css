@@ -1,0 +1,33 @@
+.mi-arena { display:flex; flex-direction:column; }
+.mi-arena > header,.mi-arena-hud,.mi-arena-result,.mi-arena > footer { flex-shrink:0; }
+.mi-arena-body { flex:1; }
+.mi-arena-match-hint { margin:5px 0 0; max-width:340px; color:#9abbb4; font-size:10px; line-height:1.5; }
+.mi-arena-matchmaking > header { gap:8px; }
+.mi-arena-matchmaking > header > button { flex-shrink:0; min-height:44px; }
+.mi-arena-identity .mi-arena-matchup { display:flex; align-items:center; flex-wrap:wrap; gap:4px; margin-top:5px; color:#a2d2c0; font-size:10px; line-height:1.4; }
+.mi-arena-matchup b { padding:2px 6px; border:1px solid currentColor; border-radius:4px; font-size:11px; background:#75d8a912; }
+.mi-arena-identity .mi-arena-matchup.is-even { color:#e9ce81; }
+.mi-arena-identity .mi-arena-matchup.is-unfavorable { color:#f0a97a; }
+.mi-arena-identity .mi-arena-matchup.is-danger { color:#ff91a0; }
+.mi-arena-tickets button { min-height:32px; margin-top:4px; padding:3px 10px; border:1px solid #d9ad5d; border-radius:6px; color:#ffebb9; background:linear-gradient(110deg,#815126,#44321f); font-size:11px; font-weight:800; cursor:pointer; }
+.mi-arena-hud .mi-arena-tickets strong { font-size:clamp(11px,1.8cqw,15px); }
+.mi-arena-shop-backdrop { position:absolute; inset:0; z-index:95; display:grid; align-items:center; padding:14px; background:#020b10df; backdrop-filter:blur(8px); }
+.mi-arena-shop { width:min(100%,440px); max-height:100%; overflow:auto; justify-self:center; padding:20px; border:1px solid #d7b66c; border-radius:18px; background:radial-gradient(ellipse at 100% 0,#38422e,transparent 60%),#091c23; color:#eee5ce; box-shadow:0 22px 80px #000b; }
+.mi-arena-shop header { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.mi-arena-shop header small { font-size:9px; color:#85d8c9; letter-spacing:.14em; }
+.mi-arena-shop h3 { margin:5px 0 16px; font-size:21px; color:#ffe3a2; }
+.mi-arena-shop button { min-height:44px; border:1px solid #5b7874; border-radius:8px; background:#102c32; color:#ede8d7; cursor:pointer; }
+.mi-arena-shop header button { width:44px; flex-shrink:0; font-size:24px; }
+.mi-arena-shop button:disabled { opacity:.45; cursor:default; }
+.mi-arena-shop button:focus-visible { outline:2px solid #91f1d6; outline-offset:2px; }
+.mi-arena-shop-wallet { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:13px; background:#020e1599; border:1px solid #47625c; border-radius:9px; font-size:12px; }
+.mi-arena-shop-wallet strong { color:#ffda8b; font-size:18px; overflow-wrap:anywhere; }
+.mi-arena-shop p { font-size:12px; line-height:1.7; color:#a9c4bc; }
+.mi-arena-shop-packs { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.mi-arena-shop-packs button { display:grid; gap:6px; padding:14px 3px; }
+.mi-arena-shop-packs b { font-size:19px; }
+.mi-arena-shop-packs span { font-size:12px; color:#d1b779; }
+.mi-arena-shop-packs .is-selected { border-color:#f3c872; background:linear-gradient(135deg,#755023,#153838); box-shadow:inset 0 -2px #eec472; }
+.mi-arena-shop-message { min-height:40px; }
+.mi-arena-shop .mi-arena-shop-buy { width:100%; min-height:50px; font-size:15px; font-weight:900; border-color:#d7b66c; background:linear-gradient(120deg,#a55d2b,#523321); }
+.mi-arena-shop > small { display:block; margin-top:14px; font-size:10px; text-align:center; color:#7e9e97; }

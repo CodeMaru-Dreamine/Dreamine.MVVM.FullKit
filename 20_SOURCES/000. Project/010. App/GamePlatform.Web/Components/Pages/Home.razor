@@ -1,0 +1,89 @@
+@page "/"
+@implements IDisposable
+@inject GamesLocalization Text
+
+<PageTitle>@Text["catalog.pageTitle"]</PageTitle>
+
+<div class="gp-catalog-home">
+    <section class="gp-catalog-hero" aria-labelledby="catalog-title">
+        <div class="gp-catalog-orbit" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="gp-catalog-hero-copy">
+            <span class="gp-kicker">@Text["catalog.kicker"]</span>
+            <h1 id="catalog-title">@Text["catalog.title"]</h1>
+            <p>@Text["catalog.lead"]</p>
+            <a class="gp-catalog-button" href="#game-library">@Text["catalog.browse"] <b aria-hidden="true">↓</b></a>
+        </div>
+        <div class="gp-catalog-featured" aria-hidden="true">
+            <img src="/images/maru-idle/landing/maru-expedition-keyart-v1.png" alt="" />
+            <div><span>FEATURED WORLD</span><strong>@Text["maru.title"]</strong><small>CODEMARU GAMES ORIGINAL</small></div>
+        </div>
+    </section>
+
+    <section class="gp-catalog-library" id="game-library" aria-labelledby="library-title">
+        <header class="gp-catalog-heading">
+            <div><span class="gp-kicker">CODEMARU GAMES</span><h2 id="library-title">@Text["catalog.library"]</h2></div>
+            <p>@Text["catalog.libraryLead"]</p>
+        </header>
+
+        <div class="gp-catalog-grid">
+            @foreach (var game in Games)
+            {
+                @if (game.IsLive)
+                {
+                    <a class="gp-catalog-game is-live" href="@game.Url">
+                        <img src="@game.ImageUrl" alt="" />
+                        <div class="gp-catalog-game-shade"></div>
+                        <div class="gp-catalog-game-top"><span><i></i>@Text["catalog.live"]</span><small>@Text[game.GenreKey]</small></div>
+                        <div class="gp-catalog-game-copy">
+                            <small>CODEMARU ORIGINAL · GAME @game.Number</small>
+                            <h3>@Text[game.TitleKey]</h3>
+                            <p>@Text[game.DescriptionKey]</p>
+                            <b>@Text["catalog.play"] →</b>
+                        </div>
+                    </a>
+                }
+                else
+                {
+                    <article class="gp-catalog-game is-coming">
+                        <div class="gp-catalog-coming-mark" aria-hidden="true"><span></span><i></i></div>
+                        <div class="gp-catalog-game-copy">
+                            <small>COMING NEXT · GAME @game.Number</small>
+                            <h3>@Text["catalog.coming"]</h3>
+                            <p>@Text["catalog.coming.desc"]</p>
+                        </div>
+                    </article>
+                }
+            }
+        </div>
+
+        <aside class="gp-catalog-account">
+            <span aria-hidden="true">C</span>
+            <div><h3>@Text["catalog.shared.title"]</h3><p>@Text["catalog.shared.desc"]</p></div>
+            <b>Dreamine.Identity</b>
+        </aside>
+    </section>
+</div>
+
+@code {
+    private static readonly IReadOnlyList<CatalogGame> Games =
+    [
+        new("01", "maru.title", "catalog.maru.desc", "catalog.maru.genre", "/maru-idle", "/images/maru-idle/landing/maru-expedition-keyart-v1.png", true),
+        new("02", string.Empty, string.Empty, string.Empty, null, null, false),
+        new("03", string.Empty, string.Empty, string.Empty, null, null, false)
+    ];
+
+    protected override void OnInitialized() => Text.Changed += HandleLanguageChanged;
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Text.Changed -= HandleLanguageChanged;
+
+    private sealed record CatalogGame(
+        string Number,
+        string TitleKey,
+        string DescriptionKey,
+        string GenreKey,
+        string? Url,
+        string? ImageUrl,
+        bool IsLive);
+}

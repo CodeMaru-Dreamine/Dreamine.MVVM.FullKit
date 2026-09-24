@@ -15,14 +15,15 @@ public static class LegalLocalization
         "ko" => new(
             "개인정보처리방침",
             "CodeMaru 서비스의 개인정보 수집, 이용, 보관, 파기 및 이용자 권리 안내입니다.",
-            "최종 업데이트: 2026년 1월 1일",
+            "최종 업데이트: 2026년 8월 20일",
             [
-                new("1. 수집하는 개인정보 항목", "CodeMaru는 서비스 이용 과정에서 아래와 같은 최소한의 정보를 수집합니다.", ["문의하기: 이름, 이메일 주소, 문의 내용", "서비스 이용 기록 (접속 IP, 접속 일시, 브라우저 정보)"]),
-                new("2. 개인정보의 수집 및 이용 목적", Items: ["문의 답변 및 서비스 안내", "서비스 품질 개선 및 오류 분석"]),
-                new("3. 개인정보의 보유 및 이용 기간", "수집된 개인정보는 목적 달성 후 즉시 파기합니다. 단, 관계 법령에 따라 보존이 필요한 경우 해당 기간 동안 보관합니다."),
+                new("1. 수집하는 개인정보 항목", "CodeMaru는 서비스 이용 과정에서 아래와 같은 최소한의 정보를 수집합니다.", ["회원가입: 이름, 이메일 주소, 비밀번호 해시, 로그인 제공자", "필수 동의 기록: 이용약관·개인정보 동의 시각과 문서 버전, 만 14세 이상 확인 시각 (생년월일은 수집하지 않음)", "문의하기: 이름, 이메일 주소, 문의 내용", "서비스 이용 기록 (접속 IP, 접속 일시, 브라우저 정보)"]),
+                new("2. 개인정보의 수집 및 이용 목적", Items: ["회원 식별, 로그인 및 계정 보안", "필수 동의 사실과 적용 문서 버전 확인", "문의 답변 및 서비스 안내", "서비스 품질 개선 및 오류 분석"]),
+                new("3. 개인정보의 보유 및 이용 기간", "계정 정보는 회원 탈퇴 시까지 보관하며, 동의 및 서비스 이용 기록은 분쟁 대응과 관계 법령 준수에 필요한 기간 동안 보관한 뒤 파기합니다."),
                 new("4. 개인정보의 제3자 제공", "CodeMaru는 이용자의 동의 없이 개인정보를 외부에 제공하지 않습니다. 단, 법령에 의거하거나 수사 목적으로 관계 기관의 요청이 있는 경우는 예외로 합니다."),
                 new("5. 개인정보 보호 책임자", "이름: 장민수"),
-                new("6. 정책 변경 안내", "본 방침은 법령·정책 변경에 따라 사전 공지 후 개정될 수 있습니다.")
+                new("6. 만 14세 미만 아동", "현재 CodeMaru는 법정대리인 동의 여부를 확인하는 절차를 제공하지 않으므로 만 14세 미만 아동의 직접 회원가입을 받지 않습니다."),
+                new("7. 정책 변경 안내", "본 방침은 법령·정책 변경에 따라 사전 공지 후 개정될 수 있습니다.")
             ]),
         "ja" => new(
             "プライバシーポリシー",
@@ -88,14 +89,15 @@ public static class LegalLocalization
         _ => new(
             "Privacy Policy",
             "Information about how CodeMaru collects, uses, retains, and deletes personal data and about your privacy rights.",
-            "Last updated: January 1, 2026",
+            "Last updated: August 20, 2026",
             [
-                new("1. Personal data we collect", "CodeMaru collects only the minimum information needed to provide its services.", ["Contact requests: name, email address, and message", "Service usage records: IP address, access time, and browser information"]),
-                new("2. How we use personal data", Items: ["Responding to inquiries and providing service information", "Improving service quality and analyzing errors"]),
-                new("3. Retention period", "Personal data is deleted after its purpose has been fulfilled, unless applicable law requires retention for a specified period."),
+                new("1. Personal data we collect", "CodeMaru collects only the minimum information needed to provide its services.", ["Account: name, email address, password hash, and sign-in provider", "Consent records: acceptance time and document version for required terms and privacy consent, and the time the user confirmed being at least 14 (date of birth is not collected)", "Contact requests: name, email address, and message", "Service usage records: IP address, access time, and browser information"]),
+                new("2. How we use personal data", Items: ["Account identification, sign-in, and security", "Recording required consent and applicable document versions", "Responding to inquiries and providing service information", "Improving service quality and analyzing errors"]),
+                new("3. Retention period", "Account data is retained until account deletion. Consent and service records are retained only as needed for dispute handling and applicable legal obligations, and are then deleted."),
                 new("4. Disclosure to third parties", "CodeMaru does not disclose personal data without consent, except when required by law or a lawful request from a competent authority."),
                 new("5. Privacy contact", "Name: Minsu Jang"),
-                new("6. Changes to this policy", "This policy may be revised after prior notice when laws or operating policies change.")
+                new("6. Children under 14", "CodeMaru currently does not provide a verified legal-guardian consent process and therefore does not accept direct registration by children under 14."),
+                new("7. Changes to this policy", "This policy may be revised after prior notice when laws or operating policies change.")
             ])
     };
 
@@ -104,14 +106,15 @@ public static class LegalLocalization
         "ko" => new(
             "이용약관",
             "CodeMaru가 제공하는 서비스의 이용 조건, 권리와 의무, 책임 사항을 안내합니다.",
-            "최종 업데이트: 2026년 1월 1일",
+            "최종 업데이트: 2026년 8월 20일",
             [
                 new("제1조 (목적)", "본 약관은 CodeMaru가 제공하는 서비스의 이용 조건과 절차, 이용자와 서비스 간의 권리·의무 및 책임 사항을 규정합니다."),
-                new("제2조 (서비스의 제공)", "CodeMaru는 다음 서비스를 제공합니다.", ["CardHybrid: 디지털 명함 및 QR 코드", "Wedding: 디지털 청첩장", "Families: 가족 라이프 플랫폼", "CCTV Viewer: 실시간 카메라 모니터링", "ShopStore: 직영 쇼핑몰", "기타 CodeMaru 운영 서비스"]),
-                new("제3조 (이용자의 의무)", Items: ["서비스를 불법적인 목적으로 사용하지 않습니다.", "타인의 개인정보를 무단 수집·이용하지 않습니다.", "서비스의 안정적 운영을 방해하지 않습니다."]),
-                new("제4조 (서비스 변경 및 중단)", "운영상 또는 기술상 필요에 따라 서비스를 변경하거나 중단할 수 있으며, 이 경우 사전에 공지합니다."),
-                new("제5조 (면책)", "천재지변, 서비스 장애 또는 이용자 귀책 사유로 발생한 손해에 대해서는 책임을 지지 않습니다."),
-                new("제6조 (문의)", "이용약관 관련 문의")
+                new("제2조 (회원가입 및 연령)", "회원가입을 신청하는 이용자는 본 약관과 개인정보 수집·이용에 동의해야 합니다. 만 14세 미만 아동은 법정대리인 동의 확인 절차가 제공되기 전까지 직접 가입할 수 없습니다."),
+                new("제3조 (서비스의 제공)", "CodeMaru는 다음 서비스를 제공합니다.", ["CardHybrid: 디지털 명함 및 QR 코드", "Wedding: 디지털 청첩장", "Families: 가족 라이프 플랫폼", "CCTV Viewer: 실시간 카메라 모니터링", "ShopStore: 직영 쇼핑몰", "Games: 온라인 게임", "기타 CodeMaru 운영 서비스"]),
+                new("제4조 (이용자의 의무)", Items: ["서비스를 불법적인 목적으로 사용하지 않습니다.", "타인의 개인정보를 무단 수집·이용하지 않습니다.", "서비스의 안정적 운영을 방해하지 않습니다."]),
+                new("제5조 (서비스 변경 및 중단)", "운영상 또는 기술상 필요에 따라 서비스를 변경하거나 중단할 수 있으며, 이 경우 사전에 공지합니다."),
+                new("제6조 (면책)", "천재지변, 서비스 장애 또는 이용자 귀책 사유로 발생한 손해에 대해서는 책임을 지지 않습니다."),
+                new("제7조 (문의)", "이용약관 관련 문의")
             ]),
         "ja" => new(
             "利用規約",
@@ -163,14 +166,15 @@ public static class LegalLocalization
         _ => new(
             "Terms of Service",
             "Terms, rights, obligations, and responsibilities governing the use of CodeMaru services.",
-            "Last updated: January 1, 2026",
+            "Last updated: August 20, 2026",
             [
                 new("1. Purpose", "These terms define the conditions and procedures for using CodeMaru services and the rights, obligations, and responsibilities of users and CodeMaru."),
-                new("2. Services", "CodeMaru provides the following services.", ["CardHybrid: digital cards and QR codes", "Wedding: digital invitations", "Families: a private family platform", "CCTV Viewer: live camera monitoring", "ShopStore: a directly operated store", "Other services operated by CodeMaru"]),
-                new("3. User obligations", Items: ["Do not use the services for unlawful purposes.", "Do not collect or use another person's personal data without authorization.", "Do not interfere with stable service operation."]),
-                new("4. Changes and interruption", "Services may be changed or interrupted for operational or technical reasons after prior notice."),
-                new("5. Disclaimer", "CodeMaru is not liable for losses caused by natural disasters, service failures, or circumstances attributable to the user."),
-                new("6. Contact", "Questions about these terms")
+                new("2. Registration and age", "Applicants must agree to these terms and to the collection and use of personal data. Children under 14 cannot register directly until a verified legal-guardian consent process is available."),
+                new("3. Services", "CodeMaru provides digital cards, invitations, family services, camera monitoring, shopping, games, and other operated services."),
+                new("4. User obligations", Items: ["Do not use the services for unlawful purposes.", "Do not collect or use another person's personal data without authorization.", "Do not interfere with stable service operation."]),
+                new("5. Changes and interruption", "Services may be changed or interrupted for operational or technical reasons after prior notice."),
+                new("6. Disclaimer", "CodeMaru is not liable for losses caused by natural disasters, service failures, or circumstances attributable to the user."),
+                new("7. Contact", "Questions about these terms")
             ])
     };
 

@@ -1,0 +1,172 @@
+@inject IGameSettingsService SettingsService
+
+<div class="mi-settings-backdrop" role="presentation" @onclick="RequestCloseAsync">
+    <section class="mi-settings-modal" role="dialog" aria-modal="true" aria-labelledby="mi-settings-title"
+             tabindex="-1" @ref="modalRoot" @onclick:stopPropagation="true" @onkeydown="OnKeyDownAsync" @onkeydown:stopPropagation="true">
+        <header class="mi-settings-header">
+            <span>GAME OPTIONS</span>
+            <h2 id="mi-settings-title">환경 설정</h2>
+            <button type="button" class="mi-settings-close" aria-label="환경설정 닫기" @onclick="RequestCloseAsync">×</button>
+        </header>
+
+        <nav class="mi-settings-tabs" aria-label="환경설정 분류">
+            @foreach (var tab in Tabs)
+            {
+                <button type="button" class="@(ActiveTab == tab.Key ? "is-active" : null)" aria-selected="@(ActiveTab == tab.Key)"
+                        @onclick="() => SelectTabAsync(tab.Key)">@tab.Label</button>
+            }
+        </nav>
+
+        <div class="mi-settings-body">
+            @if (ActiveTab == "general")
+            {
+                <div class="mi-setting-list">
+                    <label class="mi-setting-row"><span><strong>언어</strong><small>게임 UI 표시 언어</small></span>
+                        <select @bind="Draft.General.Language"><option value="ko-KR">한국어</option><option value="en-US">English</option></select></label>
+                    @ToggleRow("게임 알림", "보상과 중요 진행 알림", Draft.General.NotificationsEnabled, value => Draft.General.NotificationsEnabled = value)
+                    <label class="mi-setting-row @(SupportsVibration ? null : "is-disabled")"><span><strong>진동</strong><small>@(SupportsVibration ? "지원 기기에서 피격·버튼 진동" : "이 브라우저는 진동을 지원하지 않습니다")</small></span>
+                        <input type="checkbox" disabled="@(!SupportsVibration)" @bind="Draft.General.VibrationEnabled" /></label>
+                    @ToggleRow("절전 모드", "화면 효과와 프레임을 줄입니다", Draft.General.PowerSavingEnabled, SetPowerSaving)
+                    <label class="mi-setting-row"><span><strong>자동 절전 시간</strong><small>마지막 조작 후 절전 화면으로 전환</small></span>
+                        <select @bind="Draft.General.ScreenSaverTimeoutMinutes">
+                            <option value="0">사용 안 함</option><option value="1">1분</option><option value="3">3분</option><option value="5">5분</option><option value="10">10분</option><option value="15">15분</option><option value="30">30분</option>
+                        </select></label>
+                    <div class="mi-setting-row"><span><strong>튜토리얼 다시 보기</strong><small>기본 조작 안내를 처음부터 표시</small></span><button type="button" class="mi-small-action" @onclick="TutorialRequested">다시 보기</button></div>
+                </div>
+            }
+            else if (ActiveTab == "sound")
+            {
+                <article class="mi-track-card">
+                    <div class="mi-track-art" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+                    <div><span>@(CurrentAudio.IsBoss ? "보스 BGM" : "지역 BGM")</span><h3>@CurrentAudio.Track.Title</h3><small>@CurrentAudio.RegionName</small></div>
+                    <div class="mi-track-controls">
+                        <button type="button" aria-label="이전 곡" @onclick="PreviousTrack">|◀</button>
+                        <button type="button" class="mi-track-play" aria-label="@(IsAudioPaused ? "재생" : "일시정지")" @onclick="TogglePlayback">@(IsAudioPaused ? "▶" : "Ⅱ")</button>
+                        <button type="button" aria-label="다음 곡" @onclick="NextTrack">▶|</button>
+                    </div>
+                </article>
+                <div class="mi-volume-list">
+                    @VolumeRow("전체 음량", Draft.Sound.MasterVolume, value => Draft.Sound.MasterVolume = value)
+                    @VolumeRow("배경 음악", Draft.Sound.BgmVolume, value => Draft.Sound.BgmVolume = value)
+                    @VolumeRow("효과음", Draft.Sound.SfxVolume, value => Draft.Sound.SfxVolume = value)
+                    @VolumeRow("UI 효과음", Draft.Sound.UiVolume, value => Draft.Sound.UiVolume = value)
+                </div>
+                <div class="mi-setting-list is-compact">
+                    @ToggleRow("백그라운드 재생", "탭이 숨겨져도 음악 유지", Draft.Sound.BackgroundPlayback, value => Draft.Sound.BackgroundPlayback = value)
+                    @ToggleRow("전체 음소거", "모든 사운드 출력을 0으로 설정", Draft.Sound.Muted, value => Draft.Sound.Muted = value)
+                    <label class="mi-setting-row"><span><strong>크로스페이드</strong><small>지역·보스 음악 전환 시간</small></span><select @bind="Draft.Sound.CrossfadeMilliseconds" @bind:after="PreviewSoundAsync"><option value="750">0.75초</option><option value="1500">1.5초</option><option value="2500">2.5초</option></select></label>
+                </div>
+            }
+            else if (ActiveTab == "display")
+            {
+                <div class="mi-setting-list">
+                    <label class="mi-setting-row"><span><strong>화질</strong><small>환경 파티클과 시각 효과 밀도</small></span><select @bind="Draft.Display.Quality"><option value="@GameQuality.Low">낮음</option><option value="@GameQuality.Medium">보통</option><option value="@GameQuality.High">높음</option></select></label>
+                    <label class="mi-setting-row"><span><strong>프레임</strong><small>렌더링 프레임 정책</small></span><select @bind="Draft.Display.FrameRate"><option value="@GameFrameRate.Fps30">30 FPS</option><option value="@GameFrameRate.Fps60">60 FPS</option></select></label>
+                    @ToggleRow("화면 흔들림", "공격 적중 시 짧은 카메라 반응", Draft.Display.ScreenShake, value => Draft.Display.ScreenShake = value)
+                    @ToggleRow("검격 효과", "검광과 충격 이펙트", Draft.Display.SlashEffects, value => Draft.Display.SlashEffects = value)
+                    @ToggleRow("환경 효과", "안개·불씨·눈·도깨비불", Draft.Display.AmbientEffects, value => Draft.Display.AmbientEffects = value)
+                    @ToggleRow("데미지 숫자", "적중 데미지 팝업", Draft.Display.DamageNumbers, value => Draft.Display.DamageNumbers = value)
+                    @ToggleRow("절전 모드", "효과 수와 프레임을 함께 제한", Draft.Display.PowerSaving, SetPowerSaving)
+                </div>
+            }
+            else
+            {
+                <div class="mi-setting-list">
+                    @ToggleRow("AUTO ON/OFF", AutoUnlocked ? "계정에 저장되는 자동공격 상태" : "Stage 15 클리어 후 사용 가능", Draft.Combat.AutoEnabled, value => Draft.Combat.AutoEnabled = value, !AutoUnlocked)
+                    @ToggleRow("자동 스킬 사용", "스킬 전투 시스템 준비 중", Draft.Combat.AutoSkills, value => Draft.Combat.AutoSkills = value, true)
+                    @ToggleRow("자동 필살기 사용", "필살기 전투 시스템 준비 중", Draft.Combat.AutoUltimate, value => Draft.Combat.AutoUltimate = value, true)
+                    @ToggleRow("보스 자동 도전", "현재 탐험은 지역 보스에 자동 진입합니다", true, value => Draft.Combat.AutoBossChallenge = value, true)
+                    @ToggleRow("데미지 합산 표시", "연속 타격 숫자를 묶어 표시", Draft.Combat.AggregateDamage, value => Draft.Combat.AggregateDamage = value)
+                    @ToggleRow("치명타 연출", "치명타 색상과 확대 효과", Draft.Combat.CriticalEffects, value => Draft.Combat.CriticalEffects = value)
+                    @ToggleRow("절전 중 연출 생략", "절전 모드에서 전투 결과만 표시", Draft.Combat.SkipEffectsWhileSaving, value => Draft.Combat.SkipEffectsWhileSaving = value)
+                </div>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(ErrorMessage)) { <p class="mi-settings-error" role="alert">@ErrorMessage</p> }
+        <footer class="mi-settings-footer">
+            <button type="button" class="mi-settings-reset" @onclick="ResetAsync">기본값</button>
+            <button type="button" class="mi-settings-apply" disabled="@Saving" @onclick="ApplyAsync">@(Saving ? "저장 중…" : "적용")</button>
+        </footer>
+        <small class="mi-settings-save-note">계정 단위 저장 · 서버 설정 우선</small>
+
+        @if (confirmDiscard)
+        {
+            <div class="mi-discard-confirm" role="alertdialog" aria-modal="true" aria-label="변경 내용 폐기 확인">
+                <div><strong>변경 내용을 버릴까요?</strong><p>적용하지 않은 설정은 저장되지 않습니다.</p><span><button type="button" @onclick="() => confirmDiscard = false">계속 편집</button><button type="button" class="is-danger" @onclick="CloseWithoutSavingAsync">버리기</button></span></div>
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private static readonly (string Key, string Label)[] Tabs = [("general", "일반"), ("sound", "사운드"), ("display", "화면"), ("combat", "전투")];
+    private ElementReference modalRoot;
+    private GameSettings Draft = new();
+    private bool confirmDiscard;
+
+    /// <summary>저장된 설정 스냅샷입니다.</summary>
+    [Parameter, EditorRequired] public GameSettings SavedSettings { get; set; } = new();
+    /// <summary>현재 지역 음악 정보입니다.</summary>
+    [Parameter, EditorRequired] public RegionAudioSelection CurrentAudio { get; set; } = default!;
+    /// <summary>현재 세션에서 선택된 탭입니다.</summary>
+    [Parameter] public string ActiveTab { get; set; } = "sound";
+    /// <summary>진동 API 지원 여부입니다.</summary>
+    [Parameter] public bool SupportsVibration { get; set; }
+    /// <summary>AUTO 해금 여부입니다.</summary>
+    [Parameter] public bool AutoUnlocked { get; set; }
+    /// <summary>오디오 일시정지 여부입니다.</summary>
+    [Parameter] public bool IsAudioPaused { get; set; }
+    /// <summary>저장 진행 여부입니다.</summary>
+    [Parameter] public bool Saving { get; set; }
+    /// <summary>저장 또는 재생 오류 메시지입니다.</summary>
+    [Parameter] public string? ErrorMessage { get; set; }
+    /// <summary>탭 변경 콜백입니다.</summary>
+    [Parameter] public EventCallback<string> ActiveTabChanged { get; set; }
+    /// <summary>즉시 음량 미리듣기 콜백입니다.</summary>
+    [Parameter] public EventCallback<GameSettings> PreviewChanged { get; set; }
+    /// <summary>검증·저장 적용 콜백입니다.</summary>
+    [Parameter] public EventCallback<GameSettings> ApplyRequested { get; set; }
+    /// <summary>모달 닫기 콜백입니다.</summary>
+    [Parameter] public EventCallback CloseRequested { get; set; }
+    /// <summary>이전 곡 콜백입니다.</summary>
+    [Parameter] public EventCallback PreviousTrack { get; set; }
+    /// <summary>재생/일시정지 콜백입니다.</summary>
+    [Parameter] public EventCallback TogglePlayback { get; set; }
+    /// <summary>다음 곡 콜백입니다.</summary>
+    [Parameter] public EventCallback NextTrack { get; set; }
+    /// <summary>튜토리얼 재실행 콜백입니다.</summary>
+    [Parameter] public EventCallback TutorialRequested { get; set; }
+
+    protected override void OnParametersSet()
+    {
+        if (!SettingsService.HasChanges(SavedSettings, Draft) || !hasInitialized)
+        {
+            Draft = GameSettingsPolicy.Normalize(SavedSettings);
+            hasInitialized = true;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await modalRoot.FocusAsync();
+    }
+
+    private bool hasInitialized;
+    private async Task SelectTabAsync(string tab) { ActiveTab = tab; await ActiveTabChanged.InvokeAsync(tab); }
+    private async Task PreviewSoundAsync() => await PreviewChanged.InvokeAsync(Draft);
+    private void SetPowerSaving(bool value) { Draft.General.PowerSavingEnabled = value; Draft.Display.PowerSaving = value; }
+    private async Task ResetAsync() { Draft = new GameSettings(); await PreviewChanged.InvokeAsync(Draft); }
+    private async Task ApplyAsync() => await ApplyRequested.InvokeAsync(GameSettingsPolicy.Normalize(Draft));
+    private async Task RequestCloseAsync()
+    {
+        if (SettingsService.HasChanges(SavedSettings, Draft)) { confirmDiscard = true; return; }
+        await CloseRequested.InvokeAsync();
+    }
+    private async Task CloseWithoutSavingAsync() { confirmDiscard = false; await CloseRequested.InvokeAsync(); }
+    private async Task OnKeyDownAsync(KeyboardEventArgs args) { if (args.Key == "Escape") await RequestCloseAsync(); }
+
+    private RenderFragment ToggleRow(string title, string description, bool value, Action<bool> setter, bool disabled = false) => @<label class="mi-setting-row @(disabled ? "is-disabled" : null)"><span><strong>@title</strong><small>@description</small></span><input type="checkbox" checked="@value" disabled="@disabled" @onchange="e => setter((bool)(e.Value ?? false))" /></label>;
+
+    private RenderFragment VolumeRow(string title, int value, Action<int> setter) => @<label class="mi-volume-row"><span>@title</span><input type="range" min="0" max="100" value="@value" @oninput="async e => { setter(int.TryParse(e.Value?.ToString(), out var result) ? result : 0); await PreviewSoundAsync(); }" /><output>@value%</output></label>;
+}

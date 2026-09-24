@@ -1,0 +1,18 @@
+<section class="hospital" aria-label="영지 치료소">
+    <header><div><small>FIELD INFIRMARY</small><h3>청운 치료소 <b>Lv.@State.Buildings[6]</b></h3></div><span>병상 @TerritoryRules.HospitalOccupied(State) / @TerritoryRules.HospitalCapacity(State)</span></header>
+    <details class="policy"><summary>피해 병력 80% 수용 · 병상 초과 시 전사</summary><p>전투 피해 병력의 80%를 부상병으로 수용합니다(올림). 남은 피해와 병상 초과분은 전사합니다. 부상·치료 중인 병력도 병영 수용 인원에 포함됩니다.</p></details>
+    <div class="patients">@for (var i = 0; i < 3; i++) { var troop = i; <button class="@(selected == i ? "selected" : "")" @onclick="() => selected = troop"><i class="troop troop-@i"></i><strong>@TerritoryRules.TroopNames[i]</strong><b>부상 @State.Wounded[i]명</b></button> }</div>
+    <div class="treatment"><h4>@TerritoryRules.TroopNames[selected] 치료</h4><div class="quantities">@foreach (var n in new[] { 1, 10, 1000 }) { var amount = n; <button class="@(quantity == n ? "selected" : "")" @onclick="() => quantity = amount">@(n == 1000 ? "최대" : $"{n}명")</button> }</div><p>치료 @(Count)명 · 식량 @Cost.Food · 목재 @Cost.Wood · @TerritoryRules.HealingSeconds(State, Count)초</p><button class="primary" disabled="@(Busy || Count == 0 || State.Healing is not null || State.Food < Cost.Food || State.Wood < Cost.Wood)" @onclick='() => ActionRequested.InvokeAsync(("heal", selected, quantity))'>@(State.Healing is not null ? "치료 대기열 사용 중" : Count == 0 ? "부상병 없음" : $"{Count}명 치료 시작")</button></div>
+    @if (State.Healing is { } healing) { <div class="healing"><strong>@TerritoryRules.TroopNames[healing.Target] @(healing.Count)명 치료 중</strong><span>완료까지 @Math.Max(0, Math.Ceiling((healing.CompletesUtc - Now).TotalSeconds))초</span><progress max="100" value="@Math.Clamp((Now - healing.StartedUtc).TotalSeconds / Math.Max(1, (healing.CompletesUtc - healing.StartedUtc).TotalSeconds) * 100, 0, 100)" aria-label="병사 치료 진행"></progress></div> }
+    <details class="upgrade"><summary>치료소 확장 · 병상 +40</summary><p>병상 +40 · 치료 시간 단축<br/>목재 @TerritoryRules.BuildingCost(State, 6).Wood · 석재 @TerritoryRules.BuildingCost(State, 6).Stone · @TerritoryRules.ConstructionSeconds(State, 6)초</p><button disabled="@(Busy || TerritoryRules.ConstructionBlocked(State, "build", 6) is not null || State.Buildings[6] >= State.Buildings[0] || State.Buildings[6] >= 20 || State.Wood < TerritoryRules.BuildingCost(State, 6).Wood || State.Stone < TerritoryRules.BuildingCost(State, 6).Stone)" @onclick='() => ActionRequested.InvokeAsync(("build", 6, 1))'>@(TerritoryRules.ConstructionBlocked(State, "build", 6) ?? (State.Buildings[6] >= State.Buildings[0] ? "영주관 확장 필요" : "치료소 건설 시작"))</button></details>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public TerritoryState State { get; set; } = new();
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public DateTime Now { get; set; }
+    [Parameter] public EventCallback<(string, int, int)> ActionRequested { get; set; }
+    private int selected, quantity = 10;
+    private int Count => Math.Min(quantity, State.Wounded[selected]);
+    private (long Food, long Wood) Cost => TerritoryRules.HealingCost(selected, Count);
+}

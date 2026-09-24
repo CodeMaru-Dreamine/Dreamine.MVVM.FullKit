@@ -1,0 +1,302 @@
+@inject GameSession Session
+@implements IAsyncDisposable
+
+<section class="mi-trial-tower" role="dialog" aria-modal="true" aria-label="시련의 탑">
+    <header>
+        <div><small>ASCENSION TRIAL · HERO EXPEDITION</small><h2>시련의 탑</h2><p>한 층씩 수문진을 돌파하고 영웅 소환패를 계정에 영구 보관하세요.</p></div>
+        <button type="button" class="mi-endless-close" aria-label="시련의 탑 닫기" @onclick="CloseRequested">×</button>
+    </header>
+
+    <section class="mi-tower-hud">
+        <span><small>최고 정복</small><strong>@Snapshot.HighestTrialTowerFloor.ToString("N0")층</strong></span>
+        <span><small>다음 시련</small><strong>@NextFloor.ToString("N0")층</strong></span>
+        <span><small>시련 도전권</small><strong>@Snapshot.TrialTowerChallengeTickets.ToString("N0")장</strong></span>
+        <span><small>보유 소환패</small><strong>@Snapshot.HeroSummonTickets.ToString("N0")장</strong></span>
+    </section>
+
+    <section class="mi-tower-ticket-panel">
+        <div><small>CHALLENGE PASS</small><strong>도전권 @Snapshot.TrialTowerChallengeTickets / @TrialTowerRules.MaximumNaturalChallengeTickets</strong><span>@TicketRecoveryText</span></div>
+        <div><small>보유 CodeMaru C</small><strong>C @Snapshot.PremiumCurrency.ToString("N0")</strong></div>
+        <button type="button" disabled="@(busy || Snapshot.PremiumCurrency < TrialTowerRules.ChallengeTicketPurchaseCost || Snapshot.TrialTowerChallengeTickets >= TrialTowerRules.MaximumStoredChallengeTickets)" @onclick="PurchaseTicketAsync">+1 충전 <small>C @TrialTowerRules.ChallengeTicketPurchaseCost</small></button>
+    </section>
+
+    <section class="mi-tower-stage">
+        @if (showBattle && battleFloor is not null)
+        {
+            <div class="mi-tower-battle phase-@battlePhase">
+                <div class="mi-tower-battle-title"><small>@(battleFloor.IsBoss ? "BOSS ENCOUNTER" : "TOWER ENCOUNTER")</small><strong>@battleFloor.Title · @battleFloor.Floor.ToString("N0")층</strong></div>
+                <div class="mi-tower-enemy">
+                    <div class="mi-tower-combat-bar is-enemy"><span><b>@EnemyName</b><em>@enemyHpPercent%</em></span><i><u style="width:@enemyHpPercent%"></u></i></div>
+                    <img src="@BattleEnemyAsset" alt="@EnemyName" />
+                    @if (damageNumber > 0) { <strong class="mi-tower-damage" @key="hitSequence">-@damageNumber.ToString("N0")</strong> }
+                </div>
+                <div class="mi-tower-clash" aria-hidden="true"><i></i><i></i><b>斬</b></div>
+                <div class="mi-tower-party">
+                    <div class="mi-tower-combat-bar is-party"><span><b>원정대</b><em>@partyHpPercent%</em></span><i><u style="width:@partyHpPercent%"></u></i></div>
+                    <div class="mi-tower-party-units">
+                        @foreach (var hero in BattleParty)
+                        {
+                            <figure><img src="@hero.SpriteAssetUrl" alt="@hero.Name" /><figcaption>@hero.Name</figcaption></figure>
+                        }
+                    </div>
+                </div>
+                @if (battlePhase is "victory" or "defeat")
+                {
+                    <div class="@(battlePhase == "victory" ? "mi-tower-battle-result is-victory" : "mi-tower-battle-result is-defeat")">
+                        <small>@(battlePhase == "victory" ? "FLOOR CONQUERED" : "EXPEDITION FAILED")</small>
+                        <strong>@(battlePhase == "victory" ? $"{battleFloor.Floor:N0}층 정복" : "수문진 돌파 실패")</strong>
+                        <span>@resultMessage</span>
+                        <button type="button" @onclick="ReturnToMap">탑 지도 보기</button>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="mi-tower-summit"><small>천명 정상</small><strong>50층마다 소환패 1,000장</strong></div>
+            @foreach (var node in FloorNodes)
+            {
+                <article class="@NodeClass(node)" style="@NodeStyle(node)">
+                    <i>@(node.IsBoss ? "冠" : node.Element)</i>
+                    <span><small>@node.Title</small><strong>@node.Floor.ToString("N0")층</strong><em>소환패 @node.SummonTickets.ToString("N0")장</em></span>
+                </article>
+            }
+            <div class="mi-tower-path" aria-hidden="true"></div>
+        }
+    </section>
+
+    <section class="mi-tower-challenge">
+        <div class="mi-tower-opponent">
+            <small>@(CurrentFloor.IsBoss ? "BOSS FLOOR" : "NEXT FLOOR") · @CurrentFloor.Element 속성</small>
+            <strong>@CurrentFloor.Title · @CurrentFloor.Floor.ToString("N0")층</strong>
+            <span>권장 @CurrentFloor.EnemyPower.ToString("N0") · 원정대 합산 @Snapshot.TrialTowerPartyPower.ToString("N0")</span>
+            <em>본체 @Snapshot.Party.InheritedAttackPower.ToString("N0") + 동료 지원 @CompanionSupportPower.ToString("N0")</em>
+        </div>
+        <div class="mi-tower-odds"><small>정복 확률</small><strong>@CurrentChance%</strong><span>@ChanceCaption</span></div>
+        <div class="mi-tower-reward"><small>최초 정복 보상</small><strong>소환패 @CurrentFloor.SummonTickets.ToString("N0")장</strong><span>금화 @CurrentFloor.Gold.ToString("N0") · 광석 @CurrentFloor.UpgradeMaterials.ToString("N0")</span></div>
+        <div class="mi-tower-actions">
+            <button type="button" class="is-sweep" disabled="@(!CanSweep)" @onclick="SweepAsync"><span>@SweepButtonText</span><small>정복 시 보전 · 실패 시 1장</small></button>
+            <button type="button" class="is-challenge" disabled="@(busy || Snapshot.TrialTowerChallengeTickets <= 0)" @onclick="ChallengeAsync">@ChallengeButtonText</button>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrWhiteSpace(resultMessage))
+    {
+        <div class="@(lastVictory ? "mi-tower-result is-victory" : "mi-tower-result is-defeat")" role="status">
+            <strong>@(lastVictory ? "정복 성공" : "정복 실패")</strong><span>@resultMessage</span>
+        </div>
+    }
+
+    <footer><b>10배 상향 보상</b><span>5층 50장 · 10층 200장 · 25층 400장 · 50층 1,000장</span><em>정복하면 도전권 보전 · 실패할 때만 1장 소모 · 같은 층 보상은 반복 수령 불가</em></footer>
+</section>
+
+@code {
+    private static readonly (double Left, double Bottom)[] NodePositions =
+    [
+        (50, 6), (30, 18), (68, 30), (34, 43), (67, 56), (37, 69), (62, 82), (45, 93)
+    ];
+
+    private bool busy;
+    private string? busyAction;
+    private bool lastVictory;
+    private bool showBattle;
+    private string battlePhase = "idle";
+    private TrialTowerFloorDefinition? battleFloor;
+    private int enemyHpPercent = 100;
+    private int partyHpPercent = 100;
+    private int damageNumber;
+    private int hitSequence;
+    private string? resultMessage;
+    private DateTime clockUtc = DateTime.UtcNow;
+    private readonly CancellationTokenSource ticketClockCancellation = new();
+
+    [Parameter, EditorRequired] public GameSnapshot Snapshot { get; set; } = GameSnapshot.Empty;
+    [Parameter] public EventCallback<GameSnapshot> SnapshotChanged { get; set; }
+    [Parameter] public EventCallback CloseRequested { get; set; }
+
+    private int NextFloor => TrialTowerRules.NextFloor(Snapshot.HighestTrialTowerFloor);
+    private TrialTowerFloorDefinition CurrentFloor => TrialTowerRules.Describe(NextFloor);
+    private int CurrentChance => TrialTowerRules.SuccessChance(Snapshot.TrialTowerPartyPower, CurrentFloor);
+    private long CompanionSupportPower => Math.Max(0L, Snapshot.TrialTowerPartyPower - Snapshot.Party.InheritedAttackPower);
+    private bool CanSweep => !busy && !CurrentFloor.IsBoss && Snapshot.TrialTowerChallengeTickets > 0;
+    private int SweepFloorCount => Snapshot.TrialTowerChallengeTickets > 0 ? 5 : 0;
+    private string SweepButtonText => busy && busyAction == "sweep" ? "자동 원정 중…" : $"{SweepFloorCount}층 스킵";
+    private string ChanceCaption => CurrentChance == 0 ? "전투력 부족 · 성장 필요" : "승패는 서버에서 판정";
+    private string TicketRecoveryText
+    {
+        get
+        {
+            if (Snapshot.TrialTowerChallengeTickets >= TrialTowerRules.MaximumNaturalChallengeTickets)
+                return "자연 회복 완료 · 유료 충전분은 최대 99장";
+            if (Snapshot.NextTrialTowerTicketUtc is not { } next) return "회복 시각 계산 중";
+            var remaining = next - clockUtc;
+            if (remaining <= TimeSpan.Zero) return "도전권 회복 처리 중…";
+            return $"다음 1장 {Math.Max(0, (int)remaining.TotalHours):00}:{remaining.Minutes:00}:{remaining.Seconds:00}";
+        }
+    }
+    private string ChallengeButtonText => busy && busyAction == "challenge" ? "교전 진행 중…"
+        : showBattle && battlePhase == "victory" ? $"{NextFloor:N0}층 계속"
+        : showBattle && battlePhase == "defeat" ? $"{NextFloor:N0}층 재도전"
+        : $"{NextFloor:N0}층 도전";
+    private IReadOnlyList<HeroDefinition> BattleParty => new[] { Snapshot.Party.ActiveHero }
+        .Concat(Snapshot.Party.Companions)
+        .Take(5)
+        .ToArray();
+    private string EnemyName => battleFloor?.IsBoss == true ? "천명탑 수문장" : $"{battleFloor?.Element ?? "천"}령 마수";
+    private string BattleEnemyAsset => battleFloor?.IsBoss == true
+        ? "/images/maru-idle/boss-blue-wake.webp"
+        : ((battleFloor?.Floor ?? 1) % 4) switch
+        {
+            0 => "/images/maru-idle/enemy-eclipse-lion.webp",
+            1 => "/images/maru-idle/guardian-idle.webp",
+            2 => "/images/maru-idle/enemy-rift-crawler.webp",
+            _ => "/images/maru-idle/enemy-frost-yak.webp"
+        };
+    private IReadOnlyList<TrialTowerFloorDefinition> FloorNodes => Enumerable.Range(Math.Max(1, NextFloor - 2), 8)
+        .Select(TrialTowerRules.Describe)
+        .ToArray();
+
+    protected override Task OnInitializedAsync()
+    {
+        _ = RunTicketClockAsync(ticketClockCancellation.Token);
+        return Task.CompletedTask;
+    }
+
+    private string NodeClass(TrialTowerFloorDefinition node)
+    {
+        var state = node.Floor <= Snapshot.HighestTrialTowerFloor ? "is-cleared"
+            : node.Floor == NextFloor ? "is-current"
+            : "is-locked";
+        return $"mi-tower-node {state} {(node.IsBoss ? "is-boss" : string.Empty)}";
+    }
+
+    private string NodeStyle(TrialTowerFloorDefinition node)
+    {
+        var first = Math.Max(1, NextFloor - 2);
+        var index = Math.Clamp(node.Floor - first, 0, NodePositions.Length - 1);
+        var position = NodePositions[index];
+        return FormattableString.Invariant($"--node-left:{position.Left}%;--node-bottom:{position.Bottom}%");
+    }
+
+    private async Task ChallengeAsync()
+    {
+        if (busy) return;
+        busy = true;
+        busyAction = "challenge";
+        battleFloor = CurrentFloor;
+        showBattle = true;
+        battlePhase = "enter";
+        enemyHpPercent = 100;
+        partyHpPercent = 100;
+        damageNumber = 0;
+        resultMessage = null;
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(520);
+            var result = await Session.ChallengeTrialTowerAsync(battleFloor.Floor);
+            await SnapshotChanged.InvokeAsync(result.State);
+            if (!result.Accepted)
+            {
+                showBattle = false;
+                battlePhase = "idle";
+                lastVictory = false;
+                resultMessage = result.Message;
+                return;
+            }
+            battlePhase = "clash";
+            await InvokeAsync(StateHasChanged);
+            var enemySteps = result.Victory ? new[] { 76, 51, 23, 0 } : new[] { 82, 68, 53, 41 };
+            var partySteps = result.Victory ? new[] { 91, 81, 72, 64 } : new[] { 76, 49, 22, 0 };
+            for (var index = 0; index < enemySteps.Length; index++)
+            {
+                await Task.Delay(index == enemySteps.Length - 1 ? 520 : 390);
+                enemyHpPercent = enemySteps[index];
+                partyHpPercent = partySteps[index];
+                damageNumber = Math.Max(1, (int)Math.Min(999_999L, Snapshot.AttackPower / 3L + (index + 1) * 17L));
+                hitSequence++;
+                battlePhase = index == 2 ? "ultimate" : "clash";
+                await InvokeAsync(StateHasChanged);
+            }
+            lastVictory = result.Victory;
+            resultMessage = result.Message;
+            battlePhase = result.Victory ? "victory" : "defeat";
+            await InvokeAsync(StateHasChanged);
+        }
+        finally { busy = false; busyAction = null; }
+    }
+
+    private async Task SweepAsync()
+    {
+        if (!CanSweep) return;
+        busy = true;
+        busyAction = "sweep";
+        showBattle = false;
+        resultMessage = null;
+        try
+        {
+            await InvokeAsync(StateHasChanged);
+            var result = await Session.SweepTrialTowerAsync(SweepFloorCount);
+            await SnapshotChanged.InvokeAsync(result.State);
+            lastVictory = result.ClearedFloors > 0;
+            resultMessage = result.Message;
+        }
+        finally
+        {
+            busy = false;
+            busyAction = null;
+        }
+    }
+
+    private async Task PurchaseTicketAsync()
+    {
+        if (busy) return;
+        busy = true;
+        busyAction = "ticket";
+        try
+        {
+            var result = await Session.PurchaseTrialTowerChallengeTicketsAsync();
+            await SnapshotChanged.InvokeAsync(result.State);
+            lastVictory = result.Purchased;
+            resultMessage = result.Message;
+        }
+        finally
+        {
+            busy = false;
+            busyAction = null;
+        }
+    }
+
+    private async Task RunTicketClockAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                clockUtc = DateTime.UtcNow;
+                if (!busy && Snapshot.NextTrialTowerTicketUtc is { } next && next <= clockUtc)
+                {
+                    var refreshed = await Session.RefreshTrialTowerTicketsAsync(cancellationToken);
+                    await SnapshotChanged.InvokeAsync(refreshed);
+                }
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
+    }
+
+    private void ReturnToMap()
+    {
+        showBattle = false;
+        battlePhase = "idle";
+        damageNumber = 0;
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        ticketClockCancellation.Cancel();
+        ticketClockCancellation.Dispose();
+        return ValueTask.CompletedTask;
+    }
+}

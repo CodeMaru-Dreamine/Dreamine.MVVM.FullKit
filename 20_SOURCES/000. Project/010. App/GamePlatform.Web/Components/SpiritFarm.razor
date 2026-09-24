@@ -1,0 +1,282 @@
+@implements IAsyncDisposable
+@inject GameSession Session
+
+<section class="mi-spirit-farm" role="dialog" aria-modal="true" aria-label="영약 농원">
+    <header>
+        <div><small>PERSISTENT SPIRIT FARM</small><h2>영약 농원</h2><p>흙 위에서 영초를 직접 기르고, 시설과 비료로 농원을 돌보세요.</p></div>
+        <button type="button" class="mi-endless-close" aria-label="영약 농원 닫기" @onclick="CloseRequested">×</button>
+    </header>
+
+    <section class="mi-farm-toolbar">
+        <div><small>농원 등급</small><strong>Lv.@Snapshot.SpiritFarm.Level</strong><span>@Snapshot.SpiritFarm.UnlockedPlots / @Snapshot.SpiritFarm.MaximumPlots 경작지</span></div>
+        <div class="mi-farm-crops" aria-label="심을 영초 선택">
+            @foreach (var crop in Snapshot.SpiritFarm.Crops)
+            {
+                <button type="button" class="@(selectedCropKey == crop.CropKey ? "is-selected" : null)" style="--crop:@crop.AccentColor" @onclick="() => selectedCropKey = crop.CropKey">
+                    <img src="@crop.AssetUrl" alt="" /><span><strong>@crop.Name</strong><small>씨앗 @CropSeedCount(crop.CropKey)개 · @FormatDuration(crop.GrowTime)</small></span>
+                </button>
+            }
+        </div>
+    </section>
+
+    <section class="mi-farm-board">
+        <div class="mi-farm-landmarks" aria-label="설치된 농원 시설">
+            @if (Snapshot.SpiritFarm.VerticalRackLevel > 0)
+            {
+                <button type="button" class="mi-farm-landmark is-rack" title="수직 회전 재배대" @onclick='() => UpgradeFacilityAsync("rack")'>
+                    <img src="/images/maru-idle/trials/farm-vertical-rack-v1.png" alt="수직 회전 재배대" /><span>재배대 Lv.@Snapshot.SpiritFarm.VerticalRackLevel</span>
+                </button>
+            }
+            @if (Snapshot.SpiritFarm.House.Tier > 0)
+            {
+                <button type="button" class="mi-farm-landmark is-house" title="@Snapshot.SpiritFarm.House.Name" @onclick='() => UpgradeFacilityAsync("house")'>
+                    <img src="@Snapshot.SpiritFarm.House.AssetUrl" alt="@Snapshot.SpiritFarm.House.Name" /><span>@Snapshot.SpiritFarm.House.Name</span>
+                </button>
+            }
+        </div>
+
+        <div class="mi-farm-plots">
+            @foreach (var plot in Snapshot.SpiritFarm.Plots)
+            {
+                <article class="@(PlotClass(plot))" style="--crop:@(plot.Crop?.AccentColor ?? "#73ddc5")">
+                    @if (!plot.IsUnlocked)
+                    {
+                        <div class="mi-farm-locked-sign"><i>◆</i><strong>미개방</strong><small>농원 확장 필요</small></div>
+                    }
+                    else if (plot.Crop is null)
+                    {
+                        <button type="button" class="mi-farm-empty-bed" disabled="@(busyPlot == plot.PlotIndex || CropSeedCount(SelectedCrop.CropKey) <= 0)" @onclick="() => PlantAsync(plot.PlotIndex)">
+                            <i>＋</i><strong>@SelectedCrop.Name 심기</strong><small>씨앗 @CropSeedCount(SelectedCrop.CropKey) · 지력 @plot.SoilVitality%</small>
+                            @if (IsRepeatedCrop(plot, SelectedCrop.CropKey)) { <em>연작 주의</em> }
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="mi-farm-crop-field" style="@PlantVisualStyle(plot)" aria-hidden="true">
+                            @for (var plant = 0; plant < 5; plant++)
+                            {
+                                <img src="@plot.Crop.AssetUrl" alt="" style="--plant-index:@plant" />
+                            }
+                        </div>
+                        <div class="mi-farm-growth-line"><span style="width:@(GrowthPercent(plot).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span></div>
+                        <div class="mi-farm-ground-info">
+                            <span><strong>@plot.Crop.Name</strong><small>@(IsReady(plot) ? "개화 완료" : Remaining(plot))</small></span>
+                            <i class="@(plot.SoilVitality < 70 ? "is-tired" : null)">지력 @plot.SoilVitality%</i>
+                            @if (plot.OwnerFertilized || plot.FriendFertilizerCount > 0) { <i class="is-helped">비료 @(plot.FriendFertilizerCount + (plot.OwnerFertilized ? 1 : 0))</i> }
+                        </div>
+                        <div class="mi-farm-ground-actions">
+                            @if (!IsReady(plot))
+                            {
+                                <button type="button" class="is-fertilizer" disabled="@(plot.OwnerFertilized || Snapshot.SpiritFarm.FertilizerCount <= 0 || fertilizingPlot == plot.PlotIndex)" @onclick="() => FertilizeAsync(plot.PlotIndex)">비료</button>
+                            }
+                            <button type="button" class="@(IsReady(plot) ? "is-ready" : null)" disabled="@(!IsReady(plot) || busyPlot == plot.PlotIndex)" @onclick="() => HarvestAsync(plot.PlotIndex)">@(IsReady(plot) ? "수확" : "성장 중")</button>
+                        </div>
+                    }
+                </article>
+            }
+        </div>
+    </section>
+
+    <section class="mi-farm-management">
+        <div class="mi-farm-market-head">
+            <span><b>종묘·비료 상점</b><small>무료 지급품을 열거나 CodeMaru C로 추가 구매</small></span>
+            <strong>C @Snapshot.PremiumCurrency.ToString("N0") · 비료 @Snapshot.SpiritFarm.FertilizerCount</strong>
+        </div>
+        <div class="mi-farm-seed-shop">
+            @foreach (var pack in Snapshot.SpiritFarm.SeedPackCatalog)
+            {
+                <article style="--pack:@pack.AccentColor">
+                    <img src="@PackImage(pack.PackKey)" alt="" />
+                    <span><strong>@pack.Name</strong><small>보유 @SeedPackCount(pack.PackKey) · @PackOdds(pack)</small></span>
+                    <button type="button" disabled="@(SeedPackCount(pack.PackKey) <= 0 || openingPack)" @onclick="() => OpenSeedPackAsync(pack.PackKey)">개봉</button>
+                    <button type="button" class="is-cash" disabled="@(buying || Snapshot.PremiumCurrency < pack.PremiumCost)" @onclick="() => PurchaseSeedPackAsync(pack.PackKey)">C @pack.PremiumCost</button>
+                </article>
+            }
+            <article class="mi-farm-fertilizer-shop">
+                <div class="mi-fertilizer-art"><i>♧</i></div>
+                <span><strong>영맥 비료 ×@SpiritFarmRules.FertilizerBundleSize</strong><small>성장 15% 단축 · 지력 +12</small></span>
+                <button type="button" class="is-cash" disabled="@(buying || Snapshot.PremiumCurrency < SpiritFarmRules.FertilizerPremiumCost)" @onclick="PurchaseFertilizerAsync">C @SpiritFarmRules.FertilizerPremiumCost</button>
+            </article>
+        </div>
+
+        <div class="mi-farm-facilities">
+            <button type="button" class="@(Snapshot.SpiritFarm.VerticalRackLevel == 0 ? "is-preview" : null)" @onclick='() => UpgradeFacilityAsync("rack")' disabled="@(Snapshot.SpiritFarm.VerticalRackUpgradeGoldCost <= 0 || upgrading)">
+                <img src="/images/maru-idle/trials/farm-vertical-rack-v1.png" alt="수직 회전 재배대" />
+                <span><small>VERTICAL CULTIVATION</small><strong>수직 회전 재배대 Lv.@Snapshot.SpiritFarm.VerticalRackLevel</strong><em>수확량 +@(Snapshot.SpiritFarm.VerticalRackLevel * 15)%</em></span>
+            </button>
+            <button type="button" class="@(Snapshot.SpiritFarm.House.Tier == 0 ? "is-preview" : null)" @onclick='() => UpgradeFacilityAsync("house")' disabled="@(Snapshot.SpiritFarm.NextHouse is null || upgrading)">
+                <img src="@HousePreviewAsset" alt="@HousePreviewName" />
+                <span><small>SPIRIT GREENHOUSE</small><strong>@Snapshot.SpiritFarm.House.Name</strong><em>@(Snapshot.SpiritFarm.NextHouse is null ? "최고 시설 완성" : $"다음 · {Snapshot.SpiritFarm.NextHouse.Name}")</em></span>
+            </button>
+            <button type="button" class="is-friend" @onclick="ToggleFriendsAsync">
+                <div class="mi-friend-fertilizer-art"><i>♣</i><b>+</b></div>
+                <span><small>FRIEND CO-OP</small><strong>친구 농원 비료</strong><em>@Snapshot.SpiritFarm.FriendsHelpedToday / @Snapshot.SpiritFarm.MaximumFriendHelps 도움</em></span>
+            </button>
+        </div>
+
+        @if (showFriends)
+        {
+            <div class="mi-farm-friends">
+                <div><b>친구 농원</b><button type="button" @onclick="ToggleFriendsAsync">닫기</button></div>
+                @if (loadingFriends) { <p>친구 농원을 불러오는 중...</p> }
+                else if (friends.Count == 0) { <p>아직 함께할 협객이 없습니다. 같은 서버에 친구가 접속하면 여기에 표시됩니다.</p> }
+                else
+                {
+                    @foreach (var friend in friends)
+                    {
+                        <article><span><strong>@friend.DisplayName</strong><small>농원 Lv.@friend.FarmLevel · 재배 중 @(friend.GrowingPlots)칸</small></span><button type="button" disabled="@(!friend.CanHelp || helpingFriend)" @onclick="() => HelpFriendAsync(friend.UserId)">비료 주기</button></article>
+                    }
+                }
+            </div>
+        }
+    </section>
+
+    <footer>
+        <div><b>농원 관리</b><span>@(string.IsNullOrWhiteSpace(message) ? "작물은 흙 위에서 자라며, 시설 설치 모습도 농원에 반영됩니다." : message)</span></div>
+        <button type="button" disabled="@(Snapshot.SpiritFarm.UpgradeCost <= 0 || upgrading)" @onclick="UpgradeAsync">
+            @(Snapshot.SpiritFarm.UpgradeCost <= 0 ? "최고 등급 달성" : $"농원 확장 · {Snapshot.SpiritFarm.UpgradeCost:N0} 금화")
+        </button>
+    </footer>
+</section>
+
+@code {
+    private readonly Timer refreshTimer;
+    private string selectedCropKey = "dew-leaf";
+    private int? busyPlot;
+    private int? fertilizingPlot;
+    private bool upgrading;
+    private bool openingPack;
+    private bool buying;
+    private bool showFriends;
+    private bool loadingFriends;
+    private bool helpingFriend;
+    private string? message;
+    private IReadOnlyList<SpiritFarmFriendView> friends = Array.Empty<SpiritFarmFriendView>();
+
+    public SpiritFarm() => refreshTimer = new Timer(_ => _ = InvokeAsync(StateHasChanged), null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+
+    [Parameter, EditorRequired] public GameSnapshot Snapshot { get; set; } = GameSnapshot.Empty;
+    [Parameter] public EventCallback<GameSnapshot> SnapshotChanged { get; set; }
+    [Parameter] public EventCallback CloseRequested { get; set; }
+
+    private SpiritCropDefinition SelectedCrop => Snapshot.SpiritFarm.Crops.FirstOrDefault(crop => crop.CropKey == selectedCropKey) ?? Snapshot.SpiritFarm.Crops[0];
+    private string HousePreviewAsset => Snapshot.SpiritFarm.House.Tier > 0 ? Snapshot.SpiritFarm.House.AssetUrl : Snapshot.SpiritFarm.NextHouse?.AssetUrl ?? string.Empty;
+    private string HousePreviewName => Snapshot.SpiritFarm.House.Tier > 0 ? Snapshot.SpiritFarm.House.Name : Snapshot.SpiritFarm.NextHouse?.Name ?? "하우스";
+    private int CropSeedCount(string cropKey) => Snapshot.SpiritFarm.CropSeeds.GetValueOrDefault(cropKey);
+    private int SeedPackCount(string packKey) => Snapshot.SpiritFarm.SeedPacks.GetValueOrDefault(packKey);
+    private static bool IsRepeatedCrop(SpiritFarmPlotView plot, string cropKey) => plot.ConsecutiveCrops > 0 && string.Equals(plot.LastCropKey, cropKey, StringComparison.OrdinalIgnoreCase);
+    private string PackImage(string packKey) => packKey switch { "advanced" => Snapshot.SpiritFarm.Crops[2].AssetUrl, "intermediate" => Snapshot.SpiritFarm.Crops[1].AssetUrl, _ => Snapshot.SpiritFarm.Crops[0].AssetUrl };
+    private static string PackOdds(SpiritSeedPackDefinition pack) => $"이슬 {pack.DawnDewWeight}% · 난초 {pack.MoonOrchidWeight}% · 용맥 {pack.DragonRootWeight}%";
+
+    private async Task PlantAsync(int plotIndex)
+    {
+        if (busyPlot is not null) return;
+        busyPlot = plotIndex;
+        try { await ApplyAsync(await Session.PlantSpiritCropAsync(plotIndex, selectedCropKey)); }
+        finally { busyPlot = null; }
+    }
+
+    private async Task HarvestAsync(int plotIndex)
+    {
+        if (busyPlot is not null) return;
+        busyPlot = plotIndex;
+        try { await ApplyAsync(await Session.HarvestSpiritCropAsync(plotIndex)); }
+        finally { busyPlot = null; }
+    }
+
+    private async Task FertilizeAsync(int plotIndex)
+    {
+        if (fertilizingPlot is not null) return;
+        fertilizingPlot = plotIndex;
+        try { await ApplyAsync(await Session.FertilizeOwnSpiritCropAsync(plotIndex)); }
+        finally { fertilizingPlot = null; }
+    }
+
+    private async Task OpenSeedPackAsync(string packKey)
+    {
+        if (openingPack) return;
+        openingPack = true;
+        try { await ApplyAsync(await Session.OpenSpiritSeedPackAsync(packKey)); }
+        finally { openingPack = false; }
+    }
+
+    private async Task PurchaseSeedPackAsync(string packKey)
+    {
+        if (buying) return;
+        buying = true;
+        try { await ApplyAsync(await Session.PurchaseSpiritSeedPackAsync(packKey)); }
+        finally { buying = false; }
+    }
+
+    private async Task PurchaseFertilizerAsync()
+    {
+        if (buying) return;
+        buying = true;
+        try { await ApplyAsync(await Session.PurchaseSpiritFertilizerAsync()); }
+        finally { buying = false; }
+    }
+
+    private async Task UpgradeFacilityAsync(string facilityKey)
+    {
+        if (upgrading) return;
+        upgrading = true;
+        try { await ApplyAsync(await Session.UpgradeSpiritFarmFacilityAsync(facilityKey)); }
+        finally { upgrading = false; }
+    }
+
+    private async Task ToggleFriendsAsync()
+    {
+        showFriends = !showFriends;
+        if (!showFriends) return;
+        loadingFriends = true;
+        try { friends = await Session.GetSpiritFarmFriendsAsync(); }
+        finally { loadingFriends = false; }
+    }
+
+    private async Task HelpFriendAsync(string friendUserId)
+    {
+        if (helpingFriend) return;
+        helpingFriend = true;
+        try { await ApplyAsync(await Session.HelpFriendFarmAsync(friendUserId)); friends = await Session.GetSpiritFarmFriendsAsync(); }
+        finally { helpingFriend = false; }
+    }
+
+    private async Task UpgradeAsync()
+    {
+        if (upgrading) return;
+        upgrading = true;
+        try { await ApplyAsync(await Session.UpgradeSpiritFarmAsync()); }
+        finally { upgrading = false; }
+    }
+
+    private async Task ApplyAsync(SpiritFarmActionResult result)
+    {
+        message = result.Message;
+        await SnapshotChanged.InvokeAsync(result.State);
+    }
+
+    private static bool IsReady(SpiritFarmPlotView plot) => plot.ReadyUtc is not null && plot.ReadyUtc <= DateTime.UtcNow;
+    private static string PlotClass(SpiritFarmPlotView plot) => !plot.IsUnlocked ? "is-locked" : plot.Crop is null ? "is-empty" : IsReady(plot) ? "is-planted is-ready" : "is-planted";
+    private static double GrowthPercent(SpiritFarmPlotView plot)
+    {
+        if (plot.PlantedUtc is null || plot.ReadyUtc is null) return 0;
+        var total = (plot.ReadyUtc.Value - plot.PlantedUtc.Value).TotalSeconds;
+        var elapsed = (DateTime.UtcNow - plot.PlantedUtc.Value).TotalSeconds;
+        return total <= 0 ? 100 : Math.Clamp(elapsed / total * 100, 0, 100);
+    }
+    private static string PlantVisualStyle(SpiritFarmPlotView plot)
+    {
+        var growth = .32 + GrowthPercent(plot) / 100d * .68;
+        var bloom = .48 + GrowthPercent(plot) / 100d * .52;
+        return $"--growth:{growth:0.###};--bloom:{bloom:0.###}";
+    }
+    private static string Remaining(SpiritFarmPlotView plot)
+    {
+        var remaining = plot.ReadyUtc.GetValueOrDefault() - DateTime.UtcNow;
+        if (remaining <= TimeSpan.Zero) return "완료";
+        return remaining.TotalHours >= 1 ? $"{(int)remaining.TotalHours}:{remaining.Minutes:00}:{remaining.Seconds:00}" : $"{remaining.Minutes:00}:{remaining.Seconds:00}";
+    }
+    private static string FormatDuration(TimeSpan duration) => duration.TotalHours >= 1 ? $"{duration.TotalHours:0.#}시간" : $"{duration.TotalMinutes:0}분";
+
+    public ValueTask DisposeAsync() { refreshTimer.Dispose(); return ValueTask.CompletedTask; }
+}
