@@ -1,0 +1,5 @@
+@inject BabyCareText Text
+@if (Entry.Kind == "feeding" && Entry.FeedingMode != "") { <p>@Text[Entry.FeedingMode switch { "formula" => "분유", "breast" => "모유 직수", _ => "유축 모유 수유" }]</p> }
+@if (Entry.BreastSide != "") { <p>@Text[Entry.BreastSide switch { "left" => "왼쪽", "right" => "오른쪽", _ => "양쪽" }]</p> }
+@if (Entry.AmountGrams is { } grams) { <p>@grams g</p> }
+@code { [Parameter, EditorRequired] public CareEntry Entry { get; set; } = default!; }

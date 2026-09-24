@@ -1,0 +1,88 @@
+[
+  {
+    "id": "feeding",
+    "label": "수유",
+    "icon": "🍼",
+    "hasAmount": true,
+    "hasDuration": true,
+    "examples": [
+      "분유 80미리 먹었어",
+      "수유 시작",
+      "다 먹었어. 60 먹었어",
+      "아까 80이 아니라 60이야",
+      "오른쪽 모유 10분 먹었어",
+      "왼쪽 모유 15분 먹었어",
+      "양쪽 모유 총 20분 먹었어"
+    ]
+  },
+  {
+    "id": "burping",
+    "label": "트림시키기",
+    "icon": "☁️",
+    "hasAmount": false,
+    "hasDuration": true,
+    "examples": [
+      "트림시키기 시작",
+      "11시 20분부터 40분까지 트림시켰어",
+      "트림했어"
+    ]
+  },
+  {
+    "id": "sleep",
+    "label": "수면",
+    "icon": "🌙",
+    "hasAmount": false,
+    "hasDuration": true,
+    "examples": [
+      "지금 잠들었어",
+      "깼어",
+      "오후 1시부터 3시까지 잤어"
+    ]
+  },
+  {
+    "id": "diaper",
+    "label": "기저귀",
+    "icon": "🧷",
+    "hasAmount": false,
+    "hasDuration": false,
+    "examples": [
+      "소변 기저귀 갈았어",
+      "대변 봤어",
+      "소변 대변 둘 다"
+    ]
+  },
+  {
+    "id": "temperature",
+    "label": "체온",
+    "icon": "🌡️",
+    "hasAmount": false,
+    "hasDuration": false,
+    "examples": [
+      "지금 체온 36.7도",
+      "오후 3시 온도 36.7도"
+    ]
+  },
+  {
+    "id": "pumping",
+    "label": "유축",
+    "icon": "🤱",
+    "hasAmount": false,
+    "hasDuration": true,
+    "examples": [
+      "유축 시작",
+      "왼쪽 60미리 오른쪽 50미리 유축했어",
+      "전동 유축기로 20분 유축했어"
+    ]
+  },
+  {
+    "id": "solids",
+    "label": "이유식",
+    "icon": "🥣",
+    "hasAmount": false,
+    "hasDuration": true,
+    "examples": [
+      "쌀미음 50그램 먹었어",
+      "이유식 시작"
+    ]
+  }
+]

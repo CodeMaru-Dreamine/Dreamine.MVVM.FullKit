@@ -1,6 +1,6 @@
 # Dreamine.MVVM.FullKit
 
-[![CI](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit/actions/workflows/ci.yml/badge.svg)](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit/actions/workflows/ci.yml) [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=CodeMaru-Dreamine_Dreamine.MVVM.FullKit&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=CodeMaru-Dreamine_Dreamine.MVVM.FullKit) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=CodeMaru-Dreamine_Dreamine.MVVM.FullKit&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=CodeMaru-Dreamine_Dreamine.MVVM.FullKit) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=CodeMaru-Dreamine_Dreamine.MVVM.FullKit&metric=coverage)](https://sonarcloud.io/summary/new_code?id=CodeMaru-Dreamine_Dreamine.MVVM.FullKit)<br>
+[![CI](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CodeMaru-Dreamine/Dreamine.MVVM.FullKit/actions/workflows/ci.yml) [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=CodeMaru-Dreamine_Dreamine.MVVM.FullKit&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=CodeMaru-Dreamine_Dreamine.MVVM.FullKit) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=CodeMaru-Dreamine_Dreamine.MVVM.FullKit&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=CodeMaru-Dreamine_Dreamine.MVVM.FullKit) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=CodeMaru-Dreamine_Dreamine.MVVM.FullKit&metric=coverage)](https://sonarcloud.io/summary/new_code?id=CodeMaru-Dreamine_Dreamine.MVVM.FullKit)<br>
 ![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg) ![.NET](https://img.shields.io/badge/.NET-8%20%7C%209-512BD4.svg?logo=dotnet&logoColor=white) ![WPF](https://img.shields.io/badge/WPF-0078D4.svg?logo=windows&logoColor=white) ![WinForms](https://img.shields.io/badge/WinForms-6E6E6E.svg?logo=windows&logoColor=white) ![Blazor](https://img.shields.io/badge/Blazor-512BD4.svg?logo=blazor&logoColor=white) ![.NET MAUI](https://img.shields.io/badge/.NET%20MAUI-F7522F.svg?logo=dotnet&logoColor=white) ![Visual Studio](https://img.shields.io/badge/Visual%20Studio-2022%20%7C%202026-5C2D91.svg?logo=visualstudio&logoColor=white)<br>
 [![NuGet](https://img.shields.io/nuget/v/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit) [![NuGet Downloads](https://img.shields.io/nuget/dt/Dreamine.MVVM.FullKit.svg)](https://www.nuget.org/packages/Dreamine.MVVM.FullKit) [![문서](https://img.shields.io/badge/%F0%9F%93%96%20%EB%AC%B8%EC%84%9C-dreamine.kr-49B2FF.svg)](https://dreamine.kr/libraries) [![사용법](https://img.shields.io/badge/%F0%9F%93%98%20%EC%82%AC%EC%9A%A9%EB%B2%95-dreamine.kr-49B2FF.svg)](https://dreamine.kr/guide) [![체험공간](https://img.shields.io/badge/%F0%9F%8E%AE%20%EC%B2%B4%ED%97%98%EA%B3%B5%EA%B0%84-dreamine.kr-49B2FF.svg)](https://dreamine.kr/playground) [![Book](https://img.shields.io/badge/%F0%9F%93%96%20Book-%EB%AC%B4%EB%84%88%EC%A7%80%EC%A7%80%20%EC%95%8A%EB%8A%94%20%EA%B5%AC%EC%A1%B0%EB%A5%BC%20%EB%A7%8C%EB%93%9C%EB%8A%94%20%EB%B2%95-000000.svg)](https://bookk.co.kr/bookStore/69c0f1b41461ec1ae849a0f6)
 
@@ -11,6 +11,13 @@ WPF MVVM 애플리케이션을 위한 Dreamine 통합 패키지 문서입니다.
 [➡️ English Version](./README.md)
 
 ![Dreamine FullKit preview](./docs/assets/dreamine-fullkit-preview.png)
+
+## 웹 애플리케이션
+
+- [BabyCare](20_SOURCES/000.%20Project/010.%20App/BabyCare.Web/README_KO.md): 가족 육아 기록, 직수·이유식·유축, 사진과 10개 언어.
+- [Games](20_SOURCES/000.%20Project/010.%20App/GamePlatform.Web/README_KO.md): 게임 성장, 공유 영지, 파티, 랭킹과 브라우저 오디오.
+
+두 앱의 테스트와 커버리지 수집을 CI에서 실행합니다. 상단 배지는 메인 브랜치의 결과이며, 진행 중인 변경의 결과는 PR 검사에서 확인합니다. 서비스 배포는 수동입니다.
 
 ## 아키텍처 한눈에 보기
 

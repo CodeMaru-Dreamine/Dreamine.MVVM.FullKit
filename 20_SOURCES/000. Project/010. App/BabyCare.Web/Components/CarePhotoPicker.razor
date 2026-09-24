@@ -1,0 +1,50 @@
+@inject CarePhotos Photos
+@inject AuthenticationStateProvider Authentication
+@inject BabyCareText Text
+<div class="photo-picker">
+    <div class="photo-thumbs">
+        @foreach (var id in Value)
+        {
+            <div @key="id"><img src="@CarePhotos.Url(FamilyId, id)" alt="@Text["첨부 사진"]" loading="lazy" /><button type="button" disabled="@uploading" @onclick="() => Remove(id)" aria-label="@Text["첨부 해제"]">×</button></div>
+        }
+    </div>
+    <label class="photo-upload">@Text["사진 첨부"] (@Value.Count / @Limit)
+        <InputFile OnChange="Upload" accept="image/jpeg,image/png,image/webp" multiple="@(Limit > 1)" disabled="@(uploading || Value.Count >= Limit)" />
+    </label>
+    <p class="fine">@Text["가족만 볼 수 있어요. JPG·PNG·WebP, 장당 8MB."]</p>
+    @if (uploading) { <p role="status">@Text["사진을 올리고 있어요…"]</p> }
+    @if (error is not null) { <p class="notice error" role="alert">@Text[error]</p> }
+</div>
+@code {
+    [Parameter, EditorRequired] public string FamilyId { get; set; } = "";
+    [Parameter] public IReadOnlyList<string> Value { get; set; } = [];
+    [Parameter] public EventCallback<List<string>> ValueChanged { get; set; }
+    [Parameter] public int Limit { get; set; } = 3;
+    [Parameter] public EventCallback<bool> UploadingChanged { get; set; }
+    private bool uploading;
+    private string? error;
+    private Task Remove(string id) => ValueChanged.InvokeAsync(Value.Where(p => p != id).ToList());
+    private async Task Upload(InputFileChangeEventArgs args)
+    {
+        error = null;
+        if (args.FileCount + Value.Count > Limit) { error = "사진 개수를 확인해주세요."; return; }
+        uploading = true; await UploadingChanged.InvokeAsync(true);
+        var family = FamilyId;
+        var list = Value.ToList();
+        try
+        {
+            var user = (await Authentication.GetAuthenticationStateAsync()).User;
+            var userId = user.Identity?.IsAuthenticated == true ? user.FindFirst(DreamineIdentityExtensions.UserIdClaimType)?.Value ?? "" : "";
+            foreach (var file in args.GetMultipleFiles(Limit))
+            {
+                if (file.Size > CarePhotos.MaxBytes) throw new CareException("사진은 JPG·PNG·WebP, 장당 8MB까지 첨부할 수 있어요.");
+                await using var stream = file.OpenReadStream(CarePhotos.MaxBytes);
+                list.Add(await Photos.SaveAsync(userId, family, stream));
+            }
+            if (FamilyId == family) await ValueChanged.InvokeAsync(list);
+        }
+        catch (CareException ex) { error = ex.Message; }
+        catch (Exception ex) when (ex is IOException or InvalidOperationException) { error = "사진을 첨부하지 못했어요. 다시 시도해주세요."; }
+        finally { uploading = false; await UploadingChanged.InvokeAsync(false); }
+    }
+}

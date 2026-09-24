@@ -1,0 +1,131 @@
+@implements IAsyncDisposable
+@inject IGameChatService ChatService
+@inject IGameAdminCommunicationService CommunicationService
+
+<section class="mi-chat-dock" aria-label="@($"{ChannelName} 월드 채팅")">
+    <button type="button" class="mi-chat-preview" @onclick="OpenChat">
+        <span>@ChannelName</span>
+        @if (messages.Count == 0)
+        {
+            <em>대화를 시작해 보세요.</em>
+        }
+        else
+        {
+            <strong>@messages[^1].DisplayName</strong><em>@messages[^1].Text</em>
+        }
+        <i aria-hidden="true">⌃</i>
+    </button>
+</section>
+
+@if (isOpen)
+{
+    <div class="mi-chat-backdrop" @onclick="CloseChat">
+        <section class="mi-chat-panel" role="dialog" aria-modal="true" aria-labelledby="world-chat-title" @onclick:stopPropagation="true">
+            <header><div><small>@ChannelName · LIVE</small><h2 id="world-chat-title">월드 채팅</h2></div><button type="button" @onclick="CloseChat" aria-label="채팅 닫기">×</button></header>
+            <div class="mi-chat-log" aria-live="polite">
+                @if (messages.Count == 0) { <p class="mi-chat-empty">아직 메시지가 없습니다.</p> }
+                @foreach (var message in messages)
+                {
+                    <article class="@(message.UserId == UserId ? "is-mine" : message.UserId == AdminWhisperUserId ? "is-whisper" : null)" @key="message.MessageId">
+                        <div><strong>@message.DisplayName</strong><time datetime="@message.SentUtc.ToString("O")">@message.SentUtc.ToLocalTime().ToString("HH:mm")</time></div>
+                        <p>@message.Text</p>
+                    </article>
+                }
+            </div>
+            <form @onsubmit="SendAsync" @onsubmit:preventDefault="true"
+                  @onkeydown:stopPropagation="true" @onkeyup:stopPropagation="true">
+                <input @bind="draft" @bind:event="oninput" maxlength="120" autocomplete="off" placeholder="메시지를 입력하세요" aria-label="채팅 메시지" />
+                <button type="submit" disabled="@sending">전송</button>
+            </form>
+            @if (!string.IsNullOrWhiteSpace(error)) { <p class="mi-chat-error" role="alert">@error</p> }
+        </section>
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired] public string UserId { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string ChannelKey { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string ChannelName { get; set; } = string.Empty;
+    [Parameter, EditorRequired] public string DisplayName { get; set; } = string.Empty;
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+
+    private readonly List<GameChatMessage> messages = [];
+    private const string AdminWhisperUserId = "__codemaru_admin_whisper__";
+    private bool initialized;
+    private string? initializedChannelKey;
+    private bool isOpen;
+    private bool sending;
+    private string draft = string.Empty;
+    private string? error;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (string.IsNullOrWhiteSpace(UserId) || string.IsNullOrWhiteSpace(ChannelKey)
+            || string.Equals(initializedChannelKey, ChannelKey, StringComparison.OrdinalIgnoreCase)) return;
+        messages.Clear();
+        messages.AddRange(await ChatService.LoadRecentAsync(ChannelKey));
+        messages.AddRange((await CommunicationService.LoadForUserAsync(UserId, GameAdminMessageKind.Whisper))
+            .Select(ToChatMessage));
+        var ordered = messages.OrderBy(item => item.SentUtc).TakeLast(100).ToArray();
+        messages.Clear();
+        messages.AddRange(ordered);
+        initializedChannelKey = ChannelKey;
+        if (!initialized)
+        {
+            initialized = true;
+            ChatService.MessagePublished += OnMessagePublished;
+            CommunicationService.MessagePublished += OnAdminMessagePublished;
+        }
+    }
+
+    private async Task OpenChat() { isOpen = true; error = null; await OpenChanged.InvokeAsync(true); }
+    private async Task CloseChat() { isOpen = false; await OpenChanged.InvokeAsync(false); }
+
+    private async Task SendAsync()
+    {
+        if (sending) return;
+        sending = true;
+        error = null;
+        try
+        {
+            var result = await ChatService.PostAsync(UserId, ChannelKey, DisplayName, draft);
+            if (result.Accepted) draft = string.Empty;
+            else error = result.RejectionReason;
+        }
+        catch { error = "채팅 메시지를 저장하지 못했습니다."; }
+        finally { sending = false; }
+    }
+
+    private void OnMessagePublished(GameChatMessage message) => _ = InvokeAsync(() =>
+    {
+        if (!string.Equals(message.ChannelKey, ChannelKey, StringComparison.OrdinalIgnoreCase)) return;
+        if (messages.All(item => item.MessageId != message.MessageId)) messages.Add(message);
+        while (messages.Count > 100) messages.RemoveAt(0);
+        StateHasChanged();
+    });
+
+    private void OnAdminMessagePublished(GameAdminMessage message) => _ = InvokeAsync(() =>
+    {
+        if (message.Kind != GameAdminMessageKind.Whisper
+            || !string.Equals(message.TargetUserId, UserId, StringComparison.OrdinalIgnoreCase)) return;
+        var chatMessage = ToChatMessage(message);
+        if (messages.All(item => item.MessageId != chatMessage.MessageId)) messages.Add(chatMessage);
+        while (messages.Count > 100) messages.RemoveAt(0);
+        StateHasChanged();
+    });
+
+    private static GameChatMessage ToChatMessage(GameAdminMessage message) => new(
+        $"admin-{message.MessageId}",
+        string.Empty,
+        AdminWhisperUserId,
+        "운영자 · 귓속말",
+        message.Text,
+        message.CreatedUtc);
+
+    public ValueTask DisposeAsync()
+    {
+        ChatService.MessagePublished -= OnMessagePublished;
+        CommunicationService.MessagePublished -= OnAdminMessagePublished;
+        return ValueTask.CompletedTask;
+    }
+}

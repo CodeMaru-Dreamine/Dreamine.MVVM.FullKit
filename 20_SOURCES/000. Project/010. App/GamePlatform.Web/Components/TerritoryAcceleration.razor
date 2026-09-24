@@ -1,0 +1,18 @@
+<section class="acceleration" role="dialog" aria-modal="true" aria-label="작업 시간 가속">
+    <header><div><small>TIME ACCELERATION</small><h3>작업 시간 가속</h3></div><button aria-label="시간 가속 닫기" @onclick="CloseRequested">×</button></header>
+    <strong>@Title</strong><p>남은 시간 @Math.Max(0, Math.Ceiling((End - Now).TotalSeconds))초 · 보유 C @Coins.ToString("N0")</p>
+    <nav>@foreach (var minutes in new[] { 5, 30, 0 }) { var n = minutes; <button class="@(selected == n ? "selected" : "")" @onclick="() => selected = n">@(n == 0 ? "즉시 완료" : $"{n}분 단축")</button> }</nav>
+    <p>실제 단축 시간 @Math.Ceiling(Quote.Seconds)초 · <b>C @Quote.Cost</b><br/><small>단축 1분당 C @TerritoryRules.CoinsPerMinute (올림). 남은 시간까지만 계산합니다.</small></p>
+    <button class="confirm" disabled="@(Busy || Quote.Cost <= 0 || Coins < Quote.Cost)" @onclick="() => ConfirmRequested.InvokeAsync(selected)">@(Quote.Cost <= 0 ? "완료된 작업" : Coins < Quote.Cost ? "코인 부족" : $"C {Quote.Cost} 사용 · 가속 실행")</button>
+</section>
+@code {
+    [Parameter] public string Title { get; set; } = "";
+    [Parameter] public DateTime End { get; set; }
+    [Parameter] public DateTime Now { get; set; }
+    [Parameter] public long Coins { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public EventCallback<int> ConfirmRequested { get; set; }
+    [Parameter] public EventCallback CloseRequested { get; set; }
+    private int selected = 5;
+    private (int Cost, double Seconds) Quote => TerritoryRules.AccelerationQuote(End, Now, selected);
+}

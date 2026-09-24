@@ -467,3 +467,16 @@ FodyWeavers.xsd
 
 # Runtime application data
 **/App_Data/
+
+# Local agent work, validation packages, media tools and diagnostics
+.artifacts/
+.codex-*/
+/.codex-migration-status.json
+/.tools/
+/output/
+/factory-worker-debug/
+/factory-fault-debug.json
+/x8-max-diagnostics/
+/latpeed-codemaru-product.html
+/tools/*CodexDataMigration.ps1
+/50_SETUP/BabyCare/coordination/

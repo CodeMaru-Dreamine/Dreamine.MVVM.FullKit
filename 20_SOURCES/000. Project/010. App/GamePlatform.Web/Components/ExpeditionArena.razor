@@ -1,0 +1,204 @@
+@inject GameSession Session
+
+<section class="mi-arena" role="dialog" aria-modal="true" aria-label="천하 결투장">
+    <header>
+        <div><small>ASYNC DUEL · SAME SERVER</small><h2>천하 결투장</h2><p>같은 서버 원정대의 저장된 편성과 겨룹니다. 결투 중에도 탐험은 계속 진행됩니다.</p></div>
+        <button type="button" class="mi-endless-close" aria-label="결투장 닫기" @onclick="CloseRequested">×</button>
+    </header>
+
+    @if (loading)
+    {
+        <div class="mi-arena-loading"><i>⚔</i><strong>대전 명부를 불러오는 중…</strong></div>
+    }
+    else
+    {
+        <section class="mi-arena-hud">
+            <article class="is-tier"><small>현재 티어</small><strong>@Lobby.Tier</strong><em>@Lobby.Rating.ToString("N0")점 · @Lobby.Rank.ToString("N0")위</em></article>
+            <article><small>공격 전적</small><strong>@Lobby.AttackWins.ToString("N0")승 @Lobby.AttackLosses.ToString("N0")패</strong><em>승률 @AttackWinRate%</em></article>
+            <article><small>방어 전적</small><strong>@Lobby.DefenseWins.ToString("N0")승 @Lobby.DefenseLosses.ToString("N0")패</strong><em>현재 저장 편성 사용</em></article>
+            <article class="mi-arena-tickets"><small>남은 결투 @Lobby.RemainingChallenges 회</small><strong>무료 @(Lobby.DailyChallengeLimit - Lobby.DailyChallenges) · 구매 @Lobby.PurchasedTickets</strong><button type="button" disabled="@busy" @onclick="OpenTicketShop">결투권 충전 +</button></article>
+        </section>
+
+        @if (!string.IsNullOrWhiteSpace(resultMessage))
+        {
+            <div class="mi-arena-result @(lastVictory ? "is-victory" : "is-defeat")"><b>@(lastVictory ? "승리" : "전투 결과")</b><span>@resultMessage</span></div>
+        }
+
+        <div class="mi-arena-body">
+            <section class="mi-arena-matchmaking">
+                <header><div><small>MATCHMAKING · @Lobby.MatchmakingRevision</small><h3>도전 상대</h3><p class="mi-arena-match-hint" role="status">@(refreshMessage ?? "우세 65% 이상 · 약우세 55~64% · 각 결투는 독립 확률 판정입니다.")</p></div><button type="button" disabled="@busy" @onclick="RefreshOpponentsAsync">@(refreshing ? "갱신 중…" : "명부 갱신")</button></header>
+                @if (Lobby.Opponents.Count == 0)
+                {
+                    <div class="mi-arena-empty"><i>令</i><strong>결투 가능한 상대를 준비 중입니다.</strong><span>실제 이용자가 부족하면 서버 NPC 원정대가 자동 배치됩니다.</span></div>
+                }
+                else
+                {
+                    <div class="mi-arena-opponents">
+                        @foreach (var opponent in Lobby.Opponents)
+                        {
+                            <article>
+                                <div class="mi-arena-medal @(opponent.IsBot ? "is-bot" : null)"><b>@(opponent.IsBot ? "令" : opponent.Rank)</b><small>@(opponent.IsBot ? "NPC" : "RANK")</small></div>
+                                <div class="mi-arena-identity"><strong>@opponent.DisplayName @if (opponent.IsBot) { <i>NPC</i> }</strong><span>@opponent.Tier · @opponent.Rating.ToString("N0")점</span><em>원정대 전투력 @opponent.PartyPower.ToString("N0")</em><span class="mi-arena-matchup is-@opponent.MatchupClass" title="저장된 전투력을 서버 승패 공식으로 비교한 예상치입니다. 편성이나 장비가 바뀌면 실제 확률도 달라질 수 있습니다."><b>@opponent.MatchupLabel</b> 예상 승률 @opponent.EstimatedWinChance%</span></div>
+                                <div class="mi-arena-party" aria-label="상대 편성">
+                                    @foreach (var asset in opponent.CompanionAssetUrls)
+                                    {
+                                        <img src="@asset" alt="" />
+                                    }
+                                </div>
+                                <button type="button" disabled="@busy" @onclick="() => ChallengeAsync(opponent)">@(busyOpponentId == opponent.UserId ? "교전 중…" : Lobby.RemainingChallenges == 0 ? "충전" : "도전")</button>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+
+            <aside class="mi-arena-ranking">
+                <header><small>SERVER RANKING</small><h3>결투 순위</h3></header>
+                <div>
+                    @foreach (var player in Lobby.Leaderboard)
+                    {
+                        <article class="@(player.UserId == CurrentUserId ? "is-me" : null)"><b>@player.Rank</b><span><strong>@player.DisplayName</strong><small>@player.Tier · 전투력 @Compact(player.PartyPower)</small></span><em>@player.Rating.ToString("N0")</em></article>
+                    }
+                </div>
+            </aside>
+        </div>
+
+        <footer><b>운영 규칙</b><span>동일 서버 우선 매칭 · 부족 인원 NPC 보충 · 서버 승패 판정 · 승리 금화 보상</span><em>공식 순위는 실제 사용자만 집계합니다.</em></footer>
+    }
+</section>
+
+@if (ticketShopOpen)
+{
+    <div class="mi-arena-shop-backdrop">
+        <section class="mi-arena-shop" role="dialog" aria-modal="true" aria-label="결투권 충전">
+            <header><div><small>DUEL PASS EXCHANGE</small><h3>다음 승부를 준비하세요</h3></div><button type="button" disabled="@busy" @onclick="() => ticketShopOpen = false" aria-label="결투권 충전 닫기">×</button></header>
+            <div class="mi-arena-shop-wallet"><span>보유 CodeMaru C</span><strong>@Lobby.PremiumCurrency.ToString("N0") C</strong></div>
+            <p>무료 @ArenaRules.DailyChallengeLimit 회를 먼저 사용합니다.<br />구매한 결투권은 날짜가 바뀌어도 사라지지 않습니다.</p>
+            <div class="mi-arena-shop-packs">
+                @foreach (var count in new[] { 1, 5, 10 })
+                {
+                    <button type="button" class="@(ticketPack == count ? "is-selected" : "")" aria-pressed="@(ticketPack == count)" disabled="@busy" @onclick="() => ticketPack = count"><b>@count 장</b><span>@(count * ArenaRules.TicketPriceC) C</span></button>
+                }
+            </div>
+            <p class="mi-arena-shop-message" role="status">@(ticketMessage ?? $"구매 결투권 {Lobby.PurchasedTickets}장 보유 · 최대 {ArenaRules.MaximumPurchasedTickets}장")</p>
+            <button class="mi-arena-shop-buy" type="button" disabled="@(busy || Lobby.PremiumCurrency < ticketPack * ArenaRules.TicketPriceC || Lobby.PurchasedTickets + ticketPack > ArenaRules.MaximumPurchasedTickets)" @onclick="PurchaseTicketsAsync">@(busy ? "구매 처리 중…" : Lobby.PremiumCurrency < ticketPack * ArenaRules.TicketPriceC ? "CodeMaru C 부족" : $"{ticketPack * ArenaRules.TicketPriceC} C로 {ticketPack}장 구매")</button>
+            <small>무료 횟수는 매일 한국 시간 00시에 회복됩니다.</small>
+        </section>
+    </div>
+}
+
+@if (battleResult is not null && battleOpponent is not null && battleSnapshot is not null)
+{
+    <ArenaBattlePlayback Team="battleSnapshot" Opponent="battleOpponent" Result="battleResult" CloseRequested="CloseBattle" ReplaySpeed="Lobby.ReplaySpeed" ReplaySpeedChanged="SaveReplaySpeedAsync" />
+}
+
+@code {
+    [Parameter, EditorRequired] public GameSnapshot Snapshot { get; set; } = GameSnapshot.Empty;
+    [Parameter] public EventCallback<GameSnapshot> SnapshotChanged { get; set; }
+    [Parameter] public EventCallback CloseRequested { get; set; }
+
+    private ArenaLobbyView Lobby { get; set; } = ArenaLobbyView.Empty;
+    private bool loading = true;
+    private bool busy;
+    private bool lastVictory;
+    private string? busyOpponentId;
+    private string? resultMessage;
+    private ArenaBattleResult? battleResult;
+    private ArenaOpponentView? battleOpponent;
+    private GameSnapshot? battleSnapshot;
+    private bool ticketShopOpen;
+    private int ticketPack = 1;
+    private string? ticketMessage;
+    private bool refreshing;
+    private string? refreshMessage;
+
+    private async Task SaveReplaySpeedAsync(int speed)
+    {
+        var saved = await Session.SetArenaReplaySpeedAsync(speed);
+        Lobby = Lobby with { ReplaySpeed = saved };
+    }
+
+    private async Task RefreshOpponentsAsync()
+    {
+        if (busy) return;
+        busy = true;
+        refreshing = true;
+        try
+        {
+            var previous = Lobby.Opponents.Select(item => item.UserId).ToHashSet(StringComparer.Ordinal);
+            Lobby = await Session.RefreshArenaOpponentsAsync();
+            var changed = Lobby.Opponents.Count(item => !previous.Contains(item.UserId));
+            refreshMessage = changed > 0 ? $"갱신 완료 · 새로운 상대 {changed}팀 · 무료 갱신" : "갱신 완료 · 추가 후보가 없어 현재 상대의 순서·정보를 갱신했습니다.";
+        }
+        finally { refreshing = false; busy = false; }
+    }
+
+    private async Task OpenTicketShop()
+    {
+        await ReloadAsync();
+        ticketMessage = null;
+        ticketShopOpen = true;
+    }
+
+    private async Task PurchaseTicketsAsync()
+    {
+        if (busy) return;
+        busy = true;
+        try
+        {
+            var result = await Session.PurchaseArenaTicketsAsync(ticketPack);
+            ticketMessage = result.Message;
+            await SnapshotChanged.InvokeAsync(result.State);
+            Lobby = await Session.LoadArenaAsync();
+        }
+        finally { busy = false; }
+    }
+
+    private void CloseBattle() => battleResult = null;
+    private string CurrentUserId => Lobby.Leaderboard.FirstOrDefault(item => item.Rank == Lobby.Rank && item.Rating == Lobby.Rating)?.UserId ?? string.Empty;
+    private int AttackWinRate => Lobby.AttackWins + Lobby.AttackLosses == 0 ? 0 : (int)Math.Round(Lobby.AttackWins * 100d / (Lobby.AttackWins + Lobby.AttackLosses));
+
+    protected override async Task OnInitializedAsync() => await ReloadAsync();
+
+    private async Task ReloadAsync()
+    {
+        if (busy) return;
+        busy = true;
+        try { Lobby = await Session.LoadArenaAsync(); }
+        finally { busy = false; loading = false; }
+    }
+
+    private async Task ChallengeAsync(ArenaOpponentView opponent)
+    {
+        if (busy || battleResult is not null) return;
+        // Refresh first: free attempts may have recovered at midnight on an open lobby.
+        await ReloadAsync();
+        if (Lobby.RemainingChallenges == 0) { await OpenTicketShop(); return; }
+        busy = true;
+        busyOpponentId = opponent.UserId;
+        var startingTeam = Snapshot;
+        try
+        {
+            var result = await Session.ChallengeArenaAsync(opponent.UserId);
+            lastVictory = result.Victory;
+            resultMessage = result.Message;
+            if (result.Accepted)
+            {
+                await SnapshotChanged.InvokeAsync(result.State);
+                battleSnapshot = startingTeam;
+                battleOpponent = opponent;
+                battleResult = result;
+            }
+            Lobby = await Session.LoadArenaAsync();
+        }
+        finally { busy = false; busyOpponentId = null; }
+    }
+
+    private static string Compact(long value) => value switch
+    {
+        >= 1_000_000_000 => $"{value / 1_000_000_000d:0.#}B",
+        >= 1_000_000 => $"{value / 1_000_000d:0.#}M",
+        >= 1_000 => $"{value / 1_000d:0.#}K",
+        _ => value.ToString("N0")
+    };
+}

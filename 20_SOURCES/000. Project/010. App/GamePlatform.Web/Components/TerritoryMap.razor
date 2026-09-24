@@ -1,0 +1,157 @@
+@inject IJSRuntime JS
+@implements IAsyncDisposable
+
+<div class="world-map @(Shared is not null ? "shared-map" : "")" data-focus-target="@(FocusTarget?.Id.ToString())" data-focus-x="@(FocusTarget is null ? null : X(FocusTarget.Tile).ToString())" data-focus-y="@(FocusTarget is null ? null : Y(FocusTarget.Tile).ToString())" data-default-zoom="@(Shared is not null ? "1.05" : "0.82")" data-home-x="@X(HomeTile)" data-home-y="@Y(HomeTile)" @ref="root" role="region" aria-label="드래그로 이동하는 청운 월드맵" tabindex="0">
+    <div class="world-camera" data-camera>
+        <div class="world-plane" data-plane>
+            <img class="continent-art" src="/images/maru-idle/territory/continent-v5.png" alt="설산부터 사막과 밀림까지 이어진 천하 대륙" draggable="false" />
+            <svg class="world-fog" viewBox="0 0 7000 7000" aria-hidden="true">
+                <defs>
+                    <filter id="@($"{mapId}-blur")" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="52"/></filter>
+                    <mask id="@($"{mapId}-fog")"><rect width="7000" height="7000" fill="white"/><g fill="black" filter="@($"url(#{mapId}-blur)")">@foreach (var tile in State.Revealed) { <circle cx="@X(tile)" cy="@Y(tile)" r="225"/> }</g></mask>
+                </defs>
+                <rect width="7000" height="7000" fill="#18282c" opacity=".57" mask="@($"url(#{mapId}-fog)")"/>
+                @if (SelectedTile != 12) { <path class="planned-route" d="@($"M3500 3500 L{X(SelectedTile)} {Y(SelectedTile)}")"/> }
+                @foreach (var route in TerritoryRules.ActiveMarches(State)) { <path class="active-route" d="@($"M3500 3500 L{X(route.Tile)} {Y(route.Tile)}")"/> }
+            </svg>
+            @if (Shared is null)
+            {
+            @for (var region = 0; region < 25; region++)
+            {
+                var center = TerritoryRules.TileAt(region % 5 * 5 + 2, region / 5 * 5 + 2);
+                <span class="biome-label" style="@($"left:{X(center) - 170}px;top:{Y(center) - 350}px")">@TerritoryRules.RegionName(center)</span>
+                <button class="region-entry" style="@Position(center)" data-map-command="region" data-x="@X(center)" data-y="@Y(center)" aria-label="@($"{TerritoryRules.RegionName(center)} 권역으로 지도 이동")">@TerritoryRules.RegionName(center).Replace(" ", "")<small>@(region == 12 ? "본성" : "권역 이동")</small></button>
+            }
+            @for (var i = 0; i < TerritoryRules.WorldTileCount; i++)
+            {
+                var tile = i;
+                var terrain = TerritoryRules.Terrain(tile);
+                var revealed = State.Revealed.Contains(tile);
+                var owned = State.Claimed.Contains(tile);
+                @if (revealed || tile == 0 || TerritoryRules.IsRegionalCapital(tile))
+                {
+                    <button @key="tile" class="world-site @terrain @(owned ? "owned" : "hostile") @(SelectedTile == tile ? "selected" : "") @(!revealed ? "unexplored" : "")" style="@Position(tile)" data-map-site="@tile" aria-label="@($"{TerritoryRules.TileRow(tile) + 1},{TerritoryRules.TileColumn(tile) + 1} {TerritoryRules.TileName(tile)} {(owned ? "점령" : revealed ? "미점령" : "미발견")}")" disabled="@(!revealed)" @onclick="() => Select(tile)">
+                        <span class="site-ground"></span>
+                        @if (terrain is "home" or "citadel") { <span class="stronghold-art stronghold-@terrain" aria-hidden="true"></span> }
+                        else if (terrain == "camp") { <img class="wild-monster-art" src="@TerritoryWorldVisuals.MonsterAsset(tile)" alt="" draggable="false" /> }
+                        else { <span class="resource-deposit resource-@TerritoryWorldVisuals.ResourceIndex(tile)" aria-hidden="true"></span> }
+                        <span class="site-name"><b>@TerritoryRules.TileName(tile)</b><small>@(tile == 12 ? $"Lv.{State.Buildings[0]} · 본성" : owned ? "아군 점령지" : !revealed ? "미발견 왕성" : $"Lv.{TerritoryRules.Distance(tile)} · 수비 {TerritoryRules.Defense(tile):N0}")</small></span>
+                    </button>
+                    @if (revealed && !owned && terrain is not ("home" or "citadel" or "camp"))
+                    {
+                        <button class="world-monster" style="@MonsterPosition(tile)" aria-label="@($"{TerritoryWorldVisuals.MonsterName(tile)} · {TerritoryRules.TileName(tile)} 수비 몬스터 선택")" @onclick="() => AttackRequested.InvokeAsync(tile)">
+                            <span class="monster-shadow"></span><img src="@TerritoryWorldVisuals.MonsterAsset(tile)" alt="" draggable="false"/>
+                            <span>Lv.@TerritoryRules.Distance(tile) @TerritoryWorldVisuals.MonsterName(tile)</span>
+                        </button>
+                    }
+                }
+            }
+            @foreach (var march in TerritoryRules.ActiveMarches(State))
+            {
+                <div @key="march.Id" class="march-party" data-march data-id="@march.Id" data-slot="@march.Slot" data-start="@UtcMilliseconds(TerritoryRules.MarchVisualAnchor(march))" data-end="@UtcMilliseconds(march.ReturnsUtc)" data-progress="@Invariant(march.JourneyProgress)" data-x="@X(march.Tile)" data-y="@Y(march.Tile)" data-mission="@march.Mission" aria-label="@($"제 {march.Slot} 부대 캐릭터 행군 중")">
+                    <span class="march-shadow"></span><span class="march-dust"></span>
+                    <div class="march-sprites">
+                        @if (march.Squads.Count == 0) { <img src="@TerritoryWorldVisuals.MarchAsset(null)" alt="원정 대장" draggable="false"/> }
+                        @foreach (var squad in march.Squads) { <img class="@squad.MarchSkinClass" src="@TerritoryWorldVisuals.MarchAsset(squad)" alt="@squad.CommanderName" draggable="false"/> }
+                    </div>
+                    <strong>@march.Slot 부대 · <span data-march-phase>행군</span> · @march.Troops.Sum()명</strong>
+                    <small>@string.Join(" · ", march.Squads.Select(s => s.CommanderName))</small>
+                </div>
+            }
+            }
+            else
+            {
+                @for (var region = 0; region < 25; region++)
+                {
+                    var center = TerritoryRules.TileAt(region % 5 * 5 + 2, region / 5 * 5 + 2);
+                    <button class="region-entry" style="@Position(center)" data-map-command="region" data-x="@X(center)" data-y="@Y(center)" aria-label="@($"{TerritoryRules.RegionName(center)} 사냥 권역으로 이동")">@TerritoryRules.RegionName(center)<small>일반 · 정예 · 보스</small></button>
+                }
+                @foreach (var member in Shared.Members.Values)
+                {
+                    <button class="world-site owned shared-castle" style="@Position(member.Tile)" data-map-site="@member.Tile" @onclick="() => PlayerSelected.InvokeAsync(member.UserId)" aria-label="@($"{member.Name} 본성 · Lv.{member.Level} · {TerritorySharedRules.Protection(member, DateTime.UtcNow)}")">
+                        @if (member.Level < TerritorySharedRules.PvpLevel || member.ShieldUntilUtc > DateTime.UtcNow) { <span class="castle-shield"></span> }
+                        <span class="stronghold-art stronghold-home"></span><span class="site-name"><b>@member.Name @(member.UserId == CurrentUserId ? "· 나" : "")</b><small>Lv.@member.Level · @TerritorySharedRules.Protection(member, DateTime.UtcNow)</small></span>
+                    </button>
+                }
+                @foreach (var boss in TerritorySharedRules.Bosses.Where(b => !Shared.Members.Values.Any(m => m.Tile == b.Tile)))
+                {
+                    var resting = Shared.BossRespawns.GetValueOrDefault(boss.Id) > DateTime.UtcNow;
+                    var engaged = Shared.Rallies.Any(r => r.Boss == boss.Id && !r.Returned);
+                    <button @key="boss.Id" class="world-monster shared-boss monster-@boss.Kind @(resting ? "respawning" : "") @(engaged ? "engaged" : "")" style="@Position(boss.Tile)" data-map-site="@boss.Tile" @onclick="() => BossSelected.InvokeAsync(boss.Id)" aria-label="@($"Lv.{boss.Level} {boss.Name} · {boss.KindLabel} · {(resting ? "재출현 대기" : engaged ? "토벌 중" : "출정 가능")}")"><img src="@boss.Asset" alt="" loading="lazy" draggable="false"/><span>Lv.@boss.Level @boss.Name<br/><small>@(resting ? "재출현 대기" : engaged ? "토벌 중" : boss.KindLabel)</small></span></button>
+                }
+                @foreach (var rally in Shared.Rallies.Where(r => !r.Returned && !r.Cancelled && r.DepartsUtc <= DateTime.UtcNow))
+                {
+                    <div class="shared-army" style="@RallyPosition(rally)">@foreach (var squad in rally.Squads.Take(3)) { <img src="@TerritoryWorldVisuals.MarchAsset(squad)" alt="@squad.CommanderName"/> }<b>유저 @rally.Armies.Count 부대 @(rally.NpcSupportPower > 0 ? "+ NPC 지원군" : rally.SoloHunt ? "단독 토벌" : "집결")</b></div>
+                }
+            }
+        </div>
+    </div>
+    <div class="map-topline"><span>천하 전도 <b>@(Shared is null ? $"25권역 · 점령 {State.Claimed.Count} / {TerritoryRules.WorldTileCount}" : $"25권역 · {TerritorySharedRules.Bosses.Length}개 서식지 · {Shared.Members.Count}개 본성")</b></span><span data-camera-coordinates>13 : 13</span></div>
+    <div class="map-zoom" aria-label="지도 배율"><button data-map-command="zoom-in" aria-label="지도 확대">+</button><span data-zoom>100%</span><button data-map-command="zoom-out" aria-label="지도 축소">−</button><button data-map-command="overview" aria-label="전체 지도 보기">전체</button></div>
+    <div class="map-navigation @(directionControlsOpen ? "directions-open" : "")" aria-label="지도 이동">
+        <button class="pan-up" data-map-command="up" aria-label="지도 북쪽으로 이동">↑</button>
+        <button class="pan-left" data-map-command="left" aria-label="지도 서쪽으로 이동">←</button>
+        <button class="pan-home" data-map-command="home" aria-label="본성으로 지도 이동">본성</button>
+        <button class="pan-right" data-map-command="right" aria-label="지도 동쪽으로 이동">→</button>
+        <button class="pan-down" data-map-command="down" aria-label="지도 남쪽으로 이동">↓</button>
+    </div>
+    <div class="mobile-map-tools"><button data-map-command="home" aria-label="본성으로 지도 이동">본성</button><button aria-label="방향 이동 버튼 펼치기" aria-expanded="@directionControlsOpen" @onclick="() => directionControlsOpen = !directionControlsOpen">@(directionControlsOpen ? "접기" : "이동")</button></div>
+    <button class="mini-map" data-map-command="minimap" aria-label="미니맵 위치로 이동"><img src="/images/maru-idle/territory/continent-v5.png" alt="" draggable="false"/><span class="mini-home"></span><span data-minimap-camera></span><small>천하 전도</small></button>
+    @if (Shared is null && State.March is not null) { <button class="follow-army" data-map-command="army">원정군 찾기</button> }
+    <span class="map-help">@(initializationError ?? "드래그 이동 · 두 손가락 / 휠 확대")</span>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public TerritoryState State { get; set; } = new();
+    [Parameter] public int SelectedTile { get; set; } = 12;
+    [Parameter] public EventCallback<int> SelectedTileChanged { get; set; }
+    [Parameter] public EventCallback<int> AttackRequested { get; set; }
+    [Parameter] public TerritorySharedWorld? Shared { get; set; }
+    [Parameter] public string CurrentUserId { get; set; } = "";
+    [Parameter] public int FocusMonsterId { get; set; } = -1;
+    private TerritoryWorldBoss? FocusTarget => FocusMonsterId >= 0 && FocusMonsterId < TerritorySharedRules.Bosses.Length ? TerritorySharedRules.Bosses[FocusMonsterId] : null;
+    private int HomeTile => Shared?.Members.GetValueOrDefault(CurrentUserId)?.Tile ?? 12;
+    [Parameter] public EventCallback<int> BossSelected { get; set; }
+    [Parameter] public EventCallback<string> PlayerSelected { get; set; }
+    private string RallyPosition(TerritoryRally rally)
+    {
+        var home = Shared!.Members[rally.LeaderId].Tile; var boss = TerritorySharedRules.Bosses[rally.Boss].Tile;
+        var elapsed = (DateTime.UtcNow - rally.DepartsUtc).TotalSeconds;
+        var fraction = elapsed < 60 ? Math.Clamp(elapsed / 60, 0, 1) : elapsed < 70 ? 1 : Math.Clamp(1 - (elapsed - 70) / 60, 0, 1);
+        return $"left:{Invariant(X(home) + (X(boss) - X(home)) * fraction)}px;top:{Invariant(Y(home) + (Y(boss) - Y(home)) * fraction)}px";
+    }
+    private readonly string mapId = "world-" + Guid.NewGuid().ToString("N");
+    private ElementReference root;
+    private IJSObjectReference? module, controller;
+    private bool disposed, directionControlsOpen;
+    private string? initializationError;
+    private static int X(int tile) => TerritoryWorldVisuals.X(tile);
+    private static int Y(int tile) => TerritoryWorldVisuals.Y(tile);
+    private static string Position(int tile) => $"left:{X(tile)}px;top:{Y(tile)}px";
+    private static string MonsterPosition(int tile) => $"left:{X(tile) + 88}px;top:{Y(tile) + 68}px";
+    private static long UtcMilliseconds(DateTime date) => new DateTimeOffset(DateTime.SpecifyKind(date, DateTimeKind.Utc)).ToUnixTimeMilliseconds();
+    private static string Invariant(double n) => n.ToString(System.Globalization.CultureInfo.InvariantCulture);
+    private Task Select(int tile) => SelectedTileChanged.InvokeAsync(tile);
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (disposed) return;
+        try
+        {
+            if (firstRender)
+            {
+                module = await JS.InvokeAsync<IJSObjectReference>("import", "/territory-map.mjs?v=12");
+                if (disposed) { await module.DisposeAsync(); return; }
+                controller = await module.InvokeAsync<IJSObjectReference>("mount", root, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            }
+            else if (controller is not null) await controller.InvokeVoidAsync("sync", DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        }
+        catch (JSDisconnectedException) { }
+        catch (JSException) { if (!disposed && initializationError is null) { initializationError = "지도 조작을 불러오지 못했습니다. 다시 열어 주세요."; StateHasChanged(); } }
+    }
+    public async ValueTask DisposeAsync()
+    {
+        disposed = true;
+        try { if (controller is not null) { await controller.InvokeVoidAsync("dispose"); await controller.DisposeAsync(); } if (module is not null) await module.DisposeAsync(); }
+        catch (JSDisconnectedException) { }
+    }
+}

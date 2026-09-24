@@ -1,0 +1,125 @@
+@implements IAsyncDisposable
+@inject GameSession Session
+@inject IJSRuntime JS
+
+<section class="mi-endless-trial mi-arcade-game spirit-fortress" role="dialog" aria-modal="true" aria-label="영맥 성채">
+    <header>
+        <div><small>SPIRIT FORTRESS DEFENSE</small><h2>영맥 성채</h2><p>영기를 모아 방어탑을 세우고, 성문으로 밀려드는 마물 군세를 막으세요.</p></div>
+        <button type="button" class="mi-endless-close" aria-label="현재 보상을 정산하고 영맥 성채 닫기" title="중도 정산 후 종료" @onclick="CloseAsync">×</button>
+    </header>
+    <div class="mi-endless-hud" id="@($"{rootId}-hud")">
+        <span><small>방어</small><strong data-fortress-time>0:00</strong></span>
+        <span><small>공세</small><strong data-fortress-wave>1파</strong></span>
+        <span><small>영기</small><strong data-fortress-energy>90</strong></span>
+        <span><small>성문</small><strong data-fortress-gate>100%</strong></span>
+    </div>
+    <div class="mi-endless-canvas-shell" id="@rootId">
+        <canvas @ref="canvas" width="720" height="1080" tabindex="0" aria-label="영맥 성채 타워 디펜스 게임"></canvas>
+        @if (!running)
+        {
+            <div class="mi-endless-gate">
+                <img src="/images/maru-idle/icons-premium/equipment.png" alt="" />
+                @if (lastResult is null)
+                {
+                    <small>BUILD · UPGRADE · ENDLESS WAVES</small><h3>성채에 방어탑을 세워라</h3>
+                    <p>설치대를 누르고 망루·화살·조총·화포 중 하나를 직접 선택하세요. 종류는 고정되고 레벨만 계속 오르므로 공세 상성에 맞춘 혼합 배치가 중요합니다.</p>
+                }
+                else
+                {
+                    <small>FORTRESS COMPLETE</small><h3>@(lastResult.Accepted ? "성채 보상 정산 완료" : "기록 확인 실패")</h3><strong>@lastResult.Message</strong>
+                    @if (lastResult.EquipmentDropped is not null) { <p>장비 획득 · @lastResult.EquipmentDropped.DisplayName</p> }
+                    @if (lastResult.BoostDropped is not null) { <p>부적 획득 · @lastResult.BoostDropped.Name</p> }
+                }
+                <button type="button" disabled="@starting" @onclick="StartAsync">@(starting ? "성채 연결 중…" : lastResult is null ? "방어 시작" : "다시 방어")</button>
+            </div>
+        }
+    </div>
+    <footer><span><b>상성</b> 화살↔질주 · 조총↔중갑 · 화포↔군집</span><span><b>압박</b> 12파 이후 급상승 · 고강화 효율 감소</span><span><b>수리</b> 반복할수록 비용 증가 · 25% 이하 최후 저항</span></footer>
+</section>
+
+@code {
+    private readonly string rootId = $"spirit-fortress-{Guid.NewGuid():N}";
+    private ElementReference canvas;
+    private DotNetObjectReference<SpiritFortressDefense>? componentReference;
+    private ArcadeTrialStart? activeRun;
+    private ArcadeTrialResult? lastResult;
+    private bool running;
+    private bool starting;
+
+    [Parameter, EditorRequired] public GameSnapshot Snapshot { get; set; } = GameSnapshot.Empty;
+    [Parameter] public EventCallback<GameSnapshot> SnapshotChanged { get; set; }
+    [Parameter] public EventCallback CloseRequested { get; set; }
+
+    private async Task StartAsync()
+    {
+        if (running || starting) return;
+        starting = true;
+        lastResult = null;
+        try
+        {
+            activeRun = await Session.BeginSpiritFortressRunAsync();
+            componentReference ??= DotNetObjectReference.Create(this);
+            running = true;
+            await JS.InvokeVoidAsync("maruSpiritFortress.start", canvas, rootId, componentReference, new
+            {
+                backgroundUrl = "/images/maru-idle/trials/spirit-fortress-v1.png",
+                enemyUrl = Snapshot.World.EnemyAssetUrl,
+                towerUrl = "/images/maru-idle/trials/fortress-tower-evolution-v1.png"
+            });
+        }
+        finally { starting = false; }
+    }
+
+    [JSInvokable]
+    public async Task FinishAsync(int durationSeconds, int kills, int waves, int towerLevels, int goldPickups, int materialPickups, int ticketPickups)
+    {
+        if (!running || activeRun is null) return;
+        running = false;
+        var run = activeRun;
+        activeRun = null;
+        lastResult = await Session.CompleteSpiritFortressRunAsync(run.RunId, durationSeconds, kills, waves, towerLevels, goldPickups, materialPickups, ticketPickups);
+        await SnapshotChanged.InvokeAsync(lastResult.State);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CloseAsync()
+    {
+        if (running && activeRun is not null)
+        {
+            var run = activeRun;
+            FortressRunReport? report = null;
+            try { report = await JS.InvokeAsync<FortressRunReport?>("maruSpiritFortress.settle", canvas); }
+            catch (JSDisconnectedException) { }
+
+            running = false;
+            activeRun = null;
+            if (report is not null)
+            {
+                lastResult = await Session.CompleteSpiritFortressRunAsync(run.RunId,
+                    report.DurationSeconds, report.Kills, report.Waves, report.TowerLevels,
+                    report.GoldPickups, report.MaterialPickups, report.TicketPickups);
+                await SnapshotChanged.InvokeAsync(lastResult.State);
+            }
+        }
+        else
+        {
+            try { await JS.InvokeVoidAsync("maruSpiritFortress.stop", canvas); } catch (JSDisconnectedException) { }
+        }
+        await CloseRequested.InvokeAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { await JS.InvokeVoidAsync("maruSpiritFortress.stop", canvas); } catch (JSDisconnectedException) { }
+        componentReference?.Dispose();
+    }
+
+    private sealed record FortressRunReport(
+        int DurationSeconds,
+        int Kills,
+        int Waves,
+        int TowerLevels,
+        int GoldPickups,
+        int MaterialPickups,
+        int TicketPickups);
+}

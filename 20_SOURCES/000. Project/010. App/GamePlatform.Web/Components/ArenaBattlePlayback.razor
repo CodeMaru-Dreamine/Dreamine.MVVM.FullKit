@@ -1,0 +1,153 @@
+@implements IDisposable
+
+<section class="mi-duel @(finished ? "is-finished" : "")" role="dialog" aria-modal="true" aria-label="결투 전투 장면" style="--pace:@(speed == 1 ? "1" : ".5")">
+    <header><div><small>THE CELESTIAL ARENA</small><h2>천하 비무</h2></div><span class="mi-duel-live">@(finished ? "승부 종료" : "진행 중")</span><button type="button" @onclick="CloseRequested" aria-label="전투 장면 닫기">×</button></header>
+    <div class="mi-duel-score">
+        <div class="mi-duel-identity"><img src="@ownUnits[0].Asset" alt="" /><div><strong>@(string.IsNullOrWhiteSpace(Team.GameNickname) ? "내 원정대" : Team.GameNickname)</strong><span>전투력 @Compact(Team.TrialTowerPartyPower)</span></div><progress max="100" value="@TeamHp(false)" aria-label="내 원정대 남은 체력" /><small>생존 @ownHp.Count(h => h > 0) / @ownUnits.Length</small></div>
+        <b>VS</b>
+        <div class="mi-duel-identity is-enemy"><img src="@enemyUnits[0].Asset" alt="" /><div><strong>@Opponent.DisplayName</strong><span>@(Opponent.IsBot ? "NPC · " : "")전투력 @Compact(Opponent.PartyPower)</span></div><progress max="100" value="@TeamHp(true)" aria-label="상대 원정대 남은 체력" /><small>생존 @enemyHp.Count(h => h > 0) / @enemyUnits.Length</small></div>
+    </div>
+    <div class="mi-duel-stage @(phase == "impact" && strike?.Skill == true ? "is-burst" : "")">
+        <div class="mi-duel-floor"></div><div class="mi-duel-dust"></div>
+        <div class="mi-duel-turn"><span>천명 연무장</span><b>@(finished ? "비무 종료" : turn == 0 ? "양측 원정대 입장" : $"교전 {turn:00} / {plan.Count}")</b></div>
+        @if (strike is not null && !finished)
+        {
+            <div class="mi-duel-skill @(strike.AttackerEnemy ? "is-enemy" : "") @(strike.Skill ? "is-ultimate" : "")" @key="turn"><small>@AttackerName</small><strong>@SkillName</strong></div>
+        }
+        @for (var side = 0; side < 2; side++)
+        {
+            var enemy = side == 1;
+            var units = enemy ? enemyUnits : ownUnits;
+            var health = enemy ? enemyHp : ownHp;
+            @for (var index = 0; index < units.Length; index++)
+            {
+                var unit = units[index];
+                var hp = health[index];
+                var attacking = !finished && strike is not null && strike.AttackerEnemy == enemy && strike.Attacker == index;
+                var hit = !finished && strike is not null && strike.AttackerEnemy != enemy && strike.Target == index && phase == "impact";
+                <figure class="mi-duel-unit @(enemy ? "is-enemy" : "is-ally") @(attacking ? "is-attacking phase-" + phase : "") @(hit ? "is-hit" : "") @(hp == 0 ? "is-down" : "")" style="@UnitStyle(enemy, index, attacking)" @key="(enemy, index)">
+                    <div class="mi-duel-aura"></div>
+                    <div class="mi-duel-sprite"><img src="@unit.Asset" alt="@unit.Name" /></div>
+                    <figcaption><strong>@unit.Name</strong><progress max="100" value="@hp" aria-label="@(unit.Name + " 체력")" /></figcaption>
+                    @if (hit)
+                    {
+                        <div class="mi-duel-impact @(strike!.Skill ? "is-critical" : "")" @key="turn"><i></i><i></i><i></i><em>@(strike.Damage == 0 ? "방어" : "−" + DamageText)</em>@if (hp == 0) { <b>격파</b> }</div>
+                    }
+                </figure>
+            }
+        }
+        @if (turn == 0 && !finished)
+        {
+            <div class="mi-duel-intro"><span>천하의 강자를 가린다</span><strong>출 진</strong><small>원정대 대 원정대</small></div>
+        }
+        @if (finished)
+        {
+            <div class="mi-duel-end @(Result.Victory ? "is-victory" : "is-defeat")" role="status"><div class="mi-duel-seal">@(Result.Victory ? "勝" : "敗")</div><small>DUEL COMPLETE</small><h3>@(Result.Victory ? "비무 승리" : "비무 패배")</h3><p>@Result.Message</p><button type="button" @onclick="CloseRequested">대전 명부로</button></div>
+        }
+        <div class="mi-duel-caption">@(finished ? "승부가 기록되었습니다" : strike is null ? "편성된 동료들과 함께 출전합니다" : $"{AttackerName} → {TargetName} · {SkillName}")</div>
+    </div>
+    <footer><span role="status"><i></i>@(speedError ?? (Team.AutoAttackEnabled ? "탐험 AUTO 진행 중" : "전투 결과 재생"))</span><button type="button" @onclick="ToggleSpeedAsync" disabled="@(finished || savingSpeed)" aria-label="전투 재생 속도" title="선택한 배속은 계정에 저장됩니다">×@speed</button><button type="button" @onclick="Finish" disabled="@finished">결과 보기 ⏭</button></footer>
+</section>
+
+@code {
+    [Parameter, EditorRequired] public GameSnapshot Team { get; set; } = GameSnapshot.Empty;
+    [Parameter, EditorRequired] public ArenaOpponentView Opponent { get; set; } = default!;
+    [Parameter, EditorRequired] public ArenaBattleResult Result { get; set; } = default!;
+    [Parameter] public EventCallback CloseRequested { get; set; }
+    [Parameter] public int ReplaySpeed { get; set; } = 1;
+    [Parameter] public EventCallback<int> ReplaySpeedChanged { get; set; }
+    private readonly CancellationTokenSource lifetime = new();
+    private (string Name, string Asset)[] ownUnits = [], enemyUnits = [];
+    private int[] ownHp = [], enemyHp = [];
+    private IReadOnlyList<ArenaReplayStrike> plan = [];
+    private ArenaReplayStrike? strike;
+    private int turn, speed = 1;
+    private bool finished;
+    private bool savingSpeed;
+    private string? speedError;
+    private string phase = "ready";
+    private string AttackerName => strike is null ? "" : (strike.AttackerEnemy ? enemyUnits : ownUnits)[strike.Attacker].Name;
+    private string TargetName => strike is null ? "" : (strike.AttackerEnemy ? ownUnits : enemyUnits)[strike.Target].Name;
+    private string SkillName => strike?.Skill == true ? new[] { "천명 · 일섬", "월영 · 난무", "파군 · 진격", "청풍 · 파쇄", "용혼 · 격류", "비연 · 섬광" }[strike.Attacker % 6] : "연속 참격";
+    private string DamageText => strike is null ? "" : Compact(Math.Max(1L, (long)Math.Min(long.MaxValue, (decimal)(strike.AttackerEnemy ? Team.TrialTowerPartyPower : Opponent.PartyPower) * strike.Damage / 100m)));
+
+    protected override void OnInitialized()
+    {
+        speed = ReplaySpeed == 2 ? 2 : 1;
+        ownUnits = new[] { (Team.Party.ActiveHero.Name, Team.Party.ActiveHero.SpriteAssetUrl) }.Concat(Team.Party.Companions.Take(5).Select(hero => (hero.Name, hero.SpriteAssetUrl))).ToArray();
+        enemyUnits = new[] { ("원정대장", Team.Party.ActiveHero.SpriteAssetUrl) }.Concat(Opponent.CompanionAssetUrls.Take(5).Select(asset => (PartyRules.AllCompanions.FirstOrDefault(hero => hero.SpriteAssetUrl == asset)?.Name ?? "동료", asset))).ToArray();
+        ownHp = Enumerable.Repeat(100, ownUnits.Length).ToArray();
+        enemyHp = Enumerable.Repeat(100, enemyUnits.Length).ToArray();
+        plan = ArenaReplayPlan.Create(Result.Victory, ownUnits.Length, enemyUnits.Length);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+        try
+        {
+            await Task.Delay(1000, lifetime.Token);
+            foreach (var action in plan)
+            {
+                if (finished) break;
+                strike = action; turn++; phase = "ready";
+                await RenderDelay(140);
+                if (finished) break;
+                phase = "approach";
+                await RenderDelay(250);
+                if (finished) break;
+                (action.AttackerEnemy ? ownHp : enemyHp)[action.Target] = action.RemainingHp;
+                phase = "impact";
+                await RenderDelay(260);
+                if (finished) break;
+                phase = "recover";
+                await RenderDelay(250);
+            }
+            if (!lifetime.IsCancellationRequested) { Finish(); await InvokeAsync(StateHasChanged); }
+        }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task RenderDelay(int milliseconds)
+    {
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(milliseconds / speed, lifetime.Token);
+    }
+
+    private static (int X, int Y) Position(bool enemy, int index)
+    {
+        var x = index % 2 == 0 ? 23 : 0;
+        return (enemy ? 75 - x : x, 16 + index / 2 * 25 - index % 2 * 8);
+    }
+
+    private string UnitStyle(bool enemy, int index, bool attacking)
+    {
+        var point = Position(enemy, index);
+        var target = attacking && strike is not null ? Position(!enemy, strike.Target) : point;
+        // Figure width is 25% and height is 26% of the same battlefield.
+        var dx = attacking ? (target.X - point.X + (enemy ? 5 : -5)) * 4 : 0;
+        var dy = (target.Y - point.Y) * 100 / 26;
+        return $"left:{point.X}%;top:{point.Y}%;--travel-x:{dx}%;--travel-y:{dy}%;--depth:{point.Y + 1}";
+    }
+
+    private int TeamHp(bool enemy) => (int)(enemy ? enemyHp : ownHp).Average();
+    private async Task ToggleSpeedAsync()
+    {
+        if (savingSpeed || finished) return;
+        savingSpeed = true;
+        speedError = null;
+        var previous = speed;
+        speed = speed == 1 ? 2 : 1;
+        try { await ReplaySpeedChanged.InvokeAsync(speed); }
+        catch { speed = previous; speedError = "배속 저장 실패 · 다시 시도해 주세요"; }
+        finally { savingSpeed = false; }
+    }
+    private void Finish()
+    {
+        // Fast-forward the same visual log, without submitting another battle or reward.
+        foreach (var action in plan) (action.AttackerEnemy ? ownHp : enemyHp)[action.Target] = action.RemainingHp;
+        finished = true; turn = plan.Count; phase = "done";
+    }
+    private static string Compact(long value) => value switch { >= 1_000_000_000 => $"{value / 1_000_000_000d:0.#}B", >= 1_000_000 => $"{value / 1_000_000d:0.#}M", >= 1_000 => $"{value / 1_000d:0.#}K", _ => value.ToString("N0") };
+    public void Dispose() { lifetime.Cancel(); lifetime.Dispose(); }
+}

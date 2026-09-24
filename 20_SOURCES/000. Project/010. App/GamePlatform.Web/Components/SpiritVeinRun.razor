@@ -1,0 +1,96 @@
+@implements IAsyncDisposable
+@inject GameSession Session
+@inject IJSRuntime JS
+
+<section class="mi-endless-trial mi-arcade-game spirit-vein" role="dialog" aria-modal="true" aria-label="영맥 질주">
+    <header>
+        <div><small>SPIRIT VEIN RUN</small><h2>영맥 질주</h2><p>세 갈래 영맥을 오가며 영기와 보상을 모으고 붕괴 지대를 피하세요.</p></div>
+        <button type="button" class="mi-endless-close" aria-label="영맥 질주 닫기" @onclick="CloseAsync">×</button>
+    </header>
+    <div class="mi-endless-hud" id="@($"{rootId}-hud")">
+        <span><small>질주</small><strong data-vein-time>0:00</strong></span>
+        <span><small>거리</small><strong data-vein-distance>0m</strong></span>
+        <span><small>영기</small><strong data-vein-essence>0</strong></span>
+        <span><small>연속 획득</small><strong data-vein-combo>×1</strong></span>
+    </div>
+    <div class="mi-endless-canvas-shell" id="@rootId">
+        <canvas @ref="canvas" width="720" height="1080" tabindex="0" aria-label="세 갈래 영맥 무한 질주 게임"></canvas>
+        @if (!running)
+        {
+            <div class="mi-endless-gate">
+                <img src="/images/maru-idle/icons-premium/explore.png" alt="" />
+                @if (lastResult is null)
+                {
+                    <small>THREE LANES · ENDLESS RUN</small><h3>흐르는 영맥을 끝까지 타라</h3>
+                    <p>드래그나 방향키로 세 영맥을 이동합니다. 청록 영기는 점수와 광석을, 금빛 보상은 계정 재화를 주며 붉은 균열은 수호막을 깎습니다.</p>
+                }
+                else
+                {
+                    <small>RUN COMPLETE</small><h3>@(lastResult.Accepted ? "영맥 보상 정산 완료" : "기록 확인 실패")</h3><strong>@lastResult.Message</strong>
+                    @if (lastResult.EquipmentDropped is not null) { <p>장비 획득 · @lastResult.EquipmentDropped.DisplayName</p> }
+                    @if (lastResult.BoostDropped is not null) { <p>부적 획득 · @lastResult.BoostDropped.Name</p> }
+                }
+                <button type="button" disabled="@starting" @onclick="StartAsync">@(starting ? "영맥 연결 중…" : lastResult is null ? "질주 시작" : "다시 질주")</button>
+            </div>
+        }
+    </div>
+    <footer><span><b>조작</b> 드래그 · ← → · 3개 영맥</span><span><b>보상</b> 금화 · 광석 · 소환패 · 장비 · 부적</span><span><b>규칙</b> 수호막 3칸 · 연속 획득 배율</span></footer>
+</section>
+
+@code {
+    private readonly string rootId = $"spirit-vein-{Guid.NewGuid():N}";
+    private ElementReference canvas;
+    private DotNetObjectReference<SpiritVeinRun>? componentReference;
+    private ArcadeTrialStart? activeRun;
+    private ArcadeTrialResult? lastResult;
+    private bool running;
+    private bool starting;
+
+    [Parameter, EditorRequired] public GameSnapshot Snapshot { get; set; } = GameSnapshot.Empty;
+    [Parameter] public EventCallback<GameSnapshot> SnapshotChanged { get; set; }
+    [Parameter] public EventCallback CloseRequested { get; set; }
+
+    private async Task StartAsync()
+    {
+        if (running || starting) return;
+        starting = true; lastResult = null;
+        try
+        {
+            activeRun = await Session.BeginSpiritVeinRunAsync();
+            componentReference ??= DotNetObjectReference.Create(this);
+            running = true;
+            await JS.InvokeVoidAsync("maruSpiritVein.start", canvas, rootId, componentReference, new
+            {
+                backgroundUrl = "/images/maru-idle/trials/spirit-vein-run-v1.png",
+                playerUrl = Snapshot.Party.ActiveHero.SpriteAssetUrl,
+                goldUrl = "/images/maru-idle/rewards/gold-pouch.svg",
+                materialUrl = "/images/maru-idle/rewards/companion-ore.svg",
+                ticketUrl = "/images/maru-idle/icons-premium/companions.png"
+            });
+        }
+        finally { starting = false; }
+    }
+
+    [JSInvokable]
+    public async Task FinishAsync(int durationSeconds, int distance, int essence, int goldPickups, int materialPickups, int ticketPickups)
+    {
+        if (!running || activeRun is null) return;
+        running = false; var run = activeRun; activeRun = null;
+        lastResult = await Session.CompleteSpiritVeinRunAsync(run.RunId, durationSeconds, distance, essence, goldPickups, materialPickups, ticketPickups);
+        await SnapshotChanged.InvokeAsync(lastResult.State);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CloseAsync()
+    {
+        running = false; activeRun = null;
+        try { await JS.InvokeVoidAsync("maruSpiritVein.stop", canvas); } catch (JSDisconnectedException) { }
+        await CloseRequested.InvokeAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { await JS.InvokeVoidAsync("maruSpiritVein.stop", canvas); } catch (JSDisconnectedException) { }
+        componentReference?.Dispose();
+    }
+}

@@ -1,0 +1,102 @@
+@if (activeGame == "endless")
+{
+    <EndlessTrial Snapshot="Snapshot" SnapshotChanged="SnapshotChanged" CloseRequested="BackToHub" />
+}
+else if (activeGame == "spirit")
+{
+    <SpiritVeinRun Snapshot="Snapshot" SnapshotChanged="SnapshotChanged" CloseRequested="BackToHub" />
+}
+else if (activeGame == "formation")
+{
+    <SwordFormationDefense Snapshot="Snapshot" SnapshotChanged="SnapshotChanged" CloseRequested="BackToHub" />
+}
+else if (activeGame == "farm")
+{
+    <SpiritFarm Snapshot="Snapshot" SnapshotChanged="SnapshotChanged" CloseRequested="BackToHub" />
+}
+else if (activeGame == "fortress")
+{
+    <SpiritFortressDefense Snapshot="Snapshot" SnapshotChanged="SnapshotChanged" CloseRequested="BackToHub" />
+}
+else if (activeGame == "tower")
+{
+    <TrialTower Snapshot="Snapshot" SnapshotChanged="SnapshotChanged" CloseRequested="BackToHub" />
+}
+else if (activeGame == "arena")
+{
+    <ExpeditionArena Snapshot="Snapshot" SnapshotChanged="SnapshotChanged" CloseRequested="BackToHub" />
+}
+else if (activeGame == "territory")
+{
+    <TerritoryWorld CloseRequested="BackToHub" />
+}
+else
+{
+    <section class="mi-trial-hub" role="dialog" aria-modal="true" aria-label="시련 미니게임">
+        <header>
+            <div><small>TRIAL ARCADE</small><h2>시련 회랑</h2><p>액션·농원·디펜스·등반·결투·영지까지 여덟 가지 원정에서 다양한 보상을 획득하세요.</p></div>
+            <button type="button" aria-label="시련 회랑 닫기" @onclick="CloseRequested">×</button>
+        </header>
+        <section class="mi-trial-feature game-@selectedGame">
+            <div>
+                <small>@FeatureKicker</small><h3>@FeatureTitle</h3><p>@FeatureDescription</p>
+                <ul>@foreach (var rule in FeatureRules) { <li>@rule</li> }</ul>
+                <button type="button" @onclick="StartSelectedGame">@FeatureButton</button>
+            </div>
+            <img src="@FeatureImage" alt="" />
+        </section>
+        <div class="mi-trial-library" aria-label="시련 게임 목록">
+            <button type="button" class="@(selectedGame == "endless" ? "is-ready is-selected" : "is-ready")" @onclick='() => SelectGame("endless")'><img src="/images/maru-idle/icons-premium/codex.png" alt="" /><span><small>GAME 01</small><strong>무한 시련</strong><em>원정대 화력 성장</em></span></button>
+            <button type="button" class="@(selectedGame == "spirit" ? "is-ready is-selected" : "is-ready")" @onclick='() => SelectGame("spirit")'><img src="/images/maru-idle/icons-premium/explore.png" alt="" /><span><small>GAME 02</small><strong>영맥 질주</strong><em>3레인 보상 질주</em></span></button>
+            <button type="button" class="@(selectedGame == "formation" ? "is-ready is-selected" : "is-ready")" @onclick='() => SelectGame("formation")'><img src="/images/maru-idle/icons-premium/sword-art.png" alt="" /><span><small>GAME 03</small><strong>검진 수호</strong><em>사방향 거점 방어</em></span></button>
+            <button type="button" class="@(selectedGame == "farm" ? "is-ready is-selected" : "is-ready")" @onclick='() => SelectGame("farm")'><img src="/images/maru-idle/rewards/companion-ore.svg" alt="" /><span><small>GAME 04</small><strong>영약 농원</strong><em>오프라인 지속 재배</em></span></button>
+            <button type="button" class="@(selectedGame == "fortress" ? "is-ready is-selected" : "is-ready")" @onclick='() => SelectGame("fortress")'><img src="/images/maru-idle/icons-premium/equipment.png" alt="" /><span><small>GAME 05</small><strong>영맥 성채</strong><em>건설·강화·무한 공세</em></span></button>
+            <button type="button" class="@(selectedGame == "tower" ? "is-ready is-selected" : "is-ready")" @onclick='() => SelectGame("tower")'><img src="/images/maru-idle/icons-premium/companions.png" alt="" /><span><small>GAME 06</small><strong>시련의 탑</strong><em>영웅 소환패 원정</em></span></button>
+            <button type="button" class="@(selectedGame == "arena" ? "is-ready is-selected" : "is-ready")" @onclick='() => SelectGame("arena")'><img src="/images/maru-idle/icons-premium/sword-art.png" alt="" /><span><small>GAME 07</small><strong>천하 결투장</strong><em>동일 서버 비동기 대전</em></span></button>
+            <button type="button" class='@(selectedGame == "territory" ? "is-ready is-selected" : "is-ready")' @onclick='() => SelectGame("territory")'><img class="territory-thumbnail" src="@TerritoryPreviewImage" alt="" /><span><small>GAME 08</small><strong>영지 · 월드맵</strong><em>건설·모집·정찰·정복</em></span></button>
+        </div>
+        <footer><b>@(selectedGame == "territory" ? "영지 자원" : "공통 보상")</b><span>@(selectedGame == "territory" ? "식량 · 목재 · 석재 · 점령 영토" : "금화 · 강화 광석 · 소환패 · 장비 · 부적")</span><em>서버가 실제 플레이 시간과 기록 범위를 검증한 뒤 계정에 저장합니다.</em></footer>
+    </section>
+}
+
+@code {
+    [Parameter, EditorRequired] public GameSnapshot Snapshot { get; set; } = GameSnapshot.Empty;
+    [Parameter] public EventCallback<GameSnapshot> SnapshotChanged { get; set; }
+    [Parameter] public EventCallback CloseRequested { get; set; }
+    private string? activeGame;
+    private string selectedGame = "endless";
+
+    private string FeatureKicker => selectedGame switch { "territory" => "DOMINION · SHARED WORLD", "spirit" => "NOW PLAYABLE · SPIRIT RUNNER", "formation" => "NOW PLAYABLE · CORE DEFENSE", "farm" => "PERSISTENT · FARM MANAGEMENT", "fortress" => "NOW PLAYABLE · TOWER DEFENSE", "tower" => "ASCENSION · HERO EXPEDITION", "arena" => "ASYNC DUEL · SAME SERVER", _ => "NOW PLAYABLE · SURVIVAL" };
+    private string FeatureTitle => selectedGame switch { "territory" => "영지 · 월드맵", "spirit" => "영맥 질주", "formation" => "검진 수호", "farm" => "영약 농원", "fortress" => "영맥 성채", "tower" => "시련의 탑", "arena" => "천하 결투장", _ => "무한 시련" };
+    private string FeatureDescription => selectedGame switch
+    {
+        "territory" => "마을을 건설하고 영웅이 이끄는 병력을 육성하세요. 같은 서버 원정대와 집결해 보스를 공략하고, 영주관 Lv.10부터 보호막 없는 본성을 공격할 수 있습니다.",
+        "spirit" => "세 갈래 영맥을 실시간으로 오가며 영기와 보상을 잇고 붉은 균열을 피하세요. 속도와 보상 밀도가 끝없이 상승합니다.",
+        "formation" => "사방에서 몰려오는 마물을 향해 검진을 돌려 천명핵을 지키세요. 연속 방어로 검기를 충전해 관통 참격을 발동합니다.",
+        "farm" => "여섯 경작지에 영초를 심고 꾸준히 관리하세요. 게임을 종료해도 실제 시간이 흐르며, 자란 영초는 금화·광석·소환패가 됩니다.",
+        "fortress" => "질주·중갑·군집 공세를 예측해 망루·화살·조총·화포를 혼합 배치하세요. 타워 종류는 유지되며 레벨은 제한 없이 성장합니다.",
+        "tower" => "무한히 솟은 천명탑을 한 층씩 정복하세요. 매 층 소환패를 받고 10·25·50층 수문장에서는 영웅 모집을 크게 앞당길 대량 보상을 획득합니다.",
+        "arena" => "같은 서버의 실제 원정대가 저장한 편성과 겨루세요. 서버가 승패와 승점을 판정하며, 결투 화면을 보고 있는 동안에도 자동 탐험은 멈추지 않습니다.",
+        _ => "원정대를 좌우로 움직여 마물 군세를 막으세요. 무기와 아군을 모을수록 화력이 성장하며 시간에 따라 난도가 끝없이 상승합니다."
+    };
+    private string[] FeatureRules => selectedGame switch
+    {
+        "territory" => ["같은 서버 협동 집결", "Lv.10 본성 PvP", "초보 보호 · 3일 보호막"],
+        "spirit" => ["실시간 3레인 이동", "연속 획득 배율", "무한 가속"],
+        "formation" => ["4방향 즉시 전환", "검기 충전", "무한 공세"],
+        "farm" => ["계정 영구 저장", "오프라인 재배", "6칸 농원 확장"],
+        "fortress" => ["4종 타워 직접 선택", "공세별 상성", "강화·수리 영기 선택"],
+        "tower" => ["서버 승패 판정", "최초 정복 보상 10배", "50층마다 소환패 1,000장"],
+        "arena" => ["동일 서버 매칭", "승점·티어 순위", "일일 10회 도전"],
+        _ => ["실시간 드래그 이동", "화력·아군 성장", "무한 난이도"]
+    };
+    private const string TerritoryPreviewImage = "/images/maru-idle/territory/city-v8.png";
+    private string FeatureImage => selectedGame switch { "territory" => TerritoryPreviewImage, "spirit" => "/images/maru-idle/icons-premium/explore.png", "formation" => "/images/maru-idle/icons-premium/sword-art.png", "farm" => "/images/maru-idle/trials/spirit-herb-farm-v1.png", "fortress" => "/images/maru-idle/trials/spirit-fortress-v1.png", "tower" => "/images/maru-idle/trials/tower-of-trials-v1.png", "arena" => "/images/maru-idle/icons-premium/sword-art.png", _ => "/images/maru-idle/icons-premium/codex.png" };
+    private string FeatureButton => selectedGame switch { "territory" => "영지 입장", "spirit" => "질주 시작", "formation" => "수호 시작", "farm" => "농원 관리", "fortress" => "방어 시작", "tower" => "탑 등반", "arena" => "대전 명부 입장", _ => "도전 시작" };
+
+    private void SelectGame(string game) => selectedGame = game;
+
+    private void StartSelectedGame() => activeGame = selectedGame;
+
+    private void BackToHub() => activeGame = null;
+}

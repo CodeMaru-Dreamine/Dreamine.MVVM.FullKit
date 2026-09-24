@@ -1,0 +1,85 @@
+@inject NavigationManager Navigation
+@inject GamesLocalization Text
+@inject IHttpContextAccessor HttpContextAccessor
+
+<!DOCTYPE html>
+<html lang="@Text.HtmlLanguage">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#06252a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="마루 원정" />
+    <base href="/" />
+    <title>CodeMaru Games — 하나의 계정, 여러 세계</title>
+    <meta name="description" content="하나의 CodeMaru 계정으로 PC와 휴대폰에서 이어서 즐기는 서버형 게임 라이브러리" />
+    <meta property="og:title" content="CodeMaru Games — 하나의 계정, 여러 세계" />
+    <meta property="og:description" content="새로운 게임을 같은 계정으로 이어서 즐기는 CodeMaru Games" />
+    <meta property="og:url" content="https://games.codemaru.co.kr/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CodeMaru Games" />
+    <meta property="og:locale" content="ko_KR" />
+    <meta property="og:image" content="https://games.codemaru.co.kr/images/maru-idle/landing/maru-expedition-keyart-v1.png" />
+    <meta property="og:image:secure_url" content="https://games.codemaru.co.kr/images/maru-idle/landing/maru-expedition-keyart-v1.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1672" />
+    <meta property="og:image:height" content="941" />
+    <meta property="og:image:alt" content="달빛 아래 원정에 나서는 마루 원정대 영웅들" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CodeMaru Games — 하나의 계정, 여러 세계" />
+    <meta name="twitter:description" content="새로운 게임을 같은 계정으로 이어서 즐기는 CodeMaru Games" />
+    <meta name="twitter:image" content="https://games.codemaru.co.kr/images/maru-idle/landing/maru-expedition-keyart-v1.png" />
+    @if (!IsSamsungInternetRequest)
+    {
+        <link rel="manifest" href="/manifest.webmanifest?v=20260901-2" />
+    }
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/maru-expedition-180.png" />
+    <script>
+        (() => {
+            const isGameplayRoute = /^\/(?:maru-idle\/)?play\/?$/i.test(location.pathname);
+            document.documentElement.classList.toggle('gameplay-route', isGameplayRoute);
+            const media = window.matchMedia('(prefers-color-scheme: dark)');
+            const syncSystemClass = event => document.documentElement.classList.toggle('system-dark', event.matches);
+            syncSystemClass(media);
+            media.addEventListener?.('change', syncSystemClass);
+            const cookie = document.cookie.split(';').map(x => x.trim()).find(x => x.startsWith('dreamine-theme='));
+            const saved = cookie ? decodeURIComponent(cookie.substring('dreamine-theme='.length)) : localStorage.getItem('codemaru-theme');
+            if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved;
+        })();
+    </script>
+    <style>
+        html.gameplay-route,
+        html.gameplay-route body { margin: 0; min-height: 100%; background: #03070a !important; }
+    </style>
+    <link rel="stylesheet" href="app.css?v=20260906-arena-npc-1" />
+    <link rel="stylesheet" href="GamePlatform.Web.styles.css?v=20260906-map-command-12" />
+    <HeadOutlet @rendermode="new InteractiveServerRenderMode(prerender: false)" />
+</head>
+<body>
+    <Routes @rendermode="new InteractiveServerRenderMode(prerender: false)" />
+    <script src="_content/Dreamine.UI.Blazor/dreamine-portal.js?v=20260820-games-1"></script>
+    <script src="maru-idle.js?v=20260831-power-saving-1"></script>
+    <script src="maru-endless.js?v=20260826-endless-arena-6"></script>
+    <script src="maru-arcade.js?v=20260825-trial-arcade-1"></script>
+    <script src="maru-fortress.js?v=20260827-fortress-scout-layout-7"></script>
+    <script src="maru-audio.js?v=20260906-exploration-scope-8"></script>
+    <script src="pwa-install.js?v=20260901-samsung-safe-2"></script>
+    <script src="_framework/blazor.web.js"></script>
+</body>
+</html>
+
+@code {
+    private bool IsSamsungInternetRequest => HttpContextAccessor.HttpContext?.Request.Headers.UserAgent
+        .ToString().Contains("SamsungBrowser/", StringComparison.OrdinalIgnoreCase) == true;
+
+    protected override void OnInitialized()
+    {
+        var query = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(new Uri(Navigation.Uri).Query);
+        if (query.TryGetValue("lang", out var language))
+        {
+            Text.SetLanguage(language.ToString());
+        }
+    }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "/maru-idle/play",
+  "name": "마루 원정 | CodeMaru Games",
+  "short_name": "마루 원정",
+  "description": "동료와 함께 성장하는 CodeMaru 서버형 방치 원정 게임",
+  "lang": "ko-KR",
+  "dir": "ltr",
+  "start_url": "/maru-idle/play?source=pwa",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "portrait",
+  "background_color": "#031015",
+  "theme_color": "#06252a",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "/icons/maru-expedition-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/maru-expedition-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "원정 계속하기",
+      "short_name": "계속하기",
+      "url": "/maru-idle/play?source=pwa-shortcut",
+      "icons": [{ "src": "/icons/maru-expedition-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

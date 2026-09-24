@@ -1,0 +1,43 @@
+<section class="monster-finder @(DetailsOnly ? "details-only" : "")" aria-label="월드 몬스터 탐색">
+    @if (!DetailsOnly)
+    {
+    <header><div><small>HUNTING GROUNDS · 25 REGIONS</small><h3>월드 사냥터</h3></div><span>@TerritorySharedRules.Bosses.Length 개 서식지</span></header>
+    <div class="filters">
+        <select aria-label="몬스터 등급" @bind="kind" @bind:after="ResetPage"><option value="all">모든 등급</option><option value="normal">일반 · 단독</option><option value="elite">정예 · 단독</option><option value="boss">보스 · 집결</option></select>
+        <select aria-label="사냥 권역" @bind="region" @bind:after="ResetPage"><option value="-1">전 권역 · 본성 가까운 순</option>@for (var i = 0; i < 25; i++) { <option value="@i">@TerritoryRules.RegionName(TerritoryRules.TileAt(i % 5 * 5 + 2,i / 5 * 5 + 2))</option> }</select>
+        <select aria-label="몬스터 최대 레벨" @bind="maxLevel" @bind:after="ResetPage"><option value="30">전체 레벨</option><option value="5">Lv.1–5</option><option value="10">Lv.1–10</option><option value="15">Lv.1–15</option><option value="20">Lv.1–20</option></select>
+    </div>
+    }
+    <article class="target @Target.Kind">
+        <img src="@Target.Asset" alt="@Target.Name"/>
+        <div><small>@TerritoryRules.RegionName(Target.Tile) · @Target.KindLabel</small><h4>Lv.@Target.Level @Target.Name</h4><b>전력 @Target.Power.ToString("N0")</b><p>승리 보급: 식량·목재·석재 각각 @Target.Reward.ToString("N0")<br/>에너지 10 · 재출현 @(Target.RespawnSeconds / 60)분</p><strong class="status">@Status(Target)</strong></div>
+        @if (!DetailsOnly) { <div class="actions"><button @onclick="() => LocateRequested.InvokeAsync(Target.Id)">지도 위치</button><button class="primary" disabled="@(Busy || Blocked(Target))" @onclick="() => AttackRequested.InvokeAsync(Target.Id)">@(Target.RequiresRally ? "집결 개설" : "단독 토벌")</button></div> }
+    </article>
+    @if (!DetailsOnly)
+    {
+    <p class="notice">일반·정예는 즉시 출정합니다. 보스는 60초 모집 후 출정하며, 혼자면 NPC가 지원합니다. 다른 원정대가 출정한 대상은 귀환까지 예약됩니다.</p>
+    <div class="results">@foreach (var monster in Results.Skip(page * 6).Take(6)) {
+        <button class="@(Selected == monster.Id ? "selected" : "")" @onclick="() => SelectedChanged.InvokeAsync(monster.Id)"><img src="@monster.Asset" alt="" loading="lazy"/><span><small>@monster.KindLabel · Lv.@monster.Level</small><b>@monster.Name</b><small>@Status(monster)</small></span></button>
+    }</div>
+    @if (!Results.Any()) { <p>조건에 맞는 사냥터가 없습니다. 등급·권역·레벨을 바꿔 보세요.</p> }
+    <div class="pagination"><button disabled="@(page == 0)" @onclick="() => page--">이전</button><span>@(page + 1) / @Math.Max(1,(Results.Count + 5) / 6) · @Results.Count 곳</span><button disabled="@((page + 1) * 6 >= Results.Count)" @onclick="() => page++">다음</button></div>
+    }
+</section>
+@code {
+    [Parameter, EditorRequired] public TerritorySharedWorld World { get; set; } = new();
+    [Parameter] public string UserId { get; set; } = "";
+    [Parameter] public int Selected { get; set; }
+    [Parameter] public bool Busy { get; set; }
+    [Parameter] public bool DetailsOnly { get; set; }
+    [Parameter] public EventCallback<int> SelectedChanged { get; set; }
+    [Parameter] public EventCallback<int> AttackRequested { get; set; }
+    [Parameter] public EventCallback<int> LocateRequested { get; set; }
+    private string kind = "all";
+    private int region = -1, maxLevel = 30, page;
+    private TerritoryWorldBoss Target => TerritorySharedRules.Bosses[Selected];
+    private List<TerritoryWorldBoss> Results => TerritorySharedRules.Bosses.Where(m => (kind == "all" || m.Kind == kind) && m.Level <= maxLevel && (region < 0 || TerritoryRules.TileRow(m.Tile)/5*5 + TerritoryRules.TileColumn(m.Tile)/5 == region) && !World.Members.Values.Any(p => p.Tile == m.Tile)).OrderBy(m => Distance(m.Tile)).ThenBy(m => m.Level).ToList();
+    private int Distance(int tile) { var home = World.Members.GetValueOrDefault(UserId)?.Tile ?? 12; return Math.Abs(TerritoryRules.TileRow(home)-TerritoryRules.TileRow(tile))+Math.Abs(TerritoryRules.TileColumn(home)-TerritoryRules.TileColumn(tile)); }
+    private void ResetPage() { page=0; }
+    private bool Blocked(TerritoryWorldBoss m) => World.Members.Values.Any(p => p.Tile == m.Tile) || World.BossRespawns.GetValueOrDefault(m.Id) > DateTime.UtcNow || World.Rallies.Any(r => r.Boss == m.Id && !r.Returned);
+    private string Status(TerritoryWorldBoss m) => World.Members.Values.Any(p => p.Tile == m.Tile) ? "본성 배치 지역" : World.BossRespawns.GetValueOrDefault(m.Id) > DateTime.UtcNow ? $"재출현 {Math.Ceiling((World.BossRespawns[m.Id]-DateTime.UtcNow).TotalSeconds)}초" : World.Rallies.Any(r => r.Boss == m.Id && !r.Returned) ? "원정대 토벌 중" : "출정 가능";
+}

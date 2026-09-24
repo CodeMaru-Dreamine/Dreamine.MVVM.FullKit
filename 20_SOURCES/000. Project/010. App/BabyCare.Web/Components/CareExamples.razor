@@ -1,0 +1,26 @@
+@inject BabyCareText Text
+<details class="care-examples">
+    <summary>@Text["이렇게 말해보세요 · 모든 기록 예제"]</summary>
+    <p class="fine">@Text["예제를 누르면 입력창에 들어가요. 시간과 양을 바꾼 뒤 확인하고 저장하세요."]</p>
+    <div class="examples-grid">
+    @foreach (var group in Groups)
+    {
+        <details><summary>@Text[group.Title]</summary>@foreach (var example in group.Examples) { <button type="button" disabled="@Disabled" @onclick="() => OnSelect.InvokeAsync(Text[example])">“@Text[example]”</button> }</details>
+    }
+    </div>
+</details>
+@code {
+    [Parameter] public EventCallback<string> OnSelect { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    private static readonly (string Title, string[] Examples)[] Groups = [
+        ("분유", ["분유 80미리 먹었어"]),
+        ("모유 직수", ["오른쪽 모유 10분 먹었어", "왼쪽 모유 15분 먹었어", "양쪽 모유 총 20분 먹었어"]),
+        ("유축 모유 수유", ["유축한 모유 80미리 먹었어"]),
+        ("이유식", ["쌀미음 50그램 먹었어"]),
+        ("트림시키기", ["10분 동안 트림시켰어"]),
+        ("수면", ["지금 잠들었어", "지금 깼어"]),
+        ("기저귀", ["소변 기저귀 갈았어", "대변 기저귀 갈았어", "소변 대변 둘 다 기저귀 갈았어"]),
+        ("체온", ["오후 3시 체온 36.7도"]),
+        ("유축", ["오른쪽 유축 시작", "왼쪽 60미리 오른쪽 50미리 20분 유축했어"])
+    ];
+}

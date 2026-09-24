@@ -1,0 +1,112 @@
+@page "/maru-idle"
+@implements IDisposable
+@inject IWebHostEnvironment Environment
+@inject GamesLocalization Text
+
+<PageTitle>@Text["maru.pageTitle"]</PageTitle>
+
+<div class="gp-home gp-maru-landing">
+    <section class="gp-launch-hero" aria-labelledby="maru-title">
+        <div class="gp-launch-backdrop" aria-hidden="true"></div>
+        <div class="gp-launch-copy">
+            <span class="gp-launch-status"><i></i> @Text["maru.status"]</span>
+            <p class="gp-launch-kicker">@Text["maru.original"]</p>
+            <h1 id="maru-title"><span>@Text["maru.titleAccent"]</span> @Text["maru.titleRest"]</h1>
+            <p class="gp-launch-tagline">@Text["maru.tagline"]</p>
+            <p class="gp-launch-description">@Text["maru.description"]</p>
+            <div class="gp-launch-actions">
+                <AuthorizeView>
+                    <Authorized>
+                        <a class="gp-launch-primary" href="/maru-idle/play"><span>@Text["maru.continue"]</span><b aria-hidden="true">→</b></a>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a class="gp-launch-primary" href="@LoginUrl"><span>@Text["maru.login"]</span><b aria-hidden="true">→</b></a>
+                        @if (CanUseLocalTestLogin)
+                        {
+                            <a class="gp-launch-secondary" href="/_development/login">@Text["maru.local"]</a>
+                        }
+                    </NotAuthorized>
+                </AuthorizeView>
+                <a class="gp-launch-secondary" href="#maru-world">@Text["maru.intro"]</a>
+                <PwaInstallButton Variant="landing" />
+            </div>
+            <ul class="gp-launch-facts" aria-label="@Text["maru.title"]">
+                <li><b>24H</b><span>@Text["maru.fact.idle"]</span></li>
+                <li><b>5</b><span>@Text["maru.fact.party"]</span></li>
+                <li><b>6</b><span>@Text["maru.fact.trials"]</span></li>
+                <li><b>SERVER</b><span>@Text["maru.fact.save"]</span></li>
+            </ul>
+        </div>
+        <div class="gp-launch-caption" aria-hidden="true">
+            <span>@Text["maru.palace"]</span>
+            <strong>@Text["maru.caption"]</strong>
+        </div>
+        <div class="gp-launch-scroll" aria-hidden="true"><i></i> @Text["maru.scroll"]</div>
+    </section>
+
+    <section class="gp-world" id="maru-world" aria-labelledby="world-title">
+        <header class="gp-world-heading">
+            <div><span class="gp-kicker">@Text["maru.worldKicker"]</span><h2 id="world-title">@Text["maru.worldTitle"]</h2></div>
+            <p>@Text["maru.worldLead"]</p>
+        </header>
+
+        <div class="gp-world-showcase">
+            <a class="gp-world-main" href="/maru-idle/play">
+                <img src="/images/maru-idle/regions/eclipsed-gold-palace.png" alt="" />
+                <div class="gp-world-main-copy">
+                    <span>@Text["maru.mainKicker"]</span>
+                    <h3>@Text["maru.main"]</h3>
+                    <p>@Text["maru.mainDesc"]</p>
+                    <b>@Text["maru.play"] →</b>
+                </div>
+            </a>
+            <article class="gp-world-card gp-world-growth">
+                <img src="/images/maru-idle/growth/body-forge-v1.png" alt="" />
+                <div><span>@Text["maru.growthKicker"]</span><h3>@Text["maru.growth"]</h3><p>@Text["maru.growthDesc"]</p></div>
+            </article>
+            <article class="gp-world-card gp-world-trial">
+                <img src="/images/maru-idle/trials/tower-of-trials-v1.png" alt="" />
+                <div><span>@Text["maru.trialKicker"]</span><h3>@Text["maru.trials"]</h3><p>@Text["maru.trialsDesc"]</p></div>
+            </article>
+            <article class="gp-world-card gp-world-farm">
+                <img src="/images/maru-idle/trials/spirit-herb-farm-v1.png" alt="" />
+                <div><span>@Text["maru.farmKicker"]</span><h3>@Text["maru.farm"]</h3><p>@Text["maru.farmDesc"]</p></div>
+            </article>
+        </div>
+    </section>
+
+    <section class="gp-home-cta" aria-label="@Text["maru.enter"]">
+        <div><span class="gp-kicker">@Text["maru.ctaKicker"]</span><h2>@Text["maru.ready"]</h2></div>
+        <AuthorizeView>
+            <Authorized><a class="gp-launch-primary" href="/maru-idle/play"><span>@Text["maru.enter"]</span><b aria-hidden="true">→</b></a></Authorized>
+            <NotAuthorized><a class="gp-launch-primary" href="@LoginUrl"><span>@Text["maru.login"]</span><b aria-hidden="true">→</b></a></NotAuthorized>
+        </AuthorizeView>
+    </section>
+</div>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+
+    private string LoginUrl => Dreamine.Identity.DreamineIdentityPortal.CreateUrl(
+        "login",
+        new Uri(new Uri(Navigation.BaseUri), "maru-idle/play").ToString(),
+        Text.Language);
+
+    private bool CanUseLocalTestLogin
+    {
+        get
+        {
+            var host = new Uri(Navigation.Uri).Host;
+            return Environment.IsDevelopment()
+                   && (string.Equals(host, "localhost", StringComparison.OrdinalIgnoreCase)
+                       || string.Equals(host, "127.0.0.1", StringComparison.OrdinalIgnoreCase)
+                       || string.Equals(host, "::1", StringComparison.OrdinalIgnoreCase));
+        }
+    }
+
+    protected override void OnInitialized() => Text.Changed += HandleLanguageChanged;
+
+    private void HandleLanguageChanged() => _ = InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Text.Changed -= HandleLanguageChanged;
+}

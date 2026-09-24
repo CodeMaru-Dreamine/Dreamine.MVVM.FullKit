@@ -1,0 +1,97 @@
+@implements IAsyncDisposable
+@inject GameSession Session
+@inject IJSRuntime JS
+
+<section class="mi-endless-trial mi-arcade-game sword-formation" role="dialog" aria-modal="true" aria-label="검진 수호">
+    <header>
+        <div><small>SWORD FORMATION DEFENSE</small><h2>검진 수호</h2><p>사방의 침입 방향으로 검진을 돌려 중앙의 천명핵을 지키세요.</p></div>
+        <button type="button" class="mi-endless-close" aria-label="검진 수호 닫기" @onclick="CloseAsync">×</button>
+    </header>
+    <div class="mi-endless-hud" id="@($"{rootId}-hud")">
+        <span><small>수호</small><strong data-formation-time>0:00</strong></span>
+        <span><small>공세</small><strong data-formation-wave>1파</strong></span>
+        <span><small>격파</small><strong data-formation-kills>0</strong></span>
+        <span><small>천명핵</small><strong data-formation-core>100%</strong></span>
+    </div>
+    <div class="mi-endless-canvas-shell" id="@rootId">
+        <canvas @ref="canvas" width="720" height="1080" tabindex="0" aria-label="사방향 검진 무한 수호 게임"></canvas>
+        @if (!running)
+        {
+            <div class="mi-endless-gate">
+                <img src="/images/maru-idle/icons-premium/sword-art.png" alt="" />
+                @if (lastResult is null)
+                {
+                    <small>FOUR DIRECTIONS · CORE DEFENSE</small><h3>검진을 돌려 천명핵을 지켜라</h3>
+                    <p>화면의 상·하·좌·우를 누르거나 방향키로 공격 방향을 바꿉니다. 같은 방향을 연속 방어하면 검기가 충전되고, 가득 차면 전방을 관통합니다.</p>
+                }
+                else
+                {
+                    <small>DEFENSE COMPLETE</small><h3>@(lastResult.Accepted ? "수호 보상 정산 완료" : "기록 확인 실패")</h3><strong>@lastResult.Message</strong>
+                    @if (lastResult.EquipmentDropped is not null) { <p>장비 획득 · @lastResult.EquipmentDropped.DisplayName</p> }
+                    @if (lastResult.BoostDropped is not null) { <p>부적 획득 · @lastResult.BoostDropped.Name</p> }
+                }
+                <button type="button" disabled="@starting" @onclick="StartAsync">@(starting ? "검진 전개 중…" : lastResult is null ? "수호 시작" : "다시 수호")</button>
+            </div>
+        }
+    </div>
+    <footer><span><b>조작</b> 화면 사분면 · 방향키 · WASD</span><span><b>보상</b> 금화 · 광석 · 소환패 · 장비 · 부적</span><span><b>규칙</b> 천명핵 100% · 무한 공세</span></footer>
+</section>
+
+@code {
+    private readonly string rootId = $"sword-formation-{Guid.NewGuid():N}";
+    private ElementReference canvas;
+    private DotNetObjectReference<SwordFormationDefense>? componentReference;
+    private ArcadeTrialStart? activeRun;
+    private ArcadeTrialResult? lastResult;
+    private bool running;
+    private bool starting;
+
+    [Parameter, EditorRequired] public GameSnapshot Snapshot { get; set; } = GameSnapshot.Empty;
+    [Parameter] public EventCallback<GameSnapshot> SnapshotChanged { get; set; }
+    [Parameter] public EventCallback CloseRequested { get; set; }
+
+    private async Task StartAsync()
+    {
+        if (running || starting) return;
+        starting = true; lastResult = null;
+        try
+        {
+            activeRun = await Session.BeginSwordFormationRunAsync();
+            componentReference ??= DotNetObjectReference.Create(this);
+            running = true;
+            await JS.InvokeVoidAsync("maruSwordFormation.start", canvas, rootId, componentReference, new
+            {
+                backgroundUrl = "/images/maru-idle/trials/sword-formation-arena-v1.png",
+                enemyUrl = Snapshot.World.EnemyAssetUrl,
+                playerUrl = Snapshot.Party.ActiveHero.SpriteAssetUrl,
+                swordUrl = "/images/maru-idle/equipment/personal/weapon-sword-v1.png",
+                goldUrl = "/images/maru-idle/rewards/gold-pouch.svg",
+                materialUrl = "/images/maru-idle/rewards/companion-ore.svg"
+            });
+        }
+        finally { starting = false; }
+    }
+
+    [JSInvokable]
+    public async Task FinishAsync(int durationSeconds, int kills, int waves, int goldPickups, int materialPickups, int ticketPickups)
+    {
+        if (!running || activeRun is null) return;
+        running = false; var run = activeRun; activeRun = null;
+        lastResult = await Session.CompleteSwordFormationRunAsync(run.RunId, durationSeconds, kills, waves, goldPickups, materialPickups, ticketPickups);
+        await SnapshotChanged.InvokeAsync(lastResult.State);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task CloseAsync()
+    {
+        running = false; activeRun = null;
+        try { await JS.InvokeVoidAsync("maruSwordFormation.stop", canvas); } catch (JSDisconnectedException) { }
+        await CloseRequested.InvokeAsync();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try { await JS.InvokeVoidAsync("maruSwordFormation.stop", canvas); } catch (JSDisconnectedException) { }
+        componentReference?.Dispose();
+    }
+}

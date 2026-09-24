@@ -1,0 +1,18 @@
+@inject BabyCareText Text
+<div class="form-grid">
+    <label>@Text["왼쪽 유축량 (mL)"]<input type="number" min="0" max="2000" value="@Entry.LeftAmountMl" @oninput="LeftChanged" /></label>
+    <label>@Text["오른쪽 유축량 (mL)"]<input type="number" min="0" max="2000" value="@Entry.RightAmountMl" @oninput="RightChanged" /></label>
+</div>
+<label>@Text["유축 방법"]<select value="@Entry.PumpMethod" @onchange="e => Entry.PumpMethod = e.Value?.ToString() ?? string.Empty"><option value="">@Text["선택해주세요"]</option><option value="electric">@Text["전동 유축기"]</option><option value="manual">@Text["수동 유축기"]</option><option value="hand">@Text["손 유축"]</option></select></label>
+<p class="fine">@Text["모르는 양은 비워두세요. 유축량은 아기 수유량에 포함되지 않아요."]</p>
+<details class="reference-notes"><summary>@Text["편안한 유축을 위한 안내"]</summary>
+    <p>@Text["시작 전 손을 씻고 깨끗한 용기를 준비하세요. 사용 후 모유에 닿은 유축기 부품을 세척하세요."] <a href="https://www.cdc.gov/hygiene/about/about-breast-pump-hygiene.html" target="_blank" rel="noopener">CDC ↗</a></p>
+    <p>@Text["유축기는 설명서에 따라 낮은 압력부터 편안하게 사용하세요. 손 유축은 가슴을 부드럽게 마사지한 뒤 유두 뒤쪽을 리듬 있게 눌렀다 놓아요. 아프면 멈추고 전문가에게 자세와 기구 크기를 확인받으세요."] <a href="https://www.nhs.uk/baby/breastfeeding-and-bottle-feeding/breastfeeding/expressing-breast-milk/" target="_blank" rel="noopener">NHS ↗</a></p>
+    <p>@Text["유축 시간과 양은 사람마다 달라요. 정해진 양을 채우려고 무리하지 마세요."]</p>
+</details>
+@code {
+    [Parameter, EditorRequired] public CareEntry Entry { get; set; } = default!;
+    private void LeftChanged(ChangeEventArgs e) => Entry.LeftAmountMl = Parse(e.Value?.ToString());
+    private void RightChanged(ChangeEventArgs e) => Entry.RightAmountMl = Parse(e.Value?.ToString());
+    private static int? Parse(string? value) => string.IsNullOrWhiteSpace(value) ? null : int.TryParse(value, out var amount) ? amount : -1;
+}

@@ -1,0 +1,24 @@
+<div class="map-sheet-layer" @onkeydown="OnKeyDown" @onkeydown:stopPropagation="true">
+    <button class="sheet-backdrop" tabindex="-1" aria-label="지도 상세 정보 닫기" @onclick="CloseRequested"></button>
+    <section class="map-sheet" role="dialog" aria-label="@Title">
+        <header>
+            <div><small>@Subtitle</small><h3>@Title</h3></div>
+            <button class="sheet-close" @ref="closeButton" aria-label="선택 정보 닫기" @onclick="CloseRequested">×</button>
+        </header>
+        <div class="sheet-body">@ChildContent</div>
+        @if (Actions is not null) { <div class="sheet-actions">@Actions</div> }
+    </section>
+</div>
+@code {
+    [Parameter, EditorRequired] public string Title { get; set; } = "거점 정보";
+    [Parameter] public string Subtitle { get; set; } = "WORLD INTELLIGENCE";
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Actions { get; set; }
+    [Parameter] public EventCallback CloseRequested { get; set; }
+    private ElementReference closeButton;
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender) await closeButton.FocusAsync(preventScroll: true);
+    }
+    private Task OnKeyDown(KeyboardEventArgs e) => e.Key == "Escape" ? CloseRequested.InvokeAsync() : Task.CompletedTask;
+}

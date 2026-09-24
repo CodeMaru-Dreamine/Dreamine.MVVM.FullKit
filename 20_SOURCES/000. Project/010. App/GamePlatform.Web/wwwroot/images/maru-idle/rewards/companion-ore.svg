@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-label="동료 장비 광석">
+  <defs>
+    <radialGradient id="a" cx="50%" cy="48%" r="62%"><stop offset="0" stop-color="#cafff7" stop-opacity=".78"/><stop offset=".42" stop-color="#3de4d4" stop-opacity=".25"/><stop offset="1" stop-color="#0b645f" stop-opacity="0"/></radialGradient>
+    <linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e6fff7"/><stop offset=".2" stop-color="#72f4e2"/><stop offset=".58" stop-color="#1b9f9c"/><stop offset="1" stop-color="#0b4350"/></linearGradient>
+    <linearGradient id="c" x1="1" y1="0" x2="0" y2="1"><stop stop-color="#fff1a1"/><stop offset=".35" stop-color="#d8a641"/><stop offset="1" stop-color="#63412a"/></linearGradient>
+    <filter id="g" x="-40%" y="-40%" width="180%" height="190%"><feGaussianBlur stdDeviation="4" result="q"/><feMerge><feMergeNode in="q"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+  <circle cx="80" cy="78" r="70" fill="url(#a)"/>
+  <g filter="url(#g)">
+    <ellipse cx="80" cy="134" rx="49" ry="9" fill="#02090c" opacity=".58"/>
+    <path d="M33 117l15-54 29-28 35 11 17 65-20 22H53z" fill="#132c34" stroke="url(#c)" stroke-width="4"/>
+    <path d="M52 111l9-48 18-22 11 35-12 44z" fill="url(#b)" stroke="#c6fff5" stroke-width="2"/>
+    <path d="M79 41l26 12-15 23z" fill="#baffef" opacity=".82"/>
+    <path d="M90 76l15-23 11 55-38 12z" fill="#168d91"/>
+    <path d="M78 120l12-44 26 32-18 17z" fill="#0a5a68"/>
+    <path d="M43 120l11-35 16 17-4 27z" fill="#4fdcca" stroke="#b9fff2" stroke-width="2"/>
+    <path d="M103 121l13-31 12 24-10 14z" fill="#e0b856" stroke="#ffe591" stroke-width="2"/>
+    <circle cx="80" cy="88" r="16" fill="#071b22" stroke="#edc55e" stroke-width="3"/>
+    <path d="M80 77v22m-10-11h20" stroke="#79f2df" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <g fill="#d8fff8"><circle cx="31" cy="63" r="2"/><circle cx="128" cy="52" r="2.5"/><path d="M130 73l3 6 6 3-6 3-3 6-3-6-6-3 6-3z"/></g>
+</svg>

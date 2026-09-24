@@ -1,0 +1,301 @@
+@inject BabyCareText Text
+@page "/"
+@implements IAsyncDisposable
+@inject AuthenticationStateProvider Authentication
+@inject CareStore Store
+@inject CareCatalog Catalog
+@inject ICareInterpreter Interpreter
+@inject DreamineDialogService Dialogs
+@inject IJSRuntime JS
+@inject IConfiguration Configuration
+
+
+<DreamineDialogHost />
+<BabyCareNavigation />
+<main>
+    <header class="topbar"><a class="brand" href="/">@T("아기하루")<span>@T("작은 순간을, 함께.")</span></a><span class="pill">BABY CARE</span></header>
+    @if (!ready)
+    {
+        <p role="status">@T("가족 공간을 불러오는 중이에요…")</p>
+    }
+    else if (string.IsNullOrEmpty(userId))
+    {
+        <section class="welcome"><span class="eyebrow">@T("두 손이 바쁜 당신을 위해")</span><h1>@T("말로 남기는")<br />@T("우리 아기의 하루.")</h1><p>@T("수유부터 잠든 순간까지.")<br />@T("한 번 말하고, 함께 기억하세요.")</p><a class="primary link-button" href="/auth/login">@T("로그인하고 시작하기")</a><p class="fine">@T("가족끼리만 볼 수 있는 기록 공간입니다.")</p><div class="welcome-icons">🍼 ☁️ 🌙 🧷</div></section>
+    }
+    else
+    {
+        <div class="account"><span>@T("보호자님, 반가워요.")</span><a href="@AccountUrl">@T("내 계정")</a></div>
+        @if (!string.IsNullOrEmpty(error)) { <div class="notice error" role="alert">@T(error)</div> }
+        @if (!string.IsNullOrEmpty(message)) { <div class="notice" role="status">@T(message)</div> }
+        <fieldset disabled="@(busy || photoUploading)" class="workspace">
+        @if (family is null)
+        {
+            <section class="section-heading"><span class="eyebrow">@T("함께 돌보는 하루")</span><h1>@T("우리 가족의")<br />@T("기록을 시작해요.")</h1></section>
+        }
+        @if (families.Count > 0)
+        {
+            <label class="family-picker">@T("가족 공간")<select value="@(family?.Id ?? "")" @onchange="SelectFamily"><option value="" disabled>@T("가족 공간 선택")</option>@foreach (var f in families) { <option value="@f.Id">@f.Name · @f.BabyName</option> }</select></label>
+        }
+        @if (family is not null)
+        {
+            <BabyDashboard Family="family" Day="day" Offset="offset" OnSave="SaveProfile" UploadingChanged="v => photoUploading = v" />
+            <details class="care-settings"><summary>@T("우리 아기 기본 시간 설정")</summary>
+                <p class="fine">@T("가족 공간별 입력 기본값입니다. 실제 수유·트림·수면 시간과 다를 수 있어요.")</p>
+                <label class="check"><input type="checkbox" @bind="preferences.UseFeedingDefault" />@T("수유 종료 시각을 말하지 않으면 기본 시간 적용")</label>
+                <div class="form-grid">
+                    <label>@T("수유 기본 시간 (분)")<InputNumber @bind-Value="preferences.FeedingMinutes" min="1" max="180" /></label>
+                    <label>@T("수유 후 트림 시간 (분)")<InputNumber @bind-Value="preferences.BurpingMinutes" min="0" max="180" /></label>
+                    <label>@T("기저귀 교체 후 잠들기까지 (분)")<InputNumber @bind-Value="preferences.DiaperToSleepMinutes" min="0" max="180" /></label>
+                </div>
+                <label class="check"><input type="checkbox" @bind="preferences.SuggestSleep" />@T("트림·수면 추정 제안 보기 (확인 후 저장)")</label>
+                <button @onclick="SavePreferences">@T("설정 저장")</button>
+            </details>
+            @if (OpenEntries.Any())
+            {
+                <section class="open-records"><span class="eyebrow">@T("지금 진행 중")</span>@foreach (var e in OpenEntries) { <div><span>@Catalog.Get(e.Kind).Icon @T(Catalog.Get(e.Kind).Label) · @Local(e.StartedAt).ToString("MM.dd HH:mm") @T("시작")</span><button @onclick="() => Finish(e)">@T("종료")</button></div> }</section>
+            }
+            @if (Suggestions.Any())
+            {
+                <section class="care-suggestions"><h2>@T("추정 트림·수면 확인")</h2><p class="fine">@T("자동 저장되지 않으며 수면 합계에도 포함되지 않아요. 실제 시간을 확인해주세요.")</p>
+                    @foreach (var suggestion in Suggestions.Take(6))
+                    {
+                        <div class="notice"><strong>@T("추정") @T(Catalog.Get(suggestion.Entry.Kind).Label)</strong>
+                            <p>@Local(suggestion.Entry.StartedAt).ToString("MM.dd HH:mm") – @Local(suggestion.Entry.EndedAt!.Value).ToString("MM.dd HH:mm")</p>
+                            <button @onclick="() => ReviewSuggestion(suggestion)">@T("시간 확인 / 수정")</button></div>
+                    }
+                </section>
+            }
+            <section class="voice-card">
+                <span class="eyebrow">@T("한 번 누르고, 편하게 말하세요")</span><h2>@T("오늘은 어떤 순간인가요?")</h2>
+                <button class="microphone @(listening ? "listening" : "")" disabled="@(!speechAvailable)" @onclick="ToggleSpeech" aria-label="@T(listening ? "음성 입력 끝내기" : "음성 입력 시작")">@(listening ? "■" : "🎙")</button>
+                <p class="voice-caption">@T(listening ? "듣고 있어요. 다시 누르면 멈춰요." : speechAvailable ? "예: “분유 80미리 먹었어”" : "이 브라우저에서는 직접 입력하거나 키보드의 음성 입력을 사용해주세요.")</p>
+                <label class="sr-only" for="utterance">@T("말씀하신 내용")</label><textarea id="utterance" @bind="utterance" @bind:event="oninput" maxlength="2000" placeholder="@(T("말하거나 여기에 직접 입력하세요"))"></textarea>
+                @if (!string.IsNullOrEmpty(question)) { <div class="notice">@T(question) <small>@T("아래 답변을 추가해주세요.")</small></div><label>@T("추가 답변")<input @bind="answer" maxlength="500" /></label> }
+                <div class="row"><button class="primary" disabled="@(string.IsNullOrWhiteSpace(utterance) || listening)" @onclick="Parse">@T(busy ? "기록을 정리하는 중…" : "기록 정리하기")</button><button @onclick="ClearInput">@T("입력 지우기")</button></div>
+                <p class="fine">@T("음성을 글로 바꾼 뒤 간단한 명령은 바로, 나머지는 AI가 정리합니다. 확인하고 저장하기 전에는 기록되지 않아요.")</p>
+                <CareExamples OnSelect="UseExample" Disabled="listening" />
+            </section>
+            <section><div class="section-title"><h2>@T("직접 기록하기")</h2><span>@T("언제든 수정할 수 있어요")</span></div><div class="quick-grid">@foreach (var kind in Catalog.Kinds) { <button @onclick="() => NewEntry(kind.Id)"><span>@kind.Icon</span>@T(kind.Label)</button> }</div></section>
+            @if (draft is not null)
+            {
+                <section class="editor" id="care-editor" tabindex="-1"><div class="section-title"><h2>@T(draft.Version == 0 ? "새 기록 확인" : "기록 수정")</h2><span>@T("아직 저장되지 않았어요")</span></div>
+                    @if (draft.ConfirmedFromEstimate) { <p class="notice">@T(suggestionReason) @T("실제 시작·종료 시각을 확인한 뒤 저장해주세요.")</p> }
+                    <label>@T("기록 종류")<select value="@draft.Kind" @onchange="ChangeKind">@foreach (var kind in Catalog.Kinds) { <option value="@kind.Id">@T(kind.Label)</option> }</select></label>
+                    <div class="form-grid"><label>@T("시작 / 기록 시각")<input type="datetime-local" value="@startInput.ToString("yyyy-MM-ddTHH:mm", System.Globalization.CultureInfo.InvariantCulture)" @oninput="ChangeStartTime" /></label>
+                    @if (Catalog.Get(draft.Kind).HasAmount && draft.FeedingMode != "breast") { <label>@T("먹은 양 (mL)")<InputNumber @bind-Value="draft.AmountMl" min="0" max="2000" /></label> }</div>
+                    @if (draft.Kind == "temperature") { <label>@T("측정 체온 (°C)")<InputNumber @bind-Value="draft.TemperatureC" min="30" max="45" step="0.1" /></label> }
+                    @if (draft.Kind is "feeding" or "pumping" or "solids") { <FeedingEditor Entry="draft" Changed="StateHasChanged" /> }
+                    @if (draft.Kind == "pumping") { <PumpingEditor Entry="draft" /> }
+                    @if (draft.Kind == "feeding" && !hasEnd)
+                    {
+                        <label class="check"><input type="checkbox" @bind="useExpectedDuration" />@T("예상 수유 시간 적용")</label>
+                        @if (useExpectedDuration) { <label>@T("예상 수유 시간 (분)")<InputNumber @bind-Value="expectedMinutes" min="1" max="180" /></label><p class="fine">@T("예상 종료") @startInput.AddMinutes(Math.Clamp(expectedMinutes, 1, 180)).ToString("MM.dd HH:mm") · @T("실제 종료 시각을 입력하면 그 시간이 우선합니다.")</p> }
+                    }
+                    @if (Catalog.Get(draft.Kind).HasDuration) { <label class="check"><input type="checkbox" @bind="hasEnd" />@T("종료 시각 기록")</label>@if (hasEnd) { <label>@T("종료 시각")<input type="datetime-local" value="@endInput.ToString("yyyy-MM-ddTHH:mm", System.Globalization.CultureInfo.InvariantCulture)" @oninput="ChangeEndTime" /></label> } }
+                    @if (draft.Kind == "diaper") { <label>@T("기저귀 종류")<select value="@draft.Detail" @onchange="ChangeDiaper"><option value="">@T("선택해주세요")</option><option value="wet">@T("소변")</option><option value="dirty">@T("대변")</option><option value="mixed">@T("소변 + 대변")</option></select></label> }
+                    @if (CareObservations.HasStool(draft)) { <DiaperColorPicker Entry="draft" Stool="true" /> }
+                    @if (CareObservations.HasUrine(draft)) { <DiaperColorPicker Entry="draft" Stool="false" /> }
+                    <label>@T("메모")<textarea @bind="draft.Note" @bind:event="oninput" maxlength="1000" placeholder="@(T("트림 여부 등 남기고 싶은 내용을 적어주세요"))"></textarea></label>
+                    <div class="row"><CarePhotoPicker @key="draft.Id" FamilyId="@family.Id" Value="draft.PhotoIds" ValueChanged="v => draft.PhotoIds = v" UploadingChanged="v => photoUploading = v" /><button class="primary" @onclick="Save">@T("확인하고 저장")</button><button @onclick="() => draft = null">@T("취소")</button></div>
+                </section>
+            }
+            <section class="timeline"><div class="section-title"><h2>@T("하루 기록")</h2><button @onclick="Refresh">@T("새로고침")</button></div><label class="date-picker">@T("날짜")<input type="date" @bind="day" @bind:format="yyyy-MM-dd" /></label>
+                @if (!DayEntries.Any()) { <div class="empty">@T("아직 기록이 없어요.")<br /><span>@T("작은 순간 하나부터 남겨보세요.")</span></div> }
+                @foreach (var e in DayEntries.OrderByDescending(e => e.StartedAt))
+                {
+                    var kind = Catalog.Get(e.Kind);
+                    <article class="record" @key="e.Id"><button type="button" class="record-edit-target" aria-label="@(T("수정") + " · " + T(kind.Label) + " · " + Local(e.StartedAt).ToString("MM.dd HH:mm"))" @onclick="() => Edit(e)"></button><div class="record-icon">@kind.Icon</div><div class="record-body"><h3>@T(kind.Label) @if (e.AmountMl is { } amount) { <strong>@amount mL</strong> } @if (e.TemperatureC is { } temperature) { <strong>@temperature.ToString("0.0") °C</strong> }</h3><p>@Local(e.StartedAt).ToString("HH:mm") @if (e.EndedAt is { } end) { <span>– @Local(end).ToString("MM.dd HH:mm") · @Math.Round((end - e.StartedAt).TotalMinutes) @T("분")</span> } else if (e.ExpectedDurationMinutes is { } duration) { <span>· @T("예상") @duration @T("분") (@T("종료") @Local(e.StartedAt.AddMinutes(duration)).ToString("HH:mm"))</span> } else if (kind.HasDuration) { <span class="running">@T("진행 중")</span> }</p>@if (e.Kind == "feeding") { <p class="feeding-interval">@T("수유 간격 (시작 기준)"): @if (CareObservations.FeedingInterval(e, family!.Entries) is { } interval) { <span>@((int)interval.TotalHours) @T("시간") @(interval.Minutes) @T("분")</span> } else { <span>@T("이전 수유 기록 없음")</span> }</p> }@if (e.Kind == "diaper") { <p>@DiaperLabel(e.Detail)</p>@if (CareObservations.HasStool(e)) { <p>@T("대변 색상"): @ColorLabel(true, e.StoolColor) @if (e.StoolColor is not null && !e.StoolColorConfirmed) { <span>(@T("기본값"))</span> }</p> }@if (CareObservations.HasUrine(e)) { <p>@T("소변 색상"): @ColorLabel(false, e.UrineColor) @if (e.UrineColor is not null && !e.UrineColorConfirmed) { <span>(@T("기본값"))</span> }</p> }@if (CareObservations.Advice(true, e.StoolColor) is not null || CareObservations.Advice(false, e.UrineColor) is not null) { <p class="color-alert">@T("색상 상담 안내 · 카드를 눌러 확인")</p> } }@if (!string.IsNullOrEmpty(e.Note)) { <p class="note">@CareLanguages.DisplayNote(e, Text.Language)</p>@if (CareLanguages.DisplayNote(e, Text.Language) != e.Note) { <details><summary>@T("원문")</summary><p class="note">@e.Note</p></details> } }@if (e.ConfirmedFromEstimate) { <p>@T("추정에서 보호자가 확인한 기록")</p> }<FeedingSummary Entry="e" />@if (e.Kind == "pumping") { <p>@T("왼쪽") @(e.LeftAmountMl?.ToString() ?? "—") mL · @T("오른쪽") @(e.RightAmountMl?.ToString() ?? "—") mL</p><p>@T(PumpLabel(e.PumpMethod))</p> }@if (e.PhotoIds.Count > 0) { <div class="record-photos">@foreach (var photo in e.PhotoIds) { <a href="@CarePhotos.Url(family.Id, photo)" target="_blank" rel="noopener"><img src="@CarePhotos.Url(family.Id, photo)" alt="@T("첨부 사진")" loading="lazy" /></a> }</div> }<small>@T("수정") @Local(e.UpdatedAt).ToString("MM.dd HH:mm")</small></div><div class="record-actions"><button class="danger" @onclick="() => Delete(e)">@T("삭제")</button></div></article>
+                }
+            </section>
+            @if (family.OwnerId == userId)
+            {
+                <DreamineExpander Header="@(T("가족 초대"))" @bind-IsExpanded="inviteExpanded"><p>@T("24시간 동안 한 번 사용할 수 있는 초대 코드입니다. 새 코드를 만들면 이전 코드는 취소됩니다.")</p><button @onclick="Invite">@T("초대 코드 만들기")</button>@if (inviteCode.Length > 0) { <label>@T("가족에게 전달할 코드")<input readonly value="@inviteCode" /></label> }</DreamineExpander>
+            }
+        }
+        <DreamineExpander Header="@(T("가족 공간 만들기 / 참여하기"))" @bind-IsExpanded="spacesExpanded">
+            <div class="form-grid"><label>@T("가족 공간 이름")<input @bind="familyName" maxlength="40" placeholder="@(T("우리 가족"))" /></label><label>@T("아기 이름 / 태명")<input @bind="babyName" maxlength="40" placeholder="@(T("아기 이름"))" /></label></div><button class="primary" @onclick="CreateFamily">@T("가족 공간 만들기")</button>
+            <hr /><label>@T("받은 초대 코드")<input @bind="joinCode" maxlength="32" autocomplete="off" /></label><button @onclick="Join">@T("초대받은 공간에 참여")</button>
+        </DreamineExpander>
+        </fieldset>
+    }
+    <footer>@T("아기하루 · 함께 기억하는 작은 순간들")<span>@T("시각은 현재 기기의 시간대 기준입니다.")</span></footer>
+</main>
+<div id="blazor-error-ui">@T("연결이 끊겼어요. 입력 내용을 확인한 뒤") <a href="">@T("다시 연결")</a>@T("해주세요.")</div>
+
+@code {
+    private void UseExample(string text) { ClearInput(); utterance = text; }
+    private string T(string value) => Text[value];
+    private void LanguageChanged() => _ = InvokeAsync(StateHasChanged);
+    private string AccountUrl => Configuration.GetValue<bool>("Authentication:UseCentralPortal") ? "https://codemaru.co.kr/_identity/account" : "/_identity/account";
+    private bool photoUploading;
+    private bool ready, busy, listening, speechAvailable, hasEnd, inviteExpanded; private bool spacesExpanded = true;
+    private string userId = "", error = "", message = "", utterance = "", answer = "", question = "", conversation = "";
+    private string familyName = "", babyName = "", joinCode = "", inviteCode = "", speechFamilyId = "";
+    private FamilyState? family;
+    private CarePreferences preferences = new();
+    private bool useExpectedDuration;
+    private int expectedMinutes = 20;
+    private string draftOriginalNote = "", speechLanguage = "ko";
+    private string suggestionReason = "추정으로 계산한 기록입니다.";
+    private IEnumerable<CareSuggestion> Suggestions => family is null ? [] : CarePlanning.Suggest(family, DateTimeOffset.UtcNow)
+        .Where(x => Local(x.Entry.StartedAt).Date == day.Date);
+    private Task SaveProfile(CarePreferences profile) => Run(async () => {
+        if (family is null) return;
+        var user = await CurrentUser(); Store.SavePreferences(user, family.Id, profile);
+        family = Store.Get(user, family.Id); preferences = family.Preferences with { };
+        message = "프로필과 목표를 저장했어요.";
+    });
+    private Task SavePreferences() => Run(async () => {
+        if (family is null) return;
+        var user = await CurrentUser(); Store.SavePreferences(user, family.Id, preferences);
+        family = Store.Get(user, family.Id); preferences = family.Preferences with { };
+        message = "기본 시간을 저장했어요. 새 수유 기록과 추정 제안에 적용됩니다.";
+    });
+    private void ReviewSuggestion(CareSuggestion suggestion) { Edit(suggestion.Entry); suggestionReason = suggestion.Reason; }
+
+    private IReadOnlyList<FamilySummary> families = [];
+    private CareEntry? draft;
+    private DateTime startInput, endInput, day = DateTime.Today;
+    private bool validStartTime = true, validEndTime = true;
+    private void ChangeStartTime(ChangeEventArgs e) => validStartTime = CareLocalTime.TryParse(e.Value?.ToString(), out startInput);
+    private void ChangeEndTime(ChangeEventArgs e) => validEndTime = CareLocalTime.TryParse(e.Value?.ToString(), out endInput);
+    private TimeSpan offset = TimeSpan.FromHours(9);
+    private IJSObjectReference? speech;
+    private DotNetObjectReference<Home>? reference;
+    private readonly CancellationTokenSource lifetime = new();
+    private IEnumerable<CareEntry> DayEntries => family?.Entries.Where(e => Local(e.StartedAt).Date == day.Date) ?? [];
+    private IEnumerable<CareEntry> OpenEntries => (family?.Entries.Where(e => Catalog.Get(e.Kind).HasDuration && e.EndedAt is null && (e.ExpectedDurationMinutes is null || e.StartedAt.AddMinutes(e.ExpectedDurationMinutes.Value) > DateTimeOffset.UtcNow)) ?? []).OrderByDescending(e => e.StartedAt);
+    private int SleepMinutes => CarePlanning.SleepMinutesOnDay(family?.Entries ?? [], day, offset);
+    private DateTime Local(DateTimeOffset time) => time.ToOffset(offset).DateTime;
+    private string DiaperLabel(string value) => T(value switch { "wet" => "소변", "dirty" => "대변", "mixed" => "소변 + 대변", _ => "미지정" });
+
+    protected override async Task OnInitializedAsync()
+    {
+        Text.Changed += LanguageChanged;
+        await Run(async () => { userId = await CurrentUser(); if (userId.Length > 0) { families = Store.List(userId); if (families.Count > 0) family = Store.Get(userId, families[0].Id); } });
+        preferences = family is null ? new() : family.Preferences with { };
+        spacesExpanded = family is null; ready = true;
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (focusEditor && speech is not null) { focusEditor = false; await speech.InvokeVoidAsync("focusEditor"); }
+        if (!firstRender) return;
+        try
+        {
+            speech = await JS.InvokeAsync<IJSObjectReference>("import", "./speech.js");
+            offset = TimeSpan.FromMinutes(await speech.InvokeAsync<int>("offsetMinutes"));
+            day = Local(DateTimeOffset.UtcNow).Date;
+            speechAvailable = await speech.InvokeAsync<bool>("available");
+            reference = DotNetObjectReference.Create(this);
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (JSException) { speechAvailable = false; }
+    }
+    private async Task<string> CurrentUser()
+    {
+        var user = (await Authentication.GetAuthenticationStateAsync()).User;
+        return user.Identity?.IsAuthenticated == true ? user.FindFirst(DreamineIdentityExtensions.UserIdClaimType)?.Value ?? "" : "";
+    }
+    private async Task Run(Func<Task> action)
+    {
+        if (busy) return;
+        busy = true; error = ""; message = "";
+        try { await action(); }
+        catch (CareException ex) { error = ex.Message; }
+        catch (Exception) { error = "처리하지 못했습니다. 입력 내용을 유지했으니 다시 시도해주세요."; }
+        finally { busy = false; }
+    }
+    private Task CreateFamily() => Run(async () => { family = Store.Create(await CurrentUser(), familyName, babyName); families = Store.List(await CurrentUser()); ResetFamily(); });
+    private Task Join() => Run(async () => { family = Store.Join(await CurrentUser(), joinCode); families = Store.List(await CurrentUser()); joinCode = ""; ResetFamily(); });
+    private Task SelectFamily(ChangeEventArgs e) => Run(async () => { family = Store.Get(await CurrentUser(), e.Value?.ToString() ?? ""); ResetFamily(); });
+    private void ResetFamily() { preferences = family is null ? new() : family.Preferences with { }; spacesExpanded = false; inviteExpanded = false; draft = null; inviteCode = ""; ClearInput(); }
+    private Task Refresh() => Run(async () => { if (family is not null) family = Store.Get(await CurrentUser(), family.Id); preferences = family is null ? new() : family.Preferences with { }; message = "최신 기록을 불러왔어요."; });
+    private Task Invite() => Run(async () => { inviteCode = Store.Invite(await CurrentUser(), family!.Id); });
+    private void NewEntry(string kind) => Edit(CarePlanning.ApplyFeedingDefault(new CareEntry { Kind = kind, StartedAt = DateTimeOffset.UtcNow }, family!.Preferences));
+    private bool focusEditor;
+    private void Edit(CareEntry entry)
+    {
+        draft = CareObservations.Prepare(entry, entry.Version == 0);
+        focusEditor = true;
+        draftOriginalNote = entry.Note;
+        suggestionReason = "추정으로 계산한 기록입니다.";
+        useExpectedDuration = entry.ExpectedDurationMinutes.HasValue;
+        expectedMinutes = entry.ExpectedDurationMinutes ?? family?.Preferences.FeedingMinutes ?? 20;
+        startInput = Local(entry.StartedAt);
+        endInput = Local(entry.EndedAt ?? DateTimeOffset.UtcNow);
+        hasEnd = entry.EndedAt.HasValue;
+        validStartTime = validEndTime = true;
+    }
+    private void ChangeKind(ChangeEventArgs e)
+    {
+        if (draft is null) return;
+        draft.Kind = e.Value?.ToString() ?? "feeding";
+        if (!Catalog.Get(draft.Kind).HasAmount && draft.FeedingMode != "breast") draft.AmountMl = null;
+        if (!Catalog.Get(draft.Kind).HasDuration) hasEnd = false;
+        draft.Detail = "";
+        draft = CareObservations.Prepare(draft, false);
+        if (draft.Kind != "temperature") draft.TemperatureC = null;
+        if (draft.Kind != "feeding") draft.FeedingMode = "";
+        draft.BreastSide = "";
+        if (draft.Kind != "solids") draft.AmountGrams = null;
+        if (draft.Kind != "pumping") { draft.LeftAmountMl = null; draft.RightAmountMl = null; draft.PumpMethod = ""; }
+        draft.ExpectedDurationMinutes = null;
+        useExpectedDuration = draft.Kind == "feeding" && family!.Preferences.UseFeedingDefault;
+        draft.ConfirmedFromEstimate = false;
+    }
+    private static string PumpLabel(string method) => method switch { "electric" => "전동 유축기", "manual" => "수동 유축기", "hand" => "손 유축", _ => "미확인" };
+    private string ColorLabel(bool stool, string? color) => T((stool ? CareObservations.StoolColors : CareObservations.UrineColors).FirstOrDefault(c => c.Id == color)?.Label ?? "미확인");
+    private void ChangeDiaper(ChangeEventArgs e) { if (draft is null) return; draft.Detail = e.Value?.ToString() ?? ""; draft = CareObservations.Prepare(draft, true); }
+    private void Finish(CareEntry entry) { Edit(entry); hasEnd = true; endInput = Local(DateTimeOffset.UtcNow); }
+    private Task Save() => Run(async () =>
+    {
+        if (draft is null || family is null) return;
+        if (!validStartTime) throw new CareException("시작 시각을 확인해주세요. 미래 기록은 저장할 수 없습니다.");
+        if (hasEnd && !validEndTime) throw new CareException("종료 시각은 시작 이후이며 현재 시각 이전이어야 합니다.");
+        var entry = draft with { ExpectedDurationMinutes = draft.Kind == "feeding" && !hasEnd && useExpectedDuration ? expectedMinutes : null, StartedAt = new DateTimeOffset(DateTime.SpecifyKind(startInput, DateTimeKind.Unspecified), offset), EndedAt = hasEnd && Catalog.Get(draft.Kind).HasDuration ? new DateTimeOffset(DateTime.SpecifyKind(endInput, DateTimeKind.Unspecified), offset) : null };
+        if (entry.Note != draftOriginalNote)
+            entry = entry with { NoteTranslations = new(), NoteLanguage = Text.Language };
+        var user = await CurrentUser();
+        Store.Save(user, family.Id, entry);
+        family = Store.Get(user, family.Id); draft = null; ClearInput(); message = "기록을 저장했어요.";
+    });
+    private async Task Delete(CareEntry entry)
+    {
+        if (await Dialogs.ShowOkCancelAsync(T("이 기록을 삭제할까요?"), T("기록 삭제")) != DreamineDialogResult.OK) return;
+        await Run(async () => { var user = await CurrentUser(); Store.Delete(user, family!.Id, entry.Id, entry.Version); family = Store.Get(user, family.Id); if (draft?.Id == entry.Id) draft = null; message = "기록을 삭제했어요."; });
+    }
+    private Task Parse() => ParseInLanguage(Text.Language);
+    private Task ParseInLanguage(string inputLanguage) => Run(async () =>
+    {
+        if (family is null) return;
+        var current = Store.Get(await CurrentUser(), family.Id);
+        var context = current.Entries.OrderByDescending(e => e.StartedAt).Take(20)
+            .Concat(current.Entries.Where(e => e.EndedAt is null && Catalog.Get(e.Kind).HasDuration)).DistinctBy(e => e.Id).Take(40).ToArray();
+        var input = question.Length > 0 ? $"{conversation}\n추가 답변: {answer}" : utterance;
+        var result = await Interpreter.ParseAsync(input, DateTimeOffset.UtcNow.ToOffset(offset), context, lifetime.Token, inputLanguage);
+        if (result.Entry is not null) { Edit(CarePlanning.ApplyFeedingDefault(result.Entry, current.Preferences)); question = ""; conversation = ""; answer = ""; message = "아래 기록을 확인하고 저장해주세요."; }
+        else { conversation = input; question = result.Question ?? "조금 더 자세히 말씀해주세요."; answer = ""; }
+    });
+    private void ClearInput() { utterance = ""; question = ""; conversation = ""; answer = ""; }
+    private async Task ToggleSpeech()
+    {
+        if (speech is null) return;
+        try { if (listening) await speech.InvokeVoidAsync("stop"); else { error = ""; speechFamilyId = family?.Id ?? ""; speechLanguage = Text.Language; listening = true; await speech.InvokeVoidAsync("start", reference, speechLanguage); } }
+        catch (JSException) { listening = false; error = "마이크 권한을 확인하거나 직접 입력해주세요."; }
+    }
+    [JSInvokable] public async Task SpeechResult(string text)
+    {
+        listening = false;
+        if (speechFamilyId != family?.Id) { error = "가족 공간이 변경되었습니다. 다시 말씀해주세요."; await InvokeAsync(StateHasChanged); return; } if (question.Length > 0) answer = text; else utterance = text;
+        await ParseInLanguage(speechLanguage); await InvokeAsync(StateHasChanged);
+    }
+    [JSInvokable] public Task SpeechError(string text) { listening = false; error = text; return InvokeAsync(StateHasChanged); }
+    [JSInvokable] public Task SpeechEnded() { listening = false; return InvokeAsync(StateHasChanged); }
+    public async ValueTask DisposeAsync()
+    {
+        Text.Changed -= LanguageChanged;
+        lifetime.Cancel(); lifetime.Dispose();
+        if (speech is not null) { try { await speech.InvokeVoidAsync("dispose"); await speech.DisposeAsync(); } catch (JSDisconnectedException) { } }
+        reference?.Dispose();
+    }
+}

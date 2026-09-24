@@ -1,0 +1,55 @@
+@implements IDisposable
+@inject BabyCareText Text
+@using Dreamine.UI.Blazor.Navigation
+@inject IConfiguration Configuration
+
+<AuthorizeView Context="authState">
+    <Authorized>
+        <DreaminePortalHeader BrandName="CodeMaru" BrandUrl="https://codemaru.co.kr/"
+                              Items="Items" ActiveKey="babycare" UseCodeMaruAppearance="true"
+                              NavigationAriaLabel="@(Text["서비스 메뉴"])" ToggleMenuLabel="@(Text["메뉴 열기 / 닫기"])"
+                              IsAuthenticated="true" DisplayName="@(authState.User.Identity?.Name ?? "내 계정")"
+                              ScreenSettingsLabel="@(Text["화면 설정"])" AccountUrl="@AccountUrl" AccountLabel="@(Text["내 계정"])">
+            <Preferences>@Preferences</Preferences>
+        </DreaminePortalHeader>
+    </Authorized>
+    <NotAuthorized>
+        <DreaminePortalHeader BrandName="CodeMaru" BrandUrl="https://codemaru.co.kr/"
+                              Items="Items" ActiveKey="babycare" UseCodeMaruAppearance="true"
+                              NavigationAriaLabel="@(Text["서비스 메뉴"])" ToggleMenuLabel="@(Text["메뉴 열기 / 닫기"])"
+                              LoginUrl="/auth/login" LoginLabel="@(Text["로그인"])">
+            <Preferences>@Preferences</Preferences>
+        </DreaminePortalHeader>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private string theme = "system";
+    private RenderFragment Preferences => @<Dreamine.UI.Blazor.Navigation.DreaminePortalPreferences
+        Theme="@theme" ThemeChanged="@(value => theme = value)"
+        ThemeLabel="@(Text["테마"])" SystemThemeLabel="@(Text["시스템"])" LightThemeLabel="@(Text["밝게"])" DarkThemeLabel="@(Text["어둡게"])"
+        Language="@Text.Language" LanguageChanged="@(value => Text.SetLanguage(value))" Languages="@Text.Languages"
+        LanguageLabel="@(Text["언어"])" FallbackLanguage="ko" CookieDomain=".codemaru.co.kr" NavigateWithLanguageQuery="false" />;
+    protected override void OnInitialized() => Text.Changed += Changed;
+    private void Changed() => _ = InvokeAsync(StateHasChanged);
+    public void Dispose() => Text.Changed -= Changed;
+
+    private string AccountUrl => Configuration.GetValue<bool>("Authentication:UseCentralPortal")
+        ? "https://codemaru.co.kr/_identity/account" : "/_identity/account";
+
+    private IReadOnlyList<DreaminePortalNavigationItem> Items =>
+    [
+        new("home", Text["홈"], "https://codemaru.co.kr/"),
+        new("dreamine", "Dreamine", "https://dreamine.kr/", true),
+        new("cardhybrid", "CardHybrid", "https://codemaru.co.kr/cardhybrid"),
+        new("wedding", "Wedding", "https://wedding.codemaru.co.kr/"),
+        new("thankyou", "ThankYou", "https://thankyou.codemaru.co.kr/"),
+        new("families", "Families", "https://families.codemaru.co.kr/"),
+        new("babycare", "BabyCare", "/"),
+        new("portfolio", "Portfolio", "https://portfolio.codemaru.co.kr/"),
+        new("cctv", "CCTV", "https://cctvviewer.codemaru.co.kr/"),
+        new("shop", "ShopStore", "https://shop.codemaru.co.kr/"),
+        new("games", "Games", "https://games.codemaru.co.kr/"),
+        new("contact", Text["문의하기"], "https://codemaru.co.kr/contact")
+    ];
+}

@@ -1,0 +1,413 @@
+@inject GameSession Session
+@implements IAsyncDisposable
+
+<section class="territory @(tab is "map" or "shared" ? "map-active" : "")" role="dialog" aria-modal="true" aria-label="영지와 월드맵">
+    <header class="territory-header">
+        <img class="crest" src="/images/maru-idle/icons-premium/menu-crest-v1.png" alt="" />
+        <div><small>MARU · DOMINION</small><h2>청운 영지</h2></div>
+        <span class="domain-level">영주관 <b>Lv.@(state?.Buildings[0] ?? 1)</b></span>
+        <button class="close" aria-label="영지 닫기" @onclick="CloseRequested">×</button>
+    </header>
+    @if (state is not null)
+    {
+        <div class="resource-strip" aria-label="영지 자원">
+            @for (var i = 0; i < 3; i++)
+            {
+                var index = i;
+                <button @onclick='() => SetTab("storage")' title="@($"{ResourceNames[i]} {ResourceValues[i]:N0} / {TerritoryRules.StorageCapacity(state):N0} · 창고 열기")">
+                    <span class="resource-icon resource-@i" aria-hidden="true"></span>
+                    <span><small>@ResourceNames[i]</small><b>@Compact(ResourceValues[i])</b></span>
+                    <i style="@($"--fill:{StoragePercent(index)}%")"></i>
+                </button>
+            }
+        </div>
+        <nav class="territory-tabs" aria-label="영지 메뉴">
+            @foreach (var item in Tabs) { <button class="@(tab == item.Key ? "selected" : "")" aria-pressed="@(tab == item.Key)" @onclick="() => SetTab(item.Key)">@item.Name</button> }
+        </nav>
+        <div class="content @(tab == "map" ? "map-content" : tab == "shared" ? "shared-content" : "")">
+        @if (tab == "shared")
+        {
+            <TerritoryCoopWorld Changed="Reload" />
+        }
+        else if (tab == "village")
+        {
+            <nav class="district-tabs" aria-label="영지 건설 구역"><button class="@(!productionDistrict ? "selected" : "")" @onclick="() => productionDistrict = false">성내 시설</button><button class="@(productionDistrict ? "selected" : "")" @onclick="() => productionDistrict = true">생산 지구 · 추가 건설</button></nav>
+            @if (productionDistrict)
+            {
+                <TerritoryProductionSites State="state" Busy="busy" BuildRequested='site => Act("site-build", site)' />
+            }
+            else
+            {
+            <div class="village-view">
+                <div class="village-scene">
+                    <img src="/images/maru-idle/territory/city-v8.png" alt="청운 영지의 영주관, 농장, 제재소, 채석장, 병영과 창고 조감도" />
+                    <div class="scene-caption"><small>CHEONGUN CITADEL</small><strong>청운성</strong></div>
+                    @for (var i = 0; i < 6; i++)
+                    {
+                        var index = i; var building = TerritoryRules.ActiveConstructions(state).Any(j => j.Kind == "build" && j.Target == i);
+                        <button class="building-pin @(selectedBuilding == i ? "active" : "") @(building ? "building" : "")" style="@($"left:{BuildingPositions[i].X}%;top:{BuildingPositions[i].Y}%")" aria-label="@($"{TerritoryRules.BuildingNames[i]} Lv.{state.Buildings[i]} 선택")" @onclick="() => selectedBuilding = index">
+                            @if (building) { <em>건설 중</em> }
+                            <b>@TerritoryRules.BuildingNames[i]</b><span>Lv.@state.Buildings[i]</span>
+                        </button>
+                    }
+                    <span class="scene-guide">건물을 터치해 관리하세요</span>
+                </div>
+                <div class="building-picker" aria-label="시설 선택">
+                    @for (var i = 0; i < 6; i++) { var index = i; <button class="@(selectedBuilding == i ? "selected" : "")" @onclick="() => selectedBuilding = index">@TerritoryRules.BuildingNames[i]</button> }
+                </div>
+                <article class="detail-panel building-detail">
+                    <div class="detail-heading"><div><small>FACILITY UPGRADE</small><h3>@TerritoryRules.BuildingNames[selectedBuilding]</h3></div><span class="level-step">Lv.@state.Buildings[selectedBuilding] <i>→</i> @(state.Buildings[selectedBuilding] >= 20 ? "MAX" : $"Lv.{state.Buildings[selectedBuilding] + 1}")</span></div>
+                    <p class="effect-line">@BuildingEffect(selectedBuilding)</p>
+                    <div class="cost-line"><span>목재 <b>@TerritoryRules.BuildingCost(state, selectedBuilding).Wood.ToString("N0")</b></span><span>석재 <b>@TerritoryRules.BuildingCost(state, selectedBuilding).Stone.ToString("N0")</b></span><span>소요 <b>@Duration(TerritoryRules.ConstructionSeconds(state, selectedBuilding))</b></span></div>
+                    <button class="primary" disabled="@(busy || BuildingBlocked is not null)" @onclick='() => Act("build", selectedBuilding)'>@(BuildingBlocked ?? "건설 시작")</button>
+                </article>
+            </div>
+            }
+        }
+        else if (tab == "army")
+        {
+            <div class="army-view">
+                <div class="section-heading"><div><small>RECRUITMENT HALL</small><h3>청운 병영</h3></div><span>수용 @TerritoryRules.ReservedTroops(state) / @TerritoryRules.Capacity(state)</span></div>
+                <div class="unit-cards" aria-label="모집 병종">
+                    @for (var i = 0; i < 3; i++)
+                    {
+                        var index = i;
+                        <button class="unit-card @(selectedTroop == i ? "selected" : "")" aria-label="@($"{TerritoryRules.TroopNames[i]} 선택")" @onclick="() => selectedTroop = index">
+                            <span class="troop-art" style="@($"background-position:{i * 50}% center")" aria-hidden="true"></span>
+                            <span class="unit-rank">Lv.@TerritoryRules.EffectiveTraining(state)</span><span class="unit-owned">@state.Troops[i]<small>명 주둔</small></span>
+                            <strong>@TerritoryRules.TroopNames[i]</strong><small>@TroopRoles[i]</small>
+                        </button>
+                    }
+                </div>
+                <article class="detail-panel recruit-panel">
+                    <div class="detail-heading"><div><small>ENLIST YOUR FORCES</small><h3>@TerritoryRules.TroopNames[selectedTroop] 모집</h3></div><span class="level-step">기본 전투력 @(selectedTroop == 0 ? 10 : selectedTroop == 1 ? 14 : 22)</span></div>
+                    <div class="quantity" aria-label="모집 수량">@foreach (var number in new[] { 1, 5, 10 }) { <button class="@(recruitCount == number ? "selected" : "")" aria-pressed="@(recruitCount == number)" @onclick="() => recruitCount = number">@number 명</button> }<button disabled="@(TerritoryRules.MaximumRecruitment(state, selectedTroop) == 0)" title="@($"병영 Lv.{state.Buildings[4]} × 10 = 1회 최대 {TerritoryRules.RecruitmentLimit(state)}명")" @onclick="() => recruitCount = TerritoryRules.MaximumRecruitment(state, selectedTroop)">최대 @TerritoryRules.MaximumRecruitment(state, selectedTroop)명</button></div>
+                    <div class="cost-line"><span>식량 <b>@((20 + selectedTroop * 10) * recruitCount)</b></span><span>목재 <b>@(10 * recruitCount)</b></span><span>소요 <b>@Duration(TerritoryRules.RecruitmentSeconds(state, selectedTroop, recruitCount))</b></span></div>
+                    <button class="primary" disabled="@(busy || RecruitBlocked is not null)" @onclick='() => Act("recruit", selectedTroop, recruitCount)'>@(RecruitBlocked ?? $"{recruitCount}명 모집 시작")</button>
+                    <small class="fine-print">완료 후 병영 배치 · 출정 중에도 새 병력을 모집할 수 있습니다.</small>
+                </article>
+                <article class="training-panel">
+                    <div><small>ARMY DOCTRINE</small><strong>전군 훈련 <b>Lv.@TerritoryRules.EffectiveTraining(state)</b></strong><span>식량 @(state.Training * 100) · 석재 @(state.Training * 50) · @Duration(TerritoryRules.TrainingSeconds(state))</span></div>
+                    <button disabled="@(busy || TrainingBlocked is not null)" @onclick='() => Act("train")'>@(TrainingBlocked ?? "훈련 시작")</button>
+                </article>
+                @if (state.Training > state.Buildings[4]) { <p class="fine-print">기존 훈련 Lv.@state.Training 기록은 보존됩니다. 병영을 확장하면 보존된 레벨이 적용됩니다.</p> }
+                <p class="fine-print">병사 Lv.@TerritoryRules.EffectiveTraining(state) / 병영 Lv.@state.Buildings[4] · 주둔 전투력 @TerritoryRules.ArmyPower(state).ToString("N0") · 전군 훈련 중에는 출정할 수 없습니다.</p>
+            </div>
+        }
+        else if (tab == "map")
+        {
+            <div class="map-view">
+                <div class="map-status"><span><i></i> 개인 영토 · 채집 / 정복</span><span title="몬스터 공격 시 10 사용 · 5분마다 1 회복">에너지 <b>@state.MonsterEnergy / 100</b></span></div>
+                <div class="personal-map-frame @(personalMapExpanded ? "expanded" : "")" @onkeydown="PersonalMapKeyDown">
+                <div class="map-canvas" inert="@mapDetailOpen"><TerritoryMap State="state" SelectedTile="selectedTile" SelectedTileChanged="SelectMapTile" AttackRequested="SelectMapTile" /></div>
+                <button class="map-expand" @onclick="() => personalMapExpanded = !personalMapExpanded" aria-pressed="@personalMapExpanded">@(personalMapExpanded ? "큰 지도 닫기" : "크게 보기")</button>
+                @if (mapDetailOpen)
+                {
+                <TerritoryMapSheet Title="@TerritoryRules.TileName(selectedTile)" Subtitle="@($"{TerritoryRules.RegionName(selectedTile)} · {TerritoryRules.TileRow(selectedTile) + 1} : {TerritoryRules.TileColumn(selectedTile) + 1}")" CloseRequested="CloseMapDetail">
+                    <ChildContent>
+                    <div class="map-target-status"><span class="tag">@(state.Claimed.Contains(selectedTile) ? "아군 영토" : "미점령")</span><small>@(selectedTile == 12 ? "원정의 시작점" : "목표를 확인하고 부대를 편성하세요")</small></div>
+                    @if (selectedTile == 12)
+                    {
+                        <p class="effect-line">@(state.Claimed.Contains(0) ? "흑월 왕성 정복 완료! 청운 변경의 패권을 확보했습니다." : "주변 거점을 선택하세요. 정찰로 시야를 넓히고 영토를 연결해 흑월 왕성으로 진군하세요.")</p>
+                        <div class="cost-line"><span>주둔군 <b>@state.Troops.Sum()명</b></span><span>전투력 <b>@TerritoryRules.ArmyPower(state).ToString("N0")</b></span></div>
+                    }
+                    else
+                    {
+                        <div class="cost-line"><span>아군 <b>@SelectedArmyPower.ToString("N0")</b></span><span>수비 <b>@TerritoryRules.Defense(selectedTile).ToString("N0")</b></span><span>왕복 <b>@Duration(TerritoryRules.MarchSeconds(selectedTile))</b></span></div>
+                        <div class="region-status"><span class="@(SelectedArmyPower >= TerritoryRules.Defense(selectedTile) ? "good" : "warning")">@(SelectedArmyPower >= TerritoryRules.Defense(selectedTile) ? "현재 편성 승리 예상" : "편성 보강 필요")</span><small>대장·병력을 선택해 파견</small></div>
+                        @if (!state.Claimed.Contains(selectedTile)) { <p class="garrison-line">@TerritoryWorldVisuals.MonsterName(selectedTile) · @EnemyDescription</p> }
+                    }
+                    <small class="fine-print">승리 병종별 10% · 패배 30% 손실(올림). 내 영토와 인접한 땅만 정복 가능.</small>
+                    @if (MarchBlocked) { <p class="map-blocked">출정 슬롯과 주둔 병력을 확인하세요.</p> }
+                    </ChildContent>
+                    <Actions>
+                        @if (selectedTile == 12) { <button class="primary" @onclick='() => SetTab("village")'>본성 관리</button> }
+                        else { <div class="actions"><button disabled="@(busy || MarchBlocked || TerritoryRules.Neighbors(selectedTile).All(state.Revealed.Contains))" @onclick='() => OpenMapFormation("scout")'>정찰</button><button class="primary" disabled="@(busy || MarchBlocked || state.Claimed.Contains(selectedTile) || !TerritoryRules.Neighbors(selectedTile).Any(state.Claimed.Contains))" @onclick='() => OpenMapFormation("conquer")'>정복 편성</button><button disabled="@(busy || MarchBlocked || !state.Claimed.Contains(selectedTile) || TerritoryRules.Terrain(selectedTile) is "camp" or "citadel")" @onclick='() => OpenMapFormation("gather")'>채집</button></div> }
+                    </Actions>
+                </TerritoryMapSheet>
+                }
+                </div>
+            </div>
+        }
+        else if (tab == "hospital")
+        {
+            <TerritoryHospital State="state" Now="nowUtc" Busy="busy" ActionRequested="order => Act(order.Item1, order.Item2, order.Item3)" />
+        }
+        else if (tab == "storage")
+        {
+            <div class="storage-view">
+                <div class="storage-hero"><small>IMPERIAL STOREHOUSE</small><h3>영지 보급 창고</h3><span>시설 Lv.@state.Buildings[5] · 자원별 @TerritoryRules.StorageCapacity(state).ToString("N0") 보관</span></div>
+                @for (var i = 0; i < 3; i++)
+                {
+                    <article class="stock-card"><span class="resource-icon resource-@i" aria-hidden="true"></span><div><strong>@ResourceNames[i] <b>@ResourceValues[i].ToString("N0")</b></strong><div class="stock-meter"><i style="@($"width:{StoragePercent(i)}%")"></i></div><small>분당 +@TerritoryRules.Production(state, i + 1) · 여유 @Math.Max(0, TerritoryRules.StorageCapacity(state) - ResourceValues[i]).ToString("N0")</small></div></article>
+                }
+                <TerritoryResourceShop State="state" Changed="Reload" />
+                <article class="detail-panel"><h3>창고 확장</h3><p class="effect-line">한도에 도달하면 추가 생산·채집 보관이 멈춥니다. 기존 한도 초과 보유분은 유지됩니다.</p>
+                    <div class="cost-line"><span>목재 <b>@TerritoryRules.BuildingCost(state, 5).Wood</b></span><span>석재 <b>@TerritoryRules.BuildingCost(state, 5).Stone</b></span><span>소요 <b>@Duration(TerritoryRules.ConstructionSeconds(state, 5))</b></span></div>
+                    <button class="primary" disabled="@(busy || TerritoryRules.ConstructionBlocked(state, "build", 5) is not null || state.Buildings[5] >= state.Buildings[0] || state.Buildings[5] >= 20 || state.Wood < TerritoryRules.BuildingCost(state, 5).Wood || state.Stone < TerritoryRules.BuildingCost(state, 5).Stone)" @onclick='() => Act("build", 5)'>@(TerritoryRules.ConstructionBlocked(state, "build", 5) ?? (state.Buildings[5] >= state.Buildings[0] ? "영주관 확장 필요" : "창고 확장 시작"))</button>
+                </article>
+                <p class="fine-print">오프라인 생산 최대 8시간 · 건설과 모집 시간은 접속하지 않아도 흐릅니다.</p>
+            </div>
+        }
+        else
+        {
+            <div class="section-heading"><div><small>CAMPAIGN CHRONICLE</small><h3>영지 기록</h3></div><span>활동 @state.Reports.Count 건 · 전투 @state.Battles.Count 건</span></div>
+            <button class="clear-history" disabled="@(busy || state.Reports.Count + state.Battles.Count == 0)" @onclick="ClearHistory">@(confirmHistoryClear ? "개인 기록만 삭제 확정" : "기록 비우기")</button>
+            @if (confirmHistoryClear) { <p>활동·완료 전투 기록만 삭제합니다. 진행 중인 출정·보상은 유지됩니다. <button @onclick="() => confirmHistoryClear = false">취소</button></p> }
+            @if (state.Reports.Count + state.Battles.Count == 0) { <div class="empty-record"><img src="/images/maru-idle/icons-premium/codex.png" alt="" /><h3>표시할 기록이 없습니다</h3><p>새로운 건설, 모집, 전투 기록이 이곳에 남습니다.</p></div> }
+            @foreach (var battle in state.Battles) { <button class="battle-record" @onclick="() => OpenReplay(battle)">@(battle.EncounterTitle ?? TerritoryRules.TileName(battle.Tile)) · @(battle.Victory ? "승리" : "후퇴") · 전투 다시 보기</button> }
+            @foreach (var report in state.Reports) { <p class="report">@report</p> }
+        }
+        </div>
+        @if (PendingJobs.Any())
+        {
+            @if (tab is "map" or "shared") { <button class="map-jobs-toggle" aria-expanded="@mapJobsOpen" @onclick="() => mapJobsOpen = !mapJobsOpen"><span>진행 중인 작업 <b>@PendingJobs.Count()</b></span><span>@(mapJobsOpen ? "접기 −" : "가속 / 확인 +")</span></button> }
+            @if (tab is not ("map" or "shared") || mapJobsOpen)
+            {
+            <div class="queue-dock" aria-label="진행 중인 작업">
+                @foreach (var job in PendingJobs)
+                {
+                    <button class="queue-card" @onclick='() => OpenAcceleration(job)' title="작업 시간 가속">
+                        <small>@(job.Kind is "build" or "site-build" ? $"건설 {job.Slot}" : job.Kind == "recruit" ? "모집 중" : job.Kind == "heal" ? "치료 중" : "훈련 중") · 가속 +</small><strong>@TerritoryRules.JobTitle(job)</strong><span>@Remaining(job.CompletesUtc)</span>
+                        <progress max="100" value="@Progress(job.StartedUtc, job.CompletesUtc)" aria-label="@TerritoryRules.JobTitle(job)"></progress>
+                    </button>
+                }
+            </div>
+            }
+        }
+        <TerritoryExpeditionDock State="state" Now="nowUtc" Busy="busy" Coins="Session.Snapshot.PremiumCurrency" UnlockRequested='slot => Act("purchase-march-slot", slot)' AccelerateRequested="OpenMarchAcceleration" BoostRequested='slot => Act("boost", slot)' BattleRequested="OpenBattle" FormationRequested="OpenPreset" />
+        @if (battleRecord is not null) { <TerritoryBattle @key="battleRecord.Id" Record="battleRecord" March="ActiveBattleMarch" Replay="battleReplay" CloseRequested="CloseBattle" /> }
+        @if (accelerationId is not null) { <TerritoryAcceleration @key="accelerationId" Title="@accelerationTitle" End="AccelerationEnd" Now="nowUtc" Coins="Session.Snapshot.PremiumCurrency" Busy="busy" ConfirmRequested="Accelerate" CloseRequested="CloseAcceleration" /> }
+        <footer role="status">@(message ?? "건설·모집은 완료 시 반영됩니다. 자동 탐험은 계속 진행됩니다.")</footer>
+        @if (formationMission is not null)
+        {
+            <section class="formation-overlay" role="dialog" aria-modal="true" aria-label="원정군 파견 편성">
+                <header class="formation-heading"><div><small>EXPEDITION COMMAND</small><h3>@MissionName · 파견 편성</h3></div><button aria-label="파견 편성 닫기" @onclick="CloseFormation">×</button></header>
+                <div class="formation-scroll">
+                    <div class="formation-actions"><button @onclick="AutoAssignCommanders">대장 자동 지정</button><span>제 @formationSlot 부대 · 직접 선택도 가능</span></div>
+                    <div class="dispatch-target"><strong>@TerritoryRules.TileName(selectedTile)</strong><span>왕복 @Duration(TerritoryRules.MarchSeconds(selectedTile))</span></div>
+                    @if (formationMission == "conquer")
+                    {
+                        <div class="matchup-card"><small>적 수비 병종 · @EnemyDescription</small><strong class="@(BattlePreview.Victory ? "good" : "warning")">@(BattlePreview.Victory ? "승리 예상" : "패배 예상") <span>@BattlePreview.Matchup (@BattlePreview.MatchupPercent.ToString("+0;-0;0")%)</span></strong><p>지휘 전투력 @BattlePreview.BasePower.ToString("N0") → 상성 적용 <b>@BattlePreview.EffectivePower.ToString("N0")</b> / 수비 @BattlePreview.Defense.ToString("N0")</p></div>
+                    }
+                    <p class="fine-print">@CasualtyPreview</p>
+                    <p class="counter-guide">창병 → 기병 → 궁병 → 창병<br /><small>화살표 상대에게 +25% · 반대는 −25% · 혼성 비중 반영</small></p>
+                    <nav class="squad-tabs" aria-label="파견 부대 선택">
+                        @for (var i = 0; i < 3; i++)
+                        {
+                            var index = i;
+                            <button class="@(editedSquad == i ? "selected" : "")" aria-pressed="@(editedSquad == i)" @onclick="() => editedSquad = index"><strong>@TerritoryRules.TroopNames[i] @dispatchCounts[i]명</strong><small>@(dispatchCounts[i] == 0 ? "파견 제외" : commanders.FirstOrDefault(c => c.Id == commanderIds[i])?.Name ?? "대장 선택 필요")</small></button>
+                        }
+                    </nav>
+                    @for (var i = 0; i < 3; i++)
+                    {
+                        if (i != editedSquad) { continue; }
+                        var index = i;
+                        var commander = commanders.FirstOrDefault(c => c.Id == commanderIds[index]);
+                        <article class="squad-editor" @key="index">
+                            <div class="squad-title"><strong>@TerritoryRules.TroopNames[i]</strong><small>@TroopRoles[i]</small><span>주둔 @state.Troops[i]명</span></div>
+                            <div class="commander-select">
+                                @if (commander is not null) { <img src="@commander.AssetUrl" alt="@commander.Name" /> }
+                                <div><label for="@($"commander-{i}")">부대 대장</label><select id="@($"commander-{i}")" @bind="commanderIds[index]"><option value="">동료 선택</option>@foreach (var candidate in commanders) { <option value="@candidate.Id" disabled="@TerritoryRules.CommanderAway(state, candidate.Id)">@candidate.Name @(TerritoryRules.CommanderAway(state, candidate.Id) ? "(출정 중)" : "") · Lv.@candidate.Level · 지휘 +@candidate.BonusPercent%</option> }</select></div>
+                            </div>
+                            <div class="troop-count"><label for="@($"dispatch-count-{i}")">파견 인원</label><input id="@($"dispatch-count-{i}")" type="number" min="0" max="@Math.Min(state.Troops[i], commander?.TroopCapacity ?? 0)" step="1" @bind="dispatchCounts[index]" @bind:event="oninput" /><button @onclick="() => dispatchCounts[index] = 0">제외</button><button @onclick="() => dispatchCounts[index] = Math.Min(state.Troops[index], commander?.TroopCapacity ?? 0)">최대</button></div>
+                            <p class="fine-print">@(commander?.Name ?? "대장 미지정") 지휘 상한 @(commander?.TroopCapacity ?? 0)명 · 레벨·성급에 따라 증가</p>
+                            <details class="commander-gallery"><summary>동료 초상화로 직접 선택</summary><div>@foreach (var candidate in commanders) { <button disabled="@TerritoryRules.CommanderAway(state, candidate.Id)" @onclick="() => commanderIds[index] = candidate.Id"><img src="@candidate.AssetUrl" alt=""/><b>@candidate.Name</b><small>최대 @(candidate.TroopCapacity)명</small></button> }</div></details>
+                        </article>
+                    }
+                    <p class="fine-print">지휘 보너스: 레벨 10당 +1%, 별 1개당 +2%, 등급당 +2% (최대 30%). 대장 중복 배치 불가 · 0명인 부대는 제외됩니다. 탐험 편성은 그대로 유지됩니다.</p>
+                </div>
+                <div class="dispatch-confirm"><span>@dispatchCounts.Sum(n => (long)n)명 @(formationMission == "preset" ? "편성 저장 · 출정 전까지 병력 차감 없음" : "파견 · 식량 10 · 나머지 병력은 본성 주둔")</span><p role="status">@(FormationBlocked ?? dispatchError ?? (formationMission == "conquer" ? $"에너지 {state.MonsterEnergy}/100 · 출정 시 10 사용 · 피해 일부는 부상·전사" : "저장된 구성도 출정 시 병력과 대장 상태를 다시 확인합니다."))</p><button class="primary" disabled="@(busy || FormationBlocked is not null)" @onclick="Dispatch">@(formationMission == "preset" ? "부대 편성 저장" : $"{MissionName} 출정")</button></div>
+            </section>
+        }
+    }
+    else { <p role="status">@(message ?? "영지 불러오는 중…")</p><button @onclick="Reload">다시 불러오기</button> }
+</section>
+
+@code {
+    [Parameter] public EventCallback CloseRequested { get; set; }
+    private static readonly (string Key, string Name)[] Tabs = [("village", "영지"), ("army", "병영"), ("map", "개인 영토"), ("shared", "서버 월드"), ("storage", "창고"), ("hospital", "치료소"), ("reports", "기록")];
+    private static readonly (int X, int Y)[] BuildingPositions = [(50, 30), (22, 78), (16, 46), (84, 43), (80, 76), (50, 73)];
+    private static readonly string[] ResourceNames = ["식량", "목재", "석재"];
+    private static readonly string[] TroopRoles = ["기병에 강함 · 궁병에 약함", "창병에 강함 · 기병에 약함", "궁병에 강함 · 창병에 약함"];
+    private IReadOnlyList<TerritoryCommander> commanders = [];
+    private string[] commanderIds = ["", "", ""];
+    private int[] dispatchCounts = [0, 0, 0];
+    private int editedSquad;
+    private int formationSlot = 1;
+    private string? formationMission;
+    private string? dispatchError;
+    private bool draftInitialized;
+    private string MissionName => formationMission == "preset" ? "사전 편성" : formationMission == "conquer" ? "정복" : formationMission == "gather" ? "채집" : "정찰";
+    private List<TerritorySquad> DraftSquads => Enumerable.Range(0, 3).Where(i => dispatchCounts[i] > 0).Select(i => new TerritorySquad
+    {
+        TroopType = i, Count = dispatchCounts[i], CommanderId = commanderIds[i],
+        CommandBonus = commanders.FirstOrDefault(c => c.Id == commanderIds[i])?.BonusPercent ?? 0
+    }).ToList();
+    private TerritoryBattlePreview BattlePreview => TerritoryRules.PreviewBattle(state ?? new(), selectedTile, DraftSquads);
+    private string EnemyDescription => string.Join(" · ", TerritoryRules.GarrisonComposition(selectedTile).Select((n, i) => n > 0 ? $"{TerritoryRules.TroopNames[i]} {n}%" : null).OfType<string>());
+    private string? FormationBlocked => formationMission != "preset" && MarchBlocked ? "현재 출정할 수 없습니다. 병력·식량·작업 상태를 확인하세요."
+        : formationMission == "conquer" && state!.MonsterEnergy < MonsterEnergyRules.AttackCost ? "몬스터 공격 에너지 부족 · 5분마다 1 회복"
+        : DraftSquads.Any(s => s.Count > (commanders.FirstOrDefault(c => c.Id == s.CommanderId)?.TroopCapacity ?? 0)) ? "영웅의 병력 지휘 상한을 초과했습니다."
+        : dispatchCounts.Any(n => n < 0 || n > 999) ? "파견 수량을 확인하세요."
+        : Enumerable.Range(0, 3).Any(i => dispatchCounts[i] > state!.Troops[i]) ? "주둔 병력이 부족합니다."
+        : DraftSquads.Any(s => TerritoryRules.CommanderAway(state!, s.CommanderId)) ? "이미 출정 중인 대장입니다."
+        : DraftSquads.Count == 0 ? "파견 인원을 선택하세요."
+        : DraftSquads.Any(s => !commanders.Any(c => c.Id == s.CommanderId)) ? "각 부대 대장을 선택하세요."
+        : DraftSquads.Select(s => s.CommanderId).Distinct().Count() != DraftSquads.Count ? "대장을 중복 배치할 수 없습니다." : null;
+    private TerritoryBattleRecord? battleRecord;
+    private bool battleReplay;
+    private readonly HashSet<string> watchedBattles = [];
+    private TerritoryMarch? ActiveBattleMarch => state is null || battleRecord is null ? null : TerritoryRules.ActiveMarches(state).FirstOrDefault(m => m.Id == battleRecord.Id);
+    private string CasualtyPreview
+    {
+        get
+        {
+            if (state is null || formationMission != "conquer") return "";
+            var preview = TerritoryBattleRules.Snapshot(new TerritoryMarch { Tile = selectedTile, Power = BattlePreview.EffectivePower, EnemyPower = BattlePreview.Defense, Troops = dispatchCounts.Select(n => Math.Clamp(n, 0, 999)).ToArray() }, Math.Max(0, TerritoryRules.HospitalCapacity(state) - TerritoryRules.HospitalOccupied(state)));
+            return $"예상 부상 {preview.Wounded.Sum()}명 · 전사 {preview.Deaths.Sum()}명 · 병상 여유 {Math.Max(0, TerritoryRules.HospitalCapacity(state) - TerritoryRules.HospitalOccupied(state))} (귀환 시 병상 기준 확정)";
+        }
+    }
+    private void OpenBattle(TerritoryMarch march) { battleReplay = false; watchedBattles.Add(march.Id); battleRecord = TerritoryBattleRules.Snapshot(march, Math.Max(0, TerritoryRules.HospitalCapacity(state!) - TerritoryRules.HospitalOccupied(state!))); }
+    private void OpenReplay(TerritoryBattleRecord record) { battleReplay = true; battleRecord = record; }
+    private void CloseBattle() { battleRecord = null; }
+    private bool mapDetailOpen, personalMapExpanded, mapJobsOpen;
+    private void SetTab(string value) { tab = value; mapDetailOpen = personalMapExpanded = mapJobsOpen = false; }
+    private void SelectMapTile(int tile) { selectedTile = tile; mapDetailOpen = true; }
+    private void CloseMapDetail() { mapDetailOpen = false; }
+    private void PersonalMapKeyDown(KeyboardEventArgs e) { if (e.Key == "Escape") { if (mapDetailOpen) CloseMapDetail(); else personalMapExpanded = false; } }
+    private void OpenMapFormation(string mission) { mapDetailOpen = personalMapExpanded = false; OpenFormation(mission); }
+    private TerritoryState? state;
+    private string tab = "village";
+    private bool productionDistrict;
+    private string? message;
+    private int selectedTile = 12, selectedBuilding, selectedTroop, recruitCount = 5;
+    private DateTime nowUtc = DateTime.UtcNow;
+    private bool busy;
+    private bool confirmHistoryClear;
+    private async Task ClearHistory() { if (!confirmHistoryClear) { confirmHistoryClear = true; return; } await Act("clear-history"); confirmHistoryClear = false; }
+    private readonly CancellationTokenSource stop = new();
+    private Task? polling;
+    private long[] ResourceValues => state is null ? [0, 0, 0] : [state.Food, state.Wood, state.Stone];
+    private IEnumerable<TerritoryJob> PendingJobs => new[] { state?.Construction, state?.AdditionalConstruction, state?.Recruitment, state?.Research, state?.Healing }.OfType<TerritoryJob>();
+    private int SelectedArmyPower => state is null ? 0 : TerritoryRules.ActiveMarches(state).FirstOrDefault(m => m.Tile == selectedTile)?.Power ?? BattlePreview.EffectivePower;
+    private bool MarchBlocked => state is null || TerritoryRules.ActiveMarches(state).Count() >= TerritoryRules.MarchSlots(state) || TerritoryRules.ActiveMarches(state).Any(m => m.Tile == selectedTile) || state.Research is not null || state.Troops.Sum() == 0 || state.Food < 10;
+    private string? BuildingBlocked => state is null ? "불러오는 중" : TerritoryRules.ConstructionBlocked(state, "build", selectedBuilding) is { } blocked ? blocked : state.Buildings[selectedBuilding] >= 20 ? "최고 레벨" : selectedBuilding != 0 && state.Buildings[selectedBuilding] >= state.Buildings[0] ? "영주관 확장 필요" : state.Wood < TerritoryRules.BuildingCost(state, selectedBuilding).Wood || state.Stone < TerritoryRules.BuildingCost(state, selectedBuilding).Stone ? "건설 자원 부족" : null;
+    private string? RecruitBlocked => state is null ? "불러오는 중" : state.Recruitment is not null ? "모집 대기열 사용 중" : selectedTroop == 2 && state.Buildings[4] < 2 ? "병영 Lv.2 필요" : TerritoryRules.ReservedTroops(state) + recruitCount > TerritoryRules.Capacity(state) ? "병영 수용 한도" : state.Food < (20 + selectedTroop * 10) * recruitCount || state.Wood < 10 * recruitCount ? "모집 자원 부족" : null;
+    private string? TrainingBlocked => state is null ? "불러오는 중" : state.Research is not null ? "훈련 중" : TerritoryRules.ActiveMarches(state).Any() ? "전체 귀환 대기" : state.Training >= 20 ? "최고 레벨" : state.Training >= state.Buildings[4] ? "병영 확장 필요" : state.Food < state.Training * 100 || state.Stone < state.Training * 50 ? "자원 부족" : null;
+    private string BuildingEffect(int i) => state is null ? "" : i switch { 0 => "모든 시설 확장 · Lv.5 출정 2슬롯 · Lv.10 출정 3슬롯 개방", 6 => $"병상 {TerritoryRules.HospitalCapacity(state)}명 · 치료 대기열", 4 => $"병력 수용 {TerritoryRules.Capacity(state)}명 → {TerritoryRules.Capacity(state) + 30}명 · 모집 시간 단축", 5 => $"자원별 보관 한도 {TerritoryRules.StorageCapacity(state):N0} · 생산 중단 방지", _ => $"분당 {ResourceNames[i - 1]} +{TerritoryRules.Production(state, i)} → +{TerritoryRules.Production(state, i) + 12}" };
+    private int StoragePercent(int i) => state is null ? 0 : (int)Math.Clamp(ResourceValues[i] * 100 / TerritoryRules.StorageCapacity(state), 0, 100);
+    private static string Compact(long value) => value >= 10000 ? $"{value / 10000d:0.#}만" : value.ToString("N0");
+    private static string Duration(double seconds) { var t = TimeSpan.FromSeconds(Math.Max(0, Math.Ceiling(seconds))); return t.TotalHours >= 1 ? $"{(int)t.TotalHours}시간 {t.Minutes}분" : t.TotalMinutes >= 1 ? $"{(int)t.TotalMinutes}분 {t.Seconds:00}초" : $"{t.Seconds}초"; }
+    private string Remaining(DateTime end) => end <= nowUtc ? "완료 확인 중" : Duration((end - nowUtc).TotalSeconds);
+    private double Progress(DateTime start, DateTime end) => Math.Clamp((nowUtc - start).TotalSeconds / Math.Max(1, (end - start).TotalSeconds) * 100, 0, 100);
+    protected override async Task OnInitializedAsync() { await Reload(); polling = Poll(); }
+    private async Task Reload()
+    {
+        if (busy) return;
+        busy = true;
+        try { state = await Session.LoadTerritoryAsync(stop.Token); commanders = await Session.LoadTerritoryCommandersAsync(stop.Token); nowUtc = DateTime.UtcNow; InitializeDraft(); }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        catch (Exception) { message = "영지를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요."; }
+        finally { busy = false; }
+    }
+    private string? accelerationId;
+    private int accelerationTarget;
+    private string accelerationTitle = "";
+    private DateTime AccelerationEnd => state is null ? nowUtc : PendingJobs.FirstOrDefault(j => j.Id == accelerationId)?.CompletesUtc ?? TerritoryRules.ActiveMarches(state).FirstOrDefault(m => m.Id == accelerationId)?.ReturnsUtc ?? nowUtc;
+    private void OpenAcceleration(TerritoryJob job) { accelerationId = job.Id; accelerationTarget = TerritoryRules.AccelerationTarget(job); accelerationTitle = TerritoryRules.JobTitle(job); }
+    private void OpenMarchAcceleration(TerritoryMarch march) { accelerationId = march.Id; accelerationTarget = march.Slot + 10; accelerationTitle = $"제 {march.Slot} 원정군 · {TerritoryRules.TileName(march.Tile)}"; }
+    private void CloseAcceleration() { accelerationId = null; }
+    private async Task Accelerate(int minutes) { await Act("accelerate", accelerationTarget, minutes, accelerationId); CloseAcceleration(); }
+    private async Task Act(string action, int target = 0, int count = 1, string? expectedJobId = null)
+    {
+        if (busy) return;
+        busy = true;
+        try { var result = await Session.TerritoryActionAsync(action, target, count, stop.Token, expectedJobId: expectedJobId); state = result.State; message = result.Message; nowUtc = DateTime.UtcNow; }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        catch (Exception) { message = "처리 결과를 확인하지 못했습니다. 기록을 확인한 뒤 다시 시도해 주세요."; }
+        finally { busy = false; }
+    }
+    private void InitializeDraft()
+    {
+        if (state is null || draftInitialized) return;
+        for (var i = 0; i < 3; i++)
+        {
+            var saved = state.Formation?.Squads.FirstOrDefault(s => s.TroopType == i);
+            commanderIds[i] = saved?.CommanderId ?? commanders.ElementAtOrDefault(i)?.Id ?? "";
+            dispatchCounts[i] = Math.Min(state.Troops[i], saved?.Count ?? (state.Formation is null ? state.Troops[i] : 0));
+        }
+        draftInitialized = true;
+    }
+    private void OpenFormation(string mission)
+    {
+        formationSlot = Enumerable.Range(1, TerritoryRules.MarchSlots(state!)).FirstOrDefault(i => !TerritoryRules.ActiveMarches(state!).Any(m => m.Slot == i), 1);
+        LoadPreset(formationSlot);
+        for (var i = 0; i < 3; i++)
+        {
+            dispatchCounts[i] = Math.Clamp(dispatchCounts[i], 0, state!.Troops[i]);
+            if (TerritoryRules.CommanderAway(state, commanderIds[i])) commanderIds[i] = commanders.FirstOrDefault(c => !TerritoryRules.CommanderAway(state, c.Id) && !commanderIds.Where((_, index) => index != i && dispatchCounts[index] > 0).Contains(c.Id))?.Id ?? "";
+        }
+        formationMission = mission; dispatchError = null;
+    }
+    private void CloseFormation() { formationMission = null; }
+    private void AutoAssignCommanders()
+    {
+        var available = commanders.Where(c => !TerritoryRules.CommanderAway(state!, c.Id)).OrderByDescending(c => c.BonusPercent).ToList();
+        for (var i = 0; i < 3; i++) { var c = available.ElementAtOrDefault(i); commanderIds[i] = c?.Id ?? ""; dispatchCounts[i] = Math.Min(state!.Troops[i], c?.TroopCapacity ?? 0); }
+    }
+    private void LoadPreset(int slot)
+    {
+        if (!state!.FormationPresets.TryGetValue(slot, out var preset)) return;
+        for (var i = 0; i < 3; i++) { var squad = preset.Squads.FirstOrDefault(s => s.TroopType == i); commanderIds[i] = squad?.CommanderId ?? ""; dispatchCounts[i] = Math.Min(state.Troops[i], squad?.Count ?? 0); }
+    }
+    private void OpenPreset(int slot) { formationSlot = slot; LoadPreset(slot); formationMission = "preset"; dispatchError = null; }
+    private async Task Dispatch()
+    {
+        if (busy || FormationBlocked is not null || formationMission is null) return;
+        busy = true;
+        try
+        {
+            var result = await Session.TerritoryActionAsync(formationMission == "preset" ? "save-formation" : formationMission, formationMission == "preset" ? formationSlot : selectedTile, cancellationToken: stop.Token,
+                formation: new TerritoryFormation { Slot = formationSlot, Squads = DraftSquads });
+            state = result.State; message = result.Message; nowUtc = DateTime.UtcNow;
+            dispatchError = result.Success ? null : result.Message;
+            if (result.Success) formationMission = null;
+        }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+        catch (Exception) { message = dispatchError = "파견 결과를 확인하지 못했습니다. 창을 닫고 기록과 행군 상태를 확인하세요."; }
+        finally { busy = false; }
+    }
+    private async Task Poll()
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        var nextRefresh = DateTime.UtcNow.AddSeconds(15);
+        try
+        {
+            while (await timer.WaitForNextTickAsync(stop.Token))
+                await InvokeAsync(async () =>
+                {
+                    nowUtc = DateTime.UtcNow;
+                    var due = PendingJobs.Any(j => j.CompletesUtc <= nowUtc) || state is not null && TerritoryRules.ActiveMarches(state).Any(m => nowUtc >= m.ReturnsUtc);
+                    if (nowUtc >= nextRefresh || due)
+                    {
+                        var previousReport = state?.Reports.FirstOrDefault();
+                        await Reload(); nextRefresh = nowUtc.AddSeconds(15);
+                        if (state?.Reports.FirstOrDefault() != previousReport) message = state?.Reports.FirstOrDefault();
+                    }
+                    if (state is not null)
+                    {
+                        if (battleRecord is not null && state.Battles.FirstOrDefault(b => b.Id == battleRecord.Id) is { } settled) battleRecord = settled;
+                        if (tab == "map" && formationMission is null && battleRecord is null && accelerationId is null)
+                        {
+                            var encounter = TerritoryRules.ActiveMarches(state).FirstOrDefault(m => m.Mission == "conquer" && !watchedBattles.Contains(m.Id) && TerritoryRules.MarchProgress(m, nowUtc) >= .45 && TerritoryRules.MarchProgress(m, nowUtc) <= .55);
+                            if (encounter is not null) OpenBattle(encounter);
+                        }
+                    }
+                    StateHasChanged();
+                });
+        }
+        catch (OperationCanceledException) when (stop.IsCancellationRequested) { }
+    }
+    public async ValueTask DisposeAsync() { await stop.CancelAsync(); if (polling is not null) await polling; stop.Dispose(); }
+}

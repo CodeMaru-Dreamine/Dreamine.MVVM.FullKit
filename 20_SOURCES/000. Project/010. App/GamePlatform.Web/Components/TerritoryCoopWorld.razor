@@ -1,0 +1,138 @@
+@inject GameSession Session
+@implements IAsyncDisposable
+<section class="coop-world @(view == "map" ? "map-mode" : "")" aria-label="서버 공유 월드">
+    <header><div><small>SAME SERVER · ALLIED EXPEDITION</small><h3>서버 공유 월드</h3></div><span>@data?.Channel · @(data?.World.Members.Count ?? 0)개 본성</span></header>
+    <nav aria-label="서버 월드 메뉴">@foreach (var item in WorldTabs) { <button class="@(view == item.Key ? "selected" : "")" aria-pressed="@(view == item.Key)" @onclick="() => SetView(item.Key)">@item.Label @(item.Key == "rallies" ? ActiveRallies.Count().ToString() : "")</button> }</nav>
+    @if (data is not null)
+    {
+        <div class="world-status"><span><i></i> 서버 공유 · @data.World.Members.Count 본성</span><span title="토벌·집결 10 사용 · 5분마다 +1 · PvP 무료">에너지 <b>@data.Territory.MonsterEnergy / 100</b></span></div>
+        <div class="coop-content @(view == "map" ? "map-content" : "")">
+        @if (view == "shield") { <TerritoryShieldShop Changed="Refresh" /> }
+        else if (view == "map")
+        {
+            <div class="shared-map-frame @(mapExpanded ? "expanded" : "")" @onkeydown="MapKeyDown">
+                <div class="map-canvas" inert="@(mapMonsterOpen || mapPlayerOpen)"><TerritoryMap State="data.Territory" Shared="data.World" CurrentUserId="@data.UserId" BossSelected="SelectMapMonster" PlayerSelected="SelectPlayer" FocusMonsterId="focusMonster" /></div>
+                <button class="map-expand" aria-pressed="@mapExpanded" @onclick="() => mapExpanded = !mapExpanded">@(mapExpanded ? "지도 크게 보기 닫기" : "지도 크게 보기")</button>
+                @if (mapMonsterOpen)
+                {
+                    <TerritoryMapSheet Title="@(TerritorySharedRules.Bosses[selectedBoss].RequiresRally ? "협동 집결 목표" : "몬스터 토벌")" Subtitle="@($"{TerritoryRules.RegionName(TerritorySharedRules.Bosses[selectedBoss].Tile)} · WORLD ENCOUNTER")" CloseRequested="CloseMapDetail">
+                        <ChildContent>
+                            <TerritoryMonsterFinder DetailsOnly="true" World="data.World" UserId="@data.UserId" Selected="selectedBoss" />
+                            <p class="target-guidance">@(TerritorySharedRules.Bosses[selectedBoss].RequiresRally ? "60초간 동료 원정대를 모집합니다. 혼자라면 NPC 지원군이 합류합니다." : "내 부대가 즉시 출정합니다. 토벌 후 자원을 획득해 본성으로 귀환합니다.")</p>
+                            @if (SelectedMonsterBlocked is { } reason) { <p class="target-warning">@reason</p> }
+                        </ChildContent>
+                        <Actions><button class="primary target-deploy" disabled="@(busy || SelectedMonsterBlocked is not null)" @onclick="() => PrepareMonster(selectedBoss)">@(TerritorySharedRules.Bosses[selectedBoss].RequiresRally ? "집결 부대 편성" : "토벌 부대 편성") <span>에너지 10</span></button></Actions>
+                    </TerritoryMapSheet>
+                }
+                else if (mapPlayerOpen && data.World.Members.TryGetValue(selectedPlayer, out var selectedLord))
+                {
+                    var blocked = TerritorySharedRules.AttackBlocked(data.World.Members[data.UserId], selectedLord, now);
+                    <TerritoryMapSheet Title="@selectedLord.Name" Subtitle="@($"영주관 Lv.{selectedLord.Level} · PLAYER STRONGHOLD")" CloseRequested="CloseMapDetail">
+                        <ChildContent><div class="castle-intel"><span class="castle-art" aria-hidden="true"></span><div><strong>@(selectedLord.UserId == data.UserId ? "내 본성" : "원정대 본성")</strong><p>@TerritorySharedRules.Protection(selectedLord, now)</p>@if (selectedLord.ShieldUntilUtc > now) { <small>보호막 @Remaining(selectedLord.ShieldUntilUtc)</small> }</div></div><p class="target-guidance">Lv.10부터 본성 PvP · 공격 시 내 보호막 해제 · 몬스터 에너지 소모 없음</p>@if (blocked is not null && selectedLord.UserId != data.UserId) { <p class="target-warning">@blocked</p> }</ChildContent>
+                        <Actions>@if (selectedLord.UserId == data.UserId) { <button class="primary target-deploy" @onclick='() => SetView("shield")'>본성 보호막 관리</button> }else { <button class="primary target-deploy" disabled="@(busy || blocked is not null)" @onclick='() => Prepare("raid", selectedLord.UserId)'>본성 공격 편성</button> }</Actions>
+                    </TerritoryMapSheet>
+                }
+            </div>
+        }
+        @if (view == "hunting")
+        {
+            <TerritoryMonsterFinder World="data.World" UserId="@data.UserId" Selected="selectedBoss" SelectedChanged="SelectBoss" Busy="busy" AttackRequested="PrepareMonster" LocateRequested="LocateMonster" />
+        }
+        @if (view == "rallies")
+        {
+            <p class="hint">단독 토벌과 협동 집결 · 출정 중에는 대장과 병력을 중복 사용할 수 없습니다.</p>
+            @if (!data.World.Rallies.Any(r => r.Armies.ContainsKey(data.UserId) || !r.SoloHunt)) { <p>진행 중인 출정이 없습니다. 사냥터에서 대상을 선택하세요.</p> }
+            @foreach (var rally in data.World.Rallies.Where(r => !r.SoloHunt || r.Armies.ContainsKey(data.UserId)).OrderBy(r => r.Returned).ThenByDescending(r => r.DepartsUtc).Take(12))
+            {
+                <article class="rally"><header><b>Lv.@TerritorySharedRules.Bosses[rally.Boss].Level @TerritorySharedRules.Bosses[rally.Boss].Name</b><span>@RallyPhase(rally)</span></header><p>@(rally.SoloHunt ? "단독 원정대" : "집결장") @Name(rally.LeaderId) · 유저 @rally.Armies.Count @(rally.SoloHunt ? "명" : "/ 5명") · 전력 @rally.Power.ToString("N0")</p><div class="allies">@foreach (var id in rally.Armies.Keys) { <span>@Name(id)</span> }@if (rally.NpcSupportPower > 0) { <span>청운 지원군 · NPC · 전력 @rally.NpcSupportPower.ToString("N0")</span> }else if (!rally.SoloHunt && !rally.Resolved && rally.Armies.Count == 1) { <span>모집 종료 시 NPC 지원 예정</span> }</div>
+                    <div class="commands">@if (!rally.SoloHunt) { <button disabled="@(busy || rally.Resolved || now >= rally.DepartsUtc || rally.Armies.ContainsKey(data.UserId) || rally.Armies.Count >= 5)" @onclick='() => Prepare("rally-join", rally.Id)'>부대 합류</button> }
+                    @if (rally.LeaderId == data.UserId && now < rally.DepartsUtc && !rally.Resolved) { <button disabled="@busy" @onclick='() => Execute("rally-cancel", rally.Id)'>집결 취소</button> }
+                    @if (!rally.Cancelled && now >= rally.DepartsUtc) { <button @onclick="() => Watch(rally)">@(rally.SoloHunt ? "토벌 전투 보기" : "합동 전투 보기")</button> }</div>
+                </article>
+            }
+        }
+        @if (view == "lords")
+        {
+            <p class="hint">Lv.10부터 PvP · 최초 3일 보호막 · 공격 출정 시 내 보호막 해제<br/>승리 시 자원별 최대 5%·500 약탈 · 방어 패배 시 1시간 회복 보호</p>
+            @foreach (var member in data.World.Members.Values.OrderBy(m => m.UserId != data.UserId).ThenBy(m => m.Name))
+            {
+                var blocked = TerritorySharedRules.AttackBlocked(data.World.Members[data.UserId], member, now);
+                <article class="lord @(selectedPlayer == member.UserId ? "selected" : "")"><div><b>@member.Name @(member.UserId == data.UserId ? "· 내 본성" : "")</b><small>영주관 Lv.@member.Level · @TerritorySharedRules.Protection(member, now)</small>@if (member.ShieldUntilUtc > now) { <small>보호막 @Remaining(member.ShieldUntilUtc)</small> }</div><button disabled="@(busy || blocked is not null)" title="@blocked" @onclick='() => Prepare("raid", member.UserId)'>본성 공격</button></article>
+            }
+            @foreach (var raid in data.World.Raids.Where(r => r.Attacker == data.UserId || r.Defender == data.UserId).OrderByDescending(r => r.ReturnsUtc).Take(10))
+            { <article class="rally"><b>@Name(raid.Attacker) → @Name(raid.Defender)</b><p>@(raid.Returned ? raid.Cancelled ? "보호 상태로 취소 · 귀환" : raid.Victory ? "공격 승리 · 귀환" : "공격 패배 · 귀환" : raid.Resolved ? "귀환 중" : "공격 부대 이동 중") · @Remaining(raid.ReturnsUtc)</p></article> }
+        }
+        </div>
+        @if (intent is not null)
+        {
+            <div class="formation-overlay" role="dialog" aria-modal="true" aria-label="공유 월드 출정 편성"><header><h3>@(intent == "raid" ? "본성 공격 편성" : intent == "hunt" ? "단독 토벌 편성" : "집결 부대 편성")</h3><button aria-label="공유 출정 편성 닫기" @onclick="() => intent = null">×</button></header>
+                <button @onclick="AutoAssign">대장 자동 지정</button>
+                @for (var i = 0; i < 3; i++) { var type = i; <div class="squad"><label>@TerritoryRules.TroopNames[i] · 주둔 @data.Territory.Troops[i]명<select aria-label="@($"{TerritoryRules.TroopNames[i]} 집결 대장")" @bind="commanderIds[type]"><option value="">대장 선택</option>@foreach (var commander in commanders) { <option value="@commander.Id" disabled="@TerritoryRules.CommanderAway(data.Territory, commander.Id)">@commander.Name · 지휘 +@commander.BonusPercent%</option> }</select></label><label>파견 인원<input type="number" min="0" max="@data.Territory.Troops[type]" @bind="counts[type]" /></label></div> }
+                <p>@(intent == "raid" ? "공격 출정 시 남은 내 보호막이 즉시 해제됩니다. 전투 피해 병력 일부는 전사할 수 있습니다." : intent == "hunt" ? "에너지 10과 출정 슬롯 1개를 사용합니다. NPC 지원 없이 내 병력으로 즉시 출정하며, 귀환 시 피해와 보상이 확정됩니다." : "출정 슬롯 1개와 대장을 예약합니다. 혼자면 모집 종료 시 NPC 1부대가 합류합니다. NPC 지원이 승리를 보장하지는 않습니다.")</p>
+                <button class="primary" disabled="@busy" @onclick="Confirm">식량 10 사용 · @(intent == "raid" ? "보호막 해제 후 공격" : intent == "hunt" ? "단독 토벌 확정" : "집결 출정 확정")</button>
+                @if (message is not null) { <p role="alert">@message</p> }
+            </div>
+        }
+        @if (replay is not null) { <div class="coop-battle-overlay"><TerritoryBattle Record="replay" March="replayMarch" Replay="@(replayMarch is null)" Cooperative="@replayCooperative" EncounterTitle="@replayBoss!.Name" EnemyAsset="@replayBoss.Asset" CloseRequested="() => replay = null" /></div> }
+    }
+    @if (message is not null && intent is null) { <p role="status">@message</p> }
+</section>
+@code {
+    [Parameter] public EventCallback Changed { get; set; }
+    private TerritorySharedResult? data;
+    private string view = "map", selectedPlayer = "";
+    private string? intent, target, message;
+    private int selectedBoss;
+    private int focusMonster = -1;
+    private bool replayCooperative;
+    private int formationSlot;
+    private bool busy, mapExpanded, mapMonsterOpen, mapPlayerOpen;
+    private static readonly (string Key, string Label)[] WorldTabs = [("map", "월드맵"), ("hunting", "사냥터"), ("rallies", "출정"), ("lords", "본성"), ("shield", "보호막")];
+    private DateTime now = DateTime.UtcNow;
+    private IReadOnlyList<TerritoryCommander> commanders = [];
+    private string[] commanderIds = ["", "", ""];
+    private int[] counts = [0, 0, 0];
+    private TerritoryBattleRecord? replay;
+    private TerritoryMarch? replayMarch;
+    private TerritoryWorldBoss? replayBoss;
+    private readonly CancellationTokenSource stop = new();
+    private Task? polling;
+    private IEnumerable<TerritoryRally> ActiveRallies => data?.World.Rallies.Where(r => !r.Returned) ?? [];
+    private string Name(string id) => data?.World.Members.GetValueOrDefault(id)?.Name ?? "원정대";
+    private string Remaining(DateTime end) => end <= now ? "완료" : $"{Math.Ceiling((end - now).TotalMinutes):N0}분";
+    private string RallyPhase(TerritoryRally r) => r.Returned ? r.Cancelled ? "취소 · 귀환" : r.Victory ? "승리 · 귀환" : "패배 · 귀환" : r.DepartsUtc > now ? $"모집 {Math.Ceiling((r.DepartsUtc - now).TotalSeconds)}초" : r.BattleEndsUtc > now ? r.SoloHunt ? "단독 토벌 진행" : "합동 행군·교전" : "귀환 중";
+    protected override async Task OnInitializedAsync() { await Refresh(); polling = Poll(); }
+    private void SetView(string value) { view = value; CloseMapDetail(); mapExpanded = false; }
+    private void CloseMapDetail() { mapMonsterOpen = mapPlayerOpen = false; }
+    private string? SelectedMonsterBlocked => data is null ? "월드를 불러오는 중입니다." : data.Territory.MonsterEnergy < 10 ? "몬스터 에너지가 부족합니다. 5분마다 1 회복됩니다." : data.World.BossRespawns.GetValueOrDefault(selectedBoss) > now ? "몬스터가 재출현하면 출정할 수 있습니다." : data.World.Rallies.Any(r => r.Boss == selectedBoss && !r.Returned) ? "다른 원정대가 토벌 중인 대상입니다." : data.World.Members.Values.Any(m => m.Tile == TerritorySharedRules.Bosses[selectedBoss].Tile) ? "본성 배치 지역입니다." : null;
+    private void MapKeyDown(KeyboardEventArgs e) { if (e.Key == "Escape") { if (mapMonsterOpen || mapPlayerOpen) CloseMapDetail(); else mapExpanded = false; } }
+    private void SelectBoss(int boss) { selectedBoss = boss; mapExpanded = false; }
+    private void SelectMapMonster(int boss) { selectedBoss = boss; mapMonsterOpen = true; mapPlayerOpen = false; }
+    private void LocateMonster(int boss) { selectedBoss = boss; focusMonster = boss; SetView("map"); }
+    private void PrepareMonster(int boss) { selectedBoss = boss; Prepare(TerritorySharedRules.Bosses[boss].RequiresRally ? "rally-create" : "hunt", null); }
+    private void SelectPlayer(string id) { selectedPlayer = id; mapPlayerOpen = true; mapMonsterOpen = false; }
+    private async Task Refresh() { if (busy) return; busy = true; try { data = await Session.SharedWorldActionAsync(cancellationToken: stop.Token); commanders = await Session.LoadTerritoryCommandersAsync(stop.Token); now = DateTime.UtcNow; } catch (OperationCanceledException) { } catch { message = "공유 월드를 불러오지 못했습니다. 서버 선택과 연결 상태를 확인하세요."; } finally { busy = false; } }
+    private void Prepare(string action, string? id) { CloseMapDetail(); mapExpanded = false; intent = action; target = id; message = null; counts = data!.Territory.Troops.Select(n => Math.Min(n, 10)).ToArray(); AutoAssign(); formationSlot = Enumerable.Range(1, TerritoryRules.MarchSlots(data.Territory)).FirstOrDefault(i => !TerritoryRules.ActiveMarches(data.Territory).Any(m => m.Slot == i)); if (data.Territory.FormationPresets.TryGetValue(formationSlot, out var preset)) for (var i = 0; i < 3; i++) { var squad = preset.Squads.FirstOrDefault(s => s.TroopType == i); commanderIds[i] = squad?.CommanderId ?? ""; counts[i] = Math.Min(data.Territory.Troops[i], squad?.Count ?? 0); } }
+    private void AutoAssign() { var available = commanders.Where(c => !TerritoryRules.CommanderAway(data!.Territory, c.Id)).OrderByDescending(c => c.BonusPercent).ToArray(); for (var i = 0; i < 3; i++) { var c = available.ElementAtOrDefault(i); commanderIds[i] = c?.Id ?? ""; counts[i] = Math.Min(counts[i], c?.TroopCapacity ?? 0); } }
+    private Task Confirm() => Execute(intent!, target, new TerritoryFormation { Slot = formationSlot, Squads = Enumerable.Range(0, 3).Where(i => counts[i] != 0).Select(i => new TerritorySquad { TroopType = i, Count = counts[i], CommanderId = commanderIds[i] }).ToList() });
+    private async Task Execute(string action, string? id, TerritoryFormation? formation = null)
+    {
+        if (busy) return; busy = true;
+        try { data = await Session.SharedWorldActionAsync(action, id, selectedBoss, formation, stop.Token); message = data.Message; now = DateTime.UtcNow; if (data.Success) { intent = null; view = action == "raid" ? "lords" : "rallies"; await Changed.InvokeAsync(); } }
+        catch (OperationCanceledException) { }
+        catch { message = "처리 결과를 확인하지 못했습니다. 월드 명부와 출정 슬롯을 확인해 주세요."; }
+        finally { busy = false; }
+    }
+    private void Watch(TerritoryRally rally)
+    {
+        var boss = replayBoss = TerritorySharedRules.Bosses[rally.Boss]; replayCooperative = !rally.SoloHunt;
+        var march = new TerritoryMarch { Id = rally.Armies.GetValueOrDefault(data!.UserId) ?? rally.Id, Tile = boss.Tile, Power = rally.Power, EnemyPower = boss.Power,
+            Slot = TerritoryRules.ActiveMarches(data.Territory).FirstOrDefault(m => m.Id == rally.Armies.GetValueOrDefault(data.UserId))?.Slot ?? 1,
+            Squads = rally.Squads.Take(5).ToList(), Troops = Enumerable.Range(0,3).Select(i => rally.Squads.Where(s => s.TroopType == i).Sum(s => s.Count)).ToArray(), StartedUtc = rally.DepartsUtc, ReturnsUtc = rally.ReturnsUtc };
+        replay = rally.SoloHunt ? data.Territory.Battles.FirstOrDefault(b => b.Id == march.Id) : null;
+        replay ??= TerritoryBattleRules.Snapshot(march, Math.Max(0,TerritoryRules.HospitalCapacity(data.Territory)-TerritoryRules.HospitalOccupied(data.Territory)));
+        replayMarch = rally.Returned ? null : march;
+    }
+    private async Task Poll() { using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5)); try { while (await timer.WaitForNextTickAsync(stop.Token)) await InvokeAsync(async () => { await Refresh(); StateHasChanged(); }); } catch (OperationCanceledException) { } }
+    public async ValueTask DisposeAsync() { await stop.CancelAsync(); if (polling is not null) await polling; stop.Dispose(); }
+}

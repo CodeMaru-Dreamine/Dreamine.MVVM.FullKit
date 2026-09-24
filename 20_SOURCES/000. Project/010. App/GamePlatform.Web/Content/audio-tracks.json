@@ -1,0 +1,38 @@
+[
+  {
+    "assetKey": "bgm-ironfang-battle",
+    "fileName": "ironfang-relics-battle.ogg",
+    "title": "철아의 행군",
+    "composerOrSource": "Suno AI generation supplied by the project owner; edited and seamlessly looped for CodeMaru",
+    "license": "Project-owner supplied AI-generated audio; commercial release requires verification of the owner's Suno account and generation-time license",
+    "loopStart": 0.0,
+    "loopEnd": 88.5,
+    "volumeNormalization": 0.90,
+    "rootHz": 180.0,
+    "seed": 211
+  },
+  {
+    "assetKey": "bgm-steel-relic-boss",
+    "fileName": "steel-relic-reel-boss.ogg",
+    "title": "강철 유물의 격돌",
+    "composerOrSource": "Suno AI generation supplied by the project owner; edited and seamlessly looped for CodeMaru",
+    "license": "Project-owner supplied AI-generated audio; commercial release requires verification of the owner's Suno account and generation-time license",
+    "loopStart": 0.0,
+    "loopEnd": 88.5,
+    "volumeNormalization": 0.58,
+    "rootHz": 132.0,
+    "seed": 223
+  },
+  {
+    "assetKey": "bgm-ironfang-region",
+    "fileName": "ironfang-relics-region.ogg",
+    "title": "유적의 잔향",
+    "composerOrSource": "Suno AI generation supplied by the project owner; edited and seamlessly looped for CodeMaru",
+    "license": "Project-owner supplied AI-generated audio; commercial release requires verification of the owner's Suno account and generation-time license",
+    "loopStart": 0.0,
+    "loopEnd": 88.5,
+    "volumeNormalization": 0.76,
+    "rootHz": 156.0,
+    "seed": 227
+  }
+]
